@@ -173,6 +173,24 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </style>
 </head>
 <body>
+
+<div id="auth-gate" style="position:fixed;inset:0;background:#0f0c0d;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;">
+  <div style="text-align:center;padding:40px 32px;max-width:360px;width:100%;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.18em;color:white;margin-bottom:4px;"><span style="color:#B8283A;">S</span>TACKD</div>
+    <div style="font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:#8a7f82;margin-bottom:32px;">Operations Portal</div>
+    <div id="auth-error" style="font-size:.6rem;color:#f87171;margin-bottom:12px;min-height:18px;letter-spacing:.08em;"></div>
+    <input type="password" id="auth-input" placeholder="Enter password"
+      style="font-family:'DM Mono',monospace;font-size:.8rem;width:100%;background:transparent;border:none;border-bottom:1px solid #333;color:white;padding:10px 0;outline:none;text-align:center;letter-spacing:.2em;margin-bottom:20px;"
+      onkeydown="if(event.key==='Enter')checkAuth()">
+    <button onclick="checkAuth()"
+      style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;background:#B8283A;color:white;border:none;padding:12px 32px;cursor:pointer;width:100%;">
+      Enter
+    </button>
+    <div style="font-size:.5rem;color:#333;margin-top:20px;letter-spacing:.08em;">FPM International &middot; Authorised Access Only</div>
+  </div>
+</div>
+
+<div id="app-shell" style="display:none;">
 <div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><span>S</span>TACKD</div><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <div class="view on" id="v-dash">
   <div class="kpis" id="kpis"></div>
@@ -1364,6 +1382,56 @@ if (SS.url) { G('banner').style.display='none'; G('cfg-url').value=SS.url; if(SS
 G('auto-s').checked = SS.auto !== false;
 G('pol').checked = SS.pol !== false;
 renderAll();
+</script>
+
+</div> <!-- end app-shell -->
+
+<script>
+// ── AUTH ──────────────────────────────────────────────────────
+// Simple hash function - not cryptographic, sufficient for access deterrence
+function simpleHash(str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    var char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString();
+}
+
+var AUTH_HASH = simpleHash('stackd2025');  // Change this password
+var AUTH_KEY = 'stackd_auth';
+
+function checkAuth() {
+  var input = document.getElementById('auth-input').value;
+  var err = document.getElementById('auth-error');
+  if (simpleHash(input) === AUTH_HASH) {
+    sessionStorage.setItem(AUTH_KEY, AUTH_HASH);
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'block';
+    err.textContent = '';
+  } else {
+    err.textContent = 'Incorrect password';
+    var inp = document.getElementById('auth-input');
+    inp.style.borderBottomColor = '#f87171';
+    inp.value = '';
+    setTimeout(function(){ inp.style.borderBottomColor = '#333'; }, 1500);
+  }
+}
+
+// Check on load
+(function(){
+  if (sessionStorage.getItem(AUTH_KEY) === AUTH_HASH) {
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'block';
+  } else {
+    // Focus password input
+    setTimeout(function(){
+      var el = document.getElementById('auth-input');
+      if (el) el.focus();
+    }, 100);
+  }
+})();
 </script>
 </body>
 </html>
