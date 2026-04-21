@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.4.0</title>
+<title>Stackd Ops</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -54,7 +54,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .s-draft{background:#f5f5f5;color:#666;}.s-sent{background:var(--blf);color:var(--bl);}
 .s-partially-paid,.s-deposit-paid{background:#fff8e6;color:#7a5200;}
 .s-paid,.s-settled,.s-confirmed{background:var(--gnf);color:var(--gn);font-weight:600;}
-.s-cancelled{background:var(--crf);color:var(--cr);}.s-pro-forma{background:#f5f0ff;color:#6b21a8;}
+.s-cancelled{background:var(--crf);color:var(--cr);}
 .pamt{color:var(--gold);width:64px;text-align:right;flex-shrink:0;}
 .pbal{color:var(--bl);width:64px;text-align:right;flex-shrink:0;font-size:.52rem;}
 .tb{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
@@ -191,7 +191,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><span>S</span>TACKD</div><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><span>S</span>TACKD</div><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <div class="view on" id="v-dash">
   <div class="kpis" id="kpis"></div>
   <div class="r2">
@@ -220,14 +220,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <select class="sb" style="max-width:170px;" id="li-sf" onchange="rLI()"><option value="">All suppliers</option></select>
     <button class="btn btn-s" onclick="openLI()">+ New Line Item</button>
   </div>
-  <div class="tw"><table class="tbl"><thead><tr><th>SKU</th><th>Description</th><th>Specs</th><th>HS Code</th><th>Supplier</th><th class="num">Unit Cost</th><th class="num">Unit Price</th><th>UOM</th><th class="num">Margin</th><th>Cur.</th><th></th></tr></thead><tbody id="li-tb"></tbody></table></div>
+  <div class="tw"><table class="tbl"><thead><tr><th>SKU</th><th>Description</th><th>Specs</th><th>Supplier</th><th class="num">Unit Cost</th><th class="num">Unit Price</th><th>UOM</th><th class="num">Margin</th><th>Cur.</th><th></th></tr></thead><tbody id="li-tb"></tbody></table></div>
   <div id="li-em" class="empty" style="display:none;"><div class="ei">&#128230;</div><p>No line items yet.</p></div>
 </div>
 
 <div class="view" id="v-inv">
   <div class="tb">
     <input class="sb" type="text" placeholder="Search invoices..." id="inv-q" oninput="rInv()">
-    <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
+    <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
     <button class="btn btn-s" onclick="openInv()">+ New Invoice</button>
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
   </div>
@@ -243,78 +243,6 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
   <div class="tw"><table class="tbl"><thead><tr><th>PO #</th><th>Supplier</th><th>Linked Invoice</th><th>Date</th><th>Status</th><th class="num">Total COGS</th><th class="num">Dep. Paid</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="po-tb"></tbody></table></div>
   <div id="po-em" class="empty" style="display:none;"><div class="ei">&#128203;</div><p>No purchase orders yet.</p></div>
-</div>
-
-<!-- IMPORT DATA VIEW -->
-<div class="view" id="v-import">
-  <div style="max-width:700px;display:flex;flex-direction:column;gap:14px;">
-
-    <!-- Header -->
-    <div style="background:var(--ink);padding:18px 22px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.12em;color:white;margin-bottom:4px;"><span style="color:var(--cr);">BULK</span> IMPORT</div>
-      <div style="font-size:.58rem;color:var(--m);line-height:1.7;">Import existing data from spreadsheets. Follow the sequence below: Suppliers first, then Line Items, then Invoices, then Purchase Orders.<br>Download each CSV template, fill it in, and upload. All imports are additive — existing records are not overwritten.</div>
-    </div>
-
-    <!-- Step 1: Suppliers -->
-    <div class="card">
-      <div class="ct"><span style="background:var(--cr);color:white;font-family:'Bebas Neue',sans-serif;font-size:.9rem;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">1</span>Suppliers</div>
-      <p style="font-size:.6rem;color:var(--m);margin-bottom:12px;line-height:1.7;">Upload your supplier list first. Line items and POs reference suppliers by name — suppliers must exist before you import anything else.</p>
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <button class="btn btn-g" onclick="dlTemplate('sup')">&#8595; Download Template</button>
-        <button class="btn btn-s" onclick="G('ul-sup').click()">&#8593; Upload Suppliers CSV</button>
-        <input type="file" id="ul-sup" accept=".csv" style="display:none" onchange="bulkUpload('sup',this)">
-      </div>
-      <div id="imp-sup-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
-    </div>
-
-    <!-- Step 2: Line Items -->
-    <div class="card">
-      <div class="ct"><span style="background:var(--cr);color:white;font-family:'Bebas Neue',sans-serif;font-size:.9rem;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">2</span>Line Items</div>
-      <p style="font-size:.6rem;color:var(--m);margin-bottom:12px;line-height:1.7;">Upload your product catalogue. Supplier Name in the CSV must match exactly what you entered in Step 1.</p>
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <button class="btn btn-g" onclick="dlTemplate('li')">&#8595; Download Template</button>
-        <button class="btn btn-s" onclick="G('ul-li').click()">&#8593; Upload Line Items CSV</button>
-        <input type="file" id="ul-li" accept=".csv" style="display:none" onchange="bulkUpload('li',this)">
-      </div>
-      <div id="imp-li-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
-    </div>
-
-    <!-- Step 3: Invoices -->
-    <div class="card">
-      <div class="ct"><span style="background:var(--cr);color:white;font-family:'Bebas Neue',sans-serif;font-size:.9rem;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">3</span>Invoices</div>
-      <p style="font-size:.6rem;color:var(--m);margin-bottom:12px;line-height:1.7;">Upload your existing invoices. Line items are not required — invoices will show on the dashboard with your provided totals. You can enrich them with line items later.</p>
-      <div style="background:var(--bg);padding:10px 14px;margin-bottom:12px;font-size:.58rem;color:var(--m);line-height:1.8;">
-        <strong style="color:var(--ink);">Minimum required columns:</strong> Invoice #, Buyer, Date, Status, Currency, Grand Total<br>
-        <strong style="color:var(--ink);">Optional but recommended:</strong> Destination, Buyer Deposit, COGS, Freight Type, POL, POD, COO, Notes
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <button class="btn btn-g" onclick="dlTemplate('inv')">&#8595; Download Template</button>
-        <button class="btn btn-s" onclick="G('ul-inv').click()">&#8593; Upload Invoices CSV</button>
-        <input type="file" id="ul-inv" accept=".csv" style="display:none" onchange="bulkUpload('inv',this)">
-      </div>
-      <div id="imp-inv-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
-    </div>
-
-    <!-- Step 4: Purchase Orders -->
-    <div class="card">
-      <div class="ct"><span style="background:var(--bl);color:white;font-family:'Bebas Neue',sans-serif;font-size:.9rem;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">4</span>Purchase Orders</div>
-      <p style="font-size:.6rem;color:var(--m);margin-bottom:12px;line-height:1.7;">Upload existing POs. Supplier Name must match your supplier list. Invoice # links the PO to an existing invoice — leave blank for standalone POs.</p>
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <button class="btn btn-g" onclick="dlTemplate('po')">&#8595; Download Template</button>
-        <button class="btn btn-s" onclick="G('ul-po').click()">&#8593; Upload POs CSV</button>
-        <input type="file" id="ul-po" accept=".csv" style="display:none" onchange="bulkUpload('po',this)">
-      </div>
-      <div id="imp-po-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
-    </div>
-
-    <!-- Import log -->
-    <div class="card">
-      <div class="ct">Import Log</div>
-      <div id="imp-log" style="font-size:.58rem;font-family:'DM Mono',monospace;color:var(--m);max-height:180px;overflow-y:auto;line-height:1.9;">No imports yet this session.</div>
-      <button class="btn btn-g" style="margin-top:10px;" onclick="G('imp-log').textContent='No imports yet this session.'">Clear log</button>
-    </div>
-
-  </div>
 </div>
 
 <div class="view" id="v-cfg">
@@ -389,7 +317,6 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div class="fld"><label>Unit of Measure</label><input type="text" id="lf-u" placeholder="pcs / kg / m2"></div>
       <div class="fld" style="grid-column:1/-1"><label>Description</label><input type="text" id="lf-d"></div>
       <div class="fld" style="grid-column:1/-1"><label>Specifications</label><input type="text" id="lf-sp" placeholder="Size, grade, model, colour, voltage..."></div>
-      <div class="fld"><label>HS Code</label><input type="text" id="lf-hs" placeholder="e.g. 8418.50"></div>
       <div class="fld"><label>Unit Cost (supplier price)</label><input type="number" id="lf-c" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
       <div class="fld"><label>Unit Price (buyer price)</label><input type="number" id="lf-p" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
       <div class="fld"><label>Currency</label><select id="lf-cur"><option>USD</option><option>GBP</option><option>EUR</option><option>BBD</option><option>NGN</option><option>GHS</option></select></div>
@@ -410,7 +337,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="ov" id="ov-inv" onclick="if(event.target===this)closeM('ov-inv')">
   <div class="modal" style="max-width:900px;">
     <div class="mh"><h2 id="inv-mt">New Invoice</h2>
-      <select id="inv-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
+      <select id="inv-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
       <button class="mx" onclick="closeM('ov-inv')">&#215;</button></div>
     <div class="mb">
       <div class="ms"><div class="mst">Invoice Details</div>
@@ -687,7 +614,7 @@ function showV(v, tab) {
   G('v-' + v).classList.add('on');
   if (tab) tab.classList.add('on');
   else { var t = document.querySelector('[data-v="' + v + '"]'); if(t) t.classList.add('on'); }
-  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, import:function(){}, cfg:rCfg };
+  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, cfg:rCfg };
   if (fns[v]) fns[v]();
 }
 function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); }
@@ -823,7 +750,6 @@ function editSup(id) {
   G('sf-cur').value=s.cur||'USD'; G('ov-sup').classList.add('on');
 }
 async function saveSup() {
-  if (!G('sf-n').value.trim()) { toast('Supplier name is required'); G('sf-n').focus(); return; }
   var s = { id:EI.s||uid(), name:G('sf-n').value.trim(), country:G('sf-c').value.trim(), ct:G('sf-ct').value.trim(), email:G('sf-e').value.trim(), phone:G('sf-p').value.trim(), cur:G('sf-cur').value, notes:G('sf-nt').value.trim() };
   if (EI.s) { var i=DB.sup.findIndex(function(x){return x.id===EI.s;}); if(i>-1) DB.sup[i]=s; } else DB.sup.push(s);
   sv(K.s,DB.sup); closeM('ov-sup'); rSup(); audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s); toast('Supplier saved'); await syncEnt('sup',s);
@@ -856,25 +782,21 @@ function liMgn() {
 }
 function openLI() {
   EI.l=null; G('li-mt').textContent='New Line Item';
-  ['lf-s','lf-d','lf-sp','lf-u','lf-nt','lf-hs'].forEach(function(f){ var e=G(f); if(e) e.value=''; });
+  ['lf-s','lf-d','lf-sp','lf-u','lf-nt'].forEach(function(f){ var e=G(f); if(e) e.value=''; });
   G('lf-c').value=''; G('lf-p').value=''; G('lf-cur').value='USD'; G('lf-sup').value='';
   liMgn(); G('ov-li').classList.add('on'); setTimeout(function(){ G('lf-s').focus(); }, 50);
 }
 function editLI(id) {
   var li=DB.li.find(function(x){return x.id===id;}); if(!li) return;
   EI.l=id; G('li-mt').textContent='Edit Line Item';
-  G('lf-s').value=li.sku||''; G('lf-d').value=li.desc||''; G('lf-sp').value=li.specs||''; G('lf-hs').value=li.hs||'';
+  G('lf-s').value=li.sku||''; G('lf-d').value=li.desc||''; G('lf-sp').value=li.specs||'';
   G('lf-u').value=li.uom||''; G('lf-nt').value=li.notes||'';
   G('lf-c').value=li.cost||''; G('lf-p').value=li.price||'';
   G('lf-cur').value=li.cur||'USD'; G('lf-sup').value=li.supId||'';
   liMgn(); G('ov-li').classList.add('on');
 }
 async function saveLI() {
-  if (!G('lf-d').value.trim()) { toast('Description is required'); G('lf-d').focus(); return; }
-  if (!G('lf-sup').value) { toast('Please select a supplier'); return; }
-  if (+G('lf-c').value < 0) { toast('Unit cost cannot be negative'); return; }
-  if (+G('lf-p').value < 0) { toast('Unit price cannot be negative'); return; }
-  var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:+G('lf-c').value||0,price:+G('lf-p').value||0,cur:G('lf-cur').value,notes:G('lf-nt').value.trim()};
+  var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:+G('lf-c').value||0,price:+G('lf-p').value||0,cur:G('lf-cur').value,notes:G('lf-nt').value.trim()};
   if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
   sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); await syncEnt('li',li);
 }
@@ -884,26 +806,11 @@ async function delLI(id) {
 }
 
 // ── INVOICE MODAL ──────────────────────────────────────────────
-function nextInvNum() {
-  var year = new Date().getFullYear();
-  var prefix = 'INV-' + year + '-';
-  var max = 0;
-  DB.inv.forEach(function(inv) {
-    if (inv.num && inv.num.indexOf(prefix) === 0) {
-      var n = parseInt(inv.num.replace(prefix, ''), 10);
-      if (!isNaN(n) && n > max) max = n;
-    }
-  });
-  var next = String(max + 1).padStart(3, '0');
-  return prefix + next;
-}
-
 function openInv() {
   EI.i=null; cIL=[];
   G('inv-mt').textContent='New Invoice'; G('inv-sm').value='Draft';
   ['if-n','if-b','if-ba','if-st','if-dst','if-cid','if-ft','if-wt','if-cbm','if-pk','if-pol','if-pod','if-coo'].forEach(function(f){var e=G(f);if(e)e.value='';});
   ['if-lf','if-ins','if-leg','if-isp','if-oth','if-dep'].forEach(function(f){var e=G(f);if(e)e.value='';});
-  G('if-n').value=nextInvNum();
   G('if-dt').value=today(); G('if-ex').value=''; G('if-sd').value='';
   G('if-cur').value='USD'; G('if-tx').value='0'; G('ctx-wrap').style.display='none';
   G('if-terms').value=AS.terms||'';
@@ -1000,16 +907,6 @@ function calcInv() {
 }
 
 async function saveInv() {
-  if (!G('if-n').value.trim()) { toast('Invoice number is required'); G('if-n').focus(); return; }
-  if (!G('if-b').value.trim()) { toast('Buyer name is required'); G('if-b').focus(); return; }
-  if (!G('if-dt').value) { toast('Invoice date is required'); return; }
-  if (cIL.length === 0) { toast('Add at least one line item before saving'); return; }
-  var depVal = +G('if-dep').value||0;
-  // Check for duplicate invoice number (excluding current edit)
-  var dupNum = G('if-n').value.trim();
-  var hasDup = DB.inv.some(function(inv){ return inv.num === dupNum && inv.id !== EI.i; });
-  if (hasDup) { toast('Invoice number ' + dupNum + ' already exists'); G('if-n').focus(); return; }
-  if (depVal < 0) { toast('Buyer deposit cannot be negative'); return; }
   var tx=getTR();
   var inv={
     id:EI.i||uid(), num:G('if-n').value.trim(), buyer:G('if-b').value.trim(),
@@ -1134,9 +1031,6 @@ function calcPO() {
     '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Balance Due to Supplier</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.25rem;color:var(--bl);">' + fmt(bal,cur) + '</div></div>';
 }
 async function savePO() {
-  if (!G('pf-n').value.trim()) { toast('PO number is required'); G('pf-n').focus(); return; }
-  if (!G('pf-sup').value) { toast('Please select a supplier'); return; }
-  if (+G('pf-dep').value < 0) { toast('Supplier deposit cannot be negative'); return; }
   var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
   if(EI.p){var i=DB.po.findIndex(function(x){return x.id===EI.p;});if(i>-1)DB.po[i]=po;}else DB.po.push(po);
   sv(K.p,DB.po); closeM('ov-po'); rPO(); rDash(); audit(EI.p?'UPDATE':'CREATE','po',po.id,po); toast('PO saved'); await syncEnt('po',po);
@@ -1431,258 +1325,6 @@ function prevPODoc(po) {
   w.document.close();
   w.document.title = docTitle;
   w.focus();
-}
-
-
-
-// ── BULK IMPORT ────────────────────────────────────────────────
-
-var TEMPLATES = {
-  sup: {
-    headers: ['Supplier Name','Country','Contact Person','Email','Phone/WeChat','Currency','Notes'],
-    example: ['Jinan Jinbao Equipment Co.','China','Wang Lei','wanglei@jinbao.cn','+86 531 8800 1234','USD','Commercial refrigeration. CE certified.']
-  },
-  li: {
-    headers: ['SKU','Description','Specifications','HS Code','Supplier Name','Unit of Measure','Unit Cost','Unit Price','Currency','Notes'],
-    example: ['REF-COMM-600L','Commercial Upright Refrigerator 600L','600L 220V/50Hz R404A','8418.50','Jinan Jinbao Equipment Co.','pcs','120','200','USD','CE certified']
-  },
-  inv: {
-    headers: ['Invoice #','Buyer','Buyer Address','Destination','Date (YYYY-MM-DD)','Expiry Date','Status','Currency','Grand Total','COGS','Buyer Deposit','Tax Rate (decimal)','Local Freight','Insurance','Freight Type','Port of Loading','Port of Discharge','Country of Origin','Notes'],
-    example: ['INV-2025-001','Caribbean Supplies Ltd','Bridgetown Industrial Park, Barbados','Barbados','2025-06-01','2025-06-30','Sent','USD','3475','1650','1000','0.10','300','150','Sea - FCL 40HQ','Qingdao','Bridgetown','China','Active shipment']
-  },
-  po: {
-    headers: ['PO #','Supplier Name','Linked Invoice #','Date (YYYY-MM-DD)','Required Delivery','Currency','COGS Total','Supplier Deposit','Other Charges','Status','Notes'],
-    example: ['PO-2025-001-1','Jinan Jinbao Equipment Co.','INV-2025-001','2025-05-01','2025-05-14','USD','1200','360','0','Deposit Paid','30% deposit paid. Balance on inspection.']
-  }
-};
-
-function dlTemplate(entity) {
-  var tpl = TEMPLATES[entity];
-  if (!tpl) return;
-  var names = { sup:'suppliers', li:'line-items', inv:'invoices', po:'purchase-orders' };
-  var csv = tpl.headers.join(',') + '
-' + tpl.example.map(function(v){ return '"'+v+'"'; }).join(',');
-  var a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'stackd-' + names[entity] + '-template.csv';
-  a.click();
-  impLog('Downloaded ' + names[entity] + ' template');
-}
-
-function impLog(msg) {
-  var log = G('imp-log');
-  if (!log) return;
-  var ts = new Date().toLocaleTimeString();
-  var line = '[' + ts + '] ' + msg;
-  if (log.textContent === 'No imports yet this session.') log.textContent = '';
-  log.textContent = line + '\n' + log.textContent;
-}
-
-function bulkUpload(entity, input) {
-  var file = input.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      processImport(entity, e.target.result);
-    } catch(err) {
-      impLog('ERROR importing ' + entity + ': ' + err.message);
-      var res = G('imp-' + entity + '-result');
-      if (res) res.textContent = 'Error: ' + err.message;
-    }
-    input.value = '';
-  };
-  reader.readAsText(file);
-}
-
-function parseImportCSV(text) {
-  var lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return { headers: [], rows: [] };
-  var headers = lines[0].split(',').map(function(h){ return h.replace(/^"|"$/g,'').trim(); });
-  var rows = [];
-  for (var i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    // Handle quoted fields with commas
-    var cols = [];
-    var current = '';
-    var inQuote = false;
-    for (var c = 0; c < lines[i].length; c++) {
-      var ch = lines[i][c];
-      if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { cols.push(current.trim()); current = ''; }
-      else { current += ch; }
-    }
-    cols.push(current.trim());
-    var row = {};
-    headers.forEach(function(h, idx) { row[h] = (cols[idx]||'').replace(/^"|"$/g,'').trim(); });
-    rows.push(row);
-  }
-  return { headers: headers, rows: rows };
-}
-
-function processImport(entity, csvText) {
-  var parsed = parseImportCSV(csvText);
-  var rows = parsed.rows;
-  if (!rows.length) { impLog('No data rows found in ' + entity + ' CSV'); return; }
-
-  var added = 0, skipped = 0, errors = [];
-  var now = new Date().toISOString();
-
-  if (entity === 'sup') {
-    rows.forEach(function(r) {
-      var name = r['Supplier Name'] || r['name'] || '';
-      if (!name) { skipped++; return; }
-      // Skip if already exists by name
-      var exists = DB.sup.some(function(s){ return s.name.toLowerCase() === name.toLowerCase(); });
-      if (exists) { skipped++; impLog('Skipped duplicate supplier: ' + name); return; }
-      DB.sup.push({
-        id: uid(), name: name,
-        country: r['Country']||r['country']||'',
-        ct: r['Contact Person']||r['ct']||'',
-        email: r['Email']||r['email']||'',
-        phone: r['Phone/WeChat']||r['phone']||'',
-        cur: r['Currency']||r['cur']||'USD',
-        notes: r['Notes']||r['notes']||'',
-        updAt: now
-      });
-      added++;
-    });
-    sv(K.s, DB.sup);
-    var msg = 'Suppliers: ' + added + ' imported, ' + skipped + ' skipped';
-    G('imp-sup-result').textContent = msg; impLog(msg);
-    rSup(); rDash();
-  }
-
-  else if (entity === 'li') {
-    rows.forEach(function(r) {
-      var desc = r['Description']||r['desc']||'';
-      if (!desc) { skipped++; return; }
-      var supName = r['Supplier Name']||r['supName']||'';
-      var sup = DB.sup.find(function(s){ return s.name.toLowerCase() === supName.toLowerCase(); });
-      if (!sup && supName) { errors.push('Supplier not found: ' + supName); skipped++; return; }
-      DB.li.push({
-        id: uid(),
-        sku: r['SKU']||r['sku']||'',
-        desc: desc,
-        specs: r['Specifications']||r['specs']||'',
-        hs: r['HS Code']||r['hs']||'',
-        supId: sup ? sup.id : '',
-        uom: r['Unit of Measure']||r['uom']||'pcs',
-        cost: +r['Unit Cost']||+r['cost']||0,
-        price: +r['Unit Price']||+r['price']||0,
-        cur: r['Currency']||r['cur']||'USD',
-        notes: r['Notes']||r['notes']||'',
-        updAt: now
-      });
-      added++;
-    });
-    sv(K.l, DB.li);
-    var msg = 'Line Items: ' + added + ' imported, ' + skipped + ' skipped' + (errors.length?' | '+errors.join('; '):'');
-    G('imp-li-result').textContent = msg; impLog(msg);
-    rLI(); rDash();
-  }
-
-  else if (entity === 'inv') {
-    rows.forEach(function(r) {
-      var num = r['Invoice #']||r['num']||'';
-      var buyer = r['Buyer']||r['buyer']||'';
-      if (!num || !buyer) { skipped++; return; }
-      // Skip duplicates
-      if (DB.inv.some(function(i){ return i.num === num; })) {
-        skipped++; impLog('Skipped duplicate invoice: ' + num); return;
-      }
-      var grandTotal = +r['Grand Total']||+r['grand_total']||0;
-      var cogs = +r['COGS']||+r['cogs']||0;
-      var dep = +r['Buyer Deposit']||+r['dep']||0;
-      var taxRate = +r['Tax Rate (decimal)']||+r['taxRate']||0;
-      var lf = +r['Local Freight']||+r['lf']||0;
-      var ins = +r['Insurance']||+r['ins']||0;
-      // Calculate P&L from provided totals
-      var gp = grandTotal - cogs;
-      var np = grandTotal - cogs - lf - ins;
-      var mgn = grandTotal > 0 ? ((np/grandTotal)*100).toFixed(2) : '0';
-      DB.inv.push({
-        id: uid(), num: num, buyer: buyer,
-        buyerAddr: r['Buyer Address']||'',
-        shipTo: '',
-        dst: r['Destination']||r['dst']||'',
-        custId: '',
-        date: r['Date (YYYY-MM-DD)']||r['date']||today(),
-        expiry: r['Expiry Date']||r['expiry']||'',
-        shipDate: '',
-        ft: r['Freight Type']||r['ft']||'',
-        wt: '', cbm: '', pk: '',
-        pol: r['Port of Loading']||r['pol']||'',
-        pod: r['Port of Discharge']||r['pod']||'',
-        coo: r['Country of Origin']||r['coo']||'',
-        cur: r['Currency']||r['cur']||'USD',
-        taxRate: taxRate, lf: lf, ins: ins, leg: 0, isp: 0, oth: 0,
-        dep: dep,
-        terms: AS.terms||'',
-        status: r['Status']||r['status']||'Draft',
-        lineItems: [],
-        pos: [],
-        notes: r['Notes']||r['notes']||'',
-        // Store provided totals as calc_ fields so dashboard shows correctly
-        calc_grandTotal: String(grandTotal),
-        calc_cogs: String(cogs),
-        calc_grossProfit: String(gp),
-        calc_netProfit: String(np),
-        calc_margin: mgn,
-        calc_balanceDue: String(grandTotal - dep),
-        calc_liTotal: String(grandTotal),
-        calc_taxAmt: String(grandTotal * taxRate),
-        updAt: now
-      });
-      added++;
-    });
-    sv(K.i, DB.inv);
-    var msg = 'Invoices: ' + added + ' imported, ' + skipped + ' skipped';
-    G('imp-inv-result').textContent = msg; impLog(msg);
-    rInv(); rDash();
-  }
-
-  else if (entity === 'po') {
-    rows.forEach(function(r) {
-      var num = r['PO #']||r['num']||'';
-      var supName = r['Supplier Name']||r['supName']||'';
-      if (!num) { skipped++; return; }
-      var sup = DB.sup.find(function(s){ return s.name.toLowerCase() === supName.toLowerCase(); });
-      if (!sup && supName) { errors.push('Supplier not found: ' + supName); skipped++; return; }
-      var invNum = r['Linked Invoice #']||r['invNum']||'';
-      var inv = invNum ? DB.inv.find(function(i){ return i.num === invNum; }) : null;
-      var cogsTotal = +r['COGS Total']||+r['calc_liTotal']||0;
-      var dep = +r['Supplier Deposit']||+r['dep']||0;
-      var oth = +r['Other Charges']||+r['oth']||0;
-      DB.po.push({
-        id: uid(), num: num,
-        supId: sup ? sup.id : '',
-        invId: inv ? inv.id : '',
-        invNum: invNum,
-        date: r['Date (YYYY-MM-DD)']||r['date']||today(),
-        del: r['Required Delivery']||r['del']||'',
-        cur: r['Currency']||r['cur']||'USD',
-        lineItems: [],
-        dep: dep, oth: oth,
-        notes: r['Notes']||r['notes']||'',
-        status: r['Status']||r['status']||'Draft',
-        calc_liTotal: String(cogsTotal),
-        calc_grandTotal: String(cogsTotal + oth),
-        calc_balanceDue: String(cogsTotal + oth - dep),
-        creAt: now, updAt: now
-      });
-      added++;
-    });
-    sv(K.p, DB.po);
-    var msg = 'POs: ' + added + ' imported, ' + skipped + ' skipped' + (errors.length?' | '+errors.join('; '):'');
-    G('imp-po-result').textContent = msg; impLog(msg);
-    rPO(); rDash();
-  }
-
-  // Sync to Sheets
-  if (SS.url && SS.auto) {
-    syncAll().catch(function(){});
-  }
 }
 
 
