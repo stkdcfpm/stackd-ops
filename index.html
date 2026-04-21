@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Stackd Ops</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--gf:#fdf6ec;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-height:100vh;}
+/* NAV */
+.nav{background:var(--ink);display:flex;align-items:center;padding:0 22px;height:50px;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.18em;color:white;margin-right:20px;}
+.logo span{color:var(--cr);}
+.tabs{display:flex;height:50px;flex:1;}
+.tab{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m);padding:0 14px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;height:100%;}
+.tab:hover{color:white;} .tab.on{color:white;border-bottom-color:var(--cr);}
+.sync-btn{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid #2a2a2a;color:var(--m);padding:5px 11px;cursor:pointer;transition:all .2s;margin-left:auto;}
+.sync-btn:hover{border-color:var(--cr);color:white;}
+.sync-btn.loading{color:var(--gold);border-color:var(--gold);animation:pulse 1s infinite;}
+.sync-btn.ok{color:#4ade80;border-color:#4ade80;} .sync-btn.err{color:#f87171;border-color:#f87171;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.sdot{width:6px;height:6px;border-radius:50%;background:#2a2a2a;margin-left:8px;}
+.sdot.g{background:#4ade80;} .sdot.a{background:var(--gold);} .sdot.r{background:#f87171;}
+/* SETUP */
+.banner{background:var(--gold);padding:9px 22px;display:flex;align-items:center;gap:10px;font-size:.6rem;color:var(--ink);flex-wrap:wrap;}
+.banner input{font-family:'DM Mono',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ink);background:transparent;padding:3px 0;outline:none;width:340px;color:var(--ink);}
+.banner button{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:white;border:none;padding:5px 11px;cursor:pointer;}
+/* VIEWS */
+.view{display:none;padding:22px;} .view.on{display:block;}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:18px;}
+.kpi{background:var(--card);border:1px solid var(--ln);padding:16px 18px 12px;}
+.kl{font-size:.48rem;letter-spacing:.16em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
+.kv{font-family:'Bebas Neue',sans-serif;font-size:1.75rem;letter-spacing:.04em;line-height:1;color:var(--ink);}
+.kv.gold{color:var(--gold);} .kv.g{color:var(--gn);} .kv.r{color:var(--cr);} .kv.b{color:var(--bl);}
+.ks{font-size:.5rem;color:var(--m);margin-top:3px;}
+/* GRID */
+.r2{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:18px;}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px;}
+.card{background:var(--card);border:1px solid var(--ln);padding:18px;}
+.ct{font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.ct::after{content:'';flex:1;height:1px;background:var(--ln);}
+/* BARS */
+.bc{display:flex;flex-direction:column;gap:7px;}
+.br{display:flex;align-items:center;gap:6px;}
+.bl{font-size:.52rem;color:var(--ink);width:80px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bt{flex:1;height:13px;background:var(--bg);border-radius:1px;}
+.bf{height:100%;border-radius:1px;transition:width .5s ease;}
+.bf.cr{background:var(--cr);} .bf.go{background:var(--gold);} .bf.gn{background:var(--gn);} .bf.bl{background:var(--bl);}
+.bv{font-size:.52rem;color:var(--m);width:64px;text-align:right;flex-shrink:0;}
+/* PIPELINE */
+.pl{display:flex;flex-direction:column;gap:4px;}
+.pi{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--ln);cursor:pointer;transition:background .15s;font-size:.58rem;}
+.pi:hover{background:var(--crf);}
+.pref{color:var(--cr);width:90px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pbuy{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pdst{color:var(--m);width:75px;flex-shrink:0;font-size:.54rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tag{font-size:.48rem;letter-spacing:.07em;text-transform:uppercase;padding:2px 5px;border-radius:2px;flex-shrink:0;}
+.s-draft{background:#f5f5f5;color:#666;} .s-sent{background:var(--blf);color:var(--bl);}
+.s-partially-paid,.s-deposit-paid{background:var(--gf);color:#7a5200;}
+.s-paid,.s-settled,.s-confirmed{background:var(--gnf);color:var(--gn);font-weight:600;}
+.s-cancelled{background:var(--crf);color:var(--cr);}
+.pamt{color:var(--gold);width:64px;text-align:right;flex-shrink:0;}
+.pbal{color:var(--bl);width:64px;text-align:right;flex-shrink:0;font-size:.52rem;}
+/* TOOLBAR */
+.tb{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.sb{font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);background:white;padding:6px 10px;outline:none;flex:1;min-width:150px;max-width:220px;}
+.sb:focus{border-color:var(--cr);}
+.btn{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;padding:6px 13px;cursor:pointer;border:1px solid var(--cr);transition:all .2s;white-space:nowrap;}
+.btn-s{background:var(--cr);color:white;} .btn-s:hover{background:var(--cr2);}
+.btn-o{background:white;color:var(--cr);} .btn-o:hover{background:var(--crf);}
+.btn-g{background:transparent;border-color:var(--ln);color:var(--m);} .btn-g:hover{border-color:var(--cr);color:var(--cr);}
+.btn-b{background:var(--bl);color:white;border-color:var(--bl);} .btn-b:hover{background:#1540b0;}
+/* TABLE */
+.tw{overflow-x:auto;}
+.tbl{width:100%;border-collapse:collapse;font-size:.58rem;}
+.tbl th{font-size:.48rem;letter-spacing:.11em;text-transform:uppercase;color:var(--m);padding:7px 8px;text-align:left;border-bottom:2px solid var(--cr);background:white;white-space:nowrap;}
+.tbl td{padding:8px 8px;border-bottom:1px solid var(--ln);background:white;vertical-align:middle;}
+.tbl tr:hover td{background:var(--crf);}
+.num{text-align:right;font-variant-numeric:tabular-nums;} .pos{color:var(--gn);} .neg{color:var(--cr);}
+.pill{display:inline-block;padding:2px 5px;border-radius:2px;font-size:.5rem;}
+.phi{background:var(--gnf);color:var(--gn);} .pmi{background:var(--gf);color:#7a5200;} .plo{background:var(--crf);color:var(--cr);}
+.ab{background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--m);font-size:.66rem;transition:color .15s;}
+.ab:hover{color:var(--cr);}
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(15,12,13,.65);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:26px 14px;overflow-y:auto;}
+.ov.on{display:flex;}
+.modal{background:white;width:100%;max-width:840px;border-top:3px solid var(--cr);animation:sd .2s ease;}
+@keyframes sd{from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:translateY(0);}}
+.mh{padding:14px 22px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--ln);}
+.mh h2{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.08em;color:var(--cr);margin-right:auto;}
+.mx{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--m);} .mx:hover{color:var(--cr);}
+.mb{padding:20px 22px;}
+.ms{margin-bottom:18px;}
+.mst{font-size:.52rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--ln);padding-bottom:5px;margin-bottom:11px;}
+.mst.r{border-bottom-color:var(--cr);color:var(--cr);}
+.mst.b{border-bottom-color:var(--bl);color:var(--bl);}
+.mst.go{border-bottom-color:var(--gold);color:var(--gold);}
+.fg{display:grid;gap:11px 14px;} .fg2{grid-template-columns:1fr 1fr;} .fg3{grid-template-columns:1fr 1fr 1fr;} .fg4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.fld{display:flex;flex-direction:column;gap:3px;}
+.fld label{font-size:.48rem;letter-spacing:.11em;text-transform:uppercase;color:var(--m);}
+.fld input,.fld select,.fld textarea{font-family:'DM Mono',monospace;font-size:.68rem;border:none;border-bottom:1px solid var(--ln);padding:4px 0;outline:none;background:transparent;color:var(--ink);transition:border-color .2s;width:100%;}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--cr);}
+.fld select{cursor:pointer;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0l3.5 4 3.5-4z' fill='%23B8283A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 2px center;padding-right:13px;}
+.fld textarea{resize:vertical;min-height:44px;line-height:1.5;}
+/* LI table inside modal */
+.lit{width:100%;border-collapse:collapse;font-size:.6rem;margin-bottom:8px;}
+.lit th{font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);padding:5px 7px;text-align:left;border-bottom:1px solid var(--cr);background:var(--bg);}
+.lit td{padding:5px 7px;border-bottom:1px solid var(--ln);}
+.lit input,.lit select{font-family:'DM Mono',monospace;font-size:.62rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;outline:none;background:transparent;color:var(--ink);width:100%;}
+.lit input:focus,.lit select:focus{border-color:var(--cr);}
+.lit .num{text-align:right;} .litot{font-weight:600;color:var(--cr);}
+/* TOTALS BOX */
+.tbox{background:var(--ink);padding:0;}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;}
+.tgl{padding:14px 18px;border-right:1px solid #222;} .tgr{padding:14px 18px;}
+.crow{display:flex;justify-content:space-between;font-size:.6rem;padding:2px 0;border-bottom:1px solid #1a1a1a;}
+.crow:last-child{border-bottom:none;} .clbl{color:var(--m);} .cval{color:white;font-variant-numeric:tabular-nums;}
+.cval.hi{color:var(--gold);} .cval.g{color:#4ade80;} .cval.r{color:#f87171;} .cval.b{color:#93c5fd;}
+.tline{display:flex;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid var(--cr);}
+.tlbl{font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:.1em;color:white;}
+.tval{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.04em;color:var(--cr);}
+.dstrip{background:#080608;padding:9px 18px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;}
+.dc{padding:0 14px 0 0;} .dl{font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:#444;margin-bottom:2px;}
+.dv{font-family:'Bebas Neue',sans-serif;font-size:.95rem;color:#666;}
+.dv.by{color:#fca5a5;} .dv.ba{color:#fde68a;} .dv.su{color:#93c5fd;} .dv.gp{color:#86efac;}
+/* PRINT */
+.pmodal{background:white;width:100%;max-width:740px;border-top:3px solid var(--cr);animation:sd .2s ease;}
+.idoc,.pdoc{font-family:'DM Mono',monospace;font-size:.68rem;color:#111;background:white;padding:30px 38px;max-width:700px;}
+.ihdr,.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #111;}
+.iwm{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.18em;line-height:1;}
+.iwm span{color:var(--cr);}
+.itag{font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:var(--m);margin-top:1px;}
+.imeta h1{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:.14em;color:var(--cr);margin-bottom:5px;}
+.pmeta h1{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:.14em;color:var(--bl);margin-bottom:5px;}
+.imeta,.pmeta{text-align:right;}
+.img{display:grid;grid-template-columns:auto auto;gap:2px 14px;text-align:right;}
+.iml{font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);}
+.imv{font-size:.62rem;color:#111;}
+.ipar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #ddd;}
+.ipar2{grid-template-columns:1fr 1fr;}
+.ipt{font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
+.ipb{font-size:.62rem;line-height:1.8;color:#111;}
+.isg{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;}
+.isr{display:flex;gap:7px;font-size:.6rem;} .isl{color:var(--m);width:100px;flex-shrink:0;} .isv{color:#111;}
+.iitems table{width:100%;border-collapse:collapse;font-size:.62rem;}
+.iitems th{font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);padding:6px 7px;border-bottom:2px solid #111;text-align:left;background:#fafafa;}
+.iitems td{padding:7px 7px;border-bottom:1px solid #eee;vertical-align:top;} .ir{text-align:right;}
+.ichg{display:flex;justify-content:flex-end;margin-bottom:18px;}
+.ichgb{width:270px;}
+.icr{display:flex;justify-content:space-between;font-size:.62rem;padding:3px 0;border-bottom:1px solid #f0f0f0;}
+.icr:last-child{border-bottom:none;} .icrl{color:#555;} .icrv{color:#111;font-variant-numeric:tabular-nums;}
+.icr.sub{font-weight:600;} .icr.dep .icrl,.icr.dep .icrv{color:var(--gn);}
+.icr.grand{border-top:2px solid #111;border-bottom:none;padding-top:7px;margin-top:3px;}
+.icr.grand .icrl{font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:.1em;}
+.icr.grand .icrv{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--cr);}
+.icr.potot .icrv{color:var(--bl)!important;}
+.iftr{border-top:1px solid #eee;padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:18px;font-size:.58rem;}
+.iftl{font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:4px;}
+.iftb{line-height:1.8;color:#333;} .ifpend{font-style:italic;color:var(--m);}
+.iorg{display:flex;gap:18px;font-size:.58rem;margin-top:9px;padding-top:9px;border-top:1px solid #eee;}
+.ioitem{display:flex;flex-direction:column;gap:1px;}
+.iolab{font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:white;font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.1em;padding:9px 15px;opacity:0;transform:translateY(5px);transition:all .25s;pointer-events:none;z-index:999;border-left:3px solid var(--cr);}
+.toast.on{opacity:1;transform:translateY(0);}
+.spin{display:inline-block;width:9px;height:9px;border:2px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:3px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.empty{text-align:center;padding:40px 20px;color:var(--m);}
+.empty-i{font-size:1.8rem;margin-bottom:7px;opacity:.3;} .empty p{font-size:.58rem;line-height:1.9;}
+@media print{.nav,.banner,.tb,.ov,.toast{display:none!important;} .idoc,.pdoc{padding:0;} body{background:white;}}
+@media(max-width:680px){.kpis{grid-template-columns:1fr 1fr;} .r2,.r3{grid-template-columns:1fr;} .fg3,.fg4{grid-template-columns:1fr 1fr;} .tgrid,.dstrip{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<div id="banner" class="banner">
+  <span>&#9889; Paste your Apps Script URL to enable Sheets sync:</span>
+  <input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec">
+  <button onclick="setUrl()">Connect</button>
+  <button onclick="G('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button>
+</div>
+
+<nav class="nav">
+  <div class="logo"><span>S</span>TACKD</div>
+  <div class="tabs">
+    <button class="tab on" data-v="dash" onclick="show('dash',this)">Dashboard</button>
+    <button class="tab" data-v="sup" onclick="show('sup',this)">Suppliers</button>
+    <button class="tab" data-v="li" onclick="show('li',this)">Line Items</button>
+    <button class="tab" data-v="inv" onclick="show('inv',this)">Invoices</button>
+    <button class="tab" data-v="po" onclick="show('po',this)">Purchase Orders</button>
+    <button class="tab" data-v="cfg" onclick="show('cfg',this)">Settings</button>
+  </div>
+  <button class="sync-btn" id="sbtn" onclick="syncAll()">&#8635; Sync</button>
+  <div class="sdot" id="sdot"></div>
+</nav>
+
+<!-- DASHBOARD -->
+<div class="view on" id="v-dash">
+  <div class="kpis" id="kpis"></div>
+  <div class="r2">
+    <div class="card"><div class="ct">Invoice Pipeline</div><div class="pl" id="pipeline"></div></div>
+    <div class="card"><div class="ct">Net Profit by Invoice</div><div class="bc" id="np-chart"></div></div>
+  </div>
+  <div class="r3">
+    <div class="card"><div class="ct">Revenue by Destination</div><div class="bc" id="dest-chart"></div></div>
+    <div class="card"><div class="ct">Margin Distribution</div><div class="bc" id="mgn-chart"></div></div>
+    <div class="card"><div class="ct">PO Commitments</div><div class="bc" id="po-chart"></div></div>
+  </div>
+</div>
+
+<!-- SUPPLIERS -->
+<div class="view" id="v-sup">
+  <div class="tb">
+    <input class="sb" type="text" placeholder="Search suppliers..." id="sup-q" oninput="rSup()">
+    <button class="btn btn-s" onclick="openSup()">+ New Supplier</button>
+  </div>
+  <div class="tw"><table class="tbl"><thead><tr><th>Name</th><th>Country</th><th>Contact</th><th>Email</th><th>Phone</th><th>Currency</th><th>Notes</th><th></th></tr></thead><tbody id="sup-tb"></tbody></table></div>
+  <div id="sup-em" class="empty" style="display:none;"><div class="empty-i">&#127981;</div><p>No suppliers yet.</p></div>
+</div>
+
+<!-- LINE ITEMS -->
+<div class="view" id="v-li">
+  <div class="tb">
+    <input class="sb" type="text" placeholder="Search items..." id="li-q" oninput="rLI()">
+    <select class="sb" style="max-width:170px;" id="li-sf" onchange="rLI()"><option value="">All suppliers</option></select>
+    <button class="btn btn-s" onclick="openLI()">+ New Line Item</button>
+  </div>
+  <div class="tw"><table class="tbl"><thead><tr><th>SKU</th><th>Description</th><th>Specs</th><th>Supplier</th><th class="num">Unit Cost</th><th class="num">Unit Price</th><th>UOM</th><th class="num">Margin %</th><th>Cur.</th><th></th></tr></thead><tbody id="li-tb"></tbody></table></div>
+  <div id="li-em" class="empty" style="display:none;"><div class="empty-i">&#128230;</div><p>No line items yet.</p></div>
+</div>
+
+<!-- INVOICES (placeholder - populated in part 2) -->
+<div class="view" id="v-inv">
+  <div class="tb">
+    <input class="sb" type="text" placeholder="Search invoices..." id="inv-q" oninput="rInv()">
+    <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
+    <button class="btn btn-s" onclick="openInv()">+ New Invoice</button>
+    <button class="btn btn-g" onclick="expInvCSV()">&#8595; Export CSV</button>
+  </div>
+  <div class="tw"><table class="tbl"><thead><tr><th>Invoice #</th><th>Buyer</th><th>Destination</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">COGS</th><th class="num">Gross Profit</th><th class="num">Net Profit</th><th class="num">Margin</th><th class="num">Tax%</th><th class="num">Buyer Dep.</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="inv-tb"></tbody></table></div>
+  <div id="inv-em" class="empty" style="display:none;"><div class="empty-i">&#129534;</div><p>No invoices yet. Create one above.</p></div>
+</div>
+
+<!-- POs (placeholder - populated in part 3) -->
+<div class="view" id="v-po">
+  <div class="tb">
+    <input class="sb" type="text" placeholder="Search POs..." id="po-q" oninput="rPO()">
+    <select class="sb" style="max-width:130px;" id="po-sf" onchange="rPO()"><option value="">All statuses</option><option>Draft</option><option>Sent</option><option>Deposit Paid</option><option>Settled</option><option>Cancelled</option></select>
+    <button class="btn btn-s" onclick="openPO()">+ New PO</button>
+  </div>
+  <div class="tw"><table class="tbl"><thead><tr><th>PO #</th><th>Supplier</th><th>Linked Invoice</th><th>Date</th><th>Status</th><th class="num">Total COGS</th><th class="num">Dep. Paid</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="po-tb"></tbody></table></div>
+  <div id="po-em" class="empty" style="display:none;"><div class="empty-i">&#128203;</div><p>No purchase orders yet.</p></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="view" id="v-cfg">
+  <div style="max-width:520px;display:flex;flex-direction:column;gap:12px;">
+    <div class="card">
+      <div class="ct">Company (Stackd)</div>
+      <div class="fg fg2" style="margin-bottom:12px;">
+        <div class="fld"><label>Company Name</label><input type="text" id="c-name" placeholder="Stackd"></div>
+        <div class="fld"><label>Tagline</label><input type="text" id="c-tag" placeholder="Source &middot; Supply &middot; Ship"></div>
+        <div class="fld"><label>Address</label><input type="text" id="c-addr"></div>
+        <div class="fld"><label>Email</label><input type="email" id="c-email"></div>
+        <div class="fld"><label>Phone / WhatsApp</label><input type="text" id="c-phone"></div>
+        <div class="fld"><label>Website</label><input type="text" id="c-web"></div>
+      </div>
+      <div class="fld" style="margin-bottom:12px;">
+        <label>Bank / Payment Details <span style="color:var(--m);font-size:.46rem;">(leave blank until Stackd account open)</span></label>
+        <textarea id="c-bank" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:70px;margin-top:3px;" placeholder="Account Name: Stackd&#10;Sort Code: xx-xx-xx&#10;Account No: xxxxxxxx&#10;IBAN: GB..."></textarea>
+      </div>
+      <div class="fld" style="margin-bottom:12px;">
+        <label>Default Invoice Terms</label>
+        <textarea id="c-terms" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:52px;margin-top:3px;"></textarea>
+      </div>
+      <button class="btn btn-s" onclick="saveCfg()">Save Settings</button>
+    </div>
+    <div class="card">
+      <div class="ct">Google Sheets</div>
+      <div class="fld" style="margin-bottom:10px;"><label>Apps Script Web App URL</label><input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <button class="btn btn-s" onclick="saveCfgUrl()">Save &amp; Connect</button>
+        <button class="btn btn-o" onclick="testConn()">Test</button>
+        <button class="btn btn-g" onclick="pullAll()">&#8595; Pull</button>
+        <button class="btn btn-g" onclick="pushAll()">&#8593; Push All</button>
+      </div>
+      <p id="conn-st" style="font-size:.56rem;color:var(--m);"></p>
+    </div>
+    <div class="card">
+      <div class="ct">Sync Options</div>
+      <div style="display:flex;flex-direction:column;gap:9px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.6rem;cursor:pointer;"><input type="checkbox" id="auto-s" onchange="saveSS()"> Auto-sync on every save</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.6rem;cursor:pointer;"><input type="checkbox" id="pol" onchange="saveSS()"> Pull from Sheets on load</label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Data</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-g" onclick="expInvCSV()">&#8595; Export invoices CSV</button>
+        <button class="btn btn-g" style="border-color:#c00;color:#c00;" onclick="clearData()">Clear local data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUPPLIER MODAL -->
+<div class="ov" id="ov-sup" onclick="if(event.target===this)close('ov-sup')">
+  <div class="modal"><div class="mh"><h2 id="sup-mt">New Supplier</h2><button class="mx" onclick="close('ov-sup')">&#215;</button></div>
+  <div class="mb"><div class="fg fg3">
+    <div class="fld"><label>Name</label><input type="text" id="sf-n"></div>
+    <div class="fld"><label>Country</label><input type="text" id="sf-c" placeholder="China"></div>
+    <div class="fld"><label>Currency</label><select id="sf-cur"><option>USD</option><option>CNY</option><option>GBP</option><option>EUR</option></select></div>
+    <div class="fld"><label>Contact Person</label><input type="text" id="sf-ct"></div>
+    <div class="fld"><label>Email</label><input type="email" id="sf-e"></div>
+    <div class="fld"><label>Phone / WeChat</label><input type="text" id="sf-p"></div>
+    <div class="fld" style="grid-column:1/-1"><label>Notes</label><textarea id="sf-nt" placeholder="Certs, lead times, MOQs, red flags..."></textarea></div>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+    <button class="btn btn-g" onclick="close('ov-sup')">Cancel</button>
+    <button class="btn btn-s" onclick="saveSup()">Save Supplier</button>
+  </div></div></div>
+</div>
+
+<!-- LINE ITEM MODAL -->
+<div class="ov" id="ov-li" onclick="if(event.target===this)close('ov-li')">
+  <div class="modal"><div class="mh"><h2 id="li-mt">New Line Item</h2><button class="mx" onclick="close('ov-li')">&#215;</button></div>
+  <div class="mb">
+    <div class="fg fg3" style="margin-bottom:14px;">
+      <div class="fld"><label>SKU / Item #</label><input type="text" id="lf-s" placeholder="ITEM-001"></div>
+      <div class="fld"><label>Supplier</label><select id="lf-sup"><option value="">Select...</option></select></div>
+      <div class="fld"><label>Unit of Measure</label><input type="text" id="lf-u" placeholder="pcs / kg / m²"></div>
+      <div class="fld" style="grid-column:1/-1"><label>Description</label><input type="text" id="lf-d"></div>
+      <div class="fld" style="grid-column:1/-1"><label>Specifications</label><input type="text" id="lf-sp" placeholder="Size, grade, model, colour, voltage..."></div>
+      <div class="fld"><label>Unit Cost (you pay supplier)</label><input type="number" id="lf-c" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
+      <div class="fld"><label>Unit Price (you charge buyer)</label><input type="number" id="lf-p" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
+      <div class="fld"><label>Currency</label><select id="lf-cur"><option>USD</option><option>GBP</option><option>EUR</option><option>BBD</option><option>NGN</option><option>GHS</option></select></div>
+    </div>
+    <div style="background:var(--ink);padding:10px 14px;display:flex;gap:20px;margin-bottom:12px;">
+      <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Unit Margin</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gold);" id="lmv">&#8212;</div></div>
+      <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Margin %</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;" id="lmp">&#8212;</div></div>
+    </div>
+    <div class="fld"><label>Notes</label><textarea id="lf-nt" placeholder="HS code, certifications, packaging notes..."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="btn btn-g" onclick="close('ov-li')">Cancel</button>
+      <button class="btn btn-s" onclick="saveLI()">Save Line Item</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- INVOICE MODAL (full) -->
+<div class="ov" id="ov-inv" onclick="if(event.target===this)close('ov-inv')">
+  <div class="modal" style="max-width:900px;">
+    <div class="mh"><h2 id="inv-mt">New Invoice</h2>
+      <select id="inv-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
+      <button class="mx" onclick="close('ov-inv')">&#215;</button></div>
+    <div class="mb">
+      <div class="ms"><div class="mst">Invoice Details</div>
+        <div class="fg fg4">
+          <div class="fld"><label>Invoice #</label><input type="text" id="if-n" placeholder="INV-2025-001"></div>
+          <div class="fld"><label>Date</label><input type="date" id="if-dt"></div>
+          <div class="fld"><label>Expiry / Due Date</label><input type="date" id="if-ex"></div>
+          <div class="fld"><label>Customer ID</label><input type="text" id="if-cid" placeholder="CUS-001"></div>
+          <div class="fld" style="grid-column:span 2"><label>Buyer / Company</label><input type="text" id="if-b"></div>
+          <div class="fld" style="grid-column:span 2"><label>Buyer Address</label><input type="text" id="if-ba"></div>
+          <div class="fld" style="grid-column:span 2"><label>Ship To (if different)</label><input type="text" id="if-st"></div>
+          <div class="fld"><label>Destination Country</label><input type="text" id="if-dst" placeholder="Barbados"></div>
+        </div>
+      </div>
+      <div class="ms"><div class="mst">Shipping Details</div>
+        <div class="fg fg4">
+          <div class="fld"><label>Freight Type</label><input type="text" id="if-ft" placeholder="Sea / Air / Ground"></div>
+          <div class="fld"><label>Est. Ship Date</label><input type="date" id="if-sd"></div>
+          <div class="fld"><label>Est. Gross Weight</label><input type="text" id="if-wt" placeholder="2200 KGS"></div>
+          <div class="fld"><label>Est. Cubic Weight</label><input type="text" id="if-cbm" placeholder="18 CBM"></div>
+          <div class="fld"><label>Total Packages</label><input type="text" id="if-pk" placeholder="7"></div>
+          <div class="fld"><label>Port of Embarkation</label><input type="text" id="if-pol" placeholder="Qingdao"></div>
+          <div class="fld"><label>Port of Discharge</label><input type="text" id="if-pod" placeholder="Bridgetown"></div>
+          <div class="fld"><label>Country of Origin</label><input type="text" id="if-coo" placeholder="China"></div>
+        </div>
+      </div>
+      <div class="ms"><div class="mst r">Line Items</div>
+        <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description</th><th style="width:65px">UOM</th><th style="width:52px">Qty</th><th style="width:105px">Unit Price</th><th style="width:85px" class="num">Total</th><th style="width:22px"></th></tr></thead><tbody id="il-tb"></tbody></table>
+        <div style="display:flex;gap:7px;margin-top:5px;">
+          <button class="btn btn-g" style="flex:1;" onclick="addILI()">+ Add Line</button>
+          <button class="btn btn-o" onclick="openPicker()">Import from Library</button>
+        </div>
+      </div>
+      <div class="ms"><div class="mst go">Charges, Tax &amp; Deposits</div>
+        <div class="fg fg4">
+          <div class="fld"><label>Currency</label><select id="if-cur" onchange="calcInv()"><option>USD</option><option>GBP</option><option>EUR</option><option>BBD</option><option>NGN</option><option>GHS</option></select></div>
+          <div class="fld"><label>Tax Rate</label>
+            <select id="if-tx" onchange="txChg()">
+              <option value="0">0% &mdash; Zero rated</option><option value="0.05">5%</option>
+              <option value="0.075">7.5%</option><option value="0.10">10%</option>
+              <option value="0.15">15%</option><option value="0.175">17.5%</option>
+              <option value="0.20">20% &mdash; UK VAT</option><option value="custom">Custom...</option>
+            </select>
+          </div>
+          <div class="fld" id="ctx-wrap" style="display:none;"><label>Custom Rate (%)</label><input type="number" id="if-txc" placeholder="0.0" step="0.1" oninput="calcInv()"></div>
+          <div class="fld"><label>Local Freight</label><input type="number" id="if-lf" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
+          <div class="fld"><label>Insurance</label><input type="number" id="if-ins" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
+          <div class="fld"><label>Legal / Consular</label><input type="number" id="if-leg" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
+          <div class="fld"><label>Inspection / Cert.</label><input type="number" id="if-isp" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
+          <div class="fld"><label>Other Charges</label><input type="number" id="if-oth" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
+          <div class="fld"><label>Buyer Deposit Received</label><input type="number" id="if-dep" placeholder="0.00" step="0.01" oninput="calcInv()" style="border-bottom-color:var(--gold);background:rgba(201,150,58,.05);"></div>
+        </div>
+        <div class="fld" style="margin-top:10px;"><label>Terms of Sale / Comments</label><textarea id="if-terms"></textarea></div>
+      </div>
+      <div class="ms"><div class="mst">Live P&amp;L &amp; Totals</div>
+        <div class="tbox">
+          <div class="tgrid"><div class="tgl" id="chg-bd"></div><div class="tgr" id="pnl-bd"></div></div>
+          <div class="dstrip" id="d-strip"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="close('ov-inv')">Cancel</button>
+        <button class="btn btn-o" onclick="prevInv()">&#128065; Preview</button>
+        <button class="btn btn-s" onclick="saveInv()">Save Invoice</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PO MODAL -->
+<div class="ov" id="ov-po" onclick="if(event.target===this)close('ov-po')">
+  <div class="modal" style="max-width:840px;">
+    <div class="mh"><h2 id="po-mt">Purchase Order</h2>
+      <select id="po-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Sent</option><option>Deposit Paid</option><option>Settled</option><option>Cancelled</option></select>
+      <button class="mx" onclick="close('ov-po')">&#215;</button></div>
+    <div class="mb">
+      <div class="fg fg3" style="margin-bottom:14px;">
+        <div class="fld"><label>PO Number</label><input type="text" id="pf-n" placeholder="PO-2025-001"></div>
+        <div class="fld"><label>Supplier</label><select id="pf-sup"><option value="">Select...</option></select></div>
+        <div class="fld"><label>Date</label><input type="date" id="pf-dt"></div>
+        <div class="fld"><label>Linked Invoice # (auto)</label><input type="text" id="pf-inv" readonly style="color:var(--m);"></div>
+        <div class="fld"><label>Required Delivery</label><input type="date" id="pf-del"></div>
+        <div class="fld"><label>Currency</label><select id="pf-cur"><option>USD</option><option>CNY</option><option>GBP</option><option>EUR</option></select></div>
+      </div>
+      <div class="ms"><div class="mst b">Line Items (this supplier only)</div>
+        <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description / SKU</th><th style="width:65px">UOM</th><th style="width:52px">Qty</th><th style="width:105px">Unit Cost</th><th style="width:85px" class="num">Total</th><th style="width:22px"></th></tr></thead><tbody id="pl-tb"></tbody></table>
+        <button class="btn btn-g" style="width:100%;margin-top:5px;" onclick="addPLI()">+ Add Line Item</button>
+      </div>
+      <div class="fg fg3" style="margin-top:12px;">
+        <div class="fld"><label>Supplier Deposit Paid</label><input type="number" id="pf-dep" placeholder="0.00" step="0.01" oninput="calcPO()" style="border-bottom-color:var(--bl);background:rgba(26,79,219,.04);"></div>
+        <div class="fld"><label>Other Charges</label><input type="number" id="pf-oth" placeholder="0.00" step="0.01" oninput="calcPO()"></div>
+      </div>
+      <div style="background:var(--ink);padding:10px 18px;display:flex;gap:22px;margin-top:10px;" id="po-tots"></div>
+      <div class="fld" style="margin-top:10px;"><label>Special Instructions</label><textarea id="pf-nt" placeholder="Packaging requirements, delivery instructions, certifications required..."></textarea></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="close('ov-po')">Cancel</button>
+        <button class="btn btn-b" onclick="prevPO()">&#128065; Preview PO</button>
+        <button class="btn btn-s" onclick="savePO()">Save PO</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PICKER -->
+<div class="ov" id="ov-pick" onclick="if(event.target===this)close('ov-pick')">
+  <div class="modal" style="max-width:620px;"><div class="mh"><h2>Import Line Items</h2><button class="mx" onclick="close('ov-pick')">&#215;</button></div>
+  <div class="mb"><p style="font-size:.6rem;color:var(--m);margin-bottom:10px;">Select items to add. Quantities editable after import.</p>
+  <div id="pick-list"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn btn-g" onclick="close('ov-pick')">Cancel</button><button class="btn btn-s" onclick="doPick()">Add Selected</button></div>
+  </div></div>
+</div>
+
+<!-- PRINT PREVIEW -->
+<div class="ov" id="ov-print" onclick="if(event.target===this)close('ov-print')" style="background:rgba(0,0,0,.8);">
+  <div class="pmodal">
+    <div class="mh" style="background:var(--bg);">
+      <h2 id="print-ttl" style="font-size:.9rem;color:var(--ink);">Preview</h2>
+      <button class="btn btn-s" onclick="window.print()" style="margin-right:7px;">&#128438; Print / Save PDF</button>
+      <button class="mx" onclick="close('ov-print')">&#215;</button>
+    </div>
+    <div id="print-body" style="overflow-y:auto;max-height:80vh;"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+const K={s:'st_s',l:'st_l',i:'st_i',p:'st_p',ss:'st_ss',as:'st_as',au:'st_au'};
+function ld(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+let DB={sup:ld(K.s)||[],li:ld(K.l)||[],inv:ld(K.i)||[],po:ld(K.p)||[]};
+let SS=ld(K.ss)||{url:'',auto:true,pol:true};
+let AS=ld(K.as)||{name:'Stackd',tag:'Source · Supply · Ship',addr:'Brighton, UK',email:'cachafpm@gmail.com',phone:'+44 7930 438631',web:'',bank:'',terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.'};
+let EI={s:null,l:null,i:null,p:null};
+let cIL=[],cPL=[];  // current invoice/po line items in modal
+
+const G=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const td=()=>new Date().toISOString().slice(0,10);
+const sv=(k,d)=>localStorage.setItem(k,JSON.stringify(d));
+const saveAll=()=>{sv(K.s,DB.sup);sv(K.l,DB.li);sv(K.i,DB.inv);sv(K.p,DB.po);};
+const fmt=(n,c='USD')=>{if(n===null||isNaN(+n))return'—';try{return new Intl.NumberFormat('en-US',{style:'currency',currency:c||'USD',maximumFractionDigits:0}).format(+n);}catch(e){return'$'+(+n).toFixed(0);}};
+const fn=(n,d=2)=>isNaN(+n)?'0.00':(+n).toFixed(d);
+const fp=n=>(n===null||isNaN(+n))?'—':(+n).toFixed(1)+'%';
+const gsn=id=>{const s=DB.sup.find(x=>x.id===id);return s?s.name:id||'?';};
+
+function audit(act,ent,id,d){const log=ld(K.au)||[];log.push({ts:new Date().toISOString(),act,ent,id,snap:JSON.stringify(d).slice(0,200)});if(log.length>500)log.splice(0,500);sv(K.au,log);}
+function toast(m,d=2600){const t=G('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),d);}
+function setSS(s){const b=G('sbtn'),d=G('sdot');b.className='sync-btn'+(s==='loading'?' loading':s==='ok'?' ok':s==='err'?' err':'');d.className='sdot'+(s==='ok'?' g':s==='loading'?' a':s==='err'?' r':'');b.innerHTML=s==='loading'?'<span class="spin"></span>Syncing…':s==='ok'?'✓ Synced':s==='err'?'⚠ Error':'↻ Sync';}
+
+// ── SHEETS ──────────────────────────────────────────────
+async function sp(payload){if(!SS.url)throw new Error('No URL');const r=await fetch(SS.url,{method:'POST',body:JSON.stringify(payload)});return JSON.parse(await r.text());}
+async function sg(e){const r=await fetch(SS.url+'?action=get_all&entity='+e);return JSON.parse(await r.text());}
+async function sEnt(e,rec){if(!SS.url||!SS.auto)return;try{setSS('loading');await sp({action:'upsert',entity:e,record:rec});setSS('ok');setTimeout(()=>setSS('idle'),3000);}catch(e){setSS('err');}}
+async function dEnt(e,id){if(!SS.url)return;try{await sp({action:'delete',entity:e,id});}catch(e){}}
+async function syncAll(){if(!SS.url){toast('Add Apps Script URL in Settings');show('cfg',document.querySelectorAll('.tab')[5]);return;}setSS('loading');try{for(const e of['sup','li','inv','po'])await sp({action:'bulk_upsert',entity:e,records:DB[e]});setSS('ok');toast('Full sync ✓');setTimeout(()=>setSS('idle'),4000);}catch(e){setSS('err');toast('Sync failed: '+e.message);}}
+async function pullAll(){if(!SS.url){toast('No URL');return;}setSS('loading');try{for(const ent of['sup','li','inv','po']){const d=await sg(ent);if(d.status==='ok'&&d.records?.length){const ids=new Set(d.records.map(r=>r.id));DB[ent]=[...d.records,...DB[ent].filter(r=>!ids.has(r.id))];}}saveAll();renderAll();setSS('ok');toast('Pulled ✓');setTimeout(()=>setSS('idle'),3000);}catch(e){setSS('err');toast('Pull failed: '+e.message);}}
+async function pushAll(){setSS('loading');try{for(const e of['sup','li','inv','po'])await sp({action:'bulk_upsert',entity:e,records:DB[e]});setSS('ok');toast('Pushed ✓');setTimeout(()=>setSS('idle'),3000);}catch(e){setSS('err');toast('Failed: '+e.message);}}
+async function testConn(){const url=G('cfg-url').value.trim();if(!url){G('conn-st').textContent='Enter URL first';return;}G('conn-st').textContent='Testing…';try{const d=JSON.parse(await(await fetch(url+'?action=ping')).text());G('conn-st').textContent='✓ Connected';G('conn-st').style.color='var(--gn)';}catch(e){G('conn-st').textContent='✕ '+e.message;G('conn-st').style.color='var(--cr)';}}
+function setUrl(){const url=G('url-in').value.trim();if(!url.startsWith('https://script.google.com')){toast('Not a valid URL');return;}SS.url=url;sv(K.ss,SS);G('banner').style.display='none';G('cfg-url').value=url;toast('Connected ✓');syncAll();}
+function saveCfgUrl(){const url=G('cfg-url').value.trim();if(!url)return;SS.url=url;sv(K.ss,SS);G('banner').style.display='none';toast('Saved');}
+function saveSS(){SS.auto=G('auto-s').checked;SS.pol=G('pol').checked;sv(K.ss,SS);}
+
+// ── VIEWS ──────────────────────────────────────────────
+function show(v,tab){document.querySelectorAll('.view').forEach(e=>e.classList.remove('on'));document.querySelectorAll('.tab').forEach(e=>e.classList.remove('on'));G('v-'+v).classList.add('on');if(tab)tab.classList.add('on');else document.querySelector('[data-v="'+v+'"]')?.classList.add('on');({dash:rDash,sup:rSup,li:rLI,inv:rInv,po:rPO,cfg:rCfg})[v]?.();}
+function renderAll(){rDash();rSup();rLI();rInv();rPO();}
+function close(id){G(id).classList.remove('on');}
+
+// ── INVOICE CALC ────────────────────────────────────────
+function cInv(inv){
+  const liT=(inv.lineItems||[]).reduce((s,li)=>s+(+li.qty||0)*(+li.up||0),0);
+  const tx=+inv.taxRate||0,tax=liT*tx;
+  const lf=+inv.lf||0,ins=+inv.ins||0,leg=+inv.leg||0,isp=+inv.isp||0,oth=+inv.oth||0;
+  const chgs=lf+ins+leg+isp+oth,grand=liT+tax+chgs;
+  const dep=+inv.dep||0,bal=grand-dep;
+  const cogs=(inv.lineItems||[]).reduce((s,li)=>{const r=DB.li.find(x=>x.id===li.lid);return s+(r?(+r.cost||0)*(+li.qty||0):0);},0);
+  const gp=liT-cogs,np=grand-(cogs+chgs),mgn=grand>0?(np/grand)*100:null;
+  return{liT,tax,taxRate:tx,chgs,grand,dep,bal,cogs,gp,np,mgn};
+}
+
+// ── DASHBOARD ───────────────────────────────────────────
+function rDash(){
+  const ai=DB.inv.filter(i=>i.status!=='Cancelled');
+  const tR=ai.reduce((s,i)=>s+cInv(i).grand,0),tNP=ai.reduce((s,i)=>s+cInv(i).np,0);
+  const tOut=ai.reduce((s,i)=>s+Math.max(0,cInv(i).bal),0);
+  const tPO=DB.po.filter(p=>p.status!=='Cancelled'&&p.status!=='Settled').reduce((s,p)=>{const t=(p.lineItems||[]).reduce((a,l)=>a+(+l.qty||0)*(+l.cost||0),0);return s+t-(+p.dep||0);},0);
+  const mg=ai.map(i=>cInv(i).mgn).filter(m=>m!==null);
+  const aM=mg.length?mg.reduce((a,b)=>a+b,0)/mg.length:0;
+  G('kpis').innerHTML=`<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">${fmt(tR)}</div><div class="ks">${ai.length} active</div></div><div class="kpi"><div class="kl">Net Profit</div><div class="kv ${tNP>=0?'g':'r'}">${fmt(tNP)}</div><div class="ks">After all costs</div></div><div class="kpi"><div class="kl">Avg Margin</div><div class="kv ${aM>=20?'g':aM>=10?'gold':'r'}">${fp(aM)}</div><div class="ks">${mg.length} invoices</div></div><div class="kpi"><div class="kl">Outstanding from Buyers</div><div class="kv b">${fmt(tOut)}</div><div class="ks">Balance due</div></div><div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">${fmt(tPO)}</div><div class="ks">To suppliers</div></div>`;
+  const pl=G('pipeline');
+  pl.innerHTML=DB.inv.length?DB.inv.slice().reverse().slice(0,10).map(inv=>{const{np,bal}=cInv(inv);const sc=(inv.status||'draft').toLowerCase().replace(/\s+/g,'-');return`<div class="pi" onclick="editInv('${inv.id}')"><span class="pref">${inv.num||'—'}</span><span class="pbuy">${inv.buyer||'—'}</span><span class="pdst">${inv.dst||''}</span><span class="tag s-${sc}">${inv.status||'Draft'}</span><span class="pamt">${fmt(np,inv.cur||'USD')}</span><span class="pbal">${bal>0?fmt(bal,inv.cur||'USD'):''}</span></div>`;}).join(''):'<div class="empty"><div class="empty-i">&#128196;</div><p>No invoices yet.</p></div>';
+  const mxN=Math.max(...ai.map(i=>Math.abs(cInv(i).np)),1);
+  G('np-chart').innerHTML=ai.length?ai.slice(-7).map(i=>{const{np}=cInv(i);return`<div class="br"><div class="bl">${i.num||i.buyer||'—'}</div><div class="bt"><div class="bf ${np>=0?'go':'cr'}" style="width:${(Math.abs(np)/mxN)*100}%"></div></div><div class="bv">${fmt(np,i.cur||'USD')}</div></div>`;}).join(''):'<p style="font-size:.56rem;color:var(--m)">No data</p>';
+  const dm={};ai.forEach(i=>{const d=i.dst||'Unknown';dm[d]=(dm[d]||0)+cInv(i).grand;});const mxD=Math.max(...Object.values(dm),1);
+  G('dest-chart').innerHTML=Object.entries(dm).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([d,v])=>`<div class="br"><div class="bl">${d}</div><div class="bt"><div class="bf cr" style="width:${(v/mxD)*100}%"></div></div><div class="bv">${fmt(v)}</div></div>`).join('')||'<p style="font-size:.56rem;color:var(--m)">No data</p>';
+  const bd={'<10%':0,'10–20%':0,'20–30%':0,'>30%':0};ai.forEach(i=>{const m=cInv(i).mgn||0;if(m<10)bd['<10%']++;else if(m<20)bd['10–20%']++;else if(m<30)bd['20–30%']++;else bd['>30%']++;});const mxB=Math.max(...Object.values(bd),1);
+  G('mgn-chart').innerHTML=Object.entries(bd).map(([b,v])=>`<div class="br"><div class="bl">${b}</div><div class="bt"><div class="bf go" style="width:${(v/mxB)*100}%"></div></div><div class="bv">${v}</div></div>`).join('');
+  const apo=DB.po.filter(p=>p.status!=='Cancelled'&&p.status!=='Settled');const mxP=Math.max(...apo.map(p=>(p.lineItems||[]).reduce((s,l)=>s+(+l.qty||0)*(+l.cost||0),0)),1);
+  G('po-chart').innerHTML=apo.length?apo.slice(-6).map(p=>{const t=(p.lineItems||[]).reduce((s,l)=>s+(+l.qty||0)*(+l.cost||0),0);return`<div class="br"><div class="bl">${p.num||gsn(p.supId)||'—'}</div><div class="bt"><div class="bf bl" style="width:${(t/mxP)*100}%"></div></div><div class="bv">${fmt(t-(+p.dep||0),p.cur||'USD')}</div></div>`;}).join(''):'<p style="font-size:.56rem;color:var(--m)">No active POs</p>';
+}
+
+// ── SUPPLIERS ───────────────────────────────────────────
+function rSup(){
+  const q=(G('sup-q').value||'').toLowerCase();
+  const f=DB.sup.filter(s=>!q||(s.name||'').toLowerCase().includes(q)||(s.country||'').toLowerCase().includes(q));
+  G('sup-em').style.display=f.length?'none':'block';
+  G('sup-tb').innerHTML=f.map(s=>`<tr><td style="font-weight:500;color:var(--cr)">${s.name||'—'}</td><td>${s.country||'—'}</td><td>${s.ct||'—'}</td><td>${s.email||'—'}</td><td>${s.phone||'—'}</td><td>${s.cur||'—'}</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.notes||''}</td><td><button class="ab" onclick="editSup('${s.id}')">&#9998;</button><button class="ab" onclick="delSup('${s.id}')">&#10005;</button></td></tr>`).join('');
+  const opts=DB.sup.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  ['lf-sup','pf-sup'].forEach(id=>{const el=G(id);if(el)el.innerHTML='<option value="">Select...</option>'+opts;});
+  G('li-sf').innerHTML='<option value="">All suppliers</option>'+opts;
+}
+function openSup(){EI.s=null;G('sup-mt').textContent='New Supplier';['sf-n','sf-c','sf-ct','sf-e','sf-p','sf-nt'].forEach(f=>{const e=G(f);if(e)e.value='';});G('sf-cur').value='USD';G('ov-sup').classList.add('on');setTimeout(()=>G('sf-n').focus(),50);}
+function editSup(id){const s=DB.sup.find(x=>x.id===id);if(!s)return;EI.s=id;G('sup-mt').textContent='Edit Supplier';G('sf-n').value=s.name||'';G('sf-c').value=s.country||'';G('sf-ct').value=s.ct||'';G('sf-e').value=s.email||'';G('sf-p').value=s.phone||'';G('sf-nt').value=s.notes||'';G('sf-cur').value=s.cur||'USD';G('ov-sup').classList.add('on');}
+async function saveSup(){const s={id:EI.s||uid(),name:G('sf-n').value.trim(),country:G('sf-c').value.trim(),ct:G('sf-ct').value.trim(),email:G('sf-e').value.trim(),phone:G('sf-p').value.trim(),cur:G('sf-cur').value,notes:G('sf-nt').value.trim()};if(EI.s){const i=DB.sup.findIndex(x=>x.id===EI.s);if(i>-1)DB.sup[i]=s;}else DB.sup.push(s);sv(K.s,DB.sup);close('ov-sup');rSup();audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s);toast('Supplier saved');await sEnt('sup',s);}
+async function delSup(id){if(!confirm('Delete?'))return;DB.sup=DB.sup.filter(s=>s.id!==id);sv(K.s,DB.sup);rSup();toast('Deleted');await dEnt('sup',id);}
+
+// ── LINE ITEMS ──────────────────────────────────────────
+function rLI(){
+  const q=(G('li-q').value||'').toLowerCase(),sf=G('li-sf').value;
+  const f=DB.li.filter(l=>(!q||(l.desc||'').toLowerCase().includes(q)||(l.sku||'').toLowerCase().includes(q))&&(!sf||l.supId===sf));
+  G('li-em').style.display=f.length?'none':'block';
+  G('li-tb').innerHTML=f.map(li=>{const m=+li.price>0?(((+li.price||0)-(+li.cost||0))/(+li.price||1))*100:null;const mc=m===null?'':m>=20?'phi':m>=10?'pmi':'plo';return`<tr><td style="color:var(--m);font-size:.54rem;">${li.sku||'—'}</td><td style="font-weight:500;">${li.desc||'—'}</td><td style="color:var(--m);font-size:.56rem;">${li.specs||'—'}</td><td>${gsn(li.supId)}</td><td class="num">${fmt(li.cost,li.cur||'USD')}</td><td class="num">${fmt(li.price,li.cur||'USD')}</td><td>${li.uom||'—'}</td><td class="num"><span class="pill ${mc}">${fp(m)}</span></td><td>${li.cur||'—'}</td><td><button class="ab" onclick="editLI('${li.id}')">&#9998;</button><button class="ab" onclick="delLI('${li.id}')">&#10005;</button></td></tr>`;}).join('');
+}
+function liMgn(){const c=+G('lf-c').value||0,p=+G('lf-p').value||0,m=p>0?((p-c)/p)*100:null,cur=G('lf-cur').value||'USD';G('lmv').textContent=p?fmt(p-c,cur):'—';G('lmp').textContent=m!==null?fp(m):'—';G('lmp').style.color=m!==null?(m>=20?'#4ade80':m>=10?'var(--gold)':'#f87171'):'#888';}
+function openLI(){EI.l=null;G('li-mt').textContent='New Line Item';['lf-s','lf-d','lf-sp','lf-u','lf-nt'].forEach(f=>{const e=G(f);if(e)e.value='';});G('lf-c').value='';G('lf-p').value='';G('lf-cur').value='USD';G('lf-sup').value='';liMgn();G('ov-li').classList.add('on');setTimeout(()=>G('lf-s').focus(),50);}
+function editLI(id){const li=DB.li.find(x=>x.id===id);if(!li)return;EI.l=id;G('li-mt').textContent='Edit Line Item';G('lf-s').value=li.sku||'';G('lf-d').value=li.desc||'';G('lf-sp').value=li.specs||'';G('lf-u').value=li.uom||'';G('lf-nt').value=li.notes||'';G('lf-c').value=li.cost||'';G('lf-p').value=li.price||'';G('lf-cur').value=li.cur||'USD';G('lf-sup').value=li.supId||'';liMgn();G('ov-li').classList.add('on');}
+async function saveLI(){const li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:+G('lf-c').value||0,price:+G('lf-p').value||0,cur:G('lf-cur').value,notes:G('lf-nt').value.trim()};if(EI.l){const i=DB.li.findIndex(x=>x.id===EI.l);if(i>-1)DB.li[i]=li;}else DB.li.push(li);sv(K.l,DB.li);close('ov-li');rLI();audit(EI.l?'UPDATE':'CREATE','li',li.id,li);toast('Line item saved');await sEnt('li',li);}
+async function delLI(id){if(!confirm('Delete?'))return;DB.li=DB.li.filter(l=>l.id!==id);sv(K.l,DB.li);rLI();toast('Deleted');await dEnt('li',id);}
+
+// ── INVOICE MODAL ───────────────────────────────────────
+function openInv(){EI.i=null;cIL=[];G('inv-mt').textContent='New Invoice';G('inv-sm').value='Draft';
+  ['if-n','if-b','if-ba','if-st','if-dst','if-cid','if-ft','if-wt','if-cbm','if-pk','if-pol','if-pod','if-coo'].forEach(f=>{const e=G(f);if(e)e.value='';});
+  ['if-lf','if-ins','if-leg','if-isp','if-oth','if-dep'].forEach(f=>{const e=G(f);if(e)e.value='';});
+  G('if-dt').value=td();G('if-ex').value='';G('if-sd').value='';G('if-cur').value='USD';G('if-tx').value='0';G('ctx-wrap').style.display='none';G('if-terms').value=AS.terms||'';
+  rILT();calcInv();G('ov-inv').classList.add('on');setTimeout(()=>G('if-n').focus(),50);}
+function editInv(id){const inv=DB.inv.find(x=>x.id===id);if(!inv)return;EI.i=id;cIL=JSON.parse(JSON.stringify(inv.lineItems||[]));
+  G('inv-mt').textContent='Edit Invoice';G('inv-sm').value=inv.status||'Draft';
+  G('if-n').value=inv.num||'';G('if-b').value=inv.buyer||'';G('if-ba').value=inv.buyerAddr||'';G('if-st').value=inv.shipTo||'';G('if-dst').value=inv.dst||'';G('if-cid').value=inv.custId||'';
+  G('if-dt').value=inv.date||td();G('if-ex').value=inv.expiry||'';G('if-sd').value=inv.shipDate||'';
+  G('if-ft').value=inv.ft||'';G('if-wt').value=inv.wt||'';G('if-cbm').value=inv.cbm||'';G('if-pk').value=inv.pk||'';G('if-pol').value=inv.pol||'';G('if-pod').value=inv.pod||'';G('if-coo').value=inv.coo||'';
+  G('if-cur').value=inv.cur||'USD';
+  const kv=String(inv.taxRate||0);const kr=['0','0.05','0.075','0.10','0.15','0.175','0.20'];
+  if(kr.includes(kv)){G('if-tx').value=kv;G('ctx-wrap').style.display='none';}
+  else{G('if-tx').value='custom';G('ctx-wrap').style.display='block';G('if-txc').value=((+inv.taxRate||0)*100).toFixed(1);}
+  G('if-lf').value=inv.lf||'';G('if-ins').value=inv.ins||'';G('if-leg').value=inv.leg||'';G('if-isp').value=inv.isp||'';G('if-oth').value=inv.oth||'';G('if-dep').value=inv.dep||'';
+  G('if-terms').value=inv.terms||AS.terms||'';
+  rILT();calcInv();show('inv',document.querySelector('[data-v="inv"]'));G('ov-inv').classList.add('on');}
+function txChg(){G('ctx-wrap').style.display=G('if-tx').value==='custom'?'block':'none';calcInv();}
+function getTR(){const v=G('if-tx').value;return v==='custom'?(+G('if-txc').value||0)/100:+v||0;}
+function addILI(lid='',desc='',uom='',qty=1,up=0){cIL.push({rid:uid(),lid,desc,uom,qty,up});rILT();calcInv();}
+function remILI(rid){cIL=cIL.filter(x=>x.rid!==rid);rILT();calcInv();}
+function rILT(){
+  const tb=G('il-tb'),cur=G('if-cur').value||'USD';
+  if(!cIL.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--m);font-size:.58rem;padding:12px;">No line items &mdash; add manually or import from library</td></tr>';return;}
+  tb.innerHTML=cIL.map((li,i)=>`<tr><td style="color:var(--m);font-size:.52rem;">${i+1}</td><td><input type="text" value="${(li.desc||'').replace(/"/g,'&quot;')}" oninput="cIL[${i}].desc=this.value;calcInv()" placeholder="Description"></td><td><input type="text" value="${li.uom||''}" oninput="cIL[${i}].uom=this.value" placeholder="pcs" style="width:58px;"></td><td><input type="number" value="${li.qty||1}" min="0" step="any" oninput="cIL[${i}].qty=+this.value;calcInv()" style="width:48px;"></td><td><input type="number" value="${li.up||0}" min="0" step="0.01" oninput="cIL[${i}].up=+this.value;calcInv()" style="width:95px;text-align:right;"></td><td class="num litot">${fmt((+li.qty||0)*(+li.up||0),cur)}</td><td><button class="ab" onclick="remILI('${li.rid}')">&#10005;</button></td></tr>`).join('');
+}
+function openPicker(){if(!DB.li.length){toast('No items in library yet.');return;}G('pick-list').innerHTML=DB.li.map(li=>`<label style="display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--ln);margin-bottom:3px;cursor:pointer;font-size:.6rem;"><input type="checkbox" value="${li.id}" style="flex-shrink:0;"><div style="flex:1;"><div style="font-weight:500;">${li.desc||'—'}</div><div style="color:var(--m);font-size:.54rem;">${gsn(li.supId)} &middot; ${li.uom||'—'} &middot; ${fmt(li.price,li.cur)}</div></div></label>`).join('');G('ov-pick').classList.add('on');}
+function doPick(){const ck=[...G('pick-list').querySelectorAll('input:checked')].map(c=>c.value);ck.forEach(id=>{const li=DB.li.find(x=>x.id===id);if(li)addILI(li.id,li.desc,li.uom,1,li.price);});close('ov-pick');toast(ck.length+' item'+(ck.length!==1?'s':'')+' added');}
+
+function calcInv(){
+  const cur=G('if-cur').value||'USD';
+  const liT=cIL.reduce((s,li)=>s+(+li.qty||0)*(+li.up||0),0);
+  const tx=getTR(),tax=liT*tx,lf=+G('if-lf').value||0,ins=+G('if-ins').value||0,leg=+G('if-leg').value||0,isp=+G('if-isp').value||0,oth=+G('if-oth').value||0;
+  const chgs=lf+ins+leg+isp+oth,grand=liT+tax+chgs,dep=+G('if-dep').value||0,bal=grand-dep;
+  const cogs=cIL.reduce((s,li)=>{const r=DB.li.find(x=>x.id===li.lid);return s+(r?(+r.cost||0)*(+li.qty||0):0);},0);
+  const gp=liT-cogs,np=grand-(cogs+chgs),mgn=grand>0?(np/grand)*100:null;
+  G('chg-bd').innerHTML=[['Items Subtotal',liT,true],['Tax ('+fp(tx*100)+')',tax,false],['Local Freight',lf,false],['Insurance',ins,false],['Legal/Consular',leg,false],['Inspection/Cert.',isp,false],['Other Charges',oth,false]].map(([l,v,h])=>`<div class="crow"><span class="clbl">${l}</span><span class="cval ${h?'hi':''}">${fmt(v,cur)}</span></div>`).join('')+`<div class="tline"><span class="tlbl">Grand Total</span><span class="tval">${fmt(grand,cur)}</span></div>`;
+  G('pnl-bd').innerHTML=[['Gross Profit',fmt(gp,cur),'hi'],['Net Profit',fmt(np,cur),np>=0?'g':'r'],['Net Margin',fp(mgn),mgn!==null?(mgn>=20?'g':mgn>=10?'hi':'r'):'']].map(([l,v,c])=>`<div class="crow"><span class="clbl">${l}</span><span class="cval ${c}">${v}</span></div>`).join('')+`<div class="tline"><span class="tlbl">Balance Due</span><span class="tval" style="color:#93c5fd;">${fmt(bal,cur)}</span></div>`;
+  G('d-strip').innerHTML=`<div class="dc"><div class="dl">Buyer Dep. Received</div><div class="dv by">${dep?fmt(dep,cur):'—'}</div></div><div class="dc"><div class="dl">Balance Outstanding</div><div class="dv ba">${fmt(bal,cur)}</div></div><div class="dc"><div class="dl">COGS</div><div class="dv su">${fmt(cogs,cur)}</div></div><div class="dc"><div class="dl">Gross Profit</div><div class="dv gp">${fmt(gp,cur)}</div></div>`;
+}
+
+async function saveInv(){
+  const tx=getTR();
+  const inv={id:EI.i||uid(),num:G('if-n').value.trim(),buyer:G('if-b').value.trim(),buyerAddr:G('if-ba').value.trim(),shipTo:G('if-st').value.trim(),dst:G('if-dst').value.trim(),custId:G('if-cid').value.trim(),date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value.trim(),wt:G('if-wt').value.trim(),cbm:G('if-cbm').value.trim(),pk:G('if-pk').value.trim(),pol:G('if-pol').value.trim(),pod:G('if-pod').value.trim(),coo:G('if-coo').value.trim(),cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,terms:G('if-terms').value.trim(),status:G('inv-sm').value,lineItems:cIL,pos:[],updAt:new Date().toISOString()};
+  if(EI.i){const i=DB.inv.findIndex(x=>x.id===EI.i);if(i>-1){inv.pos=DB.inv[i].pos||[];DB.inv[i]=inv;}}else DB.inv.push(inv);
+  sv(K.i,DB.inv);close('ov-inv');rInv();rDash();audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv);toast('Invoice saved');
+  await sEnt('inv',inv);if(!EI.i)autoPos(inv);
+}
+
+function autoPos(inv){
+  const sm={};(inv.lineItems||[]).forEach(li=>{const r=DB.li.find(x=>x.id===li.lid);if(r&&r.supId){if(!sm[r.supId])sm[r.supId]=[];sm[r.supId].push({...li,cost:r.cost||0,uom:r.uom||li.uom,sku:r.sku||''});}});
+  const cnt=Object.keys(sm).length;if(!cnt)return;
+  Object.entries(sm).forEach(([supId,lis],idx)=>{
+    const po={id:uid(),num:`PO-${inv.num||Date.now().toString(36)}-${idx+1}`,supId,invId:inv.id,invNum:inv.num,date:inv.date||td(),del:'',cur:'USD',lineItems:lis.map(li=>({rid:uid(),lid:li.lid,desc:li.desc,sku:li.sku||'',uom:li.uom,qty:li.qty,cost:li.cost})),dep:0,oth:0,notes:'',status:'Draft',creAt:new Date().toISOString()};
+    DB.po.push(po);const ii=DB.inv.findIndex(x=>x.id===inv.id);if(ii>-1){DB.inv[ii].pos=DB.inv[ii].pos||[];DB.inv[ii].pos.push(po.id);}
+  });
+  sv(K.p,DB.po);sv(K.i,DB.inv);rPO();toast(cnt+' PO'+(cnt!==1?'s':'')+' auto-generated');
+}
+
+// ── INVOICES TABLE ──────────────────────────────────────
+function rInv(){
+  const q=(G('inv-q').value||'').toLowerCase(),sf=G('inv-sf').value;
+  const f=DB.inv.filter(i=>(!q||(i.num||'').toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.dst||'').toLowerCase().includes(q))&&(!sf||i.status===sf));
+  G('inv-em').style.display=f.length?'none':'block';
+  G('inv-tb').innerHTML=f.slice().reverse().map(inv=>{const{grand,cogs,gp,np,mgn,taxRate,dep,bal}=cInv(inv);const cur=inv.cur||'USD';const mc=mgn===null?'':mgn>=20?'phi':mgn>=10?'pmi':'plo';const sc=(inv.status||'draft').toLowerCase().replace(/\s+/g,'-');return`<tr><td style="color:var(--cr);font-weight:500;white-space:nowrap">${inv.num||'—'}</td><td>${inv.buyer||'—'}</td><td>${inv.dst||'—'}</td><td style="font-size:.54rem;color:var(--m);">${inv.date||'—'}</td><td><span class="tag s-${sc}">${inv.status||'—'}</span></td><td class="num">${fmt(grand,cur)}</td><td class="num">${fmt(cogs,cur)}</td><td class="num ${gp>=0?'pos':'neg'}">${fmt(gp,cur)}</td><td class="num ${np>=0?'pos':'neg'}">${fmt(np,cur)}</td><td class="num"><span class="pill ${mc}">${fp(mgn)}</span></td><td class="num" style="font-size:.54rem;color:var(--m);">${((+taxRate||0)*100).toFixed(1)}%</td><td class="num" style="color:var(--cr);">${dep?fmt(dep,cur):'—'}</td><td class="num" style="color:var(--bl);">${fmt(bal,cur)}</td><td style="white-space:nowrap;"><button class="ab" onclick="editInv('${inv.id}')" title="Edit">&#9998;</button><button class="ab" onclick="prevInvId('${inv.id}')" title="Preview" style="color:var(--gn);">&#128065;</button><button class="ab" onclick="delInv('${inv.id}')" title="Delete">&#10005;</button></td></tr>`;}).join('');
+}
+async function delInv(id){if(!confirm('Delete this invoice?'))return;DB.inv=DB.inv.filter(i=>i.id!==id);sv(K.i,DB.inv);rInv();rDash();toast('Deleted');await dEnt('inv',id);}
+
+// ── PO MODAL & TABLE ────────────────────────────────────
+function openPO(){EI.p=null;cPL=[];G('po-mt').textContent='New Purchase Order';G('po-sm').value='Draft';['pf-n','pf-del','pf-nt'].forEach(f=>{const e=G(f);if(e)e.value='';});G('pf-dep').value='';G('pf-oth').value='';G('pf-dt').value=td();G('pf-sup').value='';G('pf-cur').value='USD';G('pf-inv').value='';rPLT();calcPO();G('ov-po').classList.add('on');}
+function editPO(id){const po=DB.po.find(x=>x.id===id);if(!po)return;EI.p=id;cPL=JSON.parse(JSON.stringify(po.lineItems||[]));G('po-mt').textContent='Edit PO';G('po-sm').value=po.status||'Draft';G('pf-n').value=po.num||'';G('pf-dt').value=po.date||td();G('pf-del').value=po.del||'';G('pf-sup').value=po.supId||'';G('pf-cur').value=po.cur||'USD';G('pf-dep').value=po.dep||'';G('pf-oth').value=po.oth||'';G('pf-nt').value=po.notes||'';G('pf-inv').value=po.invNum||'';rPLT();calcPO();show('po',document.querySelector('[data-v="po"]'));G('ov-po').classList.add('on');}
+function addPLI(){cPL.push({rid:uid(),lid:'',desc:'',sku:'',uom:'',qty:1,cost:0});rPLT();calcPO();}
+function remPLI(rid){cPL=cPL.filter(x=>x.rid!==rid);rPLT();calcPO();}
+function rPLT(){
+  const tb=G('pl-tb'),cur=G('pf-cur').value||'USD';
+  if(!cPL.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--m);font-size:.58rem;padding:12px;">No line items added</td></tr>';return;}
+  tb.innerHTML=cPL.map((li,i)=>`<tr><td style="color:var(--m);font-size:.52rem;">${i+1}</td><td><input type="text" value="${(li.desc||'').replace(/"/g,'&quot;')}" oninput="cPL[${i}].desc=this.value" placeholder="Description / SKU"></td><td><input type="text" value="${li.uom||''}" oninput="cPL[${i}].uom=this.value" placeholder="pcs" style="width:58px;"></td><td><input type="number" value="${li.qty||1}" min="0" step="any" oninput="cPL[${i}].qty=+this.value;calcPO()" style="width:48px;"></td><td><input type="number" value="${li.cost||0}" min="0" step="0.01" oninput="cPL[${i}].cost=+this.value;calcPO()" style="width:95px;text-align:right;"></td><td class="num litot">${fmt((+li.qty||0)*(+li.cost||0),cur)}</td><td><button class="ab" onclick="remPLI('${li.rid}')">&#10005;</button></td></tr>`).join('');
+}
+function calcPO(){
+  const cur=G('pf-cur').value||'USD';
+  const liT=cPL.reduce((s,li)=>s+(+li.qty||0)*(+li.cost||0),0);
+  const dep=+G('pf-dep').value||0,oth=+G('pf-oth').value||0,grand=liT+oth,bal=grand-dep;
+  G('po-tots').innerHTML=`<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">COGS Subtotal</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:white;">${fmt(liT,cur)}</div></div><div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Deposit Paid</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#93c5fd;">${fmt(dep,cur)}</div></div><div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Total PO Value</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--gold);">${fmt(grand,cur)}</div></div><div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Balance Due to Supplier</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--bl);">${fmt(bal,cur)}</div></div>`;
+}
+async function savePO(){
+  const po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invId:DB.inv.find(x=>x.num===G('pf-inv').value)?.id||'',invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
+  if(EI.p){const i=DB.po.findIndex(x=>x.id===EI.p);if(i>-1)DB.po[i]=po;}else DB.po.push(po);
+  sv(K.p,DB.po);close('ov-po');rPO();rDash();audit(EI.p?'UPDATE':'CREATE','po',po.id,po);toast('PO saved');await sEnt('po',po);
+}
+function rPO(){
+  const q=(G('po-q').value||'').toLowerCase(),sf=G('po-sf').value;
+  const f=DB.po.filter(p=>(!q||(p.num||'').toLowerCase().includes(q)||gsn(p.supId).toLowerCase().includes(q)||(p.invNum||'').toLowerCase().includes(q))&&(!sf||p.status===sf));
+  G('po-em').style.display=f.length?'none':'block';
+  G('po-tb').innerHTML=f.slice().reverse().map(po=>{const liT=(po.lineItems||[]).reduce((s,li)=>s+(+li.qty||0)*(+li.cost||0),0);const dep=+po.dep||0,bal=liT+(+po.oth||0)-dep,cur=po.cur||'USD';const sc=(po.status||'draft').toLowerCase().replace(/\s+/g,'-');return`<tr><td style="color:var(--bl);font-weight:500;white-space:nowrap">${po.num||'—'}</td><td>${gsn(po.supId)}</td><td style="color:var(--m);font-size:.54rem;">${po.invNum||'—'}</td><td style="font-size:.54rem;color:var(--m);">${po.date||'—'}</td><td><span class="tag s-${sc}">${po.status||'—'}</span></td><td class="num">${fmt(liT,cur)}</td><td class="num" style="color:var(--bl);">${dep?fmt(dep,cur):'—'}</td><td class="num" style="color:var(--gold);">${fmt(bal,cur)}</td><td style="white-space:nowrap;"><button class="ab" onclick="editPO('${po.id}')">&#9998;</button><button class="ab" onclick="prevPOId('${po.id}')" style="color:var(--bl);">&#128065;</button><button class="ab" onclick="delPO('${po.id}')">&#10005;</button></td></tr>`;}).join('');
+}
+async function delPO(id){if(!confirm('Delete?'))return;DB.po=DB.po.filter(p=>p.id!==id);sv(K.p,DB.po);rPO();rDash();toast('Deleted');await dEnt('po',id);}
+
+// ── PRINT PREVIEWS ──────────────────────────────────────
+function prevInv(){const tx=getTR();prevInvDoc({num:G('if-n').value||'DRAFT',buyer:G('if-b').value,buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,terms:G('if-terms').value,lineItems:cIL});}
+function prevInvId(id){const inv=DB.inv.find(x=>x.id===id);if(inv)prevInvDoc(inv);}
+function prevPO(){prevPODoc({num:G('pf-n').value||'DRAFT',supId:G('pf-sup').value,invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,oth:+G('pf-oth').value||0,notes:G('pf-nt').value});}
+function prevPOId(id){const po=DB.po.find(x=>x.id===id);if(po)prevPODoc(po);}
+
+
+function prevInvDoc(inv){
+  const cur=inv.cur||'USD',liT=(inv.lineItems||[]).reduce((s,li)=>s+(+li.qty||0)*(+li.up||0),0);
+  const tx=+inv.taxRate||0,tax=liT*tx,lf=+inv.lf||0,ins=+inv.ins||0,leg=+inv.leg||0,isp=+inv.isp||0,oth=+inv.oth||0;
+  const grand=liT+tax+lf+ins+leg+isp+oth,dep=+inv.dep||0,bal=grand-dep;
+  const bank=AS.bank?`<div class="iftb">${AS.bank.replace(/\n/g,'<br>')}</div>`:`<div class="ifpend">Bank details pending &mdash; contact us:<br>${AS.email} &middot; ${AS.phone}</div>`;
+  G('print-body').innerHTML=`<div class="idoc">
+    <div class="ihdr">
+      <div><div class="iwm"><span>S</span>TACKD</div><div class="itag">${AS.tag||'Source &middot; Supply &middot; Ship'}</div><div style="font-size:.58rem;color:#555;margin-top:7px;line-height:1.7;">${AS.addr||''}<br>${AS.email||''} &middot; ${AS.phone||''}</div></div>
+      <div class="imeta"><h1>INVOICE</h1><div class="img"><span class="iml">Invoice #</span><span class="imv">${inv.num||'&mdash;'}</span><span class="iml">Date</span><span class="imv">${inv.date||'&mdash;'}</span><span class="iml">Expiry</span><span class="imv">${inv.expiry||'&mdash;'}</span><span class="iml">Customer ID</span><span class="imv">${inv.custId||'&mdash;'}</span><span class="iml">Currency</span><span class="imv">${cur}</span></div></div>
+    </div>
+    <div class="ipar">
+      <div><div class="ipt">Customer</div><div class="ipb">${inv.buyer||'&mdash;'}<br>${(inv.buyerAddr||'').replace(/,/g,'<br>')}</div></div>
+      <div><div class="ipt">Ship To</div><div class="ipb">${(inv.shipTo||inv.buyerAddr||'As above').replace(/,/g,'<br>')}</div></div>
+      <div><div class="ipt">Shipping Details</div><div class="isg">${[['Freight Type',inv.ft],['Est. Ship Date',inv.shipDate],['Gross Weight',inv.wt],['Cubic Weight',inv.cbm],['Total Packages',inv.pk]].filter(([,v])=>v).map(([l,v])=>`<div class="isr"><span class="isl">${l}</span><span class="isv">${v}</span></div>`).join('')}</div></div>
+    </div>
+    <div class="iitems" style="margin-bottom:18px;"><table><thead><tr><th>Item #</th><th>Description</th><th>UOM</th><th class="ir">Qty</th><th class="ir">Unit Price</th><th class="ir">Tax</th><th class="ir">Total</th></tr></thead><tbody>
+      ${(inv.lineItems||[]).map((li,i)=>{const lt=(+li.qty||0)*(+li.up||0),ltx=lt*tx;return`<tr><td style="color:#888;font-size:.56rem;">${i+1}</td><td>${li.desc||'&mdash;'}</td><td>${li.uom||'&mdash;'}</td><td class="ir">${li.qty||0}</td><td class="ir">${fn(li.up)}</td><td class="ir">${fn(ltx)}</td><td class="ir" style="font-weight:500;">${fn(lt+ltx)}</td></tr>`;}).join('')}
+    </tbody></table></div>
+    <div class="ichg"><div class="ichgb">
+      <div class="icr sub"><span class="icrl">Subtotal</span><span class="icrv">${fn(liT)}</span></div>
+      <div class="icr"><span class="icrl">Tax (${(tx*100).toFixed(1)}%)</span><span class="icrv">${fn(tax)}</span></div>
+      ${lf?`<div class="icr"><span class="icrl">Local Freight</span><span class="icrv">${fn(lf)}</span></div>`:''}
+      ${ins?`<div class="icr"><span class="icrl">Insurance</span><span class="icrv">${fn(ins)}</span></div>`:''}
+      ${leg?`<div class="icr"><span class="icrl">Legal/Consular</span><span class="icrv">${fn(leg)}</span></div>`:''}
+      ${isp?`<div class="icr"><span class="icrl">Inspection/Cert.</span><span class="icrv">${fn(isp)}</span></div>`:''}
+      ${oth?`<div class="icr"><span class="icrl">Other Charges</span><span class="icrv">${fn(oth)}</span></div>`:''}
+      ${dep?`<div class="icr dep"><span class="icrl">Less: Deposit Received</span><span class="icrv">(${fn(dep)})</span></div>`:''}
+      <div class="icr grand"><span class="icrl">BALANCE DUE</span><span class="icrv">${cur} ${fn(bal)}</span></div>
+    </div></div>
+    <div class="iftr">
+      <div><div class="iftl">Terms of Sale</div><div class="iftb">${inv.terms||AS.terms||''}</div></div>
+      <div><div class="iftl">Payment Details</div>${bank}</div>
+    </div>
+    <div class="iorg">${[['Country of Origin',inv.coo],['Port of Embarkation',inv.pol],['Port of Discharge',inv.pod]].filter(([,v])=>v).map(([l,v])=>`<div class="ioitem"><span class="iolab">${l}</span><span style="font-size:.6rem;">${v}</span></div>`).join('')}</div>
+  </div>`;
+  G('print-ttl').textContent='Invoice '+( inv.num||'Preview');G('ov-print').classList.add('on');
+}
+
+function prevPODoc(po){
+  const cur=po.cur||'USD',liT=(po.lineItems||[]).reduce((s,li)=>s+(+li.qty||0)*(+li.cost||0),0);
+  const dep=+po.dep||0,oth=+po.oth||0,grand=liT+oth,bal=grand-dep;
+  const sup=DB.sup.find(x=>x.id===po.supId);
+  G('print-body').innerHTML=`<div class="pdoc">
+    <div class="phdr">
+      <div><div class="iwm"><span>S</span>TACKD</div><div class="itag">${AS.tag||'Source &middot; Supply &middot; Ship'}</div><div style="font-size:.58rem;color:#555;margin-top:7px;line-height:1.7;">${AS.addr||''}<br>${AS.email||''} &middot; ${AS.phone||''}</div></div>
+      <div class="pmeta"><h1>PURCHASE ORDER</h1><div class="img"><span class="iml">PO Number</span><span class="imv">${po.num||'&mdash;'}</span><span class="iml">Date</span><span class="imv">${po.date||'&mdash;'}</span><span class="iml">Linked Invoice</span><span class="imv">${po.invNum||'&mdash;'}</span><span class="iml">Required Delivery</span><span class="imv">${po.del||'To be confirmed'}</span><span class="iml">Currency</span><span class="imv">${cur}</span></div></div>
+    </div>
+    <div class="ipar ipar2">
+      <div><div class="ipt">From (Buyer)</div><div class="ipb">${AS.name||'Stackd'}<br>${AS.addr||''}<br>${AS.email||''}</div></div>
+      <div><div class="ipt">To (Supplier)</div><div class="ipb">${sup?`${sup.name}<br>${sup.country||''}<br>${sup.ct||''}<br>${sup.email||''}`:po.supId||'&mdash;'}</div></div>
+    </div>
+    <div class="iitems" style="margin-bottom:18px;"><table><thead><tr><th>SKU / Item #</th><th>Description</th><th>UOM</th><th class="ir">Qty</th><th class="ir">Unit Cost</th><th class="ir">Line Total</th></tr></thead><tbody>
+      ${(po.lineItems||[]).map((li,i)=>{const lt=(+li.qty||0)*(+li.cost||0);return`<tr><td style="color:#888;font-size:.56rem;">${li.sku||i+1}</td><td>${li.desc||'&mdash;'}</td><td>${li.uom||'&mdash;'}</td><td class="ir">${li.qty||0}</td><td class="ir">${fn(li.cost)}</td><td class="ir" style="font-weight:500;">${fn(lt)}</td></tr>`;}).join('')}
+    </tbody></table></div>
+    <div class="ichg"><div class="ichgb">
+      <div class="icr sub"><span class="icrl">COGS Subtotal</span><span class="icrv">${fn(liT)}</span></div>
+      ${oth?`<div class="icr"><span class="icrl">Other Charges</span><span class="icrv">${fn(oth)}</span></div>`:''}
+      ${dep?`<div class="icr dep"><span class="icrl">Less: Deposit Paid</span><span class="icrv">(${fn(dep)})</span></div>`:''}
+      <div class="icr grand potot"><span class="icrl">BALANCE DUE TO SUPPLIER</span><span class="icrv" style="color:var(--bl)">${cur} ${fn(bal)}</span></div>
+    </div></div>
+    ${po.notes?`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #eee;font-size:.6rem;"><div style="font-size:.44rem;letter-spacing:.11em;text-transform:uppercase;color:#999;margin-bottom:3px;">Special Instructions</div>${po.notes}</div>`:''}
+    <div style="margin-top:18px;padding-top:12px;border-top:1px solid #eee;font-size:.56rem;color:#999;text-align:center;">This Purchase Order is issued by ${AS.name||'Stackd'} and constitutes a formal order. Please confirm receipt and acceptance.</div>
+  </div>`;
+  G('print-ttl').textContent='PO '+(po.num||'Preview');G('ov-print').classList.add('on');
+}
+
+// ── SETTINGS ────────────────────────────────────────────
+function rCfg(){G('cfg-url').value=SS.url||'';G('auto-s').checked=SS.auto!==false;G('pol').checked=SS.pol!==false;G('c-name').value=AS.name||'Stackd';G('c-tag').value=AS.tag||'Source · Supply · Ship';G('c-addr').value=AS.addr||'Brighton, UK';G('c-email').value=AS.email||'cachafpm@gmail.com';G('c-phone').value=AS.phone||'+44 7930 438631';G('c-web').value=AS.web||'';G('c-bank').value=AS.bank||'';G('c-terms').value=AS.terms||'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.';}
+function saveCfg(){AS={name:G('c-name').value,tag:G('c-tag').value,addr:G('c-addr').value,email:G('c-email').value,phone:G('c-phone').value,web:G('c-web').value,bank:G('c-bank').value,terms:G('c-terms').value};sv(K.as,AS);toast('Settings saved ✓');}
+
+// ── EXPORT ──────────────────────────────────────────────
+function expInvCSV(){if(!DB.inv.length){toast('No invoices');return;}const h=['Invoice #','Buyer','Destination','Date','Status','Currency','Grand Total','COGS','Gross Profit','Net Profit','Margin %','Tax Rate %','Buyer Deposit','Balance Due'];const r=DB.inv.map(inv=>{const{grand,cogs,gp,np,mgn,taxRate,dep,bal}=cInv(inv);return[inv.num,inv.buyer,inv.dst,inv.date,inv.status,inv.cur,fn(grand),fn(cogs),fn(gp),fn(np),(mgn||0).toFixed(1),((+taxRate||0)*100).toFixed(1),fn(dep),fn(bal)].map(v=>`"${v}"`).join(',');});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent([h.join(','),...r].join('
+'));a.download='Stackd-Invoices-'+td()+'.csv';a.click();toast('Exported');}
+function clearData(){if(!confirm('Clear ALL local data?'))return;Object.values(K).forEach(k=>localStorage.removeItem(k));location.reload();}
+
+// ── INIT ─────────────────────────────────────────────────
+if(SS.url){G('banner').style.display='none';G('cfg-url').value=SS.url;if(SS.pol!==false)pullAll().catch(()=>{});}
+G('auto-s').checked=SS.auto!==false;G('pol').checked=SS.pol!==false;
+renderAll();
+</script>
+</body>
+</html>
