@@ -1736,10 +1736,16 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ── INIT ──────────────────────────────────────────────────────
-if (SS.url) { G('banner').style.display='none'; G('cfg-url').value=SS.url; if(SS.pol!==false) pullAll().catch(function(){}); }
-G('auto-s').checked = SS.auto !== false;
-G('pol').checked = SS.pol !== false;
-renderAll();
+function initApp() {
+  if (SS.url) {
+    G('banner').style.display='none';
+    G('cfg-url').value=SS.url;
+    if (SS.pol!==false) pullAll().catch(function(){});
+  }
+  G('auto-s').checked = SS.auto !== false;
+  G('pol').checked = SS.pol !== false;
+  renderAll();
+}
 </script>
 
 </div> <!-- end app-shell -->
@@ -1768,6 +1774,7 @@ function checkAuth() {
     document.getElementById('auth-gate').style.display = 'none';
     document.getElementById('app-shell').style.display = 'block';
     err.textContent = '';
+    if (typeof initApp === 'function') initApp();
   } else {
     err.textContent = 'Incorrect password';
     var inp = document.getElementById('auth-input');
@@ -1782,6 +1789,7 @@ function checkAuth() {
   if (sessionStorage.getItem(AUTH_KEY) === AUTH_HASH) {
     document.getElementById('auth-gate').style.display = 'none';
     document.getElementById('app-shell').style.display = 'block';
+    if (typeof initApp === 'function') initApp();
   } else {
     // Focus password input
     setTimeout(function(){
