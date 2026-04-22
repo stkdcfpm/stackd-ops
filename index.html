@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.4.3</title>
+<title>Stackd Ops v2.4.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -1439,20 +1439,132 @@ function prevPODoc(po) {
 
 var TEMPLATES = {
   sup: {
-    headers: ['Supplier Name','Country','Contact Person','Email','Phone/WeChat','Currency','Notes'],
-    example: ['Jinan Jinbao Equipment Co.','China','Wang Lei','wanglei@jinbao.cn','+86 531 8800 1234','USD','Commercial refrigeration. CE certified.']
+    // Suppliers — upload first before line items or POs
+    headers: [
+      'Supplier Name',      // Required. Company name exactly as you refer to them.
+      'Country',            // Full country name e.g. China, Barbados, Nigeria
+      'Contact Person',     // Your main contact at the supplier
+      'Email',              // Supplier contact email
+      'Phone/WeChat',       // Phone number or WeChat ID
+      'Currency',           // USD, CNY, GBP, EUR — supplier transaction currency
+      'Notes'               // Certifications, lead times, MOQs, red flags
+    ],
+    example: [
+      'Jinan Jinbao Equipment Co.',
+      'China',
+      'Wang Lei',
+      'wanglei@jinbao.cn',
+      '+86 531 8800 1234',
+      'USD',
+      'Commercial refrigeration. CE certified. Lead time 30 days.'
+    ]
   },
   li: {
-    headers: ['SKU','Description','Specifications','HS Code','Supplier Name','Unit of Measure','Unit Cost','Unit Price','Currency','Notes'],
-    example: ['REF-COMM-600L','Commercial Upright Refrigerator 600L','600L 220V/50Hz R404A','8418.50','Jinan Jinbao Equipment Co.','pcs','120','200','USD','CE certified']
+    // Line Items — upload after suppliers. Supplier Name must match exactly.
+    headers: [
+      'SKU',                // Your product reference code e.g. REF-COMM-600L
+      'Description',        // Required. Clear product name.
+      'Specifications',     // Size, grade, model, colour, voltage
+      'HS Code',            // Harmonised System code e.g. 8418.50
+      'Supplier Name',      // Must match a supplier already in the system
+      'Unit of Measure',    // pcs, kg, m2, sheets, sets
+      'Unit Cost',          // What you pay the supplier per unit
+      'Unit Price',         // What you charge the buyer per unit
+      'Currency',           // USD, GBP, EUR, BBD, NGN, GHS
+      'Notes'               // Packaging notes, compliance requirements
+    ],
+    example: [
+      'REF-COMM-600L',
+      'Commercial Upright Refrigerator 600L',
+      '600L 220V/50Hz R404A 4 glass doors',
+      '8418.50',
+      'Jinan Jinbao Equipment Co.',
+      'pcs',
+      '120',
+      '200',
+      'USD',
+      'CE certified. Min order 5 units.'
+    ]
   },
   inv: {
-    headers: ['Invoice #','Buyer','Buyer Address','Destination','Date (YYYY-MM-DD)','Expiry Date','Status','Currency','Items Subtotal','Grand Total','COGS','Buyer Deposit','Tax Rate (decimal)','Local Freight','Insurance','Freight Type','Port of Loading','Port of Discharge','Country of Origin','Notes'],
-    example: ['INV-2025-001','Caribbean Supplies Ltd','Bridgetown Industrial Park, Barbados','Barbados','2025-06-01','2025-06-30','Sent','USD','2750','3475','1650','1000','0.10','300','150','Sea - FCL 40HQ','Qingdao','Bridgetown','China','Active shipment']
+    // Invoices — your real invoice data. Items Subtotal = line items total before tax/charges.
+    // Status values: Draft, Pro-forma, Sent, Partially Paid, Paid, Cancelled
+    // Date format: YYYY-MM-DD e.g. 2026-01-15
+    headers: [
+      'Invoice #',          // Required. Your invoice number e.g. INV10029
+      'Buyer',              // Required. Buyer company or individual name
+      'Buyer Address',      // Full buyer address
+      'Destination',        // Destination country e.g. Barbados, Nigeria
+      'Date (YYYY-MM-DD)',  // Required. Invoice date
+      'Expiry Date',        // Payment due date
+      'Status',             // Draft / Sent / Partially Paid / Paid / Cancelled
+      'Currency',           // USD, GBP, EUR, BBD, NGN, GHS
+      'Items Subtotal',     // Sum of line items only — before tax and charges
+      'Grand Total',        // Required. Final invoice value including everything
+      'COGS',               // Total cost of goods paid to suppliers
+      'Buyer Deposit',      // Deposit already received from buyer
+      'Tax Rate (decimal)', // e.g. 0.10 for 10%, 0 for zero-rated
+      'Local Freight',      // Freight charge on invoice
+      'Insurance',          // Insurance charge
+      'Freight Type',       // e.g. Sea - FCL 40HQ, Air, Sea - FCL 20
+      'Port of Loading',    // Port goods depart from e.g. Qingdao
+      'Port of Discharge',  // Port goods arrive at e.g. Bridgetown
+      'Country of Origin',  // e.g. China
+      'Notes'               // Any additional notes
+    ],
+    example: [
+      'INV10029',
+      'Thorpes International Produce Inc',
+      'Barbares Hill, Bridgetown, Barbados',
+      'Barbados',
+      '2026-01-03',
+      '2026-01-31',
+      'Paid',
+      'USD',
+      '29657.80',
+      '31055.80',
+      '26338.00',
+      '31055.80',
+      '0',
+      '1098.00',
+      '300.00',
+      'Sea - FCL 40HQ',
+      'Qingdao',
+      'Bridgetown',
+      'China',
+      'Complete shipment INV10029 paid in full'
+    ]
   },
   po: {
-    headers: ['PO #','Supplier Name','Linked Invoice #','Date (YYYY-MM-DD)','Required Delivery','Currency','COGS Total','Supplier Deposit','Other Charges','Status','Notes'],
-    example: ['PO-2025-001-1','Jinan Jinbao Equipment Co.','INV-2025-001','2025-05-01','2025-05-14','USD','1200','360','0','Deposit Paid','30% deposit paid. Balance on inspection.']
+    // Purchase Orders — upload after suppliers and invoices.
+    // Supplier Name must match. Linked Invoice # links PO to an invoice (leave blank for standalone).
+    // Status values: Draft, Sent, Deposit Paid, Settled, Cancelled
+    headers: [
+      'PO #',               // Required. Your PO reference e.g. PO10029-1
+      'Supplier Name',      // Required. Must match supplier in system
+      'Linked Invoice #',   // Invoice number this PO relates to e.g. INV10029
+      'Date (YYYY-MM-DD)',  // PO date
+      'Required Delivery',  // Required delivery date
+      'Currency',           // USD, CNY, GBP, EUR
+      'COGS Total',         // Total cost of goods on this PO
+      'Supplier Deposit',   // Deposit already paid to supplier
+      'Other Charges',      // Any additional charges
+      'Status',             // Draft / Sent / Deposit Paid / Settled / Cancelled
+      'Notes'               // Special instructions, delivery requirements
+    ],
+    example: [
+      'PO10029-1',
+      'Jinan Jinbao Equipment Co.',
+      'INV10029',
+      '2025-11-01',
+      '2025-12-15',
+      'USD',
+      '22338.00',
+      '6701.40',
+      '0',
+      'Deposit Paid',
+      '30% deposit paid. Balance due on inspection at port.'
+    ]
   }
 };
 
