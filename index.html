@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.5.4</title>
+<title>Stackd Ops v2.5.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -488,7 +488,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <div class="fld"><label>Other Charges</label><input type="number" id="if-oth" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
           <div class="fld"><label id="lbl-inv-dep">Buyer Deposit Received</label><input type="number" id="if-dep" placeholder="0.00" step="0.01" oninput="calcInv()" style="border-bottom-color:var(--gold);background:rgba(201,150,58,.05);"></div>
         </div>
-        <div class="fld" style="margin-top:10px;"><label>Terms of Sale / Comments</label><textarea id="if-terms"></textarea></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;margin-bottom:4px;padding:8px 10px;background:var(--bg);border-left:3px solid var(--gold);">
+        <input type="checkbox" id="if-chi" checked style="accent-color:var(--gold);flex-shrink:0;" onchange="calcInv()">
+        <div>
+          <label style="font-size:.6rem;color:var(--ink);font-weight:600;cursor:pointer;" for="if-chi">Charges included in Grand Total</label>
+          <div style="font-size:.52rem;color:var(--m);margin-top:1px;">Tick if freight and insurance are already rolled into your Grand Total figure. Untick if they are charged separately on top of line items.</div>
+        </div>
+      </div>
+      <div class="fld" style="margin-top:10px;"><label>Terms of Sale / Comments</label><textarea id="if-terms"></textarea></div>
       </div>
       <div class="ms"><div class="mst">Live P&amp;L and Totals</div>
         <div class="tbox">
@@ -766,7 +773,10 @@ function cInv(inv) {
   }
 
   var gp  = liT - cogs;
-  var np  = grand - cogs - chgs;
+  // Net profit depends on whether charges are included in Grand Total
+  // chargesIncluded=true (default): freight/ins already in grand total — don't deduct again
+  // chargesIncluded=false: charges are separate — deduct from net profit
+  var np  = (inv.chargesIncluded !== false) ? grand - cogs : grand - cogs - chgs;
   var mgn = grand > 0 ? (np / grand) * 100 : null;
 
   return { liT:liT, tax:tax, taxRate:tx, chgs:chgs, grand:grand, dep:dep, bal:bal, cogs:cogs, gp:gp, np:np, mgn:mgn };
@@ -1099,7 +1109,7 @@ function openInv() {
   ['if-lf','if-ins','if-leg','if-isp','if-oth','if-dep'].forEach(function(f){var e=G(f);if(e)e.value='';});
   G('if-n').value=nextInvNum();
   G('if-dt').value=today(); G('if-ex').value=''; G('if-sd').value='';
-  G('if-cur').value='USD'; G('if-tx').value='0'; G('ctx-wrap').style.display='none';
+  G('if-cur').value='USD'; G('if-tx').value='0'; G('ctx-wrap').style.display='none'; G('if-chi').checked=true;
   G('if-terms').value=AS.terms||'';
   rILT(); calcInv(); G('ov-inv').classList.add('on'); setTimeout(function(){G('if-n').focus();},50);
 }
@@ -1118,7 +1128,7 @@ function editInv(id) {
   else{G('if-tx').value='custom';G('ctx-wrap').style.display='block';G('if-txc').value=((+inv.taxRate||0)*100).toFixed(1);}
   G('if-lf').value=inv.lf||''; G('if-ins').value=inv.ins||''; G('if-leg').value=inv.leg||'';
   G('if-isp').value=inv.isp||''; G('if-oth').value=inv.oth||''; G('if-dep').value=inv.dep||'';
-  G('if-terms').value=inv.terms||AS.terms||'';
+  G('if-terms').value=inv.terms||AS.terms||''; G('if-chi').checked=inv.chargesIncluded!==false;
   rILT(); calcInv(); showV('inv',document.querySelector('[data-v="inv"]')); G('ov-inv').classList.add('on');
 }
 function txChg() { G('ctx-wrap').style.display = G('if-tx').value==='custom' ? 'block' : 'none'; calcInv(); }
@@ -1168,7 +1178,7 @@ function calcInv() {
   var lf=+G('if-lf').value||0, ins=+G('if-ins').value||0, leg=+G('if-leg').value||0, isp=+G('if-isp').value||0, oth=+G('if-oth').value||0;
   var chgs=lf+ins+leg+isp+oth, grand=liT+tax+chgs, dep=+G('if-dep').value||0, bal=grand-dep;
   var cogs=cIL.reduce(function(s,li){var r=DB.li.find(function(x){return x.id===li.lid;});return s+(r?(+r.cost||0)*(+li.qty||0):0);},0);
-  var gp=liT-cogs, np=grand-cogs-chgs, mgn=grand>0?(np/grand)*100:null;
+  var gp=liT-cogs, np=(G('if-chi').checked!==false)?(grand-cogs):(grand-cogs-chgs), mgn=grand>0?(np/grand)*100:null;
 
   G('chg-bd').innerHTML =
     '<div class="crow"><span class="clbl">Items Subtotal</span><span class="cval hi">' + fmt(liT,cur) + '</span></div>' +
@@ -1206,7 +1216,7 @@ async function saveInv() {
     cur:G('if-cur').value, taxRate:tx,
     lf:+G('if-lf').value||0, ins:+G('if-ins').value||0, leg:+G('if-leg').value||0,
     isp:+G('if-isp').value||0, oth:+G('if-oth').value||0, dep:+G('if-dep').value||0,
-    terms:G('if-terms').value.trim(), status:G('inv-sm').value,
+    terms:G('if-terms').value.trim(), chargesIncluded:G('if-chi').checked, status:G('inv-sm').value,
     lineItems:cIL, pos:[], updAt:new Date().toISOString()
   };
   if(EI.i){var idx=DB.inv.findIndex(function(x){return x.id===EI.i;});if(idx>-1){inv.pos=DB.inv[idx].pos||[];DB.inv[idx]=inv;}}
@@ -1869,12 +1879,16 @@ function processImport(entity, csvText) {
       if (!num||!buyer) { skipped++; return; }
       var gt=+r['Grand Total']||+r['grand_total']||0;
       var liT=+r['Items Subtotal']||+r['liTotal']||gt;
+      // If Items Subtotal not provided, derive from Grand Total
+      if (!+r['Items Subtotal'] && !+r['liTotal']) {
+        liT = (tx > 0) ? gt/(1+tx) : gt;
+      }
       var cogs=+r['COGS']||+r['cogs']||0;
       var dep=+r['Buyer Deposit']||+r['dep']||0;
       var tx=+r['Tax Rate (decimal)']||+r['taxRate']||0;
       var lf=+r['Local Freight']||+r['lf']||0;
       var ins=+r['Insurance']||+r['ins']||0;
-      var gp=liT-cogs; var np=gt-cogs-lf-ins;
+      var gp=liT-cogs; var np=gt-cogs; // chargesIncluded=true default
       var mgn=gt>0?((np/gt)*100).toFixed(2):'0';
       var status=(function(s){
         var m={'paid':'Paid','partially paid':'Partially Paid','part paid':'Partially Paid',
@@ -1892,6 +1906,7 @@ function processImport(entity, csvText) {
         cur:r['Currency']||r['cur']||'USD', taxRate:tx, lf:lf, ins:ins, leg:0, isp:0, oth:0, dep:dep,
         terms:AS.terms||'', status:status,
         lineItems:existing?existing.lineItems:[], pos:existing?existing.pos:[],
+        chargesIncluded:true,
         notes:r['Notes']||r['notes']||'',
         calc_grandTotal:String(gt), calc_cogs:String(cogs), calc_grossProfit:String(gp),
         calc_netProfit:String(np), calc_margin:mgn, calc_balanceDue:String(gt-dep),
