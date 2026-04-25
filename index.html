@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.5.3</title>
+<title>Stackd Ops v2.5.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -1817,171 +1817,128 @@ function processImport(entity, csvText) {
   var rows = parsed.rows;
   if (!rows.length) { impLog('No data rows found in ' + entity + ' CSV'); return; }
 
-  var added = 0, skipped = 0, errors = [];
+  var added = 0, updated = 0, skipped = 0, errors = [];
   var now = new Date().toISOString();
 
   if (entity === 'sup') {
     rows.forEach(function(r) {
-      var name = r['Supplier Name'] || r['name'] || '';
+      var name = r['Supplier Name']||r['name']||'';
       if (!name) { skipped++; return; }
-      // Skip if already exists by name
-      var exists = DB.sup.some(function(s){ return s.name.toLowerCase() === name.toLowerCase(); });
-      if (exists) { skipped++; impLog('Skipped duplicate supplier: ' + name); return; }
-      DB.sup.push({
-        id: uid(), name: name,
-        country: r['Country']||r['country']||'',
-        ct: r['Contact Person']||r['ct']||'',
-        email: r['Email']||r['email']||'',
-        phone: r['Phone/WeChat']||r['phone']||'',
-        cur: r['Currency']||r['cur']||'USD',
-        notes: r['Notes']||r['notes']||'',
-        updAt: now
-      });
-      added++;
+      var existing = DB.sup.find(function(s){ return s.name.toLowerCase()===name.toLowerCase(); });
+      var rec = { id:existing?existing.id:uid(), name:name,
+        country:r['Country']||r['country']||'', ct:r['Contact Person']||r['ct']||'',
+        email:r['Email']||r['email']||'', phone:r['Phone/WeChat']||r['phone']||'',
+        cur:r['Currency']||r['cur']||'USD', notes:r['Notes']||r['notes']||'', updAt:now };
+      if (existing) { var i=DB.sup.findIndex(function(s){return s.id===existing.id;}); DB.sup[i]=rec; updated++; impLog('Updated supplier: '+name); }
+      else { DB.sup.push(rec); added++; }
     });
-    sv(K.s, DB.sup);
-    var msg = 'Suppliers: ' + added + ' imported, ' + skipped + ' skipped';
-    G('imp-sup-result').textContent = msg; impLog(msg);
-    rSup(); rDash();
+    sv(K.s,DB.sup);
+    var msg='Suppliers: '+added+' added, '+updated+' updated, '+skipped+' skipped';
+    G('imp-sup-result').textContent=msg; impLog(msg); rSup(); rDash();
   }
 
   else if (entity === 'li') {
     rows.forEach(function(r) {
-      var desc = r['Description']||r['desc']||'';
+      var desc=r['Description']||r['desc']||'';
+      var sku=r['SKU']||r['sku']||'';
       if (!desc) { skipped++; return; }
-      var supName = r['Supplier Name']||r['supName']||'';
-      var sup = DB.sup.find(function(s){ return s.name.toLowerCase() === supName.toLowerCase(); });
-      if (!sup && supName) { errors.push('Supplier not found: ' + supName); skipped++; return; }
-      DB.li.push({
-        id: uid(),
-        sku: r['SKU']||r['sku']||'',
-        desc: desc,
-        specs: r['Specifications']||r['specs']||'',
-        hs: r['HS Code']||r['hs']||'',
-        supId: sup ? sup.id : '',
-        uom: r['Unit of Measure']||r['uom']||'pcs',
-        cost: +r['Unit Cost']||+r['cost']||0,
-        price: +r['Unit Price']||+r['price']||0,
-        cur: r['Currency']||r['cur']||'USD',
-        notes: r['Notes']||r['notes']||'',
-        updAt: now
+      var supName=r['Supplier Name']||r['supName']||'';
+      var sup=DB.sup.find(function(s){return s.name.toLowerCase()===supName.toLowerCase();});
+      if (!sup&&supName) { errors.push('Supplier not found: '+supName); skipped++; return; }
+      var existing=DB.li.find(function(l){
+        if(sku) return l.sku===sku&&l.supId===(sup?sup.id:'');
+        return l.desc.toLowerCase()===desc.toLowerCase()&&l.supId===(sup?sup.id:'');
       });
-      added++;
+      var rec = { id:existing?existing.id:uid(), sku:sku, desc:desc,
+        specs:r['Specifications']||r['specs']||'', hs:r['HS Code']||r['hs']||'',
+        supId:sup?sup.id:'', uom:r['Unit of Measure']||r['uom']||'pcs',
+        cost:+r['Unit Cost']||+r['cost']||0, price:+r['Unit Price']||+r['price']||0,
+        cur:r['Currency']||r['cur']||'USD', notes:r['Notes']||r['notes']||'', updAt:now };
+      if (existing) { var i=DB.li.findIndex(function(l){return l.id===existing.id;}); DB.li[i]=rec; updated++; impLog('Updated: '+(sku||desc)); }
+      else { DB.li.push(rec); added++; }
     });
-    sv(K.l, DB.li);
-    var msg = 'Line Items: ' + added + ' imported, ' + skipped + ' skipped' + (errors.length?' | '+errors.join('; '):'');
-    G('imp-li-result').textContent = msg; impLog(msg);
-    rLI(); rDash();
+    sv(K.l,DB.li);
+    var msg='Line Items: '+added+' added, '+updated+' updated, '+skipped+' skipped'+(errors.length?' | '+errors.join('; '):'');
+    G('imp-li-result').textContent=msg; impLog(msg); rLI(); rDash();
   }
 
   else if (entity === 'inv') {
     rows.forEach(function(r) {
-      var num = r['Invoice #']||r['num']||'';
-      var buyer = r['Buyer']||r['buyer']||'';
-      if (!num || !buyer) { skipped++; return; }
-      // Skip duplicates
-      if (DB.inv.some(function(i){ return i.num === num; })) {
-        skipped++; impLog('Skipped duplicate invoice: ' + num); return;
-      }
-      var grandTotal = +r['Grand Total']||+r['grand_total']||0;
-      var liTotal = +r['Items Subtotal']||+r['liTotal']||grandTotal;
-      var cogs = +r['COGS']||+r['cogs']||0;
-      var dep = +r['Buyer Deposit']||+r['dep']||0;
-      var taxRate = +r['Tax Rate (decimal)']||+r['taxRate']||0;
-      var lf = +r['Local Freight']||+r['lf']||0;
-      var ins = +r['Insurance']||+r['ins']||0;
-      // Calculate P&L from provided totals
-      var gp = liTotal - cogs;
-      var np = grandTotal - cogs - lf - ins;
-      var mgn = grandTotal > 0 ? ((np/grandTotal)*100).toFixed(2) : '0';
-      DB.inv.push({
-        id: uid(), num: num, buyer: buyer,
-        buyerAddr: r['Buyer Address']||'',
-        shipTo: '',
-        dst: r['Destination']||r['dst']||'',
-        custId: '',
-        date: r['Date (YYYY-MM-DD)']||r['date']||today(),
-        expiry: r['Expiry Date']||r['expiry']||'',
-        shipDate: '',
-        ft: r['Freight Type']||r['ft']||'',
-        wt: '', cbm: '', pk: '',
-        pol: r['Port of Loading']||r['pol']||'',
-        pod: r['Port of Discharge']||r['pod']||'',
-        coo: r['Country of Origin']||r['coo']||'',
-        cur: r['Currency']||r['cur']||'USD',
-        taxRate: taxRate, lf: lf, ins: ins, leg: 0, isp: 0, oth: 0,
-        dep: dep,
-        terms: AS.terms||'',
-        status: (function(s){
-          var m={'paid':'Paid','partially paid':'Partially Paid','part paid':'Partially Paid',
-            'part':'Partially Paid','sent':'Sent','draft':'Draft','cancelled':'Cancelled',
-            'canceled':'Cancelled','proforma':'Pro-forma','pro-forma':'Pro-forma',
-            'pro forma':'Pro-forma'};
-          var v=(s||'').trim();
-          return m[v.toLowerCase()]||v||'Draft';
-        })(r['Status']||r['status']||''),
-        lineItems: [],
-        pos: [],
-        notes: r['Notes']||r['notes']||'',
-        // Store provided totals as calc_ fields so dashboard shows correctly
-        calc_grandTotal: String(grandTotal),
-        calc_cogs: String(cogs),
-        calc_grossProfit: String(gp),
-        calc_netProfit: String(np),
-        calc_margin: mgn,
-        calc_balanceDue: String(grandTotal - dep),
-        calc_liTotal: String(liTotal),
-        calc_taxAmt: String(liTotal * taxRate),
-        updAt: now
-      });
-      added++;
+      var num=r['Invoice #']||r['num']||'';
+      var buyer=r['Buyer']||r['buyer']||'';
+      if (!num||!buyer) { skipped++; return; }
+      var gt=+r['Grand Total']||+r['grand_total']||0;
+      var liT=+r['Items Subtotal']||+r['liTotal']||gt;
+      var cogs=+r['COGS']||+r['cogs']||0;
+      var dep=+r['Buyer Deposit']||+r['dep']||0;
+      var tx=+r['Tax Rate (decimal)']||+r['taxRate']||0;
+      var lf=+r['Local Freight']||+r['lf']||0;
+      var ins=+r['Insurance']||+r['ins']||0;
+      var gp=liT-cogs; var np=gt-cogs-lf-ins;
+      var mgn=gt>0?((np/gt)*100).toFixed(2):'0';
+      var status=(function(s){
+        var m={'paid':'Paid','partially paid':'Partially Paid','part paid':'Partially Paid',
+          'part':'Partially Paid','sent':'Sent','draft':'Draft','cancelled':'Cancelled',
+          'canceled':'Cancelled','proforma':'Pro-forma','pro-forma':'Pro-forma','pro forma':'Pro-forma'};
+        var v=(s||'').trim(); return m[v.toLowerCase()]||v||'Draft';
+      })(r['Status']||r['status']||'');
+      var existing=DB.inv.find(function(i){return i.num===num;});
+      var rec = { id:existing?existing.id:uid(), num:num, buyer:buyer,
+        buyerAddr:r['Buyer Address']||'', shipTo:'', dst:r['Destination']||r['dst']||'', custId:'',
+        date:r['Date (YYYY-MM-DD)']||r['date']||today(), expiry:r['Expiry Date']||r['expiry']||'', shipDate:'',
+        ft:r['Freight Type']||r['ft']||'', wt:'', cbm:'', pk:'',
+        pol:r['Port of Loading']||r['pol']||'', pod:r['Port of Discharge']||r['pod']||'',
+        coo:r['Country of Origin']||r['coo']||'',
+        cur:r['Currency']||r['cur']||'USD', taxRate:tx, lf:lf, ins:ins, leg:0, isp:0, oth:0, dep:dep,
+        terms:AS.terms||'', status:status,
+        lineItems:existing?existing.lineItems:[], pos:existing?existing.pos:[],
+        notes:r['Notes']||r['notes']||'',
+        calc_grandTotal:String(gt), calc_cogs:String(cogs), calc_grossProfit:String(gp),
+        calc_netProfit:String(np), calc_margin:mgn, calc_balanceDue:String(gt-dep),
+        calc_liTotal:String(liT), calc_taxAmt:String(liT*tx), updAt:now };
+      if (existing) { var i=DB.inv.findIndex(function(x){return x.num===num;}); DB.inv[i]=rec; updated++; impLog('Updated invoice: '+num); }
+      else { DB.inv.push(rec); added++; }
     });
-    sv(K.i, DB.inv);
-    var msg = 'Invoices: ' + added + ' imported, ' + skipped + ' skipped';
-    G('imp-inv-result').textContent = msg; impLog(msg);
-    rInv(); rDash();
+    sv(K.i,DB.inv);
+    var msg='Invoices: '+added+' added, '+updated+' updated, '+skipped+' skipped';
+    G('imp-inv-result').textContent=msg; impLog(msg); rInv(); rDash();
   }
 
   else if (entity === 'po') {
     rows.forEach(function(r) {
-      var num = r['PO #']||r['num']||'';
-      var supName = r['Supplier Name']||r['supName']||'';
+      var num=r['PO #']||r['num']||'';
+      var supName=r['Supplier Name']||r['supName']||'';
       if (!num) { skipped++; return; }
-      var sup = DB.sup.find(function(s){ return s.name.toLowerCase() === supName.toLowerCase(); });
-      if (!sup && supName) { errors.push('Supplier not found: ' + supName); skipped++; return; }
-      var invNum = r['Linked Invoice #']||r['invNum']||'';
-      var inv = invNum ? DB.inv.find(function(i){ return i.num === invNum; }) : null;
-      var cogsTotal = +r['COGS Total']||+r['calc_liTotal']||0;
-      var dep = +r['Supplier Deposit']||+r['dep']||0;
-      var oth = +r['Other Charges']||+r['oth']||0;
-      DB.po.push({
-        id: uid(), num: num,
-        supId: sup ? sup.id : '',
-        invId: inv ? inv.id : '',
-        invNum: invNum,
-        date: r['Date (YYYY-MM-DD)']||r['date']||today(),
-        del: r['Required Delivery']||r['del']||'',
-        cur: r['Currency']||r['cur']||'USD',
-        lineItems: [],
-        dep: dep, oth: oth,
-        notes: r['Notes']||r['notes']||'',
-        status: (function(s){
-          var m={'deposit paid':'Deposit Paid','settled':'Settled','sent':'Sent',
-            'draft':'Draft','cancelled':'Cancelled','canceled':'Cancelled'};
-          var v=(s||'').trim();
-          return m[v.toLowerCase()]||v||'Draft';
-        })(r['Status']||r['status']||''),
-        calc_liTotal: String(cogsTotal),
-        calc_grandTotal: String(cogsTotal + oth),
-        calc_balanceDue: String(cogsTotal + oth - dep),
-        creAt: now, updAt: now
-      });
-      added++;
+      var sup=DB.sup.find(function(s){return s.name.toLowerCase()===supName.toLowerCase();});
+      if (!sup&&supName) { errors.push('Supplier not found: '+supName); skipped++; return; }
+      var invNum=r['Linked Invoice #']||r['invNum']||'';
+      var inv=invNum?DB.inv.find(function(i){return i.num===invNum;}):null;
+      var cogs=+r['COGS Total']||0;
+      var dep=+r['Supplier Deposit']||+r['dep']||0;
+      var oth=+r['Other Charges']||+r['oth']||0;
+      var status=(function(s){
+        var m={'deposit paid':'Deposit Paid','settled':'Settled','sent':'Sent',
+          'draft':'Draft','cancelled':'Cancelled','canceled':'Cancelled'};
+        var v=(s||'').trim(); return m[v.toLowerCase()]||v||'Draft';
+      })(r['Status']||r['status']||'');
+      var existing=DB.po.find(function(p){return p.num===num;});
+      var rec = { id:existing?existing.id:uid(), num:num,
+        supId:sup?sup.id:'', invId:inv?inv.id:(existing?existing.invId:''), invNum:invNum,
+        date:r['Date (YYYY-MM-DD)']||r['date']||today(), del:r['Required Delivery']||r['del']||'',
+        cur:r['Currency']||r['cur']||'USD',
+        lineItems:existing?existing.lineItems:[],
+        dep:dep, oth:oth,
+        fpmFunded:existing?existing.fpmFunded||0:0,
+        fpmRecovered:existing?existing.fpmRecovered||false:false,
+        notes:r['Notes']||r['notes']||'', status:status,
+        calc_liTotal:String(cogs), calc_grandTotal:String(cogs+oth), calc_balanceDue:String(cogs+oth-dep),
+        creAt:existing?existing.creAt:now, updAt:now };
+      if (existing) { var i=DB.po.findIndex(function(p){return p.num===num;}); DB.po[i]=rec; updated++; impLog('Updated PO: '+num); }
+      else { DB.po.push(rec); added++; }
     });
-    sv(K.p, DB.po);
-    var msg = 'POs: ' + added + ' imported, ' + skipped + ' skipped' + (errors.length?' | '+errors.join('; '):'');
-    G('imp-po-result').textContent = msg; impLog(msg);
-    rPO(); rDash();
+    sv(K.p,DB.po);
+    var msg='POs: '+added+' added, '+updated+' updated, '+skipped+' skipped'+(errors.length?' | '+errors.join('; '):'');
+    G('imp-po-result').textContent=msg; impLog(msg); rPO(); rDash();
   }
 
   // Sync to Sheets
