@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.5.1</title>
+<title>Stackd Ops v2.5.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -26,7 +26,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .banner input{font-family:'DM Mono',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ink);background:transparent;padding:3px 0;outline:none;width:340px;color:var(--ink);}
 .banner button{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:white;border:none;padding:5px 11px;cursor:pointer;}
 .view{display:none;padding:22px;}.view.on{display:block;}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:18px;}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-bottom:18px;}
 .kpi{background:var(--card);border:1px solid var(--ln);padding:16px 18px 12px;}
 .kl{font-size:.48rem;letter-spacing:.16em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
 .kv{font-family:'Bebas Neue',sans-serif;font-size:1.75rem;letter-spacing:.04em;line-height:1;color:var(--ink);}
@@ -158,7 +158,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .empty{text-align:center;padding:40px 20px;color:var(--m);}
 .ei{font-size:1.8rem;margin-bottom:7px;opacity:.3;}.empty p{font-size:.58rem;line-height:1.9;}
  .idoc,.pdoc{padding:20px;max-width:100%;}}
-@media(max-width:680px){.kpis{grid-template-columns:1fr 1fr;}.r2,.r3{grid-template-columns:1fr;}.fg3,.fg4{grid-template-columns:1fr 1fr;}.tgrid,.dstrip{grid-template-columns:1fr 1fr;}}
+@media(max-width:680px){.kpis{grid-template-columns:1fr 1fr 1fr;}.r2,.r3{grid-template-columns:1fr;}.fg3,.fg4{grid-template-columns:1fr 1fr;}.tgrid,.dstrip{grid-template-columns:1fr 1fr;}}
 
   #print-body {
     position:fixed;
@@ -209,6 +209,20 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div class="card"><div class="ct">Revenue by Destination</div><div class="bc" id="dest-chart"></div></div>
     <div class="card"><div class="ct">Margin Distribution</div><div class="bc" id="mgn-chart"></div></div>
     <div class="card"><div class="ct">PO Commitments</div><div class="bc" id="po-chart"></div></div>
+  </div>
+
+  <!-- Accounts & Deposit Tracker -->
+  <div class="card" style="margin-top:12px;">
+    <div class="ct">
+      Accounts &amp; Deposit Tracker
+      <div style="margin-left:auto;display:flex;gap:6px;">
+        <button class="btn btn-s" id="acct-inv-btn" onclick="setAcctView('inv')" style="font-size:.48rem;padding:3px 9px;">By Invoice</button>
+        <button class="btn btn-g" id="acct-sup-btn" onclick="setAcctView('sup')" style="font-size:.48rem;padding:3px 9px;">By Supplier</button>
+      </div>
+    </div>
+    <div id="acct-inv" class="tw"></div>
+    <div id="acct-sup" class="tw" style="display:none;"></div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--ln);display:flex;gap:22px;" id="acct-totals"></div>
   </div>
 </div>
 
@@ -512,7 +526,12 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
       <div class="fg fg3" style="margin-top:12px;">
         <div class="fld"><label id="lbl-po-dep">Supplier Deposit Paid</label><input type="number" id="pf-dep" placeholder="0.00" step="0.01" oninput="calcPO()" style="border-bottom-color:var(--bl);background:rgba(26,79,219,.04);"></div>
+        <div class="fld"><label style="color:var(--cr);">FPM Funded (out of pocket)</label><input type="number" id="pf-fpm" placeholder="0.00" step="0.01" oninput="calcPO()" style="border-bottom-color:var(--cr);background:rgba(184,40,58,.04);" title="Amount of the deposit you paid from your own funds — not covered by buyer deposit. Auto-recovered when invoice is marked Paid."></div>
         <div class="fld"><label>Other Charges</label><input type="number" id="pf-oth" placeholder="0.00" step="0.01" oninput="calcPO()"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;margin-bottom:4px;">
+        <input type="checkbox" id="pf-rec" disabled style="accent-color:var(--gn);">
+        <label style="font-size:.58rem;color:var(--m);" id="pf-rec-label">FPM funds recovered (auto-set when invoice marked Paid)</label>
       </div>
       <div style="background:var(--ink);padding:10px 18px;display:flex;gap:22px;margin-top:10px;" id="po-tots"></div>
       <div class="fld" style="margin-top:10px;"><label id="lbl-po-notes">Special Instructions</label><textarea id="pf-nt" placeholder="Packaging, delivery, certifications required..."></textarea></div>
@@ -767,12 +786,19 @@ function rDash() {
   var mg = ai.map(function(i){ return cInv(i).mgn; }).filter(function(m){ return m !== null; });
   var aM = mg.length ? mg.reduce(function(a,b){ return a+b; }, 0) / mg.length : 0;
 
+  // Net cash: total buyer deposits received minus total supplier deposits paid
+  var tBuyerDep = ai.reduce(function(s,i){ return s + (+i.dep||0); }, 0);
+  var tSupDep = DB.po.filter(function(p){ return p.status!=='Cancelled'; })
+    .reduce(function(s,p){ return s + (+p.dep||0); }, 0);
+  var netCash = tBuyerDep - tSupDep;
+
   G('kpis').innerHTML =
     '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR) + '</div><div class="ks">' + ai.length + ' active</div></div>' +
     '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP) + '</div><div class="ks">After all costs</div></div>' +
     '<div class="kpi"><div class="kl">Avg Margin</div><div class="kv ' + (aM>=20?'g':aM>=10?'gold':'r') + '">' + fp(aM) + '</div><div class="ks">' + mg.length + ' invoices</div></div>' +
     '<div class="kpi"><div class="kl">Outstanding from Buyers</div><div class="kv b">' + fmt(tOut) + '</div><div class="ks">Balance due</div></div>' +
-    '<div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">' + fmt(tPO) + '</div><div class="ks">To suppliers</div></div>';
+    '<div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">' + fmt(tPO) + '</div><div class="ks">To suppliers</div></div>' +
+    '<div class="kpi"><div class="kl">Net Cash Position</div><div class="kv ' + (netCash>=0?'g':'r') + '">' + fmt(netCash) + '</div><div class="ks">Buyer deps - supplier deps</div></div>';
 
   var pl = G('pipeline');
   if (!DB.inv.length) {
@@ -820,6 +846,152 @@ function rDash() {
     var t = (p.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0);
     return '<div class="br"><div class="bl2">' + (p.num||gsn(p.supId)||'-') + '</div><div class="bt"><div class="bf bl" style="width:' + (t/mxP*100) + '%"></div></div><div class="bv">' + fmt(t-(+p.dep||0),p.cur||'USD') + '</div></div>';
   }).join('') : '<p style="font-size:.56rem;color:var(--m)">No active POs</p>';
+
+  // Render accounts tracker
+  renderAccts();
+}
+
+function setAcctView(view) {
+  G('acct-inv').style.display = view==='inv' ? 'block' : 'none';
+  G('acct-sup').style.display = view==='sup' ? 'block' : 'none';
+  G('acct-inv-btn').className = 'btn ' + (view==='inv' ? 'btn-s' : 'btn-g');
+  G('acct-sup-btn').className = 'btn ' + (view==='sup' ? 'btn-s' : 'btn-g');
+}
+
+function renderAccts() {
+  var ai = DB.inv.filter(function(i){ return i.status !== 'Cancelled'; });
+
+  // ── PER INVOICE VIEW ──────────────────────────────────────
+  var invRows = ai.slice().reverse().map(function(inv) {
+    var cur = inv.cur || 'USD';
+    var c = cInv(inv);
+    var buyerDep = +inv.dep || 0;
+    var balFromBuyer = c.bal;
+
+    // Sum supplier deposits across all POs linked to this invoice
+    var linkedPOs = DB.po.filter(function(p){
+      return p.invId === inv.id || p.invNum === inv.num;
+    });
+    var supDepPaid  = linkedPOs.reduce(function(s,p){ return s + (+p.dep||0); }, 0);
+    var fpmFunded   = linkedPOs.reduce(function(s,p){ return s + (+p.fpmFunded||0); }, 0);
+    var fpmRecovered= linkedPOs.every(function(p){ return !p.fpmFunded || p.fpmRecovered; });
+    var supBalDue   = linkedPOs.reduce(function(s,p){
+      var t = (p.lineItems||[]).reduce(function(a,l){ return a+(+l.qty||0)*(+l.cost||0); },0);
+      return s + Math.max(0, t + (+p.oth||0) - (+p.dep||0));
+    }, 0);
+
+    // Total to chase = invoice balance + any unrecovered FPM-funded deposits
+    var unrecoveredFPM = fpmRecovered ? 0 : fpmFunded;
+    var totalToChase = balFromBuyer + unrecoveredFPM;
+    var netPos = buyerDep - supDepPaid;
+    var nc = netPos >= 0 ? 'pos' : 'neg';
+    var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
+
+    var fpmCell = fpmFunded > 0
+      ? (fpmRecovered
+          ? '<span style="color:var(--gn);font-size:.52rem;">&#10003; Recovered</span>'
+          : '<span style="color:var(--cr);">' + fmt(fpmFunded,cur) + '</span>')
+      : '-';
+
+    var chaseCell = totalToChase > 0
+      ? '<span style="color:var(--cr);font-weight:600;">' + fmt(totalToChase,cur) + (unrecoveredFPM>0?' <span style="font-size:.48rem;">(inc. FPM dep)</span>':'') + '</span>'
+      : '<span style="color:var(--gn);">&#10003; Settled</span>';
+
+    return '<tr>' +
+      '<td style="color:var(--cr);font-weight:500;white-space:nowrap;">' + (inv.num||'-') + '</td>' +
+      '<td>' + (inv.buyer||'-') + '</td>' +
+      '<td>' + (inv.dst||'-') + '</td>' +
+      '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
+      '<td class="num">' + fmt(c.grand, cur) + '</td>' +
+      '<td class="num" style="color:var(--gn);">' + (buyerDep ? fmt(buyerDep,cur) : '-') + '</td>' +
+      '<td class="num ' + (balFromBuyer>0?'neg':'') + '">' + (balFromBuyer>0 ? fmt(balFromBuyer,cur) : '<span style="color:var(--gn);">&#10003;</span>') + '</td>' +
+      '<td class="num" style="color:var(--bl);">' + (supDepPaid ? fmt(supDepPaid,cur) : '-') + '</td>' +
+      '<td class="num">' + fpmCell + '</td>' +
+      '<td class="num ' + (supBalDue>0?'neg':'') + '">' + (supBalDue>0 ? fmt(supBalDue,cur) : (linkedPOs.length?'<span style="color:var(--gn);">&#10003;</span>':'-')) + '</td>' +
+      '<td class="num">' + chaseCell + '</td>' +
+      '</tr>';
+  }).join('');
+
+  G('acct-inv').innerHTML = ai.length ?
+    '<table class="tbl"><thead><tr>' +
+      '<th>Invoice #</th><th>Buyer</th><th>Destination</th><th>Status</th>' +
+      '<th class="num">Invoice Total</th>' +
+      '<th class="num" style="color:var(--gn);">Buyer Dep. Rec.</th>' +
+      '<th class="num">Buyer Bal. Due</th>' +
+      '<th class="num" style="color:var(--bl);">Sup. Dep. Paid</th>' +
+      '<th class="num" style="color:var(--cr);">FPM Funded</th>' +
+      '<th class="num">Sup. Bal. Due</th>' +
+      '<th class="num">Total to Chase</th>' +
+    '</tr></thead><tbody>' + invRows + '</tbody></table>' :
+    '<div class="empty"><div class="ei">&#128197;</div><p>No invoices to display.</p></div>';
+
+  // ── PER SUPPLIER VIEW ─────────────────────────────────────
+  var supMap = {};
+  DB.po.filter(function(p){ return p.status!=='Cancelled'; }).forEach(function(po) {
+    var sid = po.supId || 'unknown';
+    if (!supMap[sid]) supMap[sid] = { name: gsn(po.supId), pos: [] };
+    supMap[sid].pos.push(po);
+  });
+
+  var supRows = Object.values(supMap).map(function(s) {
+    var totalCOGS = s.pos.reduce(function(a,p){
+      return a + (p.lineItems||[]).reduce(function(b,l){ return b+(+l.qty||0)*(+l.cost||0); },0);
+    }, 0);
+    var totalDep = s.pos.reduce(function(a,p){ return a+(+p.dep||0); },0);
+    var totalBal = s.pos.reduce(function(a,p){
+      var t=(p.lineItems||[]).reduce(function(b,l){return b+(+l.qty||0)*(+l.cost||0);},0);
+      return a+Math.max(0,t+(+p.oth||0)-(+p.dep||0));
+    },0);
+    var pct = totalCOGS > 0 ? ((totalDep/totalCOGS)*100).toFixed(0) : 0;
+    var settled = s.pos.filter(function(p){return p.status==='Settled';}).length;
+
+    return '<tr>' +
+      '<td style="font-weight:500;color:var(--cr);">' + s.name + '</td>' +
+      '<td class="num">' + s.pos.length + '</td>' +
+      '<td class="num">' + fmt(totalCOGS) + '</td>' +
+      '<td class="num" style="color:var(--bl);">' + fmt(totalDep) + '</td>' +
+      '<td class="num ' + (totalBal>0?'neg':'pos') + '">' + fmt(totalBal) + '</td>' +
+      '<td class="num"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">' +
+        '<div style="width:60px;height:6px;background:var(--bg);border-radius:2px;">' +
+          '<div style="width:' + Math.min(100,+pct) + '%;height:100%;background:var(--bl);border-radius:2px;"></div>' +
+        '</div>' +
+        '<span style="font-size:.5rem;">' + pct + '%</span>' +
+      '</div></td>' +
+      '<td style="font-size:.54rem;color:var(--m);">' + settled + '/' + s.pos.length + ' settled</td>' +
+      '</tr>';
+  }).join('');
+
+  G('acct-sup').innerHTML = Object.keys(supMap).length ?
+    '<table class="tbl"><thead><tr>' +
+      '<th>Supplier</th><th class="num">POs</th>' +
+      '<th class="num">Total COGS</th>' +
+      '<th class="num" style="color:var(--bl);">Dep. Paid</th>' +
+      '<th class="num">Bal. Due to Sup.</th>' +
+      '<th class="num">Dep. Coverage</th>' +
+      '<th>Settlement</th>' +
+    '</tr></thead><tbody>' + supRows + '</tbody></table>' :
+    '<div class="empty"><div class="ei">&#128203;</div><p>No purchase orders. POs are auto-generated when you save an invoice with library line items.</p></div>';
+
+  // ── TOTALS BAR ────────────────────────────────────────────
+  var tBD = ai.reduce(function(s,i){ return s+(+i.dep||0); },0);
+  var tSD = DB.po.filter(function(p){return p.status!=='Cancelled';})
+    .reduce(function(s,p){return s+(+p.dep||0);},0);
+  var tFPM = DB.po.filter(function(p){return p.status!=='Cancelled' && !p.fpmRecovered && +p.fpmFunded>0;})
+    .reduce(function(s,p){return s+(+p.fpmFunded||0);},0);
+  var net = tBD - tSD;
+
+  G('acct-totals').innerHTML =
+    '<div><div class="dl" style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:2px;">Total Received from Buyers</div>' +
+      '<div class="kv g" style="font-size:1.1rem;">' + fmt(tBD) + '</div></div>' +
+    '<div><div class="dl" style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:2px;">Total Paid to Suppliers</div>' +
+      '<div class="kv b" style="font-size:1.1rem;">' + fmt(tSD) + '</div></div>' +
+    '<div><div class="dl" style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:2px;">Net Cash Position</div>' +
+      '<div class="kv ' + (net>=0 ? 'g' : 'r') + '" style="font-size:1.1rem;">' + fmt(net) + '</div></div>' +
+    (tFPM > 0 ? '<div><div class="dl" style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cr);margin-bottom:2px;">FPM Exposure (to recover)</div>' +
+      '<div class="kv r" style="font-size:1.1rem;">' + fmt(tFPM) + '</div></div>' : '');
+
+  // Default to invoice view
+  setAcctView('inv');
 }
 
 // ── SUPPLIERS ──────────────────────────────────────────────────
@@ -1043,6 +1215,22 @@ async function saveInv() {
   audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv); toast('Invoice saved');
   await syncEnt('inv',inv);
   if(!EI.i) autoPos(inv);
+  // Auto-recover FPM-funded deposits when invoice is marked Paid
+  if (inv.status === 'Paid') {
+    var recovered = false;
+    DB.po.forEach(function(po) {
+      if ((po.invId === inv.id || po.invNum === inv.num) && po.fpmFunded > 0 && !po.fpmRecovered) {
+        po.fpmRecovered = true;
+        po.updAt = new Date().toISOString();
+        recovered = true;
+        syncEnt('po', po);
+      }
+    });
+    if (recovered) {
+      sv(K.p, DB.po);
+      toast('FPM-funded deposits marked as recovered ✓');
+    }
+  }
 }
 
 function autoPos(inv) {
@@ -1104,7 +1292,7 @@ function openPO() {
   EI.p=null; cPL=[];
   G('po-mt').textContent='New Purchase Order'; G('po-sm').value='Draft';
   ['pf-n','pf-del','pf-nt'].forEach(function(f){var e=G(f);if(e)e.value='';});
-  G('pf-dep').value=''; G('pf-oth').value=''; G('pf-dt').value=today();
+  G('pf-dep').value=''; G('pf-fpm').value=''; G('pf-oth').value=''; G('pf-rec').checked=false; G('pf-rec-label').textContent='FPM funds recovered (auto-set when invoice marked Paid)'; G('pf-dt').value=today();
   G('pf-sup').value=''; G('pf-cur').value='USD'; G('pf-inv').value='';
   rPLT(); calcPO(); G('ov-po').classList.add('on');
 }
@@ -1140,15 +1328,16 @@ function calcPO() {
   var cur=G('pf-cur').value||'USD';
   var liT=cPL.reduce(function(s,li){return s+(+li.qty||0)*(+li.cost||0);},0);
   var dep=+G('pf-dep').value||0, oth=+G('pf-oth').value||0, grand=liT+oth, bal=grand-dep;
+  var fpm=+(G('pf-fpm')&&G('pf-fpm').value)||0;
   G('po-tots').innerHTML =
-    '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">COGS Subtotal</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;color:white;">' + fmt(liT,cur) + '</div></div>' +
-    '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Deposit Paid</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;color:#93c5fd;">' + fmt(dep,cur) + '</div></div>' +
-    '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Total PO Value</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;color:var(--gold);">' + fmt(grand,cur) + '</div></div>' +
-    '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Balance Due to Supplier</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.25rem;color:var(--bl);">' + fmt(bal,cur) + '</div></div>';
+    '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">COGS Subtotal</div><div style="font-family:Bebas Neue,sans-serif;font-size:1.05rem;color:white;">' + fmt(liT,cur) + '</div></div>' +
+    '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Deposit Paid</div><div style="font-family:Bebas Neue,sans-serif;font-size:1.05rem;color:#93c5fd;">' + fmt(dep,cur) + '</div></div>' +
+    '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Total PO Value</div><div style="font-family:Bebas Neue,sans-serif;font-size:1.05rem;color:var(--gold);">' + fmt(grand,cur) + '</div></div>' +
+    '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Balance Due to Supplier</div><div style="font-family:Bebas Neue,sans-serif;font-size:1.25rem;color:var(--bl);">' + fmt(bal,cur) + '</div></div>';
 }
 async function savePO() {
   if (!vPO()) return;
-  var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
+  var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,fpmFunded:+G('pf-fpm').value||0,fpmRecovered:G('pf-rec').checked,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
   if(EI.p){var i=DB.po.findIndex(function(x){return x.id===EI.p;});if(i>-1)DB.po[i]=po;}else DB.po.push(po);
   sv(K.p,DB.po); closeM('ov-po'); rPO(); rDash(); audit(EI.p?'UPDATE':'CREATE','po',po.id,po); toast('PO saved'); await syncEnt('po',po);
 }
@@ -1272,12 +1461,12 @@ function prevInvDoc(inv) {
       // Header
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:18px;border-bottom:2px solid #111;">'
         +'<div>'
-          +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:2.2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:2.2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
           +'<div style="font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:#8a7f82;margin-top:2px;">'+(AS.tag||'Source &middot; Supply &middot; Ship')+'</div>'
           +'<div style="font-size:.6rem;color:#555;margin-top:8px;line-height:1.8;">'+(AS.addr||'')+'<br>'+(AS.email||'')+' &nbsp;&middot;&nbsp; '+(AS.phone||'')+'</div>'
         +'</div>'
         +'<div style="text-align:right;">'
-          +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.9rem;letter-spacing:.15em;color:#B8283A;margin-bottom:8px;">INVOICE</div>'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:#B8283A;margin-bottom:8px;">INVOICE</div>'
           +'<table style="font-size:.62rem;margin-left:auto;"><tbody>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Invoice #</td><td style="text-align:right;">'+invNum+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Date</td><td style="text-align:right;">'+(inv.date||'-')+'</td></tr>'
@@ -1313,8 +1502,8 @@ function prevInvDoc(inv) {
         +'<div style="width:300px;">'
           +charges
           +'<div style="display:flex;justify-content:space-between;border-top:2px solid #111;padding-top:8px;margin-top:4px;">'
-            +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:.95rem;letter-spacing:.1em;">BALANCE DUE</span>'
-            +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#B8283A;">'+cur+' '+fn(bal)+'</span>'
+            +'<span style="font-family:Bebas Neue,sans-serif;font-size:.95rem;letter-spacing:.1em;">BALANCE DUE</span>'
+            +'<span style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;color:#B8283A;">'+cur+' '+fn(bal)+'</span>'
           +'</div>'
         +'</div>'
       +'</div>'
@@ -1384,12 +1573,12 @@ function prevPODoc(po) {
     +'<div class="doc">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:18px;border-bottom:2px solid #111;">'
         +'<div>'
-          +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:2.2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:2.2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
           +'<div style="font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:#8a7f82;margin-top:2px;">'+(AS.tag||'Source &middot; Supply &middot; Ship')+'</div>'
           +'<div style="font-size:.6rem;color:#555;margin-top:8px;line-height:1.8;">'+(AS.addr||'')+'<br>'+(AS.email||'')+'</div>'
         +'</div>'
         +'<div style="text-align:right;">'
-          +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.9rem;letter-spacing:.15em;color:#1a4fdb;margin-bottom:8px;">PURCHASE ORDER</div>'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:#1a4fdb;margin-bottom:8px;">PURCHASE ORDER</div>'
           +'<table style="font-size:.62rem;margin-left:auto;"><tbody>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">PO Number</td><td style="text-align:right;">'+poNum+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Date</td><td style="text-align:right;">'+(po.date||'-')+'</td></tr>'
@@ -1422,8 +1611,8 @@ function prevPODoc(po) {
           +(oth?'<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.65rem;"><span style="color:#555;">Other Charges</span><span>'+fn(oth)+'</span></div>':'')
           +(dep?'<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.65rem;color:#1a7a4a;"><span>Less: Deposit Paid</span><span>('+fn(dep)+')</span></div>':'')
           +'<div style="display:flex;justify-content:space-between;border-top:2px solid #111;padding-top:8px;margin-top:4px;">'
-            +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:.95rem;letter-spacing:.1em;">BALANCE DUE</span>'
-            +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#1a4fdb;">'+cur+' '+fn(bal)+'</span>'
+            +'<span style="font-family:Bebas Neue,sans-serif;font-size:.95rem;letter-spacing:.1em;">BALANCE DUE</span>'
+            +'<span style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;color:#1a4fdb;">'+cur+' '+fn(bal)+'</span>'
           +'</div>'
         +'</div>'
       +'</div>'
