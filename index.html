@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.5.0</title>
+<title>Stackd Ops v2.5.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -707,35 +707,49 @@ function closeM(id) { G(id).classList.remove('on'); }
 // ── INVOICE CALCULATION ────────────────────────────────────────
 function cInv(inv) {
   var lis = inv.lineItems || [];
-  var liT = lis.reduce(function(s,li){ return s + (+li.qty||0) * (+li.up||0); }, 0);
-  var tx = +inv.taxRate || 0;
-  var tax = liT * tx;
+  // Always read charges directly from the invoice record
   var lf = +inv.lf||0, ins = +inv.ins||0, leg = +inv.leg||0, isp = +inv.isp||0, oth = +inv.oth||0;
   var chgs = lf + ins + leg + isp + oth;
-  var grand = liT + tax + chgs;
+  var tx = +inv.taxRate || 0;
   var dep = +inv.dep || 0;
+
+  // Calculate from live line items if present
+  var liT = lis.reduce(function(s,li){ return s + (+li.qty||0) * (+li.up||0); }, 0);
+  var tax = liT * tx;
+  var grand = liT + tax + chgs;
+
+  // Fall back to pre-calculated fields from Sheets if no live line items
+  if (grand === 0 || liT === 0) {
+    if (inv.calc_grandTotal && +inv.calc_grandTotal > 0) {
+      grand = +inv.calc_grandTotal;
+      liT   = +inv.calc_liTotal || 0;
+      tax   = +inv.calc_taxAmt  || 0;
+      // Recalculate chgs from grand total if charges not stored
+      // chgs stays as read from inv.lf/ins/leg/isp/oth above
+      if (chgs === 0 && grand > 0) {
+        chgs = grand - liT - tax;
+      }
+    }
+  }
+
   var bal = grand - dep;
-  // Try live COGS lookup first; fall back to pre-calculated field from Sheets
+
+  // COGS: try live lookup first, then pre-calculated
   var cogs = 0;
-  var cogsFromLookup = lis.reduce(function(s,li){
+  var cogsLive = lis.reduce(function(s,li){
     var r = DB.li.find(function(x){ return x.id === li.lid; });
     return s + (r ? (+r.cost||0) * (+li.qty||0) : 0);
   }, 0);
-  if (cogsFromLookup > 0) {
-    cogs = cogsFromLookup;
+  if (cogsLive > 0) {
+    cogs = cogsLive;
   } else if (inv.calc_cogs && +inv.calc_cogs > 0) {
     cogs = +inv.calc_cogs;
   }
-  // Use pre-calculated grand total from Sheets if live calc is zero (no line items loaded)
-  if (grand === 0 && inv.calc_grandTotal && +inv.calc_grandTotal > 0) {
-    grand = +inv.calc_grandTotal;
-    bal = grand - dep;
-    liT = +inv.calc_liTotal || grand;
-    tax = +inv.calc_taxAmt || 0;
-  }
-  var gp = liT - cogs;
-  var np = grand - cogs - chgs;
-  var mgn = grand > 0 ? (np/grand)*100 : null;
+
+  var gp  = liT - cogs;
+  var np  = grand - cogs - chgs;
+  var mgn = grand > 0 ? (np / grand) * 100 : null;
+
   return { liT:liT, tax:tax, taxRate:tx, chgs:chgs, grand:grand, dep:dep, bal:bal, cogs:cogs, gp:gp, np:np, mgn:mgn };
 }
 
