@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.4.5</title>
+<title>Stackd Ops v2.5.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -170,6 +170,13 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     padding:20px;
   }
 }
+
+/* TOOLTIPS */
+.tip{position:relative;display:inline-flex;align-items:center;gap:4px;width:100%;}
+.tip-icon{width:13px;height:13px;border-radius:50%;background:var(--m);color:white;font-size:.5rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;cursor:help;font-style:normal;line-height:1;}
+.tip-box{position:absolute;bottom:calc(100% + 6px);left:0;background:var(--ink);color:white;font-size:.55rem;line-height:1.6;padding:7px 10px;border-radius:2px;white-space:nowrap;max-width:260px;white-space:normal;z-index:500;pointer-events:none;opacity:0;transition:opacity .15s;border-left:2px solid var(--cr);}
+.tip-icon:hover + .tip-box,.tip-icon:focus + .tip-box{opacity:1;}
+@media(max-width:480px){.tip-box{max-width:200px;}}
 </style>
 </head>
 <body>
@@ -252,7 +259,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <!-- Header -->
     <div style="background:var(--ink);padding:18px 22px;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.12em;color:white;margin-bottom:4px;"><span style="color:var(--cr);">BULK</span> IMPORT</div>
-      <div style="font-size:.58rem;color:var(--m);line-height:1.7;">Import existing data from spreadsheets. Follow the sequence below: Suppliers first, then Line Items, then Invoices, then Purchase Orders.<br>Download each CSV template, fill it in, and upload. All imports are additive — existing records are not overwritten.</div>
+      <div style="font-size:.58rem;color:var(--m);line-height:1.7;">Import existing data from your spreadsheets. Follow the sequence: <strong style="color:white;">Suppliers &rarr; Line Items &rarr; Invoices &rarr; POs</strong><br><br><strong style="color:var(--gold);">How it works:</strong> Download a template, fill it in, upload once. Data syncs to Google Sheets permanently — you will never need to re-import. CSVs are one-time import files only.<br><br><strong style="color:var(--gold);">Excel &amp; Google Drive:</strong> Save your master Excel files to Google Drive. Export as CSV when you have a batch to import. Add new individual records directly in the portal going forward.</div>
     </div>
 
     <!-- Step 1: Suppliers -->
@@ -282,7 +289,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <!-- Step 3: Invoices -->
     <div class="card">
       <div class="ct"><span style="background:var(--cr);color:white;font-family:'Bebas Neue',sans-serif;font-size:.9rem;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">3</span>Invoices</div>
-      <p style="font-size:.6rem;color:var(--m);margin-bottom:12px;line-height:1.7;">Upload your existing invoices. Line items are not required — invoices will show on the dashboard with your provided totals. You can enrich them with line items later.</p>
+      <p style="font-size:.6rem;color:var(--m);margin-bottom:12px;line-height:1.7;">Upload your existing invoices. Line items are not required — invoices appear on the dashboard immediately with your provided totals. Enrich with line items later by editing each invoice. Status values are case-insensitive: paid, Paid, PAID all work.</p>
       <div style="background:var(--bg);padding:10px 14px;margin-bottom:12px;font-size:.58rem;color:var(--m);line-height:1.8;">
         <strong style="color:var(--ink);">Minimum required columns:</strong> Invoice #, Buyer, Date, Status, Currency, Grand Total<br>
         <strong style="color:var(--ink);">Optional but recommended:</strong> Destination, Buyer Deposit, COGS, Freight Type, POL, POD, COO, Notes
@@ -329,8 +336,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld"><label>Phone / WhatsApp</label><input type="text" id="c-phone"></div>
         <div class="fld"><label>Website</label><input type="text" id="c-web"></div>
       </div>
-      <div class="fld" style="margin-bottom:12px;"><label>Bank / Payment Details (leave blank until Stackd account open)</label><textarea id="c-bank" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:70px;margin-top:3px;" placeholder="Account Name: Stackd&#10;Sort Code: xx-xx-xx&#10;Account No: xxxxxxxx"></textarea></div>
-      <div class="fld" style="margin-bottom:12px;"><label>Default Invoice Terms</label><textarea id="c-terms" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:52px;margin-top:3px;"></textarea></div>
+      <div class="fld" style="margin-bottom:12px;"><label id="lbl-cfg-bank">Bank / Payment Details (leave blank until Stackd account open)</label><textarea id="c-bank" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:70px;margin-top:3px;" placeholder="Account Name: Stackd&#10;Sort Code: xx-xx-xx&#10;Account No: xxxxxxxx"></textarea></div>
+      <div class="fld" style="margin-bottom:12px;"><label id="lbl-cfg-terms">Default Invoice Terms</label><textarea id="c-terms" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:52px;margin-top:3px;"></textarea></div>
       <button class="btn btn-s" onclick="saveCfg()">Save Settings</button>
     </div>
     <div class="card">
@@ -365,12 +372,16 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="ov" id="ov-sup" onclick="if(event.target===this)closeM('ov-sup')">
   <div class="modal"><div class="mh"><h2 id="sup-mt">New Supplier</h2><button class="mx" onclick="closeM('ov-sup')">&#215;</button></div>
   <div class="mb"><div class="fg fg3">
-    <div class="fld"><label>Name</label><input type="text" id="sf-n"></div>
-    <div class="fld"><label>Country</label><input type="text" id="sf-c" placeholder="China"></div>
+    <div class="fld"><label id="lbl-sup-name">Name</label><input type="text" id="sf-n"></div>
+    <div class="fld"><label id="lbl-sup-country">Country</label><input type="text" id="sf-c" placeholder="China"></div>
     <div class="fld"><label>Currency</label><select id="sf-cur"><option>USD</option><option>CNY</option><option>GBP</option><option>EUR</option></select></div>
-    <div class="fld"><label>Contact Person</label><input type="text" id="sf-ct"></div>
-    <div class="fld"><label>Email</label><input type="email" id="sf-e"></div>
-    <div class="fld"><label>Phone / WeChat</label><input type="text" id="sf-p"></div>
+    <div class="fld"><label id="lbl-sup-ct">Contact Person</label><input type="text" id="sf-ct"></div>
+    <div class="fld"><label id="lbl-sup-email">Email</label><input type="email" id="sf-e"></div>
+    <div class="fld"><label id="lbl-sup-phone">Phone / WeChat</label>
+      <div style="display:flex;gap:6px;">
+        <select id="sf-dial" style="font-family:'DM Mono',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);background:transparent;color:var(--ink);outline:none;cursor:pointer;flex-shrink:0;width:110px;padding:4px 0;"></select>
+        <input type="text" id="sf-p" placeholder="number" style="flex:1;">
+      </div></div>
     <div class="fld" style="grid-column:1/-1"><label>Notes</label><textarea id="sf-nt" placeholder="Certs, lead times, MOQs, red flags..."></textarea></div>
   </div>
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
@@ -384,14 +395,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   <div class="modal"><div class="mh"><h2 id="li-mt">New Line Item</h2><button class="mx" onclick="closeM('ov-li')">&#215;</button></div>
   <div class="mb">
     <div class="fg fg3" style="margin-bottom:14px;">
-      <div class="fld"><label>SKU / Item #</label><input type="text" id="lf-s" placeholder="ITEM-001"></div>
+      <div class="fld"><label id="lbl-li-sku">SKU / Item #</label><input type="text" id="lf-s" placeholder="ITEM-001"></div>
       <div class="fld"><label>Supplier</label><select id="lf-sup"><option value="">Select...</option></select></div>
       <div class="fld"><label>Unit of Measure</label><input type="text" id="lf-u" placeholder="pcs / kg / m2"></div>
-      <div class="fld" style="grid-column:1/-1"><label>Description</label><input type="text" id="lf-d"></div>
+      <div class="fld" style="grid-column:1/-1"><label id="lbl-li-desc">Description</label><input type="text" id="lf-d"></div>
       <div class="fld" style="grid-column:1/-1"><label>Specifications</label><input type="text" id="lf-sp" placeholder="Size, grade, model, colour, voltage..."></div>
-      <div class="fld"><label>HS Code</label><input type="text" id="lf-hs" placeholder="e.g. 8418.50"></div>
-      <div class="fld"><label>Unit Cost (supplier price)</label><input type="number" id="lf-c" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
-      <div class="fld"><label>Unit Price (buyer price)</label><input type="number" id="lf-p" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
+      <div class="fld"><label id="lbl-li-hs">HS Code</label><input type="text" id="lf-hs" placeholder="e.g. 8418.50"></div>
+      <div class="fld"><label id="lbl-li-cost">Unit Cost (supplier price)</label><input type="number" id="lf-c" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
+      <div class="fld"><label id="lbl-li-price">Unit Price (buyer price)</label><input type="number" id="lf-p" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
       <div class="fld"><label>Currency</label><select id="lf-cur"><option>USD</option><option>GBP</option><option>EUR</option><option>BBD</option><option>NGN</option><option>GHS</option></select></div>
     </div>
     <div style="background:var(--ink);padding:10px 14px;display:flex;gap:20px;margin-bottom:12px;">
@@ -415,14 +426,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div class="mb">
       <div class="ms"><div class="mst">Invoice Details</div>
         <div class="fg fg4">
-          <div class="fld"><label>Invoice #</label><input type="text" id="if-n" placeholder="INV-2025-001"></div>
+          <div class="fld"><label id="lbl-inv-num">Invoice #</label><input type="text" id="if-n" placeholder="INV-2025-001"></div>
           <div class="fld"><label>Date</label><input type="date" id="if-dt"></div>
           <div class="fld"><label>Expiry / Due Date</label><input type="date" id="if-ex"></div>
           <div class="fld"><label>Customer ID</label><input type="text" id="if-cid"></div>
-          <div class="fld" style="grid-column:span 2"><label>Buyer / Company</label><input type="text" id="if-b"></div>
+          <div class="fld" style="grid-column:span 2"><label id="lbl-inv-buyer">Buyer / Company</label><input type="text" id="if-b"></div>
           <div class="fld" style="grid-column:span 2"><label>Buyer Address</label><input type="text" id="if-ba"></div>
           <div class="fld" style="grid-column:span 2"><label>Ship To (if different)</label><input type="text" id="if-st"></div>
-          <div class="fld"><label>Destination</label><input type="text" id="if-dst" placeholder="Barbados"></div>
+          <div class="fld"><label id="lbl-inv-dst">Destination</label><input type="text" id="if-dst" placeholder="Barbados"></div>
         </div>
       </div>
       <div class="ms"><div class="mst">Shipping Details</div>
@@ -432,9 +443,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <div class="fld"><label>Est. Gross Weight</label><input type="text" id="if-wt" placeholder="2200 KGS"></div>
           <div class="fld"><label>Est. Cubic Weight</label><input type="text" id="if-cbm" placeholder="18 CBM"></div>
           <div class="fld"><label>Total Packages</label><input type="text" id="if-pk" placeholder="7"></div>
-          <div class="fld"><label>Port of Embarkation</label><input type="text" id="if-pol" placeholder="Qingdao"></div>
-          <div class="fld"><label>Port of Discharge</label><input type="text" id="if-pod" placeholder="Bridgetown"></div>
-          <div class="fld"><label>Country of Origin</label><input type="text" id="if-coo" placeholder="China"></div>
+          <div class="fld"><label id="lbl-inv-pol">Port of Embarkation</label><input type="text" id="if-pol" placeholder="Qingdao"></div>
+          <div class="fld"><label id="lbl-inv-pod">Port of Discharge</label><input type="text" id="if-pod" placeholder="Bridgetown"></div>
+          <div class="fld"><label id="lbl-inv-coo">Country of Origin</label><input type="text" id="if-coo" placeholder="China"></div>
         </div>
       </div>
       <div class="ms"><div class="mst r">Line Items</div>
@@ -447,7 +458,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div class="ms"><div class="mst go">Charges, Tax and Deposits</div>
         <div class="fg fg4">
           <div class="fld"><label>Currency</label><select id="if-cur" onchange="calcInv()"><option>USD</option><option>GBP</option><option>EUR</option><option>BBD</option><option>NGN</option><option>GHS</option></select></div>
-          <div class="fld"><label>Tax Rate</label>
+          <div class="fld"><label id="lbl-inv-tx">Tax Rate</label>
             <select id="if-tx" onchange="txChg()">
               <option value="0">0% - Zero rated</option><option value="0.05">5%</option>
               <option value="0.075">7.5%</option><option value="0.10">10%</option>
@@ -456,12 +467,12 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
             </select>
           </div>
           <div class="fld" id="ctx-wrap" style="display:none;"><label>Custom Rate (%)</label><input type="number" id="if-txc" placeholder="0.0" step="0.1" oninput="calcInv()"></div>
-          <div class="fld"><label>Local Freight</label><input type="number" id="if-lf" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
-          <div class="fld"><label>Insurance</label><input type="number" id="if-ins" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
+          <div class="fld"><label id="lbl-inv-lf">Local Freight</label><input type="number" id="if-lf" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
+          <div class="fld"><label id="lbl-inv-ins">Insurance</label><input type="number" id="if-ins" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
           <div class="fld"><label>Legal / Consular</label><input type="number" id="if-leg" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
           <div class="fld"><label>Inspection / Cert.</label><input type="number" id="if-isp" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
           <div class="fld"><label>Other Charges</label><input type="number" id="if-oth" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
-          <div class="fld"><label>Buyer Deposit Received</label><input type="number" id="if-dep" placeholder="0.00" step="0.01" oninput="calcInv()" style="border-bottom-color:var(--gold);background:rgba(201,150,58,.05);"></div>
+          <div class="fld"><label id="lbl-inv-dep">Buyer Deposit Received</label><input type="number" id="if-dep" placeholder="0.00" step="0.01" oninput="calcInv()" style="border-bottom-color:var(--gold);background:rgba(201,150,58,.05);"></div>
         </div>
         <div class="fld" style="margin-top:10px;"><label>Terms of Sale / Comments</label><textarea id="if-terms"></textarea></div>
       </div>
@@ -500,11 +511,11 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" style="width:100%;margin-top:5px;" onclick="addPLI()">+ Add Line Item</button>
       </div>
       <div class="fg fg3" style="margin-top:12px;">
-        <div class="fld"><label>Supplier Deposit Paid</label><input type="number" id="pf-dep" placeholder="0.00" step="0.01" oninput="calcPO()" style="border-bottom-color:var(--bl);background:rgba(26,79,219,.04);"></div>
+        <div class="fld"><label id="lbl-po-dep">Supplier Deposit Paid</label><input type="number" id="pf-dep" placeholder="0.00" step="0.01" oninput="calcPO()" style="border-bottom-color:var(--bl);background:rgba(26,79,219,.04);"></div>
         <div class="fld"><label>Other Charges</label><input type="number" id="pf-oth" placeholder="0.00" step="0.01" oninput="calcPO()"></div>
       </div>
       <div style="background:var(--ink);padding:10px 18px;display:flex;gap:22px;margin-top:10px;" id="po-tots"></div>
-      <div class="fld" style="margin-top:10px;"><label>Special Instructions</label><textarea id="pf-nt" placeholder="Packaging, delivery, certifications required..."></textarea></div>
+      <div class="fld" style="margin-top:10px;"><label id="lbl-po-notes">Special Instructions</label><textarea id="pf-nt" placeholder="Packaging, delivery, certifications required..."></textarea></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;">
         <button class="btn btn-g" onclick="closeM('ov-po')">Cancel</button>
         <button class="btn btn-b" onclick="prevPO()">Preview PO</button>
@@ -813,18 +824,18 @@ function rSup() {
 function openSup() {
   EI.s = null; G('sup-mt').textContent = 'New Supplier';
   ['sf-n','sf-c','sf-ct','sf-e','sf-p','sf-nt'].forEach(function(f){ var e=G(f); if(e) e.value=''; });
-  G('sf-cur').value = 'USD'; G('ov-sup').classList.add('on'); setTimeout(function(){ G('sf-n').focus(); }, 50);
+  G('sf-cur').value = 'USD'; populateDialCodes(); G('ov-sup').classList.add('on'); setTimeout(function(){ G('sf-n').focus(); }, 50);
 }
 function editSup(id) {
   var s = DB.sup.find(function(x){ return x.id===id; }); if(!s) return;
   EI.s = id; G('sup-mt').textContent = 'Edit Supplier';
   G('sf-n').value=s.name||''; G('sf-c').value=s.country||''; G('sf-ct').value=s.ct||'';
-  G('sf-e').value=s.email||''; G('sf-p').value=s.phone||''; G('sf-nt').value=s.notes||'';
+  G('sf-e').value=s.email||''; setSupPhone(s.phone||''); G('sf-nt').value=s.notes||'';
   G('sf-cur').value=s.cur||'USD'; G('ov-sup').classList.add('on');
 }
 async function saveSup() {
-  if (!G('sf-n').value.trim()) { toast('Supplier name is required'); G('sf-n').focus(); return; }
-  var s = { id:EI.s||uid(), name:G('sf-n').value.trim(), country:G('sf-c').value.trim(), ct:G('sf-ct').value.trim(), email:G('sf-e').value.trim(), phone:G('sf-p').value.trim(), cur:G('sf-cur').value, notes:G('sf-nt').value.trim() };
+  if (!vSup()) return;
+  var s = { id:EI.s||uid(), name:G('sf-n').value.trim(), country:G('sf-c').value.trim(), ct:G('sf-ct').value.trim(), email:G('sf-e').value.trim(), phone:getSupPhone(), cur:G('sf-cur').value, notes:G('sf-nt').value.trim() };
   if (EI.s) { var i=DB.sup.findIndex(function(x){return x.id===EI.s;}); if(i>-1) DB.sup[i]=s; } else DB.sup.push(s);
   sv(K.s,DB.sup); closeM('ov-sup'); rSup(); audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s); toast('Supplier saved'); await syncEnt('sup',s);
 }
@@ -870,10 +881,7 @@ function editLI(id) {
   liMgn(); G('ov-li').classList.add('on');
 }
 async function saveLI() {
-  if (!G('lf-d').value.trim()) { toast('Description is required'); G('lf-d').focus(); return; }
-  if (!G('lf-sup').value) { toast('Please select a supplier'); return; }
-  if (+G('lf-c').value < 0) { toast('Unit cost cannot be negative'); return; }
-  if (+G('lf-p').value < 0) { toast('Unit price cannot be negative'); return; }
+  if (!vLI()) return;
   var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:+G('lf-c').value||0,price:+G('lf-p').value||0,cur:G('lf-cur').value,notes:G('lf-nt').value.trim()};
   if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
   sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); await syncEnt('li',li);
@@ -1000,16 +1008,7 @@ function calcInv() {
 }
 
 async function saveInv() {
-  if (!G('if-n').value.trim()) { toast('Invoice number is required'); G('if-n').focus(); return; }
-  if (!G('if-b').value.trim()) { toast('Buyer name is required'); G('if-b').focus(); return; }
-  if (!G('if-dt').value) { toast('Invoice date is required'); return; }
-  if (cIL.length === 0) { toast('Add at least one line item before saving'); return; }
-  var depVal = +G('if-dep').value||0;
-  // Check for duplicate invoice number (excluding current edit)
-  var dupNum = G('if-n').value.trim();
-  var hasDup = DB.inv.some(function(inv){ return inv.num === dupNum && inv.id !== EI.i; });
-  if (hasDup) { toast('Invoice number ' + dupNum + ' already exists'); G('if-n').focus(); return; }
-  if (depVal < 0) { toast('Buyer deposit cannot be negative'); return; }
+  if (!vInv()) return;
   var tx=getTR();
   var inv={
     id:EI.i||uid(), num:G('if-n').value.trim(), buyer:G('if-b').value.trim(),
@@ -1134,9 +1133,7 @@ function calcPO() {
     '<div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Balance Due to Supplier</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.25rem;color:var(--bl);">' + fmt(bal,cur) + '</div></div>';
 }
 async function savePO() {
-  if (!G('pf-n').value.trim()) { toast('PO number is required'); G('pf-n').focus(); return; }
-  if (!G('pf-sup').value) { toast('Please select a supplier'); return; }
-  if (+G('pf-dep').value < 0) { toast('Supplier deposit cannot be negative'); return; }
+  if (!vPO()) return;
   var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
   if(EI.p){var i=DB.po.findIndex(function(x){return x.id===EI.p;});if(i>-1)DB.po[i]=po;}else DB.po.push(po);
   sv(K.p,DB.po); closeM('ov-po'); rPO(); rDash(); audit(EI.p?'UPDATE':'CREATE','po',po.id,po); toast('PO saved'); await syncEnt('po',po);
@@ -1434,6 +1431,99 @@ function prevPODoc(po) {
 }
 
 
+
+
+// ── VALIDATION ─────────────────────────────────────────────────
+var RX = {
+  email:   /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
+  invNum:  /^(INV|CN)\d{4,6}(-D\d+)?$/i,
+  hsCode:  /^\d{4,10}(\.\d{1,4})?$/,
+  date:    /^\d{4}-\d{2}-\d{2}$/,
+  taxRate: function(v){ return v >= 0 && v <= 1; }
+};
+
+function vErr(fieldId, msg) {
+  var el = G(fieldId);
+  if (el) {
+    el.style.borderBottomColor = '#f87171';
+    el.style.background = 'rgba(248,113,113,0.05)';
+    setTimeout(function(){
+      el.style.borderBottomColor = '';
+      el.style.background = '';
+    }, 3000);
+  }
+  toast('⚠ ' + msg);
+  if (el) el.focus();
+  return false;
+}
+
+function vWarn(fieldId, msg) {
+  var el = G(fieldId);
+  if (el) {
+    el.style.borderBottomColor = 'var(--gold)';
+    el.style.background = 'rgba(201,150,58,0.05)';
+    setTimeout(function(){
+      el.style.borderBottomColor = '';
+      el.style.background = '';
+    }, 4000);
+  }
+  toast('⚠ ' + msg);
+}
+
+function vSup() {
+  var name = G('sf-n').value.trim();
+  var email = G('sf-e').value.trim();
+  var hs = '';
+  if (!name) return vErr('sf-n', 'Supplier name is required');
+  if (email && !RX.email.test(email)) return vErr('sf-e', 'Invalid email address — use format name@company.com');
+  return true;
+}
+
+function vLI() {
+  var desc = G('lf-d').value.trim();
+  var sup = G('lf-sup').value;
+  var cost = +G('lf-c').value;
+  var price = +G('lf-p').value;
+  var hs = G('lf-hs').value.trim();
+  if (!desc) return vErr('lf-d', 'Description is required');
+  if (!sup) return vErr('lf-sup', 'Please select a supplier');
+  if (cost < 0) return vErr('lf-c', 'Unit cost cannot be negative');
+  if (price < 0) return vErr('lf-p', 'Unit price cannot be negative');
+  if (hs && !RX.hsCode.test(hs)) vWarn('lf-hs', 'HS code should be numeric e.g. 8418.50 — check before saving');
+  return true;
+}
+
+function vInv() {
+  var num = G('if-n').value.trim();
+  var buyer = G('if-b').value.trim();
+  var date = G('if-dt').value;
+  var dep = +G('if-dep').value||0;
+  var tx = getTR();
+  if (!num) return vErr('if-n', 'Invoice number is required');
+  if (!RX.invNum.test(num)) return vErr('if-n', 'Invoice number must start with INV or CN followed by digits e.g. INV10032, CN10029, INV10032-D1');
+  var hasDup = DB.inv.some(function(inv){ return inv.num===num && inv.id!==EI.i; });
+  if (hasDup) return vErr('if-n', 'Invoice number ' + num + ' already exists');
+  if (!buyer) return vErr('if-b', 'Buyer name is required');
+  if (!date) return vErr('if-dt', 'Invoice date is required');
+  if (cIL.length===0) { toast('⚠ Add at least one line item before saving'); return false; }
+  if (dep < 0) return vErr('if-dep', 'Buyer deposit cannot be negative');
+  if (!RX.taxRate(tx)) return vErr('if-tx', 'Tax rate must be between 0 and 1 (e.g. 0.20 for 20%)');
+  var charges = ['if-lf','if-ins','if-leg','if-isp','if-oth'];
+  for (var i=0; i<charges.length; i++) {
+    if ((+G(charges[i]).value||0) < 0) return vErr(charges[i], 'Charges cannot be negative');
+  }
+  return true;
+}
+
+function vPO() {
+  var num = G('pf-n').value.trim();
+  var sup = G('pf-sup').value;
+  var dep = +G('pf-dep').value||0;
+  if (!num) return vErr('pf-n', 'PO number is required');
+  if (!sup) return vErr('pf-sup', 'Please select a supplier');
+  if (dep < 0) return vErr('pf-dep', 'Supplier deposit cannot be negative');
+  return true;
+}
 
 // ── BULK IMPORT ────────────────────────────────────────────────
 
@@ -1747,8 +1837,200 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
+
+
+// ── DIAL CODES ─────────────────────────────────────────────────
+var DIAL_CODES = [
+  ['+1','US/CA'],  ['+1 246','Barbados'], ['+1 264','Anguilla'], ['+1 268','Antigua'],
+  ['+1 284','BVI'], ['+1 345','Cayman Is.'], ['+1 441','Bermuda'], ['+1 473','Grenada'],
+  ['+1 649','Turks & Caicos'], ['+1 664','Montserrat'], ['+1 721','St Maarten'],
+  ['+1 758','St Lucia'], ['+1 767','Dominica'], ['+1 784','St Vincent'],
+  ['+1 809','Dominican Rep.'], ['+1 868','Trinidad'], ['+1 869','St Kitts'],
+  ['+1 876','Jamaica'], ['+20','Egypt'], ['+27','South Africa'], ['+30','Greece'],
+  ['+31','Netherlands'], ['+32','Belgium'], ['+33','France'], ['+34','Spain'],
+  ['+39','Italy'], ['+40','Romania'], ['+41','Switzerland'], ['+44','United Kingdom'],
+  ['+45','Denmark'], ['+46','Sweden'], ['+47','Norway'], ['+48','Poland'],
+  ['+49','Germany'], ['+51','Peru'], ['+52','Mexico'], ['+53','Cuba'],
+  ['+54','Argentina'], ['+55','Brazil'], ['+56','Chile'], ['+57','Colombia'],
+  ['+58','Venezuela'], ['+60','Malaysia'], ['+61','Australia'], ['+62','Indonesia'],
+  ['+63','Philippines'], ['+64','New Zealand'], ['+65','Singapore'], ['+66','Thailand'],
+  ['+81','Japan'], ['+82','South Korea'], ['+84','Vietnam'], ['+86','China'],
+  ['+90','Turkey'], ['+91','India'], ['+92','Pakistan'], ['+93','Afghanistan'],
+  ['+94','Sri Lanka'], ['+95','Myanmar'], ['+98','Iran'], ['+212','Morocco'],
+  ['+213','Algeria'], ['+216','Tunisia'], ['+218','Libya'], ['+220','Gambia'],
+  ['+221','Senegal'], ['+222','Mauritania'], ['+223','Mali'], ['+224','Guinea'],
+  ['+225','Ivory Coast'], ['+226','Burkina Faso'], ['+227','Niger'],
+  ['+228','Togo'], ['+229','Benin'], ['+230','Mauritius'], ['+231','Liberia'],
+  ['+232','Sierra Leone'], ['+233','Ghana'], ['+234','Nigeria'], ['+235','Chad'],
+  ['+236','CAR'], ['+237','Cameroon'], ['+238','Cape Verde'], ['+239','Sao Tome'],
+  ['+240','Eq. Guinea'], ['+241','Gabon'], ['+242','Congo'], ['+243','DR Congo'],
+  ['+244','Angola'], ['+245','Guinea-Bissau'], ['+246','BIOT'], ['+248','Seychelles'],
+  ['+249','Sudan'], ['+250','Rwanda'], ['+251','Ethiopia'], ['+252','Somalia'],
+  ['+253','Djibouti'], ['+254','Kenya'], ['+255','Tanzania'], ['+256','Uganda'],
+  ['+257','Burundi'], ['+258','Mozambique'], ['+260','Zambia'], ['+261','Madagascar'],
+  ['+262','Reunion'], ['+263','Zimbabwe'], ['+264','Namibia'], ['+265','Malawi'],
+  ['+266','Lesotho'], ['+267','Botswana'], ['+268','Swaziland'], ['+269','Comoros'],
+  ['+297','Aruba'], ['+298','Faroe Islands'], ['+299','Greenland'],
+  ['+350','Gibraltar'], ['+351','Portugal'], ['+352','Luxembourg'],
+  ['+353','Ireland'], ['+354','Iceland'], ['+355','Albania'], ['+356','Malta'],
+  ['+357','Cyprus'], ['+358','Finland'], ['+359','Bulgaria'], ['+370','Lithuania'],
+  ['+371','Latvia'], ['+372','Estonia'], ['+373','Moldova'], ['+374','Armenia'],
+  ['+375','Belarus'], ['+376','Andorra'], ['+377','Monaco'], ['+380','Ukraine'],
+  ['+381','Serbia'], ['+382','Montenegro'], ['+385','Croatia'], ['+386','Slovenia'],
+  ['+387','Bosnia'], ['+389','N.Macedonia'], ['+420','Czech Rep.'], ['+421','Slovakia'],
+  ['+423','Liechtenstein'], ['+500','Falkland Is.'], ['+501','Belize'],
+  ['+502','Guatemala'], ['+503','El Salvador'], ['+504','Honduras'],
+  ['+505','Nicaragua'], ['+506','Costa Rica'], ['+507','Panama'],
+  ['+509','Haiti'], ['+590','Guadeloupe'], ['+591','Bolivia'],
+  ['+592','Guyana'], ['+593','Ecuador'], ['+594','French Guiana'],
+  ['+595','Paraguay'], ['+596','Martinique'], ['+597','Suriname'],
+  ['+598','Uruguay'], ['+599','Netherlands Antilles'], ['+670','East Timor'],
+  ['+672','Norfolk Is.'], ['+673','Brunei'], ['+674','Nauru'], ['+675','PNG'],
+  ['+676','Tonga'], ['+677','Solomon Is.'], ['+678','Vanuatu'], ['+679','Fiji'],
+  ['+680','Palau'], ['+681','Wallis & Futuna'], ['+682','Cook Is.'],
+  ['+683','Niue'], ['+685','Samoa'], ['+686','Kiribati'], ['+687','New Caledonia'],
+  ['+688','Tuvalu'], ['+689','French Polynesia'], ['+690','Tokelau'],
+  ['+691','Micronesia'], ['+692','Marshall Is.'], ['+850','North Korea'],
+  ['+852','Hong Kong'], ['+853','Macao'], ['+855','Cambodia'], ['+856','Laos'],
+  ['+880','Bangladesh'], ['+886','Taiwan'], ['+960','Maldives'],
+  ['+961','Lebanon'], ['+962','Jordan'], ['+963','Syria'], ['+964','Iraq'],
+  ['+965','Kuwait'], ['+966','Saudi Arabia'], ['+967','Yemen'], ['+968','Oman'],
+  ['+970','Palestine'], ['+971','UAE'], ['+972','Israel'], ['+973','Bahrain'],
+  ['+974','Qatar'], ['+975','Bhutan'], ['+976','Mongolia'], ['+977','Nepal'],
+  ['+992','Tajikistan'], ['+993','Turkmenistan'], ['+994','Azerbaijan'],
+  ['+995','Georgia'], ['+996','Kyrgyzstan'], ['+998','Uzbekistan']
+];
+
+function populateDialCodes() {
+  var sel = document.getElementById('sf-dial');
+  if (!sel || sel.options.length > 1) return;
+  DIAL_CODES.forEach(function(d) {
+    var opt = document.createElement('option');
+    opt.value = d[0];
+    opt.textContent = d[0] + ' ' + d[1];
+    sel.appendChild(opt);
+  });
+  // Default to +44 UK
+  sel.value = '+44';
+}
+
+function getSupPhone() {
+  var dial = document.getElementById('sf-dial');
+  var num = document.getElementById('sf-p');
+  if (!dial || !num) return '';
+  var n = num.value.trim();
+  return n ? dial.value + ' ' + n : '';
+}
+
+function setSupPhone(phone) {
+  if (!phone) return;
+  var dial = document.getElementById('sf-dial');
+  var num = document.getElementById('sf-p');
+  if (!dial || !num) return;
+  // Try to match a dial code
+  var matched = false;
+  // Sort by length desc to match longest prefix first (+1 246 before +1)
+  var sorted = DIAL_CODES.slice().sort(function(a,b){return b[0].length-a[0].length;});
+  for (var i=0; i<sorted.length; i++) {
+    if (phone.startsWith(sorted[i][0])) {
+      dial.value = sorted[i][0];
+      num.value = phone.slice(sorted[i][0].length).trim();
+      matched = true;
+      break;
+    }
+  }
+  if (!matched) {
+    dial.value = '+44';
+    num.value = phone;
+  }
+}
+
+// ── TOOLTIPS ───────────────────────────────────────────────────
+var TIPS = {
+  // Supplier fields
+  'sup-name':    'Required. The full company name of your supplier exactly as you want it to appear on purchase orders.',
+  'sup-country': 'Full country name e.g. China, Barbados, Nigeria. Used for reporting and document generation.',
+  'sup-cur':     'The currency you transact in with this supplier. Used as a default on purchase orders.',
+  'sup-ct':      'Your main point of contact at the supplier. Name of the person you deal with.',
+  'sup-email':   'Must be a valid email address. Used on purchase order documents.',
+  'sup-phone':   'Include country dial code e.g. +86 for China, +44 for UK, +1 246 for Barbados.',
+  'sup-notes':   'Free text. Record certifications, lead times, MOQs, due diligence findings, red flags.',
+  // Line item fields
+  'li-sku':      'Stock Keeping Unit. Your internal product reference code e.g. REF-COMM-600L. Optional but recommended for traceability.',
+  'li-desc':     'Required. Clear product name as it should appear on invoices and purchase orders.',
+  'li-specs':    'Technical specifications: size, grade, model, colour, voltage, material. Appears on documents.',
+  'li-hs':       'Harmonised System code for customs. Numeric only e.g. 8418.50. Required for Barbados, Nigeria and Ghana customs declarations.',
+  'li-sup':      'Required. The supplier this product is sourced from. Must exist in your Suppliers list.',
+  'li-uom':      'Unit of measure: pcs, kg, m2, sheets, sets, cartons. Appears on invoice and PO line items.',
+  'li-cost':     'What you pay the supplier per unit. Used to calculate COGS, gross profit and margin. Not shown to buyers.',
+  'li-price':    'What you charge the buyer per unit. Appears on the invoice. Should be higher than unit cost.',
+  'li-cur':      'Currency for both cost and price. All line items on one invoice should use the same currency.',
+  'li-notes':    'Internal notes: packaging requirements, certifications needed, compliance notes.',
+  // Invoice fields
+  'inv-num':     'Required. Your invoice reference number e.g. INV10032. Use CN prefix for credit notes e.g. CN10029. Append -D1, -D2 for drafts.',
+  'inv-buyer':   'Required. Buyer company or individual name as it should appear on the invoice document.',
+  'inv-ba':      'Full buyer billing address. Appears on the invoice document under Customer.',
+  'inv-st':      'Delivery address if different from billing address. Leave blank to use buyer address.',
+  'inv-dst':     'Destination country e.g. Barbados, Nigeria. Used in dashboard charts and reporting.',
+  'inv-cid':     'Your internal customer reference code e.g. CUS-001. Optional.',
+  'inv-dt':      'Invoice date. Format YYYY-MM-DD. Appears on the invoice document.',
+  'inv-ex':      'Payment due date. Appears on the invoice as Expiry.',
+  'inv-sd':      'Estimated date goods will be shipped. Informational only.',
+  'inv-ft':      'Freight method e.g. Sea - FCL 40HQ, Sea - FCL 20, Air. Appears on invoice.',
+  'inv-wt':      'Estimated gross weight of the shipment e.g. 4200 KGS.',
+  'inv-cbm':     'Estimated cubic volume of the shipment e.g. 22 CBM.',
+  'inv-pk':      'Total number of packages or cartons.',
+  'inv-pol':     'Port of Loading — where the goods depart from e.g. Qingdao.',
+  'inv-pod':     'Port of Discharge — where the goods arrive e.g. Bridgetown.',
+  'inv-coo':     'Country where goods were manufactured e.g. China. Required on customs documents.',
+  'inv-cur':     'Invoice currency. All line items and charges on this invoice use this currency.',
+  'inv-tx':      'Tax rate applied to the line items subtotal only. Not applied to freight or other charges. 0% for zero-rated exports.',
+  'inv-lf':      'Local freight charge billed to the buyer. Included in grand total but not in gross profit calculation.',
+  'inv-ins':     'Insurance charge billed to the buyer. Included in grand total.',
+  'inv-leg':     'Legal or consular fees billed to the buyer e.g. certificate legalisation.',
+  'inv-isp':     'Inspection or certification fees billed to the buyer e.g. third party QC inspection.',
+  'inv-oth':     'Any other charges billed to the buyer not covered by the above categories.',
+  'inv-dep':     'Deposit already received from the buyer. Deducted from grand total to show balance due. Does not affect profit calculations.',
+  'inv-terms':   'Payment and delivery terms. Printed on the invoice document. Pre-filled from your default terms in Settings.',
+  // PO fields
+  'po-num':      'Purchase Order reference number. Auto-generated as PO[invoice#]-1, PO[invoice#]-2 etc. when created from an invoice.',
+  'po-sup':      'Required. The supplier this PO is issued to. Must exist in your Suppliers list.',
+  'po-dt':       'Date this PO is issued.',
+  'po-del':      'Date by which you require the goods to be ready or delivered.',
+  'po-cur':      'Currency for this PO. Usually matches the supplier currency.',
+  'po-dep':      'Deposit amount already paid to this supplier. Deducted from balance due.',
+  'po-oth':      'Any other charges on this PO e.g. packaging, inland freight to port.',
+  'po-notes':    'Special instructions to the supplier: packaging requirements, certifications needed, delivery notes.',
+  // Settings
+  'cfg-bank':    'Your Stackd business bank account details. Leave blank until the account is open. Appears on invoice payment section.',
+  'cfg-terms':   'Default invoice terms pre-filled on every new invoice. Can be edited per invoice.',
+  'cfg-url':     'Your Google Apps Script web app URL. Format: https://script.google.com/macros/s/.../exec'
+};
+
+function tipLabel(labelText, tipKey) {
+  var tip = TIPS[tipKey];
+  if (!tip) return labelText;
+  return '<span class="tip"><span>' + labelText + '</span><i class="tip-icon" tabindex="0">?</i><span class="tip-box">' + tip + '</span></span>';
+}
+
+
 // ── INIT ──────────────────────────────────────────────────────
+
+function wireTips() {
+  Object.keys(TIPS).forEach(function(key) {
+    var lbl = document.getElementById('lbl-' + key);
+    if (!lbl) return;
+    var text = lbl.textContent;
+    lbl.innerHTML = '<span class="tip">' +
+      '<span>' + text + '</span>' +
+      '<i class="tip-icon" tabindex="0" aria-label="Help for ' + text + '">?</i>' +
+      '<span class="tip-box">' + TIPS[key] + '</span>' +
+      '</span>';
+  });
+}
+
 function initApp() {
+  wireTips();
   if (SS.url) {
     G('banner').style.display='none';
     G('cfg-url').value=SS.url;
