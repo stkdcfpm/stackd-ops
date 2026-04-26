@@ -3,19 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.6.2</title>
+<title>Stackd Ops v2.6.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-height:100vh;}
 .nav{background:var(--ink);display:flex;align-items:center;padding:0 22px;height:50px;position:sticky;top:0;z-index:100;}
-.logo{display:flex;align-items:flex-start;gap:10px;margin-right:20px;flex-shrink:0;}
-.logo-containers{display:flex;flex-direction:column;gap:0;margin-top:3px;}
-.logo-wm{display:flex;flex-direction:column;}
-.logo-text{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.18em;color:white;line-height:1;}
+.logo{display:flex;align-items:flex-start;gap:8px;margin-right:20px;flex-shrink:0;}
+.logo-wm{display:inline-flex;flex-direction:column;width:fit-content;}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.18em;color:white;line-height:1;white-space:nowrap;}
 .logo-text span{color:var(--cr);}
-.logo-tag{font-size:.38rem;color:#6A6060;letter-spacing:0;display:flex;justify-content:space-between;width:100%;margin-top:2px;font-family:'DM Mono',monospace;font-weight:300;}
+.logo-tag{font-size:.36rem;color:#6A6060;letter-spacing:.06em;display:flex;justify-content:space-between;width:100%;margin-top:1px;font-family:'DM Mono',monospace;}
 .tabs{display:flex;height:50px;flex:1;}
 .tab{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m);padding:0 14px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;height:100%;}
 .tab:hover{color:white;}.tab.on{color:white;border-bottom-color:var(--cr);}
@@ -1486,6 +1485,11 @@ function prevPO() {
 }
 function prevPOId(id) { var po=DB.po.find(function(x){return x.id===id;}); if(po) prevPODoc(po); }
 
+function fmtDate(d) {
+  if (!d) return '-';
+  return String(d).slice(0,10);
+}
+
 function prevInvDoc(inv) {
   var cur = inv.cur||'USD';
   var lis = inv.lineItems||[];
@@ -1494,9 +1498,11 @@ function prevInvDoc(inv) {
   var tx = +inv.taxRate||0, tax=liT*tx;
   var lf=+inv.lf||0, ins=+inv.ins||0, leg=+inv.leg||0, isp=+inv.isp||0, oth=+inv.oth||0;
   var grand=liT+tax+lf+ins+leg+isp+oth, dep=+inv.dep||0, bal=grand-dep;
-  if (grand===0 && inv.calc_grandTotal) {
-    grand=+inv.calc_grandTotal; bal=grand-dep;
+  if ((grand===0 || grand < dep) && inv.calc_grandTotal && +inv.calc_grandTotal > 0) {
+    grand=+inv.calc_grandTotal;
     liT=+inv.calc_liTotal||grand; tax=+inv.calc_taxAmt||0;
+    lf=+inv.lf||0; ins=+inv.ins||0; leg=+inv.leg||0; isp=+inv.isp||0; oth=+inv.oth||0;
+    dep=+inv.dep||0; bal=grand-dep;
   }
   var bank = AS.bank ? AS.bank.replace(/\n/g,'<br>') : '<em>Bank details pending &mdash; contact '+AS.email+'</em>';
 
@@ -1575,8 +1581,8 @@ function prevInvDoc(inv) {
           +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:#B8283A;margin-bottom:8px;">INVOICE</div>'
           +'<table style="font-size:.62rem;margin-left:auto;"><tbody>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Invoice #</td><td style="text-align:right;">'+invNum+'</td></tr>'
-            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Date</td><td style="text-align:right;">'+(inv.date||'-')+'</td></tr>'
-            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Expiry</td><td style="text-align:right;">'+(inv.expiry||'-')+'</td></tr>'
+            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Date</td><td style="text-align:right;">'+(fmtDate(inv.date))+'</td></tr>'
+            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Expiry</td><td style="text-align:right;">'+(fmtDate(inv.expiry))+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Customer ID</td><td style="text-align:right;">'+(inv.custId||'-')+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Currency</td><td style="text-align:right;">'+cur+'</td></tr>'
           +'</tbody></table>'
