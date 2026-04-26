@@ -1450,7 +1450,27 @@ async function saveInv() {
     terms:G('if-terms').value.trim(), chargesIncluded:G('if-chi').checked, status:G('inv-sm').value,
     lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0}; }), pos:[], updAt:new Date().toISOString()
   };
-  if(EI.i){var idx=DB.inv.findIndex(function(x){return x.id===EI.i;});if(idx>-1){inv.pos=DB.inv[idx].pos||[];DB.inv[idx]=inv;}}
+  // Preserve calc_ fields and lineItems from existing record when no live line items
+  if(EI.i){
+    var idx=DB.inv.findIndex(function(x){return x.id===EI.i;});
+    if(idx>-1){
+      var existing=DB.inv[idx];
+      inv.pos=existing.pos||[];
+      // If no live line items in this save, preserve existing calc_ fields and lineItems
+      if(cIL.length===0) {
+        inv.calc_grandTotal = existing.calc_grandTotal||inv.calc_grandTotal||'0';
+        inv.calc_cogs       = existing.calc_cogs||'0';
+        inv.calc_grossProfit= existing.calc_grossProfit||'0';
+        inv.calc_netProfit  = existing.calc_netProfit||'0';
+        inv.calc_margin     = existing.calc_margin||'0';
+        inv.calc_balanceDue = existing.calc_balanceDue||'0';
+        inv.calc_liTotal    = existing.calc_liTotal||'0';
+        inv.calc_taxAmt     = existing.calc_taxAmt||'0';
+        inv.lineItems       = existing.lineItems||[];
+      }
+      DB.inv[idx]=inv;
+    }
+  }
   else DB.inv.push(inv);
   sv(K.i,DB.inv); closeM('ov-inv'); rInv(); rDash();
   audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv); toast('Invoice saved');
