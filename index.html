@@ -3,15 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.6.1</title>
+<title>Stackd Ops v2.6.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-height:100vh;}
 .nav{background:var(--ink);display:flex;align-items:center;padding:0 22px;height:50px;position:sticky;top:0;z-index:100;}
-.logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.18em;color:white;margin-right:20px;}
-.logo span{color:var(--cr);}
+.logo{display:flex;align-items:flex-start;gap:10px;margin-right:20px;flex-shrink:0;}
+.logo-containers{display:flex;flex-direction:column;gap:0;margin-top:3px;}
+.logo-wm{display:flex;flex-direction:column;}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.18em;color:white;line-height:1;}
+.logo-text span{color:var(--cr);}
+.logo-tag{font-size:.38rem;color:#6A6060;letter-spacing:0;display:flex;justify-content:space-between;width:100%;margin-top:2px;font-family:'DM Mono',monospace;font-weight:300;}
 .tabs{display:flex;height:50px;flex:1;}
 .tab{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m);padding:0 14px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;height:100%;}
 .tab:hover{color:white;}.tab.on{color:white;border-bottom-color:var(--cr);}
@@ -198,7 +202,44 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><span>S</span>TACKD</div><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><svg width="13" height="42" viewBox="0 0 13 42" style="flex-shrink:0;">
+<rect x="0" y="0" width="13" height="13" rx="0" fill="#5C0E0E"/>
+<rect x="0" y="0" width="13" height="2" fill="#8B1A1A"/>
+<rect x="0" y="11" width="13" height="2" fill="#8B1A1A"/>
+<rect x="1" y="2" width="4" height="9" fill="#7A1515"/>
+<rect x="7" y="2" width="4" height="9" fill="#7A1515"/>
+<rect x="5" y="0" width="3" height="13" fill="#3D0808"/>
+<rect x="4" y="4" width="5" height="2" rx="1" fill="#C8C8C8"/>
+<rect x="4" y="7" width="5" height="2" rx="1" fill="#C8C8C8"/>
+<rect x="0" y="0" width="3" height="3" fill="#C0C0C0"/>
+<rect x="10" y="0" width="3" height="3" fill="#C0C0C0"/>
+<rect x="0" y="10" width="3" height="3" fill="#C0C0C0"/>
+<rect x="10" y="10" width="3" height="3" fill="#C0C0C0"/>
+<rect x="0" y="14" width="13" height="14" rx="0" fill="#0A0A0A"/>
+<rect x="0" y="14" width="13" height="2" fill="#1E1E1E"/>
+<rect x="0" y="26" width="13" height="2" fill="#1E1E1E"/>
+<rect x="1" y="16" width="4" height="10" fill="#141414"/>
+<rect x="7" y="16" width="4" height="10" fill="#141414"/>
+<rect x="5" y="14" width="3" height="14" fill="#050505"/>
+<rect x="4" y="18" width="5" height="2" rx="1" fill="#C8C8C8"/>
+<rect x="4" y="22" width="5" height="2" rx="1" fill="#C8C8C8"/>
+<rect x="0" y="14" width="3" height="3" fill="#C0C0C0"/>
+<rect x="10" y="14" width="3" height="3" fill="#C0C0C0"/>
+<rect x="0" y="25" width="3" height="3" fill="#C0C0C0"/>
+<rect x="10" y="25" width="3" height="3" fill="#C0C0C0"/>
+<rect x="0" y="29" width="13" height="13" rx="0" fill="#5C0E0E"/>
+<rect x="0" y="29" width="13" height="2" fill="#8B1A1A"/>
+<rect x="0" y="40" width="13" height="2" fill="#8B1A1A"/>
+<rect x="1" y="31" width="4" height="9" fill="#7A1515"/>
+<rect x="7" y="31" width="4" height="9" fill="#7A1515"/>
+<rect x="5" y="29" width="3" height="13" fill="#3D0808"/>
+<rect x="4" y="33" width="5" height="2" rx="1" fill="#C8C8C8"/>
+<rect x="4" y="37" width="5" height="2" rx="1" fill="#C8C8C8"/>
+<rect x="0" y="29" width="3" height="3" fill="#C0C0C0"/>
+<rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
+<rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
+<rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
+</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <div class="view on" id="v-dash">
   <div class="kpis" id="kpis"></div>
   <div class="r2">
@@ -1524,8 +1565,10 @@ function prevInvDoc(inv) {
       // Header
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:18px;border-bottom:2px solid #111;">'
         +'<div>'
+          +'<svg width=\'24\' height=\'76\' viewBox=\'0 0 24 76\' style=\'flex-shrink:0;margin-top:2px;\'><rect x=\'0\' y=\'0\' width=\'24\' height=\'24\' fill=\'#5C0E0E\'/><rect x=\'0\' y=\'0\' width=\'24\' height=\'3\' fill=\'#8B1A1A\'/><rect x=\'0\' y=\'21\' width=\'24\' height=\'3\' fill=\'#8B1A1A\'/><rect x=\'2\' y=\'3\' width=\'8\' height=\'18\' fill=\'#7A1515\'/><rect x=\'13\' y=\'3\' width=\'8\' height=\'18\' fill=\'#7A1515\'/><rect x=\'10\' y=\'0\' width=\'4\' height=\'24\' fill=\'#3D0808\'/><rect x=\'8\' y=\'7\' width=\'8\' height=\'3\' rx=\'1\' fill=\'#C8C8C8\'/><rect x=\'8\' y=\'14\' width=\'8\' height=\'3\' rx=\'1\' fill=\'#C8C8C8\'/><rect x=\'0\' y=\'0\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'19\' y=\'0\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'0\' y=\'19\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'19\' y=\'19\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'0\' y=\'26\' width=\'24\' height=\'24\' fill=\'#0A0A0A\'/><rect x=\'0\' y=\'26\' width=\'24\' height=\'3\' fill=\'#1E1E1E\'/><rect x=\'0\' y=\'47\' width=\'24\' height=\'3\' fill=\'#1E1E1E\'/><rect x=\'2\' y=\'29\' width=\'8\' height=\'18\' fill=\'#141414\'/><rect x=\'13\' y=\'29\' width=\'8\' height=\'18\' fill=\'#141414\'/><rect x=\'10\' y=\'26\' width=\'4\' height=\'24\' fill=\'#050505\'/><rect x=\'8\' y=\'33\' width=\'8\' height=\'3\' rx=\'1\' fill=\'#C8C8C8\'/><rect x=\'8\' y=\'40\' width=\'8\' height=\'3\' rx=\'1\' fill=\'#C8C8C8\'/><rect x=\'0\' y=\'26\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'19\' y=\'26\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'0\' y=\'45\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'19\' y=\'45\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'0\' y=\'52\' width=\'24\' height=\'24\' fill=\'#5C0E0E\'/><rect x=\'0\' y=\'52\' width=\'24\' height=\'3\' fill=\'#8B1A1A\'/><rect x=\'0\' y=\'73\' width=\'24\' height=\'3\' fill=\'#8B1A1A\'/><rect x=\'2\' y=\'55\' width=\'8\' height=\'18\' fill=\'#7A1515\'/><rect x=\'13\' y=\'55\' width=\'8\' height=\'18\' fill=\'#7A1515\'/><rect x=\'10\' y=\'52\' width=\'4\' height=\'24\' fill=\'#3D0808\'/><rect x=\'8\' y=\'59\' width=\'8\' height=\'3\' rx=\'1\' fill=\'#C8C8C8\'/><rect x=\'8\' y=\'66\' width=\'8\' height=\'3\' rx=\'1\' fill=\'#C8C8C8\'/><rect x=\'0\' y=\'52\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'19\' y=\'52\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'0\' y=\'71\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/><rect x=\'19\' y=\'71\' width=\'5\' height=\'5\' fill=\'#C0C0C0\'/></svg>'
+          +'<div style="display:flex;flex-direction:column;">'
           +'<div style="font-family:Bebas Neue,sans-serif;font-size:2.2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
-          +'<div style="font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:#8a7f82;margin-top:2px;">'+(AS.tag||'Source &middot; Supply &middot; Ship')+'</div>'
+          +'<div style="font-size:.42rem;color:#8a7f82;display:flex;justify-content:space-between;margin-top:3px;"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div>'
           +'<div style="font-size:.6rem;color:#555;margin-top:8px;line-height:1.8;">'+(AS.addr||'')+'<br>'+(AS.email||'')+' &nbsp;&middot;&nbsp; '+(AS.phone||'')+'</div>'
         +'</div>'
         +'<div style="text-align:right;">'
