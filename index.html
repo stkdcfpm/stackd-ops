@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.5.6</title>
+<title>Stackd Ops v2.6.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -273,7 +273,29 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <!-- Header -->
     <div style="background:var(--ink);padding:18px 22px;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.12em;color:white;margin-bottom:4px;"><span style="color:var(--cr);">BULK</span> IMPORT</div>
-      <div style="font-size:.58rem;color:var(--m);line-height:1.7;">Import existing data from your spreadsheets. Follow the sequence: <strong style="color:white;">Suppliers &rarr; Line Items &rarr; Invoices &rarr; POs</strong><br><br><strong style="color:var(--gold);">How it works:</strong> Download a template, fill it in, upload once. Data syncs to Google Sheets permanently — you will never need to re-import. CSVs are one-time import files only.<br><br><strong style="color:var(--gold);">Excel &amp; Google Drive:</strong> Save your master Excel files to Google Drive. Export as CSV when you have a batch to import. Add new individual records directly in the portal going forward.</div>
+      <div style="font-size:.58rem;color:var(--m);line-height:1.7;">Two ways to import. <strong style="color:var(--gold);">Option 1 is recommended — no file export needed.</strong></div>
+    </div>
+
+    <!-- Option 1: Google Sheets Direct Import -->
+    <div class="card" style="border-left:3px solid var(--gold);">
+      <div class="ct" style="color:var(--gold);">&#9889; Option 1 — Import Directly from Google Sheets</div>
+      <p style="font-size:.6rem;color:var(--m);margin-bottom:10px;line-height:1.7;">
+        Reads directly from your master template in Google Drive. No export, no file, no formatting issues.<br>
+        <strong style="color:var(--ink);">File:</strong> My Drive &gt; FPM &gt; FPM STACKD - OPS TEMPLATES &gt; stackd-master-template-v1.0.4
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <button class="btn btn-s" onclick="importFromSheets(&apos;sup&apos;)">&#8659; Suppliers</button>
+        <button class="btn btn-s" onclick="importFromSheets(&apos;li&apos;)">&#8659; Line Items</button>
+        <button class="btn btn-s" onclick="importFromSheets(&apos;inv&apos;)">&#8659; Invoices</button>
+        <button class="btn btn-s" onclick="importFromSheets(&apos;po&apos;)">&#8659; Purchase Orders</button>
+        <button class="btn" style="background:var(--gold);color:white;font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;font-size:.7rem;padding:6px 14px;" onclick="importAllFromSheets()">&#8659; Import All</button>
+      </div>
+      <div id="sheets-import-status" style="font-size:.58rem;color:var(--m);min-height:16px;line-height:1.7;"></div>
+    </div>
+
+    <!-- Option 2 header -->
+    <div style="padding:8px 0 4px 0;border-top:1px solid var(--ln);">
+      <div style="font-size:.56rem;color:var(--m);letter-spacing:.08em;text-transform:uppercase;">Option 2 — CSV Upload (use if data is not in Google Drive)</div>
     </div>
 
     <!-- Step 1: Suppliers -->
@@ -1816,7 +1838,22 @@ function parseImportCSV(text) {
     }
     cols.push(current.trim());
     var row = {};
-    headers.forEach(function(h, idx) { row[h] = (cols[idx]||'').replace(/^"|"$/g,'').trim(); });
+    headers.forEach(function(h, idx) {
+      var val = (cols[idx]||'').replace(/^"|"$/g,'').trim();
+      // Strip thousand separators from numeric-looking values e.g. "30,755.80" -> "30755.80"
+      if (/^[\d,]+(\.\d+)?$/.test(val)) val = val.replace(/,/g,'');
+      // Normalise date formats: DD/MM/YYYY -> YYYY-MM-DD
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(val)) {
+        var dp = val.split('/');
+        val = dp[2] + '-' + dp[1].padStart(2,'0') + '-' + dp[0].padStart(2,'0');
+      }
+      // Normalise DD-MM-YYYY -> YYYY-MM-DD
+      if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(val)) {
+        var dp = val.split('-');
+        val = dp[2] + '-' + dp[1].padStart(2,'0') + '-' + dp[0].padStart(2,'0');
+      }
+      row[h] = val;
+    });
     rows.push(row);
   }
   return { headers: headers, rows: rows };
@@ -1960,6 +1997,239 @@ function processImport(entity, csvText) {
   if (SS.url && SS.auto) {
     syncAll().catch(function(){});
   }
+}
+
+
+
+// ── GOOGLE SHEETS DIRECT IMPORT ────────────────────────────────
+async function importFromSheets(entity) {
+  if (!SS.url) {
+    toast('Connect your Apps Script URL in Settings first');
+    showV('cfg', document.querySelector('[data-v="cfg"]'));
+    return;
+  }
+  var status = G('sheets-import-status');
+  var entityNames = { sup:'Suppliers', li:'Line Items', inv:'Invoices', po:'Purchase Orders' };
+  var name = entityNames[entity] || entity;
+  status.textContent = 'Reading ' + name + ' from Google Sheets master file...';
+  status.style.color = 'var(--gold)';
+  setSyncStatus('loading');
+
+  try {
+    var resp = await sPost({ action: 'import_from_master', entity: entity });
+
+    if (resp.status !== 'ok') {
+      status.textContent = '⚠ ' + resp.message;
+      status.style.color = '#f87171';
+      setSyncStatus('err');
+      impLog('ERROR importing ' + name + ' from Sheets: ' + resp.message);
+      return;
+    }
+
+    // Process records using existing processImport logic
+    // Convert from master template column names to importer column names
+    var csvRows = resp.records.map(function(rec) { return rec; });
+
+    if (!csvRows.length) {
+      status.textContent = 'No data rows found in ' + name + ' sheet';
+      status.style.color = 'var(--m)';
+      setSyncStatus('idle');
+      return;
+    }
+
+    // Build a fake CSV text from the records and run through processImport
+    // Actually — process directly since we already have parsed objects
+    processImportRecords(entity, csvRows, function(summary) {
+      var msg = name + ': ' + summary.added + ' added, ' + summary.updated + ' updated, ' + summary.skipped + ' skipped';
+      if (summary.errors && summary.errors.length) msg += ' | ' + summary.errors.join('; ');
+      status.textContent = '✓ ' + msg;
+      status.style.color = '#4ade80';
+      setSyncStatus('ok');
+      impLog('[Sheets import] ' + msg);
+      setTimeout(function(){ setSyncStatus('idle'); }, 3000);
+    });
+
+  } catch(e) {
+    status.textContent = '⚠ Connection failed: ' + e.message;
+    status.style.color = '#f87171';
+    setSyncStatus('err');
+    impLog('ERROR: ' + e.message);
+  }
+}
+
+async function importAllFromSheets() {
+  var status = G('sheets-import-status');
+  status.textContent = 'Importing all entities from master file...';
+  status.style.color = 'var(--gold)';
+  var entities = ['sup', 'li', 'inv', 'po'];
+  var results = [];
+  for (var i = 0; i < entities.length; i++) {
+    await importFromSheets(entities[i]);
+    await new Promise(function(r){ setTimeout(r, 500); });
+  }
+  status.textContent = '✓ All entities imported from Google Sheets master file';
+  status.style.color = '#4ade80';
+}
+
+// Process records from Sheets (already parsed objects, not CSV text)
+function processImportRecords(entity, records, callback) {
+  var added = 0, updated = 0, skipped = 0, errors = [];
+  var now = new Date().toISOString();
+
+  if (entity === 'sup') {
+    records.forEach(function(r) {
+      var name = r['Supplier Name']||r['name']||'';
+      if (!name) { skipped++; return; }
+      var existing = DB.sup.find(function(s){ return s.name.toLowerCase()===name.toLowerCase(); });
+      var rec = { id:existing?existing.id:uid(), name:name,
+        country:r['Country']||'', ct:r['Contact Person']||'',
+        email:r['Email']||'', phone:r['Phone/WeChat']||'',
+        cur:r['Currency']||'USD', notes:r['Notes']||'', updAt:now };
+      if (existing) { var i=DB.sup.findIndex(function(s){return s.id===existing.id;}); DB.sup[i]=rec; updated++; }
+      else { DB.sup.push(rec); added++; }
+    });
+    sv(K.s, DB.sup); rSup(); rDash();
+  }
+
+  else if (entity === 'li') {
+    records.forEach(function(r) {
+      var desc=r['Description']||''; var sku=r['SKU']||'';
+      if (!desc) { skipped++; return; }
+      var supName=r['Supplier Name']||'';
+      var sup=DB.sup.find(function(s){return s.name.toLowerCase()===supName.toLowerCase();});
+      if (!sup&&supName) { errors.push('Supplier not found: '+supName); skipped++; return; }
+      var existing=DB.li.find(function(l){
+        if(sku) return l.sku===sku&&l.supId===(sup?sup.id:'');
+        return l.desc.toLowerCase()===desc.toLowerCase()&&l.supId===(sup?sup.id:'');
+      });
+      var rec = { id:existing?existing.id:uid(), sku:sku, desc:desc,
+        specs:r['Specifications']||'', hs:r['HS Code']||'',
+        supId:sup?sup.id:'', uom:r['Unit of Measure']||'pcs',
+        cost:+r['Unit Cost']||0, price:+r['Unit Price']||0,
+        cur:r['Currency']||'USD', notes:r['Notes']||'', updAt:now };
+      if (existing) { var i=DB.li.findIndex(function(l){return l.id===existing.id;}); DB.li[i]=rec; updated++; }
+      else { DB.li.push(rec); added++; }
+    });
+    sv(K.l, DB.li); rLI(); rDash();
+  }
+
+  else if (entity === 'inv') {
+    records.forEach(function(r) {
+      var num=String(r['Invoice #']||r['num']||'').trim();
+      var buyer=String(r['Buyer']||r['buyer']||'').trim();
+      if (!num||!buyer) { skipped++; return; }
+      // Clean numbers — remove thousand separators if string
+      function cleanNum(v) {
+        if (typeof v === 'number') return v;
+        return +(String(v).replace(/,/g,''))||0;
+      }
+      // Normalise date
+      function cleanDate(v) {
+        if (!v) return '';
+        var s = String(v).trim();
+        // DD/MM/YYYY
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
+          var p=s.split('/'); return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+        }
+        return s;
+      }
+      var gt=cleanNum(r['Grand Total']);
+      var liT=cleanNum(r['Items Subtotal'])||gt;
+      var cogs=cleanNum(r['COGS']);
+      var dep=cleanNum(r['Buyer Deposit']);
+      var tx=cleanNum(r['Tax Rate (decimal)']);
+      var lf=cleanNum(r['Local Freight']);
+      var ins=cleanNum(r['Insurance']);
+      if (!liT && gt) liT = (tx>0) ? gt/(1+tx) : gt;
+      var gp=liT-cogs; var np=gt-cogs;
+      var mgn=gt>0?((np/gt)*100).toFixed(2):'0';
+      var status=(function(s){
+        var m={'paid':'Paid','partially paid':'Partially Paid','part paid':'Partially Paid',
+          'part':'Partially Paid','sent':'Sent','draft':'Draft','cancelled':'Cancelled',
+          'canceled':'Cancelled','proforma':'Pro-forma','pro-forma':'Pro-forma'};
+        var v=(String(s||'')).trim();
+        return m[v.toLowerCase()]||v||'Draft';
+      })(r['Status']||'');
+      var existing=DB.inv.find(function(i){return i.num===num;});
+      var rec = { id:existing?existing.id:uid(), num:num, buyer:buyer,
+        buyerAddr:String(r['Buyer Address']||''),
+        shipTo:'', dst:String(r['Destination']||''), custId:'',
+        date:cleanDate(r['Date (YYYY-MM-DD)']||r['date']||''),
+        expiry:cleanDate(r['Expiry Date']||r['expiry']||''),
+        shipDate:'',
+        ft:String(r['Freight Type']||''), wt:'', cbm:'', pk:'',
+        pol:String(r['Port of Loading']||''), pod:String(r['Port of Discharge']||''),
+        coo:String(r['Country of Origin']||''),
+        cur:String(r['Currency']||'USD'), taxRate:tx,
+        lf:lf, ins:ins, leg:0, isp:0, oth:0, dep:dep,
+        chargesIncluded:true,
+        terms:AS.terms||'', status:status,
+        lineItems:existing?existing.lineItems:[],
+        pos:existing?existing.pos:[],
+        notes:String(r['Notes']||''),
+        calc_grandTotal:String(gt), calc_cogs:String(cogs),
+        calc_grossProfit:String(gp), calc_netProfit:String(np),
+        calc_margin:mgn, calc_balanceDue:String(gt-dep),
+        calc_liTotal:String(liT), calc_taxAmt:String(liT*tx), updAt:now };
+      if (existing) { var i=DB.inv.findIndex(function(x){return x.num===num;}); DB.inv[i]=rec; updated++; }
+      else { DB.inv.push(rec); added++; }
+    });
+    sv(K.i, DB.inv); rInv(); rDash();
+  }
+
+
+  else if (entity === 'po') {
+    records.forEach(function(r) {
+      var num     = String(r['PO #']||r['num']||'').trim();
+      var supName = String(r['Supplier Name']||r['supName']||'').trim();
+      if (!num) { skipped++; return; }
+      var sup = DB.sup.find(function(s){ return s.name.toLowerCase()===supName.toLowerCase(); });
+      if (!sup && supName) { errors.push('Supplier not found: '+supName); skipped++; return; }
+      var invNum = String(r['Linked Invoice #']||r['invNum']||'').trim();
+      var inv    = invNum ? DB.inv.find(function(i){ return i.num===invNum; }) : null;
+      function cleanNum(v) { if (typeof v==='number') return v; return +(String(v).replace(/,/g,''))||0; }
+      function cleanDate(v) {
+        if (!v) return '';
+        var s=String(v).trim();
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){var p=s.split('/');return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}
+        return s;
+      }
+      var cogs = cleanNum(r['COGS Total']);
+      var dep  = cleanNum(r['Supplier Deposit']);
+      var oth  = cleanNum(r['Other Charges']);
+      var status = (function(s){
+        var m={'deposit paid':'Deposit Paid','settled':'Settled','sent':'Sent',
+          'draft':'Draft','cancelled':'Cancelled','canceled':'Cancelled'};
+        var v=(String(s||'')).trim(); return m[v.toLowerCase()]||v||'Draft';
+      })(r['Status']||'');
+      var existing = DB.po.find(function(p){ return p.num===num; });
+      var rec = { id:existing?existing.id:uid(), num:num,
+        supId:sup?sup.id:'',
+        invId:inv?inv.id:(existing?existing.invId:''),
+        invNum:invNum,
+        date:cleanDate(r['Date (YYYY-MM-DD)']||r['date']||''),
+        del:cleanDate(r['Required Delivery']||r['del']||''),
+        cur:String(r['Currency']||'USD'),
+        lineItems:existing?existing.lineItems:[],
+        dep:dep, oth:oth,
+        fpmFunded:existing?existing.fpmFunded||0:0,
+        fpmRecovered:existing?existing.fpmRecovered||false:false,
+        notes:String(r['Notes']||''), status:status,
+        calc_liTotal:String(cogs),
+        calc_grandTotal:String(cogs+oth),
+        calc_balanceDue:String(cogs+oth-dep),
+        creAt:existing?existing.creAt:now, updAt:now };
+      if (existing) {
+        var i=DB.po.findIndex(function(p){return p.num===num;}); DB.po[i]=rec; updated++;
+      } else { DB.po.push(rec); added++; }
+    });
+    sv(K.p, DB.po); rPO(); rDash();
+  }
+
+  // Sync to Sheets
+  if (SS.url && SS.auto) syncAll().catch(function(){});
+
+  if (callback) callback({ added:added, updated:updated, skipped:skipped, errors:errors });
 }
 
 
