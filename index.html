@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.6.4</title>
+<title>Stackd Ops v2.6.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -750,6 +750,28 @@ async function pullAll() {
         var pulledIds = {};
         for (var pi = 0; pi < pulled.length; pi++) pulledIds[pulled[pi].id] = true;
         var localOnly = DB[ent].filter(function(r){ return !pulledIds[r.id]; });
+        // For invoices and POs: preserve local lineItems/pos if pulled record has empty arrays
+        // This prevents a Sheets sync from wiping line items added locally
+        if (ent === 'inv' || ent === 'po') {
+          for (var pi = 0; pi < pulled.length; pi++) {
+            var localRec = DB[ent].find(function(r){ return r.id === pulled[pi].id; });
+            if (localRec) {
+              if (ent === 'inv') {
+                if ((!pulled[pi].lineItems || pulled[pi].lineItems.length === 0) && localRec.lineItems && localRec.lineItems.length > 0) {
+                  pulled[pi].lineItems = localRec.lineItems;
+                }
+                if ((!pulled[pi].pos || pulled[pi].pos.length === 0) && localRec.pos && localRec.pos.length > 0) {
+                  pulled[pi].pos = localRec.pos;
+                }
+              }
+              if (ent === 'po') {
+                if ((!pulled[pi].lineItems || pulled[pi].lineItems.length === 0) && localRec.lineItems && localRec.lineItems.length > 0) {
+                  pulled[pi].lineItems = localRec.lineItems;
+                }
+              }
+            }
+          }
+        }
         DB[ent] = pulled.concat(localOnly);
       }
     }
@@ -1314,7 +1336,7 @@ async function saveInv() {
     lf:+G('if-lf').value||0, ins:+G('if-ins').value||0, leg:+G('if-leg').value||0,
     isp:+G('if-isp').value||0, oth:+G('if-oth').value||0, dep:+G('if-dep').value||0,
     terms:G('if-terms').value.trim(), chargesIncluded:G('if-chi').checked, status:G('inv-sm').value,
-    lineItems:cIL, pos:[], updAt:new Date().toISOString()
+    lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0}; }), pos:[], updAt:new Date().toISOString()
   };
   if(EI.i){var idx=DB.inv.findIndex(function(x){return x.id===EI.i;});if(idx>-1){inv.pos=DB.inv[idx].pos||[];DB.inv[idx]=inv;}}
   else DB.inv.push(inv);
@@ -1825,7 +1847,10 @@ function vInv() {
   if (hasDup) return vErr('if-n', 'Invoice number ' + num + ' already exists');
   if (!buyer) return vErr('if-b', 'Buyer name is required');
   if (!date) return vErr('if-dt', 'Invoice date is required');
-  if (cIL.length===0) { toast('⚠ Add at least one line item before saving'); return false; }
+  if (cIL.length===0) {
+    var inv0 = EI.i ? DB.inv.find(function(i){ return i.id===EI.i; }) : null;
+    if (!inv0 || !(+inv0.calc_grandTotal>0)) { toast('⚠ Add at least one line item before saving'); return false; }
+  }
   if (dep < 0) return vErr('if-dep', 'Buyer deposit cannot be negative');
   if (!RX.taxRate(tx)) return vErr('if-tx', 'Tax rate must be between 0 and 1 (e.g. 0.20 for 20%)');
   var charges = ['if-lf','if-ins','if-leg','if-isp','if-oth'];
