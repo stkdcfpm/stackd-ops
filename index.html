@@ -238,7 +238,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
 <rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
 <rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
-</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.6.6</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <div class="view on" id="v-dash">
   <div class="kpis" id="kpis"></div>
   <div class="r2">
@@ -590,6 +590,118 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+
+<!-- CHANGELOG MODAL -->
+<div class="ov" id="ov-changelog" onclick="if(event.target===this)closeM('ov-changelog')" style="display:none;">
+  <div class="modal" style="max-width:580px;">
+    <div class="mh">
+      <h2>Release Notes</h2>
+      <span style="font-family:'DM Mono',monospace;font-size:.5rem;color:var(--m);margin-left:8px;">Stackd Ops</span>
+      <button class="mx" onclick="closeM('ov-changelog')">&#215;</button>
+    </div>
+    <div class="mb" style="max-height:480px;overflow-y:auto;">
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.6.6</span>
+          <span style="font-size:.5rem;color:var(--m);">Current release</span>
+          <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Line items now survive Sheets pull — local line items preserved when Sheets has empty arrays</li>
+          <li>Fix: Payment ledger float rounding — status auto-flip now accurate to 2dp</li>
+          <li>Fix: Outstanding from buyers excludes Paid invoices correctly</li>
+          <li>Fix: Payment modal X button now closes correctly</li>
+          <li>Fix: Payment sync error removed — payments not yet synced to Sheets (v3.0.0)</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--m);margin-bottom:8px;">v2.6.5</div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Line items save on imported invoices — validation no longer blocks invoices with known totals</li>
+          <li>Fix: cIL correctly initialised from inv.lineItems when editing</li>
+          <li>Fix: Invoice line items correctly serialised on save</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--m);margin-bottom:8px;">v2.6.4</div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Payment ledger — dep field uses payment ledger total when payments exist</li>
+          <li>Fix: cInv uses payment ledger for balance due calculation</li>
+          <li>Fix: Outstanding from buyers excludes Paid invoices</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--m);margin-bottom:8px;">v2.6.3</div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Logo layout — SOURCE SUPPLY SHIP spans wordmark width correctly</li>
+          <li>Fix: Invoice date strips time component (no more T00:00:00.000Z)</li>
+          <li>Fix: Balance due falls back to calc_grandTotal when live calc is zero</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--m);margin-bottom:8px;">v2.6.2</div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Stackd container logo mark — three stacked shipping containers (red/black/red) in nav and document headers</li>
+          <li>New: SOURCE · SUPPLY · SHIP tagline spans wordmark width</li>
+          <li>Font: Bebas Neue retained for STACKD wordmark</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--m);margin-bottom:8px;">v2.6.1</div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Payment ledger — record individual buyer payments per invoice</li>
+          <li>New: Auto-status — invoice flips to Paid/Partially Paid based on payment total</li>
+          <li>New: Auto-recovery — FPM deposits auto-recovered when invoice marked Paid</li>
+          <li>New: INV10029 pre-seeded with two payment records ($10,000 + $21,055.76)</li>
+          <li>New: $ button on every invoice row opens payment history</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--m);margin-bottom:8px;">v2.6.0</div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Google Sheets direct import — one click, no CSV export needed</li>
+          <li>New: Import All button — all four entities in sequence</li>
+          <li>New: Apps Script v2.2.0 — reads directly from master template in Google Drive</li>
+          <li>Fix: Folder name corrected to FPM STACKD - OPS TEMPLATES</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--m);margin-bottom:8px;">v2.5.x</div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>v2.5.7: CSV parser hardened — strips commas from numbers, normalises DD/MM/YYYY dates</li>
+          <li>v2.5.6: Charges included flag — toggle whether freight is embedded in Grand Total</li>
+          <li>v2.5.4: Upsert import — new records insert, existing records update on re-import</li>
+          <li>v2.5.3: FPM funded deposit tracker — track out-of-pocket deposits per PO</li>
+          <li>v2.5.2: Accounts &amp; Deposit Tracker — by invoice and by supplier pivot</li>
+          <li>v2.5.1: Net profit calculation fix for imported invoices</li>
+          <li>v2.5.0: Tooltips (50 fields), dial code dropdown (250 countries), field validation</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:4px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--m);margin-bottom:8px;">v2.4.x — v2.3.2</div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>v2.4.x: Bulk import, HS codes, pro-forma status, INV##### numbering, status normalisation</li>
+          <li>v2.3.2: Password gate, GitHub Pages deployment, print fix</li>
+        </ul>
+      </div>
+
+    </div>
+    <div style="padding:12px 0 0;border-top:1px solid var(--ln);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:.52rem;color:var(--m);">Full changelog: <a href="https://github.com/stkdcfpm/stackd-ops" target="_blank" style="color:var(--cr);">github.com/stkdcfpm/stackd-ops</a></span>
+      <button class="btn btn-g" onclick="closeM('ov-changelog')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- PO MODAL -->
 <div class="ov" id="ov-po" onclick="if(event.target===this)closeM('ov-po')">
   <div class="modal" style="max-width:840px;">
@@ -892,7 +1004,7 @@ function rDash() {
   var ai = DB.inv.filter(function(i){ return i.status !== 'Cancelled'; });
   var tR = ai.reduce(function(s,i){ return s + cInv(i).grand; }, 0);
   var tNP = ai.reduce(function(s,i){ return s + cInv(i).np; }, 0);
-  var tOut = ai.reduce(function(s,i){ return s + i.status!=='Paid'&&i.status!=='Cancelled' ? Math.max(0, cInv(i).bal) : 0; }, 0);
+  var tOut = ai.reduce(function(s,i){ return s + ((i.status!=='Paid'&&i.status!=='Cancelled') ? Math.max(0, cInv(i).bal) : 0); }, 0);
   var tPO = DB.po.filter(function(p){ return p.status!=='Cancelled' && p.status!=='Settled'; })
     .reduce(function(s,p){
       var t = (p.lineItems||[]).reduce(function(a,l){ return a + (+l.qty||0)*(+l.cost||0); }, 0);
@@ -2348,6 +2460,10 @@ function openPayments(invId, invNum) {
   if (title) title.textContent = 'Payments — ' + invNum;
   renderPaymentsTab(invId);
   G('ov-payments').style.display = 'flex';
+}
+
+function openChangelog() {
+  G('ov-changelog').style.display = 'flex';
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────
