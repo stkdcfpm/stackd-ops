@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.6.0</title>
+<title>Stackd Ops v2.6.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -508,7 +508,10 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <div class="fld"><label>Legal / Consular</label><input type="number" id="if-leg" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
           <div class="fld"><label>Inspection / Cert.</label><input type="number" id="if-isp" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
           <div class="fld"><label>Other Charges</label><input type="number" id="if-oth" placeholder="0.00" step="0.01" oninput="calcInv()"></div>
-          <div class="fld"><label id="lbl-inv-dep">Buyer Deposit Received</label><input type="number" id="if-dep" placeholder="0.00" step="0.01" oninput="calcInv()" style="border-bottom-color:var(--gold);background:rgba(201,150,58,.05);"></div>
+          <div class="fld"><label id="lbl-inv-dep">Buyer Deposit Received</label>
+          <input type="number" id="if-dep" placeholder="0.00" step="0.01" oninput="calcInv()" style="border-bottom-color:var(--gold);background:rgba(201,150,58,.05);">
+          <div id="dep-note" style="font-size:.5rem;color:var(--m);margin-top:2px;display:none;">Auto-calculated from Payments tab</div>
+        </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:8px;margin-bottom:4px;padding:8px 10px;background:var(--bg);border-left:3px solid var(--gold);">
         <input type="checkbox" id="if-chi" checked style="accent-color:var(--gold);flex-shrink:0;" onchange="calcInv()">
@@ -530,6 +533,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-o" onclick="prevInv()">Preview Invoice</button>
         <button class="btn btn-s" onclick="saveInv()">Save Invoice</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT SECTION — shown below invoice modal via floating panel -->
+<div class="ov" id="ov-payments" onclick="if(event.target===this)closeM('ov-payments')" style="display:none;">
+  <div class="modal" style="max-width:700px;">
+    <div class="mh">
+      <h2 id="pm-title">Payment History</h2>
+      <button class="mx" onclick="closeM('ov-payments')">&#215;</button>
+    </div>
+    <div class="mb">
+      <div id="payments-tab"></div>
     </div>
   </div>
 </div>
@@ -601,9 +617,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', ss:'st_ss', as:'st_as', au:'st_au'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', ss:'st_ss', as:'st_as', au:'st_au'};
 function ld(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } }
-let DB = { sup: ld(K.s)||[], li: ld(K.l)||[], inv: ld(K.i)||[], po: ld(K.p)||[] };
+let DB = { sup: ld(K.s)||[], li: ld(K.l)||[], inv: ld(K.i)||[], po: ld(K.p)||[], payments: ld(K.pm)||[] };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true };
 let AS = ld(K.as) || { name:'Stackd', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'Brighton, UK', email:'cachafpm@gmail.com', phone:'+44 7930 438631', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
 let EI = { s:null, l:null, i:null, p:null };
@@ -614,7 +630,7 @@ const G = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
 const today = () => new Date().toISOString().slice(0,10);
 const sv = (k,d) => localStorage.setItem(k, JSON.stringify(d));
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); };
 
 function fmt(n, c) {
   c = c || 'USD';
@@ -1151,6 +1167,20 @@ function editInv(id) {
   G('if-lf').value=inv.lf||''; G('if-ins').value=inv.ins||''; G('if-leg').value=inv.leg||'';
   G('if-isp').value=inv.isp||''; G('if-oth').value=inv.oth||''; G('if-dep').value=inv.dep||'';
   G('if-terms').value=inv.terms||AS.terms||''; G('if-chi').checked=inv.chargesIncluded!==false;
+  // Update payments tab badge
+  var pmCount = DB.payments.filter(function(p){ return p.invId === inv.id; }).length;
+  var pmTab = G('tab-payments');
+  if (pmTab) pmTab.textContent = pmCount > 0 ? 'Payments (' + pmCount + ')' : 'Payments';
+  // Show dep as calculated if payments exist
+  var depNote = G('dep-note');
+  if (depNote) depNote.style.display = pmCount > 0 ? 'block' : 'none';
+  if (pmCount > 0) {
+    var depField = G('if-dep');
+    if (depField) { depField.value = getInvTotalPaid(inv.id).toFixed(2); depField.readOnly = true; depField.style.opacity = '0.6'; }
+  } else {
+    var depField = G('if-dep');
+    if (depField) { depField.readOnly = false; depField.style.opacity = '1'; }
+  }
   rILT(); calcInv(); showV('inv',document.querySelector('[data-v="inv"]')); G('ov-inv').classList.add('on');
 }
 function txChg() { G('ctx-wrap').style.display = G('if-tx').value==='custom' ? 'block' : 'none'; calcInv(); }
@@ -1309,6 +1339,7 @@ function rInv() {
       '<td class="num" style="color:var(--bl);">' + fmt(c.bal,cur) + '</td>' +
       '<td style="white-space:nowrap;">' +
         '<button class="ab" onclick="editInv(\'' + inv.id + '\')" title="Edit">&#9998;</button>' +
+        '<button class="ab" onclick="openPayments(\'' + inv.id + '\',\'' + inv.num + '\')" title="Payments" style="color:var(--gn);">$</button>' +
         '<button class="ab" onclick="prevInvId(\'' + inv.id + '\')" title="Preview Invoice" style="color:var(--gn);font-size:.52rem;border:1px solid var(--gn);padding:2px 6px;border-radius:2px;">&#128065; PDF</button>' +
         '<button class="ab" onclick="delInv(\'' + inv.id + '\')" title="Delete">&#10005;</button>' +
       '</td></tr>';
@@ -2233,6 +2264,13 @@ function processImportRecords(entity, records, callback) {
 }
 
 
+function openPayments(invId, invNum) {
+  var title = G('pm-title');
+  if (title) title.textContent = 'Payments — ' + invNum;
+  renderPaymentsTab(invId);
+  G('ov-payments').style.display = 'flex';
+}
+
 // ── SETTINGS ──────────────────────────────────────────────────
 function rCfg() {
   G('cfg-url').value=SS.url||''; G('auto-s').checked=SS.auto!==false; G('pol').checked=SS.pol!==false;
@@ -2390,6 +2428,183 @@ function setSupPhone(phone) {
   }
 }
 
+// ── PAYMENT METHODS ────────────────────────────────────────────
+var PAYMENT_METHODS = ['Bank Transfer','Wire Transfer','Cash','Cheque','PayPal/Stripe','Other'];
+
+// ── PAYMENT FUNCTIONS ──────────────────────────────────────────
+
+function getInvPayments(invId) {
+  return DB.payments.filter(function(p){ return p.invId === invId; })
+    .sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+}
+
+function getInvTotalPaid(invId) {
+  return getInvPayments(invId).reduce(function(s,p){ return s + (+p.amount||0); }, 0);
+}
+
+function savePayment(payment) {
+  var existing = DB.payments.findIndex(function(p){ return p.id === payment.id; });
+  if (existing >= 0) { DB.payments[existing] = payment; }
+  else { DB.payments.push(payment); }
+  sv(K.pm, DB.payments);
+  audit('SAVE', 'payment', payment.id, payment);
+
+  // Update invoice dep field to match total paid
+  var inv = DB.inv.find(function(i){ return i.id === payment.invId; });
+  if (inv) {
+    var totalPaid = getInvTotalPaid(inv.id);
+    inv.dep = totalPaid;
+    inv.updAt = new Date().toISOString();
+
+    // Auto-status based on payments
+    var grand = +inv.calc_grandTotal || cInv(inv).grand;
+    var prevStatus = inv.status;
+    if (totalPaid >= grand && grand > 0) {
+      inv.status = 'Paid';
+    } else if (totalPaid > 0 && totalPaid < grand) {
+      inv.status = 'Partially Paid';
+    }
+
+    sv(K.i, DB.inv);
+    syncEnt('inv', inv).catch(function(){});
+
+    // Auto-recover FPM deposits if now Paid
+    if (inv.status === 'Paid' && prevStatus !== 'Paid') {
+      var recovered = false;
+      DB.po.forEach(function(po) {
+        if ((po.invId === inv.id || po.invNum === inv.num) && +po.fpmFunded > 0 && !po.fpmRecovered) {
+          po.fpmRecovered = true;
+          po.updAt = new Date().toISOString();
+          recovered = true;
+          syncEnt('po', po).catch(function(){});
+        }
+      });
+      sv(K.p, DB.po);
+      if (recovered) toast('\u2713 Invoice marked Paid — FPM deposits auto-recovered');
+      else toast('\u2713 Invoice marked Paid');
+    }
+
+    rInv(); rDash();
+  }
+
+  // Sync payment to Sheets
+  syncEnt('payment', payment).catch(function(){});
+}
+
+function deletePayment(id) {
+  var pm = DB.payments.find(function(p){ return p.id === id; });
+  if (!pm) return;
+  if (!confirm('Delete this payment record?')) return;
+  DB.payments = DB.payments.filter(function(p){ return p.id !== id; });
+  sv(K.pm, DB.payments);
+  audit('DELETE', 'payment', id, pm);
+
+  // Recalculate invoice dep
+  var inv = DB.inv.find(function(i){ return i.id === pm.invId; });
+  if (inv) {
+    inv.dep = getInvTotalPaid(inv.id);
+    inv.updAt = new Date().toISOString();
+    sv(K.i, DB.inv);
+    syncEnt('inv', inv).catch(function(){});
+    rInv(); rDash();
+  }
+  renderPaymentsTab(pm.invId);
+}
+
+function renderPaymentsTab(invId) {
+  var container = G('payments-tab');
+  if (!container) return;
+  var payments = getInvPayments(invId);
+  var inv = DB.inv.find(function(i){ return i.id === invId; });
+  var grand = inv ? (+inv.calc_grandTotal || cInv(inv).grand) : 0;
+  var totalPaid = payments.reduce(function(s,p){ return s+(+p.amount||0); }, 0);
+  var balance = grand - totalPaid;
+  var cur = inv ? inv.cur : 'USD';
+
+  var html = '<div style="margin-bottom:12px;display:flex;gap:16px;padding:10px 12px;background:var(--bg);">' +
+    '<div><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);">Invoice Total</div>' +
+    '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;">' + fmt(grand,cur) + '</div></div>' +
+    '<div><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);">Total Received</div>' +
+    '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;color:var(--gn);">' + fmt(totalPaid,cur) + '</div></div>' +
+    '<div><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);">Balance Due</div>' +
+    '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;color:' + (balance>0?'var(--cr)':'var(--gn)') + ';">' +
+    (balance > 0 ? fmt(balance,cur) : '\u2713 Settled') + '</div></div>' +
+    '</div>';
+
+  if (payments.length) {
+    html += '<table class="tbl"><thead><tr>' +
+      '<th>Date</th><th>Amount</th><th>Method</th><th>Reference</th><th>Notes</th><th></th>' +
+      '</tr></thead><tbody>';
+    payments.forEach(function(pm) {
+      html += '<tr>' +
+        '<td style="white-space:nowrap;">' + (pm.date||'-') + '</td>' +
+        '<td class="num" style="color:var(--gn);font-weight:600;">' + fmt(pm.amount,cur) + '</td>' +
+        '<td>' + (pm.method||'-') + '</td>' +
+        '<td style="font-size:.54rem;color:var(--m);">' + (pm.reference||'-') + '</td>' +
+        '<td style="font-size:.54rem;color:var(--m);">' + (pm.notes||'-') + '</td>' +
+        '<td><button class="btn btn-g" style="font-size:.5rem;padding:2px 7px;" onclick="deletePayment(\'' + pm.id + '\')">\u00d7</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div class="empty"><div class="ei">\ud83d\udcb3</div><p>No payments recorded yet.</p></div>';
+  }
+
+  // Add payment form
+  html += '<div style="margin-top:12px;padding:12px;background:var(--bg);border-top:2px solid var(--gold);">' +
+    '<div style="font-size:.56rem;font-weight:600;color:var(--ink);margin-bottom:8px;letter-spacing:.06em;">RECORD PAYMENT</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
+    '<div class="fld"><label>Date</label><input type="date" id="pm-date" value="' + today() + '"></div>' +
+    '<div class="fld"><label>Amount</label><input type="number" id="pm-amount" placeholder="0.00" step="0.01" style="border-bottom-color:var(--gn);"></div>' +
+    '<div class="fld"><label>Method</label><select id="pm-method">' +
+    PAYMENT_METHODS.map(function(m){ return '<option>' + m + '</option>'; }).join('') +
+    '</select></div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">' +
+    '<div class="fld"><label>Reference / Transaction ID</label><input type="text" id="pm-ref" placeholder="Bank ref, transaction ID..."></div>' +
+    '<div class="fld"><label>Notes</label><input type="text" id="pm-notes" placeholder="Optional notes..."></div>' +
+    '</div>' +
+    '<button class="btn btn-s" style="margin-top:10px;" onclick="addPaymentFromForm(\'' + invId + '\')">\u2713 Save Payment</button>' +
+    '</div>';
+
+  container.innerHTML = html;
+}
+
+function addPaymentFromForm(invId) {
+  var date = G('pm-date') ? G('pm-date').value : today();
+  var amount = G('pm-amount') ? +G('pm-amount').value : 0;
+  var method = G('pm-method') ? G('pm-method').value : 'Bank Transfer';
+  var ref = G('pm-ref') ? G('pm-ref').value.trim() : '';
+  var notes = G('pm-notes') ? G('pm-notes').value.trim() : '';
+
+  if (!amount || amount <= 0) { toast('\u26a0 Enter a payment amount'); return; }
+  if (!date) { toast('\u26a0 Enter a payment date'); return; }
+
+  var inv = DB.inv.find(function(i){ return i.id === invId; });
+  var pm = {
+    id: uid(),
+    invId: invId,
+    invNum: inv ? inv.num : '',
+    date: date,
+    amount: amount,
+    method: method,
+    reference: ref,
+    notes: notes,
+    type: 'buyer_payment',
+    creAt: new Date().toISOString()
+  };
+
+  savePayment(pm);
+  renderPaymentsTab(invId);
+
+  // Clear form
+  if (G('pm-amount')) G('pm-amount').value = '';
+  if (G('pm-ref')) G('pm-ref').value = '';
+  if (G('pm-notes')) G('pm-notes').value = '';
+
+  toast('\u2713 Payment of ' + fmt(amount, inv ? inv.cur : 'USD') + ' recorded');
+}
+
 // ── TOOLTIPS ───────────────────────────────────────────────────
 var TIPS = {
   // Supplier fields
@@ -2474,8 +2689,28 @@ function wireTips() {
   });
 }
 
+// Pre-populate INV10029 payment history
+function seedINV10029Payments() {
+  var inv = DB.inv.find(function(i){ return i.num === 'INV10029'; });
+  if (!inv) return;
+  var existing = DB.payments.filter(function(p){ return p.invId === inv.id; });
+  if (existing.length > 0) return; // Already seeded
+  var payments = [
+    { id:uid(), invId:inv.id, invNum:'INV10029', date:'2026-01-03',
+      amount:10000, method:'Bank Transfer', reference:'', notes:'First instalment', type:'buyer_payment', creAt:new Date().toISOString() },
+    { id:uid(), invId:inv.id, invNum:'INV10029', date:'2026-01-31',
+      amount:21055.76, method:'Bank Transfer', reference:'', notes:'Final payment', type:'buyer_payment', creAt:new Date().toISOString() }
+  ];
+  payments.forEach(function(p){ DB.payments.push(p); });
+  sv(K.pm, DB.payments);
+  // Update dep field
+  inv.dep = 31055.76;
+  sv(K.i, DB.inv);
+}
+
 function initApp() {
   wireTips();
+  seedINV10029Payments();
   if (SS.url) {
     G('banner').style.display='none';
     G('cfg-url').value=SS.url;
