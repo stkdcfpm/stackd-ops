@@ -529,8 +529,15 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div class="ms"><div class="mst r">Line Items</div>
         <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description</th><th style="width:65px">UOM</th><th style="width:52px">Qty</th><th style="width:105px">Unit Price</th><th style="width:85px" class="num">Total</th><th style="width:22px"></th></tr></thead><tbody id="il-tb"></tbody></table>
         <div style="display:flex;gap:7px;margin-top:5px;">
-          <button class="btn btn-g" style="flex:1;" onclick="addILI()">+ Add Line</button>
           <button class="btn btn-o" onclick="openPicker()">Import from Library</button>
+        </div>
+        <!-- Quick add form -->
+        <div style="display:grid;grid-template-columns:2fr 60px 60px 90px auto;gap:6px;margin-top:8px;align-items:end;">
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Description</label><input type="text" id="qal-desc" placeholder="e.g. Local Freight"></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">UOM</label><input type="text" id="qal-uom" placeholder="lot" value="pcs"></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Qty</label><input type="number" id="qal-qty" placeholder="1" value="1" min="0" step="any"></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Unit Price</label><input type="number" id="qal-up" placeholder="0.00" step="0.01"></div>
+          <button class="btn btn-s" style="white-space:nowrap;" onclick="quickAddLine()">+ Add</button>
         </div>
       </div>
       <div class="ms"><div class="mst go">Charges, Tax and Deposits</div>
@@ -1383,6 +1390,22 @@ function editInv(id) {
 function txChg() { G('ctx-wrap').style.display = G('if-tx').value==='custom' ? 'block' : 'none'; calcInv(); }
 function getTR() { var v=G('if-tx').value; return v==='custom' ? (+G('if-txc').value||0)/100 : +v||0; }
 
+function quickAddLine() {
+  var desc = G('qal-desc') ? G('qal-desc').value.trim() : '';
+  var uom  = G('qal-uom')  ? G('qal-uom').value.trim()  : 'pcs';
+  var qty  = G('qal-qty')  ? +G('qal-qty').value  : 1;
+  var up   = G('qal-up')   ? +G('qal-up').value   : 0;
+  if (!desc) { toast('⚠ Enter a description'); return; }
+  if (qty === 0) qty = 1;
+  cIL.push({ rid:uid(), lid:'', desc:desc, uom:uom, qty:qty, up:up });
+  rILT(); calcInv();
+  // Clear form
+  if (G('qal-desc')) G('qal-desc').value = '';
+  if (G('qal-up'))   G('qal-up').value   = '';
+  if (G('qal-qty'))  G('qal-qty').value  = '1';
+  toast('✓ Line item added — click Save Invoice to keep');
+}
+
 function addILI(lid, desc, uom, qty, up) {
   cIL.push({ rid:uid(), lid:lid||'', desc:desc||'', uom:uom||'', qty:qty||1, up:up||0 });
   rILT(); calcInv();
@@ -1453,6 +1476,8 @@ function calcInv() {
 }
 
 async function saveInv() {
+  // Force any pending oninput events to flush before reading cIL
+  document.activeElement && document.activeElement.blur && document.activeElement.blur();
   if (!vInv()) return;
   var tx=getTR();
   var inv={
