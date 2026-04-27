@@ -439,7 +439,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div style="display:flex;gap:8px;">
         <button class="btn btn-g" onclick="expCSV()">&#8595; Export invoices CSV</button>
         <button class="btn btn-g" style="border-color:#c00;color:#c00;" onclick="clearData()">Clear local data</button>
+        <button class="btn btn-g" style="border-color:var(--gold);color:var(--gold);" onclick="runDataRepair()">&#9881; Repair invoice totals</button>
       </div>
+      <div id="repair-status" style="font-size:.56rem;color:var(--m);margin-top:6px;min-height:14px;"></div>
     </div>
   </div>
 </div>
@@ -2500,6 +2502,55 @@ function openPayments(invId, invNum) {
 
 function openChangelog() {
   G('ov-changelog').style.display = 'flex';
+}
+
+async function runDataRepair() {
+  var status = G('repair-status');
+  status.textContent = 'Repairing...';
+  status.style.color = 'var(--gold)';
+
+  var known = {
+    'INV10029': { calc_grandTotal:'31055.80', calc_cogs:'26338', calc_liTotal:'30755.80',
+                  calc_taxAmt:'0', calc_grossProfit:'4717.80', calc_netProfit:'4717.80',
+                  calc_margin:'15.2', calc_balanceDue:'0', lf:1098, ins:300 },
+    'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730',
+                  calc_taxAmt:'0', calc_grossProfit:'4652.18', calc_netProfit:'4652.18',
+                  calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
+    'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6227', calc_liTotal:'7048.24',
+                  calc_taxAmt:'0', calc_grossProfit:'1021.24', calc_netProfit:'1021.24',
+                  calc_margin:'14.1', calc_balanceDue:'7248.24', lf:50, ins:0 }
+  };
+
+  var repaired = [];
+  DB.inv.forEach(function(inv) {
+    var k = known[inv.num];
+    if (k) {
+      Object.keys(k).forEach(function(f) { inv[f] = k[f]; });
+      inv.chargesIncluded = true;
+      inv.updAt = new Date().toISOString();
+      repaired.push(inv);
+    }
+  });
+
+  sv(K.i, DB.inv);
+  rInv(); rDash();
+
+  // Push repaired invoices to Sheets
+  if (SS.url && repaired.length) {
+    try {
+      for (var i = 0; i < repaired.length; i++) {
+        await syncEnt('inv', repaired[i]);
+      }
+      status.textContent = '✓ ' + repaired.length + ' invoices repaired and pushed to Sheets';
+      status.style.color = '#4ade80';
+    } catch(e) {
+      status.textContent = '✓ Repaired locally — Sheets push failed: ' + e.message;
+      status.style.color = 'var(--gold)';
+    }
+  } else {
+    status.textContent = '✓ ' + repaired.length + ' invoices repaired locally';
+    status.style.color = '#4ade80';
+  }
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────
