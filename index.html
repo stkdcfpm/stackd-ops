@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.6.7</title>
+<title>Stackd Ops v2.6.8</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -238,7 +238,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
 <rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
 <rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
-</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.6.7</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.6.8</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <div class="view on" id="v-dash">
   <div class="kpis" id="kpis"></div>
   <div class="r2">
@@ -288,7 +288,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="view" id="v-inv">
   <div class="tb">
     <input class="sb" type="text" placeholder="Search invoices..." id="inv-q" oninput="rInv()">
-    <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
+    <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option><option disabled>── Credit Notes ──</option><option>CN Draft</option><option>CN Issued</option><option>CN Applied</option></select>
     <button class="btn btn-s" onclick="openInv()">+ New Invoice</button>
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
   </div>
@@ -502,12 +502,15 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="ov" id="ov-inv" onclick="if(event.target===this)closeM('ov-inv')">
   <div class="modal" style="max-width:900px;">
     <div class="mh"><h2 id="inv-mt">New Invoice</h2>
-      <select id="inv-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
+      <select id="inv-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option><option disabled>── Credit Notes ──</option><option>CN Draft</option><option>CN Issued</option><option>CN Applied</option></select>
       <button class="mx" onclick="closeM('ov-inv')">&#215;</button></div>
     <div class="mb">
       <div class="ms"><div class="mst">Invoice Details</div>
         <div class="fg fg4">
-          <div class="fld"><label id="lbl-inv-num">Invoice #</label><input type="text" id="if-n" placeholder="INV-2025-001"></div>
+          <div class="fld"><label id="lbl-inv-num">Invoice #</label><input type="text" id="if-n" placeholder="INV10032 or CN10029" oninput="onInvNumInput(this.value)"></div>
+          <div class="fld" id="fld-linked-inv" style="display:none;"><label style="color:var(--cr);">Credits Invoice #</label><input type="text" id="if-linked" placeholder="e.g. INV10029" style="border-bottom-color:var(--cr);"></div>
+          <div class="fld" id="fld-cn-reason" style="display:none;"><label style="color:var(--cr);">Credit Reason</label><input type="text" id="if-cn-reason" placeholder="e.g. Pricing correction — agreed with buyer"></div>
+          <div class="fld" id="fld-cn-amount" style="display:none;"><label style="color:var(--cr);">Credit Amount</label><input type="number" id="if-cn-amount" placeholder="0.00" step="0.01" style="border-bottom-color:var(--cr);background:rgba(184,40,58,.05);"></div>
           <div class="fld"><label>Date</label><input type="date" id="if-dt"></div>
           <div class="fld"><label>Expiry / Due Date</label><input type="date" id="if-ex"></div>
           <div class="fld"><label>Customer ID</label><input type="text" id="if-cid"></div>
@@ -1013,6 +1016,11 @@ function cInv(inv) {
   var grand = liT + tax + chgs;
 
   // Fall back to pre-calculated fields from Sheets if no live line items
+  // Credit note short-circuit
+  if (inv.type==='credit_note' && inv.cnAmount) {
+    var cAmt=+inv.cnAmount||0;
+    return {liT:cAmt,tax:0,taxRate:0,chgs:0,grand:cAmt,dep:0,bal:cAmt,cogs:0,gp:0,np:0,mgn:null};
+  }
   if (grand === 0 || liT === 0) {
     if (inv.calc_grandTotal && +inv.calc_grandTotal > 0) {
       grand = +inv.calc_grandTotal;
@@ -1026,7 +1034,11 @@ function cInv(inv) {
     }
   }
 
-  var bal = grand - dep;
+  // Subtract applied credit notes from balance
+  var appliedCNs = DB.inv ? DB.inv.filter(function(cn){
+    return cn.type==='credit_note' && (cn.linkedInvId===inv.id||cn.linkedInvNum===inv.num) && cn.status==='CN Applied';
+  }).reduce(function(s,cn){ return s+Math.abs(+cn.cnAmount||0); },0) : 0;
+  var bal = Math.max(0, grand - dep - appliedCNs);
 
   // COGS: try live lookup first, then pre-calculated
   var cogs = 0;
@@ -1519,7 +1531,13 @@ async function saveInv() {
     lf:+G('if-lf').value||0, ins:+G('if-ins').value||0, leg:+G('if-leg').value||0,
     isp:+G('if-isp').value||0, oth:+G('if-oth').value||0, dep:+G('if-dep').value||0,
     terms:G('if-terms').value.trim(), chargesIncluded:G('if-chi').checked, status:G('inv-sm').value,
-    lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0}; }), pos:[], updAt:new Date().toISOString()
+    lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0}; }), pos:[],
+    type:isCN(G('if-n').value.trim())?'credit_note':'invoice',
+    linkedInvNum:G('if-linked')?G('if-linked').value.trim():'',
+    linkedInvId:(function(){ var l=G('if-linked')?G('if-linked').value.trim():''; var r=DB.inv.find(function(i){return i.num===l;}); return r?r.id:''; })(),
+    cnReason:G('if-cn-reason')?G('if-cn-reason').value.trim():'',
+    cnAmount:G('if-cn-amount')?-(Math.abs(+G('if-cn-amount').value||0)):0,
+    updAt:new Date().toISOString()
   };
   // Preserve calc_ fields and lineItems from existing record when no live line items
   if(EI.i){
@@ -2459,7 +2477,7 @@ function processImportRecords(entity, records, callback) {
       var status=(function(s){
         var m={'paid':'Paid','partially paid':'Partially Paid','part paid':'Partially Paid',
           'part':'Partially Paid','sent':'Sent','draft':'Draft','cancelled':'Cancelled',
-          'canceled':'Cancelled','proforma':'Pro-forma','pro-forma':'Pro-forma'};
+          'canceled':'Cancelled','proforma':'Pro-forma','pro-forma':'Pro-forma','cn draft':'CN Draft','cn issued':'CN Issued','cn applied':'CN Applied'};
         var v=(String(s||'')).trim();
         return m[v.toLowerCase()]||v||'Draft';
       })(r['Status']||'');
@@ -2545,6 +2563,91 @@ function processImportRecords(entity, records, callback) {
   if (callback) callback({ added:added, updated:updated, skipped:skipped, errors:errors });
 }
 
+
+
+// ── CREDIT NOTES ──────────────────────────────────────────────
+function isCN(num) { return num && String(num).toUpperCase().startsWith('CN'); }
+
+function onInvNumInput(val) {
+  var isCn = isCN(val);
+  var fL=G('fld-linked-inv'), fR=G('fld-cn-reason'), fA=G('fld-cn-amount');
+  if(fL) fL.style.display=isCn?'block':'none';
+  if(fR) fR.style.display=isCn?'block':'none';
+  if(fA) fA.style.display=isCn?'block':'none';
+  if(isCn && val.length>2 && G('if-linked') && !G('if-linked').value) {
+    var sugNum='INV'+val.slice(2);
+    var linked=DB.inv.find(function(i){return i.num===sugNum;});
+    if(linked) G('if-linked').value=sugNum;
+  }
+  var t=G('inv-mt'); if(t) t.textContent=isCn?'Credit Note':(EI.i?'Edit Invoice':'New Invoice');
+}
+
+function openCN(invId) {
+  var inv=DB.inv.find(function(i){return i.id===invId;}); if(!inv) return;
+  var cnNum='CN'+inv.num.replace(/^INV/i,'');
+  openInv();
+  setTimeout(function(){
+    G('if-n').value=cnNum; onInvNumInput(cnNum);
+    G('if-linked').value=inv.num;
+    G('if-b').value=inv.buyer;
+    G('if-ba').value=inv.buyerAddr||'';
+    G('if-dst').value=inv.dst||'';
+    G('if-cur').value=inv.cur||'USD';
+    G('inv-sm').value='CN Draft';
+    G('inv-mt').textContent='Credit Note';
+  },50);
+}
+
+function getCNsForInv(invId) {
+  var inv=DB.inv.find(function(i){return i.id===invId;}); if(!inv) return [];
+  return DB.inv.filter(function(i){
+    return i.type==='credit_note'&&(i.linkedInvId===invId||i.linkedInvNum===inv.num)&&i.status==='CN Applied';
+  });
+}
+
+function prevCNDoc(inv) {
+  var cur=inv.cur||'USD';
+  var amt=Math.abs(+inv.cnAmount||0);
+  var linked=DB.inv.find(function(i){return i.id===inv.linkedInvId||i.num===inv.linkedInvNum;});
+  var bank=AS.bank?AS.bank.replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
+  var svgCont='<svg width="18" height="58" viewBox="0 0 18 58" style="flex-shrink:0;margin-top:2px;"><rect x="0" y="0" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="0" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="16" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="2" width="6" height="14" fill="#7A1515"/><rect x="10" y="2" width="6" height="14" fill="#7A1515"/><rect x="7" y="0" width="4" height="18" fill="#3D0808"/><rect x="0" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="20" width="18" height="18" fill="#0A0A0A"/><rect x="0" y="20" width="18" height="2" fill="#1E1E1E"/><rect x="0" y="36" width="18" height="2" fill="#1E1E1E"/><rect x="1" y="22" width="6" height="14" fill="#141414"/><rect x="10" y="22" width="6" height="14" fill="#141414"/><rect x="7" y="20" width="4" height="18" fill="#050505"/><rect x="0" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="40" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="40" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="56" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="42" width="6" height="14" fill="#7A1515"/><rect x="10" y="42" width="6" height="14" fill="#7A1515"/><rect x="7" y="40" width="4" height="18" fill="#3D0808"/><rect x="0" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="54" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="54" width="4" height="4" fill="#C0C0C0"/></svg>';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Credit Note '+san(inv.num)+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:9pt;color:#0f0c0d;margin:0;padding:0;background:white;}.page{max-width:210mm;margin:0 auto;padding:16mm 14mm;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #B8283A;}.cn-badge{background:#B8283A;color:white;font-family:Arial Black,sans-serif;font-size:1.6rem;letter-spacing:.1em;padding:6px 18px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #0f0c0d;padding:4px 6px;text-align:left;}td{font-size:9pt;padding:6px;border-bottom:1px solid #f0ece8;vertical-align:top;}.num{text-align:right;}.total{font-weight:700;font-size:11pt;color:#B8283A;}@media print{body{-webkit-print-color-adjust:exact;}}</style>'
+    +'</head><body><div class="page"><div class="hdr">'
+    +'<div style="display:flex;gap:14px;align-items:flex-start;">'+svgCont
+    +'<div><div style="font-family:Bebas Neue,sans-serif;font-size:2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
+    +'<div style="font-size:.42rem;color:#8a7f82;display:flex;justify-content:space-between;margin-top:3px;"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div>'
+    +'<div style="font-size:7.5pt;color:#8a7f82;margin-top:4px;">'+san(AS.addr||'Brighton, UK')+'</div>'
+    +'<div style="font-size:7.5pt;color:#8a7f82;">'+san(AS.email||'cachafpm@gmail.com')+' &middot; '+san(AS.phone||'')+'</div></div></div>'
+    +'<div style="text-align:right;"><div class="cn-badge">CREDIT NOTE</div>'
+    +'<table style="margin-top:8px;width:auto;margin-left:auto;font-size:8pt;">'
+    +'<tr><td style="color:#8a7f82;padding-right:16px;">CN #</td><td style="text-align:right;font-weight:700;">'+san(inv.num)+'</td></tr>'
+    +'<tr><td style="color:#8a7f82;">Date</td><td style="text-align:right;">'+fmtDate(inv.date)+'</td></tr>'
+    +'<tr><td style="color:#8a7f82;">Credits Invoice</td><td style="text-align:right;color:#B8283A;font-weight:700;">'+san(inv.linkedInvNum||'-')+'</td></tr>'
+    +'<tr><td style="color:#8a7f82;">Currency</td><td style="text-align:right;">'+san(cur)+'</td></tr>'
+    +'</table></div></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px;">'
+    +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">To</div>'
+    +'<div style="font-weight:700;">'+san(inv.buyer||'-')+'</div>'
+    +'<div style="font-size:8.5pt;color:#555;">'+san(inv.buyerAddr||'')+'</div></div>'
+    +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">Reason for Credit</div>'
+    +'<div style="font-size:8.5pt;">'+san(inv.cnReason||inv.notes||'-')+'</div>'
+    +(linked?'<div style="font-size:7.5pt;color:#8a7f82;margin-top:6px;">Original invoice: '+san(linked.num)+' dated '+fmtDate(linked.date)+'</div>':'')
+    +'</div></div>'
+    +'<table><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>'
+    +'<tr><td>Credit &mdash; '+san(inv.cnReason||'As agreed')+'</td><td class="num" style="color:#B8283A;">('+fmt(amt,cur)+')</td></tr>'
+    +'</tbody></table>'
+    +'<div style="display:flex;justify-content:flex-end;margin-top:8px;">'
+    +'<table style="width:220px;"><tr><td style="font-size:9pt;font-weight:700;">Total Credit</td><td class="num total">('+fmt(amt,cur)+')</td></tr>'
+    +'<tr><td style="font-size:8pt;color:#8a7f82;">Applied to '+san(inv.linkedInvNum||'invoice')+'</td>'
+    +'<td class="num" style="font-size:8pt;color:#8a7f82;">'+(inv.status==='CN Applied'?'&#10003; Applied':'Pending')+'</td></tr>'
+    +'</table></div>'
+    +'<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e0d8d4;display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:8pt;">'
+    +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Payment / Refund Details</div><div>'+bank+'</div></div>'
+    +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Notes</div><div>'+san(inv.notes||'')+'</div></div></div>'
+    +'</div></body></html>';
+  var w=window.open('','_blank'); if(w){w.document.write(html);w.document.close();}
+}
 
 function openPayments(invId, invNum) {
   var title = G('pm-title');
