@@ -868,16 +868,30 @@ async function pullAll() {
           for (var pi = 0; pi < pulled.length; pi++) {
             var localRec = DB[ent].find(function(r){ return r.id === pulled[pi].id; });
             if (localRec) {
+              // Helper: treat empty array, null, undefined, "[]", "" all as empty
+              function isEmptyLI(v) {
+                if (!v) return true;
+                if (typeof v === 'string') { try { v=JSON.parse(v); } catch(e){ return true; } }
+                return !Array.isArray(v) || v.length === 0;
+              }
               if (ent === 'inv') {
-                if ((!pulled[pi].lineItems || pulled[pi].lineItems.length === 0) && localRec.lineItems && localRec.lineItems.length > 0) {
+                if (isEmptyLI(pulled[pi].lineItems) && !isEmptyLI(localRec.lineItems)) {
                   pulled[pi].lineItems = localRec.lineItems;
                 }
-                if ((!pulled[pi].pos || pulled[pi].pos.length === 0) && localRec.pos && localRec.pos.length > 0) {
+                if (isEmptyLI(pulled[pi].pos) && !isEmptyLI(localRec.pos)) {
                   pulled[pi].pos = localRec.pos;
                 }
+                // Also preserve calc fields if local has them and pulled doesn't
+                var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt',
+                  'calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
+                calcFields.forEach(function(f) {
+                  if ((!pulled[pi][f] || +pulled[pi][f]===0) && localRec[f] && +localRec[f]>0) {
+                    pulled[pi][f] = localRec[f];
+                  }
+                });
               }
               if (ent === 'po') {
-                if ((!pulled[pi].lineItems || pulled[pi].lineItems.length === 0) && localRec.lineItems && localRec.lineItems.length > 0) {
+                if (isEmptyLI(pulled[pi].lineItems) && !isEmptyLI(localRec.lineItems)) {
                   pulled[pi].lineItems = localRec.lineItems;
                 }
               }
