@@ -1008,7 +1008,9 @@ function cInv(inv) {
     var r = DB.li.find(function(x){ return x.id === li.lid; });
     return s + (r ? (+r.cost||0) * (+li.qty||0) : 0);
   }, 0);
-  if (cogsLive > 0) {
+  // Use live COGS only if library matches exist for ALL line items with a lid
+  var hasLidMatches = lis.some(function(li){ return li.lid && DB.li.find(function(x){ return x.id===li.lid; }); });
+  if (cogsLive > 0 && hasLidMatches) {
     cogs = cogsLive;
   } else if (inv.calc_cogs && +inv.calc_cogs > 0) {
     cogs = +inv.calc_cogs;
@@ -3026,7 +3028,8 @@ function repairCalcFields() {
   var changed = false;
   DB.inv.forEach(function(inv) {
     var k = known[inv.num];
-    if (k && (!inv.calc_grandTotal || +inv.calc_grandTotal === 0 || +inv.calc_grandTotal < 100)) {
+    if (k) {
+      // Always repair all calc fields — not just when grandTotal is wrong
       Object.keys(k).forEach(function(f) { inv[f] = k[f]; });
       changed = true;
     }
