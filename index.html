@@ -2583,9 +2583,9 @@ async function runDataRepair() {
     'INV10028': { calc_grandTotal:'31055.80', calc_cogs:'26338', calc_liTotal:'30755.80',
                   calc_taxAmt:'0', calc_grossProfit:'4717.80', calc_netProfit:'4717.80',
                   calc_margin:'15.2', calc_balanceDue:'0', lf:1098, ins:300 },
-    'INV10029': { calc_grandTotal:'957.08', calc_cogs:'957.08', calc_liTotal:'894.47',
-                  calc_taxAmt:'62.61', calc_grossProfit:'0', calc_netProfit:'0',
-                  calc_margin:'0', calc_balanceDue:'0', lf:0, ins:0 },
+    'INV10029': { calc_grandTotal:'957.08', calc_cogs:'957.08', calc_liTotal:'957.08',
+                  calc_taxAmt:'0', calc_grossProfit:'0', calc_netProfit:'0',
+                  calc_margin:'0', calc_balanceDue:'0', dep:957.08, lf:0, ins:0 },
     'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730',
                   calc_taxAmt:'0', calc_grossProfit:'4652.18', calc_netProfit:'4652.18',
                   calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
@@ -3153,8 +3153,10 @@ function repairCalcFields() {
   DB.inv.forEach(function(inv) {
     var k = known[inv.num];
     if (k) {
-      // Always repair all calc fields — not just when grandTotal is wrong
+      // Always repair all calc fields
       Object.keys(k).forEach(function(f) { inv[f] = k[f]; });
+      // Also fix dep field if specified
+      if (k.dep !== undefined) inv.dep = k.dep;
       changed = true;
     }
   });
