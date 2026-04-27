@@ -618,7 +618,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.6.7</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.6.8</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
         </div>
@@ -801,7 +801,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', ss:'st_ss', as:'st_as', au:'st_au'};
 function ld(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } }
 let DB = { sup: ld(K.s)||[], li: ld(K.l)||[], inv: ld(K.i)||[], po: ld(K.p)||[], payments: ld(K.pm)||[] };
-let SS = ld(K.ss) || { url:'', auto:false, pol:false, token:'' };
+let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'Stackd', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'Brighton, UK', email:'cachafpm@gmail.com', phone:'+44 7930 438631', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
 let EI = { s:null, l:null, i:null, p:null };
 let cIL = [], cPL = [];
@@ -1016,7 +1016,6 @@ function cInv(inv) {
   var grand = liT + tax + chgs;
 
   // Fall back to pre-calculated fields from Sheets if no live line items
-  // Credit note short-circuit
   if (inv.type==='credit_note' && inv.cnAmount) {
     var cAmt=+inv.cnAmount||0;
     return {liT:cAmt,tax:0,taxRate:0,chgs:0,grand:cAmt,dep:0,bal:cAmt,cogs:0,gp:0,np:0,mgn:null};
@@ -1034,7 +1033,6 @@ function cInv(inv) {
     }
   }
 
-  // Subtract applied credit notes from balance
   var appliedCNs = DB.inv ? DB.inv.filter(function(cn){
     return cn.type==='credit_note' && (cn.linkedInvId===inv.id||cn.linkedInvNum===inv.num) && cn.status==='CN Applied';
   }).reduce(function(s,cn){ return s+Math.abs(+cn.cnAmount||0); },0) : 0;
@@ -1563,7 +1561,7 @@ async function saveInv() {
   else DB.inv.push(inv);
   sv(K.i,DB.inv); closeM('ov-inv'); rInv(); rDash();
   audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv); toast('Invoice saved');
-  if (SS.auto) await syncEnt('inv',inv);
+  await syncEnt('inv',inv);
   if(!EI.i) autoPos(inv);
   // Auto-recover FPM-funded deposits when invoice is marked Paid
   if (inv.status === 'Paid') {
@@ -1615,7 +1613,7 @@ function rInv() {
     return '<tr>' +
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td><td>' + (san(inv.dst)||'-') + '</td>' +
-      '<td style="font-size:.54rem;color:var(--m);">' + (fmtDate(inv.date)||'-') + '</td>' +
+      '<td style="font-size:.54rem;color:var(--m);">' + (inv.date||'-') + '</td>' +
       '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(c.grand,cur) + '</td>' +
       '<td class="num">' + fmt(c.cogs,cur) + '</td>' +
@@ -1629,7 +1627,7 @@ function rInv() {
         '<button class="ab" onclick="editInv(\'' + inv.id + '\')" title="Edit">&#9998;</button>' +
         '<button class="ab" onclick="openPayments(\'' + inv.id + '\',\'' + inv.num + '\')" title="Payments" style="color:var(--gn);">$</button>' +
         '<button class="ab" onclick="prevInvId(\'' + inv.id + '\')" title="Preview Invoice" style="color:var(--gn);font-size:.52rem;border:1px solid var(--gn);padding:2px 6px;border-radius:2px;">&#128065; PDF</button>' +
-        '<button class="ab" onclick="openCN(\'' + inv.id + '\')" title="Delete">CN</button>' +
+        '<button class="ab" onclick="openCN(\'' + inv.id + '\')" title="Raise CN" style="color:var(--cr);font-size:.5rem;font-weight:600;">CN</button>' +
         '<button class="ab" onclick="delInv(\'' + inv.id + '\')" title="Delete">&#10005;</button>' +
       '</td></tr>';
   }).join('');
@@ -2565,91 +2563,6 @@ function processImportRecords(entity, records, callback) {
 }
 
 
-
-// ── CREDIT NOTES ──────────────────────────────────────────────
-function isCN(num) { return num && String(num).toUpperCase().startsWith('CN'); }
-
-function onInvNumInput(val) {
-  var isCn = isCN(val);
-  var fL=G('fld-linked-inv'), fR=G('fld-cn-reason'), fA=G('fld-cn-amount');
-  if(fL) fL.style.display=isCn?'block':'none';
-  if(fR) fR.style.display=isCn?'block':'none';
-  if(fA) fA.style.display=isCn?'block':'none';
-  if(isCn && val.length>2 && G('if-linked') && !G('if-linked').value) {
-    var sugNum='INV'+val.slice(2);
-    var linked=DB.inv.find(function(i){return i.num===sugNum;});
-    if(linked) G('if-linked').value=sugNum;
-  }
-  var t=G('inv-mt'); if(t) t.textContent=isCn?'Credit Note':(EI.i?'Edit Invoice':'New Invoice');
-}
-
-function openCN(invId) {
-  var inv=DB.inv.find(function(i){return i.id===invId;}); if(!inv) return;
-  var cnNum='CN'+inv.num.replace(/^INV/i,'');
-  openInv();
-  setTimeout(function(){
-    G('if-n').value=cnNum; onInvNumInput(cnNum);
-    G('if-linked').value=inv.num;
-    G('if-b').value=inv.buyer;
-    G('if-ba').value=inv.buyerAddr||'';
-    G('if-dst').value=inv.dst||'';
-    G('if-cur').value=inv.cur||'USD';
-    G('inv-sm').value='CN Draft';
-    G('inv-mt').textContent='Credit Note';
-  },50);
-}
-
-function getCNsForInv(invId) {
-  var inv=DB.inv.find(function(i){return i.id===invId;}); if(!inv) return [];
-  return DB.inv.filter(function(i){
-    return i.type==='credit_note'&&(i.linkedInvId===invId||i.linkedInvNum===inv.num)&&i.status==='CN Applied';
-  });
-}
-
-function prevCNDoc(inv) {
-  var cur=inv.cur||'USD';
-  var amt=Math.abs(+inv.cnAmount||0);
-  var linked=DB.inv.find(function(i){return i.id===inv.linkedInvId||i.num===inv.linkedInvNum;});
-  var bank=AS.bank?AS.bank.replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
-  var svgCont='<svg width="18" height="58" viewBox="0 0 18 58" style="flex-shrink:0;margin-top:2px;"><rect x="0" y="0" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="0" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="16" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="2" width="6" height="14" fill="#7A1515"/><rect x="10" y="2" width="6" height="14" fill="#7A1515"/><rect x="7" y="0" width="4" height="18" fill="#3D0808"/><rect x="0" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="20" width="18" height="18" fill="#0A0A0A"/><rect x="0" y="20" width="18" height="2" fill="#1E1E1E"/><rect x="0" y="36" width="18" height="2" fill="#1E1E1E"/><rect x="1" y="22" width="6" height="14" fill="#141414"/><rect x="10" y="22" width="6" height="14" fill="#141414"/><rect x="7" y="20" width="4" height="18" fill="#050505"/><rect x="0" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="40" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="40" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="56" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="42" width="6" height="14" fill="#7A1515"/><rect x="10" y="42" width="6" height="14" fill="#7A1515"/><rect x="7" y="40" width="4" height="18" fill="#3D0808"/><rect x="0" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="54" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="54" width="4" height="4" fill="#C0C0C0"/></svg>';
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Credit Note '+san(inv.num)+'</title>'
-    +'<style>body{font-family:Arial,sans-serif;font-size:9pt;color:#0f0c0d;margin:0;padding:0;background:white;}.page{max-width:210mm;margin:0 auto;padding:16mm 14mm;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #B8283A;}.cn-badge{background:#B8283A;color:white;font-family:Arial Black,sans-serif;font-size:1.6rem;letter-spacing:.1em;padding:6px 18px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #0f0c0d;padding:4px 6px;text-align:left;}td{font-size:9pt;padding:6px;border-bottom:1px solid #f0ece8;vertical-align:top;}.num{text-align:right;}.total{font-weight:700;font-size:11pt;color:#B8283A;}@media print{body{-webkit-print-color-adjust:exact;}}</style>'
-    +'</head><body><div class="page"><div class="hdr">'
-    +'<div style="display:flex;gap:14px;align-items:flex-start;">'+svgCont
-    +'<div><div style="font-family:Bebas Neue,sans-serif;font-size:2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
-    +'<div style="font-size:.42rem;color:#8a7f82;display:flex;justify-content:space-between;margin-top:3px;"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div>'
-    +'<div style="font-size:7.5pt;color:#8a7f82;margin-top:4px;">'+san(AS.addr||'Brighton, UK')+'</div>'
-    +'<div style="font-size:7.5pt;color:#8a7f82;">'+san(AS.email||'cachafpm@gmail.com')+' &middot; '+san(AS.phone||'')+'</div></div></div>'
-    +'<div style="text-align:right;"><div class="cn-badge">CREDIT NOTE</div>'
-    +'<table style="margin-top:8px;width:auto;margin-left:auto;font-size:8pt;">'
-    +'<tr><td style="color:#8a7f82;padding-right:16px;">CN #</td><td style="text-align:right;font-weight:700;">'+san(inv.num)+'</td></tr>'
-    +'<tr><td style="color:#8a7f82;">Date</td><td style="text-align:right;">'+fmtDate(inv.date)+'</td></tr>'
-    +'<tr><td style="color:#8a7f82;">Credits Invoice</td><td style="text-align:right;color:#B8283A;font-weight:700;">'+san(inv.linkedInvNum||'-')+'</td></tr>'
-    +'<tr><td style="color:#8a7f82;">Currency</td><td style="text-align:right;">'+san(cur)+'</td></tr>'
-    +'</table></div></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px;">'
-    +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">To</div>'
-    +'<div style="font-weight:700;">'+san(inv.buyer||'-')+'</div>'
-    +'<div style="font-size:8.5pt;color:#555;">'+san(inv.buyerAddr||'')+'</div></div>'
-    +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">Reason for Credit</div>'
-    +'<div style="font-size:8.5pt;">'+san(inv.cnReason||inv.notes||'-')+'</div>'
-    +(linked?'<div style="font-size:7.5pt;color:#8a7f82;margin-top:6px;">Original invoice: '+san(linked.num)+' dated '+fmtDate(linked.date)+'</div>':'')
-    +'</div></div>'
-    +'<table><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>'
-    +'<tr><td>Credit &mdash; '+san(inv.cnReason||'As agreed')+'</td><td class="num" style="color:#B8283A;">('+fmt(amt,cur)+')</td></tr>'
-    +'</tbody></table>'
-    +'<div style="display:flex;justify-content:flex-end;margin-top:8px;">'
-    +'<table style="width:220px;"><tr><td style="font-size:9pt;font-weight:700;">Total Credit</td><td class="num total">('+fmt(amt,cur)+')</td></tr>'
-    +'<tr><td style="font-size:8pt;color:#8a7f82;">Applied to '+san(inv.linkedInvNum||'invoice')+'</td>'
-    +'<td class="num" style="font-size:8pt;color:#8a7f82;">'+(inv.status==='CN Applied'?'&#10003; Applied':'Pending')+'</td></tr>'
-    +'</table></div>'
-    +'<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e0d8d4;display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:8pt;">'
-    +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Payment / Refund Details</div><div>'+bank+'</div></div>'
-    +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Notes</div><div>'+san(inv.notes||'')+'</div></div></div>'
-    +'</div></body></html>';
-  var w=window.open('','_blank'); if(w){w.document.write(html);w.document.close();}
-}
-
 function openPayments(invId, invNum) {
   var title = G('pm-title');
   if (title) title.textContent = 'Payments — ' + invNum;
@@ -2708,6 +2621,84 @@ async function runDataRepair() {
     status.textContent = '✓ ' + repaired.length + ' invoices repaired locally';
     status.style.color = '#4ade80';
   }
+}
+
+
+// ── CREDIT NOTES ──────────────────────────────────────────────
+function isCN(num) { return num && String(num).toUpperCase().startsWith('CN'); }
+
+function onInvNumInput(val) {
+  var isCn = isCN(val);
+  var fL=G('fld-linked-inv'), fR=G('fld-cn-reason'), fA=G('fld-cn-amount');
+  if(fL) fL.style.display=isCn?'block':'none';
+  if(fR) fR.style.display=isCn?'block':'none';
+  if(fA) fA.style.display=isCn?'block':'none';
+  if(isCn && val.length>2 && G('if-linked') && !G('if-linked').value) {
+    var sugNum='INV'+val.slice(2);
+    var linked=DB.inv.find(function(i){return i.num===sugNum;});
+    if(linked) G('if-linked').value=sugNum;
+  }
+  var t=G('inv-mt'); if(t) t.textContent=isCn?'Credit Note':(EI.i?'Edit Invoice':'New Invoice');
+}
+
+function openCN(invId) {
+  var inv=DB.inv.find(function(i){return i.id===invId;}); if(!inv) return;
+  var cnNum='CN'+inv.num.replace(/^INV/i,'');
+  openInv();
+  setTimeout(function(){
+    G('if-n').value=cnNum; onInvNumInput(cnNum);
+    G('if-linked').value=inv.num;
+    G('if-b').value=inv.buyer;
+    G('if-ba').value=inv.buyerAddr||'';
+    G('if-dst').value=inv.dst||'';
+    G('if-cur').value=inv.cur||'USD';
+    G('inv-sm').value='CN Draft';
+    G('inv-mt').textContent='Credit Note';
+  },50);
+}
+
+function prevCNDoc(inv) {
+  var cur=inv.cur||'USD';
+  var amt=Math.abs(+inv.cnAmount||0);
+  var linked=DB.inv.find(function(i){return i.id===inv.linkedInvId||i.num===inv.linkedInvNum;});
+  var bank=AS.bank?AS.bank.replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
+  var svgC='<svg width="18" height="58" viewBox="0 0 18 58" style="flex-shrink:0;margin-top:2px;"><rect x="0" y="0" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="0" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="16" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="2" width="6" height="14" fill="#7A1515"/><rect x="10" y="2" width="6" height="14" fill="#7A1515"/><rect x="7" y="0" width="4" height="18" fill="#3D0808"/><rect x="0" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="20" width="18" height="18" fill="#0A0A0A"/><rect x="0" y="20" width="18" height="2" fill="#1E1E1E"/><rect x="0" y="36" width="18" height="2" fill="#1E1E1E"/><rect x="1" y="22" width="6" height="14" fill="#141414"/><rect x="10" y="22" width="6" height="14" fill="#141414"/><rect x="7" y="20" width="4" height="18" fill="#050505"/><rect x="0" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="40" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="40" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="56" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="42" width="6" height="14" fill="#7A1515"/><rect x="10" y="42" width="6" height="14" fill="#7A1515"/><rect x="7" y="40" width="4" height="18" fill="#3D0808"/><rect x="0" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="54" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="54" width="4" height="4" fill="#C0C0C0"/></svg>';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Credit Note '+san(inv.num)+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:9pt;color:#0f0c0d;margin:0;padding:0;}.page{max-width:210mm;margin:0 auto;padding:16mm 14mm;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #B8283A;}.cn-badge{background:#B8283A;color:white;font-family:Arial Black,sans-serif;font-size:1.6rem;letter-spacing:.1em;padding:6px 18px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #0f0c0d;padding:4px 6px;text-align:left;}td{font-size:9pt;padding:6px;border-bottom:1px solid #f0ece8;vertical-align:top;}.num{text-align:right;}.total{font-weight:700;font-size:11pt;color:#B8283A;}@media print{body{-webkit-print-color-adjust:exact;}}</style>'
+    +'</head><body><div class="page"><div class="hdr">'
+    +'<div style="display:flex;gap:14px;align-items:flex-start;">'+svgC
+    +'<div><div style="font-family:Bebas Neue,sans-serif;font-size:2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
+    +'<div style="font-size:.42rem;color:#8a7f82;display:flex;justify-content:space-between;margin-top:3px;"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div>'
+    +'<div style="font-size:7.5pt;color:#8a7f82;margin-top:4px;">'+san(AS.addr||'Brighton, UK')+'</div>'
+    +'<div style="font-size:7.5pt;color:#8a7f82;">'+san(AS.email||'cachafpm@gmail.com')+' &middot; '+san(AS.phone||'')+'</div></div></div>'
+    +'<div style="text-align:right;"><div class="cn-badge">CREDIT NOTE</div>'
+    +'<table style="margin-top:8px;width:auto;margin-left:auto;font-size:8pt;">'
+    +'<tr><td style="color:#8a7f82;padding-right:16px;">CN #</td><td style="text-align:right;font-weight:700;">'+san(inv.num)+'</td></tr>'
+    +'<tr><td style="color:#8a7f82;">Date</td><td style="text-align:right;">'+fmtDate(inv.date)+'</td></tr>'
+    +'<tr><td style="color:#8a7f82;">Credits Invoice</td><td style="text-align:right;color:#B8283A;font-weight:700;">'+san(inv.linkedInvNum||'-')+'</td></tr>'
+    +'<tr><td style="color:#8a7f82;">Currency</td><td style="text-align:right;">'+san(cur)+'</td></tr>'
+    +'</table></div></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px;">'
+    +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">To</div>'
+    +'<div style="font-weight:700;">'+san(inv.buyer||'-')+'</div>'
+    +'<div style="font-size:8.5pt;color:#555;">'+san(inv.buyerAddr||'')+'</div></div>'
+    +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">Reason for Credit</div>'
+    +'<div style="font-size:8.5pt;">'+san(inv.cnReason||inv.notes||'-')+'</div>'
+    +(linked?'<div style="font-size:7.5pt;color:#8a7f82;margin-top:6px;">Original invoice: '+san(linked.num)+' dated '+fmtDate(linked.date)+'</div>':'')
+    +'</div></div>'
+    +'<table><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>'
+    +'<tr><td>Credit &mdash; '+san(inv.cnReason||'As agreed')+'</td><td class="num" style="color:#B8283A;">('+fmt(amt,cur)+')</td></tr>'
+    +'</tbody></table>'
+    +'<div style="display:flex;justify-content:flex-end;margin-top:8px;">'
+    +'<table style="width:220px;"><tr><td style="font-size:9pt;font-weight:700;">Total Credit</td><td class="num total">('+fmt(amt,cur)+')</td></tr>'
+    +'<tr><td style="font-size:8pt;color:#8a7f82;">Applied to '+san(inv.linkedInvNum||'invoice')+'</td>'
+    +'<td class="num" style="font-size:8pt;color:#8a7f82;">'+(inv.status==='CN Applied'?'&#10003; Applied':'Pending')+'</td></tr>'
+    +'</table></div>'
+    +'<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e0d8d4;display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:8pt;">'
+    +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Payment / Refund Details</div><div>'+bank+'</div></div>'
+    +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Notes</div><div>'+san(inv.notes||'')+'</div></div></div>'
+    +'</div></body></html>';
+  var w=window.open('','_blank'); if(w){w.document.write(html);w.document.close();}
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────
