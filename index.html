@@ -1629,8 +1629,7 @@ function rInv() {
         '<button class="ab" onclick="editInv(\'' + inv.id + '\')" title="Edit">&#9998;</button>' +
         '<button class="ab" onclick="openPayments(\'' + inv.id + '\',\'' + inv.num + '\')" title="Payments" style="color:var(--gn);">$</button>' +
         '<button class="ab" onclick="prevInvId(\'' + inv.id + '\')" title="Preview Invoice" style="color:var(--gn);font-size:.52rem;border:1px solid var(--gn);padding:2px 6px;border-radius:2px;">&#128065; PDF</button>' +
-        +(inv.type!=='credit_note'&&inv.status!=='Cancelled'?'<button class="ab" style="color:var(--cr);font-size:.5rem;" onclick="openCN(\''+inv.id+'\')" title="Raise Credit Note">CN</button>':'')+
-        +(inv.type!=='credit_note'&&inv.status!=='Cancelled'?'<button class="ab" style="color:var(--cr);font-size:.5rem;" onclick="openCN(\''+inv.id+'\')" title="Raise Credit Note">CN</button>':'')+
+        '<button class="ab" onclick="openCN(\'' + inv.id + '\')" title="Delete">CN</button>' +
         '<button class="ab" onclick="delInv(\'' + inv.id + '\')" title="Delete">&#10005;</button>' +
       '</td></tr>';
   }).join('');
