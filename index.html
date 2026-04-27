@@ -885,7 +885,9 @@ async function pullAll() {
                 var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt',
                   'calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
                 calcFields.forEach(function(f) {
-                  if ((!pulled[pi][f] || +pulled[pi][f]===0) && localRec[f] && +localRec[f]>0) {
+                  var pulledVal = +pulled[pi][f] || 0;
+                  var localVal  = +localRec[f]  || 0;
+                  if (pulledVal === 0 && localVal > 0) {
                     pulled[pi][f] = localRec[f];
                   }
                 });
@@ -2938,8 +2940,27 @@ function seedINV10029Payments() {
   sv(K.i, DB.inv);
 }
 
+function repairCalcFields() {
+  // Repair known invoice totals if calc_grandTotal got wiped
+  var known = {
+    'INV10029': { calc_grandTotal:'31055.80', calc_cogs:'26338', calc_liTotal:'30755.80', calc_balanceDue:'0' },
+    'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730', calc_balanceDue:'10180' },
+    'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6227', calc_liTotal:'7048.24', calc_balanceDue:'7248.24' }
+  };
+  var changed = false;
+  DB.inv.forEach(function(inv) {
+    var k = known[inv.num];
+    if (k && (!inv.calc_grandTotal || +inv.calc_grandTotal === 0 || +inv.calc_grandTotal < 100)) {
+      Object.keys(k).forEach(function(f) { inv[f] = k[f]; });
+      changed = true;
+    }
+  });
+  if (changed) { sv(K.i, DB.inv); }
+}
+
 function initApp() {
   wireTips();
+  repairCalcFields();
   seedINV10029Payments();
   if (SS.url) {
     G('banner').style.display='none';
