@@ -193,17 +193,27 @@ test('credit note returns cnAmount as grand total', () => {
   const c = ctx.cInv(inv);
   assertEqual(c.grand, 250, 'CN grand'); assertEqual(c.bal, 250, 'CN bal');
 });
-test('chargesIncluded=true: np = grand - cogs', () => {
+test('chargesIncluded=true: np = grand - tax - cogs', () => {
   ctx.DB.li = [{ id:'l1', cost:600 }];
   const inv = { id:'t7', lineItems:[{qty:1,up:1000,lid:'l1'}],
     taxRate:0, dep:0, lf:100, chargesIncluded:true };
-  assertEqual(ctx.cInv(inv).np, 500, 'np = 1100 - 600 = 500');
+  // liT=1000, tax=0, chgs=100, grand=1100, cogs=600 → np=500
+  assertEqual(ctx.cInv(inv).np, 500, 'np = 1100 - 0 - 600 = 500');
   ctx.DB.li = [];
 });
-test('chargesIncluded=false: np = grand - cogs - charges', () => {
+test('chargesIncluded=false: np = grand - tax - charges - cogs', () => {
   const inv = { id:'t8', lineItems:[{qty:1,up:1000}],
     taxRate:0, dep:0, lf:100, chargesIncluded:false, calc_cogs:'600' };
-  assertEqual(ctx.cInv(inv).np, 400, 'np = 1100 - 600 - 100 = 400');
+  // liT=1000, tax=0, chgs=100, grand=1100, cogs=600 → np=400
+  assertEqual(ctx.cInv(inv).np, 400, 'np = 1100 - 0 - 100 - 600 = 400');
+});
+test('tax is excluded from net profit — buyer pass-through not seller income', () => {
+  const inv = { id:'t9', lineItems:[{qty:1,up:1000}],
+    taxRate:0.20, dep:0, chargesIncluded:true };
+  const c = ctx.cInv(inv);
+  // liT=1000, tax=200, grand=1200, cogs=0
+  assertEqual(c.grand, 1200, 'grand includes tax');
+  assertEqual(c.np,    1000, 'np must exclude the £200 tax (it goes to HMRC, not Stackd)');
 });
 
 // ── nextInvNum() ───────────────────────────────────────────────
