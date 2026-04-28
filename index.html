@@ -1071,10 +1071,10 @@ function cInv(inv) {
   }
 
   var gp  = liT - cogs;
-  // Net profit depends on whether charges are included in Grand Total
-  // chargesIncluded=true (default): freight/ins already in grand total — don't deduct again
-  // chargesIncluded=false: charges are separate — deduct from net profit
-  var np  = (inv.chargesIncluded !== false) ? grand - cogs : grand - cogs - chgs;
+  // Tax is always a buyer pass-through — never Stackd's income.
+  // chargesIncluded=true: freight/ins rolled into grand total (Stackd keeps the charge margin)
+  // chargesIncluded=false: freight/ins billed separately on top — deduct as pass-through costs
+  var np  = (inv.chargesIncluded !== false) ? grand - tax - cogs : grand - tax - chgs - cogs;
   var mgn = grand > 0 ? (np / grand) * 100 : null;
 
   return { liT:liT, tax:tax, taxRate:tx, chgs:chgs, grand:grand, dep:dep, bal:bal, cogs:cogs, gp:gp, np:np, mgn:mgn };
