@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.6.8</title>
+<title>Stackd Ops v2.7.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -238,7 +238,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
 <rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
 <rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
-</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.6.8</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.7.0</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <div class="view on" id="v-dash">
   <div class="kpis" id="kpis"></div>
   <div class="r2">
@@ -618,9 +618,26 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.6.8</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.0</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: HS Code column restored in Line Items table — was missing, causing column misalignment</li>
+          <li>Fix: XSS — specs, destination, PO number, supplier name fields sanitised before DOM insertion</li>
+          <li>Fix: Print state — prevInvDoc sets _lastInv, enabling Ctrl+P after invoice preview</li>
+          <li>Fix: initApp wrapped in try/catch — corrupt localStorage no longer silently breaks load</li>
+          <li>Fix: Sync delete failures now surface as a toast warning instead of silently swallowing</li>
+          <li>Fix: PO saves invId alongside invNum — link survives invoice number corrections</li>
+          <li>Fix: KPI tiles labelled "mixed cur." — clarifies multi-currency aggregation</li>
+          <li>Dev: Automated QA test suite added — node tests/run.js (28 tests)</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.6.8</span>
+          <span style="font-size:.5rem;color:var(--m);">Previous release</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Security: XSS sanitisation — user input stripped before DOM insertion</li>
@@ -872,7 +889,8 @@ async function syncEnt(entity, rec) {
 }
 async function delEnt(entity, id) {
   if (!SS.url) return;
-  try { await sPost({action:'delete', entity:entity, id:id}); } catch(e) {}
+  try { await sPost({action:'delete', entity:entity, id:id}); }
+  catch(e) { toast('Sync delete failed — Sheets may be out of date'); }
 }
 async function syncAll() {
   if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
@@ -1053,10 +1071,10 @@ function cInv(inv) {
   }
 
   var gp  = liT - cogs;
-  // Net profit depends on whether charges are included in Grand Total
-  // chargesIncluded=true (default): freight/ins already in grand total — don't deduct again
-  // chargesIncluded=false: charges are separate — deduct from net profit
-  var np  = (inv.chargesIncluded !== false) ? grand - cogs : grand - cogs - chgs;
+  // Tax is always a buyer pass-through — never Stackd's income.
+  // chargesIncluded=true: freight/ins rolled into grand total (Stackd keeps the charge margin)
+  // chargesIncluded=false: freight/ins billed separately on top — deduct as pass-through costs
+  var np  = (inv.chargesIncluded !== false) ? grand - tax - cogs : grand - tax - chgs - cogs;
   var mgn = grand > 0 ? (np / grand) * 100 : null;
 
   return { liT:liT, tax:tax, taxRate:tx, chgs:chgs, grand:grand, dep:dep, bal:bal, cogs:cogs, gp:gp, np:np, mgn:mgn };
@@ -1083,11 +1101,11 @@ function rDash() {
   var netCash = tBuyerDep - tSupDep;
 
   G('kpis').innerHTML =
-    '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR) + '</div><div class="ks">' + ai.length + ' active</div></div>' +
-    '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP) + '</div><div class="ks">After all costs</div></div>' +
+    '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR) + '</div><div class="ks">' + ai.length + ' active &middot; mixed cur.</div></div>' +
+    '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP) + '</div><div class="ks">After all costs &middot; mixed cur.</div></div>' +
     '<div class="kpi"><div class="kl">Avg Margin</div><div class="kv ' + (aM>=20?'g':aM>=10?'gold':'r') + '">' + fp(aM) + '</div><div class="ks">' + mg.length + ' invoices</div></div>' +
-    '<div class="kpi"><div class="kl">Outstanding from Buyers</div><div class="kv b">' + fmt(tOut) + '</div><div class="ks">Balance due</div></div>' +
-    '<div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">' + fmt(tPO) + '</div><div class="ks">To suppliers</div></div>' +
+    '<div class="kpi"><div class="kl">Outstanding from Buyers</div><div class="kv b">' + fmt(tOut) + '</div><div class="ks">Balance due &middot; mixed cur.</div></div>' +
+    '<div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">' + fmt(tPO) + '</div><div class="ks">To suppliers &middot; mixed cur.</div></div>' +
     '<div class="kpi"><div class="kl">Net Cash Position</div><div class="kv ' + (netCash>=0?'g':'r') + '">' + fmt(netCash) + '</div><div class="ks">Buyer deps - supplier deps</div></div>';
 
   var pl = G('pipeline');
@@ -1100,7 +1118,7 @@ function rDash() {
       return '<div class="pi" onclick="editInv(\'' + inv.id + '\')">' +
         '<span class="pref">' + (san(inv.num)||'-') + '</span>' +
         '<span class="pbuy">' + (san(inv.buyer)||'-') + '</span>' +
-        '<span class="pdst">' + (inv.dst||'') + '</span>' +
+        '<span class="pdst">' + san(inv.dst||'') + '</span>' +
         '<span class="tag s-' + sc + '">' + (inv.status||'Draft') + '</span>' +
         '<span class="pamt">' + fmt(c.np, inv.cur||'USD') + '</span>' +
         '<span class="pbal">' + (c.bal>0 ? fmt(c.bal, inv.cur||'USD') : '') + '</span>' +
@@ -1120,7 +1138,7 @@ function rDash() {
   ai.forEach(function(i){ var d = i.dst||'Unknown'; dm[d] = (dm[d]||0) + cInv(i).grand; });
   var mxD = Math.max.apply(null, Object.values(dm).concat([1]));
   G('dest-chart').innerHTML = Object.entries(dm).sort(function(a,b){return b[1]-a[1];}).slice(0,5).map(function(e){
-    return '<div class="br"><div class="bl2">' + e[0] + '</div><div class="bt"><div class="bf cr" style="width:' + (e[1]/mxD*100) + '%"></div></div><div class="bv">' + fmt(e[1]) + '</div></div>';
+    return '<div class="br"><div class="bl2">' + san(e[0]) + '</div><div class="bt"><div class="bf cr" style="width:' + (e[1]/mxD*100) + '%"></div></div><div class="bv">' + fmt(e[1]) + '</div></div>';
   }).join('') || '<p style="font-size:.56rem;color:var(--m)">No data</p>';
 
   var bd = {'Under 10%':0, '10-20%':0, '20-30%':0, 'Over 30%':0};
@@ -1329,7 +1347,7 @@ function rLI() {
   G('li-tb').innerHTML = f.map(function(li){
     var m = +li.price>0 ? ((+li.price||0)-(+li.cost||0))/(+li.price||1)*100 : null;
     var mc = m===null?'':(m>=20?'phi':m>=10?'pmi':'plo');
-    return '<tr><td style="color:var(--m);font-size:.54rem;">' + (san(li.sku)||'-') + '</td><td style="font-weight:500;">' + (san(li.desc)||'-') + '</td><td style="color:var(--m);font-size:.56rem;">' + (li.specs||'-') + '</td><td>' + gsn(li.supId) + '</td>' +
+    return '<tr><td style="color:var(--m);font-size:.54rem;">' + (san(li.sku)||'-') + '</td><td style="font-weight:500;">' + (san(li.desc)||'-') + '</td><td style="color:var(--m);font-size:.56rem;">' + san(li.specs||'-') + '</td><td style="color:var(--m);font-size:.54rem;">' + san(li.hs||'-') + '</td><td>' + san(gsn(li.supId)) + '</td>' +
       '<td class="num">' + fmt(li.cost,li.cur||'USD') + '</td><td class="num">' + fmt(li.price,li.cur||'USD') + '</td><td>' + (li.uom||'-') + '</td>' +
       '<td class="num"><span class="pill ' + mc + '">' + fp(m) + '</span></td><td>' + (li.cur||'-') + '</td>' +
       '<td><button class="ab" onclick="editLI(\'' + li.id + '\')">&#9998;</button><button class="ab" onclick="delLI(\'' + li.id + '\')">&#10005;</button></td></tr>';
@@ -1687,7 +1705,9 @@ function calcPO() {
 }
 async function savePO() {
   if (!vPO()) return;
-  var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,fpmFunded:+G('pf-fpm').value||0,fpmRecovered:G('pf-rec').checked,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
+  var invNumVal = G('pf-inv').value.trim();
+  var linkedInv = DB.inv.find(function(i){ return i.num === invNumVal; });
+  var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:invNumVal,invId:linkedInv?linkedInv.id:'',date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,fpmFunded:+G('pf-fpm').value||0,fpmRecovered:G('pf-rec').checked,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
   if(EI.p){var i=DB.po.findIndex(function(x){return x.id===EI.p;});if(i>-1)DB.po[i]=po;}else DB.po.push(po);
   sv(K.p,DB.po); closeM('ov-po'); rPO(); rDash(); audit(EI.p?'UPDATE':'CREATE','po',po.id,po); toast('PO saved'); await syncEnt('po',po);
 }
@@ -1700,9 +1720,9 @@ function rPO() {
     var dep=+po.dep||0, bal=liT+(+po.oth||0)-dep, cur=po.cur||'USD';
     var sc=(po.status||'draft').toLowerCase().replace(/ /g,'-');
     return '<tr>' +
-      '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + (po.num||'-') + '</td>' +
-      '<td>' + gsn(po.supId) + '</td>' +
-      '<td style="color:var(--m);font-size:.54rem;">' + (po.invNum||'-') + '</td>' +
+      '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + san(po.num||'-') + '</td>' +
+      '<td>' + san(gsn(po.supId)) + '</td>' +
+      '<td style="color:var(--m);font-size:.54rem;">' + san(po.invNum||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (po.date||'-') + '</td>' +
       '<td><span class="tag s-' + sc + '">' + (po.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(liT,cur) + '</td>' +
@@ -1738,6 +1758,8 @@ function fmtDate(d) {
 }
 
 function prevInvDoc(inv) {
+  window._lastInv = inv;
+  window._lastPO  = null;
   var cur = inv.cur||'USD';
   var lis = inv.lineItems||[];
   if (typeof lis === 'string') { try { lis=JSON.parse(lis); } catch(e){ lis=[]; } }
@@ -3123,7 +3145,9 @@ function wireTips() {
   });
 }
 
-// Pre-populate INV10029 payment history
+// Live FPM data patch — seeds the two known payments for INV10029 (Thorpes International,
+// $10,000 + $21,055.76). Runs once per device: skips if payments already exist for that
+// invoice. Safe to leave in production; it is a no-op once seeded.
 function seedINV10029Payments() {
   var inv = DB.inv.find(function(i){ return i.num === 'INV10029'; });
   if (!inv) return;
@@ -3142,6 +3166,9 @@ function seedINV10029Payments() {
   sv(K.i, DB.inv);
 }
 
+// Live FPM data patch — restores pre-calculated totals for the three live FPM invoices
+// (INV10029, INV10030, INV10031) if a Sheets pull wiped their calc_ fields. Runs on every
+// boot but only mutates records that exist in DB. Safe to keep; cost is negligible.
 function repairCalcFields() {
   // Repair known invoice totals if calc_grandTotal got wiped
   var known = {
@@ -3164,17 +3191,22 @@ function repairCalcFields() {
 }
 
 function initApp() {
-  wireTips();
-  repairCalcFields();
-  seedINV10029Payments();
-  if (SS.url) {
-    G('banner').style.display='none';
-    G('cfg-url').value=SS.url;
-    if (SS.pol!==false) pullAll().catch(function(){});
+  try {
+    wireTips();
+    repairCalcFields();
+    seedINV10029Payments();
+    if (SS.url) {
+      G('banner').style.display='none';
+      G('cfg-url').value=SS.url;
+      if (SS.pol!==false) pullAll().catch(function(){});
+    }
+    G('auto-s').checked = SS.auto !== false;
+    G('pol').checked = SS.pol !== false;
+    renderAll();
+  } catch(e) {
+    console.error('initApp failed:', e);
+    toast('Failed to initialise — check console (F12) for details', 5000);
   }
-  G('auto-s').checked = SS.auto !== false;
-  G('pol').checked = SS.pol !== false;
-  renderAll();
 }
 </script>
 
