@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.7.0</title>
+<title>Stackd Ops v2.7.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -238,7 +238,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
 <rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
 <rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
-</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.7.0</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.7.2</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <div class="view on" id="v-dash">
   <div class="kpis" id="kpis"></div>
   <div class="r2">
@@ -618,9 +618,32 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.0</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.2</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Security: Plaintext password removed from source — pre-baked hash stored instead</li>
+          <li>Security: Auth lockout — 5 failed attempts triggers 60s lockout with countdown</li>
+          <li>Security: Sheets sync token moved to POST body — no longer exposed in server logs via URL</li>
+          <li>Perf: mousemove session reset debounced (500ms) — was firing on every pixel moved</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.1</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Tax excluded from net profit — tax is a buyer pass-through to HMRC, not Stackd income</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.0</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: HS Code column restored in Line Items table — was missing, causing column misalignment</li>
@@ -650,8 +673,6 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.6.6</span>
-          <span style="font-size:.5rem;color:var(--m);">Current release</span>
-          <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: Line items now survive Sheets pull — local line items preserved when Sheets has empty arrays</li>
@@ -878,8 +899,9 @@ async function sPost(payload) {
   return JSON.parse(await r.text());
 }
 async function sGet(entity) {
-  var tokenParam = SS.token ? '&_token=' + encodeURIComponent(SS.token) : '';
-  var r = await fetch(SS.url + '?action=get_all&entity=' + entity + tokenParam);
+  var payload = { action: 'get_all', entity: entity };
+  if (SS.token) payload._token = SS.token;
+  var r = await fetch(SS.url, { method: 'POST', body: JSON.stringify(payload) });
   return JSON.parse(await r.text());
 }
 async function syncEnt(entity, rec) {
@@ -3237,10 +3259,17 @@ function resetSessionTimer() {
   if (sessionStorage.getItem(AUTH_KEY)) startSessionTimer();
 }
 
-// Reset session on user interaction
-['click','keydown','mousemove','touchstart'].forEach(function(evt) {
+// Debounce mousemove so it doesn't fire on every pixel
+var _mmDebounce = null;
+function resetSessionTimerDebounced() {
+  if (_mmDebounce) return;
+  _mmDebounce = setTimeout(function(){ _mmDebounce = null; resetSessionTimer(); }, 500);
+}
+
+['click','keydown','touchstart'].forEach(function(evt) {
   document.addEventListener(evt, resetSessionTimer, { passive: true });
 });
+document.addEventListener('mousemove', resetSessionTimerDebounced, { passive: true });
 
 function simpleHash(str) {
   var hash = 0;
@@ -3252,13 +3281,25 @@ function simpleHash(str) {
   return hash.toString();
 }
 
-var AUTH_HASH = simpleHash('stackd2025');  // Change this password
+// Pre-baked djb2 hash — plaintext password never stored in source.
+// To change: open browser console, run simpleHash('newpassword'), paste result here.
+var AUTH_HASH = '2039100893';
 var AUTH_KEY = 'stackd_auth';
 
+var _authFailCount = 0;
+var _authLockUntil = 0;
+
 function checkAuth() {
+  var now = Date.now();
+  if (now < _authLockUntil) {
+    var secs = Math.ceil((_authLockUntil - now) / 1000);
+    document.getElementById('auth-error').textContent = 'Too many attempts — try again in ' + secs + 's';
+    return;
+  }
   var input = document.getElementById('auth-input').value;
   var err = document.getElementById('auth-error');
   if (simpleHash(input) === AUTH_HASH) {
+    _authFailCount = 0;
     sessionStorage.setItem(AUTH_KEY, AUTH_HASH);
     sessionStorage.setItem('stackd_login_time', Date.now().toString());
     document.getElementById('auth-gate').style.display = 'none';
@@ -3267,11 +3308,17 @@ function checkAuth() {
     startSessionTimer();
     if (typeof initApp === 'function') initApp();
   } else {
-    err.textContent = 'Incorrect password';
+    _authFailCount++;
     var inp = document.getElementById('auth-input');
     inp.style.borderBottomColor = '#f87171';
     inp.value = '';
     setTimeout(function(){ inp.style.borderBottomColor = '#333'; }, 1500);
+    if (_authFailCount >= 5) {
+      _authLockUntil = Date.now() + 60000;
+      err.textContent = 'Too many attempts — locked for 60s';
+    } else {
+      err.textContent = 'Incorrect password (' + (5 - _authFailCount) + ' attempt' + (5 - _authFailCount === 1 ? '' : 's') + ' remaining)';
+    }
   }
 }
 
