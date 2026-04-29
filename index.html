@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.7.4</title>
+<title>Stackd Ops v2.8.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -29,7 +29,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .banner input{font-family:'DM Mono',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ink);background:transparent;padding:3px 0;outline:none;width:340px;color:var(--ink);}
 .banner button{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:white;border:none;padding:5px 11px;cursor:pointer;}
 .view{display:none;padding:22px;}.view.on{display:block;}
-.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-bottom:18px;}
+.kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:11px;margin-bottom:18px;}
 .kpi{background:var(--card);border:1px solid var(--ln);padding:16px 18px 12px;}
 .kl{font-size:.48rem;letter-spacing:.16em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
 .kv{font-family:'Bebas Neue',sans-serif;font-size:1.75rem;letter-spacing:.04em;line-height:1;color:var(--ink);}
@@ -161,7 +161,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .empty{text-align:center;padding:40px 20px;color:var(--m);}
 .ei{font-size:1.8rem;margin-bottom:7px;opacity:.3;}.empty p{font-size:.58rem;line-height:1.9;}
  .idoc,.pdoc{padding:20px;max-width:100%;}}
-@media(max-width:680px){.kpis{grid-template-columns:1fr 1fr 1fr;}.r2,.r3{grid-template-columns:1fr;}.fg3,.fg4{grid-template-columns:1fr 1fr;}.tgrid,.dstrip{grid-template-columns:1fr 1fr;}}
+@media(max-width:680px){.kpis{grid-template-columns:1fr 1fr;}.r2,.r3{grid-template-columns:1fr;}.fg3,.fg4{grid-template-columns:1fr 1fr;}.tgrid,.dstrip{grid-template-columns:1fr 1fr;}}
 
   #print-body {
     position:fixed;
@@ -238,7 +238,13 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
 <rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
 <rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
-</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.7.4</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.8.0</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<!-- ONBOARDING BANNER -->
+<div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
+  <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
+  <div id="ob-steps" style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;"></div>
+</div>
+
 <div class="view on" id="v-dash">
   <div class="kpis" id="kpis"></div>
   <div class="r2">
@@ -249,6 +255,10 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div class="card"><div class="ct">Revenue by Destination</div><div class="bc" id="dest-chart"></div></div>
     <div class="card"><div class="ct">Margin Distribution</div><div class="bc" id="mgn-chart"></div></div>
     <div class="card"><div class="ct">PO Commitments</div><div class="bc" id="po-chart"></div></div>
+  </div>
+  <div class="r2" style="margin-bottom:18px;">
+    <div class="card"><div class="ct">Shipment Pipeline</div><div id="shp-pipeline"></div></div>
+    <div class="card"><div class="ct">Active Shipments</div><div id="shp-map" style="font-size:.56rem;color:var(--m);"></div></div>
   </div>
 
   <!-- Accounts & Deposit Tracker -->
@@ -304,6 +314,24 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
   <div class="tw"><table class="tbl"><thead><tr><th>PO #</th><th>Supplier</th><th>Linked Invoice</th><th>Date</th><th>Status</th><th class="num">Total COGS</th><th class="num">Dep. Paid</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="po-tb"></tbody></table></div>
   <div id="po-em" class="empty" style="display:none;"><div class="ei">&#128203;</div><p>No purchase orders yet.</p></div>
+</div>
+
+<!-- SHIPMENTS VIEW -->
+<div class="view" id="v-sh">
+  <div class="tb">
+    <input class="sb" type="text" placeholder="Search shipments..." id="sh-q" oninput="rShp()">
+    <select class="sb" style="max-width:140px;" id="sh-sf" onchange="rShp()"><option value="">All statuses</option><option>Pending</option><option>Booked</option><option>In Transit</option><option>Arrived</option><option>Delivered</option></select>
+    <button class="btn btn-s" onclick="openShp()">+ New Shipment</button>
+  </div>
+  <div class="tw" style="overflow-x:auto;">
+    <table class="tbl"><thead><tr>
+      <th>Ref</th><th>BL Number</th><th>Vessel</th><th>Carrier</th>
+      <th>Origin → Dest</th><th>ETD</th><th>ETA</th>
+      <th>Status</th><th>Container</th><th>DG</th><th>Docs</th>
+      <th>Linked Invoices</th><th></th>
+    </tr></thead><tbody id="sh-tb"></tbody></table>
+  </div>
+  <div id="sh-em" class="empty" style="display:none;"><div class="ei">&#128674;</div><p>No shipments yet.</p></div>
 </div>
 
 <!-- IMPORT DATA VIEW -->
@@ -633,9 +661,22 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.4</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.8.0</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Shipments tab — sixth entity. Track BL number, vessel, carrier, ports, ETD/ETA, container, DG flag, docs status. Linked to invoices. Syncs to Sheets.</li>
+          <li>New: Dashboard — In Transit KPI tile + Shipment Pipeline mini-list with status breakdown</li>
+          <li>New: Tab-aware AI context — AI suggestion chips and system prompt update per active tab</li>
+          <li>New: Onboarding checklist — dismissible 4-step banner, auto-ticks as data is added</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.4</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: AI Assistant — floating AI button opens Claude-powered chat. Ask natural language questions about portal usage, workflows, and troubleshooting. Powered by claude-haiku-4-5 via the Anthropic API.</li>
@@ -870,6 +911,44 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- SHIPMENT MODAL -->
+<div class="ov" id="ov-shp" onclick="if(event.target===this)closeM('ov-shp')">
+  <div class="modal" style="max-width:680px;">
+    <div class="mh"><h2 id="shp-mt">New Shipment</h2><button class="mx" onclick="closeM('ov-shp')">&#215;</button></div>
+    <div class="mb">
+      <div class="fg fg4" style="margin-bottom:14px;">
+        <div class="fld"><label>Shipment Ref</label><input type="text" id="shf-ref" placeholder="SHP-001"></div>
+        <div class="fld"><label>BL Number</label><input type="text" id="shf-bl" placeholder="MEDUWA872896"></div>
+        <div class="fld"><label>Vessel</label><input type="text" id="shf-vessel" placeholder="MSC Mara"></div>
+        <div class="fld"><label>Carrier</label><input type="text" id="shf-carrier" placeholder="MSC"></div>
+        <div class="fld"><label>Origin Port</label><input type="text" id="shf-op" placeholder="Qingdao"></div>
+        <div class="fld"><label>Destination Port</label><input type="text" id="shf-dp" placeholder="Bridgetown"></div>
+        <div class="fld"><label>ETD</label><input type="date" id="shf-etd"></div>
+        <div class="fld"><label>ETA</label><input type="date" id="shf-eta"></div>
+        <div class="fld"><label>Container Type</label>
+          <select id="shf-ctype"><option>20GP</option><option>40HQ</option><option>LCL</option><option>Other</option></select></div>
+        <div class="fld"><label>Container Number</label><input type="text" id="shf-cnum" placeholder="MSCU1234567"></div>
+        <div class="fld" style="display:flex;align-items:center;gap:8px;padding-top:18px;">
+          <input type="checkbox" id="shf-dg" style="width:auto;margin:0;">
+          <label for="shf-dg" style="margin:0;cursor:pointer;">DG Onboard</label>
+        </div>
+        <div class="fld"><label>Docs Status</label>
+          <select id="shf-docs"><option>Pending</option><option>In Progress</option><option>Complete</option></select></div>
+        <div class="fld"><label>Status</label>
+          <select id="shf-st"><option>Pending</option><option>Booked</option><option>In Transit</option><option>Arrived</option><option>Delivered</option></select></div>
+        <div class="fld"><label>Linked Invoices <span style="font-size:.44rem;color:var(--m);">(comma-separated)</span></label>
+          <input type="text" id="shf-invs" placeholder="INV10030, INV10031"></div>
+        <div class="fld" style="grid-column:1/-1"><label>Notes</label>
+          <textarea id="shf-nt" placeholder="Customs agent, port notes, delays..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-g" onclick="closeM('ov-shp')">Cancel</button>
+        <button class="btn btn-s" onclick="saveShp()">Save Shipment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- AI CHAT FLOATING BUTTON -->
 <button id="ai-fab" onclick="openAIChat()" title="AI Assistant — ask anything about using Stackd Ops" style="position:fixed;bottom:24px;right:24px;width:46px;height:46px;border-radius:50%;background:var(--cr);border:none;cursor:pointer;color:white;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:.07em;box-shadow:0 2px 10px rgba(0,0,0,.45);z-index:900;display:flex;align-items:center;justify-content:center;transition:transform .15s;">AI</button>
 
@@ -885,7 +964,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <button class="mx" onclick="closeM('ov-ai')">&#215;</button>
     </div>
     <div id="ai-msgs" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:14px 16px;"></div>
-    <div style="padding:10px 14px;border-top:1px solid var(--ln);display:flex;gap:8px;flex-shrink:0;">
+    <div id="ai-chips" style="padding:8px 14px 0;display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;border-top:1px solid var(--ln);"></div>
+    <div style="padding:8px 14px 10px;display:flex;gap:8px;flex-shrink:0;">
       <input type="text" id="ai-input" placeholder="Ask a question about the portal…" style="flex:1;font-family:'DM Mono',monospace;font-size:.62rem;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMsg();}">
       <button class="btn btn-s" id="ai-send" onclick="sendAIMsg()">Send</button>
     </div>
@@ -896,12 +976,12 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai'};
 function ld(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } }
-let DB = { sup: ld(K.s)||[], li: ld(K.l)||[], inv: ld(K.i)||[], po: ld(K.p)||[], payments: ld(K.pm)||[] };
+let DB = { sup: ld(K.s)||[], li: ld(K.l)||[], inv: ld(K.i)||[], po: ld(K.p)||[], payments: ld(K.pm)||[], sh: ld(K.sh)||[] };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'Stackd', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'Brighton, UK', email:'cachafpm@gmail.com', phone:'+44 7930 438631', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
-let EI = { s:null, l:null, i:null, p:null };
+let EI = { s:null, l:null, i:null, p:null, sh:null };
 let cIL = [], cPL = [];
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
@@ -911,7 +991,7 @@ const G = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
 const today = () => new Date().toISOString().slice(0,10);
 const sv = (k,d) => localStorage.setItem(k, JSON.stringify(d));
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); };
 
 function fmt(n, c) {
   c = c || 'USD';
@@ -980,7 +1060,7 @@ async function syncAll() {
   if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
   setSyncStatus('loading');
   try {
-    var synEnts = ['sup','li','inv','po'];
+    var synEnts = ['sup','li','inv','po','sh'];
     for (var si = 0; si < synEnts.length; si++) {
       await sPost({action:'bulk_upsert', entity:synEnts[si], records:DB[synEnts[si]]});
     }
@@ -991,7 +1071,7 @@ async function pullAll() {
   if (!SS.url) { toast('No URL configured'); return; }
   setSyncStatus('loading');
   try {
-    var entities = ['sup','li','inv','po'];
+    var entities = ['sup','li','inv','po','sh'];
     for (var ei = 0; ei < entities.length; ei++) {
       var ent = entities[ei];
       var d = await sGet(ent);
@@ -1052,7 +1132,7 @@ async function pullAll() {
 async function pushAll() {
   setSyncStatus('loading');
   try {
-    var ents = ['sup','li','inv','po'];
+    var ents = ['sup','li','inv','po','sh'];
     for (var pi = 0; pi < ents.length; pi++) {
       await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]]});
     }
@@ -1081,7 +1161,7 @@ function saveCfgUrl() {
   SS.url = url;
   SS.token = G('cfg-token') ? G('cfg-token').value.trim() : '';
   sv(K.ss, SS);
-  G('banner').style.display = 'none'; toast('URL saved');
+  G('banner').style.display = 'none'; toast('URL saved'); renderOnboarding();
 }
 function saveSS() { SS.auto = G('auto-s').checked; SS.pol = G('pol').checked; sv(K.ss, SS); }
 
@@ -1092,10 +1172,12 @@ function showV(v, tab) {
   G('v-' + v).classList.add('on');
   if (tab) tab.classList.add('on');
   else { var t = document.querySelector('[data-v="' + v + '"]'); if(t) t.classList.add('on'); }
-  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, import:function(){}, cfg:rCfg };
+  window.currentTab = v;
+  updateAIChips(v);
+  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, sh:rShp, import:function(){}, cfg:rCfg };
   if (fns[v]) fns[v]();
 }
-function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); }
+function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); }
 function closeM(id) { G(id).classList.remove('on'); }
 
 // ── INVOICE CALCULATION ────────────────────────────────────────
@@ -1184,13 +1266,16 @@ function rDash() {
     .reduce(function(s,p){ return s + (+p.dep||0); }, 0);
   var netCash = tBuyerDep - tSupDep;
 
+  var inTransit = DB.sh.filter(function(s){ return s.status === 'In Transit'; }).length;
+
   G('kpis').innerHTML =
     '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR) + '</div><div class="ks">' + ai.length + ' active &middot; mixed cur.</div></div>' +
     '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP) + '</div><div class="ks">After all costs &middot; mixed cur.</div></div>' +
     '<div class="kpi"><div class="kl">Avg Margin</div><div class="kv ' + (aM>=20?'g':aM>=10?'gold':'r') + '">' + fp(aM) + '</div><div class="ks">' + mg.length + ' invoices</div></div>' +
     '<div class="kpi"><div class="kl">Outstanding from Buyers</div><div class="kv b">' + fmt(tOut) + '</div><div class="ks">Balance due &middot; mixed cur.</div></div>' +
     '<div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">' + fmt(tPO) + '</div><div class="ks">To suppliers &middot; mixed cur.</div></div>' +
-    '<div class="kpi"><div class="kl">Net Cash Position</div><div class="kv ' + (netCash>=0?'g':'r') + '">' + fmt(netCash) + '</div><div class="ks">Buyer deps - supplier deps</div></div>';
+    '<div class="kpi"><div class="kl">Net Cash Position</div><div class="kv ' + (netCash>=0?'g':'r') + '">' + fmt(netCash) + '</div><div class="ks">Buyer deps - supplier deps</div></div>' +
+    '<div class="kpi"><div class="kl">In Transit</div><div class="kv gold">' + inTransit + '</div><div class="ks">' + DB.sh.length + ' total shipments</div></div>';
 
   var pl = G('pipeline');
   if (!DB.inv.length) {
@@ -1238,6 +1323,40 @@ function rDash() {
     var t = (p.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0);
     return '<div class="br"><div class="bl2">' + (p.num||gsn(p.supId)||'-') + '</div><div class="bt"><div class="bf bl" style="width:' + (t/mxP*100) + '%"></div></div><div class="bv">' + fmt(t-(+p.dep||0),p.cur||'USD') + '</div></div>';
   }).join('') : '<p style="font-size:.56rem;color:var(--m)">No active POs</p>';
+
+  // Shipment Pipeline mini-list
+  var shpPl = G('shp-pipeline');
+  var shpMap = G('shp-map');
+  if (shpPl) {
+    var activeShp = DB.sh.filter(function(s){ return s.status !== 'Delivered'; });
+    var recentShp = DB.sh.slice().reverse().slice(0, 5);
+    if (!recentShp.length) {
+      shpPl.innerHTML = '<div class="empty" style="padding:12px 0;"><p style="font-size:.56rem;color:var(--m);">No shipments yet. <a href="#" onclick="showV(\'sh\');return false;" style="color:var(--cr);">Add one</a></p></div>';
+    } else {
+      shpPl.innerHTML = recentShp.map(function(s){
+        var sc = shpStatusClass(s.status);
+        var dgPill = s.dg ? '<span style="background:#c00;color:white;font-size:.4rem;padding:1px 4px;border-radius:2px;margin-left:4px;letter-spacing:.05em;">DG</span>' : '';
+        return '<div class="pi" onclick="editShp(\'' + s.id + '\')" style="cursor:pointer;">' +
+          '<span class="pref">' + san(s.ref||'-') + dgPill + '</span>' +
+          '<span class="pbuy">' + san(s.vessel||'-') + '</span>' +
+          '<span class="pdst">' + san((s.originPort||'?') + ' → ' + (s.destPort||'?')) + '</span>' +
+          '<span class="tag ' + sc + '">' + san(s.status||'Pending') + '</span>' +
+          '<span class="pamt" style="font-size:.52rem;">' + (s.eta ? 'ETA ' + s.eta : '') + '</span>' +
+          '</div>';
+      }).join('');
+    }
+    if (shpMap) {
+      var statusCounts = {};
+      DB.sh.forEach(function(s){ statusCounts[s.status] = (statusCounts[s.status]||0) + 1; });
+      shpMap.innerHTML = Object.keys(statusCounts).length
+        ? Object.entries(statusCounts).map(function(e){
+            return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--ln);">' +
+              '<span class="tag ' + shpStatusClass(e[0]) + '">' + e[0] + '</span>' +
+              '<span style="font-size:.56rem;color:var(--ink);font-weight:600;">' + e[1] + '</span></div>';
+          }).join('')
+        : '<p style="font-size:.56rem;color:var(--m);">No shipments</p>';
+    }
+  }
 
   // Render accounts tracker
   renderAccts();
@@ -1415,7 +1534,7 @@ async function saveSup() {
   if (!vSup()) return;
   var s = { id:EI.s||uid(), name:G('sf-n').value.trim(), country:G('sf-c').value.trim(), ct:G('sf-ct').value.trim(), email:G('sf-e').value.trim(), phone:getSupPhone(), cur:G('sf-cur').value, notes:G('sf-nt').value.trim() };
   if (EI.s) { var i=DB.sup.findIndex(function(x){return x.id===EI.s;}); if(i>-1) DB.sup[i]=s; } else DB.sup.push(s);
-  sv(K.s,DB.sup); closeM('ov-sup'); rSup(); audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s); toast('Supplier saved'); await syncEnt('sup',s);
+  sv(K.s,DB.sup); closeM('ov-sup'); rSup(); audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s); toast('Supplier saved'); renderOnboarding(); await syncEnt('sup',s);
 }
 async function delSup(id) {
   if (!confirm('Delete this supplier?')) return;
@@ -1462,7 +1581,7 @@ async function saveLI() {
   if (!vLI()) return;
   var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:+G('lf-c').value||0,price:+G('lf-p').value||0,cur:G('lf-cur').value,notes:G('lf-nt').value.trim()};
   if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
-  sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); await syncEnt('li',li);
+  sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li);
 }
 async function delLI(id) {
   if(!confirm('Delete?')) return;
@@ -1662,7 +1781,7 @@ async function saveInv() {
   }
   else DB.inv.push(inv);
   sv(K.i,DB.inv); closeM('ov-inv'); rInv(); rDash();
-  audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv); toast('Invoice saved');
+  audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv); toast('Invoice saved'); renderOnboarding();
   await syncEnt('inv',inv);
   if(!EI.i) autoPos(inv);
   // Auto-recover FPM-funded deposits when invoice is marked Paid
@@ -2910,7 +3029,28 @@ var AI_SYSTEM_PROMPT = [
   'Google Sheets card: Apps Script URL, Secret Token.',
   'Sync Options: auto-sync (keep off), Pull on load (keep off).',
   'Data: Export CSV, Clear local data, ⚙ Repair invoice totals.',
-  'AI Assistant: Claude API Key (stored locally in browser, used only to call the Anthropic API).'
+  'AI Assistant: Claude API Key (stored locally in browser, used only to call the Anthropic API).',
+  '',
+  '## Shipments Entity',
+  'Shipments is the sixth entity in Stackd Ops (Shipments tab). It tracks physical cargo movements. One shipment can link to multiple invoices via the Linked Invoices field.',
+  'Fields: Shipment Ref (e.g. SHP-001), BL Number (Bill of Lading e.g. MEDUWA872896), Vessel (e.g. MSC Mara), Carrier (e.g. MSC, OOCL), Origin Port, Destination Port, ETD (estimated departure date), ETA (estimated arrival date), Container Type (20GP / 40HQ / LCL / Other), Container Number (e.g. MSCU1234567), DG Onboard (checkbox — Dangerous Goods), Docs Status (Pending / In Progress / Complete), Status (Pending / Booked / In Transit / Arrived / Delivered), Linked Invoices (comma-separated invoice numbers e.g. INV10030, INV10031), Notes.',
+  'Shipments sync to Google Sheets alongside the other four entities. The Dashboard In Transit KPI counts shipments with status = In Transit.',
+  '',
+  '## Shipment Status Flow',
+  'Pending → Booked → In Transit → Arrived → Delivered.',
+  'In Transit = goods are on the water.',
+  'Arrived = at destination port, not yet cleared customs.',
+  'Delivered = cleared customs and delivered to buyer.',
+  '',
+  '## DG (Dangerous Goods)',
+  'DG = Dangerous Goods. If any product on the shipment is classified as DG (e.g. refrigerants, batteries), tick DG Onboard. This triggers IMDG compliance requirements.',
+  'The freight cost includes a DG surcharge of $250 per DG commodity line.',
+  'Examples: R404A refrigerant = IMDG Class 2.2. Lead-acid batteries = IMDG Class 8.',
+  '',
+  '## FPM Freight Rates',
+  'FCL 20GP: $1,800/container. FCL 40HQ: $2,800/container. LCL: $65/CBM.',
+  'DG surcharge: $250/line. Origin charges (Qingdao): $180. Destination charges (Bridgetown): $220.',
+  'Insurance: 0.5% of CIF value. FPM admin fee: $350/order.'
 ].join('\n');
 
 function saveAIKey() {
@@ -2991,7 +3131,12 @@ async function sendAIMsg() {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
         stream: true,
-        system: AI_SYSTEM_PROMPT,
+        system: (function(){
+          var tabNames = {dash:'Dashboard',sup:'Suppliers',li:'Line Items',inv:'Invoices',po:'Purchase Orders',sh:'Shipments',import:'Import Data',cfg:'Settings'};
+          var tab = window.currentTab || 'dash';
+          var ctx = 'The user is currently on the ' + (tabNames[tab]||tab) + ' tab of Stackd Ops.\n\n';
+          return ctx + AI_SYSTEM_PROMPT;
+        })(),
         messages: _aiHistory
       })
     });
@@ -3057,6 +3202,196 @@ function expCSV() {
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent([h.join(',')].concat(rows).join('\n'));
   a.download='Stackd-Invoices-'+today()+'.csv'; a.click(); toast('Exported');
 }
+// ── SHIPMENTS ──────────────────────────────────────────────────
+function shpStatusClass(st) {
+  var m = { 'Pending':'s-draft', 'Booked':'s-sent', 'In Transit':'s-partially-paid', 'Arrived':'s-confirmed', 'Delivered':'s-paid' };
+  return m[st] || 's-draft';
+}
+
+function rShp() {
+  var q = (G('sh-q') ? G('sh-q').value.toLowerCase() : '');
+  var sf = (G('sh-sf') ? G('sh-sf').value : '');
+  var rows = DB.sh.filter(function(s){
+    if (sf && s.status !== sf) return false;
+    if (q && !(
+      (s.ref||'').toLowerCase().includes(q) ||
+      (s.blNum||'').toLowerCase().includes(q) ||
+      (s.vessel||'').toLowerCase().includes(q) ||
+      (s.carrier||'').toLowerCase().includes(q) ||
+      (s.originPort||'').toLowerCase().includes(q) ||
+      (s.destPort||'').toLowerCase().includes(q)
+    )) return false;
+    return true;
+  });
+  var tb = G('sh-tb'), em = G('sh-em');
+  if (!tb) return;
+  if (!rows.length) {
+    tb.innerHTML = '';
+    if (em) em.style.display = 'flex';
+    return;
+  }
+  if (em) em.style.display = 'none';
+  tb.innerHTML = rows.map(function(s){
+    var sc = shpStatusClass(s.status);
+    var dgPill = s.dg ? '<span style="background:#c00;color:white;font-size:.4rem;padding:1px 4px;border-radius:2px;margin-left:3px;">DG</span>' : '';
+    return '<tr>' +
+      '<td style="font-weight:500;color:var(--cr);">' + san(s.ref||'-') + dgPill + '</td>' +
+      '<td>' + san(s.blNum||'-') + '</td>' +
+      '<td>' + san(s.vessel||'-') + '</td>' +
+      '<td>' + san(s.carrier||'-') + '</td>' +
+      '<td>' + san((s.originPort||'?') + ' → ' + (s.destPort||'?')) + '</td>' +
+      '<td>' + san(s.etd||'-') + '</td>' +
+      '<td>' + san(s.eta||'-') + '</td>' +
+      '<td><span class="tag ' + sc + '">' + san(s.status||'Pending') + '</span></td>' +
+      '<td>' + san(s.containerType||'-') + (s.containerNum ? ' · ' + san(s.containerNum) : '') + '</td>' +
+      '<td>' + (s.dg ? '<span class="tag" style="background:#fde8e8;color:#c00;">DG</span>' : '') + '</td>' +
+      '<td><span class="tag ' + (s.docsStatus==='Complete'?'s-paid':s.docsStatus==='In Progress'?'s-sent':'s-draft') + '">' + san(s.docsStatus||'Pending') + '</span></td>' +
+      '<td style="font-size:.52rem;">' + san((s.linkedInvs||[]).join(', ')||'-') + '</td>' +
+      '<td style="white-space:nowrap;">' +
+        '<button class="btn btn-g" style="padding:2px 7px;font-size:.5rem;" onclick="editShp(\'' + s.id + '\')">&#9998;</button> ' +
+        '<button class="btn btn-g" style="padding:2px 7px;font-size:.5rem;border-color:#c00;color:#c00;" onclick="delShp(\'' + s.id + '\')">&#10005;</button>' +
+      '</td></tr>';
+  }).join('');
+}
+
+function openShp() {
+  EI.sh = null;
+  G('shp-mt').textContent = 'New Shipment';
+  ['shf-ref','shf-bl','shf-vessel','shf-carrier','shf-op','shf-dp','shf-cnum','shf-invs','shf-nt'].forEach(function(id){ if(G(id)) G(id).value=''; });
+  if(G('shf-etd')) G('shf-etd').value='';
+  if(G('shf-eta')) G('shf-eta').value='';
+  if(G('shf-ctype')) G('shf-ctype').value='20GP';
+  if(G('shf-docs')) G('shf-docs').value='Pending';
+  if(G('shf-st')) G('shf-st').value='Pending';
+  if(G('shf-dg')) G('shf-dg').checked=false;
+  G('ov-shp').classList.add('on');
+  setTimeout(function(){ if(G('shf-ref')) G('shf-ref').focus(); }, 50);
+}
+
+function editShp(id) {
+  var s = DB.sh.find(function(x){ return x.id===id; });
+  if (!s) return;
+  EI.sh = id;
+  G('shp-mt').textContent = 'Edit Shipment';
+  G('shf-ref').value=s.ref||''; G('shf-bl').value=s.blNum||'';
+  G('shf-vessel').value=s.vessel||''; G('shf-carrier').value=s.carrier||'';
+  G('shf-op').value=s.originPort||''; G('shf-dp').value=s.destPort||'';
+  G('shf-etd').value=s.etd||''; G('shf-eta').value=s.eta||'';
+  G('shf-ctype').value=s.containerType||'20GP'; G('shf-cnum').value=s.containerNum||'';
+  G('shf-dg').checked=!!s.dg; G('shf-docs').value=s.docsStatus||'Pending';
+  G('shf-st').value=s.status||'Pending';
+  G('shf-invs').value=(s.linkedInvs||[]).join(', ');
+  G('shf-nt').value=s.notes||'';
+  G('ov-shp').classList.add('on');
+}
+
+async function saveShp() {
+  var ref = G('shf-ref').value.trim();
+  if (!ref) { toast('Shipment Ref is required'); return; }
+  var invRaw = G('shf-invs').value.trim();
+  var linkedInvs = invRaw ? invRaw.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+  var shp = {
+    id: EI.sh || uid(),
+    ref: ref,
+    blNum: G('shf-bl').value.trim(),
+    vessel: G('shf-vessel').value.trim(),
+    carrier: G('shf-carrier').value.trim(),
+    originPort: G('shf-op').value.trim(),
+    destPort: G('shf-dp').value.trim(),
+    etd: G('shf-etd').value,
+    eta: G('shf-eta').value,
+    containerType: G('shf-ctype').value,
+    containerNum: G('shf-cnum').value.trim(),
+    dg: G('shf-dg').checked,
+    docsStatus: G('shf-docs').value,
+    status: G('shf-st').value,
+    linkedInvs: linkedInvs,
+    notes: G('shf-nt').value.trim(),
+    updAt: new Date().toISOString()
+  };
+  if (EI.sh) {
+    var idx = DB.sh.findIndex(function(x){ return x.id===EI.sh; });
+    if (idx>-1) DB.sh[idx]=shp; else DB.sh.push(shp);
+  } else {
+    DB.sh.push(shp);
+  }
+  sv(K.sh, DB.sh); closeM('ov-shp'); rShp(); rDash(); toast('Shipment saved');
+  await syncEnt('sh', shp);
+}
+
+async function delShp(id) {
+  if (!confirm('Delete this shipment?')) return;
+  DB.sh = DB.sh.filter(function(s){ return s.id!==id; });
+  sv(K.sh, DB.sh); rShp(); rDash(); toast('Deleted'); await delEnt('sh', id);
+}
+
+// ── ONBOARDING ─────────────────────────────────────────────────
+function checkOnboarding() {
+  if (localStorage.getItem('stackd_onboarded') === 'true') return;
+  if (DB.sup.length > 0 && DB.li.length > 0 && DB.inv.length > 0) {
+    localStorage.setItem('stackd_onboarded', 'true');
+    return;
+  }
+  renderOnboarding();
+}
+
+function renderOnboarding() {
+  var bar = G('onboarding-bar');
+  if (!bar) return;
+  if (localStorage.getItem('stackd_onboarded') === 'true') { bar.style.display='none'; return; }
+  var steps = [
+    { label: 'Add your first supplier',  done: DB.sup.length > 0,             tab: 'sup'  },
+    { label: 'Add line items',            done: DB.li.length > 0,              tab: 'li'   },
+    { label: 'Create your first invoice', done: DB.inv.length > 0,             tab: 'inv'  },
+    { label: 'Connect Google Sheets',     done: !!(SS.url && SS.url.length>0), tab: 'cfg', opt: true }
+  ];
+  var allDone = steps.every(function(s){ return s.done; });
+  if (allDone) {
+    G('ob-steps').innerHTML = '<span style="font-size:.6rem;color:var(--gold);font-weight:600;">You\'re set up &#10003;</span>' +
+      '<button class="btn btn-g" style="font-size:.5rem;padding:3px 10px;margin-left:12px;" onclick="dismissOnboarding()">Dismiss</button>';
+  } else {
+    G('ob-steps').innerHTML = steps.map(function(s){
+      return '<span onclick="showV(\'' + s.tab + '\')" style="font-size:.56rem;cursor:pointer;color:' + (s.done?'var(--gn)':'var(--m)') + ';display:flex;align-items:center;gap:5px;">' +
+        '<span style="width:14px;height:14px;border-radius:50%;border:1px solid ' + (s.done?'var(--gn)':'var(--m)') + ';display:flex;align-items:center;justify-content:center;font-size:.5rem;flex-shrink:0;">' +
+        (s.done ? '&#10003;' : '') + '</span>' +
+        s.label + (s.opt ? ' <span style="font-size:.44rem;color:var(--m);">(optional)</span>' : '') + '</span>';
+    }).join('<span style="color:var(--m);font-size:.56rem;">→</span>');
+  }
+  bar.style.display = 'block';
+}
+
+function dismissOnboarding() {
+  localStorage.setItem('stackd_onboarded', 'true');
+  var bar = G('onboarding-bar');
+  if (bar) bar.style.display = 'none';
+}
+
+// ── TAB-AWARE AI ───────────────────────────────────────────────
+var TAB_CHIPS = {
+  dash:   ['Why are my KPIs wrong?', 'What does Net Cash Position mean?', 'Why is my margin showing wrong?'],
+  sup:    ['What currency should I set for a Chinese supplier?', 'Why do I need a supplier before a line item?', 'How do I record payment terms?'],
+  li:     ['What is COGS?', 'Why is my margin showing low?', 'How do I link a line item to a supplier?'],
+  inv:    ['Why is my balance due wrong?', 'How do I raise a credit note?', 'Why is net profit negative?'],
+  po:     ['How do I auto-generate a PO?', 'What is FPM Funded?', 'How do I mark a PO as settled?'],
+  sh:     ['What fields does a shipment need?', 'What does DG Onboard mean?', 'How do I link a shipment to an invoice?'],
+  import: ['What order do I import data?', 'Why are my line items missing after import?', 'What happens if I import duplicate invoice numbers?'],
+  cfg:    ['Why should I not enable auto-sync?', 'How do I repair invoice totals?', 'How do I connect Google Sheets?']
+};
+
+function updateAIChips(tab) {
+  var el = G('ai-chips');
+  if (!el) return;
+  var chips = TAB_CHIPS[tab] || TAB_CHIPS['dash'];
+  el.innerHTML = chips.map(function(c){
+    return '<button onclick="useAIChip(' + JSON.stringify(c) + ')" style="font-family:\'DM Mono\',monospace;font-size:.5rem;background:var(--card);border:1px solid var(--ln);padding:4px 9px;border-radius:2px;cursor:pointer;color:var(--m);text-align:left;">' + san(c) + '</button>';
+  }).join('');
+}
+
+function useAIChip(text) {
+  var input = G('ai-input');
+  if (input) { input.value = text; input.focus(); }
+}
+
 function clearData() {
   if(!confirm('Clear ALL local data? This cannot be undone.')) return;
   Object.values(K).forEach(function(k){ localStorage.removeItem(k); });
@@ -3519,6 +3854,9 @@ function initApp() {
     G('auto-s').checked = SS.auto !== false;
     G('pol').checked = SS.pol !== false;
     renderAll();
+    checkOnboarding();
+    window.currentTab = 'dash';
+    updateAIChips('dash');
   } catch(e) {
     console.error('initApp failed:', e);
     toast('Failed to initialise — check console (F12) for details', 5000);
