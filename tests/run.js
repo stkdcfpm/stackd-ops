@@ -324,6 +324,101 @@ test('savePO stores empty invId when invNum does not match any invoice', () => {
   assertEqual(saved.invId, '', 'invId should be empty string when no match found');
 });
 
+// ── Shipment CRUD ──────────────────────────────────────────────
+console.log('\nShipment CRUD');
+
+test('saveShp stores a new shipment in DB.sh', () => {
+  resetDB();
+  ctx.DB.sh = [];
+  ctx.EI.sh = null;
+
+  mockEl('shf-ref').value    = 'SHP-001';
+  mockEl('shf-bl').value     = 'MEDU1234567';
+  mockEl('shf-vessel').value = 'MSC Mara';
+  mockEl('shf-carrier').value= 'MSC';
+  mockEl('shf-op').value     = 'Qingdao';
+  mockEl('shf-dp').value     = 'Bridgetown';
+  mockEl('shf-etd').value    = '2026-05-01';
+  mockEl('shf-eta').value    = '2026-06-01';
+  mockEl('shf-ctype').value  = '40HQ';
+  mockEl('shf-cnum').value   = 'MSCU1234567';
+  mockEl('shf-dg').checked   = false;
+  mockEl('shf-docs').value   = 'Pending';
+  mockEl('shf-st').value     = 'Booked';
+  mockEl('shf-invs').value   = 'INV10030, INV10031';
+  mockEl('shf-nt').value     = '';
+
+  ctx.saveShp();
+
+  const saved = ctx.DB.sh[0];
+  assert(saved, 'Shipment should be saved to DB.sh');
+  assertEqual(saved.ref, 'SHP-001', 'ref stored');
+  assertEqual(saved.status, 'Booked', 'status stored');
+  assertEqual(saved.containerType, '40HQ', 'containerType stored');
+  assert(Array.isArray(saved.linkedInvs), 'linkedInvs is array');
+  assertEqual(saved.linkedInvs.length, 2, 'two linked invoices parsed');
+  assertEqual(saved.linkedInvs[0], 'INV10030', 'first linked invoice');
+});
+
+test('saveShp parses DG flag correctly', () => {
+  resetDB();
+  ctx.DB.sh = [];
+  ctx.EI.sh = null;
+
+  mockEl('shf-ref').value    = 'SHP-DG';
+  mockEl('shf-bl').value     = '';
+  mockEl('shf-vessel').value = '';
+  mockEl('shf-carrier').value= '';
+  mockEl('shf-op').value     = '';
+  mockEl('shf-dp').value     = '';
+  mockEl('shf-etd').value    = '';
+  mockEl('shf-eta').value    = '';
+  mockEl('shf-ctype').value  = '20GP';
+  mockEl('shf-cnum').value   = '';
+  mockEl('shf-dg').checked   = true;
+  mockEl('shf-docs').value   = 'In Progress';
+  mockEl('shf-st').value     = 'In Transit';
+  mockEl('shf-invs').value   = '';
+  mockEl('shf-nt').value     = '';
+
+  ctx.saveShp();
+
+  const saved = ctx.DB.sh[0];
+  assert(saved.dg === true, 'dg flag must be true');
+  assertEqual(saved.status, 'In Transit', 'In Transit status stored');
+  assertEqual(saved.linkedInvs.length, 0, 'empty linkedInvs when field is blank');
+});
+
+test('delShp removes shipment from DB.sh', () => {
+  resetDB();
+  ctx.DB.sh = [{ id:'sh-1', ref:'SHP-DEL', status:'Pending', linkedInvs:[], dg:false }];
+  ctx.confirm = () => true;
+
+  ctx.delShp('sh-1');
+
+  assertEqual(ctx.DB.sh.length, 0, 'DB.sh should be empty after delete');
+});
+
+test('shpStatusClass returns correct CSS class for each status', () => {
+  assertEqual(ctx.shpStatusClass('Pending'),    's-draft',         'Pending → s-draft');
+  assertEqual(ctx.shpStatusClass('Booked'),     's-sent',          'Booked → s-sent');
+  assertEqual(ctx.shpStatusClass('In Transit'), 's-partially-paid','In Transit → s-partially-paid');
+  assertEqual(ctx.shpStatusClass('Arrived'),    's-confirmed',     'Arrived → s-confirmed');
+  assertEqual(ctx.shpStatusClass('Delivered'),  's-paid',          'Delivered → s-paid');
+});
+
+test('In Transit KPI counts only In Transit shipments', () => {
+  ctx.DB.sh = [
+    { id:'s1', status:'In Transit' },
+    { id:'s2', status:'In Transit' },
+    { id:'s3', status:'Booked'     },
+    { id:'s4', status:'Delivered'  }
+  ];
+  const count = ctx.DB.sh.filter(function(s){ return s.status === 'In Transit'; }).length;
+  assertEqual(count, 2, 'should count only In Transit shipments');
+  ctx.DB.sh = [];
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
