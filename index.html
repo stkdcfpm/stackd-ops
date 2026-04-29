@@ -650,7 +650,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 
 <!-- CHANGELOG MODAL -->
-<div class="ov" id="ov-changelog" onclick="if(event.target===this)closeM('ov-changelog')" style="display:none;">
+<div class="ov" id="ov-changelog" onclick="if(event.target===this)closeM('ov-changelog')" >
   <div class="modal" style="max-width:580px;">
     <div class="mh">
       <h2>Release Notes</h2>
@@ -2796,7 +2796,7 @@ function openPayments(invId, invNum) {
 }
 
 function openChangelog() {
-  G('ov-changelog').style.display = 'flex';
+  G('ov-changelog').classList.add('on');
 }
 
 async function runDataRepair() {
