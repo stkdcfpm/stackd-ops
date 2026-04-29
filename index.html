@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.7.3</title>
+<title>Stackd Ops v2.7.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -238,7 +238,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
 <rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
 <rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
-</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.7.3</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.7.4</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <div class="view on" id="v-dash">
   <div class="kpis" id="kpis"></div>
   <div class="r2">
@@ -446,6 +446,21 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
       <div id="repair-status" style="font-size:.56rem;color:var(--m);margin-top:6px;min-height:14px;"></div>
     </div>
+    <div class="card">
+      <div class="ct">AI Assistant</div>
+      <div class="fld" style="margin-bottom:10px;">
+        <label>Claude API Key <span style="font-size:.44rem;color:var(--m);">(stored locally — never sent anywhere except Anthropic)</span></label>
+        <div style="display:flex;gap:8px;">
+          <input type="password" id="cfg-ai-key" placeholder="sk-ant-..." autocomplete="off" style="flex:1;">
+          <button class="btn btn-g" onclick="document.getElementById('cfg-ai-key').type=document.getElementById('cfg-ai-key').type==='password'?'text':'password'">Show</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-s" onclick="saveAIKey()">Save Key</button>
+        <button class="btn btn-g" onclick="openAIChat()">Open AI Chat</button>
+        <span id="ai-key-st" style="font-size:.54rem;color:var(--m);"></span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -618,9 +633,21 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.3</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.4</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: AI Assistant — floating AI button opens Claude-powered chat. Ask natural language questions about portal usage, workflows, and troubleshooting. Powered by claude-haiku-4-5 via the Anthropic API.</li>
+          <li>New: Settings → AI Assistant card — paste Claude API key once, stored locally in browser</li>
+          <li>New: Operator manual v1.0 embedded as AI system context — covers all workflows, quirks, and field reference</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.7.3</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: repairCalcFields — adds INV10028; corrects INV10029 to Reolink actuals (was showing FPM totals)</li>
@@ -843,17 +870,41 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- AI CHAT FLOATING BUTTON -->
+<button id="ai-fab" onclick="openAIChat()" title="AI Assistant — ask anything about using Stackd Ops" style="position:fixed;bottom:24px;right:24px;width:46px;height:46px;border-radius:50%;background:var(--cr);border:none;cursor:pointer;color:white;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:.07em;box-shadow:0 2px 10px rgba(0,0,0,.45);z-index:900;display:flex;align-items:center;justify-content:center;transition:transform .15s;">AI</button>
+
+<!-- AI CHAT MODAL -->
+<div class="ov" id="ov-ai" onclick="if(event.target===this)closeM('ov-ai')">
+  <div class="modal" style="max-width:540px;width:100%;display:flex;flex-direction:column;height:600px;max-height:88vh;padding:0;">
+    <div class="mh" style="flex-shrink:0;">
+      <div>
+        <h2 style="font-size:.82rem;">AI Assistant</h2>
+        <div style="font-size:.46rem;color:var(--m);margin-top:1px;">Ask anything about using Stackd Ops &middot; Powered by Claude</div>
+      </div>
+      <button onclick="clearAIChat()" style="font-family:'DM Mono',monospace;font-size:.5rem;color:var(--m);background:transparent;border:1px solid var(--ln);padding:3px 8px;border-radius:2px;cursor:pointer;margin-right:6px;">Clear</button>
+      <button class="mx" onclick="closeM('ov-ai')">&#215;</button>
+    </div>
+    <div id="ai-msgs" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:14px 16px;"></div>
+    <div style="padding:10px 14px;border-top:1px solid var(--ln);display:flex;gap:8px;flex-shrink:0;">
+      <input type="text" id="ai-input" placeholder="Ask a question about the portal…" style="flex:1;font-family:'DM Mono',monospace;font-size:.62rem;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMsg();}">
+      <button class="btn btn-s" id="ai-send" onclick="sendAIMsg()">Send</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', ss:'st_ss', as:'st_as', au:'st_au'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai'};
 function ld(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } }
 let DB = { sup: ld(K.s)||[], li: ld(K.l)||[], inv: ld(K.i)||[], po: ld(K.p)||[], payments: ld(K.pm)||[] };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'Stackd', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'Brighton, UK', email:'cachafpm@gmail.com', phone:'+44 7930 438631', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
 let EI = { s:null, l:null, i:null, p:null };
 let cIL = [], cPL = [];
+let AI = ld(K.ai) || { key: '' };
+let _aiHistory = [];
 
 // ── UTILS ──────────────────────────────────────────────────────
 const G = id => document.getElementById(id);
@@ -2760,12 +2811,235 @@ function prevCNDoc(inv) {
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────
+// ── AI ASSISTANT ───────────────────────────────────────────────
+var AI_SYSTEM_PROMPT = [
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal.',
+  'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
+  '',
+  '## What Stackd Ops Does',
+  '- Raises buyer-facing invoices (USD) with line items, charges, and tax',
+  '- Tracks payments and auto-flips invoice statuses (Draft → Paid)',
+  '- Generates purchase orders to suppliers, grouped by supplier from invoice line items',
+  '- Calculates gross profit, net profit, and margin per invoice',
+  '- Syncs all data to Google Sheets on demand via Apps Script',
+  '- Generates invoice preview / PDF documents via browser print',
+  '- Raises credit notes against existing invoices',
+  '',
+  '## Data Entry Sequence — CRITICAL',
+  'Always follow this order: Suppliers → Line Items → Invoices → Purchase Orders → Payments.',
+  'Line items need a supplier. Invoices use line items from the library. POs are auto-generated from invoices.',
+  'Skipping steps causes missing COGS data, broken P&L, and incomplete PO generation.',
+  '',
+  '## Suppliers',
+  'Suppliers tab → + New Supplier. Fields: Name, Country, Currency (CNY for most Chinese suppliers — used on POs), Contact, Email, Phone/WeChat, Payment Terms, Notes.',
+  '',
+  '## Line Items (Product Catalogue)',
+  'Line Items tab → + New Line Item. Fields: SKU, Description, UOM, Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code, Supplier link.',
+  'Rule: wrong unit cost or price corrupts profit calculations on every invoice using that product.',
+  '',
+  '## Invoices',
+  'Invoices tab → + New Invoice.',
+  '1. Invoice #, Buyer, Address, Destination, Date, Currency, Status',
+  '2. Shipping: Freight Type, Port of Loading, Port of Discharge, Country of Origin',
+  '3. Line Items: use Import from Library (preferred — pulls correct COGS) or quick-add form (no COGS link)',
+  '4. Charges: Local Freight, Insurance, Tax Rate (0% for zero-rated exports)',
+  '5. Click Save Invoice — line items are NOT saved automatically. Always save before closing the modal.',
+  'Statuses: Draft → Pro-forma → Sent → Partially Paid → Paid → Cancelled. CN Draft / CN Issued / CN Applied for credit notes.',
+  'PO status: Draft → Sent → Confirmed → In Production → Shipped → Completed.',
+  '',
+  '## Purchase Orders',
+  'Auto-generated from invoice line items on save, grouped by supplier. Only works when line items were added via Import from Library. Review and edit in Purchase Orders tab.',
+  '',
+  '## Payments',
+  'Invoices tab → click $ on invoice row. Enter: Date, Amount, Method, Reference, Notes → Save Payment.',
+  'Status auto-flips: fully settled = Paid, partial = Partially Paid.',
+  'FPM deposit recovery: when invoice is marked Paid, the system auto-records a deposit recovery entry for the Net Cash Position KPI.',
+  '',
+  '## Dashboard KPIs',
+  '- Invoice Revenue: sum of grand totals (non-cancelled invoices)',
+  '- Net Profit: grand total minus COGS minus tax per invoice. Tax is a buyer pass-through to HMRC — never Stackd income.',
+  '- Avg Margin: net profit ÷ revenue × 100',
+  '- Outstanding: balance due on unpaid / partially paid invoices',
+  '- PO Balance Due: outstanding on active POs',
+  '- Net Cash Position: buyer deposits received minus supplier deposits paid',
+  'If KPIs look wrong: Settings → Data → ⚙ Repair invoice totals.',
+  '',
+  '## Credit Notes',
+  'Invoices tab → click CN on the invoice to credit. Pre-fills CN number, linked invoice, buyer, currency. Fill Credit Reason and Credit Amount → Save.',
+  'Change status to CN Applied to reduce the linked invoice\'s balance.',
+  '',
+  '## Tax Treatment',
+  '- China → Caribbean / West Africa: 0% (zero-rated export)',
+  '- China → UK / Europe: 0% default; 20% if buyer is UK VAT-registered',
+  '- USA → Barbados (Reolink pattern): taxRate = 0. Unit cost includes US sales tax. Invoice total entered manually. Zero margin is correct for pass-through transactions.',
+  'Tax is always a buyer pass-through — never Stackd income.',
+  '',
+  '## Google Sheets Sync',
+  'Settings → Google Sheets. Paste Apps Script URL → Save & Connect.',
+  'SAFE WORKFLOW: make changes locally → ⚙ Repair → Push All.',
+  'DO NOT enable auto-sync — can corrupt calc fields via stale Sheets pulls.',
+  'DO NOT Pull unless recovering data. Always run ⚙ Repair immediately after any Pull.',
+  '',
+  '## Data Repair',
+  'Settings → Data → ⚙ Repair invoice totals. Run after every Sheets pull, when KPIs look wrong, or after clearing browser cache.',
+  'Known invoices restored: INV10028 ($31,055.80), INV10029 ($957.08 Reolink, 7% tax, fully paid), INV10030 ($14,180), INV10031 ($7,248.24).',
+  '',
+  '## Known Quirks',
+  '1. Always click Save Invoice before closing the modal — line items are lost if you close without saving.',
+  '2. Import from Library is preferred over quick-add — quick-add has no COGS link, breaks profit tracking.',
+  '3. Do not enable auto-sync.',
+  '4. Run Repair after every Pull.',
+  '5. Do not use both the Local Freight charge field AND a local freight line item — double-counts charges.',
+  '6. Add product to Line Items catalogue before using Import from Library.',
+  '',
+  '## Troubleshooting',
+  '- Dashboard KPIs wrong → Settings → ⚙ Repair invoice totals',
+  '- Invoice total shows a small wrong number → calc_grandTotal corrupted → ⚙ Repair',
+  '- Net profit massively wrong → COGS is 0, no library line item links → run Repair, add line items via Import from Library',
+  '- Line items missing after reopening → closed modal without saving OR Sheets pull overwrote lineItems → re-add items, Save Invoice, Push All',
+  '- Sync button shows error → invalid or expired Apps Script URL → Settings → verify URL, redeploy Apps Script',
+  '- Wrong deposit on invoice → payments from a renamed invoice → open $ → delete incorrect entries → re-add correct payment',
+  '- Credit note not reducing balance → CN status must be CN Applied',
+  '',
+  '## Invoice Preview / PDF',
+  'Click 👁 PDF on any invoice row. New tab opens with formatted document. Use Ctrl+P / Cmd+P to save as PDF.',
+  'Bank details must be set in Settings → Company before sending to buyers.',
+  '',
+  '## Settings',
+  'Company card: Name, Tagline, Address, Email, Phone, Website, Bank/Payment Details (printed on invoices), Default Invoice Terms.',
+  'Google Sheets card: Apps Script URL, Secret Token.',
+  'Sync Options: auto-sync (keep off), Pull on load (keep off).',
+  'Data: Export CSV, Clear local data, ⚙ Repair invoice totals.',
+  'AI Assistant: Claude API Key (stored locally in browser, used only to call the Anthropic API).'
+].join('\n');
+
+function saveAIKey() {
+  var key = (G('cfg-ai-key') ? G('cfg-ai-key').value.trim() : '');
+  AI.key = key;
+  sv(K.ai, AI);
+  G('ai-key-st').textContent = key ? 'Key saved.' : 'Key cleared.';
+  setTimeout(function(){ G('ai-key-st').textContent = ''; }, 2000);
+  toast('AI key saved');
+}
+
+function openAIChat() {
+  G('ov-ai').classList.add('on');
+  var msgs = G('ai-msgs');
+  if (!msgs.children.length) {
+    var welcome = document.createElement('div');
+    welcome.style.cssText = 'font-size:.58rem;color:var(--m);text-align:center;padding:20px 10px;line-height:1.7;';
+    welcome.textContent = 'Hello! I\'m the Stackd Ops AI assistant. Ask me anything about using the portal — workflows, data entry, troubleshooting, or field explanations.';
+    msgs.appendChild(welcome);
+  }
+  setTimeout(function(){ if(G('ai-input')) G('ai-input').focus(); }, 80);
+}
+
+function clearAIChat() {
+  _aiHistory = [];
+  G('ai-msgs').innerHTML = '';
+  openAIChat();
+}
+
+function _aiMsgEl(role) {
+  var el = document.createElement('div');
+  var isUser = role === 'user';
+  el.style.cssText = [
+    'max-width:88%',
+    'padding:9px 12px',
+    'border-radius:4px',
+    'font-size:.6rem',
+    'line-height:1.75',
+    'white-space:pre-wrap',
+    'word-break:break-word',
+    isUser ? 'align-self:flex-end' : 'align-self:flex-start',
+    isUser ? 'background:var(--cr);color:white' : 'background:var(--card);border:1px solid var(--ln);color:var(--ink)'
+  ].join(';');
+  G('ai-msgs').appendChild(el);
+  G('ai-msgs').scrollTop = G('ai-msgs').scrollHeight;
+  return el;
+}
+
+async function sendAIMsg() {
+  var input = G('ai-input');
+  var msg = (input ? input.value.trim() : '');
+  if (!msg) return;
+  if (!AI.key) {
+    toast('Add your Claude API key in Settings → AI Assistant');
+    closeM('ov-ai');
+    showV('cfg', document.querySelector('[data-v="cfg"]'));
+    return;
+  }
+  input.value = '';
+  _aiMsgEl('user').textContent = msg;
+  _aiHistory.push({ role: 'user', content: msg });
+
+  var sendBtn = G('ai-send');
+  if (sendBtn) sendBtn.disabled = true;
+  var replyEl = _aiMsgEl('assistant');
+  replyEl.textContent = '…';
+
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': AI.key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        stream: true,
+        system: AI_SYSTEM_PROMPT,
+        messages: _aiHistory
+      })
+    });
+    if (!resp.ok) {
+      var errBody = await resp.json().catch(function(){ return {}; });
+      throw new Error((errBody.error && errBody.error.message) || 'API error ' + resp.status);
+    }
+    var reader = resp.body.getReader();
+    var decoder = new TextDecoder();
+    var fullText = '';
+    replyEl.textContent = '';
+    while (true) {
+      var chunk = await reader.read();
+      if (chunk.done) break;
+      var lines = decoder.decode(chunk.value, { stream: true }).split('\n');
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line.startsWith('data: ')) continue;
+        var raw = line.slice(6);
+        if (raw === '[DONE]') continue;
+        try {
+          var evt = JSON.parse(raw);
+          if (evt.type === 'content_block_delta' && evt.delta && evt.delta.text) {
+            fullText += evt.delta.text;
+            replyEl.textContent = fullText;
+            G('ai-msgs').scrollTop = G('ai-msgs').scrollHeight;
+          }
+        } catch(e) {}
+      }
+    }
+    _aiHistory.push({ role: 'assistant', content: fullText });
+  } catch(e) {
+    replyEl.textContent = 'Error: ' + e.message;
+    replyEl.style.color = '#f87171';
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+    if (input) input.focus();
+  }
+}
+
 function rCfg() {
   G('cfg-url').value=SS.url||''; if(G('cfg-token')) G('cfg-token').value=SS.token||''; G('auto-s').checked=SS.auto!==false; G('pol').checked=SS.pol!==false;
   G('c-name').value=AS.name||'Stackd'; G('c-tag').value=AS.tag||'Source - Supply - Ship';
   G('c-addr').value=AS.addr||'Brighton, UK'; G('c-email').value=AS.email||'cachafpm@gmail.com';
   G('c-phone').value=AS.phone||'+44 7930 438631'; G('c-web').value=AS.web||'';
   G('c-bank').value=AS.bank||''; G('c-terms').value=AS.terms||'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.';
+  if(G('cfg-ai-key')) G('cfg-ai-key').value=AI.key||'';
+  if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
 }
 function saveCfg() {
   AS={name:G('c-name').value,tag:G('c-tag').value,addr:G('c-addr').value,email:G('c-email').value,phone:G('c-phone').value,web:G('c-web').value,bank:G('c-bank').value,terms:G('c-terms').value};
