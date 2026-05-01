@@ -3867,27 +3867,6 @@ function wireTips() {
   });
 }
 
-// Live FPM data patch — seeds the two known payments for INV10029 (Thorpes International,
-// $10,000 + $21,055.76). Runs once per device: skips if payments already exist for that
-// invoice. Safe to leave in production; it is a no-op once seeded.
-function seedINV10029Payments() {
-  var inv = DB.inv.find(function(i){ return i.num === 'INV10029'; });
-  if (!inv) return;
-  var existing = DB.payments.filter(function(p){ return p.invId === inv.id; });
-  if (existing.length > 0) return; // Already seeded
-  var payments = [
-    { id:uid(), invId:inv.id, invNum:'INV10029', date:'2026-01-03',
-      amount:10000, method:'Bank Transfer', reference:'', notes:'First instalment', type:'buyer_payment', creAt:new Date().toISOString() },
-    { id:uid(), invId:inv.id, invNum:'INV10029', date:'2026-01-31',
-      amount:21055.76, method:'Bank Transfer', reference:'', notes:'Final payment', type:'buyer_payment', creAt:new Date().toISOString() }
-  ];
-  payments.forEach(function(p){ DB.payments.push(p); });
-  sv(K.pm, DB.payments);
-  // Update dep field
-  inv.dep = 31055.76;
-  sv(K.i, DB.inv);
-}
-
 // Live FPM data patch — restores pre-calculated totals for the three live FPM invoices
 // (INV10029, INV10030, INV10031) if a Sheets pull wiped their calc_ fields. Runs on every
 // boot but only mutates records that exist in DB. Safe to keep; cost is negligible.
@@ -3925,7 +3904,6 @@ function initApp() {
   try {
     wireTips();
     repairCalcFields();
-    seedINV10029Payments();
     if (SS.url) {
       G('banner').style.display='none';
       G('cfg-url').value=SS.url;
