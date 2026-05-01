@@ -419,6 +419,151 @@ test('In Transit KPI counts only In Transit shipments', () => {
   ctx.DB.sh = [];
 });
 
+// ── Price History ──────────────────────────────────────────────
+console.log('\nPrice History — priceHistory versioning');
+
+test('saveLI seeds priceHistory on new item creation', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'sup-ph', name:'PH Supplier' }];
+  ctx.EI.l = null;
+  mockEl('lf-s').value  = 'SKU-PH';
+  mockEl('lf-d').value  = 'Price History Test';
+  mockEl('lf-sp').value = '';
+  mockEl('lf-hs').value = '';
+  mockEl('lf-sup').value= 'sup-ph';
+  mockEl('lf-u').value  = 'pcs';
+  mockEl('lf-c').value  = '100';
+  mockEl('lf-p').value  = '150';
+  mockEl('lf-cur').value= 'USD';
+  mockEl('lf-nt').value = '';
+
+  ctx.saveLI();
+
+  const li = ctx.DB.li[0];
+  assert(li, 'line item saved');
+  assert(Array.isArray(li.priceHistory), 'priceHistory is array');
+  assertEqual(li.priceHistory.length, 1, 'one history entry on creation');
+  assertEqual(li.priceHistory[0].cost,  100, 'history cost = 100');
+  assertEqual(li.priceHistory[0].price, 150, 'history price = 150');
+  assertEqual(li.priceHistory[0].invoiceRef, '', 'invoiceRef empty for catalogue entry');
+});
+
+test('saveLI appends history when price changes on edit', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'sup-ph', name:'PH Supplier' }];
+  ctx.DB.li = [{ id:'li-edit', sku:'SKU-EDIT', desc:'Edit Test', cost:100, price:150, priceHistory:[{ date:'2026-01-01', cost:100, price:150, invoiceRef:'', notes:'Initial catalogue price' }], uom:'pcs', cur:'USD', supId:'sup-ph' }];
+  ctx.EI.l = 'li-edit';
+  mockEl('lf-s').value  = 'SKU-EDIT';
+  mockEl('lf-d').value  = 'Edit Test';
+  mockEl('lf-sp').value = '';
+  mockEl('lf-hs').value = '';
+  mockEl('lf-sup').value= 'sup-ph';
+  mockEl('lf-u').value  = 'pcs';
+  mockEl('lf-c').value  = '100';
+  mockEl('lf-p').value  = '180'; // changed
+  mockEl('lf-cur').value= 'USD';
+  mockEl('lf-nt').value = '';
+
+  ctx.saveLI();
+
+  const li = ctx.DB.li.find(x => x.id === 'li-edit');
+  assert(li, 'line item still exists');
+  assertEqual(li.priceHistory.length, 2, 'history appended on price change');
+  assertEqual(li.priceHistory[1].price, 180, 'new history entry has updated price');
+  assertEqual(li.price, 180, 'catalogue price updated to 180');
+});
+
+test('saveLI does not append history when price unchanged on edit', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'sup-ph', name:'PH Supplier' }];
+  ctx.DB.li = [{ id:'li-same', sku:'SKU-SAME', desc:'No Change', cost:100, price:150, priceHistory:[{ date:'2026-01-01', cost:100, price:150, invoiceRef:'', notes:'Initial catalogue price' }], uom:'pcs', cur:'USD', supId:'sup-ph' }];
+  ctx.EI.l = 'li-same';
+  mockEl('lf-s').value  = 'SKU-SAME';
+  mockEl('lf-d').value  = 'No Change';
+  mockEl('lf-sp').value = '';
+  mockEl('lf-hs').value = '';
+  mockEl('lf-sup').value= 'sup-ph';
+  mockEl('lf-u').value  = 'pcs';
+  mockEl('lf-c').value  = '100'; // same
+  mockEl('lf-p').value  = '150'; // same
+  mockEl('lf-cur').value= 'USD';
+  mockEl('lf-nt').value = '';
+
+  ctx.saveLI();
+
+  const li = ctx.DB.li.find(x => x.id === 'li-same');
+  assertEqual(li.priceHistory.length, 1, 'history unchanged when price not modified');
+});
+
+test('saveInv records price history when invoice price deviates from catalogue', () => {
+  resetDB();
+  ctx.DB.li  = [{ id:'li-dev', sku:'SKU-DEV', desc:'Deviation Test', cost:100, price:150, priceHistory:[], uom:'pcs', cur:'USD' }];
+  ctx.DB.inv = [{ id:'inv-base', num:'INV10001', status:'Draft', lineItems:[], taxRate:0, dep:0, chargesIncluded:true }];
+  ctx.EI.i   = null;
+  ctx.cIL    = [{ rid:'r1', lid:'li-dev', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }]; // 120 ≠ 150
+
+  mockEl('if-n').value   = 'INV10002';
+  mockEl('if-b').value   = 'Test Buyer';
+  mockEl('if-ba').value  = '';
+  mockEl('if-st').value  = '';
+  mockEl('if-dst').value = 'Barbados';
+  mockEl('if-cid').value = '';
+  mockEl('if-dt').value  = '2026-05-01';
+  mockEl('if-ex').value  = '';
+  mockEl('if-sd').value  = '';
+  mockEl('if-ft').value  = '';
+  mockEl('if-wt').value  = '';
+  mockEl('if-cbm').value = '';
+  mockEl('if-pk').value  = '';
+  mockEl('if-pol').value = '';
+  mockEl('if-pod').value = '';
+  mockEl('if-coo').value = '';
+  mockEl('if-cur').value = 'USD';
+  mockEl('if-tx').value  = '0';
+  mockEl('if-lf').value  = '0';
+  mockEl('if-ins').value = '0';
+  mockEl('if-leg').value = '0';
+  mockEl('if-isp').value = '0';
+  mockEl('if-oth').value = '0';
+  mockEl('if-dep').value = '0';
+  mockEl('if-terms').value = '';
+  mockEl('if-chi').checked = true;
+  mockEl('inv-sm').value = 'Draft';
+
+  ctx.saveInv();
+
+  const cat = ctx.DB.li.find(x => x.id === 'li-dev');
+  assert(cat.priceHistory.length > 0, 'history entry added to catalogue item');
+  const entry = cat.priceHistory[cat.priceHistory.length - 1];
+  assertEqual(entry.price,      120,        'history records invoice price (120)');
+  assertEqual(entry.invoiceRef, 'INV10002', 'history records invoice number');
+  assertEqual(entry.notes, 'Price at time of order', 'history notes set');
+});
+
+test('saveInv does not record history when price matches catalogue', () => {
+  resetDB();
+  ctx.DB.li  = [{ id:'li-match', sku:'SKU-MATCH', desc:'Match Test', cost:100, price:150, priceHistory:[], uom:'pcs', cur:'USD' }];
+  ctx.EI.i   = null;
+  ctx.cIL    = [{ rid:'r1', lid:'li-match', desc:'Match Test', uom:'pcs', qty:1, up:150 }]; // exactly matches catalogue
+
+  mockEl('if-n').value   = 'INV10003';
+  mockEl('if-b').value   = 'Buyer';
+  mockEl('if-ba').value  = ''; mockEl('if-st').value  = ''; mockEl('if-dst').value = '';
+  mockEl('if-cid').value = ''; mockEl('if-dt').value  = '2026-05-01'; mockEl('if-ex').value  = '';
+  mockEl('if-sd').value  = ''; mockEl('if-ft').value  = ''; mockEl('if-wt').value  = '';
+  mockEl('if-cbm').value = ''; mockEl('if-pk').value  = ''; mockEl('if-pol').value = '';
+  mockEl('if-pod').value = ''; mockEl('if-coo').value = ''; mockEl('if-cur').value = 'USD';
+  mockEl('if-tx').value  = '0'; mockEl('if-lf').value  = '0'; mockEl('if-ins').value = '0';
+  mockEl('if-leg').value = '0'; mockEl('if-isp').value = '0'; mockEl('if-oth').value = '0';
+  mockEl('if-dep').value = '0'; mockEl('if-terms').value = ''; mockEl('if-chi').checked = true;
+  mockEl('inv-sm').value = 'Draft';
+
+  ctx.saveInv();
+
+  const cat = ctx.DB.li.find(x => x.id === 'li-match');
+  assertEqual(cat.priceHistory.length, 0, 'no history added when price matches catalogue');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
