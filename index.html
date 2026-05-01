@@ -290,6 +290,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <input class="sb" type="text" placeholder="Search items..." id="li-q" oninput="rLI()">
     <select class="sb" style="max-width:170px;" id="li-sf" onchange="rLI()"><option value="">All suppliers</option></select>
     <button class="btn btn-s" onclick="openLI()">+ New Line Item</button>
+    <button class="btn btn-g" onclick="expPriceHistoryCSV()" title="Export price history for all line items">&#8595; Price History CSV</button>
   </div>
   <div class="tw"><table class="tbl"><thead><tr><th>SKU</th><th>Description</th><th>Specs</th><th>HS Code</th><th>Supplier</th><th class="num">Unit Cost</th><th class="num">Unit Price</th><th>UOM</th><th class="num">Margin</th><th>Cur.</th><th></th></tr></thead><tbody id="li-tb"></tbody></table></div>
   <div id="li-em" class="empty" style="display:none;"><div class="ei">&#128230;</div><p>No line items yet.</p></div>
@@ -1550,12 +1551,40 @@ function rLI() {
   G('li-tb').innerHTML = f.map(function(li){
     var m = +li.price>0 ? ((+li.price||0)-(+li.cost||0))/(+li.price||1)*100 : null;
     var mc = m===null?'':(m>=20?'phi':m>=10?'pmi':'plo');
+    var ph = li.priceHistory || [];
+    var phBadge = ph.length
+      ? '<span onclick="togglePH(\'' + li.id + '\')" style="cursor:pointer;font-size:.44rem;color:var(--bl);border:1px solid var(--bl);padding:1px 5px;border-radius:2px;white-space:nowrap;margin-left:4px;" title="Show price history">' + ph.length + ' pt' + (ph.length!==1?'s':'') + '</span>'
+      : '';
+    var phRow = ph.length
+      ? '<tr id="ph-' + li.id + '" style="display:none;"><td colspan="11" style="padding:0;background:var(--card);border-bottom:1px solid var(--ln);">' +
+          '<div style="padding:8px 14px;">' +
+          '<table style="width:100%;border-collapse:collapse;font-size:.52rem;">' +
+          '<thead><tr style="color:var(--m);"><th style="padding:3px 8px;text-align:left;">Date</th><th style="padding:3px 8px;text-align:right;">Cost</th><th style="padding:3px 8px;text-align:right;">Price</th><th style="padding:3px 8px;text-align:left;">Invoice</th><th style="padding:3px 8px;text-align:left;">Notes</th></tr></thead><tbody>' +
+          ph.map(function(h){
+            return '<tr style="border-top:1px solid var(--ln);">' +
+              '<td style="padding:3px 8px;">' + san(h.date||'-') + '</td>' +
+              '<td style="padding:3px 8px;text-align:right;">' + fmt(h.cost, li.cur||'USD') + '</td>' +
+              '<td style="padding:3px 8px;text-align:right;">' + fmt(h.price, li.cur||'USD') + '</td>' +
+              '<td style="padding:3px 8px;color:var(--cr);">' + san(h.invoiceRef||'-') + '</td>' +
+              '<td style="padding:3px 8px;color:var(--m);">' + san(h.notes||'-') + '</td>' +
+            '</tr>';
+          }).join('') +
+          '</tbody></table></div></td></tr>'
+      : '';
     return '<tr><td style="color:var(--m);font-size:.54rem;">' + (san(li.sku)||'-') + '</td><td style="font-weight:500;">' + (san(li.desc)||'-') + '</td><td style="color:var(--m);font-size:.56rem;">' + san(li.specs||'-') + '</td><td style="color:var(--m);font-size:.54rem;">' + san(li.hs||'-') + '</td><td>' + san(gsn(li.supId)) + '</td>' +
-      '<td class="num">' + fmt(li.cost,li.cur||'USD') + '</td><td class="num">' + fmt(li.price,li.cur||'USD') + '</td><td>' + (li.uom||'-') + '</td>' +
+      '<td class="num">' + fmt(li.cost,li.cur||'USD') + '</td>' +
+      '<td class="num">' + fmt(li.price,li.cur||'USD') + phBadge + '</td>' +
+      '<td>' + (li.uom||'-') + '</td>' +
       '<td class="num"><span class="pill ' + mc + '">' + fp(m) + '</span></td><td>' + (li.cur||'-') + '</td>' +
-      '<td><button class="ab" onclick="editLI(\'' + li.id + '\')">&#9998;</button><button class="ab" onclick="delLI(\'' + li.id + '\')">&#10005;</button></td></tr>';
+      '<td><button class="ab" onclick="editLI(\'' + li.id + '\')">&#9998;</button><button class="ab" onclick="delLI(\'' + li.id + '\')">&#10005;</button></td></tr>' +
+      phRow;
   }).join('');
 }
+function togglePH(id) {
+  var row = G('ph-' + id);
+  if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+
 function liMgn() {
   var c=+G('lf-c').value||0, p=+G('lf-p').value||0, m=p>0?((p-c)/p)*100:null, cur=G('lf-cur').value||'USD';
   G('lmv').textContent = p ? fmt(p-c,cur) : '-';
@@ -1579,7 +1608,19 @@ function editLI(id) {
 }
 async function saveLI() {
   if (!vLI()) return;
-  var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:+G('lf-c').value||0,price:+G('lf-p').value||0,cur:G('lf-cur').value,notes:G('lf-nt').value.trim()};
+  var newCost  = +G('lf-c').value||0;
+  var newPrice = +G('lf-p').value||0;
+  var existing = EI.l ? DB.li.find(function(x){ return x.id===EI.l; }) : null;
+  var history  = (existing && existing.priceHistory) ? existing.priceHistory.slice() : [];
+
+  // Seed first history entry on create, or append when cost/price changed via catalogue edit
+  if (!existing) {
+    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Initial catalogue price' });
+  } else if (newCost !== (+existing.cost||0) || newPrice !== (+existing.price||0)) {
+    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Catalogue price updated' });
+  }
+
+  var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history};
   if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
   sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li);
 }
@@ -1780,6 +1821,24 @@ async function saveInv() {
     }
   }
   else DB.inv.push(inv);
+  // Auto-record price history when invoice price deviates from catalogue price
+  var liChanged = false;
+  cIL.forEach(function(li) {
+    if (!li.lid) return;
+    var cat = DB.li.find(function(x){ return x.id === li.lid; });
+    if (!cat) return;
+    var invoicePrice = +li.up || 0;
+    var catPrice     = +cat.price || 0;
+    if (Math.abs(invoicePrice - catPrice) < 0.001) return; // no deviation
+    var history = cat.priceHistory ? cat.priceHistory.slice() : [];
+    // Skip if already recorded for this invoice ref
+    if (history.some(function(h){ return h.invoiceRef === inv.num && h.price === invoicePrice; })) return;
+    history.push({ date: inv.date || today(), cost: +cat.cost||0, price: invoicePrice, invoiceRef: inv.num, notes: 'Price at time of order' });
+    cat.priceHistory = history;
+    liChanged = true;
+  });
+  if (liChanged) sv(K.l, DB.li);
+
   sv(K.i,DB.inv); closeM('ov-inv'); rInv(); rDash();
   audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv); toast('Invoice saved'); renderOnboarding();
   await syncEnt('inv',inv);
@@ -3189,6 +3248,27 @@ function rCfg() {
 function saveCfg() {
   AS={name:G('c-name').value,tag:G('c-tag').value,addr:G('c-addr').value,email:G('c-email').value,phone:G('c-phone').value,web:G('c-web').value,bank:G('c-bank').value,terms:G('c-terms').value};
   sv(K.as,AS); toast('Settings saved');
+}
+
+function expPriceHistoryCSV() {
+  var rows = [];
+  var h = ['SKU','Description','Currency','Current Cost','Current Price','History Date','History Cost','History Price','Invoice Ref','Notes'];
+  DB.li.forEach(function(li) {
+    var ph = li.priceHistory || [];
+    if (!ph.length) {
+      rows.push([li.sku||'', li.desc||'', li.cur||'USD', li.cost||0, li.price||0, '', '', '', '', '']);
+    } else {
+      ph.forEach(function(h) {
+        rows.push([li.sku||'', li.desc||'', li.cur||'USD', li.cost||0, li.price||0, h.date||'', h.cost||0, h.price||0, h.invoiceRef||'', h.notes||'']);
+      });
+    }
+  });
+  if (!rows.length) { toast('No line items to export'); return; }
+  var csv = [h].concat(rows).map(function(r){ return r.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'Stackd-PriceHistory-' + today() + '.csv';
+  a.click(); toast('Price history exported');
 }
 
 function expCSV() {
