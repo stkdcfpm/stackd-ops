@@ -1414,14 +1414,45 @@ function searchHSCodes(q) {
   }).slice(0, 20);
 }
 function getPorts(region) {
-  return region ? RD_PORTS.filter(function(p){ return p.r === region; }) : RD_PORTS;
+  var all = getAllPorts();
+  return region ? all.filter(function(p){ return p.r === region; }) : all;
 }
 function searchPorts(q) {
-  if (!q) return RD_PORTS;
+  var all = getAllPorts();
+  if (!q) return all;
   var lq = q.toLowerCase();
-  return RD_PORTS.filter(function(p){
+  return all.filter(function(p){
     return p.name.toLowerCase().includes(lq) || p.code.toLowerCase().includes(lq) || p.country.toLowerCase().includes(lq);
   });
+}
+function getCustomPorts() {
+  return ldArr('stackd_custom_ports');
+}
+function getAllPorts() {
+  return RD_PORTS.concat(getCustomPorts());
+}
+function addCustomPort(code, name, country) {
+  code = code.trim().toUpperCase();
+  name = name.trim();
+  country = country.trim();
+  if (!code || !name || !country) { toast('⚠ LOCODE, port name and country are all required'); return false; }
+  if (!/^[A-Z]{2} [A-Z0-9]{3}$/.test(code)) { toast('⚠ LOCODE must be in format CC XXX e.g. BB BGI — two-letter country code, space, three-letter port code'); return false; }
+  var all = getAllPorts();
+  var dup = all.find(function(p){ return p.code === code; });
+  if (dup) { toast('⚠ LOCODE ' + code + ' already exists (' + dup.name + ', ' + dup.country + ')'); return false; }
+  var ports = ldArr('stackd_custom_ports');
+  ports.push({ code: code, name: name, country: country, r: 'Custom' });
+  sv('stackd_custom_ports', ports);
+  return true;
+}
+function delCustomPort(code) {
+  var ports = ldArr('stackd_custom_ports');
+  var updated = ports.filter(function(p){ return p.code !== code; });
+  if (updated.length === ports.length) return;
+  sv('stackd_custom_ports', updated);
+  rRefData('ports');
+  populateRefDataLists();
+  toast('Port ' + code + ' removed');
 }
 
 function populateRefDataLists() {
@@ -1439,7 +1470,7 @@ function populateRefDataLists() {
   // Ports datalist
   var dlp = G('dl-ports');
   if (dlp) {
-    dlp.innerHTML = RD_PORTS.map(function(p){
+    dlp.innerHTML = getAllPorts().map(function(p){
       return '<option value="' + san(p.name + ' (' + p.code + ')') + '">' + san(p.country) + '</option>';
     }).join('');
   }
@@ -4039,7 +4070,24 @@ function rRefData(cat) {
     el.innerHTML = '<input type="text" id="rd-hs-q" placeholder="Type chapter number (e.g. 84) or keyword (e.g. machinery)…" oninput="renderHSSearch(this.value)" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;width:100%;outline:none;margin-bottom:8px;box-sizing:border-box;"><div id="rd-hs-res"></div>';
     renderHSSearch('');
   } else if (cat === 'ports') {
-    el.innerHTML = '<input type="text" id="rd-port-q" placeholder="Search by port name, country or UN/LOCODE…" oninput="renderPortSearch(this.value)" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;width:100%;outline:none;margin-bottom:8px;box-sizing:border-box;"><div id="rd-port-res"></div>';
+    var customPorts = getCustomPorts();
+    var customTbl = customPorts.length
+      ? '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>LOCODE</th><th>Port</th><th>Country</th><th></th></tr></thead><tbody>' +
+        customPorts.map(function(p){
+          return '<tr><td style="font-weight:600;color:var(--cr);">' + san(p.code) + '</td><td>' + san(p.name) + '</td><td>' + san(p.country) + '</td>'
+            + '<td><button onclick="delCustomPort(\'' + san(p.code) + '\')" style="font-family:\'DM Mono\',monospace;font-size:.44rem;background:transparent;border:1px solid var(--cr);color:var(--cr);padding:1px 6px;cursor:pointer;border-radius:2px;">del</button></td></tr>';
+        }).join('') + '</tbody></table>'
+      : '<p style="color:var(--m);font-size:.54rem;margin:4px 0 8px;">No custom ports yet.</p>';
+    el.innerHTML = '<input type="text" id="rd-port-q" placeholder="Search by port name, country or UN/LOCODE…" oninput="renderPortSearch(this.value)" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;width:100%;outline:none;margin-bottom:8px;box-sizing:border-box;"><div id="rd-port-res"></div>'
+      + '<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--ln);">'
+      + '<div style="font-size:.48rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--cr);margin-bottom:6px;">Custom Ports</div>'
+      + customTbl
+      + '<div style="display:grid;grid-template-columns:90px 1fr 1fr auto;gap:5px;margin-top:8px;align-items:end;">'
+      + '<div><div style="font-size:.44rem;color:var(--m);margin-bottom:2px;">LOCODE (e.g. BB BGI)</div><input type="text" id="rd-cp-code" placeholder="BB BGI" maxlength="6" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;width:100%;outline:none;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>'
+      + '<div><div style="font-size:.44rem;color:var(--m);margin-bottom:2px;">Port name</div><input type="text" id="rd-cp-name" placeholder="e.g. Bridgetown" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;width:100%;outline:none;"></div>'
+      + '<div><div style="font-size:.44rem;color:var(--m);margin-bottom:2px;">Country</div><input type="text" id="rd-cp-ctry" placeholder="e.g. Barbados" list="dl-countries" autocomplete="off" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;width:100%;outline:none;"></div>'
+      + '<button class="btn btn-s" style="font-size:.48rem;padding:3px 9px;white-space:nowrap;" onclick="if(addCustomPort(G(\'rd-cp-code\').value,G(\'rd-cp-name\').value,G(\'rd-cp-ctry\').value)){rRefData(\'ports\');populateRefDataLists();}">+ Add</button>'
+      + '</div></div>';
     renderPortSearch('');
   }
 }
@@ -4053,7 +4101,7 @@ function renderHSSearch(q) {
 }
 function renderPortSearch(q) {
   var el = G('rd-port-res'); if (!el) return;
-  var res = q ? searchPorts(q) : RD_PORTS;
+  var res = searchPorts(q);
   el.innerHTML = res.length
     ? '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>LOCODE</th><th>Port</th><th>Country</th><th>Region</th></tr></thead><tbody>' +
       res.map(function(p){ return '<tr><td style="font-weight:600;color:var(--cr);">' + san(p.code) + '</td><td>' + san(p.name) + '</td><td>' + san(p.country) + '</td><td style="color:var(--m);">' + san(p.r) + '</td></tr>'; }).join('') + '</tbody></table>'
