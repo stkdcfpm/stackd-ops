@@ -261,6 +261,13 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div class="card"><div class="ct">Active Shipments</div><div id="shp-map" style="font-size:.56rem;color:var(--m);"></div></div>
   </div>
 
+  <!-- Storage Health -->
+  <div class="card" style="margin-top:12px;">
+    <div class="ct">Storage Health <span id="store-badge" style="margin-left:auto;font-size:.48rem;padding:2px 8px;border-radius:3px;font-weight:600;color:white;"></span></div>
+    <div style="margin:8px 0 5px;background:var(--ln);border-radius:3px;height:5px;"><div id="store-fill" style="height:5px;border-radius:3px;transition:width .4s;width:0%;"></div></div>
+    <div id="store-info" style="font-size:.54rem;color:var(--m);"></div>
+  </div>
+
   <!-- Accounts & Deposit Tracker -->
   <div class="card" style="margin-top:12px;">
     <div class="ct">
@@ -468,7 +475,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     </div>
     <div class="card">
       <div class="ct">Data</div>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-s" onclick="expAll()">&#8595; Backup All JSON</button>
+        <button class="btn btn-g" onclick="impAll()">&#8593; Restore from JSON</button>
         <button class="btn btn-g" onclick="expCSV()">&#8595; Export invoices CSV</button>
         <button class="btn btn-g" style="border-color:#c00;color:#c00;" onclick="clearData()">Clear local data</button>
         <button class="btn btn-g" style="border-color:var(--gold);color:var(--gold);" onclick="runDataRepair()">&#9881; Repair invoice totals</button>
@@ -974,12 +983,24 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div class="toast" id="toast"></div>
+<input type="file" id="imp-file" accept=".json" style="display:none" onchange="doImport(event)">
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────
 const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai'};
-function ld(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } }
-let DB = { sup: ld(K.s)||[], li: ld(K.l)||[], inv: ld(K.i)||[], po: ld(K.p)||[], payments: ld(K.pm)||[], sh: ld(K.sh)||[] };
+
+var _storageOK = (function() {
+  try { localStorage.setItem('_stk_t','1'); localStorage.removeItem('_stk_t'); return true; }
+  catch(e) { return false; }
+})();
+
+function ld(k) {
+  if (!_storageOK) return null;
+  try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; }
+}
+function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
+
+let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'Stackd', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'Brighton, UK', email:'cachafpm@gmail.com', phone:'+44 7930 438631', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
 let EI = { s:null, l:null, i:null, p:null, sh:null };
@@ -991,7 +1012,17 @@ let _aiHistory = [];
 const G = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
 const today = () => new Date().toISOString().slice(0,10);
-const sv = (k,d) => localStorage.setItem(k, JSON.stringify(d));
+function sv(k, d) {
+  if (!_storageOK) { toast('⚠ Storage unavailable — data will not persist', 5000); return; }
+  try { localStorage.setItem(k, JSON.stringify(d)); }
+  catch(e) {
+    if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014) {
+      toast('⚠ Storage full! Export a backup now from Settings → Data. Last save was not written.', 9000);
+    } else {
+      toast('⚠ Save error: ' + e.message, 5000);
+    }
+  }
+}
 const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); };
 
 function fmt(n, c) {
@@ -1356,6 +1387,26 @@ function rDash() {
               '<span style="font-size:.56rem;color:var(--ink);font-weight:600;">' + e[1] + '</span></div>';
           }).join('')
         : '<p style="font-size:.56rem;color:var(--m);">No shipments</p>';
+    }
+  }
+
+  // Storage health tile
+  var sh = storageHealth();
+  var badge = G('store-badge'), fill = G('store-fill'), info = G('store-info');
+  if (badge && fill && info) {
+    if (!sh.ok) {
+      badge.textContent = 'Unavailable'; badge.style.background = '#c00';
+      fill.style.cssText = 'height:5px;border-radius:3px;width:0%;';
+      info.textContent = 'localStorage is not available (private/incognito mode?). Data will not persist between sessions.';
+    } else {
+      var col = sh.pct < 60 ? 'var(--gn)' : sh.pct < 85 ? 'var(--gold)' : '#c00';
+      var lbl = sh.pct < 60 ? 'OK' : sh.pct < 85 ? 'Warning' : 'Critical';
+      badge.textContent = lbl; badge.style.background = col;
+      fill.style.cssText = 'height:5px;border-radius:3px;transition:width .4s;background:' + col + ';width:' + sh.pct + '%;';
+      info.textContent = sh.kb + ' KB used of ~5,120 KB browser quota (' + sh.pct + '%) — ' +
+        DB.sup.length + ' suppliers, ' + DB.li.length + ' items, ' + DB.inv.length + ' invoices, ' +
+        DB.po.length + ' POs, ' + DB.payments.length + ' payments, ' + DB.sh.length + ' shipments. ' +
+        'Back up regularly: Settings → Data → Backup All JSON.';
     }
   }
 
@@ -3282,6 +3333,74 @@ function expCSV() {
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent([h.join(',')].concat(rows).join('\n'));
   a.download='Stackd-Invoices-'+today()+'.csv'; a.click(); toast('Exported');
 }
+function storageHealth() {
+  if (!_storageOK) return { ok: false, kb: 0, pct: 0 };
+  var total = 0;
+  Object.values(K).forEach(function(k) { total += (localStorage.getItem(k) || '').length; });
+  var kb = +(total * 2 / 1024).toFixed(1); // UTF-16: 2 bytes per char
+  var pct = Math.min(100, Math.round(total * 2 / 1024 / 5120 * 100));
+  return { ok: true, kb: kb, pct: pct };
+}
+
+function expAll() {
+  var snap = {
+    _version: 1,
+    _exported: new Date().toISOString(),
+    _app: 'Stackd Ops',
+    sup: DB.sup,
+    li: DB.li,
+    inv: DB.inv,
+    po: DB.po,
+    payments: DB.payments,
+    sh: DB.sh,
+    settings: SS,
+    company: AS
+  };
+  var a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(snap, null, 2));
+  a.download = 'Stackd-Backup-' + today() + '.json';
+  a.click();
+  toast('Backup downloaded — store this file safely');
+}
+
+function impAll() { G('imp-file').click(); }
+
+function doImport(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var data;
+    try { data = JSON.parse(ev.target.result); }
+    catch(err) { toast('Invalid JSON — file not restored', 5000); return; }
+    var entities = ['sup','li','inv','po','payments','sh'];
+    var structOk = entities.every(function(k) {
+      return data[k] === undefined || Array.isArray(data[k]);
+    });
+    if (!structOk || data._app !== 'Stackd Ops') {
+      toast('File does not look like a Stackd backup — not restored', 5000);
+      G('imp-file').value = '';
+      return;
+    }
+    var counts = entities.map(function(k){ return (data[k]||[]).length; });
+    var msg = 'Restore backup from ' + (data._exported ? data._exported.slice(0,10) : 'unknown date') + '?\n\n' +
+      'Suppliers: '  + counts[0] + '  |  Line Items: ' + counts[1] + '\n' +
+      'Invoices: '   + counts[2] + '  |  POs: ' + counts[3] + '\n' +
+      'Payments: '   + counts[4] + '  |  Shipments: ' + counts[5] + '\n\n' +
+      'WARNING: This will replace ALL current local data.';
+    if (!confirm(msg)) { G('imp-file').value = ''; return; }
+    entities.forEach(function(k) { DB[k] = Array.isArray(data[k]) ? data[k] : []; });
+    if (data.settings) { SS = data.settings; sv(K.ss, SS); }
+    if (data.company)  { AS = data.company;  sv(K.as, AS); }
+    saveAll();
+    renderAll();
+    rCfg();
+    toast('Restored: ' + DB.inv.length + ' invoices, ' + DB.sup.length + ' suppliers', 4000);
+    G('imp-file').value = '';
+  };
+  reader.readAsText(file);
+}
+
 // ── SHIPMENTS ──────────────────────────────────────────────────
 function shpStatusClass(st) {
   var m = { 'Pending':'s-draft', 'Booked':'s-sent', 'In Transit':'s-partially-paid', 'Arrived':'s-confirmed', 'Delivered':'s-paid' };
