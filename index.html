@@ -328,7 +328,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="view" id="v-sh">
   <div class="tb">
     <input class="sb" type="text" placeholder="Search shipments..." id="sh-q" oninput="rShp()">
-    <select class="sb" style="max-width:140px;" id="sh-sf" onchange="rShp()"><option value="">All statuses</option><option>Pending</option><option>Booked</option><option>In Transit</option><option>Arrived</option><option>Delivered</option></select>
+    <select class="sb" style="max-width:160px;" id="sh-sf" onchange="rShp()"><option value="">All statuses</option><option>Booked</option><option>Confirmed</option><option>In Transit</option><option>At Origin Port</option><option>At Destination Port</option><option>In Customs</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option><option>On Hold</option><option>Cancelled</option></select>
     <button class="btn btn-s" onclick="openShp()">+ New Shipment</button>
   </div>
   <div class="tw" style="overflow-x:auto;">
@@ -485,6 +485,21 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div id="repair-status" style="font-size:.56rem;color:var(--m);margin-top:6px;min-height:14px;"></div>
     </div>
     <div class="card">
+      <div class="ct">Reference Data
+        <select id="rd-cat" onchange="rRefData(this.value)" style="margin-left:auto;font-family:'DM Mono',monospace;font-size:.55rem;border:1px solid var(--ln);padding:3px 7px;cursor:pointer;background:white;">
+          <option value="countries">Countries</option>
+          <option value="currencies">Currencies</option>
+          <option value="uom">Units of Measure</option>
+          <option value="incoterms">Incoterms 2020</option>
+          <option value="payterms">Payment Terms</option>
+          <option value="shpstatus">Shipment Statuses</option>
+          <option value="hs">HS Code Chapters</option>
+          <option value="ports">Port Codes</option>
+        </select>
+      </div>
+      <div id="rd-body" style="margin-top:10px;max-height:360px;overflow-y:auto;font-size:.56rem;"></div>
+    </div>
+    <div class="card">
       <div class="ct">AI Assistant</div>
       <div class="fld" style="margin-bottom:10px;">
         <label>Claude API Key <span style="font-size:.44rem;color:var(--m);">(stored locally — never sent anywhere except Anthropic)</span></label>
@@ -507,7 +522,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   <div class="modal"><div class="mh"><h2 id="sup-mt">New Supplier</h2><button class="mx" onclick="closeM('ov-sup')">&#215;</button></div>
   <div class="mb"><div class="fg fg3">
     <div class="fld"><label id="lbl-sup-name">Name</label><input type="text" id="sf-n"></div>
-    <div class="fld"><label id="lbl-sup-country">Country</label><input type="text" id="sf-c" placeholder="China"></div>
+    <div class="fld"><label id="lbl-sup-country">Country</label><input type="text" id="sf-c" placeholder="China" list="dl-countries" autocomplete="off"></div>
     <div class="fld"><label>Currency</label><select id="sf-cur"><option>USD</option><option>CNY</option><option>GBP</option><option>EUR</option></select></div>
     <div class="fld"><label id="lbl-sup-ct">Contact Person</label><input type="text" id="sf-ct"></div>
     <div class="fld"><label id="lbl-sup-email">Email</label><input type="email" id="sf-e"></div>
@@ -531,10 +546,10 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div class="fg fg3" style="margin-bottom:14px;">
       <div class="fld"><label id="lbl-li-sku">SKU / Item #</label><input type="text" id="lf-s" placeholder="ITEM-001"></div>
       <div class="fld"><label>Supplier</label><select id="lf-sup"><option value="">Select...</option></select></div>
-      <div class="fld"><label>Unit of Measure</label><input type="text" id="lf-u" placeholder="pcs / kg / m2"></div>
+      <div class="fld"><label>Unit of Measure</label><select id="lf-u"><option value="">— Select UOM —</option></select></div>
       <div class="fld" style="grid-column:1/-1"><label id="lbl-li-desc">Description</label><input type="text" id="lf-d"></div>
       <div class="fld" style="grid-column:1/-1"><label>Specifications</label><input type="text" id="lf-sp" placeholder="Size, grade, model, colour, voltage..."></div>
-      <div class="fld"><label id="lbl-li-hs">HS Code</label><input type="text" id="lf-hs" placeholder="e.g. 8418.50"></div>
+      <div class="fld"><label id="lbl-li-hs">HS Code</label><input type="text" id="lf-hs" placeholder="e.g. 84 or refrigerating" list="dl-hs" autocomplete="off"></div>
       <div class="fld"><label id="lbl-li-cost">Unit Cost (supplier price)</label><input type="number" id="lf-c" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
       <div class="fld"><label id="lbl-li-price">Unit Price (buyer price)</label><input type="number" id="lf-p" placeholder="0.00" step="0.01" oninput="liMgn()"></div>
       <div class="fld"><label>Currency</label><select id="lf-cur"><option>USD</option><option>GBP</option><option>EUR</option><option>BBD</option><option>NGN</option><option>GHS</option></select></div>
@@ -570,19 +585,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <div class="fld" style="grid-column:span 2"><label id="lbl-inv-buyer">Buyer / Company</label><input type="text" id="if-b"></div>
           <div class="fld" style="grid-column:span 2"><label>Buyer Address</label><input type="text" id="if-ba"></div>
           <div class="fld" style="grid-column:span 2"><label>Ship To (if different)</label><input type="text" id="if-st"></div>
-          <div class="fld"><label id="lbl-inv-dst">Destination</label><input type="text" id="if-dst" placeholder="Barbados"></div>
+          <div class="fld"><label id="lbl-inv-dst">Destination</label><input type="text" id="if-dst" placeholder="Barbados" list="dl-countries" autocomplete="off"></div>
         </div>
       </div>
       <div class="ms"><div class="mst">Shipping Details</div>
         <div class="fg fg4">
-          <div class="fld"><label>Freight Type</label><input type="text" id="if-ft" placeholder="Sea / Air / Ground"></div>
+          <div class="fld"><label>Freight Type</label><input type="text" id="if-ft" placeholder="Sea Freight — FCL" list="dl-freight" autocomplete="off"></div>
           <div class="fld"><label>Est. Ship Date</label><input type="date" id="if-sd"></div>
           <div class="fld"><label>Est. Gross Weight</label><input type="text" id="if-wt" placeholder="2200 KGS"></div>
           <div class="fld"><label>Est. Cubic Weight</label><input type="text" id="if-cbm" placeholder="18 CBM"></div>
           <div class="fld"><label>Total Packages</label><input type="text" id="if-pk" placeholder="7"></div>
-          <div class="fld"><label id="lbl-inv-pol">Port of Embarkation</label><input type="text" id="if-pol" placeholder="Qingdao"></div>
-          <div class="fld"><label id="lbl-inv-pod">Port of Discharge</label><input type="text" id="if-pod" placeholder="Bridgetown"></div>
-          <div class="fld"><label id="lbl-inv-coo">Country of Origin</label><input type="text" id="if-coo" placeholder="China"></div>
+          <div class="fld"><label id="lbl-inv-pol">Port of Embarkation</label><input type="text" id="if-pol" placeholder="Qingdao" list="dl-ports" autocomplete="off"></div>
+          <div class="fld"><label id="lbl-inv-pod">Port of Discharge</label><input type="text" id="if-pod" placeholder="Bridgetown" list="dl-ports" autocomplete="off"></div>
+          <div class="fld"><label id="lbl-inv-coo">Country of Origin</label><input type="text" id="if-coo" placeholder="China" list="dl-countries" autocomplete="off"></div>
         </div>
       </div>
       <div class="ms"><div class="mst r">Line Items</div>
@@ -593,7 +608,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <!-- Quick add form -->
         <div style="display:grid;grid-template-columns:2fr 60px 60px 90px auto;gap:6px;margin-top:8px;align-items:end;">
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Description</label><input type="text" id="qal-desc" placeholder="e.g. Local Freight"></div>
-          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">UOM</label><input type="text" id="qal-uom" placeholder="lot" value="pcs"></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">UOM</label><input type="text" id="qal-uom" placeholder="pcs" value="pcs" list="dl-uom" autocomplete="off"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Qty</label><input type="number" id="qal-qty" placeholder="1" value="1" min="0" step="any"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Unit Price</label><input type="number" id="qal-up" placeholder="0.00" step="0.01"></div>
           <button class="btn btn-s" style="white-space:nowrap;" onclick="quickAddLine()">+ Add</button>
@@ -931,8 +946,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld"><label>BL Number</label><input type="text" id="shf-bl" placeholder="MEDUWA872896"></div>
         <div class="fld"><label>Vessel</label><input type="text" id="shf-vessel" placeholder="MSC Mara"></div>
         <div class="fld"><label>Carrier</label><input type="text" id="shf-carrier" placeholder="MSC"></div>
-        <div class="fld"><label>Origin Port</label><input type="text" id="shf-op" placeholder="Qingdao"></div>
-        <div class="fld"><label>Destination Port</label><input type="text" id="shf-dp" placeholder="Bridgetown"></div>
+        <div class="fld"><label>Origin Port</label><input type="text" id="shf-op" placeholder="Qingdao" list="dl-ports" autocomplete="off"></div>
+        <div class="fld"><label>Destination Port</label><input type="text" id="shf-dp" placeholder="Bridgetown" list="dl-ports" autocomplete="off"></div>
         <div class="fld"><label>ETD</label><input type="date" id="shf-etd"></div>
         <div class="fld"><label>ETA</label><input type="date" id="shf-eta"></div>
         <div class="fld"><label>Container Type</label>
@@ -945,7 +960,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld"><label>Docs Status</label>
           <select id="shf-docs"><option>Pending</option><option>In Progress</option><option>Complete</option></select></div>
         <div class="fld"><label>Status</label>
-          <select id="shf-st"><option>Pending</option><option>Booked</option><option>In Transit</option><option>Arrived</option><option>Delivered</option></select></div>
+          <select id="shf-st"><option>Booked</option><option>Confirmed</option><option>In Transit</option><option>At Origin Port</option><option>At Destination Port</option><option>In Customs</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option><option>On Hold</option><option>Cancelled</option></select></div>
         <div class="fld"><label>Linked Invoices <span style="font-size:.44rem;color:var(--m);">(comma-separated)</span></label>
           <input type="text" id="shf-invs" placeholder="INV10030, INV10031"></div>
         <div class="fld" style="grid-column:1/-1"><label>Notes</label>
@@ -984,6 +999,11 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <div class="toast" id="toast"></div>
 <input type="file" id="imp-file" accept=".json" style="display:none" onchange="doImport(event)">
+<datalist id="dl-countries"></datalist>
+<datalist id="dl-ports"></datalist>
+<datalist id="dl-hs"></datalist>
+<datalist id="dl-uom"></datalist>
+<datalist id="dl-freight"></datalist>
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────
@@ -1063,6 +1083,346 @@ function setSyncStatus(s) {
   else if (s==='ok') b.textContent = '\u2713 Synced';
   else if (s==='err') b.textContent = '\u26a0 Error';
   else b.textContent = '\u21bb Sync';
+}
+
+// ── REFERENCE DATA ─────────────────────────────────────────────
+// Static JS constants — never stored in localStorage.
+// UOM and Payment Terms support custom additions (stored in localStorage).
+
+const RD_COUNTRIES = [
+  // Caribbean — priority 1
+  {n:'Barbados',a2:'BB',a3:'BRB',r:'Caribbean',p:1},
+  {n:'Trinidad and Tobago',a2:'TT',a3:'TTO',r:'Caribbean',p:1},
+  {n:'Jamaica',a2:'JM',a3:'JAM',r:'Caribbean',p:1},
+  {n:'Guyana',a2:'GY',a3:'GUY',r:'Caribbean',p:1},
+  {n:'Saint Vincent and the Grenadines',a2:'VC',a3:'VCT',r:'Caribbean',p:1},
+  {n:'Saint Lucia',a2:'LC',a3:'LCA',r:'Caribbean',p:1},
+  {n:'Grenada',a2:'GD',a3:'GRD',r:'Caribbean',p:1},
+  {n:'Dominica',a2:'DM',a3:'DMA',r:'Caribbean',p:1},
+  {n:'Antigua and Barbuda',a2:'AG',a3:'ATG',r:'Caribbean',p:1},
+  {n:'Saint Kitts and Nevis',a2:'KN',a3:'KNA',r:'Caribbean',p:1},
+  {n:'Bahamas',a2:'BS',a3:'BHS',r:'Caribbean',p:1},
+  {n:'Haiti',a2:'HT',a3:'HTI',r:'Caribbean',p:1},
+  {n:'Dominican Republic',a2:'DO',a3:'DOM',r:'Caribbean',p:1},
+  {n:'Cuba',a2:'CU',a3:'CUB',r:'Caribbean',p:1},
+  {n:'Turks and Caicos Islands',a2:'TC',a3:'TCA',r:'Caribbean',p:1},
+  {n:'Cayman Islands',a2:'KY',a3:'CYM',r:'Caribbean',p:1},
+  {n:'British Virgin Islands',a2:'VG',a3:'VGB',r:'Caribbean',p:1},
+  {n:'Anguilla',a2:'AI',a3:'AIA',r:'Caribbean',p:1},
+  {n:'Montserrat',a2:'MS',a3:'MSR',r:'Caribbean',p:1},
+  {n:'Aruba',a2:'AW',a3:'ABW',r:'Caribbean',p:1},
+  {n:'Curaçao',a2:'CW',a3:'CUW',r:'Caribbean',p:1},
+  {n:'Suriname',a2:'SR',a3:'SUR',r:'Caribbean',p:1},
+  // West Africa — priority 2
+  {n:'Ghana',a2:'GH',a3:'GHA',r:'West Africa',p:2},
+  {n:'Nigeria',a2:'NG',a3:'NGA',r:'West Africa',p:2},
+  {n:"Côte d'Ivoire",a2:'CI',a3:'CIV',r:'West Africa',p:2},
+  {n:'Senegal',a2:'SN',a3:'SEN',r:'West Africa',p:2},
+  {n:'Gambia',a2:'GM',a3:'GMB',r:'West Africa',p:2},
+  {n:'Sierra Leone',a2:'SL',a3:'SLE',r:'West Africa',p:2},
+  {n:'Liberia',a2:'LR',a3:'LBR',r:'West Africa',p:2},
+  {n:'Guinea',a2:'GN',a3:'GIN',r:'West Africa',p:2},
+  {n:'Guinea-Bissau',a2:'GW',a3:'GNB',r:'West Africa',p:2},
+  {n:'Togo',a2:'TG',a3:'TGO',r:'West Africa',p:2},
+  {n:'Benin',a2:'BJ',a3:'BEN',r:'West Africa',p:2},
+  {n:'Cameroon',a2:'CM',a3:'CMR',r:'West Africa',p:2},
+  // Major sourcing / trading countries
+  {n:'China',a2:'CN',a3:'CHN',r:'Asia'},
+  {n:'United Kingdom',a2:'GB',a3:'GBR',r:'Europe'},
+  {n:'United States',a2:'US',a3:'USA',r:'North America'},
+  {n:'Germany',a2:'DE',a3:'DEU',r:'Europe'},
+  {n:'Netherlands',a2:'NL',a3:'NLD',r:'Europe'},
+  {n:'France',a2:'FR',a3:'FRA',r:'Europe'},
+  {n:'Italy',a2:'IT',a3:'ITA',r:'Europe'},
+  {n:'Spain',a2:'ES',a3:'ESP',r:'Europe'},
+  {n:'Belgium',a2:'BE',a3:'BEL',r:'Europe'},
+  {n:'United Arab Emirates',a2:'AE',a3:'ARE',r:'Middle East'},
+  {n:'India',a2:'IN',a3:'IND',r:'Asia'},
+  {n:'Hong Kong',a2:'HK',a3:'HKG',r:'Asia'},
+  {n:'Singapore',a2:'SG',a3:'SGP',r:'Asia'},
+  {n:'Japan',a2:'JP',a3:'JPN',r:'Asia'},
+  {n:'South Korea',a2:'KR',a3:'KOR',r:'Asia'},
+  {n:'Taiwan',a2:'TW',a3:'TWN',r:'Asia'},
+  {n:'Vietnam',a2:'VN',a3:'VNM',r:'Asia'},
+  {n:'Bangladesh',a2:'BD',a3:'BGD',r:'Asia'},
+  {n:'Pakistan',a2:'PK',a3:'PAK',r:'Asia'},
+  {n:'Canada',a2:'CA',a3:'CAN',r:'North America'},
+  {n:'Australia',a2:'AU',a3:'AUS',r:'Oceania'},
+  {n:'Brazil',a2:'BR',a3:'BRA',r:'South America'},
+  {n:'Colombia',a2:'CO',a3:'COL',r:'South America'},
+  {n:'Panama',a2:'PA',a3:'PAN',r:'Central America'},
+  {n:'Mexico',a2:'MX',a3:'MEX',r:'North America'},
+  {n:'South Africa',a2:'ZA',a3:'ZAF',r:'Southern Africa'},
+];
+
+const RD_CURRENCIES = [
+  {code:'USD',name:'US Dollar',sym:'$',dec:2},
+  {code:'GBP',name:'Pound Sterling',sym:'£',dec:2},
+  {code:'EUR',name:'Euro',sym:'€',dec:2},
+  {code:'CNY',name:'Chinese Yuan Renminbi',sym:'¥',dec:2},
+  {code:'BBD',name:'Barbados Dollar',sym:'Bds$',dec:2},
+  {code:'TTD',name:'Trinidad & Tobago Dollar',sym:'TT$',dec:2},
+  {code:'JMD',name:'Jamaican Dollar',sym:'J$',dec:2},
+  {code:'XCD',name:'East Caribbean Dollar',sym:'EC$',dec:2},
+  {code:'GYD',name:'Guyanese Dollar',sym:'GY$',dec:2},
+  {code:'BSD',name:'Bahamian Dollar',sym:'B$',dec:2},
+  {code:'HTG',name:'Haitian Gourde',sym:'G',dec:2},
+  {code:'DOP',name:'Dominican Peso',sym:'RD$',dec:2},
+  {code:'GHS',name:'Ghanaian Cedi',sym:'GH₵',dec:2},
+  {code:'NGN',name:'Nigerian Naira',sym:'₦',dec:2},
+  {code:'XOF',name:'West African CFA Franc',sym:'CFA',dec:0},
+  {code:'GMD',name:'Gambian Dalasi',sym:'D',dec:2},
+  {code:'SLE',name:'Sierra Leonean Leone',sym:'Le',dec:2},
+  {code:'CAD',name:'Canadian Dollar',sym:'CA$',dec:2},
+  {code:'AUD',name:'Australian Dollar',sym:'A$',dec:2},
+  {code:'JPY',name:'Japanese Yen',sym:'¥',dec:0},
+  {code:'SGD',name:'Singapore Dollar',sym:'S$',dec:2},
+  {code:'AED',name:'UAE Dirham',sym:'AED',dec:2},
+  {code:'INR',name:'Indian Rupee',sym:'₹',dec:2},
+  {code:'HKD',name:'Hong Kong Dollar',sym:'HK$',dec:2},
+  {code:'VND',name:'Vietnamese Dong',sym:'₫',dec:0},
+];
+
+const RD_UOM_BASE = [
+  {code:'pcs',name:'Pieces'},
+  {code:'kg',name:'Kilograms'},
+  {code:'mt',name:'Metric Tonnes'},
+  {code:'cbm',name:'Cubic Metres'},
+  {code:'ctn',name:'Cartons'},
+  {code:'plt',name:'Pallets'},
+  {code:'bag',name:'Bags'},
+  {code:'drm',name:'Drums'},
+  {code:'lot',name:'Lot'},
+  {code:'set',name:'Sets'},
+  {code:'m',name:'Metres'},
+  {code:'m2',name:'Square Metres'},
+  {code:'ltr',name:'Litres'},
+];
+
+const RD_INCOTERMS = [
+  {code:'EXW',name:'Ex Works',mode:'Any',desc:'Seller makes goods available at their premises. Buyer bears all costs and risks from that point.'},
+  {code:'FCA',name:'Free Carrier',mode:'Any',desc:'Seller delivers to named carrier or place. Risk transfers there. Buyer arranges main carriage.'},
+  {code:'FAS',name:'Free Alongside Ship',mode:'Sea/Inland waterway',desc:'Seller delivers alongside vessel at named port. Buyer bears loading and all subsequent costs.'},
+  {code:'FOB',name:'Free On Board',mode:'Sea/Inland waterway',desc:'Seller loads goods on board vessel at named port. Risk transfers on board.'},
+  {code:'CFR',name:'Cost and Freight',mode:'Sea/Inland waterway',desc:'Seller pays freight to destination port. Risk transfers when goods are on board at origin.'},
+  {code:'CIF',name:'Cost, Insurance and Freight',mode:'Sea/Inland waterway',desc:'As CFR but seller also provides marine insurance against buyer\'s risk during transit.'},
+  {code:'CPT',name:'Carriage Paid To',mode:'Any',desc:'Seller pays freight to named destination. Risk transfers when goods handed to first carrier.'},
+  {code:'CIP',name:'Carriage and Insurance Paid To',mode:'Any',desc:'As CPT but seller provides all-risk insurance (ICC A) to named destination.'},
+  {code:'DAP',name:'Delivered At Place',mode:'Any',desc:'Seller delivers to named destination, not unloaded. Buyer handles import customs and unloading.'},
+  {code:'DPU',name:'Delivered At Place Unloaded',mode:'Any',desc:'Seller delivers and unloads at named destination. Seller bears all risk until unloading is complete.'},
+  {code:'DDP',name:'Delivered Duty Paid',mode:'Any',desc:'Maximum obligation for seller. Delivers duty-paid to buyer\'s premises. Buyer bears no risk.'},
+];
+
+const RD_PAYMENT_TERMS_BASE = [
+  'Net 30','Net 60','Net 90',
+  'LC at sight','LC 30 days','LC 60 days','LC 90 days',
+  'TT in advance','TT on delivery','Open Account',
+];
+
+const RD_SHP_STATUS = [
+  'Booked','Confirmed','In Transit','At Origin Port',
+  'At Destination Port','In Customs','Out for Delivery',
+  'Delivered','Delayed','On Hold','Cancelled',
+];
+
+const RD_HS_CHAPTERS = [
+  {ch:'01',desc:'Live animals'},{ch:'02',desc:'Meat and edible meat offal'},{ch:'03',desc:'Fish, crustaceans and molluscs'},
+  {ch:'04',desc:'Dairy produce; eggs; honey'},{ch:'05',desc:'Products of animal origin NES'},{ch:'06',desc:'Live trees, plants and bulbs'},
+  {ch:'07',desc:'Edible vegetables, roots and tubers'},{ch:'08',desc:'Edible fruit and nuts'},{ch:'09',desc:'Coffee, tea, maté and spices'},
+  {ch:'10',desc:'Cereals'},{ch:'11',desc:'Milling industry products; malt'},{ch:'12',desc:'Oil seeds; oleaginous fruits; straw'},
+  {ch:'13',desc:'Lac; gums, resins and vegetable saps'},{ch:'14',desc:'Vegetable plaiting materials'},{ch:'15',desc:'Animal or vegetable fats and oils'},
+  {ch:'16',desc:'Preparations of meat, fish or crustaceans'},{ch:'17',desc:'Sugars and sugar confectionery'},{ch:'18',desc:'Cocoa and cocoa preparations'},
+  {ch:'19',desc:'Preparations of cereals, flour or starch'},{ch:'20',desc:'Preparations of vegetables, fruit and nuts'},{ch:'21',desc:'Miscellaneous edible preparations'},
+  {ch:'22',desc:'Beverages, spirits and vinegar'},{ch:'23',desc:'Residues from food industries; animal fodder'},{ch:'24',desc:'Tobacco and manufactured tobacco substitutes'},
+  {ch:'25',desc:'Salt, sulphur, earths, stone and cement'},{ch:'26',desc:'Ores, slag and ash'},{ch:'27',desc:'Mineral fuels, oils and waxes'},
+  {ch:'28',desc:'Inorganic chemicals'},{ch:'29',desc:'Organic chemicals'},{ch:'30',desc:'Pharmaceutical products'},
+  {ch:'31',desc:'Fertilisers'},{ch:'32',desc:'Tanning, dyeing, paints and varnishes'},{ch:'33',desc:'Essential oils, perfumery and cosmetics'},
+  {ch:'34',desc:'Soap, waxes and cleaning preparations'},{ch:'35',desc:'Albuminoidal substances; starches; glues'},{ch:'36',desc:'Explosives and pyrotechnic products'},
+  {ch:'37',desc:'Photographic or cinematographic goods'},{ch:'38',desc:'Miscellaneous chemical products'},{ch:'39',desc:'Plastics and plastic articles'},
+  {ch:'40',desc:'Rubber and rubber articles'},{ch:'41',desc:'Raw hides, skins and leather'},{ch:'42',desc:'Leather articles; travel goods; handbags'},
+  {ch:'43',desc:'Furskins and fur articles'},{ch:'44',desc:'Wood and articles of wood; charcoal'},{ch:'45',desc:'Cork and cork articles'},
+  {ch:'46',desc:'Manufactures of straw or plaiting materials'},{ch:'47',desc:'Pulp of wood; recovered paper'},{ch:'48',desc:'Paper and paperboard; articles of paper'},
+  {ch:'49',desc:'Printed books, newspapers and pictures'},{ch:'50',desc:'Silk'},{ch:'51',desc:'Wool and fine animal hair'},
+  {ch:'52',desc:'Cotton'},{ch:'53',desc:'Other vegetable textile fibres; paper yarn'},{ch:'54',desc:'Man-made filaments; strip and the like'},
+  {ch:'55',desc:'Man-made staple fibres'},{ch:'56',desc:'Wadding, felt, nonwovens; yarns and twine'},{ch:'57',desc:'Carpets and other textile floor coverings'},
+  {ch:'58',desc:'Special woven fabrics; tufted textiles; lace'},{ch:'59',desc:'Impregnated or coated textile fabrics'},{ch:'60',desc:'Knitted or crocheted fabrics'},
+  {ch:'61',desc:'Apparel, knitted or crocheted'},{ch:'62',desc:'Apparel, not knitted or crocheted'},{ch:'63',desc:'Other made-up textile articles; worn clothing'},
+  {ch:'64',desc:'Footwear, gaiters and the like'},{ch:'65',desc:'Headgear and parts thereof'},{ch:'66',desc:'Umbrellas, walking-sticks and seat-sticks'},
+  {ch:'67',desc:'Prepared feathers; artificial flowers'},{ch:'68',desc:'Stone, plaster, cement and asbestos articles'},{ch:'69',desc:'Ceramic products'},
+  {ch:'70',desc:'Glass and glassware'},{ch:'71',desc:'Precious stones, metals and jewellery'},{ch:'72',desc:'Iron and steel'},
+  {ch:'73',desc:'Articles of iron or steel'},{ch:'74',desc:'Copper and copper articles'},{ch:'75',desc:'Nickel and nickel articles'},
+  {ch:'76',desc:'Aluminium and aluminium articles'},{ch:'78',desc:'Lead and lead articles'},{ch:'79',desc:'Zinc and zinc articles'},
+  {ch:'80',desc:'Tin and tin articles'},{ch:'81',desc:'Other base metals; cermets'},{ch:'82',desc:'Tools, implements, cutlery of base metal'},
+  {ch:'83',desc:'Miscellaneous articles of base metal'},{ch:'84',desc:'Nuclear reactors, boilers and machinery'},{ch:'85',desc:'Electrical machinery and equipment'},
+  {ch:'86',desc:'Railway or tramway locomotives and stock'},{ch:'87',desc:'Vehicles (not railway or tramway)'},{ch:'88',desc:'Aircraft, spacecraft and parts thereof'},
+  {ch:'89',desc:'Ships, boats and floating structures'},{ch:'90',desc:'Optical, photographic and medical instruments'},{ch:'91',desc:'Clocks and watches'},
+  {ch:'92',desc:'Musical instruments'},{ch:'93',desc:'Arms and ammunition'},{ch:'94',desc:'Furniture; bedding, mattresses and cushions'},
+  {ch:'95',desc:'Toys, games and sports equipment'},{ch:'96',desc:'Miscellaneous manufactured articles'},{ch:'97',desc:'Works of art, collectors\' pieces and antiques'},
+];
+
+const RD_PORTS = [
+  // Caribbean
+  {code:'BB BGI',name:'Bridgetown',country:'Barbados',r:'Caribbean'},
+  {code:'TT POS',name:'Port of Spain',country:'Trinidad and Tobago',r:'Caribbean'},
+  {code:'JM KIN',name:'Kingston',country:'Jamaica',r:'Caribbean'},
+  {code:'GY GEO',name:'Georgetown',country:'Guyana',r:'Caribbean'},
+  {code:'VC SVD',name:'Kingstown',country:'Saint Vincent',r:'Caribbean'},
+  {code:'LC SLU',name:'Castries',country:'Saint Lucia',r:'Caribbean'},
+  {code:'AG ANU',name:"St John's",country:'Antigua',r:'Caribbean'},
+  {code:'GD GND',name:"St George's",country:'Grenada',r:'Caribbean'},
+  {code:'KN SKB',name:'Basseterre',country:'Saint Kitts',r:'Caribbean'},
+  {code:'BS NAS',name:'Nassau (Prince George Wharf)',country:'Bahamas',r:'Caribbean'},
+  {code:'HT PAP',name:'Port-au-Prince',country:'Haiti',r:'Caribbean'},
+  {code:'DO SPM',name:'Puerto Plata',country:'Dominican Republic',r:'Caribbean'},
+  {code:'DO SDQ',name:'Rio Haina (Santo Domingo)',country:'Dominican Republic',r:'Caribbean'},
+  // West Africa
+  {code:'GH TEM',name:'Tema',country:'Ghana',r:'West Africa'},
+  {code:'NG APP',name:'Apapa (Lagos)',country:'Nigeria',r:'West Africa'},
+  {code:'NG TIN',name:'Tin Can Island (Lagos)',country:'Nigeria',r:'West Africa'},
+  {code:'NG PHC',name:'Port Harcourt',country:'Nigeria',r:'West Africa'},
+  {code:'CI ABJ',name:'Abidjan (Port Bouet)',country:"Côte d'Ivoire",r:'West Africa'},
+  {code:'SN DKR',name:'Dakar (Port Autonome)',country:'Senegal',r:'West Africa'},
+  {code:'TG LFW',name:'Lomé',country:'Togo',r:'West Africa'},
+  {code:'BJ COO',name:'Cotonou',country:'Benin',r:'West Africa'},
+  {code:'CM DLA',name:'Douala',country:'Cameroon',r:'West Africa'},
+  {code:'GN CKY',name:'Conakry',country:'Guinea',r:'West Africa'},
+  {code:'SL FNA',name:'Freetown',country:'Sierra Leone',r:'West Africa'},
+  // China
+  {code:'CN SHA',name:'Shanghai (Yangshan)',country:'China',r:'China'},
+  {code:'CN SZX',name:'Shenzhen (Yantian / Chiwan)',country:'China',r:'China'},
+  {code:'CN CAN',name:'Guangzhou (Nansha)',country:'China',r:'China'},
+  {code:'CN NGB',name:'Ningbo-Zhoushan',country:'China',r:'China'},
+  {code:'CN TXG',name:'Tianjin (Xingang)',country:'China',r:'China'},
+  {code:'CN QIN',name:'Qingdao',country:'China',r:'China'},
+  {code:'CN XMN',name:'Xiamen',country:'China',r:'China'},
+  {code:'CN DLC',name:'Dalian',country:'China',r:'China'},
+  // UK
+  {code:'GB FXT',name:'Felixstowe',country:'United Kingdom',r:'UK'},
+  {code:'GB SOU',name:'Southampton',country:'United Kingdom',r:'UK'},
+  {code:'GB LIV',name:'Liverpool',country:'United Kingdom',r:'UK'},
+  {code:'GB LON',name:'London Gateway',country:'United Kingdom',r:'UK'},
+  {code:'GB TIL',name:'Tilbury (London)',country:'United Kingdom',r:'UK'},
+  {code:'GB HUL',name:'Immingham / Hull',country:'United Kingdom',r:'UK'},
+  // Other major
+  {code:'NL RTM',name:'Rotterdam',country:'Netherlands',r:'Europe'},
+  {code:'BE ANR',name:'Antwerp',country:'Belgium',r:'Europe'},
+  {code:'DE HAM',name:'Hamburg',country:'Germany',r:'Europe'},
+  {code:'SG SIN',name:'Singapore',country:'Singapore',r:'Asia'},
+  {code:'AE DXB',name:'Dubai (Jebel Ali)',country:'UAE',r:'Middle East'},
+  {code:'HK HKG',name:'Hong Kong',country:'Hong Kong',r:'Asia'},
+  {code:'US NYC',name:'New York / New Jersey',country:'USA',r:'North America'},
+  {code:'US LAX',name:'Los Angeles / Long Beach',country:'USA',r:'North America'},
+  {code:'PA MIT',name:'Manzanillo',country:'Panama',r:'Central America'},
+  {code:'PA ONX',name:'Colón (Cristóbal)',country:'Panama',r:'Central America'},
+];
+
+// ── REFERENCE DATA ACCESSORS ────────────────────────────────────
+function getCountries(q) {
+  if (!q) return RD_COUNTRIES;
+  var lq = q.toLowerCase();
+  return RD_COUNTRIES.filter(function(c){
+    return c.n.toLowerCase().includes(lq) || c.a2.toLowerCase()===lq || c.a3.toLowerCase()===lq;
+  });
+}
+function getCurrencies() { return RD_CURRENCIES; }
+function getUOM() {
+  var custom = ld('rd_uom_cust') || [];
+  return RD_UOM_BASE.concat(custom.map(function(x){ return {code:x, name:x, custom:true}; }));
+}
+function addCustomUOM(label) {
+  label = (label||'').trim();
+  if (!label) return;
+  var c = ld('rd_uom_cust') || [];
+  if (!c.includes(label)) { c.push(label); sv('rd_uom_cust', c); }
+}
+function getPaymentTerms() {
+  var custom = ld('rd_pt_cust') || [];
+  return RD_PAYMENT_TERMS_BASE.concat(custom);
+}
+function addCustomPaymentTerm(label) {
+  label = (label||'').trim();
+  if (!label) return;
+  var c = ld('rd_pt_cust') || [];
+  if (!c.includes(label)) { c.push(label); sv('rd_pt_cust', c); }
+}
+function searchHSCodes(q) {
+  if (!q) return RD_HS_CHAPTERS.slice(0, 15);
+  var lq = q.toLowerCase();
+  var isNum = /^\d/.test(q);
+  return RD_HS_CHAPTERS.filter(function(h){
+    return isNum ? h.ch.startsWith(q) : h.desc.toLowerCase().includes(lq);
+  }).slice(0, 20);
+}
+function getPorts(region) {
+  return region ? RD_PORTS.filter(function(p){ return p.r === region; }) : RD_PORTS;
+}
+function searchPorts(q) {
+  if (!q) return RD_PORTS;
+  var lq = q.toLowerCase();
+  return RD_PORTS.filter(function(p){
+    return p.name.toLowerCase().includes(lq) || p.code.toLowerCase().includes(lq) || p.country.toLowerCase().includes(lq);
+  });
+}
+
+function populateRefDataLists() {
+  // Countries datalist — priority markets first
+  var dlc = G('dl-countries');
+  if (dlc) {
+    var sorted = RD_COUNTRIES.slice().sort(function(a,b){
+      var pa = a.p||99, pb = b.p||99;
+      return pa !== pb ? pa - pb : (a.n < b.n ? -1 : 1);
+    });
+    dlc.innerHTML = sorted.map(function(c){
+      return '<option value="' + san(c.n) + '">' + san(c.a2 + ' — ' + c.r) + '</option>';
+    }).join('');
+  }
+  // Ports datalist
+  var dlp = G('dl-ports');
+  if (dlp) {
+    dlp.innerHTML = RD_PORTS.map(function(p){
+      return '<option value="' + san(p.name + ' (' + p.code + ')') + '">' + san(p.country) + '</option>';
+    }).join('');
+  }
+  // HS codes datalist
+  var dlh = G('dl-hs');
+  if (dlh) {
+    dlh.innerHTML = RD_HS_CHAPTERS.map(function(h){
+      return '<option value="' + h.ch + '">' + san(h.ch + ' — ' + h.desc) + '</option>';
+    }).join('');
+  }
+  // UOM datalist (for quick-add and any text fallbacks)
+  var dlu = G('dl-uom');
+  if (dlu) {
+    dlu.innerHTML = getUOM().map(function(u){
+      return '<option value="' + san(u.code) + '">' + san(u.name) + '</option>';
+    }).join('');
+  }
+  // Freight type datalist
+  var dlf = G('dl-freight');
+  if (dlf) {
+    ['Sea Freight — FCL','Sea Freight — LCL','Air Freight','Road Freight','Rail Freight','Courier / Express','Multimodal'].forEach(function(v){
+      dlf.innerHTML += '<option value="' + v + '">';
+    });
+  }
+  // Currency selects — repopulate from RD_CURRENCIES
+  var curOpts = RD_CURRENCIES.map(function(c){
+    return '<option value="' + c.code + '">' + c.code + ' — ' + san(c.name) + '</option>';
+  }).join('');
+  ['sf-cur','lf-cur','if-cur','pf-cur'].forEach(function(id){
+    var el = G(id);
+    if (!el) return;
+    var prev = el.value;
+    el.innerHTML = curOpts;
+    el.value = (prev && el.querySelector('option[value="' + prev + '"]')) ? prev : 'USD';
+  });
+  // UOM select in line item modal
+  var uomSel = G('lf-u');
+  if (uomSel && uomSel.tagName === 'SELECT') {
+    var prevU = uomSel.value;
+    uomSel.innerHTML = '<option value="">— Select UOM —</option>' +
+      getUOM().map(function(u){ return '<option value="' + san(u.code) + '">' + san(u.name) + '</option>'; }).join('');
+    if (prevU) uomSel.value = prevU;
+  }
 }
 
 // ── SHEETS SYNC ────────────────────────────────────────────────
@@ -3295,10 +3655,62 @@ function rCfg() {
   G('c-bank').value=AS.bank||''; G('c-terms').value=AS.terms||'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.';
   if(G('cfg-ai-key')) G('cfg-ai-key').value=AI.key||'';
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
+  rRefData('countries');
 }
 function saveCfg() {
   AS={name:G('c-name').value,tag:G('c-tag').value,addr:G('c-addr').value,email:G('c-email').value,phone:G('c-phone').value,web:G('c-web').value,bank:G('c-bank').value,terms:G('c-terms').value};
   sv(K.as,AS); toast('Settings saved');
+}
+
+function rRefData(cat) {
+  var el = G('rd-body'); if (!el) return;
+  cat = cat || (G('rd-cat') ? G('rd-cat').value : 'countries');
+  if (cat === 'countries') {
+    var pri = RD_COUNTRIES.filter(function(c){ return c.p; }).sort(function(a,b){ return a.n<b.n?-1:1; });
+    var rest = RD_COUNTRIES.filter(function(c){ return !c.p; }).sort(function(a,b){ return a.n<b.n?-1:1; });
+    var tbl = function(rows){ return '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>Country</th><th>A2</th><th>A3</th><th>Region</th></tr></thead><tbody>' + rows.map(function(c){ return '<tr><td>' + san(c.n) + '</td><td>' + c.a2 + '</td><td>' + c.a3 + '</td><td style="color:var(--m);">' + san(c.r) + '</td></tr>'; }).join('') + '</tbody></table>'; };
+    el.innerHTML = '<div style="font-size:.48rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--cr);margin-bottom:4px;">Priority Markets (Caribbean &amp; West Africa)</div>' + tbl(pri) + '<div style="font-size:.48rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--m);margin:10px 0 4px;">All Countries</div>' + tbl(rest);
+  } else if (cat === 'currencies') {
+    el.innerHTML = '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>Code</th><th>Name</th><th>Symbol</th><th>Dec</th></tr></thead><tbody>' +
+      RD_CURRENCIES.map(function(c){ return '<tr><td style="font-weight:600;color:var(--cr);">' + c.code + '</td><td>' + san(c.name) + '</td><td>' + san(c.sym) + '</td><td style="color:var(--m);">' + c.dec + '</td></tr>'; }).join('') + '</tbody></table>';
+  } else if (cat === 'uom') {
+    var custom = ld('rd_uom_cust') || [];
+    el.innerHTML = '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>Code</th><th>Name</th><th></th></tr></thead><tbody>' +
+      getUOM().map(function(u){ return '<tr><td style="font-weight:600;">' + san(u.code) + '</td><td>' + san(u.name) + '</td><td style="color:var(--m);font-size:.5rem;">' + (u.custom ? 'custom' : '') + '</td></tr>'; }).join('') +
+      '</tbody></table><div style="display:flex;gap:6px;margin-top:8px;"><input type="text" id="rd-uom-new" placeholder="New UOM label (e.g. rolls)" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;flex:1;outline:none;"><button class="btn btn-s" style="font-size:.48rem;padding:3px 9px;" onclick="addCustomUOM(G(\'rd-uom-new\').value);rRefData(\'uom\');populateRefDataLists();">+ Add</button></div>';
+  } else if (cat === 'incoterms') {
+    el.innerHTML = '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>Code</th><th>Name</th><th>Mode</th><th>Description</th></tr></thead><tbody>' +
+      RD_INCOTERMS.map(function(t){ return '<tr><td style="font-weight:600;color:var(--cr);white-space:nowrap;">' + t.code + '</td><td style="white-space:nowrap;">' + san(t.name) + '</td><td style="color:var(--m);font-size:.5rem;white-space:nowrap;">' + san(t.mode) + '</td><td style="font-size:.5rem;">' + san(t.desc) + '</td></tr>'; }).join('') + '</tbody></table>';
+  } else if (cat === 'payterms') {
+    el.innerHTML = '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>Term</th><th></th></tr></thead><tbody>' +
+      getPaymentTerms().map(function(t){ var c=!RD_PAYMENT_TERMS_BASE.includes(t); return '<tr><td>' + san(t) + '</td><td style="color:var(--m);font-size:.5rem;">' + (c?'custom':'') + '</td></tr>'; }).join('') +
+      '</tbody></table><div style="display:flex;gap:6px;margin-top:8px;"><input type="text" id="rd-pt-new" placeholder="New payment term" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;flex:1;outline:none;"><button class="btn btn-s" style="font-size:.48rem;padding:3px 9px;" onclick="addCustomPaymentTerm(G(\'rd-pt-new\').value);rRefData(\'payterms\');">+ Add</button></div>';
+  } else if (cat === 'shpstatus') {
+    el.innerHTML = '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>Status</th><th>Display</th></tr></thead><tbody>' +
+      RD_SHP_STATUS.map(function(s){ return '<tr><td>' + san(s) + '</td><td><span class="tag ' + shpStatusClass(s) + '">' + san(s) + '</span></td></tr>'; }).join('') + '</tbody></table>';
+  } else if (cat === 'hs') {
+    el.innerHTML = '<input type="text" id="rd-hs-q" placeholder="Type chapter number (e.g. 84) or keyword (e.g. machinery)…" oninput="renderHSSearch(this.value)" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;width:100%;outline:none;margin-bottom:8px;box-sizing:border-box;"><div id="rd-hs-res"></div>';
+    renderHSSearch('');
+  } else if (cat === 'ports') {
+    el.innerHTML = '<input type="text" id="rd-port-q" placeholder="Search by port name, country or UN/LOCODE…" oninput="renderPortSearch(this.value)" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px;width:100%;outline:none;margin-bottom:8px;box-sizing:border-box;"><div id="rd-port-res"></div>';
+    renderPortSearch('');
+  }
+}
+function renderHSSearch(q) {
+  var el = G('rd-hs-res'); if (!el) return;
+  var res = searchHSCodes(q);
+  el.innerHTML = res.length
+    ? '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>Ch.</th><th>Description</th></tr></thead><tbody>' +
+      res.map(function(h){ return '<tr><td style="font-weight:600;color:var(--cr);">' + h.ch + '</td><td>' + san(h.desc) + '</td></tr>'; }).join('') + '</tbody></table>'
+    : '<p style="color:var(--m);font-size:.54rem;">No matches</p>';
+}
+function renderPortSearch(q) {
+  var el = G('rd-port-res'); if (!el) return;
+  var res = q ? searchPorts(q) : RD_PORTS;
+  el.innerHTML = res.length
+    ? '<table class="tbl" style="font-size:.54rem;width:100%;"><thead><tr><th>LOCODE</th><th>Port</th><th>Country</th><th>Region</th></tr></thead><tbody>' +
+      res.map(function(p){ return '<tr><td style="font-weight:600;color:var(--cr);">' + san(p.code) + '</td><td>' + san(p.name) + '</td><td>' + san(p.country) + '</td><td style="color:var(--m);">' + san(p.r) + '</td></tr>'; }).join('') + '</tbody></table>'
+    : '<p style="color:var(--m);font-size:.54rem;">No matches</p>';
 }
 
 function expPriceHistoryCSV() {
@@ -3403,7 +3815,13 @@ function doImport(e) {
 
 // ── SHIPMENTS ──────────────────────────────────────────────────
 function shpStatusClass(st) {
-  var m = { 'Pending':'s-draft', 'Booked':'s-sent', 'In Transit':'s-partially-paid', 'Arrived':'s-confirmed', 'Delivered':'s-paid' };
+  var m = {
+    'Booked':'s-sent', 'Confirmed':'s-sent',
+    'In Transit':'s-partially-paid', 'At Origin Port':'s-confirmed', 'At Destination Port':'s-confirmed',
+    'In Customs':'s-partially-paid', 'Out for Delivery':'s-partially-paid',
+    'Delivered':'s-paid', 'Arrived':'s-confirmed',
+    'Delayed':'s-cancelled', 'On Hold':'s-draft', 'Cancelled':'s-cancelled', 'Pending':'s-draft',
+  };
   return m[st] || 's-draft';
 }
 
@@ -4022,6 +4440,7 @@ function repairCalcFields() {
 function initApp() {
   try {
     wireTips();
+    populateRefDataLists();
     repairCalcFields();
     if (SS.url) {
       G('banner').style.display='none';
