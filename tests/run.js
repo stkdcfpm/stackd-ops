@@ -666,6 +666,140 @@ test('cQte sums lines and adds overheads correctly', () => {
   ctx.QR = savedQR;
 });
 
+// ── Quote Line Price Versioning ────────────────────────────────
+console.log('\nQuote line price versioning');
+
+function saveQteSetup(rid, cost, dutyPct, markup, note) {
+  mockEl('qf-num').value = 'QTE-0001';
+  mockEl('qf-client').value = 'Versioning Client';
+  mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = '';
+  mockEl('qf-cur').value = 'USD';
+  mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = String(markup);
+  mockEl('qf-st').value = 'Draft';
+  mockEl('qf-nt').value = '';
+  mockEl('qt-verr').textContent = '';
+  mockEl('ql-supId-' + rid).value = '';
+  mockEl('ql-desc-' + rid).value = 'Test item';
+  mockEl('ql-qty-' + rid).value = '1';
+  mockEl('ql-uom-' + rid).value = 'pcs';
+  mockEl('ql-cost-' + rid).value = String(cost);
+  mockEl('ql-cbm-' + rid).value = '2';
+  mockEl('ql-dg-' + rid).checked = false;
+  mockEl('ql-dutyPct-' + rid).value = String(dutyPct);
+  mockEl('ql-note-' + rid).value = note || '';
+}
+
+test('saveQte creates version 1 on first save with correct fields', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv1', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv1', 500, 10, 15, 'Initial price');
+
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assert(Array.isArray(line.priceHistory), 'priceHistory is array');
+  assertEqual(line.priceHistory.length, 1, 'version 1 created on first save');
+  const v = line.priceHistory[0];
+  assertEqual(v.v, 1, 'version number is 1');
+  assertEqual(v.cost, 500, 'cost stored');
+  assertEqual(v.dutyPct, 10, 'dutyPct stored');
+  assertEqual(v.markup, 15, 'markup stored');
+  assertEqual(v.note, 'Initial price', 'note stored');
+  assert(v.ts && v.ts.length > 10, 'timestamp present');
+  assert(v.landed > 0, 'landed > 0');
+  assert(v.sellPrice > 0, 'sellPrice > 0');
+  assertEqual(v.sellPrice, +(v.landed * 1.15).toFixed(2), 'sellPrice = landed * (1 + markup/100)');
+});
+
+test('saveQte appends version 2 when cost changes on re-save', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv2', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:10 }];
+  saveQteSetup('rv2', 500, 10, 15, '');
+  ctx.saveQte();
+
+  const qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  saveQteSetup('rv2', 600, 10, 15, 'Price increase from supplier');  // cost changed 500→600
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.priceHistory.length, 2, 'version 2 appended on cost change');
+  assertEqual(line.priceHistory[1].v, 2, 'v=2');
+  assertEqual(line.priceHistory[1].cost, 600, 'cost updated to 600');
+  assertEqual(line.priceHistory[1].note, 'Price increase from supplier', 'note captured');
+});
+
+test('saveQte appends new version when dutyPct changes', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv3', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv3', 500, 10, 15, '');
+  ctx.saveQte();
+
+  const qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  saveQteSetup('rv3', 500, 20, 15, 'Duty rate revised');  // dutyPct changed 10→20
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.priceHistory.length, 2, 'version 2 appended on dutyPct change');
+  assertEqual(line.priceHistory[1].dutyPct, 20, 'dutyPct updated to 20');
+});
+
+test('saveQte appends new version when markup changes', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv4', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv4', 500, 10, 15, '');
+  ctx.saveQte();
+
+  const qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  saveQteSetup('rv4', 500, 10, 20, 'Markup raised');  // markup changed 15→20
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.priceHistory.length, 2, 'version 2 appended on markup change');
+  assertEqual(line.priceHistory[1].markup, 20, 'markup updated to 20');
+});
+
+test('saveQte does not append version when no tracked field changes', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv5', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv5', 500, 10, 15, '');
+  ctx.saveQte();
+
+  const qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  saveQteSetup('rv5', 500, 10, 15, 'No change note');  // cost/dutyPct/markup unchanged
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.priceHistory.length, 1, 'no new version when tracked fields unchanged');
+});
+
+test('version sellPrice equals landed * (1 + markup/100)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv6', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv6', 400, 5, 25, '');
+  ctx.saveQte();
+
+  const v = ctx.DB.qt[0].lines[0].priceHistory[0];
+  const expected = +(v.landed * 1.25).toFixed(2);
+  assertEqual(v.sellPrice, expected, 'sellPrice = landed * (1 + 0.25)');
+  assert(v.landed > 0, 'landed is positive');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
