@@ -118,5 +118,14 @@ See `docs/known-gaps.md` for full entries.
 ## On version delivery
 
 At the end of each version delivery, update:
-1. **This file** — bump `Current version`, update `Test count`, add row to Version history, add any new Known gaps
+1. **This file** — bump `Current version`, update `Test count`, add row to Version history, add any new Known gaps, tick off sprint items
 2. **`docs/known-gaps.md`** — add new gap entries as they are identified
+
+---
+
+## Current sprint
+
+| ID | Item | Status |
+|---|---|---|
+| 8 | Quote line price versioning | ✓ done (v2.9.4) |
+| 9 | Xero export | pending |
