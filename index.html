@@ -2289,7 +2289,7 @@ async function saveInv() {
         po.fpmRecovered = true;
         po.updAt = new Date().toISOString();
         recovered = true;
-        syncEnt('po', po);
+        syncEnt('po', po).catch(function(){});
       }
     });
     if (recovered) {
