@@ -601,6 +601,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <div class="fld"><label id="lbl-inv-pol">Port of Embarkation</label><input type="text" id="if-pol" placeholder="Qingdao" list="dl-ports" autocomplete="off"></div>
           <div class="fld"><label id="lbl-inv-pod">Port of Discharge</label><input type="text" id="if-pod" placeholder="Bridgetown" list="dl-ports" autocomplete="off"></div>
           <div class="fld"><label id="lbl-inv-coo">Country of Origin</label><input type="text" id="if-coo" placeholder="China" list="dl-countries" autocomplete="off"></div>
+          <div class="fld"><label>Incoterms 2020</label><select id="if-inco"><option value="">Select Incoterm...</option></select></div>
         </div>
       </div>
       <div class="ms"><div class="mst r">Line Items</div>
@@ -646,7 +647,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <div style="font-size:.52rem;color:var(--m);margin-top:1px;">Tick if freight and insurance are already rolled into your Grand Total figure. Untick if they are charged separately on top of line items.</div>
         </div>
       </div>
-      <div class="fld" style="margin-top:10px;"><label>Terms of Sale / Comments</label><textarea id="if-terms"></textarea></div>
+      <div class="fld" style="margin-top:6px;"><label>Payment Terms</label><select id="if-pt"><option value="">Select payment terms...</option></select></div>
+      <div class="fld" style="margin-top:6px;"><label>Terms of Sale / Comments</label><textarea id="if-terms"></textarea></div>
       </div>
       <div class="ms"><div class="mst">Live P&amp;L and Totals</div>
         <div class="tbox">
@@ -939,6 +941,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld"><label>Linked Invoice # (auto)</label><input type="text" id="pf-inv" readonly style="color:var(--m);"></div>
         <div class="fld"><label>Required Delivery</label><input type="date" id="pf-del"></div>
         <div class="fld"><label>Currency</label><select id="pf-cur"><option>USD</option><option>CNY</option><option>GBP</option><option>EUR</option></select></div>
+        <div class="fld"><label>Payment Terms</label><select id="pf-pt"><option value="">Select (optional)...</option></select></div>
       </div>
       <div class="ms"><div class="mst b">Line Items (this supplier only)</div>
         <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description / SKU</th><th style="width:65px">UOM</th><th style="width:52px">Qty</th><th style="width:105px">Unit Cost</th><th style="width:85px" class="num">Total</th><th style="width:22px"></th></tr></thead><tbody id="pl-tb"></tbody></table>
@@ -1475,6 +1478,26 @@ function populateRefDataLists() {
       getUOM().map(function(u){ return '<option value="' + san(u.code) + '">' + san(u.name) + '</option>'; }).join('');
     if (prevU) uomSel.value = prevU;
   }
+  // Incoterms select — invoice form
+  var incoSel = G('if-inco');
+  if (incoSel) {
+    var prevInco = incoSel.value;
+    incoSel.innerHTML = '<option value="">Select Incoterm...</option>' +
+      RD_INCOTERMS.map(function(t){ return '<option value="' + t.code + '">' + t.code + ' — ' + san(t.name) + '</option>'; }).join('');
+    if (prevInco) incoSel.value = prevInco;
+  }
+  // Payment Terms selects — invoice and PO forms
+  var ptOpts = '<option value="">Select (optional)...</option>' +
+    getPaymentTerms().map(function(t){ return '<option value="' + san(t) + '">' + san(t) + '</option>'; }).join('');
+  ['if-pt', 'pf-pt'].forEach(function(id) {
+    var el = G(id);
+    if (!el) return;
+    var prev = el.value;
+    el.innerHTML = id === 'if-pt'
+      ? '<option value="">Select payment terms...</option>' + getPaymentTerms().map(function(t){ return '<option value="' + san(t) + '">' + san(t) + '</option>'; }).join('')
+      : ptOpts;
+    if (prev) el.value = prev;
+  });
 }
 
 // ── SHEETS SYNC ────────────────────────────────────────────────
@@ -2135,7 +2158,8 @@ function openInv() {
   G('inv-mt').textContent='New Invoice'; G('inv-sm').value='Draft';
   ['if-n','if-b','if-ba','if-st','if-dst','if-cid','if-ft','if-wt','if-cbm','if-pk','if-pol','if-pod','if-coo'].forEach(function(f){var e=G(f);if(e)e.value='';});
   ['if-lf','if-ins','if-leg','if-isp','if-oth','if-dep'].forEach(function(f){var e=G(f);if(e)e.value='';});
-  vClrAll(['if-n','if-b','if-dt','if-dep','if-lf','if-ins','if-leg','if-isp','if-oth','if-ex','if-sd']);
+  G('if-inco').value=''; G('if-pt').value='';
+  vClrAll(['if-n','if-b','if-dt','if-dep','if-lf','if-ins','if-leg','if-isp','if-oth','if-ex','if-sd','if-inco','if-pt']);
   G('if-n').value=nextInvNum();
   G('if-dt').value=today(); G('if-ex').value=''; G('if-sd').value='';
   G('if-cur').value='USD'; G('if-tx').value='0'; G('ctx-wrap').style.display='none'; G('if-chi').checked=true;
@@ -2157,6 +2181,7 @@ function editInv(id) {
   else{G('if-tx').value='custom';G('ctx-wrap').style.display='block';G('if-txc').value=((+inv.taxRate||0)*100).toFixed(1);}
   G('if-lf').value=inv.lf||''; G('if-ins').value=inv.ins||''; G('if-leg').value=inv.leg||'';
   G('if-isp').value=inv.isp||''; G('if-oth').value=inv.oth||''; G('if-dep').value=inv.dep||'';
+  G('if-inco').value=inv.incoterm||''; G('if-pt').value=inv.paymentTerms||'';
   G('if-terms').value=inv.terms||AS.terms||''; G('if-chi').checked=inv.chargesIncluded!==false;
   // Update payments tab badge
   var pmCount = DB.payments.filter(function(p){ return p.invId === inv.id; }).length;
@@ -2277,6 +2302,7 @@ async function saveInv() {
     cur:G('if-cur').value, taxRate:tx,
     lf:+G('if-lf').value||0, ins:+G('if-ins').value||0, leg:+G('if-leg').value||0,
     isp:+G('if-isp').value||0, oth:+G('if-oth').value||0, dep:+G('if-dep').value||0,
+    incoterm:G('if-inco').value, paymentTerms:G('if-pt').value.trim(),
     terms:G('if-terms').value.trim(), chargesIncluded:G('if-chi').checked, status:G('inv-sm').value,
     lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0}; }), pos:[],
     type:isCN(G('if-n').value.trim())?'credit_note':'invoice',
@@ -2410,7 +2436,7 @@ function openPO() {
   G('po-mt').textContent='New Purchase Order'; G('po-sm').value='Draft';
   ['pf-n','pf-del','pf-nt'].forEach(function(f){var e=G(f);if(e)e.value='';});
   G('pf-dep').value=''; G('pf-fpm').value=''; G('pf-oth').value=''; G('pf-rec').checked=false; G('pf-rec-label').textContent='FPM funds recovered (auto-set when invoice marked Paid)'; G('pf-dt').value=today();
-  G('pf-sup').value=''; G('pf-cur').value='USD'; G('pf-inv').value='';
+  G('pf-sup').value=''; G('pf-cur').value='USD'; G('pf-inv').value=''; G('pf-pt').value='';
   vClrAll(['pf-n','pf-sup','pf-dep','pf-fpm','pf-oth','pf-dt','pf-del']);
   rPLT(); calcPO(); G('ov-po').classList.add('on');
 }
@@ -2421,7 +2447,7 @@ function editPO(id) {
   G('pf-n').value=po.num||''; G('pf-dt').value=po.date||today();
   G('pf-del').value=po.del||''; G('pf-sup').value=po.supId||'';
   G('pf-cur').value=po.cur||'USD'; G('pf-dep').value=po.dep||'';
-  G('pf-oth').value=po.oth||''; G('pf-nt').value=po.notes||''; G('pf-inv').value=po.invNum||'';
+  G('pf-oth').value=po.oth||''; G('pf-nt').value=po.notes||''; G('pf-inv').value=po.invNum||''; G('pf-pt').value=po.paymentTerms||'';
   rPLT(); calcPO(); showV('po',document.querySelector('[data-v="po"]')); G('ov-po').classList.add('on');
 }
 function addPLI() { cPL.push({rid:uid(),lid:'',desc:'',sku:'',uom:'',qty:1,cost:0}); rPLT(); calcPO(); }
@@ -2457,7 +2483,7 @@ async function savePO() {
   if (!vPO()) return;
   var invNumVal = G('pf-inv').value.trim();
   var linkedInv = DB.inv.find(function(i){ return i.num === invNumVal; });
-  var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:invNumVal,invId:linkedInv?linkedInv.id:'',date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,fpmFunded:+G('pf-fpm').value||0,fpmRecovered:G('pf-rec').checked,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
+  var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:invNumVal,invId:linkedInv?linkedInv.id:'',date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,paymentTerms:G('pf-pt').value.trim(),lineItems:cPL,dep:+G('pf-dep').value||0,fpmFunded:+G('pf-fpm').value||0,fpmRecovered:G('pf-rec').checked,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
   if(EI.p){var i=DB.po.findIndex(function(x){return x.id===EI.p;});if(i>-1)DB.po[i]=po;}else DB.po.push(po);
   sv(K.p,DB.po); closeM('ov-po'); rPO(); rDash(); audit(EI.p?'UPDATE':'CREATE','po',po.id,po); toast('PO saved'); await syncEnt('po',po);
 }
@@ -2494,11 +2520,11 @@ async function delPO(id) {
 function prevInv() {
   window._lastPO=null;
   var tx=getTR();
-  prevInvDoc({num:G('if-n').value||'DRAFT',buyer:G('if-b').value,buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,terms:G('if-terms').value,lineItems:cIL});
+  prevInvDoc({num:G('if-n').value||'DRAFT',buyer:G('if-b').value,buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,incoterm:G('if-inco').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,paymentTerms:G('if-pt').value,terms:G('if-terms').value,lineItems:cIL});
 }
 function prevInvId(id) { var inv=DB.inv.find(function(x){return x.id===id;}); if(inv){ window._lastInv=inv; window._lastPO=null; prevInvDoc(inv); } }
 function prevPO() {
-  prevPODoc({num:G('pf-n').value||'DRAFT',supId:G('pf-sup').value,invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,lineItems:cPL,dep:+G('pf-dep').value||0,oth:+G('pf-oth').value||0,notes:G('pf-nt').value});
+  prevPODoc({num:G('pf-n').value||'DRAFT',supId:G('pf-sup').value,invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,paymentTerms:G('pf-pt').value,lineItems:cPL,dep:+G('pf-dep').value||0,oth:+G('pf-oth').value||0,notes:G('pf-nt').value});
 }
 function prevPOId(id) { var po=DB.po.find(function(x){return x.id===id;}); if(po) prevPODoc(po); }
 
@@ -2553,7 +2579,7 @@ function prevInvDoc(inv) {
       +'<span>'+r[1]+'</span></div>';
   }).join('');
 
-  var shpRows = [['Freight Type',inv.ft],['Est. Ship Date',inv.shipDate],['Gross Weight',inv.wt],['Cubic Weight',inv.cbm],['Total Packages',inv.pk]]
+  var shpRows = [['Freight Type',inv.ft],['Incoterms',inv.incoterm],['Est. Ship Date',inv.shipDate],['Gross Weight',inv.wt],['Cubic Weight',inv.cbm],['Total Packages',inv.pk]]
     .filter(function(r){return r[1];})
     .map(function(r){return '<div style="display:flex;gap:8px;font-size:.62rem;margin-bottom:3px;"><span style="color:#8a7f82;width:110px;flex-shrink:0;">'+r[0]+'</span><span>'+r[1]+'</span></div>';})
     .join('');
@@ -2604,6 +2630,7 @@ function prevInvDoc(inv) {
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Expiry</td><td style="text-align:right;">'+(fmtDate(inv.expiry))+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Customer ID</td><td style="text-align:right;">'+(inv.custId||'-')+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Currency</td><td style="text-align:right;">'+cur+'</td></tr>'
+            +(inv.paymentTerms?'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Payment Terms</td><td style="text-align:right;">'+san(inv.paymentTerms)+'</td></tr>':'')
           +'</tbody></table>'
         +'</div>'
       +'</div>'
@@ -2716,6 +2743,7 @@ function prevPODoc(po) {
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Linked Invoice</td><td style="text-align:right;">'+(po.invNum||'-')+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Delivery Required</td><td style="text-align:right;">'+(po.del||'TBC')+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Currency</td><td style="text-align:right;">'+cur+'</td></tr>'
+            +(po.paymentTerms?'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Payment Terms</td><td style="text-align:right;">'+san(po.paymentTerms)+'</td></tr>':'')
           +'</tbody></table>'
         +'</div>'
       +'</div>'
@@ -2950,6 +2978,8 @@ function wireBlurValidation() {
     'if-oth':  function(){ vBlurCurrency('if-oth','Other charges'); },
     'if-ex':   function(){ vBlurDate('if-ex','Expiry / due date'); },
     'if-sd':   function(){ vBlurDate('if-sd','Est. ship date'); },
+    'if-inco': function(){ if(!G('if-inco').value) vErr('if-inco','Incoterm is required'); else vOk('if-inco'); },
+    'if-pt':   function(){ if(!G('if-pt').value) vErr('if-pt','Payment terms are required'); else vOk('if-pt'); },
     'pf-n':    function(){ vBlurPONum('pf-n'); },
     'pf-dep':  function(){ vBlurCurrency('pf-dep','Supplier deposit'); },
     'pf-fpm':  function(){ vBlurCurrency('pf-fpm','FPM funded amount'); },
@@ -3028,6 +3058,10 @@ function vInv() {
     if (cv !== '' && !RX.currency(cv)) return vErr(charges[ci], 'Charges must be a non-negative number');
     if ((+cv||0) < 0)              return vErr(charges[ci], 'Charges cannot be negative');
   }
+  if (!G('if-inco').value)   return vErr('if-inco', 'Incoterm is required — select from Incoterms 2020');
+  vOk('if-inco');
+  if (!G('if-pt').value)     return vErr('if-pt', 'Payment terms are required');
+  vOk('if-pt');
   return vFormOk('ov-inv');
 }
 
@@ -4044,10 +4078,10 @@ function expPriceHistoryCSV() {
 
 function expCSV() {
   if(!DB.inv.length){toast('No invoices');return;}
-  var h=['Invoice #','Buyer','Destination','Date','Status','Currency','Grand Total','COGS','Gross Profit','Net Profit','Margin %','Tax Rate %','Buyer Deposit','Balance Due'];
+  var h=['Invoice #','Buyer','Destination','Date','Status','Currency','Grand Total','COGS','Gross Profit','Net Profit','Margin %','Tax Rate %','Buyer Deposit','Balance Due','Incoterm','Payment Terms'];
   var rows=DB.inv.map(function(inv){
     var c=cInv(inv);
-    return [inv.num,inv.buyer,inv.dst,inv.date,inv.status,inv.cur,fn(c.grand),fn(c.cogs),fn(c.gp),fn(c.np),(c.mgn||0).toFixed(1),((+c.taxRate||0)*100).toFixed(1),fn(c.dep),fn(c.bal)].map(function(v){return '"'+v+'"';}).join(',');
+    return [inv.num,inv.buyer,inv.dst,inv.date,inv.status,inv.cur,fn(c.grand),fn(c.cogs),fn(c.gp),fn(c.np),(c.mgn||0).toFixed(1),((+c.taxRate||0)*100).toFixed(1),fn(c.dep),fn(c.bal),inv.incoterm||'',inv.paymentTerms||''].map(function(v){return '"'+v+'"';}).join(',');
   });
   var a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent([h.join(',')].concat(rows).join('\n'));

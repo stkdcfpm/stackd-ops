@@ -287,6 +287,7 @@ test('savePO stores invId resolved from invNum', () => {
   mockEl('pf-fpm').value = '0';
   mockEl('pf-rec').checked = false;
   mockEl('pf-oth').value = '0';
+  mockEl('pf-pt').value  = 'Net 30';
   mockEl('pf-nt').value  = '';
   mockEl('po-sm').value  = 'Draft';
 
@@ -314,6 +315,7 @@ test('savePO stores empty invId when invNum does not match any invoice', () => {
   mockEl('pf-fpm').value = '0';
   mockEl('pf-rec').checked = false;
   mockEl('pf-oth').value = '0';
+  mockEl('pf-pt').value  = '';
   mockEl('pf-nt').value  = '';
   mockEl('po-sm').value  = 'Draft';
 
@@ -526,6 +528,8 @@ test('saveInv records price history when invoice price deviates from catalogue',
   mockEl('if-isp').value = '0';
   mockEl('if-oth').value = '0';
   mockEl('if-dep').value = '0';
+  mockEl('if-inco').value = 'CIF';
+  mockEl('if-pt').value = 'Net 30';
   mockEl('if-terms').value = '';
   mockEl('if-chi').checked = true;
   mockEl('inv-sm').value = 'Draft';
@@ -555,13 +559,71 @@ test('saveInv does not record history when price matches catalogue', () => {
   mockEl('if-pod').value = ''; mockEl('if-coo').value = ''; mockEl('if-cur').value = 'USD';
   mockEl('if-tx').value  = '0'; mockEl('if-lf').value  = '0'; mockEl('if-ins').value = '0';
   mockEl('if-leg').value = '0'; mockEl('if-isp').value = '0'; mockEl('if-oth').value = '0';
-  mockEl('if-dep').value = '0'; mockEl('if-terms').value = ''; mockEl('if-chi').checked = true;
+  mockEl('if-dep').value = '0'; mockEl('if-inco').value = 'FOB'; mockEl('if-pt').value = 'Net 60';
+  mockEl('if-terms').value = ''; mockEl('if-chi').checked = true;
   mockEl('inv-sm').value = 'Draft';
 
   ctx.saveInv();
 
   const cat = ctx.DB.li.find(x => x.id === 'li-match');
   assertEqual(cat.priceHistory.length, 0, 'no history added when price matches catalogue');
+});
+
+// ── Incoterms + Payment Terms ──────────────────────────────────
+console.log('\nIncoterms + Payment Terms');
+
+test('saveInv stores incoterm and paymentTerms on record', () => {
+  resetDB();
+  ctx.DB.li  = [{ id:'li-ipt', sku:'SKU-IPT', desc:'IPT Test', cost:50, price:100, priceHistory:[], uom:'pcs', cur:'USD' }];
+  ctx.EI.i   = null;
+  ctx.cIL    = [{ rid:'r1', lid:'li-ipt', desc:'IPT Test', uom:'pcs', qty:1, up:100 }];
+
+  mockEl('if-n').value   = 'INV10010';
+  mockEl('if-b').value   = 'Test Buyer';
+  mockEl('if-ba').value  = ''; mockEl('if-st').value  = ''; mockEl('if-dst').value = 'Jamaica';
+  mockEl('if-cid').value = ''; mockEl('if-dt').value  = '2026-05-01'; mockEl('if-ex').value  = '';
+  mockEl('if-sd').value  = ''; mockEl('if-ft').value  = ''; mockEl('if-wt').value  = '';
+  mockEl('if-cbm').value = ''; mockEl('if-pk').value  = ''; mockEl('if-pol').value = '';
+  mockEl('if-pod').value = ''; mockEl('if-coo').value = ''; mockEl('if-cur').value = 'USD';
+  mockEl('if-tx').value  = '0'; mockEl('if-lf').value  = '0'; mockEl('if-ins').value = '0';
+  mockEl('if-leg').value = '0'; mockEl('if-isp').value = '0'; mockEl('if-oth').value = '0';
+  mockEl('if-dep').value = '0'; mockEl('if-inco').value = 'CIF'; mockEl('if-pt').value = 'LC at sight';
+  mockEl('if-terms').value = ''; mockEl('if-chi').checked = true;
+  mockEl('inv-sm').value = 'Draft';
+
+  ctx.saveInv();
+
+  const inv = ctx.DB.inv[0];
+  assert(inv, 'invoice saved');
+  assertEqual(inv.incoterm, 'CIF', 'incoterm stored');
+  assertEqual(inv.paymentTerms, 'LC at sight', 'paymentTerms stored');
+});
+
+test('savePO stores paymentTerms on record', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'sup-pt', name:'PT Supplier', cur:'USD' }];
+  ctx.EI.p   = null;
+  ctx.cPL    = [];
+
+  mockEl('pf-n').value   = 'PO-PT-001';
+  mockEl('pf-sup').value = 'sup-pt';
+  mockEl('pf-inv').value = '';
+  mockEl('pf-dt').value  = '2026-01-01';
+  mockEl('pf-del').value = '';
+  mockEl('pf-cur').value = 'USD';
+  mockEl('pf-dep').value = '0';
+  mockEl('pf-fpm').value = '0';
+  mockEl('pf-rec').checked = false;
+  mockEl('pf-oth').value = '0';
+  mockEl('pf-pt').value  = 'TT in advance';
+  mockEl('pf-nt').value  = '';
+  mockEl('po-sm').value  = 'Draft';
+
+  ctx.savePO();
+
+  const po = ctx.DB.po[0];
+  assert(po, 'PO saved');
+  assertEqual(po.paymentTerms, 'TT in advance', 'paymentTerms stored on PO');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
