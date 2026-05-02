@@ -180,6 +180,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .tip-box{position:absolute;bottom:calc(100% + 6px);left:0;background:var(--ink);color:white;font-size:.55rem;line-height:1.6;padding:7px 10px;border-radius:2px;white-space:nowrap;max-width:260px;white-space:normal;z-index:500;pointer-events:none;opacity:0;transition:opacity .15s;border-left:2px solid var(--cr);}
 .tip-icon:hover + .tip-box,.tip-icon:focus + .tip-box{opacity:1;}
 @media(max-width:480px){.tip-box{max-width:200px;}}
+/* INLINE VALIDATION */
+.v-err{display:block;font-size:.48rem;color:#f87171;margin-top:2px;line-height:1.4;}
+.v-warn{display:block;font-size:.48rem;color:var(--gold);margin-top:2px;line-height:1.4;}
 </style>
 </head>
 <body>
@@ -1933,6 +1936,7 @@ function rSup() {
 function openSup() {
   EI.s = null; G('sup-mt').textContent = 'New Supplier';
   ['sf-n','sf-c','sf-ct','sf-e','sf-p','sf-nt'].forEach(function(f){ var e=G(f); if(e) e.value=''; });
+  vClrAll(['sf-n','sf-e']);
   G('sf-cur').value = 'USD'; populateDialCodes(); G('ov-sup').classList.add('on'); setTimeout(function(){ G('sf-n').focus(); }, 50);
 }
 function editSup(id) {
@@ -1949,7 +1953,17 @@ async function saveSup() {
   sv(K.s,DB.sup); closeM('ov-sup'); rSup(); audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s); toast('Supplier saved'); renderOnboarding(); await syncEnt('sup',s);
 }
 async function delSup(id) {
-  if (!confirm('Delete this supplier?')) return;
+  var invCount = DB.inv.filter(function(i){ return i.dst && DB.po.some(function(p){ return p.supId===id; }); }).length;
+  var poCount  = DB.po.filter(function(p){ return p.supId===id; }).length;
+  var invRef   = DB.inv.filter(function(i){
+    return (i.lineItems||[]).some(function(li){ var cat=DB.li.find(function(x){return x.id===li.lid;}); return cat && cat.supId===id; });
+  }).length;
+  var warns = [];
+  if (poCount > 0)  warns.push(poCount + ' purchase order' + (poCount>1?'s':'') + ' linked to this supplier');
+  if (invRef > 0)   warns.push(invRef + ' invoice' + (invRef>1?'s':'') + ' reference items from this supplier');
+  var msg = 'Delete this supplier?';
+  if (warns.length) msg += '\n\nWarning: ' + warns.join('\n') + '\n\nThe POs and invoices will remain but will show a missing supplier reference.';
+  if (!confirm(msg)) return;
   DB.sup = DB.sup.filter(function(s){ return s.id!==id; });
   sv(K.s,DB.sup); rSup(); toast('Deleted'); await delEnt('sup',id);
 }
@@ -2006,6 +2020,7 @@ function openLI() {
   EI.l=null; G('li-mt').textContent='New Line Item';
   ['lf-s','lf-d','lf-sp','lf-u','lf-nt','lf-hs'].forEach(function(f){ var e=G(f); if(e) e.value=''; });
   G('lf-c').value=''; G('lf-p').value=''; G('lf-cur').value='USD'; G('lf-sup').value='';
+  vClrAll(['lf-d','lf-sup','lf-hs','lf-c','lf-p']);
   liMgn(); G('ov-li').classList.add('on'); setTimeout(function(){ G('lf-s').focus(); }, 50);
 }
 function editLI(id) {
@@ -2036,7 +2051,18 @@ async function saveLI() {
   sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li);
 }
 async function delLI(id) {
-  if(!confirm('Delete?')) return;
+  var invRefs = DB.inv.filter(function(inv){
+    return (inv.lineItems||[]).some(function(li){ return li.lid===id; });
+  });
+  var poRefs = DB.po.filter(function(po){
+    return (po.lineItems||[]).some(function(li){ return li.lid===id; });
+  });
+  var warns = [];
+  if (invRefs.length) warns.push(invRefs.length + ' invoice' + (invRefs.length>1?'s':'') + ' (' + invRefs.map(function(i){return i.num||i.id;}).join(', ') + ')');
+  if (poRefs.length)  warns.push(poRefs.length  + ' purchase order' + (poRefs.length>1?'s':'')  + ' (' + poRefs.map(function(p){return p.num||p.id;}).join(', ') + ')');
+  var msg = 'Delete this line item?';
+  if (warns.length) msg += '\n\nWarning: This item is referenced in:\n  ' + warns.join('\n  ') + '\n\nExisting line entries on those documents will be preserved but the catalogue link will be broken.';
+  if (!confirm(msg)) return;
   DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li); rLI(); toast('Deleted'); await delEnt('li',id);
 }
 
@@ -2060,6 +2086,7 @@ function openInv() {
   G('inv-mt').textContent='New Invoice'; G('inv-sm').value='Draft';
   ['if-n','if-b','if-ba','if-st','if-dst','if-cid','if-ft','if-wt','if-cbm','if-pk','if-pol','if-pod','if-coo'].forEach(function(f){var e=G(f);if(e)e.value='';});
   ['if-lf','if-ins','if-leg','if-isp','if-oth','if-dep'].forEach(function(f){var e=G(f);if(e)e.value='';});
+  vClrAll(['if-n','if-b','if-dt','if-dep','if-lf','if-ins','if-leg','if-isp','if-oth','if-ex','if-sd']);
   G('if-n').value=nextInvNum();
   G('if-dt').value=today(); G('if-ex').value=''; G('if-sd').value='';
   G('if-cur').value='USD'; G('if-tx').value='0'; G('ctx-wrap').style.display='none'; G('if-chi').checked=true;
@@ -2335,6 +2362,7 @@ function openPO() {
   ['pf-n','pf-del','pf-nt'].forEach(function(f){var e=G(f);if(e)e.value='';});
   G('pf-dep').value=''; G('pf-fpm').value=''; G('pf-oth').value=''; G('pf-rec').checked=false; G('pf-rec-label').textContent='FPM funds recovered (auto-set when invoice marked Paid)'; G('pf-dt').value=today();
   G('pf-sup').value=''; G('pf-cur').value='USD'; G('pf-inv').value='';
+  vClrAll(['pf-n','pf-sup','pf-dep','pf-fpm','pf-oth','pf-dt','pf-del']);
   rPLT(); calcPO(); G('ov-po').classList.add('on');
 }
 function editPO(id) {
@@ -2694,23 +2722,40 @@ function prevPODoc(po) {
 var RX = {
   email:   /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
   invNum:  /^(INV|CN)\d{4,6}(-D\d+)?$/i,
-  hsCode:  /^\d{4,10}(\.\d{1,4})?$/,
+  poNum:   /^PO[\w\-]{2,20}$/i,
+  shpRef:  /^[A-Z0-9][\w\-]{1,29}$/i,
+  hsCode:  /^\d{2,10}(\.\d{1,4})?$/,
   date:    /^\d{4}-\d{2}-\d{2}$/,
-  taxRate: function(v){ return v >= 0 && v <= 1; }
+  taxRate: function(v){ return v >= 0 && v <= 1; },
+  currency: function(v){ return !isNaN(+v) && +v >= 0 && !/\.\d{3,}/.test(String(v)); }
 };
+
+// ── VALIDATION HELPERS ─────────────────────────────────────────
+// Persistent inline errors — inserted below the field's .fld container.
+// No toasts. Error persists until vOk/vClr is called for the same fieldId.
+
+function _vSpan(fieldId, msg, cls) {
+  var el = G(fieldId); if (!el) return;
+  var eid = 've-' + fieldId;
+  var span = G(eid);
+  if (!span) {
+    span = document.createElement('span');
+    span.id = eid;
+    var fld = el.closest ? el.closest('.fld') : el.parentNode;
+    (fld || el.parentNode).appendChild(span);
+  }
+  span.className = cls;
+  span.textContent = msg;
+}
 
 function vErr(fieldId, msg) {
   var el = G(fieldId);
   if (el) {
     el.style.borderBottomColor = '#f87171';
-    el.style.background = 'rgba(248,113,113,0.05)';
-    setTimeout(function(){
-      el.style.borderBottomColor = '';
-      el.style.background = '';
-    }, 3000);
+    el.style.background = 'rgba(248,113,113,.05)';
   }
-  toast('⚠ ' + msg);
-  if (el) el.focus();
+  _vSpan(fieldId, msg, 'v-err');
+  if (el && el.focus) el.focus();
   return false;
 }
 
@@ -2718,70 +2763,284 @@ function vWarn(fieldId, msg) {
   var el = G(fieldId);
   if (el) {
     el.style.borderBottomColor = 'var(--gold)';
-    el.style.background = 'rgba(201,150,58,0.05)';
-    setTimeout(function(){
-      el.style.borderBottomColor = '';
-      el.style.background = '';
-    }, 4000);
+    el.style.background = 'rgba(201,150,58,.05)';
   }
-  toast('⚠ ' + msg);
+  _vSpan(fieldId, msg, 'v-warn');
+}
+
+function vOk(fieldId) {
+  var el = G(fieldId);
+  if (el) {
+    el.style.borderBottomColor = 'var(--gn)';
+    el.style.background = 'rgba(74,222,128,.03)';
+  }
+  var span = G('ve-' + fieldId);
+  if (span && span.remove) span.remove();
+}
+
+function vClr(fieldId) {
+  var el = G(fieldId);
+  if (el) { el.style.borderBottomColor = ''; el.style.background = ''; }
+  var span = G('ve-' + fieldId);
+  if (span && span.remove) span.remove();
+}
+
+// Returns false if any v-err span exists inside the given modal element id.
+function vFormOk(modalId) {
+  var m = G(modalId);
+  if (!m || !m.querySelector) return true;
+  return !m.querySelector('.v-err');
+}
+function vClrAll(ids) { ids.forEach(vClr); }
+
+// ── BLUR RULE HELPERS ─────────────────────────────────────────
+function vBlurReq(id, label) {
+  var v = G(id); if (!v) return;
+  var val = v.value.trim();
+  if (!val) vErr(id, label + ' is required');
+  else vOk(id);
+}
+function vBlurEmail(id) {
+  var v = G(id); if (!v) return;
+  var val = v.value.trim();
+  if (!val) { vOk(id); return; }
+  if (!RX.email.test(val)) vErr(id, 'Invalid email — use format name@domain.com');
+  else vOk(id);
+}
+function vBlurCurrency(id, label) {
+  var v = G(id); if (!v) return;
+  var val = v.value;
+  if (val === '' || val === null) { vOk(id); return; }
+  if (!RX.currency(val)) vErr(id, label + ' must be a non-negative number with at most 2 decimal places');
+  else if (+val < 0) vErr(id, label + ' cannot be negative');
+  else vOk(id);
+}
+function vBlurCurrencyPos(id, label) {
+  var v = G(id); if (!v) return;
+  var val = v.value;
+  if (!val || +val <= 0) vErr(id, label + ' must be greater than zero');
+  else if (!RX.currency(val)) vErr(id, label + ' must be a valid amount');
+  else vOk(id);
+}
+function vBlurDate(id, label) {
+  var v = G(id); if (!v) return;
+  var val = v.value;
+  if (!val) { vOk(id); return; }
+  if (!RX.date.test(val) || isNaN(new Date(val).getTime())) vErr(id, label + ' is not a valid date');
+  else vOk(id);
+}
+function vBlurDateAfter(id, afterId, label, afterLabel) {
+  var v = G(id), a = G(afterId); if (!v) return;
+  var val = v.value, aval = a ? a.value : '';
+  if (!val) { vOk(id); return; }
+  if (!RX.date.test(val) || isNaN(new Date(val).getTime())) { vErr(id, label + ' is not a valid date'); return; }
+  if (aval && new Date(val) < new Date(aval)) { vErr(id, label + ' cannot be before ' + afterLabel); return; }
+  vOk(id);
+}
+function vBlurInvNum(id) {
+  var v = G(id); if (!v) return;
+  var val = v.value.trim();
+  if (!val) { vErr(id, 'Invoice number is required'); return; }
+  if (!RX.invNum.test(val)) { vErr(id, 'Must be INV or CN followed by 4–6 digits, e.g. INV10032 or CN10029'); return; }
+  var hasDup = DB.inv.some(function(inv){ return inv.num === val && inv.id !== EI.i; });
+  if (hasDup) { vErr(id, 'Invoice number ' + val + ' already exists'); return; }
+  vOk(id);
+}
+function vBlurPONum(id) {
+  var v = G(id); if (!v) return;
+  var val = v.value.trim();
+  if (!val) { vErr(id, 'PO number is required'); return; }
+  if (val.length < 3) { vErr(id, 'PO number must be at least 3 characters'); return; }
+  var hasDup = DB.po.some(function(po){ return po.num === val && po.id !== EI.p; });
+  if (hasDup) { vErr(id, 'PO number ' + val + ' already exists'); return; }
+  vOk(id);
+}
+function vBlurShpRef(id) {
+  var v = G(id); if (!v) return;
+  var val = v.value.trim();
+  if (!val) { vErr(id, 'Shipment reference is required'); return; }
+  if (val.length < 2) { vErr(id, 'Shipment reference must be at least 2 characters'); return; }
+  var hasDup = DB.sh.some(function(s){ return s.ref === val && s.id !== EI.sh; });
+  if (hasDup) { vErr(id, 'Shipment reference ' + val + ' already exists'); return; }
+  vOk(id);
+}
+function vBlurHS(id) {
+  var v = G(id); if (!v) return;
+  var val = v.value.trim();
+  if (!val) { vOk(id); return; }
+  if (!/^\d{2,10}(\.\d{1,4})?$/.test(val)) vWarn(id, 'HS code should be 2–10 digits, e.g. 84 or 8418.50 — verify before saving');
+  else vOk(id);
+}
+function vBlurPayDate(id, invId) {
+  var v = G(id); if (!v) return;
+  var val = v.value;
+  if (!val) { vErr(id, 'Payment date is required'); return; }
+  if (!RX.date.test(val) || isNaN(new Date(val).getTime())) { vErr(id, 'Not a valid date'); return; }
+  if (new Date(val) > new Date()) { vWarn(id, 'Payment date is in the future — confirm this is correct'); return; }
+  var inv = invId ? DB.inv.find(function(i){ return i.id===invId; }) : null;
+  if (inv && inv.date && new Date(val) < new Date(inv.date)) { vWarn(id, 'Payment date is before the invoice date (' + inv.date + ')'); return; }
+  vOk(id);
+}
+
+function wireBlurValidation() {
+  var rules = {
+    'sf-n':    function(){ vBlurReq('sf-n','Supplier name'); },
+    'sf-e':    function(){ vBlurEmail('sf-e'); },
+    'lf-d':    function(){ vBlurReq('lf-d','Description'); },
+    'lf-hs':   function(){ vBlurHS('lf-hs'); },
+    'lf-c':    function(){ vBlurCurrency('lf-c','Unit cost'); },
+    'lf-p':    function(){ vBlurCurrency('lf-p','Unit price'); },
+    'if-n':    function(){ vBlurInvNum('if-n'); },
+    'if-b':    function(){ vBlurReq('if-b','Buyer name'); },
+    'if-dt':   function(){ vBlurReq('if-dt','Invoice date'); },
+    'if-dep':  function(){ vBlurCurrency('if-dep','Buyer deposit'); },
+    'if-lf':   function(){ vBlurCurrency('if-lf','Local freight'); },
+    'if-ins':  function(){ vBlurCurrency('if-ins','Insurance'); },
+    'if-leg':  function(){ vBlurCurrency('if-leg','Legal charges'); },
+    'if-isp':  function(){ vBlurCurrency('if-isp','Inspection charges'); },
+    'if-oth':  function(){ vBlurCurrency('if-oth','Other charges'); },
+    'if-ex':   function(){ vBlurDate('if-ex','Expiry / due date'); },
+    'if-sd':   function(){ vBlurDate('if-sd','Est. ship date'); },
+    'pf-n':    function(){ vBlurPONum('pf-n'); },
+    'pf-dep':  function(){ vBlurCurrency('pf-dep','Supplier deposit'); },
+    'pf-fpm':  function(){ vBlurCurrency('pf-fpm','FPM funded amount'); },
+    'pf-oth':  function(){ vBlurCurrency('pf-oth','Other charges'); },
+    'pf-dt':   function(){ vBlurDate('pf-dt','PO date'); },
+    'pf-del':  function(){ vBlurDate('pf-del','Required delivery date'); },
+    'shf-ref': function(){ vBlurShpRef('shf-ref'); },
+    'shf-etd': function(){ vBlurDate('shf-etd','ETD'); },
+    'shf-eta': function(){ vBlurDateAfter('shf-eta','shf-etd','ETA','ETD'); },
+  };
+  Object.keys(rules).forEach(function(id) {
+    var el = G(id);
+    if (el) el.addEventListener('blur', rules[id]);
+  });
 }
 
 function vSup() {
-  var name = G('sf-n').value.trim();
+  var name  = G('sf-n').value.trim();
   var email = G('sf-e').value.trim();
-  var hs = '';
-  if (!name) return vErr('sf-n', 'Supplier name is required');
-  if (email && !RX.email.test(email)) return vErr('sf-e', 'Invalid email address — use format name@company.com');
-  return true;
+  if (!name)                          return vErr('sf-n', 'Supplier name is required');
+  else                                vOk('sf-n');
+  if (email && !RX.email.test(email)) return vErr('sf-e', 'Invalid email — use format name@domain.com');
+  else if (email)                     vOk('sf-e');
+  return vFormOk('ov-sup');
 }
 
 function vLI() {
-  var desc = G('lf-d').value.trim();
-  var sup = G('lf-sup').value;
-  var cost = +G('lf-c').value;
-  var price = +G('lf-p').value;
-  var hs = G('lf-hs').value.trim();
-  if (!desc) return vErr('lf-d', 'Description is required');
-  if (!sup) return vErr('lf-sup', 'Please select a supplier');
-  if (cost < 0) return vErr('lf-c', 'Unit cost cannot be negative');
-  if (price < 0) return vErr('lf-p', 'Unit price cannot be negative');
-  if (hs && !RX.hsCode.test(hs)) vWarn('lf-hs', 'HS code should be numeric e.g. 8418.50 — check before saving');
-  return true;
+  var desc  = G('lf-d').value.trim();
+  var sup   = G('lf-sup').value;
+  var cost  = G('lf-c').value;
+  var price = G('lf-p').value;
+  var hs    = G('lf-hs').value.trim();
+  if (!desc)                  return vErr('lf-d', 'Description is required');
+  else                        vOk('lf-d');
+  if (!sup)                   return vErr('lf-sup', 'Please select a supplier');
+  if (cost !== '' && !RX.currency(cost))   return vErr('lf-c', 'Unit cost must be a non-negative number with at most 2 decimal places');
+  else if (+cost < 0)         return vErr('lf-c', 'Unit cost cannot be negative');
+  else                        vOk('lf-c');
+  if (price !== '' && !RX.currency(price)) return vErr('lf-p', 'Unit price must be a non-negative number with at most 2 decimal places');
+  else if (+price < 0)        return vErr('lf-p', 'Unit price cannot be negative');
+  else                        vOk('lf-p');
+  if (hs && !/^\d{2,10}(\.\d{1,4})?$/.test(hs)) vWarn('lf-hs', 'HS code should be 2–10 digits e.g. 84 or 8418.50 — verify before saving');
+  else if (hs)                vOk('lf-hs');
+  return vFormOk('ov-li');
 }
 
 function vInv() {
-  var num = G('if-n').value.trim();
+  var num   = G('if-n').value.trim();
   var buyer = G('if-b').value.trim();
-  var date = G('if-dt').value;
-  var dep = +G('if-dep').value||0;
-  var tx = getTR();
-  if (!num) return vErr('if-n', 'Invoice number is required');
-  if (!RX.invNum.test(num)) return vErr('if-n', 'Invoice number must start with INV or CN followed by digits e.g. INV10032, CN10029, INV10032-D1');
+  var date  = G('if-dt').value;
+  var dep   = G('if-dep').value;
+  var tx    = getTR();
+  if (!num)                        return vErr('if-n', 'Invoice number is required');
+  if (!RX.invNum.test(num))        return vErr('if-n', 'Must be INV or CN followed by 4–6 digits e.g. INV10032, CN10029, INV10032-D1');
   var hasDup = DB.inv.some(function(inv){ return inv.num===num && inv.id!==EI.i; });
-  if (hasDup) return vErr('if-n', 'Invoice number ' + num + ' already exists');
-  if (!buyer) return vErr('if-b', 'Buyer name is required');
-  if (!date) return vErr('if-dt', 'Invoice date is required');
-  if (cIL.length===0) {
+  if (hasDup)                      return vErr('if-n', 'Invoice number ' + num + ' already exists');
+  vOk('if-n');
+  if (!buyer)                      return vErr('if-b', 'Buyer name is required');
+  vOk('if-b');
+  if (!date)                       return vErr('if-dt', 'Invoice date is required');
+  if (!RX.date.test(date) || isNaN(new Date(date).getTime())) return vErr('if-dt', 'Invoice date is not a valid date');
+  vOk('if-dt');
+  if (cIL.length === 0) {
     var inv0 = EI.i ? DB.inv.find(function(i){ return i.id===EI.i; }) : null;
-    if (!inv0 || !(+inv0.calc_grandTotal>0)) { toast('⚠ Add at least one line item before saving'); return false; }
+    if (!inv0 || !(+inv0.calc_grandTotal > 0)) {
+      toast('⚠ Add at least one line item before saving'); return false;
+    }
   }
-  if (dep < 0) return vErr('if-dep', 'Buyer deposit cannot be negative');
-  if (!RX.taxRate(tx)) return vErr('if-tx', 'Tax rate must be between 0 and 1 (e.g. 0.20 for 20%)');
+  if (dep !== '' && !RX.currency(dep)) return vErr('if-dep', 'Buyer deposit must be a non-negative number with at most 2 decimal places');
+  if (+dep < 0)                    return vErr('if-dep', 'Buyer deposit cannot be negative');
+  vOk('if-dep');
+  if (!RX.taxRate(tx))             return vErr('if-tx', 'Tax rate must be between 0% and 100%');
   var charges = ['if-lf','if-ins','if-leg','if-isp','if-oth'];
-  for (var i=0; i<charges.length; i++) {
-    if ((+G(charges[i]).value||0) < 0) return vErr(charges[i], 'Charges cannot be negative');
+  for (var ci = 0; ci < charges.length; ci++) {
+    var cv = G(charges[ci]).value;
+    if (cv !== '' && !RX.currency(cv)) return vErr(charges[ci], 'Charges must be a non-negative number');
+    if ((+cv||0) < 0)              return vErr(charges[ci], 'Charges cannot be negative');
   }
-  return true;
+  return vFormOk('ov-inv');
 }
 
 function vPO() {
   var num = G('pf-n').value.trim();
   var sup = G('pf-sup').value;
-  var dep = +G('pf-dep').value||0;
-  if (!num) return vErr('pf-n', 'PO number is required');
-  if (!sup) return vErr('pf-sup', 'Please select a supplier');
-  if (dep < 0) return vErr('pf-dep', 'Supplier deposit cannot be negative');
+  var dep = G('pf-dep').value;
+  var fpm = G('pf-fpm').value;
+  if (!num)  return vErr('pf-n', 'PO number is required');
+  if (num.length < 3) return vErr('pf-n', 'PO number must be at least 3 characters');
+  var hasDup = DB.po.some(function(po){ return po.num===num && po.id!==EI.p; });
+  if (hasDup) return vErr('pf-n', 'PO number ' + num + ' already exists');
+  vOk('pf-n');
+  if (!sup)  return vErr('pf-sup', 'Please select a supplier');
+  if (dep !== '' && !RX.currency(dep)) return vErr('pf-dep', 'Supplier deposit must be a non-negative number');
+  if ((+dep||0) < 0) return vErr('pf-dep', 'Supplier deposit cannot be negative');
+  vOk('pf-dep');
+  if (fpm !== '' && !RX.currency(fpm)) return vErr('pf-fpm', 'FPM funded amount must be a non-negative number');
+  if ((+fpm||0) < 0) return vErr('pf-fpm', 'FPM funded amount cannot be negative');
+  return vFormOk('ov-po');
+}
+
+function vShp() {
+  var ref = G('shf-ref').value.trim();
+  var etd = G('shf-etd').value;
+  var eta = G('shf-eta').value;
+  if (!ref) return vErr('shf-ref', 'Shipment reference is required');
+  if (ref.length < 2) return vErr('shf-ref', 'Shipment reference must be at least 2 characters');
+  var hasDup = DB.sh.some(function(s){ return s.ref===ref && s.id!==EI.sh; });
+  if (hasDup) return vErr('shf-ref', 'Shipment reference ' + ref + ' already exists');
+  vOk('shf-ref');
+  if (etd && (!RX.date.test(etd) || isNaN(new Date(etd).getTime()))) return vErr('shf-etd', 'ETD is not a valid date');
+  if (etd) vOk('shf-etd');
+  if (eta && (!RX.date.test(eta) || isNaN(new Date(eta).getTime()))) return vErr('shf-eta', 'ETA is not a valid date');
+  if (eta && etd && new Date(eta) < new Date(etd)) return vErr('shf-eta', 'ETA cannot be before ETD (' + etd + ')');
+  if (eta) vOk('shf-eta');
+  return vFormOk('ov-shp');
+}
+
+function vPay(date, amount, invId) {
+  var dateEl = G('pm-date'), amtEl = G('pm-amount');
+  if (!amount || +amount <= 0) {
+    if (amtEl) { amtEl.style.borderBottomColor='#f87171'; amtEl.focus(); }
+    toast('⚠ Payment amount must be greater than zero'); return false;
+  }
+  if (!RX.currency(String(amount))) {
+    if (amtEl) amtEl.style.borderBottomColor='#f87171';
+    toast('⚠ Payment amount must be a valid number with at most 2 decimal places'); return false;
+  }
+  if (amtEl) amtEl.style.borderBottomColor='var(--gn)';
+  if (!date || !RX.date.test(date) || isNaN(new Date(date).getTime())) {
+    if (dateEl) { dateEl.style.borderBottomColor='#f87171'; dateEl.focus(); }
+    toast('⚠ Payment date is required and must be a valid date'); return false;
+  }
+  if (new Date(date) > new Date(today() + 'T23:59:59')) {
+    toast('⚠ Payment date is in the future — please confirm'); return false;
+  }
+  var inv = invId ? DB.inv.find(function(i){ return i.id===invId; }) : null;
+  if (inv && inv.date && new Date(date) < new Date(inv.date)) {
+    toast('⚠ Payment date is before invoice date (' + inv.date + ') — please confirm');
+  }
+  if (dateEl) dateEl.style.borderBottomColor='var(--gn)';
   return true;
 }
 
@@ -3877,6 +4136,7 @@ function openShp() {
   ['shf-ref','shf-bl','shf-vessel','shf-carrier','shf-op','shf-dp','shf-cnum','shf-invs','shf-nt'].forEach(function(id){ if(G(id)) G(id).value=''; });
   if(G('shf-etd')) G('shf-etd').value='';
   if(G('shf-eta')) G('shf-eta').value='';
+  vClrAll(['shf-ref','shf-etd','shf-eta']);
   if(G('shf-ctype')) G('shf-ctype').value='20GP';
   if(G('shf-docs')) G('shf-docs').value='Pending';
   if(G('shf-st')) G('shf-st').value='Pending';
@@ -3903,8 +4163,8 @@ function editShp(id) {
 }
 
 async function saveShp() {
+  if (!vShp()) return;
   var ref = G('shf-ref').value.trim();
-  if (!ref) { toast('Shipment Ref is required'); return; }
   var invRaw = G('shf-invs').value.trim();
   var linkedInvs = invRaw ? invRaw.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
   var shp = {
@@ -4292,8 +4552,7 @@ function addPaymentFromForm(invId) {
   var ref = G('pm-ref') ? G('pm-ref').value.trim() : '';
   var notes = G('pm-notes') ? G('pm-notes').value.trim() : '';
 
-  if (!amount || amount <= 0) { toast('\u26a0 Enter a payment amount'); return; }
-  if (!date) { toast('\u26a0 Enter a payment date'); return; }
+  if (!vPay(date, amount, invId)) return;
 
   var inv = DB.inv.find(function(i){ return i.id === invId; });
   var pm = {
@@ -4440,6 +4699,7 @@ function repairCalcFields() {
 function initApp() {
   try {
     wireTips();
+    wireBlurValidation();
     populateRefDataLists();
     repairCalcFields();
     if (SS.url) {
