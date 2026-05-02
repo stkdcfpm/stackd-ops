@@ -312,6 +312,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option><option disabled>── Credit Notes ──</option><option>CN Draft</option><option>CN Issued</option><option>CN Applied</option></select>
     <button class="btn btn-s" onclick="openInv()">+ New Invoice</button>
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
+    <button class="btn btn-g" onclick="openAcctExport('inv')">&#8595; Accounting Export</button>
   </div>
   <div class="tw"><table class="tbl"><thead><tr><th>Invoice #</th><th>Buyer</th><th>Dest.</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">COGS</th><th class="num">Gross Profit</th><th class="num">Net Profit</th><th class="num">Margin</th><th class="num">Tax%</th><th class="num">Dep. Rec.</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="inv-tb"></tbody></table></div>
   <div id="inv-em" class="empty" style="display:none;"><div class="ei">&#129534;</div><p>No invoices yet.</p></div>
@@ -553,6 +554,83 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-s" onclick="saveAIKey()">Save Key</button>
         <button class="btn btn-g" onclick="openAIChat()">Open AI Chat</button>
         <span id="ai-key-st" style="font-size:.54rem;color:var(--m);"></span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Accounting Export — Field Mapping Reference</div>
+      <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Read-only reference. Gaps indicate data not available in Stackd that the platform expects.</p>
+      <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Xero Invoice Import</div>
+      <table class="tbl" style="font-size:.5rem;margin-bottom:12px;"><thead><tr><th>Xero Field</th><th>Stackd Source</th><th>Gap</th></tr></thead><tbody>
+        <tr><td>ContactName</td><td>inv.buyer</td><td>—</td></tr>
+        <tr><td>EmailAddress</td><td>—</td><td>No buyer email in Stackd</td></tr>
+        <tr><td>POAddressLine1</td><td>inv.buyerAddr</td><td>Partial (single field vs multi-line)</td></tr>
+        <tr><td>InvoiceNumber</td><td>inv.num</td><td>—</td></tr>
+        <tr><td>InvoiceDate</td><td>inv.date</td><td>—</td></tr>
+        <tr><td>DueDate</td><td>—</td><td>No due date; not reliably derivable from Payment Terms</td></tr>
+        <tr><td>Description</td><td>line.desc</td><td>—</td></tr>
+        <tr><td>Quantity</td><td>line.qty</td><td>—</td></tr>
+        <tr><td>UnitAmount</td><td>line.up</td><td>—</td></tr>
+        <tr><td>Discount</td><td>—</td><td>No discount field</td></tr>
+        <tr><td>AccountCode</td><td>—</td><td>No account codes in Stackd</td></tr>
+        <tr><td>TaxType</td><td>Derived: NONE (taxRate=0), TAX001 (taxRate&gt;0)</td><td>Partial</td></tr>
+        <tr><td>TaxAmount</td><td>Calculated per line</td><td>—</td></tr>
+        <tr><td>Currency</td><td>inv.cur</td><td>—</td></tr>
+        <tr><td>TrackingName1/Option1</td><td>—</td><td>No tracking categories</td></tr>
+      </tbody></table>
+      <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">QuickBooks Online Invoice Import</div>
+      <table class="tbl" style="font-size:.5rem;margin-bottom:12px;"><thead><tr><th>QB Field</th><th>Stackd Source</th><th>Gap</th></tr></thead><tbody>
+        <tr><td>Customer</td><td>inv.buyer</td><td>—</td></tr>
+        <tr><td>Invoice Date</td><td>inv.date</td><td>—</td></tr>
+        <tr><td>Due Date</td><td>—</td><td>No due date</td></tr>
+        <tr><td>Item (Product/Service)</td><td>line.desc</td><td>No product/service code</td></tr>
+        <tr><td>Description</td><td>line.desc</td><td>—</td></tr>
+        <tr><td>Qty</td><td>line.qty</td><td>—</td></tr>
+        <tr><td>Rate</td><td>line.up</td><td>—</td></tr>
+        <tr><td>Amount</td><td>line.qty × line.up</td><td>—</td></tr>
+        <tr><td>Currency</td><td>inv.cur</td><td>—</td></tr>
+      </tbody></table>
+      <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">FreeAgent Bills (Payments)</div>
+      <table class="tbl" style="font-size:.5rem;"><thead><tr><th>FreeAgent Field</th><th>Stackd Source</th><th>Gap</th></tr></thead><tbody>
+        <tr><td>Date</td><td>payment.date</td><td>—</td></tr>
+        <tr><td>Payee</td><td>inv.buyer via invId lookup</td><td>—</td></tr>
+        <tr><td>Description</td><td>payment.notes or payment.method</td><td>—</td></tr>
+        <tr><td>Net Amount</td><td>payment.amount</td><td>—</td></tr>
+        <tr><td>Tax Rate</td><td>—</td><td>No tax on payment records</td></tr>
+        <tr><td>Currency</td><td>inv.cur via invId lookup</td><td>—</td></tr>
+        <tr><td>Reference</td><td>payment.reference</td><td>—</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNTING EXPORT MODAL -->
+<div class="ov" id="ov-acct-exp" onclick="if(event.target===this)closeM('ov-acct-exp')">
+  <div class="modal" style="max-width:520px;">
+    <div class="mh"><h2>Accounting Export</h2><button class="mx" onclick="closeM('ov-acct-exp')">&#215;</button></div>
+    <div class="mb">
+      <div id="acct-exp-warnings"></div>
+      <div class="fg fg2">
+        <div class="fld">
+          <label>Entity</label>
+          <select id="acct-exp-entity">
+            <option value="inv">Invoices</option>
+            <option value="pmt">Payments</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink);margin-bottom:8px;">Format</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="generic-csv"> Generic CSV</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="generic-json"> Generic JSON</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="xero"> Xero (Invoices only)</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="qb"> QuickBooks (Invoices only)</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="fa"> FreeAgent Bills (Payments only)</label>
+        </div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px;">
+        <button class="btn btn-s" onclick="doAcctExport()">&#8595; Download</button>
+        <button class="btn btn-g" onclick="closeM('ov-acct-exp')">Cancel</button>
       </div>
     </div>
   </div>
@@ -4240,6 +4318,180 @@ function expCSV() {
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent([h.join(',')].concat(rows).join('\n'));
   a.download='Stackd-Invoices-'+today()+'.csv'; a.click(); toast('Exported');
 }
+
+// ── ACCOUNTING EXPORT ───────────────────────────────────────────
+function csvRow(cells) {
+  return cells.map(function(v) {
+    var s = v == null ? '' : String(v);
+    if (/[",\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }).join(',');
+}
+
+function dlText(filename, content, mime) {
+  var a = document.createElement('a');
+  a.href = 'data:' + (mime || 'text/plain') + ';charset=utf-8,' + encodeURIComponent(content);
+  a.download = filename;
+  a.click();
+}
+
+function acctInvCSV(invoices) {
+  var h = ['Invoice #','Invoice Date','Status','Currency','Buyer','Destination','Incoterm','Payment Terms','Tax Rate %',
+           'Line #','Description','SKU','Qty','UOM','Unit Price','Line Total','COGS','Gross Profit','Tax Amount'];
+  var rows = [csvRow(h)];
+  invoices.forEach(function(inv) {
+    var taxRate = +(inv.taxRate || 0);
+    (inv.lines || []).forEach(function(l, idx) {
+      var qty = +(l.qty || 0), up = +(l.up || 0), cu = +(l.cu || 0);
+      var lineTotal = (qty * up).toFixed(2);
+      var lineCOGS  = (qty * cu).toFixed(2);
+      var lineGP    = (qty * up - qty * cu).toFixed(2);
+      var lineTax   = (qty * up * taxRate).toFixed(2);
+      rows.push(csvRow([
+        inv.num || '', inv.date || '', inv.status || '', inv.cur || 'USD',
+        inv.buyer || '', inv.dst || '', inv.incoterm || '', inv.paymentTerms || '',
+        (taxRate * 100).toFixed(2),
+        idx + 1, l.desc || '', l.sku || '', qty, l.uom || '',
+        up, lineTotal, lineCOGS, lineGP, lineTax
+      ]));
+    });
+  });
+  return '﻿' + rows.join('\n');
+}
+
+function acctPmtCSV(payments) {
+  var h = ['Payment ID','Invoice #','Date','Amount','Method','Reference','Notes','Currency'];
+  var rows = [csvRow(h)];
+  payments.forEach(function(pm) {
+    var inv = DB.inv.find(function(i) { return i.id === pm.invId; });
+    rows.push(csvRow([
+      pm.id || '', inv ? inv.num : (pm.invId || ''), pm.date || '',
+      +(pm.amount || 0), pm.method || '', pm.reference || '', pm.notes || '',
+      inv ? inv.cur : ''
+    ]));
+  });
+  return '﻿' + rows.join('\n');
+}
+
+function acctInvJSON(invoices) {
+  return JSON.stringify({ _exported: new Date().toISOString(), invoices: invoices }, null, 2);
+}
+
+function acctPmtJSON(payments) {
+  return JSON.stringify({ _exported: new Date().toISOString(), payments: payments }, null, 2);
+}
+
+function acctXeroCSV(invoices) {
+  var h = ['ContactName','EmailAddress','POAddressLine1','InvoiceNumber','Reference',
+           'InvoiceDate','DueDate','Description','Quantity','UnitAmount',
+           'Discount','AccountCode','TaxType','TaxAmount','TrackingName1','TrackingOption1','Currency'];
+  var rows = [csvRow(h)];
+  invoices.forEach(function(inv) {
+    var taxRate = +(inv.taxRate || 0);
+    (inv.lines || []).forEach(function(l) {
+      var qty = +(l.qty || 0), up = +(l.up || 0);
+      var taxType = taxRate > 0 ? 'TAX001' : 'NONE';
+      var taxAmt  = +(qty * up * taxRate).toFixed(2);
+      rows.push(csvRow([
+        inv.buyer || '', '', inv.buyerAddr || '',
+        inv.num || '', '',
+        inv.date || '', '',
+        l.desc || '', qty, up,
+        '', '', taxType, taxAmt, '', '', inv.cur || 'USD'
+      ]));
+    });
+  });
+  return '﻿' + rows.join('\n');
+}
+
+function acctQBCSV(invoices) {
+  var h = ['Customer','Invoice Date','Due Date','Item (Product/Service)','Description',
+           'Qty','Rate','Amount','Currency'];
+  var rows = [csvRow(h)];
+  invoices.forEach(function(inv) {
+    (inv.lines || []).forEach(function(l) {
+      var qty = +(l.qty || 0), rate = +(l.up || 0);
+      var amt = (qty * rate).toFixed(2);
+      rows.push(csvRow([
+        inv.buyer || '', inv.date || '', '',
+        l.desc || '', l.desc || '',
+        qty, rate, amt, inv.cur || 'USD'
+      ]));
+    });
+  });
+  return '﻿' + rows.join('\n');
+}
+
+function acctFACSV(payments) {
+  var h = ['Date','Payee','Description','Net Amount','Tax Rate','Currency','Reference'];
+  var rows = [csvRow(h)];
+  payments.forEach(function(pm) {
+    var inv = DB.inv.find(function(i) { return i.id === pm.invId; });
+    rows.push(csvRow([
+      pm.date || '', inv ? inv.buyer : '',
+      pm.notes || pm.method || '',
+      +(pm.amount || 0), '', inv ? inv.cur : '',
+      pm.reference || ''
+    ]));
+  });
+  return '﻿' + rows.join('\n');
+}
+
+function acctQualityCheck(invoices, payments) {
+  var warns = [];
+  invoices.forEach(function(inv) {
+    if (!inv.incoterm)      warns.push('Invoice ' + inv.num + ': missing Incoterm');
+    if (!inv.paymentTerms)  warns.push('Invoice ' + inv.num + ': missing Payment Terms');
+    (inv.lines || []).forEach(function(l, i) {
+      if (!(+(l.qty || 0) * +(l.up || 0))) warns.push('Invoice ' + inv.num + ' line ' + (i + 1) + ': zero-value line item');
+    });
+    var hasPmt = (payments || []).some(function(p) { return p.invId === inv.id; });
+    if (!hasPmt) warns.push('Invoice ' + inv.num + ': no payments recorded');
+  });
+  return warns;
+}
+
+function openAcctExport(entity) {
+  var warns = acctQualityCheck(DB.inv, DB.payments);
+  var wHtml = warns.length
+    ? '<div style="background:var(--gold);padding:8px 10px;border-radius:4px;font-size:.5rem;margin-bottom:10px;">' +
+      '<strong style="font-size:.52rem;">&#9888; Data Quality Warnings</strong>' +
+      '<ul style="margin:4px 0 0;padding-left:16px;">' +
+      warns.map(function(w) { return '<li>' + san(w) + '</li>'; }).join('') +
+      '</ul></div>'
+    : '';
+  var el = G('acct-exp-warnings');
+  if (el) el.innerHTML = wHtml;
+  var entEl = G('acct-exp-entity');
+  if (entEl) entEl.value = entity || 'inv';
+  openM('ov-acct-exp');
+}
+
+function doAcctExport() {
+  var entity = G('acct-exp-entity') ? G('acct-exp-entity').value : 'inv';
+  var fmt = '';
+  var fmtEls = document.querySelectorAll('input[name="acct-fmt"]');
+  fmtEls.forEach(function(r) { if (r.checked) fmt = r.value; });
+  if (!fmt) { toast('Select a format'); return; }
+  var content, filename, mime;
+  if (entity === 'inv') {
+    if (!DB.inv.length) { toast('No invoices to export'); return; }
+    if      (fmt === 'generic-csv')  { content = acctInvCSV(DB.inv);  filename = 'Stackd-Acct-Invoices-' + today() + '.csv';  mime = 'text/csv'; }
+    else if (fmt === 'generic-json') { content = acctInvJSON(DB.inv); filename = 'Stackd-Acct-Invoices-' + today() + '.json'; mime = 'application/json'; }
+    else if (fmt === 'xero')         { content = acctXeroCSV(DB.inv); filename = 'Stackd-Xero-Invoices-'  + today() + '.csv';  mime = 'text/csv'; }
+    else if (fmt === 'qb')           { content = acctQBCSV(DB.inv);   filename = 'Stackd-QB-Invoices-'    + today() + '.csv';  mime = 'text/csv'; }
+  } else {
+    if (!DB.payments.length) { toast('No payments to export'); return; }
+    if      (fmt === 'generic-csv')  { content = acctPmtCSV(DB.payments);  filename = 'Stackd-Acct-Payments-'      + today() + '.csv';  mime = 'text/csv'; }
+    else if (fmt === 'generic-json') { content = acctPmtJSON(DB.payments); filename = 'Stackd-Acct-Payments-'      + today() + '.json'; mime = 'application/json'; }
+    else if (fmt === 'fa')           { content = acctFACSV(DB.payments);   filename = 'Stackd-FreeAgent-Payments-' + today() + '.csv';  mime = 'text/csv'; }
+  }
+  if (!content) { toast('Unsupported format for this entity'); return; }
+  dlText(filename, content, mime);
+  toast('Export downloaded');
+  closeM('ov-acct-exp');
+}
+
 function storageHealth() {
   if (!_storageOK) return { ok: false, kb: 0, pct: 0 };
   var total = 0;
@@ -5159,6 +5411,7 @@ function renderPaymentsTab(invId) {
     '<div><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);">Balance Due</div>' +
     '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;color:' + (balance>0?'var(--cr)':'var(--gn)') + ';">' +
     (balance > 0 ? fmt(balance,cur) : '\u2713 Settled') + '</div></div>' +
+    '<div style="margin-left:auto;align-self:center;"><button class="btn btn-g" style="font-size:.5rem;" onclick="openAcctExport(\'pmt\')">&#8595; Export</button></div>' +
     '</div>';
 
   if (payments.length) {
