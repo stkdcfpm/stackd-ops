@@ -241,7 +241,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
 <rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
 <rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
-</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.3</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.3</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -343,6 +343,25 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     </tr></thead><tbody id="sh-tb"></tbody></table>
   </div>
   <div id="sh-em" class="empty" style="display:none;"><div class="ei">&#128674;</div><p>No shipments yet.</p></div>
+</div>
+
+<!-- QUOTES VIEW -->
+<div class="view" id="v-qt">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;color:var(--h);">QUOTES</div>
+    <button class="btn btn-s" onclick="openQte()">+ New Quote</button>
+  </div>
+  <table class="tbl" id="qt-tbl" style="display:none;">
+    <thead><tr>
+      <th>Quote #</th><th>Client</th><th>Date</th><th>Valid Until</th>
+      <th>Mode</th><th>Lines</th><th>Sell (USD)</th><th>Sell (GBP)</th>
+      <th>Status</th><th>PO</th><th></th>
+    </tr></thead>
+    <tbody id="qt-tb"></tbody>
+  </table>
+  <div id="qt-em" class="empty" style="display:none;">
+    <div class="ei">&#128203;</div><p>No quotes yet. Click <strong>+ New Quote</strong> to get started.</p>
+  </div>
 </div>
 
 <!-- IMPORT DATA VIEW -->
@@ -486,6 +505,25 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" style="border-color:var(--gold);color:var(--gold);" onclick="runDataRepair()">&#9881; Repair invoice totals</button>
       </div>
       <div id="repair-status" style="font-size:.56rem;color:var(--m);margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="card" id="cfg-rates">
+      <div class="ct">Rates &amp; FX
+        <button class="btn btn-g" style="margin-left:auto;font-size:.48rem;padding:2px 9px;" onclick="saveRates()">Save Rates</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:.56rem;">
+        <div class="fld"><label>GBP → USD FX</label><input type="number" id="qr-fxGBPUSD" step="0.01" min="0"></div>
+        <div class="fld"><label>GBP → RMB FX</label><input type="number" id="qr-fxGBPRMB" step="0.01" min="0"></div>
+        <div class="fld"><label>GBP → BBD FX</label><input type="number" id="qr-fxGBPBBD" step="0.01" min="0"></div>
+        <div class="fld"><label>LCL Rate ($/CBM)</label><input type="number" id="qr-lclPerCBM" step="1" min="0"></div>
+        <div class="fld"><label>FCL 20GP ($)</label><input type="number" id="qr-fcl20GP" step="10" min="0"></div>
+        <div class="fld"><label>FCL 40HQ ($)</label><input type="number" id="qr-fcl40HQ" step="10" min="0"></div>
+        <div class="fld"><label>Origin Charges ($)</label><input type="number" id="qr-originCharges" step="5" min="0"></div>
+        <div class="fld"><label>Dest Charges ($)</label><input type="number" id="qr-destCharges" step="5" min="0"></div>
+        <div class="fld"><label>DG Surcharge ($)</label><input type="number" id="qr-dgSurcharge" step="5" min="0"></div>
+        <div class="fld"><label>Insurance Rate (%)</label><input type="number" id="qr-insRate" step="0.01" min="0"></div>
+        <div class="fld"><label>FPM Admin ($)</label><input type="number" id="qr-fpmAdmin" step="5" min="0"></div>
+      </div>
+      <p style="font-size:.5rem;color:var(--m);margin-top:8px;">Rates used by the Quote Engine. Changes apply to new calculations immediately after save.</p>
     </div>
     <div class="card">
       <div class="ct">Reference Data
@@ -1029,6 +1067,64 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- QUOTE MODAL -->
+<div class="ov" id="ov-qt" onclick="if(event.target===this)closeM('ov-qt')">
+  <div class="modal" style="max-width:920px;width:100%;">
+    <div class="mh">
+      <div id="qt-title">New Quote</div>
+      <button class="mc" onclick="closeM('ov-qt')">&#10005;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+      <div class="fld"><label>Quote #</label><input type="text" id="qf-num" readonly style="background:#f8f8f8;font-family:'DM Mono',monospace;"></div>
+      <div class="fld"><label>Client / Buyer</label><input type="text" id="qf-client" placeholder="Buyer name" list="dl-buyers"></div>
+      <div class="fld"><label>Quote Date</label><input type="date" id="qf-dt"></div>
+      <div class="fld"><label>Valid Until</label><input type="date" id="qf-valid"></div>
+      <div class="fld"><label>Freight Mode</label>
+        <select id="qf-mode" onchange="calcQte()">
+          <option value="LCL">LCL</option>
+          <option value="FCL 20GP">FCL 20GP</option>
+          <option value="FCL 40HQ">FCL 40HQ</option>
+        </select>
+      </div>
+      <div class="fld"><label>Markup %</label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
+      <div class="fld"><label>Currency</label>
+        <select id="qf-cur">
+          <option value="USD">USD</option><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="BBD">BBD</option>
+        </select>
+      </div>
+      <div class="fld"><label>Status</label>
+        <select id="qf-st">
+          <option value="Draft">Draft</option><option value="Sent">Sent</option>
+          <option value="Accepted">Accepted</option><option value="Declined">Declined</option><option value="Expired">Expired</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:.08em;color:var(--cr);margin-bottom:6px;">LINE ITEMS</div>
+    <div id="qt-lines" style="overflow-x:auto;margin-bottom:8px;"></div>
+    <button class="btn btn-g" style="font-size:.5rem;padding:3px 10px;margin-bottom:14px;" onclick="addQteLine()">+ Add Line</button>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:#f8f8f8;padding:12px;margin-bottom:12px;font-size:.56rem;">
+      <div><div style="color:var(--m);margin-bottom:2px;">Origin Charges</div><div id="qt-orig" style="font-weight:600;">-</div></div>
+      <div><div style="color:var(--m);margin-bottom:2px;">Dest Charges</div><div id="qt-dest" style="font-weight:600;">-</div></div>
+      <div><div style="color:var(--m);margin-bottom:2px;">FPM Admin</div><div id="qt-adm" style="font-weight:600;">-</div></div>
+      <div><div style="color:var(--m);margin-bottom:2px;">Total Landed</div><div id="qt-landed" style="font-weight:600;">-</div></div>
+      <div><div style="color:var(--m);margin-bottom:2px;">Markup</div><div id="qt-mkp-disp" style="font-weight:600;color:var(--gold);">-</div></div>
+      <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (USD)</div><div id="qt-sell-usd" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
+      <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (GBP)</div><div id="qt-sell-gbp" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
+      <div></div>
+    </div>
+    <div class="fld" style="margin-bottom:12px;"><label>Notes</label>
+      <textarea id="qf-nt" placeholder="Special conditions, scope, exclusions..." rows="2"></textarea>
+    </div>
+    <div id="qt-verr" style="font-size:.54rem;color:var(--cr);margin-bottom:8px;min-height:16px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-g" onclick="closeM('ov-qt')">Cancel</button>
+      <button class="btn btn-g" id="qt-prev-btn" onclick="prevQteId()" style="display:none;">&#128438; Preview</button>
+      <button class="btn btn-g" id="qt-po-btn" onclick="qteToPoConvert()" style="display:none;border-color:var(--gold);color:var(--gold);">Convert to PO</button>
+      <button class="btn btn-s" onclick="saveQte()">Save Quote</button>
+    </div>
+  </div>
+</div>
+
 <!-- AI CHAT FLOATING BUTTON -->
 <button id="ai-fab" onclick="openAIChat()" title="AI Assistant — ask anything about using Stackd Ops" style="position:fixed;bottom:24px;right:24px;width:46px;height:46px;border-radius:50%;background:var(--cr);border:none;cursor:pointer;color:white;font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:.07em;box-shadow:0 2px 10px rgba(0,0,0,.45);z-index:900;display:flex;align-items:center;justify-content:center;transition:transform .15s;">AI</button>
 
@@ -1062,7 +1158,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai'};
 
 var _storageOK = (function() {
   try { localStorage.setItem('_stk_t','1'); localStorage.removeItem('_stk_t'); return true; }
@@ -1075,11 +1171,11 @@ function ld(k) {
 }
 function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 
-let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh) };
+let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'Stackd', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'Brighton, UK', email:'cachafpm@gmail.com', phone:'+44 7930 438631', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
-let EI = { s:null, l:null, i:null, p:null, sh:null };
-let cIL = [], cPL = [];
+let EI = { s:null, l:null, i:null, p:null, sh:null, qt:null };
+let cIL = [], cPL = [], cQL = [];
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 
@@ -1098,7 +1194,10 @@ function sv(k, d) {
     }
   }
 }
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); };
+
+const QR_DEFAULTS = { fxGBPUSD:1.27, fxGBPRMB:9.20, fxGBPBBD:2.54, lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, originCharges:250, destCharges:350, dgSurcharge:150, insRate:0.005, fpmAdmin:75 };
+var QR = (function(){ var saved = ld('st_qr'); return saved ? Object.assign({}, QR_DEFAULTS, saved) : Object.assign({}, QR_DEFAULTS); })();
 
 function fmt(n, c) {
   c = c || 'USD';
@@ -1677,10 +1776,10 @@ function showV(v, tab) {
   else { var t = document.querySelector('[data-v="' + v + '"]'); if(t) t.classList.add('on'); }
   window.currentTab = v;
   updateAIChips(v);
-  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, sh:rShp, import:function(){}, cfg:rCfg };
+  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, sh:rShp, qt:rQte, import:function(){}, cfg:rCfg };
   if (fns[v]) fns[v]();
 }
-function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); }
+function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); rQte(); }
 function closeM(id) { G(id).classList.remove('on'); }
 
 // ── INVOICE CALCULATION ────────────────────────────────────────
@@ -4033,6 +4132,7 @@ function rCfg() {
   G('c-bank').value=AS.bank||''; G('c-terms').value=AS.terms||'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.';
   if(G('cfg-ai-key')) G('cfg-ai-key').value=AI.key||'';
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
+  qteFillRates();
   rRefData('countries');
 }
 function saveCfg() {
@@ -4160,6 +4260,7 @@ function expAll() {
     po: DB.po,
     payments: DB.payments,
     sh: DB.sh,
+    qt: DB.qt,
     settings: SS,
     company: AS
   };
@@ -4180,7 +4281,7 @@ function doImport(e) {
     var data;
     try { data = JSON.parse(ev.target.result); }
     catch(err) { toast('Invalid JSON — file not restored', 5000); return; }
-    var entities = ['sup','li','inv','po','payments','sh'];
+    var entities = ['sup','li','inv','po','payments','sh','qt'];
     var structOk = entities.every(function(k) {
       return data[k] === undefined || Array.isArray(data[k]);
     });
@@ -4193,7 +4294,8 @@ function doImport(e) {
     var msg = 'Restore backup from ' + (data._exported ? data._exported.slice(0,10) : 'unknown date') + '?\n\n' +
       'Suppliers: '  + counts[0] + '  |  Line Items: ' + counts[1] + '\n' +
       'Invoices: '   + counts[2] + '  |  POs: ' + counts[3] + '\n' +
-      'Payments: '   + counts[4] + '  |  Shipments: ' + counts[5] + '\n\n' +
+      'Payments: '   + counts[4] + '  |  Shipments: ' + counts[5] + '\n' +
+      'Quotes: '     + counts[6] + '\n\n' +
       'WARNING: This will replace ALL current local data.';
     if (!confirm(msg)) { G('imp-file').value = ''; return; }
     entities.forEach(function(k) { DB[k] = Array.isArray(data[k]) ? data[k] : []; });
@@ -4409,6 +4511,363 @@ function clearData() {
   if(!confirm('Clear ALL local data? This cannot be undone.')) return;
   Object.values(K).forEach(function(k){ localStorage.removeItem(k); });
   location.reload();
+}
+
+// ── QUOTE ENGINE ───────────────────────────────────────────────
+function nextQteNum() {
+  var nums = DB.qt.map(function(q){ var m = q.num && q.num.match(/^QTE-(\d+)$/); return m ? parseInt(m[1],10) : 0; });
+  var max = nums.length ? Math.max.apply(null, nums) : 0;
+  return 'QTE-' + String(max + 1).padStart(4, '0');
+}
+
+function cQteLine(line, qr, freightMode, totalCBM) {
+  var cbm = +line.cbm || 0;
+  var cost = +line.cost || 0;
+  var freight = 0;
+  if (freightMode === 'FCL 20GP') {
+    freight = totalCBM > 0 ? (cbm / totalCBM) * qr.fcl20GP : 0;
+  } else if (freightMode === 'FCL 40HQ') {
+    freight = totalCBM > 0 ? (cbm / totalCBM) * qr.fcl40HQ : 0;
+  } else {
+    freight = cbm * qr.lclPerCBM;
+  }
+  var dgAmt = line.dg ? qr.dgSurcharge : 0;
+  var ins = (cost + freight) * qr.insRate;
+  var duty = cost * (+line.dutyPct || 0) / 100;
+  var landed = cost + freight + dgAmt + ins + duty;
+  return { freight: freight, dgAmt: dgAmt, ins: ins, duty: duty, landed: landed };
+}
+
+function cQte(qt) {
+  var qr = QR;
+  var mode = qt.freightMode || 'LCL';
+  var lines = qt.lines || [];
+  var totalCBM = lines.reduce(function(s,l){ return s + (+l.cbm||0); }, 0);
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, qr, mode, totalCBM); });
+  var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
+  var overhead = qr.originCharges + qr.destCharges + qr.fpmAdmin;
+  var quotedTotal = totalLanded + overhead;
+  var markup = +qt.markup || 0;
+  var sellUSD = quotedTotal * (1 + markup / 100);
+  var sellGBP = sellUSD / qr.fxGBPUSD;
+  return { totalLanded: totalLanded, overhead: overhead, quotedTotal: quotedTotal, sellUSD: sellUSD, sellGBP: sellGBP, lineCalcs: lineCalcs };
+}
+
+function rQte() {
+  var tbl = G('qt-tbl'), em = G('qt-em'), tb = G('qt-tb');
+  if (!tbl || !tb) return;
+  if (!DB.qt.length) { tbl.style.display='none'; em.style.display='flex'; return; }
+  em.style.display = 'none'; tbl.style.display = '';
+  tb.innerHTML = DB.qt.slice().sort(function(a,b){ return (b.dt||'') < (a.dt||'') ? -1 : 1; }).map(function(q) {
+    var c = cQte(q);
+    var stCls = { 'Accepted':'s-confirmed', 'Declined':'s-draft', 'Sent':'s-sent', 'Expired':'s-draft' }[q.status] || 's-draft';
+    return '<tr>'
+      + '<td style="font-weight:600;color:var(--cr);">' + san(q.num) + '</td>'
+      + '<td>' + san(q.client||'') + '</td>'
+      + '<td>' + san(q.dt||'') + '</td>'
+      + '<td style="color:var(--m);">' + san(q.validUntil||'') + '</td>'
+      + '<td>' + san(q.freightMode||'LCL') + '</td>'
+      + '<td style="color:var(--m);">' + (q.lines||[]).length + '</td>'
+      + '<td style="font-weight:600;">' + fmt(c.sellUSD,'USD') + '</td>'
+      + '<td>£' + fn(c.sellGBP,0) + '</td>'
+      + '<td><span class="tag ' + stCls + '">' + san(q.status||'Draft') + '</span></td>'
+      + '<td style="font-size:.5rem;color:var(--m);">' + (q.linkedPOId ? 'PO linked' : '') + '</td>'
+      + '<td style="white-space:nowrap;">'
+        + '<button onclick="editQte(\'' + q.id + '\')" class="btn btn-g" style="font-size:.46rem;padding:2px 7px;">Edit</button> '
+        + '<button onclick="prevQte(\'' + q.id + '\')" class="btn btn-g" style="font-size:.46rem;padding:2px 7px;">&#128438;</button> '
+        + '<button onclick="delQte(\'' + q.id + '\')" class="btn btn-g" style="font-size:.46rem;padding:2px 7px;border-color:var(--cr);color:var(--cr);">Del</button>'
+      + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+function openQte() {
+  EI.qt = null; cQL = [];
+  G('qt-title').textContent = 'New Quote';
+  G('qf-num').value = nextQteNum();
+  G('qf-client').value = '';
+  G('qf-dt').value = today();
+  G('qf-valid').value = '';
+  G('qf-cur').value = 'USD';
+  G('qf-mode').value = 'LCL';
+  G('qf-mkp').value = '15';
+  G('qf-st').value = 'Draft';
+  G('qf-nt').value = '';
+  G('qt-verr').textContent = '';
+  G('qt-prev-btn').style.display = 'none';
+  G('qt-po-btn').style.display = 'none';
+  rQLT();
+  G('ov-qt').classList.add('on');
+}
+
+function editQte(id) {
+  var q = DB.qt.find(function(x){ return x.id === id; });
+  if (!q) return;
+  EI.qt = id;
+  cQL = (q.lines || []).map(function(l){ return Object.assign({}, l); });
+  G('qt-title').textContent = 'Edit Quote';
+  G('qf-num').value = q.num || '';
+  G('qf-client').value = q.client || '';
+  G('qf-dt').value = q.dt || '';
+  G('qf-valid').value = q.validUntil || '';
+  G('qf-cur').value = q.currency || 'USD';
+  G('qf-mode').value = q.freightMode || 'LCL';
+  G('qf-mkp').value = q.markup !== undefined ? String(q.markup) : '15';
+  G('qf-st').value = q.status || 'Draft';
+  G('qf-nt').value = q.notes || '';
+  G('qt-verr').textContent = '';
+  G('qt-prev-btn').style.display = '';
+  G('qt-po-btn').style.display = q.linkedPOId ? 'none' : '';
+  rQLT();
+  calcQte();
+  G('ov-qt').classList.add('on');
+}
+
+function qlFld(rid, f) {
+  var el = G('ql-' + f + '-' + rid);
+  if (!el) return '';
+  return el.type === 'checkbox' ? el.checked : el.value;
+}
+
+function addQteLine() {
+  cQL.push({ rid: uid(), supId:'', desc:'', qty:1, uom:'pcs', cost:0, cbm:0, dg:false, dutyPct:0 });
+  rQLT();
+}
+
+function removeQteLine(rid) {
+  cQL = cQL.filter(function(l){ return l.rid !== rid; });
+  rQLT();
+  calcQte();
+}
+
+function rQLT() {
+  var el = G('qt-lines');
+  if (!el) return;
+  if (!cQL.length) {
+    el.innerHTML = '<p style="font-size:.54rem;color:var(--m);padding:8px 0;">No lines yet — click + Add Line below.</p>';
+    return;
+  }
+  var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
+  var totalCBM = cQL.reduce(function(s,l){ return s+(+l.cbm||0); }, 0);
+  el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:800px;">'
+    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th>Landed</th><th></th></tr></thead>'
+    + '<tbody>'
+    + cQL.map(function(l){
+        var calcR = cQteLine(l, QR, mode, totalCBM);
+        return '<tr>'
+          + '<td><select id="ql-supId-' + l.rid + '" style="font-size:.5rem;width:110px;" onchange="calcQte()">'
+            + '<option value="">— Supplier —</option>'
+            + DB.sup.map(function(s){ return '<option value="' + san(s.id) + '"' + (l.supId===s.id?' selected':'') + '>' + san(s.name) + '</option>'; }).join('')
+            + '</select></td>'
+          + '<td><input type="text" id="ql-desc-' + l.rid + '" value="' + san(l.desc||'') + '" placeholder="Description" style="font-size:.5rem;width:120px;"></td>'
+          + '<td><input type="number" id="ql-qty-' + l.rid + '" value="' + (+l.qty||1) + '" min="0.001" step="any" style="font-size:.5rem;width:50px;" oninput="calcQte()"></td>'
+          + '<td><input type="text" id="ql-uom-' + l.rid + '" value="' + san(l.uom||'pcs') + '" list="dl-uom" style="font-size:.5rem;width:46px;"></td>'
+          + '<td><input type="number" id="ql-cost-' + l.rid + '" value="' + (+l.cost||0) + '" min="0" step="any" style="font-size:.5rem;width:72px;" oninput="calcQte()"></td>'
+          + '<td><input type="number" id="ql-cbm-' + l.rid + '" value="' + (+l.cbm||0) + '" min="0" step="0.001" style="font-size:.5rem;width:50px;" oninput="calcQte()"></td>'
+          + '<td style="text-align:center;"><input type="checkbox" id="ql-dg-' + l.rid + '"' + (l.dg?' checked':'') + ' onchange="calcQte()"></td>'
+          + '<td><input type="number" id="ql-dutyPct-' + l.rid + '" value="' + (+l.dutyPct||0) + '" min="0" max="100" step="0.5" style="font-size:.5rem;width:46px;" oninput="calcQte()"></td>'
+          + '<td style="font-weight:600;">$' + fn(calcR.landed,0) + '</td>'
+          + '<td><button onclick="removeQteLine(\'' + l.rid + '\')" style="font-size:.44rem;background:transparent;border:1px solid var(--cr);color:var(--cr);padding:1px 6px;cursor:pointer;">×</button></td>'
+          + '</tr>';
+      }).join('')
+    + '</tbody></table>';
+}
+
+function calcQte() {
+  if (!cQL.length) {
+    ['qt-orig','qt-dest','qt-adm','qt-landed','qt-mkp-disp','qt-sell-usd','qt-sell-gbp'].forEach(function(f){ var el=G(f); if(el) el.textContent='-'; });
+    return;
+  }
+  var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
+  var markup = G('qf-mkp') ? +G('qf-mkp').value : 15;
+  var totalCBM = cQL.reduce(function(s,l){ return s+(+qlFld(l.rid,'cbm')||0); }, 0);
+  var totalLanded = cQL.reduce(function(s,l){
+    var line = { cost:+qlFld(l.rid,'cost')||0, cbm:+qlFld(l.rid,'cbm')||0, dg:qlFld(l.rid,'dg'), dutyPct:+qlFld(l.rid,'dutyPct')||0 };
+    return s + cQteLine(line, QR, mode, totalCBM).landed;
+  }, 0);
+  var overhead = QR.originCharges + QR.destCharges + QR.fpmAdmin;
+  var sellUSD = (totalLanded + overhead) * (1 + markup/100);
+  var sellGBP = sellUSD / QR.fxGBPUSD;
+  if (G('qt-orig'))     G('qt-orig').textContent     = '$' + fn(QR.originCharges,0);
+  if (G('qt-dest'))     G('qt-dest').textContent     = '$' + fn(QR.destCharges,0);
+  if (G('qt-adm'))      G('qt-adm').textContent      = '$' + fn(QR.fpmAdmin,0);
+  if (G('qt-landed'))   G('qt-landed').textContent   = '$' + fn(totalLanded,0);
+  if (G('qt-mkp-disp')) G('qt-mkp-disp').textContent = markup + '%';
+  if (G('qt-sell-usd')) G('qt-sell-usd').textContent = fmt(sellUSD,'USD');
+  if (G('qt-sell-gbp')) G('qt-sell-gbp').textContent = '£' + fn(sellGBP,0);
+}
+
+function vQte() {
+  var errs = [];
+  if (!G('qf-client').value.trim()) errs.push('Client name is required');
+  if (!G('qf-dt').value)            errs.push('Quote date is required');
+  if (!cQL.length)                  errs.push('Add at least one line item');
+  if (errs.length) { G('qt-verr').textContent = errs.join(' · '); return false; }
+  G('qt-verr').textContent = '';
+  return true;
+}
+
+function saveQte() {
+  if (!vQte()) return;
+  var mode = G('qf-mode').value;
+  var lines = cQL.map(function(l){
+    return {
+      rid: l.rid,
+      supId: qlFld(l.rid,'supId'),
+      desc: qlFld(l.rid,'desc'),
+      qty: +qlFld(l.rid,'qty')||1,
+      uom: qlFld(l.rid,'uom')||'pcs',
+      cost: +qlFld(l.rid,'cost')||0,
+      cbm: +qlFld(l.rid,'cbm')||0,
+      dg: qlFld(l.rid,'dg'),
+      dutyPct: +qlFld(l.rid,'dutyPct')||0
+    };
+  });
+  var totalCBM = lines.reduce(function(s,l){ return s+(l.cbm||0); }, 0);
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM); });
+  var totalLanded = lineCalcs.reduce(function(s,c){ return s+c.landed; }, 0);
+  var markup = +G('qf-mkp').value||0;
+  var overhead = QR.originCharges + QR.destCharges + QR.fpmAdmin;
+  var sellUSD = (totalLanded + overhead) * (1 + markup/100);
+  var sellGBP = sellUSD / QR.fxGBPUSD;
+  var existQ = EI.qt ? DB.qt.find(function(x){ return x.id===EI.qt; }) : null;
+  var qt = {
+    id: EI.qt || uid(),
+    num: G('qf-num').value.trim() || nextQteNum(),
+    client: G('qf-client').value.trim(),
+    dt: G('qf-dt').value,
+    validUntil: G('qf-valid').value,
+    currency: G('qf-cur').value,
+    freightMode: mode,
+    markup: markup,
+    status: G('qf-st').value,
+    notes: G('qf-nt').value.trim(),
+    lines: lines,
+    linkedPOId: existQ ? (existQ.linkedPOId||'') : '',
+    calc_totalLanded: +fn(totalLanded,2),
+    calc_sellUSD: +fn(sellUSD,2),
+    calc_sellGBP: +fn(sellGBP,2)
+  };
+  if (EI.qt) {
+    var idx = DB.qt.findIndex(function(x){ return x.id===EI.qt; });
+    if (idx >= 0) DB.qt[idx] = qt; else DB.qt.push(qt);
+  } else {
+    DB.qt.push(qt);
+  }
+  sv(K.qt, DB.qt);
+  closeM('ov-qt');
+  rQte();
+  toast('Quote ' + qt.num + ' saved');
+}
+
+function delQte(id) {
+  if (!confirm('Delete this quote?')) return;
+  DB.qt = DB.qt.filter(function(q){ return q.id !== id; });
+  sv(K.qt, DB.qt);
+  rQte();
+  toast('Quote deleted');
+}
+
+function qteToPoConvert() {
+  var id = EI.qt;
+  if (!id) return;
+  var q = DB.qt.find(function(x){ return x.id===id; });
+  if (!q) return;
+  if (q.linkedPOId) { toast('This quote already has a linked PO'); return; }
+  var firstSup = (q.lines||[]).find(function(l){ return l.supId; });
+  var poNum = 'PO-' + q.num;
+  var po = {
+    id: uid(), num: poNum, supId: firstSup ? firstSup.supId : '',
+    invNum: '', invId: '', dt: today(), del: '', currency: q.currency||'USD',
+    dep: 0, fpm: 0, rec: false, oth: 0, paymentTerms: '',
+    notes: 'Auto-converted from ' + q.num, status: 'Draft',
+    lines: (q.lines||[]).map(function(l){
+      return { rid:uid(), liId:'', desc:l.desc, qty:l.qty||1, up:l.cost, uom:l.uom||'pcs', cur:q.currency||'USD' };
+    }),
+    quoteId: id, quoteNum: q.num
+  };
+  DB.po.push(po);
+  sv(K.p, DB.po);
+  q.linkedPOId = po.id;
+  sv(K.qt, DB.qt);
+  G('qt-po-btn').style.display = 'none';
+  closeM('ov-qt');
+  rQte();
+  rPO();
+  toast('PO ' + poNum + ' created from ' + q.num);
+}
+
+function prevQteId() { if (EI.qt) prevQte(EI.qt); }
+
+function prevQte(id) {
+  var q = DB.qt.find(function(x){ return x.id===id; });
+  if (!q) return;
+  prevQteDoc(q);
+}
+
+function prevQteDoc(q) {
+  var c = cQte(q);
+  var linesHtml = (q.lines||[]).map(function(l, i){
+    var calc = c.lineCalcs[i] || {};
+    return '<tr>'
+      + '<td style="padding:4px 8px;font-size:11px;">' + san(gsn(l.supId)) + '</td>'
+      + '<td style="padding:4px 8px;font-size:11px;">' + san(l.desc||'') + '</td>'
+      + '<td style="padding:4px 8px;font-size:11px;text-align:center;">' + (+l.qty||1) + ' ' + san(l.uom||'pcs') + '</td>'
+      + '<td style="padding:4px 8px;font-size:11px;text-align:right;">$' + fn(l.cost,0) + '</td>'
+      + '<td style="padding:4px 8px;font-size:11px;text-align:right;">$' + fn(calc.freight||0,0) + '</td>'
+      + '<td style="padding:4px 8px;font-size:11px;text-align:right;">$' + fn(calc.duty||0,0) + '</td>'
+      + '<td style="padding:4px 8px;font-size:11px;text-align:right;font-weight:600;">$' + fn(calc.landed||0,0) + '</td>'
+      + '</tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html><head><title>' + san(q.num) + ' — Quote</title>'
+    + '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:0;padding:24px;color:#222;}'
+    + 'h1{font-size:22px;letter-spacing:.1em;margin:0 0 4px;}table{border-collapse:collapse;width:100%;}'
+    + 'th{background:#1a1a1a;color:white;padding:6px 8px;text-align:left;font-size:11px;}'
+    + 'td{border-bottom:1px solid #e8e8e8;}@media print{button{display:none!important;}}</style></head>'
+    + '<body>'
+    + '<div style="display:flex;justify-content:space-between;margin-bottom:16px;">'
+    + '<div><h1>QUOTE</h1><div style="color:#888;font-size:11px;">' + san(AS.name||'Stackd') + ' · ' + san(AS.email||'') + '</div></div>'
+    + '<div style="text-align:right;"><div style="font-weight:600;font-size:16px;color:#c00;">' + san(q.num) + '</div>'
+    + '<div style="font-size:11px;">' + san(q.dt||'') + '</div>'
+    + '<div style="font-size:11px;color:#888;">Valid until: ' + san(q.validUntil||'—') + '</div></div>'
+    + '</div>'
+    + '<div style="margin-bottom:12px;font-size:11px;"><strong>Client:</strong> ' + san(q.client||'') + ' &nbsp; <strong>Mode:</strong> ' + san(q.freightMode||'LCL') + '</div>'
+    + '<table><thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>Cost</th><th>Freight</th><th>Duty</th><th>Landed</th></tr></thead>'
+    + '<tbody>' + linesHtml + '</tbody></table>'
+    + '<div style="margin-top:14px;display:flex;justify-content:flex-end;">'
+    + '<table style="width:280px;"><tbody>'
+    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(QR.originCharges,0) + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Destination Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(QR.destCharges,0) + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Admin</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(QR.fpmAdmin,0) + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#c00;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (GBP)</td><td style="padding:3px 8px;text-align:right;font-weight:600;">£' + fn(c.sellGBP,0) + '</td></tr>'
+    + '</tbody></table></div>'
+    + (q.notes ? '<div style="margin-top:14px;font-size:11px;border-top:1px solid #e8e8e8;padding-top:10px;"><strong>Notes:</strong> ' + san(q.notes) + '</div>' : '')
+    + '<div style="margin-top:20px;text-align:center;"><button onclick="window.print()" style="padding:8px 24px;cursor:pointer;">Print</button></div>'
+    + '</body></html>';
+  var w = window.open('','_blank');
+  if (w) { w.document.write(html); w.document.close(); }
+}
+
+function qteFillRates() {
+  var numFields = ['fxGBPUSD','fxGBPRMB','fxGBPBBD','lclPerCBM','fcl20GP','fcl40HQ','originCharges','destCharges','dgSurcharge','fpmAdmin'];
+  numFields.forEach(function(f){ var el=G('qr-'+f); if(el) el.value = QR[f] !== undefined ? QR[f] : QR_DEFAULTS[f]; });
+  var insEl = G('qr-insRate');
+  if (insEl) insEl.value = fn((QR.insRate||QR_DEFAULTS.insRate)*100, 2);
+}
+
+function ratesFromForm() {
+  var r = {};
+  ['fxGBPUSD','fxGBPRMB','fxGBPBBD','lclPerCBM','fcl20GP','fcl40HQ','originCharges','destCharges','dgSurcharge','fpmAdmin'].forEach(function(f){ var el=G('qr-'+f); if(el) r[f]=+el.value||0; });
+  var insEl = G('qr-insRate');
+  if (insEl) r.insRate = (+insEl.value||0) / 100;
+  return r;
+}
+
+function saveRates() {
+  Object.assign(QR, QR_DEFAULTS, ratesFromForm());
+  sv('st_qr', QR);
+  toast('Rates saved');
 }
 
 // ── PRINT ─────────────────────────────────────────────────────

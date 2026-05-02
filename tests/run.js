@@ -107,7 +107,7 @@ function assertNotContains(str, sub, msg) {
 }
 
 function resetDB() {
-  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [] };
+  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [] };
 }
 
 // ── TEST SUITE ─────────────────────────────────────────────────
@@ -624,6 +624,46 @@ test('savePO stores paymentTerms on record', () => {
   const po = ctx.DB.po[0];
   assert(po, 'PO saved');
   assertEqual(po.paymentTerms, 'TT in advance', 'paymentTerms stored on PO');
+});
+
+// ── Quote Engine ───────────────────────────────────────────────
+console.log('\nQuote Engine — nextQteNum / cQteLine / cQte');
+
+test('nextQteNum returns QTE-0001 with empty DB', () => {
+  ctx.DB.qt = [];
+  assertEqual(ctx.nextQteNum(), 'QTE-0001');
+});
+
+test('nextQteNum increments from highest existing number', () => {
+  ctx.DB.qt = [{ num:'QTE-0003' }, { num:'QTE-0001' }];
+  assertEqual(ctx.nextQteNum(), 'QTE-0004');
+  ctx.DB.qt = [];
+});
+
+test('cQteLine calculates landed cost correctly (LCL)', () => {
+  var qr = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005 };
+  var line = { cost:500, cbm:2, dg:false, dutyPct:10 };
+  // freight = 2*85=170, ins=(500+170)*0.005=3.35, duty=500*10/100=50, landed=723.35
+  var r = ctx.cQteLine(line, qr, 'LCL', 2);
+  assertEqual(r.freight, 170, 'freight = cbm * lclPerCBM');
+  assertEqual(r.dgAmt, 0, 'no DG charge');
+  assert(Math.abs(r.ins - 3.35) < 0.001, 'ins = (cost+freight)*insRate');
+  assertEqual(r.duty, 50, 'duty = cost * dutyPct/100');
+  assert(Math.abs(r.landed - 723.35) < 0.001, 'landed total correct');
+});
+
+test('cQte sums lines and adds overheads correctly', () => {
+  var savedQR = ctx.QR;
+  ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
+  var qt = { freightMode:'LCL', markup:20, lines:[{ cost:500, cbm:2, dg:false, dutyPct:10 }] };
+  // line landed=723.35, overhead=675, quotedTotal=1398.35, sellUSD=1678.02
+  var c = ctx.cQte(qt);
+  assert(Math.abs(c.totalLanded - 723.35) < 0.01, 'totalLanded ≈ 723.35');
+  assertEqual(c.overhead, 675, 'overhead = originCharges+destCharges+fpmAdmin');
+  assert(Math.abs(c.quotedTotal - 1398.35) < 0.01, 'quotedTotal = landed+overhead');
+  assert(Math.abs(c.sellUSD - 1678.02) < 0.01, 'sellUSD = quotedTotal*(1+markup/100)');
+  assert(Math.abs(c.sellGBP - (1678.02/1.27)) < 0.5, 'sellGBP = sellUSD/fxGBPUSD');
+  ctx.QR = savedQR;
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
