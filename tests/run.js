@@ -800,6 +800,148 @@ test('version sellPrice equals landed * (1 + markup/100)', () => {
   assert(v.landed > 0, 'landed is positive');
 });
 
+// ── Accounting Export ──────────────────────────────────────────
+console.log('\nAccounting Export');
+
+test('csvRow escapes values containing commas', () => {
+  const out = ctx.csvRow(['hello', 'world,comma', 'plain']);
+  assertContains(out, '"world,comma"', 'field with comma must be quoted');
+});
+
+test('csvRow escapes values containing double quotes', () => {
+  const out = ctx.csvRow(['say "hello"']);
+  assertContains(out, '"say ""hello"""', 'inner quotes must be doubled');
+});
+
+test('csvRow does not quote plain values', () => {
+  const out = ctx.csvRow(['foo', 'bar', '123']);
+  assertEqual(out, 'foo,bar,123', 'plain values need no quoting');
+});
+
+test('acctInvCSV includes expected header columns', () => {
+  const out = ctx.acctInvCSV([]);
+  assertContains(out, 'Invoice #', 'header must include Invoice #');
+  assertContains(out, 'Line Total', 'header must include Line Total');
+  assertContains(out, 'Tax Amount', 'header must include Tax Amount');
+});
+
+test('acctInvCSV emits one row per line item with invoice fields repeated', () => {
+  const inv = {
+    id: 'i1', num: 'INV-001', date: '2026-01-01', status: 'Sent', cur: 'USD',
+    buyer: 'Acme', dst: 'UK', incoterm: 'FOB', paymentTerms: 'Net 30', taxRate: 0,
+    lines: [
+      { desc: 'Widget A', sku: 'WA1', qty: 2, up: 10, cu: 6, uom: 'pcs' },
+      { desc: 'Widget B', sku: 'WB1', qty: 5, up: 4,  cu: 2, uom: 'pcs' },
+    ]
+  };
+  const out = ctx.acctInvCSV([inv]);
+  const lines = out.split('\n');
+  // BOM line + header + 2 data rows = 3 lines (BOM is prepended to header row)
+  assertEqual(lines.length, 3, 'one header + two data rows');
+  assertContains(lines[1], 'INV-001', 'first data row has invoice number');
+  assertContains(lines[2], 'INV-001', 'second data row has invoice number repeated');
+  assertContains(lines[1], 'Widget A', 'first row has first line desc');
+  assertContains(lines[2], 'Widget B', 'second row has second line desc');
+});
+
+test('acctInvCSV calculates line total correctly', () => {
+  const inv = {
+    id: 'i2', num: 'INV-002', date: '2026-01-02', status: 'Draft', cur: 'GBP',
+    buyer: 'Bob', dst: 'US', incoterm: '', paymentTerms: '', taxRate: 0.2,
+    lines: [{ desc: 'Item', sku: '', qty: 3, up: 50, cu: 30, uom: 'pcs' }]
+  };
+  const out = ctx.acctInvCSV([inv]);
+  assertContains(out, '150.00', 'line total = 3 * 50 = 150');
+  assertContains(out, '30.00',  'tax = 150 * 0.2 = 30');
+});
+
+test('acctPmtCSV includes expected header and a data row', () => {
+  resetDB();
+  ctx.DB.inv = [{ id: 'xi1', num: 'INV-100', cur: 'USD', buyer: 'Client Co' }];
+  ctx.DB.payments = [{ id: 'p1', invId: 'xi1', date: '2026-02-01', amount: 500, method: 'Bank Transfer', reference: 'REF123', notes: 'deposit' }];
+  const out = ctx.acctPmtCSV(ctx.DB.payments);
+  assertContains(out, 'Payment ID', 'header has Payment ID');
+  assertContains(out, 'INV-100',    'data row has invoice number');
+  assertContains(out, 'REF123',     'data row has reference');
+  assertContains(out, 'USD',        'currency resolved from linked invoice');
+});
+
+test('acctInvJSON returns parseable JSON with invoices array', () => {
+  const inv = { id: 'j1', num: 'INV-200', lines: [] };
+  const json = ctx.acctInvJSON([inv]);
+  const parsed = JSON.parse(json);
+  assert(Array.isArray(parsed.invoices), 'invoices must be an array');
+  assertEqual(parsed.invoices[0].num, 'INV-200', 'invoice preserved in JSON');
+  assert(parsed._exported, '_exported timestamp present');
+});
+
+test('acctXeroCSV maps ContactName from inv.buyer', () => {
+  const inv = {
+    id: 'x1', num: 'XINV-001', date: '2026-03-01', cur: 'GBP', buyer: 'Xero Client',
+    buyerAddr: '1 High St', taxRate: 0,
+    lines: [{ desc: 'Product X', qty: 1, up: 100 }]
+  };
+  const out = ctx.acctXeroCSV([inv]);
+  assertContains(out, 'Xero Client', 'ContactName must be inv.buyer');
+  assertContains(out, 'XINV-001',    'InvoiceNumber must be inv.num');
+});
+
+test('acctXeroCSV sets TaxType NONE when taxRate is 0', () => {
+  const inv = {
+    id: 'x2', num: 'XINV-002', date: '2026-03-01', cur: 'USD', buyer: 'Co',
+    taxRate: 0, lines: [{ desc: 'A', qty: 2, up: 50 }]
+  };
+  assertContains(ctx.acctXeroCSV([inv]), 'NONE', 'TaxType NONE when taxRate=0');
+});
+
+test('acctXeroCSV sets TaxType TAX001 when taxRate is greater than 0', () => {
+  const inv = {
+    id: 'x3', num: 'XINV-003', date: '2026-03-01', cur: 'USD', buyer: 'Co',
+    taxRate: 0.2, lines: [{ desc: 'A', qty: 1, up: 100 }]
+  };
+  assertContains(ctx.acctXeroCSV([inv]), 'TAX001', 'TaxType TAX001 when taxRate>0');
+});
+
+test('acctQBCSV maps Customer and Amount correctly', () => {
+  const inv = {
+    id: 'q1', num: 'QB-001', date: '2026-04-01', cur: 'USD', buyer: 'QB Customer',
+    lines: [{ desc: 'Service', qty: 4, up: 25 }]
+  };
+  const out = ctx.acctQBCSV([inv]);
+  assertContains(out, 'QB Customer', 'Customer must be inv.buyer');
+  assertContains(out, '100.00',      'Amount = 4 * 25 = 100');
+});
+
+test('acctQualityCheck flags missing Incoterm', () => {
+  const inv = { id: 'c1', num: 'C-001', incoterm: '', paymentTerms: 'Net 30', lines: [{ qty: 1, up: 10 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c1' }]);
+  assert(warns.some(function(w) { return w.includes('Incoterm'); }), 'should warn missing Incoterm');
+});
+
+test('acctQualityCheck flags missing Payment Terms', () => {
+  const inv = { id: 'c2', num: 'C-002', incoterm: 'FOB', paymentTerms: '', lines: [{ qty: 1, up: 10 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c2' }]);
+  assert(warns.some(function(w) { return w.includes('Payment Terms'); }), 'should warn missing Payment Terms');
+});
+
+test('acctQualityCheck flags zero-value line items', () => {
+  const inv = { id: 'c3', num: 'C-003', incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ qty: 0, up: 0 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c3' }]);
+  assert(warns.some(function(w) { return w.includes('zero-value'); }), 'should warn zero-value line');
+});
+
+test('acctQualityCheck flags invoice with no payments', () => {
+  const inv = { id: 'c4', num: 'C-004', incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ qty: 1, up: 50 }] };
+  const warns = ctx.acctQualityCheck([inv], []);
+  assert(warns.some(function(w) { return w.includes('no payments'); }), 'should warn no payments recorded');
+});
+
+test('acctQualityCheck returns no warnings when data is complete', () => {
+  const inv = { id: 'c5', num: 'C-005', incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ qty: 2, up: 25 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c5' }]);
+  assertEqual(warns.length, 0, 'no warnings when all fields present');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
