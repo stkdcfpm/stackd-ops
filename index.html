@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.8.0</title>
+<title>Stackd Ops v2.9.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -241,7 +241,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
 <rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
 <rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
-</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.8.0</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.3</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -689,9 +689,58 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.8.0</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.3</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Full inline form validation across all six entities — persistent field-level errors, green/red border feedback, blur-triggered rules</li>
+          <li>New: Centralised validators — vSup, vLI, vInv, vPO, vShp, vPay — with duplicate prevention and cross-field checks (ETA vs ETD, expiry vs issue date, payment date vs invoice date)</li>
+          <li>New: Deletion safety warnings — delSup and delLI show reference counts (linked POs, invoices) before confirming</li>
+          <li>Fix: Async save functions no longer silently fail on unhandled promise rejections</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.2</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Reference data layer — 8 controlled lookup tables: countries (Caribbean &amp; West Africa priority), currencies, UOM, Incoterms 2020, payment terms, shipment statuses, HS chapters, port codes (UN/LOCODE)</li>
+          <li>New: All freehand text fields replaced with datalists and selects — countries, ports, HS codes, UOM, freight terms, currencies</li>
+          <li>New: Settings → Reference Data viewer — browse all lookup tables in-app</li>
+          <li>New: Custom UOM and payment terms extensible via localStorage</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.1</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Resilient localStorage wrapper — boot-time availability probe, QuotaExceededError handling with toast, array integrity guard on load</li>
+          <li>New: Export All / Import All JSON backup &amp; restore in Settings → Data</li>
+          <li>New: Storage health dashboard card — shows KB used and % of 5 MB quota</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.8.1</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Removed seedINV10029Payments boot-time seed — payments now entered via ledger only</li>
+          <li>CI: GitHub Actions QA workflow — runs full test suite on every push and pull request to main</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.8.0</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Shipments tab — sixth entity. Track BL number, vessel, carrier, ports, ETD/ETA, container, DG flag, docs status. Linked to invoices. Syncs to Sheets.</li>
