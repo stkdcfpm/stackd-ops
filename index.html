@@ -3,18 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.9.3</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Stackd Ops v2.9.6</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-height:100vh;}
 .nav{background:var(--ink);display:flex;align-items:center;padding:0 22px;height:50px;position:sticky;top:0;z-index:100;}
-.logo{display:flex;align-items:flex-start;gap:8px;margin-right:20px;flex-shrink:0;}
+.logo{display:flex;align-items:center;margin-right:20px;flex-shrink:0;}
 .logo-wm{display:inline-flex;flex-direction:column;width:fit-content;}
-.logo-text{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.18em;color:white;line-height:1;white-space:nowrap;}
-.logo-text span{color:var(--cr);}
-.logo-tag{font-size:.36rem;color:#6A6060;letter-spacing:.06em;display:flex;justify-content:space-between;width:100%;margin-top:1px;font-family:'DM Mono',monospace;}
+.logo-text{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.35rem;letter-spacing:.14em;color:white;line-height:1;white-space:nowrap;text-transform:uppercase;}
+.logo-text span{color:#C8312E;}
+.logo-rule{border:none;border-top:1px solid rgba(255,255,255,.18);width:100%;margin:3px 0 2px;}
+.logo-tag{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:.31rem;color:white;opacity:.38;letter-spacing:.2em;white-space:nowrap;}
 .tabs{display:flex;height:50px;flex:1;}
 .tab{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m);padding:0 14px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;height:100%;}
 .tab:hover{color:white;}.tab.on{color:white;border-bottom-color:var(--cr);}
@@ -204,44 +205,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><svg width="13" height="42" viewBox="0 0 13 42" style="flex-shrink:0;">
-<rect x="0" y="0" width="13" height="13" rx="0" fill="#5C0E0E"/>
-<rect x="0" y="0" width="13" height="2" fill="#8B1A1A"/>
-<rect x="0" y="11" width="13" height="2" fill="#8B1A1A"/>
-<rect x="1" y="2" width="4" height="9" fill="#7A1515"/>
-<rect x="7" y="2" width="4" height="9" fill="#7A1515"/>
-<rect x="5" y="0" width="3" height="13" fill="#3D0808"/>
-<rect x="4" y="4" width="5" height="2" rx="1" fill="#C8C8C8"/>
-<rect x="4" y="7" width="5" height="2" rx="1" fill="#C8C8C8"/>
-<rect x="0" y="0" width="3" height="3" fill="#C0C0C0"/>
-<rect x="10" y="0" width="3" height="3" fill="#C0C0C0"/>
-<rect x="0" y="10" width="3" height="3" fill="#C0C0C0"/>
-<rect x="10" y="10" width="3" height="3" fill="#C0C0C0"/>
-<rect x="0" y="14" width="13" height="14" rx="0" fill="#0A0A0A"/>
-<rect x="0" y="14" width="13" height="2" fill="#1E1E1E"/>
-<rect x="0" y="26" width="13" height="2" fill="#1E1E1E"/>
-<rect x="1" y="16" width="4" height="10" fill="#141414"/>
-<rect x="7" y="16" width="4" height="10" fill="#141414"/>
-<rect x="5" y="14" width="3" height="14" fill="#050505"/>
-<rect x="4" y="18" width="5" height="2" rx="1" fill="#C8C8C8"/>
-<rect x="4" y="22" width="5" height="2" rx="1" fill="#C8C8C8"/>
-<rect x="0" y="14" width="3" height="3" fill="#C0C0C0"/>
-<rect x="10" y="14" width="3" height="3" fill="#C0C0C0"/>
-<rect x="0" y="25" width="3" height="3" fill="#C0C0C0"/>
-<rect x="10" y="25" width="3" height="3" fill="#C0C0C0"/>
-<rect x="0" y="29" width="13" height="13" rx="0" fill="#5C0E0E"/>
-<rect x="0" y="29" width="13" height="2" fill="#8B1A1A"/>
-<rect x="0" y="40" width="13" height="2" fill="#8B1A1A"/>
-<rect x="1" y="31" width="4" height="9" fill="#7A1515"/>
-<rect x="7" y="31" width="4" height="9" fill="#7A1515"/>
-<rect x="5" y="29" width="3" height="13" fill="#3D0808"/>
-<rect x="4" y="33" width="5" height="2" rx="1" fill="#C8C8C8"/>
-<rect x="4" y="37" width="5" height="2" rx="1" fill="#C8C8C8"/>
-<rect x="0" y="29" width="3" height="3" fill="#C0C0C0"/>
-<rect x="10" y="29" width="3" height="3" fill="#C0C0C0"/>
-<rect x="0" y="39" width="3" height="3" fill="#C0C0C0"/>
-<rect x="10" y="39" width="3" height="3" fill="#C0C0C0"/>
-</svg><div class="logo-wm"><div class="logo-text"><span>S</span>TACKD</div><div class="logo-tag"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.3</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.6</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
