@@ -107,7 +107,7 @@ function assertNotContains(str, sub, msg) {
 }
 
 function resetDB() {
-  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [] };
+  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [] };
 }
 
 // ── TEST SUITE ─────────────────────────────────────────────────
@@ -624,6 +624,322 @@ test('savePO stores paymentTerms on record', () => {
   const po = ctx.DB.po[0];
   assert(po, 'PO saved');
   assertEqual(po.paymentTerms, 'TT in advance', 'paymentTerms stored on PO');
+});
+
+// ── Quote Engine ───────────────────────────────────────────────
+console.log('\nQuote Engine — nextQteNum / cQteLine / cQte');
+
+test('nextQteNum returns QTE-0001 with empty DB', () => {
+  ctx.DB.qt = [];
+  assertEqual(ctx.nextQteNum(), 'QTE-0001');
+});
+
+test('nextQteNum increments from highest existing number', () => {
+  ctx.DB.qt = [{ num:'QTE-0003' }, { num:'QTE-0001' }];
+  assertEqual(ctx.nextQteNum(), 'QTE-0004');
+  ctx.DB.qt = [];
+});
+
+test('cQteLine calculates landed cost correctly (LCL)', () => {
+  var qr = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005 };
+  var line = { cost:500, cbm:2, dg:false, dutyPct:10 };
+  // freight = 2*85=170, ins=(500+170)*0.005=3.35, duty=500*10/100=50, landed=723.35
+  var r = ctx.cQteLine(line, qr, 'LCL', 2);
+  assertEqual(r.freight, 170, 'freight = cbm * lclPerCBM');
+  assertEqual(r.dgAmt, 0, 'no DG charge');
+  assert(Math.abs(r.ins - 3.35) < 0.001, 'ins = (cost+freight)*insRate');
+  assertEqual(r.duty, 50, 'duty = cost * dutyPct/100');
+  assert(Math.abs(r.landed - 723.35) < 0.001, 'landed total correct');
+});
+
+test('cQte sums lines and adds overheads correctly', () => {
+  var savedQR = ctx.QR;
+  ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
+  var qt = { freightMode:'LCL', markup:20, lines:[{ cost:500, cbm:2, dg:false, dutyPct:10 }] };
+  // line landed=723.35, overhead=675, quotedTotal=1398.35, sellUSD=1678.02
+  var c = ctx.cQte(qt);
+  assert(Math.abs(c.totalLanded - 723.35) < 0.01, 'totalLanded ≈ 723.35');
+  assertEqual(c.overhead, 675, 'overhead = originCharges+destCharges+fpmAdmin');
+  assert(Math.abs(c.quotedTotal - 1398.35) < 0.01, 'quotedTotal = landed+overhead');
+  assert(Math.abs(c.sellUSD - 1678.02) < 0.01, 'sellUSD = quotedTotal*(1+markup/100)');
+  assert(Math.abs(c.sellGBP - (1678.02/1.27)) < 0.5, 'sellGBP = sellUSD/fxGBPUSD');
+  ctx.QR = savedQR;
+});
+
+// ── Quote Line Price Versioning ────────────────────────────────
+console.log('\nQuote line price versioning');
+
+function saveQteSetup(rid, cost, dutyPct, markup, note) {
+  mockEl('qf-num').value = 'QTE-0001';
+  mockEl('qf-client').value = 'Versioning Client';
+  mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = '';
+  mockEl('qf-cur').value = 'USD';
+  mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = String(markup);
+  mockEl('qf-st').value = 'Draft';
+  mockEl('qf-nt').value = '';
+  mockEl('qt-verr').textContent = '';
+  mockEl('ql-supId-' + rid).value = '';
+  mockEl('ql-desc-' + rid).value = 'Test item';
+  mockEl('ql-qty-' + rid).value = '1';
+  mockEl('ql-uom-' + rid).value = 'pcs';
+  mockEl('ql-cost-' + rid).value = String(cost);
+  mockEl('ql-cbm-' + rid).value = '2';
+  mockEl('ql-dg-' + rid).checked = false;
+  mockEl('ql-dutyPct-' + rid).value = String(dutyPct);
+  mockEl('ql-note-' + rid).value = note || '';
+}
+
+test('saveQte creates version 1 on first save with correct fields', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv1', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv1', 500, 10, 15, 'Initial price');
+
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assert(Array.isArray(line.priceHistory), 'priceHistory is array');
+  assertEqual(line.priceHistory.length, 1, 'version 1 created on first save');
+  const v = line.priceHistory[0];
+  assertEqual(v.v, 1, 'version number is 1');
+  assertEqual(v.cost, 500, 'cost stored');
+  assertEqual(v.dutyPct, 10, 'dutyPct stored');
+  assertEqual(v.markup, 15, 'markup stored');
+  assertEqual(v.note, 'Initial price', 'note stored');
+  assert(v.ts && v.ts.length > 10, 'timestamp present');
+  assert(v.landed > 0, 'landed > 0');
+  assert(v.sellPrice > 0, 'sellPrice > 0');
+  assertEqual(v.sellPrice, +(v.landed * 1.15).toFixed(2), 'sellPrice = landed * (1 + markup/100)');
+});
+
+test('saveQte appends version 2 when cost changes on re-save', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv2', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:10 }];
+  saveQteSetup('rv2', 500, 10, 15, '');
+  ctx.saveQte();
+
+  const qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  saveQteSetup('rv2', 600, 10, 15, 'Price increase from supplier');  // cost changed 500→600
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.priceHistory.length, 2, 'version 2 appended on cost change');
+  assertEqual(line.priceHistory[1].v, 2, 'v=2');
+  assertEqual(line.priceHistory[1].cost, 600, 'cost updated to 600');
+  assertEqual(line.priceHistory[1].note, 'Price increase from supplier', 'note captured');
+});
+
+test('saveQte appends new version when dutyPct changes', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv3', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv3', 500, 10, 15, '');
+  ctx.saveQte();
+
+  const qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  saveQteSetup('rv3', 500, 20, 15, 'Duty rate revised');  // dutyPct changed 10→20
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.priceHistory.length, 2, 'version 2 appended on dutyPct change');
+  assertEqual(line.priceHistory[1].dutyPct, 20, 'dutyPct updated to 20');
+});
+
+test('saveQte appends new version when markup changes', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv4', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv4', 500, 10, 15, '');
+  ctx.saveQte();
+
+  const qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  saveQteSetup('rv4', 500, 10, 20, 'Markup raised');  // markup changed 15→20
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.priceHistory.length, 2, 'version 2 appended on markup change');
+  assertEqual(line.priceHistory[1].markup, 20, 'markup updated to 20');
+});
+
+test('saveQte does not append version when no tracked field changes', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv5', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv5', 500, 10, 15, '');
+  ctx.saveQte();
+
+  const qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  saveQteSetup('rv5', 500, 10, 15, 'No change note');  // cost/dutyPct/markup unchanged
+  ctx.saveQte();
+
+  const line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.priceHistory.length, 1, 'no new version when tracked fields unchanged');
+});
+
+test('version sellPrice equals landed * (1 + markup/100)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rv6', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('rv6', 400, 5, 25, '');
+  ctx.saveQte();
+
+  const v = ctx.DB.qt[0].lines[0].priceHistory[0];
+  const expected = +(v.landed * 1.25).toFixed(2);
+  assertEqual(v.sellPrice, expected, 'sellPrice = landed * (1 + 0.25)');
+  assert(v.landed > 0, 'landed is positive');
+});
+
+// ── Accounting Export ──────────────────────────────────────────
+console.log('\nAccounting Export');
+
+test('csvRow escapes values containing commas', () => {
+  const out = ctx.csvRow(['hello', 'world,comma', 'plain']);
+  assertContains(out, '"world,comma"', 'field with comma must be quoted');
+});
+
+test('csvRow escapes values containing double quotes', () => {
+  const out = ctx.csvRow(['say "hello"']);
+  assertContains(out, '"say ""hello"""', 'inner quotes must be doubled');
+});
+
+test('csvRow does not quote plain values', () => {
+  const out = ctx.csvRow(['foo', 'bar', '123']);
+  assertEqual(out, 'foo,bar,123', 'plain values need no quoting');
+});
+
+test('acctInvCSV includes expected header columns', () => {
+  const out = ctx.acctInvCSV([]);
+  assertContains(out, 'Invoice #', 'header must include Invoice #');
+  assertContains(out, 'Line Total', 'header must include Line Total');
+  assertContains(out, 'Tax Amount', 'header must include Tax Amount');
+});
+
+test('acctInvCSV emits one row per line item with invoice fields repeated', () => {
+  const inv = {
+    id: 'i1', num: 'INV-001', date: '2026-01-01', status: 'Sent', cur: 'USD',
+    buyer: 'Acme', dst: 'UK', incoterm: 'FOB', paymentTerms: 'Net 30', taxRate: 0,
+    lines: [
+      { desc: 'Widget A', sku: 'WA1', qty: 2, up: 10, cu: 6, uom: 'pcs' },
+      { desc: 'Widget B', sku: 'WB1', qty: 5, up: 4,  cu: 2, uom: 'pcs' },
+    ]
+  };
+  const out = ctx.acctInvCSV([inv]);
+  const lines = out.split('\n');
+  // BOM line + header + 2 data rows = 3 lines (BOM is prepended to header row)
+  assertEqual(lines.length, 3, 'one header + two data rows');
+  assertContains(lines[1], 'INV-001', 'first data row has invoice number');
+  assertContains(lines[2], 'INV-001', 'second data row has invoice number repeated');
+  assertContains(lines[1], 'Widget A', 'first row has first line desc');
+  assertContains(lines[2], 'Widget B', 'second row has second line desc');
+});
+
+test('acctInvCSV calculates line total correctly', () => {
+  const inv = {
+    id: 'i2', num: 'INV-002', date: '2026-01-02', status: 'Draft', cur: 'GBP',
+    buyer: 'Bob', dst: 'US', incoterm: '', paymentTerms: '', taxRate: 0.2,
+    lines: [{ desc: 'Item', sku: '', qty: 3, up: 50, cu: 30, uom: 'pcs' }]
+  };
+  const out = ctx.acctInvCSV([inv]);
+  assertContains(out, '150.00', 'line total = 3 * 50 = 150');
+  assertContains(out, '30.00',  'tax = 150 * 0.2 = 30');
+});
+
+test('acctPmtCSV includes expected header and a data row', () => {
+  resetDB();
+  ctx.DB.inv = [{ id: 'xi1', num: 'INV-100', cur: 'USD', buyer: 'Client Co' }];
+  ctx.DB.payments = [{ id: 'p1', invId: 'xi1', date: '2026-02-01', amount: 500, method: 'Bank Transfer', reference: 'REF123', notes: 'deposit' }];
+  const out = ctx.acctPmtCSV(ctx.DB.payments);
+  assertContains(out, 'Payment ID', 'header has Payment ID');
+  assertContains(out, 'INV-100',    'data row has invoice number');
+  assertContains(out, 'REF123',     'data row has reference');
+  assertContains(out, 'USD',        'currency resolved from linked invoice');
+});
+
+test('acctInvJSON returns parseable JSON with invoices array', () => {
+  const inv = { id: 'j1', num: 'INV-200', lines: [] };
+  const json = ctx.acctInvJSON([inv]);
+  const parsed = JSON.parse(json);
+  assert(Array.isArray(parsed.invoices), 'invoices must be an array');
+  assertEqual(parsed.invoices[0].num, 'INV-200', 'invoice preserved in JSON');
+  assert(parsed._exported, '_exported timestamp present');
+});
+
+test('acctXeroCSV maps ContactName from inv.buyer', () => {
+  const inv = {
+    id: 'x1', num: 'XINV-001', date: '2026-03-01', cur: 'GBP', buyer: 'Xero Client',
+    buyerAddr: '1 High St', taxRate: 0,
+    lines: [{ desc: 'Product X', qty: 1, up: 100 }]
+  };
+  const out = ctx.acctXeroCSV([inv]);
+  assertContains(out, 'Xero Client', 'ContactName must be inv.buyer');
+  assertContains(out, 'XINV-001',    'InvoiceNumber must be inv.num');
+});
+
+test('acctXeroCSV sets TaxType NONE when taxRate is 0', () => {
+  const inv = {
+    id: 'x2', num: 'XINV-002', date: '2026-03-01', cur: 'USD', buyer: 'Co',
+    taxRate: 0, lines: [{ desc: 'A', qty: 2, up: 50 }]
+  };
+  assertContains(ctx.acctXeroCSV([inv]), 'NONE', 'TaxType NONE when taxRate=0');
+});
+
+test('acctXeroCSV sets TaxType TAX001 when taxRate is greater than 0', () => {
+  const inv = {
+    id: 'x3', num: 'XINV-003', date: '2026-03-01', cur: 'USD', buyer: 'Co',
+    taxRate: 0.2, lines: [{ desc: 'A', qty: 1, up: 100 }]
+  };
+  assertContains(ctx.acctXeroCSV([inv]), 'TAX001', 'TaxType TAX001 when taxRate>0');
+});
+
+test('acctQBCSV maps Customer and Amount correctly', () => {
+  const inv = {
+    id: 'q1', num: 'QB-001', date: '2026-04-01', cur: 'USD', buyer: 'QB Customer',
+    lines: [{ desc: 'Service', qty: 4, up: 25 }]
+  };
+  const out = ctx.acctQBCSV([inv]);
+  assertContains(out, 'QB Customer', 'Customer must be inv.buyer');
+  assertContains(out, '100.00',      'Amount = 4 * 25 = 100');
+});
+
+test('acctQualityCheck flags missing Incoterm', () => {
+  const inv = { id: 'c1', num: 'C-001', incoterm: '', paymentTerms: 'Net 30', lines: [{ qty: 1, up: 10 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c1' }]);
+  assert(warns.some(function(w) { return w.includes('Incoterm'); }), 'should warn missing Incoterm');
+});
+
+test('acctQualityCheck flags missing Payment Terms', () => {
+  const inv = { id: 'c2', num: 'C-002', incoterm: 'FOB', paymentTerms: '', lines: [{ qty: 1, up: 10 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c2' }]);
+  assert(warns.some(function(w) { return w.includes('Payment Terms'); }), 'should warn missing Payment Terms');
+});
+
+test('acctQualityCheck flags zero-value line items', () => {
+  const inv = { id: 'c3', num: 'C-003', incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ qty: 0, up: 0 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c3' }]);
+  assert(warns.some(function(w) { return w.includes('zero-value'); }), 'should warn zero-value line');
+});
+
+test('acctQualityCheck flags invoice with no payments', () => {
+  const inv = { id: 'c4', num: 'C-004', incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ qty: 1, up: 50 }] };
+  const warns = ctx.acctQualityCheck([inv], []);
+  assert(warns.some(function(w) { return w.includes('no payments'); }), 'should warn no payments recorded');
+});
+
+test('acctQualityCheck returns no warnings when data is complete', () => {
+  const inv = { id: 'c5', num: 'C-005', incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ qty: 2, up: 25 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c5' }]);
+  assertEqual(warns.length, 0, 'no warnings when all fields present');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
