@@ -945,8 +945,9 @@ test('acctQualityCheck returns no warnings when data is complete', () => {
 // ── PREVIEW DOCUMENT TESTS ─────────────────────────────────────
 function makePreviewMock() {
   var captured = '';
-  var mockW = { document: { open(){}, write(h){ captured = h; }, close(){}, title: '' }, focus(){} };
-  ctx.open = function(){ return mockW; };
+  ctx.Blob = function(parts) { this._parts = parts; };
+  ctx.URL = { createObjectURL: function(b) { captured = b._parts[0]; return 'blob:mock'; }, revokeObjectURL: function(){} };
+  ctx.open = function() { return { focus: function(){} }; };
   return function(){ return captured; };
 }
 

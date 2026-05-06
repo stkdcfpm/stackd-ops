@@ -2891,12 +2891,10 @@ function prevInvDoc(inv) {
     +'</div>'
     +'</body></html>';
 
-  var w = window.open('', '_blank');
-  if (!w) { alert('Allow pop-ups for this page then try again.'); return; }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.document.title = docTitle;
+  var blob = new Blob([html], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  var w = window.open(url, '_blank');
+  if (!w) { URL.revokeObjectURL(url); alert('Allow pop-ups for this page then try again.'); return; }
   w.focus();
 }
 
@@ -2998,12 +2996,10 @@ function prevPODoc(po) {
   window._lastPO = po;
   window._lastInv = null;
 
-  var w = window.open('', '_blank');
-  if (!w) { alert('Allow pop-ups for this page then try again.'); return; }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.document.title = docTitle;
+  var blob = new Blob([html], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  var w = window.open(url, '_blank');
+  if (!w) { URL.revokeObjectURL(url); alert('Allow pop-ups for this page then try again.'); return; }
   w.focus();
 }
 
@@ -3953,7 +3949,10 @@ function prevCNDoc(inv) {
     +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Payment / Refund Details</div><div>'+bank+'</div></div>'
     +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Notes</div><div>'+san(inv.notes||'')+'</div></div></div>'
     +'</div></body></html>';
-  var w=window.open('','_blank'); if(w){w.document.write(html);w.document.close();}
+  var blob = new Blob([html], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  var w = window.open(url, '_blank');
+  if (!w) URL.revokeObjectURL(url);
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────
@@ -5189,8 +5188,10 @@ function prevQteDoc(q) {
     + (q.notes ? '<div style="margin-top:14px;font-size:11px;border-top:1px solid #e8e8e8;padding-top:10px;"><strong>Notes:</strong> ' + san(q.notes) + '</div>' : '')
     + '<div style="margin-top:20px;text-align:center;"><button onclick="window.print()" style="padding:8px 24px;cursor:pointer;">Print</button></div>'
     + '</body></html>';
-  var w = window.open('','_blank');
-  if (w) { w.document.write(html); w.document.close(); }
+  var blob = new Blob([html], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  var w = window.open(url, '_blank');
+  if (!w) URL.revokeObjectURL(url);
 }
 
 function qteFillRates() {
