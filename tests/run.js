@@ -256,7 +256,7 @@ test('li.specs is HTML-escaped in rendered row', () => {
   ctx.rLI();
   assertNotContains(mockEl('li-tb').innerHTML, '<script>', 'li.specs XSS must be escaped');
 });
-test('rendered row has 11 <td> cells matching header', () => {
+test('rendered row has 12 <td> cells matching header', () => {
   ctx.DB.li = [{
     id:'l3', sku:'SKU-03', desc:'Widget', specs:'spec', hs:'1234',
     supId:'s1', cost:10, price:20, uom:'pcs', cur:'USD',
@@ -264,7 +264,7 @@ test('rendered row has 11 <td> cells matching header', () => {
   mockEl('li-q').value = ''; mockEl('li-sf').value = '';
   ctx.rLI();
   const tdCount = (mockEl('li-tb').innerHTML.match(/<td/g) || []).length;
-  assertEqual(tdCount, 11, 'Row must have 11 <td> cells: SKU, Desc, Specs, HS, Supplier, Cost, Price, UOM, Margin, Cur, Actions');
+  assertEqual(tdCount, 12, 'Row must have 12 <td> cells: SKU, Desc, Specs, HS, Supplier, Cost, Price, UOM, Margin, Cur, Invoices, Actions');
 });
 
 // ── PO → Invoice linking ───────────────────────────────────────
@@ -1048,6 +1048,194 @@ test('prevQteDoc — popup opens via Blob URL not document.write', function() {
   resetDB();
   ctx.prevQteDoc({ num: 'QT-MECH', client: '', freightMode: 'LCL', dt: '', markup: 0, lines: [] });
   assertEqual(capturedUrl, 'blob:mock', 'prevQteDoc: window.open receives blob URL');
+});
+
+// ── isEmptyLI — Sheets sync guard (SPEC-SYN-001) ───────────────
+console.log('\nisEmptyLI — Sheets sync guard');
+
+test('isEmptyLI — null returns true (inv)', function() {
+  assert(ctx.isEmptyLI(null, 'inv') === true, 'null → true');
+});
+test('isEmptyLI — undefined returns true (inv)', function() {
+  assert(ctx.isEmptyLI(undefined, 'inv') === true, 'undefined → true');
+});
+test('isEmptyLI — empty string returns true (inv)', function() {
+  assert(ctx.isEmptyLI('', 'inv') === true, 'empty string → true');
+});
+test('isEmptyLI — "[]" string returns true (inv)', function() {
+  assert(ctx.isEmptyLI('[]', 'inv') === true, '"[]" string → true');
+});
+test('isEmptyLI — non-JSON string returns true (inv)', function() {
+  assert(ctx.isEmptyLI('not-json', 'inv') === true, 'non-JSON string → true');
+});
+test('isEmptyLI — number returns true (inv)', function() {
+  assert(ctx.isEmptyLI(42, 'inv') === true, 'number 42 → true');
+});
+test('isEmptyLI — boolean returns true (inv)', function() {
+  assert(ctx.isEmptyLI(true, 'inv') === true, 'boolean true → true');
+});
+test('isEmptyLI — plain object returns true (inv)', function() {
+  assert(ctx.isEmptyLI({}, 'inv') === true, 'plain object → true');
+});
+test('isEmptyLI — empty array returns true (inv)', function() {
+  assert(ctx.isEmptyLI([], 'inv') === true, 'empty array → true');
+});
+test('isEmptyLI — array with up field returns false (inv)', function() {
+  assert(ctx.isEmptyLI([{up:5}], 'inv') === false, '[{up:5}] → false for inv');
+});
+test('isEmptyLI — array with cost field returns false (po)', function() {
+  assert(ctx.isEmptyLI([{cost:10}], 'po') === false, '[{cost:10}] → false for po');
+});
+test('isEmptyLI — array with only desc field returns true for inv', function() {
+  assert(ctx.isEmptyLI([{desc:'x'}], 'inv') === true, '[{desc}] no up → true for inv');
+});
+test('isEmptyLI — non-empty string array returns false (pos)', function() {
+  assert(ctx.isEmptyLI(['po-abc123'], 'pos') === false, '["po-abc123"] → false for pos');
+});
+test('isEmptyLI — array of empty strings returns true (pos)', function() {
+  assert(ctx.isEmptyLI([''], 'pos') === true, '[""] → true for pos');
+});
+
+// ── invoiceRefs index (SPEC-LIB-001) ───────────────────────────
+console.log('\ninvoiceRefs — library item invoice index');
+
+function setupInvForm(num) {
+  mockEl('if-n').value = num;           mockEl('if-b').value = 'Test Buyer';
+  mockEl('if-ba').value = '';           mockEl('if-st').value = '';
+  mockEl('if-dst').value = '';          mockEl('if-cid').value = '';
+  mockEl('if-dt').value = '2026-05-01'; mockEl('if-ex').value = '';
+  mockEl('if-sd').value = '';           mockEl('if-ft').value = '';
+  mockEl('if-wt').value = '';           mockEl('if-cbm').value = '';
+  mockEl('if-pk').value = '';           mockEl('if-pol').value = '';
+  mockEl('if-pod').value = '';          mockEl('if-coo').value = '';
+  mockEl('if-cur').value = 'USD';       mockEl('if-tx').value = '0';
+  mockEl('if-lf').value = '0';          mockEl('if-ins').value = '0';
+  mockEl('if-leg').value = '0';         mockEl('if-isp').value = '0';
+  mockEl('if-oth').value = '0';         mockEl('if-dep').value = '0';
+  mockEl('if-inco').value = 'FOB';      mockEl('if-pt').value = 'Net 30';
+  mockEl('if-terms').value = '';        mockEl('if-chi').checked = true;
+  mockEl('inv-sm').value = 'Draft';
+}
+
+test('invoiceRefs — saveInv adds refs to both lib items', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[] });
+  ctx.DB.li.push({ id:'lib2', desc:'Gadget', uom:'kg',  price:20, cur:'USD', supId:'', priceHistory:[] });
+  ctx.EI.i = null;
+  ctx.cIL = [
+    { rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:2, up:10 },
+    { rid:'r2', lid:'lib2', desc:'Gadget', uom:'kg',  qty:1, up:20 }
+  ];
+  setupInvForm('INV10051');
+  ctx.saveInv();
+  var lib1 = ctx.DB.li.find(function(l){ return l.id==='lib1'; });
+  var lib2 = ctx.DB.li.find(function(l){ return l.id==='lib2'; });
+  assert(lib1.invoiceRefs && lib1.invoiceRefs.length === 1, 'lib1 has 1 invoiceRef');
+  assert(lib2.invoiceRefs && lib2.invoiceRefs.length === 1, 'lib2 has 1 invoiceRef');
+  assertEqual(lib1.invoiceRefs[0].invNum, 'INV10051', 'lib1 ref has correct invNum');
+});
+
+test('invoiceRefs — saveInv removes stale ref when lib item removed from invoice', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[],
+    invoiceRefs:[{ invId:'inv-x', invNum:'INV10052', date:'2026-01-01' }] });
+  ctx.DB.inv.push({ id:'inv-x', num:'INV10052', status:'Draft',
+    lineItems:[{rid:'r0',lid:'lib1',desc:'Widget',uom:'pcs',qty:1,up:10}],
+    taxRate:0, calc_grandTotal:'10' });
+  ctx.EI.i = 'inv-x';
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Manual item', uom:'pcs', qty:1, up:5 }];
+  setupInvForm('INV10052');
+  ctx.saveInv();
+  var lib1 = ctx.DB.li.find(function(l){ return l.id==='lib1'; });
+  var remaining = (lib1.invoiceRefs||[]).filter(function(r){ return r.invId==='inv-x'; });
+  assertEqual(remaining.length, 0, 'lib1 stale ref removed after item dropped from invoice');
+});
+
+test('invoiceRefs — delInv removes all refs for that invoice', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[],
+    invoiceRefs:[{ invId:'inv-del', invNum:'INV10053', date:'2026-01-01' }] });
+  ctx.DB.inv.push({ id:'inv-del', num:'INV10053', status:'Draft', lineItems:[], taxRate:0 });
+  ctx.confirm = function(){ return true; };
+  ctx.delInv('inv-del');
+  ctx.confirm = function(){ return false; };
+  var lib1 = ctx.DB.li.find(function(l){ return l.id==='lib1'; });
+  var remaining = (lib1.invoiceRefs||[]).filter(function(r){ return r.invId==='inv-del'; });
+  assertEqual(remaining.length, 0, 'invoiceRef cleaned up after delInv');
+});
+
+test('invoiceRefs — saveInv with empty cIL does not modify invoiceRefs', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[],
+    invoiceRefs:[{ invId:'inv-y', invNum:'INV10054', date:'2026-01-01' }] });
+  ctx.DB.inv.push({ id:'inv-y', num:'INV10054', status:'Draft',
+    lineItems:[{rid:'r0',lid:'lib1',desc:'Widget',uom:'pcs',qty:1,up:10}],
+    taxRate:0, calc_grandTotal:'10' });
+  ctx.EI.i = 'inv-y';
+  ctx.cIL = [];
+  setupInvForm('INV10054');
+  ctx.saveInv();
+  var lib1 = ctx.DB.li.find(function(l){ return l.id==='lib1'; });
+  assertEqual((lib1.invoiceRefs||[]).length, 1, 'invoiceRefs unchanged when saveInv called with empty cIL');
+});
+
+test('invoiceRefs — openPicker marks item in cIL with li-already-on-inv class', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[] });
+  ctx.cIL = [{ rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:1, up:10 }];
+  ctx.openPicker();
+  var html = ctx.G('pick-list').innerHTML;
+  assertContains(html, 'li-already-on-inv', 'picker adds li-already-on-inv class for item in cIL');
+});
+
+test('invoiceRefs — rLI shows usage count for item on 2 invoices', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[],
+    invoiceRefs:[
+      { invId:'i1', invNum:'INV10055', date:'2026-01-01' },
+      { invId:'i2', invNum:'INV10056', date:'2026-02-01' }
+    ]
+  });
+  mockEl('li-q').value = '';
+  mockEl('li-sf').value = '';
+  ctx.rLI();
+  var html = ctx.G('li-tb').innerHTML;
+  assertContains(html, 'used on 2 invoice(s)', 'rLI shows correct usage count');
+});
+
+test('invoiceRefs — saveInv is idempotent (no duplicate refs on second save)', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[] });
+  ctx.DB.inv.push({ id:'inv-idem', num:'INV10057', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'0' });
+  ctx.EI.i = 'inv-idem';
+  ctx.cIL = [{ rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:1, up:10 }];
+  setupInvForm('INV10057');
+  ctx.saveInv();
+  ctx.saveInv();
+  var lib1 = ctx.DB.li.find(function(l){ return l.id==='lib1'; });
+  assertEqual(lib1.invoiceRefs.length, 1, 'no duplicate invoiceRef entries after second save');
+});
+
+test('invoiceRefs — stale-ref removal only removes current invoice ref, preserves others', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[],
+    invoiceRefs:[
+      { invId:'inv-a', invNum:'INV10058', date:'2026-01-01' },
+      { invId:'inv-b', invNum:'INV10059', date:'2026-02-01' }
+    ]
+  });
+  ctx.DB.inv.push({ id:'inv-a', num:'INV10058', status:'Draft',
+    lineItems:[{rid:'r0',lid:'lib1',desc:'Widget',uom:'pcs',qty:1,up:10}],
+    taxRate:0, calc_grandTotal:'10' });
+  ctx.EI.i = 'inv-a';
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Manual', uom:'pcs', qty:1, up:5 }];
+  setupInvForm('INV10058');
+  ctx.saveInv();
+  var lib1 = ctx.DB.li.find(function(l){ return l.id==='lib1'; });
+  var forA = (lib1.invoiceRefs||[]).filter(function(r){ return r.invId==='inv-a'; });
+  var forB = (lib1.invoiceRefs||[]).filter(function(r){ return r.invId==='inv-b'; });
+  assertEqual(forA.length, 0, 'inv-A ref removed');
+  assertEqual(forB.length, 1, 'inv-B ref preserved');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
