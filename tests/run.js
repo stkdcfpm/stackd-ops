@@ -945,8 +945,9 @@ test('acctQualityCheck returns no warnings when data is complete', () => {
 // ── PREVIEW DOCUMENT TESTS ─────────────────────────────────────
 function makePreviewMock() {
   var captured = '';
-  var mockW = { document: { open(){}, write(h){ captured = h; }, close(){}, title: '' }, focus(){} };
-  ctx.open = function(){ return mockW; };
+  ctx.Blob = function(parts) { this._parts = parts; };
+  ctx.URL = { createObjectURL: function(b) { captured = b._parts[0]; return 'blob:mock'; }, revokeObjectURL: function(){} };
+  ctx.open = function() { return { focus: function(){} }; };
   return function(){ return captured; };
 }
 
@@ -1013,6 +1014,40 @@ test('prevQteDoc — all line item fields render in HTML output', function() {
   var html = getHtml();
   assertContains(html, 'Green Component', 'prevQteDoc: line item desc');
   assertContains(html, '<tbody>',         'prevQteDoc: tbody present');
+});
+
+// Preview popup mechanism — explicit Blob URL regression tests.
+// These tests pin the delivery mechanism: if any preview function reverts to
+// document.write() the captured URL will be '' (about:blank) not 'blob:mock'
+// and these tests fail before the content tests even run.
+test('prevInvDoc — popup opens via Blob URL not document.write', function() {
+  var capturedUrl = '';
+  ctx.Blob = function(parts) { this._parts = parts; };
+  ctx.URL = { createObjectURL: function(b) { return 'blob:mock'; }, revokeObjectURL: function(){} };
+  ctx.open = function(url) { capturedUrl = url; return { focus: function(){} }; };
+  resetDB();
+  ctx.prevInvDoc({ num: 'INV-MECH', cur: 'USD', taxRate: 0, lineItems: [] });
+  assertEqual(capturedUrl, 'blob:mock', 'prevInvDoc: window.open receives blob URL');
+});
+
+test('prevPODoc — popup opens via Blob URL not document.write', function() {
+  var capturedUrl = '';
+  ctx.Blob = function(parts) { this._parts = parts; };
+  ctx.URL = { createObjectURL: function(b) { return 'blob:mock'; }, revokeObjectURL: function(){} };
+  ctx.open = function(url) { capturedUrl = url; return { focus: function(){} }; };
+  resetDB();
+  ctx.prevPODoc({ num: 'PO-MECH', cur: 'USD', lineItems: [] });
+  assertEqual(capturedUrl, 'blob:mock', 'prevPODoc: window.open receives blob URL');
+});
+
+test('prevQteDoc — popup opens via Blob URL not document.write', function() {
+  var capturedUrl = '';
+  ctx.Blob = function(parts) { this._parts = parts; };
+  ctx.URL = { createObjectURL: function(b) { return 'blob:mock'; }, revokeObjectURL: function(){} };
+  ctx.open = function(url) { capturedUrl = url; return { focus: function(){} }; };
+  resetDB();
+  ctx.prevQteDoc({ num: 'QT-MECH', client: '', freightMode: 'LCL', dt: '', markup: 0, lines: [] });
+  assertEqual(capturedUrl, 'blob:mock', 'prevQteDoc: window.open receives blob URL');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
