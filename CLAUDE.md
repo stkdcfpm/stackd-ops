@@ -3,8 +3,8 @@
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.6**  
-**Test count: 68/68 PASS** (`node tests/run.js`)
+**Current version: v2.9.7**  
+**Test count: 98/98 PASS** (`node tests/run.js`)
 
 ---
 
@@ -95,6 +95,7 @@ View routing: `showV(v, tab)` dispatches to render functions via the `fns` map. 
 
 | Version | Highlights |
 |---|---|
+| v2.9.7 | Sheets sync guard (`isEmptyLI` hoisted), invoice→library refs index (`invoiceRefs`), Blob URL PDF previews, library picker usage indicators |
 | v2.9.6 | Brand lockup — Rajdhani 700 wordmark, JetBrains Mono tagline, D in #C8312E, HR rule; drops SVG container mark |
 | v2.9.5 | Accounting export — generic CSV/JSON + Xero/QuickBooks/FreeAgent mappers, data quality check, export modal |
 | v2.9.4 | Quote engine, rate engine, per-line price versioning, Settings Rates card |
@@ -113,6 +114,7 @@ See `docs/known-gaps.md` for full entries.
 | ID | Area | Summary |
 |---|---|---|
 | QTE-GAP-001 | Quote status | No workflow enforcement — Convert to PO available on any status; no transition guards |
+| LIB-GAP-001 | Library sync | `syncEnt('li')` not called when `invoiceRefs` mutates — remote Sheets copy will lag until next explicit lib save |
 
 ---
 
