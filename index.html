@@ -771,9 +771,46 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.3</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.6</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Brand lockup — STACKD wordmark in Rajdhani 700, D in #C8312E, thin rule, SOURCE · SUPPLY · SHIP tagline in JetBrains Mono</li>
+          <li>Removed: SVG stacked-container mark replaced by pure HTML/CSS lockup</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.5</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Accounting export — generic CSV and JSON for invoices and payments</li>
+          <li>New: Platform mappers — Xero invoice import, QuickBooks Online invoice import, FreeAgent bills</li>
+          <li>New: Pre-export data quality check — warns on missing Incoterm, missing Payment Terms, zero-value lines, invoices with no payments</li>
+          <li>New: Export modal with entity selector (Invoices / Payments) and format picker</li>
+          <li>New: Settings → Accounting Export — field mapping reference for all three platforms with gaps documented</li>
+          <li>New: Export button in invoice toolbar and payments tab header</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.4</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Quote engine — full quote entity with freight, DG, insurance, duty, and landed cost calculation</li>
+          <li>New: Rate engine — editable FX, LCL/FCL, origin/dest charges, DG surcharge, insurance rate, FPM admin in Settings</li>
+          <li>New: Per-line price versioning — version history appended on cost, duty, or markup change</li>
+          <li>New: Convert quote to Purchase Order</li>
+          <li>New: Settings → Rates card</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.3</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Full inline form validation across all six entities — persistent field-level errors, green/red border feedback, blur-triggered rules</li>
