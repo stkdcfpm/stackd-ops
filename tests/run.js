@@ -942,6 +942,79 @@ test('acctQualityCheck returns no warnings when data is complete', () => {
   assertEqual(warns.length, 0, 'no warnings when all fields present');
 });
 
+// ── PREVIEW DOCUMENT TESTS ─────────────────────────────────────
+function makePreviewMock() {
+  var captured = '';
+  var mockW = { document: { open(){}, write(h){ captured = h; }, close(){}, title: '' }, focus(){} };
+  ctx.open = function(){ return mockW; };
+  return function(){ return captured; };
+}
+
+test('prevInvDoc — all line item fields render in HTML output', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevInvDoc({
+    num: 'INV10001', cur: 'USD', taxRate: 0.1, buyer: 'ACME Corp',
+    lineItems: [
+      { rid: 'r1', lid: '', desc: 'Blue Widget', uom: 'pcs', qty: 10, up: 5.99 },
+      { rid: 'r2', lid: '', desc: 'Red Gadget',  uom: 'kg',  qty: 2,  up: 50.00 }
+    ]
+  });
+  var html = getHtml();
+  assertContains(html, 'Blue Widget', 'prevInvDoc: first line item desc');
+  assertContains(html, 'Red Gadget',  'prevInvDoc: second line item desc');
+  assertContains(html, 'pcs',         'prevInvDoc: UOM rendered');
+  assertContains(html, '5.99',        'prevInvDoc: unit price rendered');
+  assertContains(html, '<tbody>',     'prevInvDoc: tbody present');
+});
+
+test('prevInvDoc — empty lineItems renders table with no rows', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevInvDoc({ num: 'INV10002', cur: 'USD', taxRate: 0, lineItems: [] });
+  var html = getHtml();
+  assertContains(html, '<tbody></tbody>', 'prevInvDoc: empty tbody when no line items');
+});
+
+test('prevInvDoc — no legacy SVG in output', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevInvDoc({ num: 'INV10003', cur: 'USD', taxRate: 0, lineItems: [] });
+  var html = getHtml();
+  assert(!html.includes('<svg'), 'prevInvDoc: no SVG in preview HTML (removed in v2.9.6)');
+});
+
+test('prevPODoc — all line item fields render in HTML output', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevPODoc({
+    num: 'PO-001', cur: 'USD',
+    lineItems: [
+      { rid: 'r1', lid: '', sku: 'SKU1', desc: 'Steel Bracket', uom: 'each', qty: 50, cost: 3.20 }
+    ]
+  });
+  var html = getHtml();
+  assertContains(html, 'Steel Bracket', 'prevPODoc: line item desc');
+  assertContains(html, 'each',          'prevPODoc: UOM rendered');
+  assertContains(html, '3.20',          'prevPODoc: unit cost rendered');
+  assertContains(html, '<tbody>',       'prevPODoc: tbody present');
+});
+
+test('prevQteDoc — all line item fields render in HTML output', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevQteDoc({
+    num: 'QT-001', client: 'Test Client', freightMode: 'LCL',
+    dt: '2026-05-06', markup: 15,
+    lines: [
+      { rid: 'r1', supId: '', desc: 'Green Component', qty: 4, uom: 'pcs', cost: 120, cbm: 0.8, dg: false, dutyPct: 8 }
+    ]
+  });
+  var html = getHtml();
+  assertContains(html, 'Green Component', 'prevQteDoc: line item desc');
+  assertContains(html, '<tbody>',         'prevQteDoc: tbody present');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
