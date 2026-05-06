@@ -1016,6 +1016,40 @@ test('prevQteDoc — all line item fields render in HTML output', function() {
   assertContains(html, '<tbody>',         'prevQteDoc: tbody present');
 });
 
+// Preview popup mechanism — explicit Blob URL regression tests.
+// These tests pin the delivery mechanism: if any preview function reverts to
+// document.write() the captured URL will be '' (about:blank) not 'blob:mock'
+// and these tests fail before the content tests even run.
+test('prevInvDoc — popup opens via Blob URL not document.write', function() {
+  var capturedUrl = '';
+  ctx.Blob = function(parts) { this._parts = parts; };
+  ctx.URL = { createObjectURL: function(b) { return 'blob:mock'; }, revokeObjectURL: function(){} };
+  ctx.open = function(url) { capturedUrl = url; return { focus: function(){} }; };
+  resetDB();
+  ctx.prevInvDoc({ num: 'INV-MECH', cur: 'USD', taxRate: 0, lineItems: [] });
+  assertEqual(capturedUrl, 'blob:mock', 'prevInvDoc: window.open receives blob URL');
+});
+
+test('prevPODoc — popup opens via Blob URL not document.write', function() {
+  var capturedUrl = '';
+  ctx.Blob = function(parts) { this._parts = parts; };
+  ctx.URL = { createObjectURL: function(b) { return 'blob:mock'; }, revokeObjectURL: function(){} };
+  ctx.open = function(url) { capturedUrl = url; return { focus: function(){} }; };
+  resetDB();
+  ctx.prevPODoc({ num: 'PO-MECH', cur: 'USD', lineItems: [] });
+  assertEqual(capturedUrl, 'blob:mock', 'prevPODoc: window.open receives blob URL');
+});
+
+test('prevQteDoc — popup opens via Blob URL not document.write', function() {
+  var capturedUrl = '';
+  ctx.Blob = function(parts) { this._parts = parts; };
+  ctx.URL = { createObjectURL: function(b) { return 'blob:mock'; }, revokeObjectURL: function(){} };
+  ctx.open = function(url) { capturedUrl = url; return { focus: function(){} }; };
+  resetDB();
+  ctx.prevQteDoc({ num: 'QT-MECH', client: '', freightMode: 'LCL', dt: '', markup: 0, lines: [] });
+  assertEqual(capturedUrl, 'blob:mock', 'prevQteDoc: window.open receives blob URL');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
