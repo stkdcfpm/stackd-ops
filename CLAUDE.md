@@ -122,6 +122,7 @@ At the end of each version delivery, update:
 
 - **This file** — bump Current version, update Test count, add row to Version history, add any new Known gaps, tick off sprint items
 - **`docs/known-gaps.md`** — add new gap entries as they are identified
+- **`AI_SYSTEM_PROMPT` in `index.html`** — review the constant against every change shipped in the version. If any new entity, field, feature, workflow, setting, or known quirk was added or changed, update the prompt to reflect it. The prompt must always accurately describe the current state of the portal. A version is not complete until the prompt is current.
 
 ---
 
