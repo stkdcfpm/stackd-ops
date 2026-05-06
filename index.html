@@ -1749,6 +1749,26 @@ async function syncAll() {
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
   } catch(e) { setSyncStatus('err'); toast('Sync failed: ' + e.message); }
 }
+function isEmptyLI(v, fieldType) {
+  // fieldType: 'inv' — valid element has typeof el.up !== 'undefined'
+  //            'po'  — valid element has typeof el.cost !== 'undefined'
+  //            'pos' — valid element is a non-empty string (length > 0); PO IDs are uid() outputs
+  //   any other fieldType falls through to 'inv' rule — intentional safe default
+  if (v === null || v === undefined) return true;
+  if (typeof v === 'string') {
+    try { v = JSON.parse(v); } catch(e) { return true; }
+    if (!Array.isArray(v)) return true;
+  }
+  if (!Array.isArray(v)) return true;
+  if (v.length === 0) return true;
+  if (fieldType === 'pos') {
+    return !v.some(function(el){ return typeof el === 'string' && el.length > 0; });
+  }
+  var field = fieldType === 'po' ? 'cost' : 'up';
+  return !v.some(function(el){
+    return el !== null && typeof el === 'object' && typeof el[field] !== 'undefined';
+  });
+}
 async function pullAll() {
   if (!SS.url) { toast('No URL configured'); return; }
   setSyncStatus('loading');
@@ -1768,17 +1788,11 @@ async function pullAll() {
           for (var pi = 0; pi < pulled.length; pi++) {
             var localRec = DB[ent].find(function(r){ return r.id === pulled[pi].id; });
             if (localRec) {
-              // Helper: treat empty array, null, undefined, "[]", "" all as empty
-              function isEmptyLI(v) {
-                if (!v) return true;
-                if (typeof v === 'string') { try { v=JSON.parse(v); } catch(e){ return true; } }
-                return !Array.isArray(v) || v.length === 0;
-              }
               if (ent === 'inv') {
-                if (isEmptyLI(pulled[pi].lineItems) && !isEmptyLI(localRec.lineItems)) {
+                if (isEmptyLI(pulled[pi].lineItems, 'inv') && !isEmptyLI(localRec.lineItems, 'inv')) {
                   pulled[pi].lineItems = localRec.lineItems;
                 }
-                if (isEmptyLI(pulled[pi].pos) && !isEmptyLI(localRec.pos)) {
+                if (isEmptyLI(pulled[pi].pos, 'pos') && !isEmptyLI(localRec.pos, 'pos')) {
                   pulled[pi].pos = localRec.pos;
                 }
                 // Also preserve calc fields if local has them and pulled doesn't
@@ -1793,7 +1807,7 @@ async function pullAll() {
                 });
               }
               if (ent === 'po') {
-                if (isEmptyLI(pulled[pi].lineItems) && !isEmptyLI(localRec.lineItems)) {
+                if (isEmptyLI(pulled[pi].lineItems, 'po') && !isEmptyLI(localRec.lineItems, 'po')) {
                   pulled[pi].lineItems = localRec.lineItems;
                 }
               }
@@ -2288,6 +2302,7 @@ function rLI() {
       '<td class="num">' + fmt(li.price,li.cur||'USD') + phBadge + '</td>' +
       '<td>' + (li.uom||'-') + '</td>' +
       '<td class="num"><span class="pill ' + mc + '">' + fp(m) + '</span></td><td>' + (li.cur||'-') + '</td>' +
+      '<td>' + (li.invoiceRefs && li.invoiceRefs.length ? '<span style="font-size:.5rem;color:#1a7a4a;">used on ' + li.invoiceRefs.length + ' invoice(s)</span>' : '-') + '</td>' +
       '<td><button class="ab" onclick="editLI(\'' + li.id + '\')">&#9998;</button><button class="ab" onclick="delLI(\'' + li.id + '\')">&#10005;</button></td></tr>' +
       phRow;
   }).join('');
@@ -2333,7 +2348,7 @@ async function saveLI() {
     history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Catalogue price updated' });
   }
 
-  var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history};
+  var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history,invoiceRefs:existing?(existing.invoiceRefs||[]):[]};
   if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
   sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li);
 }
@@ -2457,10 +2472,12 @@ function rILT() {
 function openPicker() {
   if(!DB.li.length){toast('No items in library yet.');return;}
   G('pick-list').innerHTML=DB.li.map(function(li){
-    return '<label style="display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--ln);margin-bottom:3px;cursor:pointer;font-size:.6rem;">' +
+    var onInv = cIL.some(function(c){ return c.lid === li.id; });
+    var refCount = (li.invoiceRefs||[]).length;
+    return '<label class="' + (onInv ? 'li-already-on-inv' : '') + '" style="display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--ln);margin-bottom:3px;cursor:pointer;font-size:.6rem;' + (onInv ? 'background:#f0fdf4;' : '') + '">' +
       '<input type="checkbox" value="' + li.id + '" style="flex-shrink:0;">' +
-      '<div style="flex:1;"><div style="font-weight:500;">' + (san(li.desc)||'-') + '</div>' +
-      '<div style="color:var(--m);font-size:.54rem;">' + gsn(li.supId) + ' - ' + (li.uom||'-') + ' - ' + fmt(li.price,li.cur) + '</div></div></label>';
+      '<div style="flex:1;"><div style="font-weight:500;">' + (san(li.desc)||'-') + (onInv ? ' <span style="color:#1a7a4a;font-size:.5rem;">&#10003; on this invoice</span>' : '') + '</div>' +
+      '<div style="color:var(--m);font-size:.54rem;">' + gsn(li.supId) + ' - ' + (li.uom||'-') + ' - ' + fmt(li.price,li.cur) + (refCount ? ' &nbsp;&middot;&nbsp; used on ' + refCount + ' invoice(s)' : '') + '</div></div></label>';
   }).join('');
   G('ov-pick').classList.add('on');
 }
@@ -2567,6 +2584,33 @@ async function saveInv() {
   });
   if (liChanged) sv(K.l, DB.li);
 
+  // ── invoiceRefs index (gated on cIL.length > 0) ──────────────
+  if (cIL.length > 0) {
+    var refsChanged = false;
+    cIL.forEach(function(li) {
+      if (!li.lid) return;
+      var cat = DB.li.find(function(x){ return x.id === li.lid; });
+      if (!cat) return;
+      var refs = cat.invoiceRefs ? cat.invoiceRefs.slice() : [];
+      if (!refs.some(function(r){ return r.invId === inv.id; })) {
+        refs.push({ invId: inv.id, invNum: inv.num, date: inv.date || '' });
+        cat.invoiceRefs = refs;
+        refsChanged = true;
+      }
+    });
+    var liveLids = {};
+    cIL.forEach(function(li){ if (li.lid) liveLids[li.lid] = true; });
+    DB.li.forEach(function(cat) {
+      if (!cat.invoiceRefs) return;
+      var before = cat.invoiceRefs.length;
+      cat.invoiceRefs = cat.invoiceRefs.filter(function(r) {
+        return r.invId !== inv.id || liveLids[cat.id];
+      });
+      if (cat.invoiceRefs.length !== before) refsChanged = true;
+    });
+    if (refsChanged) sv(K.l, DB.li);
+  }
+
   sv(K.i,DB.inv); closeM('ov-inv'); rInv(); rDash();
   audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv); toast('Invoice saved'); renderOnboarding();
   await syncEnt('inv',inv);
@@ -2642,7 +2686,15 @@ function rInv() {
 }
 async function delInv(id) {
   if(!confirm('Delete this invoice?')) return;
-  DB.inv=DB.inv.filter(function(i){return i.id!==id;}); sv(K.i,DB.inv); rInv(); rDash(); toast('Deleted'); await delEnt('inv',id);
+  DB.inv=DB.inv.filter(function(i){return i.id!==id;});
+  var libRefsChanged = false;
+  DB.li.forEach(function(cat) {
+    if (!cat.invoiceRefs) return;
+    var before = cat.invoiceRefs.length;
+    cat.invoiceRefs = cat.invoiceRefs.filter(function(r){ return r.invId !== id; });
+    if (cat.invoiceRefs.length !== before) libRefsChanged = true;
+  });
+  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt('inv',id);
 }
 
 // ── PO MODAL & TABLE ───────────────────────────────────────────
@@ -3958,7 +4010,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.6).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.7).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -3982,6 +4034,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Line Items (Product Catalogue)',
   'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency.',
+  'Invoice usage: each library item tracks which invoices it has been used on (invoiceRefs index). The list view shows "used on N invoice(s)" against each item. The Import from Library picker marks items already on the current invoice with a green tick.',
   'Rule: wrong unit cost or price corrupts profit calculations on every invoice using that product.',
   '',
   '## Quotes',
@@ -4088,13 +4141,14 @@ var AI_SYSTEM_PROMPT = [
   '5. Do not use both the Local Freight charge field AND a local freight line item — double-counts charges.',
   '6. Add product to Line Items catalogue before using Import from Library.',
   '7. Rates in Settings → Rates & FX override the default freight rate estimates — always configure these before creating quotes.',
+  '8. PDF previews open in a new tab via a Blob URL — allow pop-ups for this page if the preview does not appear.',
   '',
   '## Troubleshooting',
   '- Dashboard KPIs wrong → Settings → ⚙ Repair invoice totals',
   '- Quote landed cost looks wrong → check Settings → Rates & FX — rates may not be configured',
   '- Price history not showing → price versioning only triggers when cost, duty %, or markup % changes on save',
   '- Accounting export quality check warnings → review flagged invoices for missing Incoterm or Payment Terms before exporting',
-  '- Line items missing after reopening → closed modal without saving OR Sheets pull overwrote lineItems → re-add items, Save Invoice, Push All',
+  '- Line items missing after reopening → closed modal without saving OR Sheets pull overwrote lineItems → re-add items, Save Invoice, Push All. The sync guard (v2.9.7) now preserves existing line items on pull if the remote copy arrives empty — but always save before closing.',
   '- Storage health red (≥85%) → export JSON backup immediately, consider clearing old data',
   '- Sync button shows error → invalid or expired Apps Script URL → Settings → verify URL, redeploy Apps Script',
   '- Credit note not reducing balance → CN status must be CN Applied',
