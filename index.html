@@ -1148,58 +1148,59 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <!-- QUOTE MODAL -->
 <div class="ov" id="ov-qt" onclick="if(event.target===this)closeM('ov-qt')">
-  <div class="modal" style="max-width:920px;width:100%;">
-    <div class="mh">
+  <div class="modal" style="max-width:960px;width:100%;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="mh" style="flex-shrink:0;">
       <div id="qt-title">New Quote</div>
-      <button class="mc" onclick="closeM('ov-qt')">&#10005;</button>
+      <button class="mx" onclick="closeM('ov-qt')">&#215;</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
-      <div class="fld"><label>Quote #</label><input type="text" id="qf-num" readonly style="background:#f8f8f8;font-family:'DM Mono',monospace;"></div>
-      <div class="fld"><label>Client / Buyer</label><input type="text" id="qf-client" placeholder="Buyer name" list="dl-buyers"></div>
-      <div class="fld"><label>Quote Date</label><input type="date" id="qf-dt"></div>
-      <div class="fld"><label>Valid Until</label><input type="date" id="qf-valid"></div>
-      <div class="fld"><label>Freight Mode</label>
-        <select id="qf-mode" onchange="calcQte()">
-          <option value="LCL">LCL</option>
-          <option value="FCL 20GP">FCL 20GP</option>
-          <option value="FCL 40HQ">FCL 40HQ</option>
-        </select>
+    <div class="mb" style="overflow-y:auto;flex:1;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px;">
+        <div class="fld"><label>Quote #</label><input type="text" id="qf-num" readonly style="background:#f8f8f8;font-family:'DM Mono',monospace;"></div>
+        <div class="fld"><label>Client / Buyer</label><input type="text" id="qf-client" placeholder="Buyer name" list="dl-buyers"></div>
+        <div class="fld"><label>Quote Date</label><input type="date" id="qf-dt"></div>
+        <div class="fld"><label>Valid Until</label><input type="date" id="qf-valid"></div>
+        <div class="fld"><label>Freight Mode</label>
+          <select id="qf-mode" onchange="calcQte()">
+            <option value="LCL">LCL</option>
+            <option value="FCL 20GP">FCL 20GP</option>
+            <option value="FCL 40HQ">FCL 40HQ</option>
+          </select>
+        </div>
+        <div class="fld"><label>Markup %</label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
+        <div class="fld"><label>Currency</label>
+          <select id="qf-cur">
+            <option value="USD">USD</option><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="BBD">BBD</option>
+          </select>
+        </div>
+        <div class="fld"><label>Status</label>
+          <select id="qf-st">
+            <option value="Draft">Draft</option><option value="Sent">Sent</option>
+            <option value="Accepted">Accepted</option><option value="Declined">Declined</option><option value="Expired">Expired</option>
+          </select>
+        </div>
       </div>
-      <div class="fld"><label>Markup %</label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
-      <div class="fld"><label>Currency</label>
-        <select id="qf-cur">
-          <option value="USD">USD</option><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="BBD">BBD</option>
-        </select>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:.08em;color:var(--cr);margin-bottom:6px;">LINE ITEMS</div>
+      <div id="qt-lines" style="overflow-x:auto;margin-bottom:8px;"></div>
+      <button class="btn btn-g" style="font-size:.5rem;padding:3px 10px;margin-bottom:14px;" onclick="addQteLine()">+ Add Line</button>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;background:#f8f8f8;padding:12px;margin-bottom:12px;font-size:.56rem;">
+        <div><div style="color:var(--m);margin-bottom:2px;">Origin Charges</div><div id="qt-orig" style="font-weight:600;">-</div></div>
+        <div><div style="color:var(--m);margin-bottom:2px;">Dest Charges</div><div id="qt-dest" style="font-weight:600;">-</div></div>
+        <div><div style="color:var(--m);margin-bottom:2px;">FPM Admin</div><div id="qt-adm" style="font-weight:600;">-</div></div>
+        <div><div style="color:var(--m);margin-bottom:2px;">Total Landed</div><div id="qt-landed" style="font-weight:600;">-</div></div>
+        <div><div style="color:var(--m);margin-bottom:2px;">Markup</div><div id="qt-mkp-disp" style="font-weight:600;color:var(--gold);">-</div></div>
+        <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (USD)</div><div id="qt-sell-usd" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
+        <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (GBP)</div><div id="qt-sell-gbp" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
       </div>
-      <div class="fld"><label>Status</label>
-        <select id="qf-st">
-          <option value="Draft">Draft</option><option value="Sent">Sent</option>
-          <option value="Accepted">Accepted</option><option value="Declined">Declined</option><option value="Expired">Expired</option>
-        </select>
+      <div class="fld" style="margin-bottom:12px;"><label>Notes</label>
+        <textarea id="qf-nt" placeholder="Special conditions, scope, exclusions..." rows="2"></textarea>
       </div>
-    </div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:.08em;color:var(--cr);margin-bottom:6px;">LINE ITEMS</div>
-    <div id="qt-lines" style="overflow-x:auto;margin-bottom:8px;"></div>
-    <button class="btn btn-g" style="font-size:.5rem;padding:3px 10px;margin-bottom:14px;" onclick="addQteLine()">+ Add Line</button>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:#f8f8f8;padding:12px;margin-bottom:12px;font-size:.56rem;">
-      <div><div style="color:var(--m);margin-bottom:2px;">Origin Charges</div><div id="qt-orig" style="font-weight:600;">-</div></div>
-      <div><div style="color:var(--m);margin-bottom:2px;">Dest Charges</div><div id="qt-dest" style="font-weight:600;">-</div></div>
-      <div><div style="color:var(--m);margin-bottom:2px;">FPM Admin</div><div id="qt-adm" style="font-weight:600;">-</div></div>
-      <div><div style="color:var(--m);margin-bottom:2px;">Total Landed</div><div id="qt-landed" style="font-weight:600;">-</div></div>
-      <div><div style="color:var(--m);margin-bottom:2px;">Markup</div><div id="qt-mkp-disp" style="font-weight:600;color:var(--gold);">-</div></div>
-      <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (USD)</div><div id="qt-sell-usd" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
-      <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (GBP)</div><div id="qt-sell-gbp" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
-      <div></div>
-    </div>
-    <div class="fld" style="margin-bottom:12px;"><label>Notes</label>
-      <textarea id="qf-nt" placeholder="Special conditions, scope, exclusions..." rows="2"></textarea>
-    </div>
-    <div id="qt-verr" style="font-size:.54rem;color:var(--cr);margin-bottom:8px;min-height:16px;"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button class="btn btn-g" onclick="closeM('ov-qt')">Cancel</button>
-      <button class="btn btn-g" id="qt-prev-btn" onclick="prevQteId()" style="display:none;">&#128438; Preview</button>
-      <button class="btn btn-g" id="qt-po-btn" onclick="qteToPoConvert()" style="display:none;border-color:var(--gold);color:var(--gold);">Convert to PO</button>
-      <button class="btn btn-s" onclick="saveQte()">Save Quote</button>
+      <div id="qt-verr" style="font-size:.54rem;color:var(--cr);margin-bottom:8px;min-height:16px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="closeM('ov-qt')">Cancel</button>
+        <button class="btn btn-g" id="qt-prev-btn" onclick="prevQteId()" style="display:none;">&#128438; Preview</button>
+        <button class="btn btn-g" id="qt-po-btn" onclick="qteToPoConvert()" style="display:none;border-color:var(--gold);color:var(--gold);">Convert to PO</button>
+        <button class="btn btn-s" onclick="saveQte()">Save Quote</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3958,56 +3959,99 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal.',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.6).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
+  '- Manages the full trade cycle: Suppliers → Quotes → Purchase Orders → Invoices → Payments → Shipments',
   '- Raises buyer-facing invoices (USD) with line items, charges, and tax',
-  '- Tracks payments and auto-flips invoice statuses (Draft → Paid)',
-  '- Generates purchase orders to suppliers, grouped by supplier from invoice line items',
+  '- Tracks payments and auto-flips invoice statuses',
+  '- Generates landed cost quotes with freight, duty, DG surcharge, insurance, and FX calculations',
+  '- Generates purchase orders to suppliers from invoice line items or quotes',
   '- Calculates gross profit, net profit, and margin per invoice',
+  '- Exports data to accounting platforms (Xero, QuickBooks, FreeAgent) and generic CSV/JSON',
   '- Syncs all data to Google Sheets on demand via Apps Script',
-  '- Generates invoice preview / PDF documents via browser print',
-  '- Raises credit notes against existing invoices',
+  '- Generates invoice, PO, and quote preview / PDF documents via browser print',
   '',
   '## Data Entry Sequence — CRITICAL',
-  'Always follow this order: Suppliers → Line Items → Invoices → Purchase Orders → Payments.',
-  'Line items need a supplier. Invoices use line items from the library. POs are auto-generated from invoices.',
+  'Always follow this order: Suppliers → Line Items → Quotes → Purchase Orders → Invoices → Payments → Shipments.',
+  'Line items need a supplier. Quotes use suppliers and line items. Invoices use line items from the library. POs are auto-generated from invoices or converted from quotes.',
   'Skipping steps causes missing COGS data, broken P&L, and incomplete PO generation.',
   '',
   '## Suppliers',
-  'Suppliers tab → + New Supplier. Fields: Name, Country, Currency (CNY for most Chinese suppliers — used on POs), Contact, Email, Phone/WeChat, Payment Terms, Notes.',
+  'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes.',
   '',
   '## Line Items (Product Catalogue)',
-  'Line Items tab → + New Line Item. Fields: SKU, Description, UOM, Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code, Supplier link.',
+  'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency.',
   'Rule: wrong unit cost or price corrupts profit calculations on every invoice using that product.',
+  '',
+  '## Quotes',
+  'Quotes tab → + New Quote. Format: QTE-001, QTE-002 etc.',
+  'Header fields: Client, Date, Valid Until, Freight Mode (LCL / FCL 20GP / FCL 40HQ), Markup %, Currency, Status (Draft / Sent / Accepted / Declined / Expired).',
+  'Line items: Product description, Supplier (from catalogue), Qty, UOM, Unit Cost, CBM, DG flag (Y/N), Duty %.',
+  'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX. Override rates per quote if needed.',
+  'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
+  'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
+  'Convert to PO: when a quote is Accepted, click Convert to PO to create a linked PO. The Quote ID is stored on the PO for traceability.',
+  'Print preview: click 👁 on any quote row to open a formatted quote document in a new tab.',
+  '',
+  '## Rates & FX (Settings)',
+  'Settings → Rates & FX. Configure: GBP/USD rate, GBP/RMB rate, GBP/BBD rate, LCL rate per CBM, FCL 20GP rate, FCL 40HQ rate, Origin charges, Destination charges, DG surcharge per line, Insurance rate (% of CIF), FPM admin fee. These defaults populate new quotes but can be overridden per quote.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
-  '1. Invoice #, Buyer, Address, Destination, Date, Currency, Status',
-  '2. Shipping: Freight Type, Port of Loading, Port of Discharge, Country of Origin',
+  '1. Invoice #, Buyer, Address, Destination (country lookup), Date, Currency, Status',
+  '2. Shipping: Freight Type, Port of Loading (UN/LOCODE lookup), Port of Discharge (UN/LOCODE lookup), Country of Origin (country lookup), Incoterm (Incoterms 2020 select — required), Payment Terms (controlled lookup — required)',
   '3. Line Items: use Import from Library (preferred — pulls correct COGS) or quick-add form (no COGS link)',
   '4. Charges: Local Freight, Insurance, Tax Rate (0% for zero-rated exports)',
   '5. Click Save Invoice — line items are NOT saved automatically. Always save before closing the modal.',
   'Statuses: Draft → Pro-forma → Sent → Partially Paid → Paid → Cancelled. CN Draft / CN Issued / CN Applied for credit notes.',
-  'PO status: Draft → Sent → Confirmed → In Production → Shipped → Completed.',
   '',
   '## Purchase Orders',
-  'Auto-generated from invoice line items on save, grouped by supplier. Only works when line items were added via Import from Library. Review and edit in Purchase Orders tab.',
+  'Auto-generated from invoice line items on save, grouped by supplier. Also created via Convert to PO from an Accepted quote. Only works when line items were added via Import from Library. Review and edit in Purchase Orders tab.',
+  'PO status: Draft → Sent → Confirmed → In Production → Shipped → Completed.',
+  'Payment Terms field available on PO (optional).',
   '',
   '## Payments',
   'Invoices tab → click $ on invoice row. Enter: Date, Amount, Method, Reference, Notes → Save Payment.',
   'Status auto-flips: fully settled = Paid, partial = Partially Paid.',
-  'FPM deposit recovery: when invoice is marked Paid, the system auto-records a deposit recovery entry for the Net Cash Position KPI.',
+  '',
+  '## Accounting Export',
+  'Invoices tab → ↓ Accounting Export button. Payments tab → ↓ Export button.',
+  'On click: modal shows entity selector, format options, and a pre-export quality check.',
+  'Quality check warns (does not block) on: missing Incoterm, missing Payment Terms, zero-value lines, invoices with no associated payment.',
+  'Export formats:',
+  '- Generic CSV — flat CSV of invoices or payments, universal format',
+  '- Generic JSON — structured JSON mirroring the internal data model',
+  '- Xero CSV — reshapes invoice export to Xero invoice import template',
+  '- QuickBooks CSV — reshapes to QuickBooks Online invoice import format',
+  '- FreeAgent CSV — reshapes payments to FreeAgent bill format',
+  'All exports are download-only to your device. No data is transmitted externally.',
+  'Field mapping reference for all platforms is available in Settings → Accounting Export.',
+  '',
+  '## Reference Data',
+  'All key fields use controlled lookups — not freehand text. This ensures data quality and prevents errors.',
+  '- Countries: 67 curated ISO entries, Caribbean and West Africa priority flagged',
+  '- Currencies: 25 ISO 4217 currencies',
+  '- Units of measure: 13 standard UOMs',
+  '- Incoterms: all 11 Incoterms 2020',
+  '- Payment Terms: standard trade payment terms',
+  '- Port codes: 48+ curated UN/LOCODE entries (Caribbean, West Africa, China, UK). Add custom ports in Settings → Reference Data → Ports → Custom Ports.',
+  '- HS Codes: searchable by 2-digit chapter number or keyword',
   '',
   '## Dashboard KPIs',
   '- Invoice Revenue: sum of grand totals (non-cancelled invoices)',
-  '- Net Profit: grand total minus COGS minus tax per invoice. Tax is a buyer pass-through to HMRC — never Stackd income.',
+  '- Net Profit: grand total minus COGS minus tax per invoice',
   '- Avg Margin: net profit ÷ revenue × 100',
   '- Outstanding: balance due on unpaid / partially paid invoices',
   '- PO Balance Due: outstanding on active POs',
   '- Net Cash Position: buyer deposits received minus supplier deposits paid',
+  '- In Transit: count of shipments with status = In Transit',
+  '- Storage Health: localStorage usage as % of 5MB browser quota',
   'If KPIs look wrong: Settings → Data → ⚙ Repair invoice totals.',
+  '',
+  '## Validation',
+  'All forms validate on submit and on blur (when you leave a field). Required fields are enforced — the form cannot save with missing required data. Errors show inline in red below the relevant field with a specific message. Valid fields show a green border after interaction. Duplicate reference numbers are blocked across all entities.',
   '',
   '## Credit Notes',
   'Invoices tab → click CN on the invoice to credit. Pre-fills CN number, linked invoice, buyer, currency. Fill Credit Reason and Credit Amount → Save.',
@@ -4016,67 +4060,54 @@ var AI_SYSTEM_PROMPT = [
   '## Tax Treatment',
   '- China → Caribbean / West Africa: 0% (zero-rated export)',
   '- China → UK / Europe: 0% default; 20% if buyer is UK VAT-registered',
-  '- USA → Barbados (Reolink pattern): taxRate = 0. Unit cost includes US sales tax. Invoice total entered manually. Zero margin is correct for pass-through transactions.',
+  '- USA → Barbados (Reolink pattern): taxRate = 0. Unit cost includes US sales tax. Zero margin is correct for pass-through transactions.',
   'Tax is always a buyer pass-through — never Stackd income.',
+  '',
+  '## Shipments',
+  'Shipments tab → + New Shipment. Ref format: SHP-001.',
+  'Fields: BL Number, Vessel, Carrier, Origin Port (UN/LOCODE lookup), Destination Port (UN/LOCODE lookup), ETD, ETA, Container Type (20GP / 40HQ / LCL / Other), Container Number, DG Onboard, Docs Status (Pending / In Progress / Complete), Status, Linked Invoices, Notes.',
+  'Status flow: Pending → Booked → In Transit → Arrived → Delivered.',
+  'DG Onboard: tick if any product is classified as Dangerous Goods (e.g. refrigerants, batteries). Triggers IMDG compliance requirements.',
   '',
   '## Google Sheets Sync',
   'Settings → Google Sheets. Paste Apps Script URL → Save & Connect.',
   'SAFE WORKFLOW: make changes locally → ⚙ Repair → Push All.',
-  'DO NOT enable auto-sync — can corrupt calc fields via stale Sheets pulls.',
-  'DO NOT Pull unless recovering data. Always run ⚙ Repair immediately after any Pull.',
+  'DO NOT enable auto-sync. DO NOT Pull unless recovering data. Always run ⚙ Repair immediately after any Pull.',
+  '',
+  '## Data Backup & Restore',
+  'Settings → Data → Backup All JSON: downloads a full snapshot of all entities to your device. Restore from JSON: uploads a previous backup and restores all data. Run backups regularly — all data is stored in your browser\'s localStorage and will be lost if you clear browser data.',
+  'Storage health indicator on Dashboard shows current localStorage usage. Export your data if it approaches 85%.',
   '',
   '## Data Repair',
   'Settings → Data → ⚙ Repair invoice totals. Run after every Sheets pull, when KPIs look wrong, or after clearing browser cache.',
-  'Known invoices restored: INV10028 ($31,055.80), INV10029 ($957.08 Reolink, 7% tax, fully paid), INV10030 ($14,180), INV10031 ($7,248.24).',
   '',
   '## Known Quirks',
   '1. Always click Save Invoice before closing the modal — line items are lost if you close without saving.',
   '2. Import from Library is preferred over quick-add — quick-add has no COGS link, breaks profit tracking.',
   '3. Do not enable auto-sync.',
-  '4. Run Repair after every Pull.',
+  '4. Run Repair after every Sheets pull.',
   '5. Do not use both the Local Freight charge field AND a local freight line item — double-counts charges.',
   '6. Add product to Line Items catalogue before using Import from Library.',
+  '7. Rates in Settings → Rates & FX override the default freight rate estimates — always configure these before creating quotes.',
   '',
   '## Troubleshooting',
   '- Dashboard KPIs wrong → Settings → ⚙ Repair invoice totals',
-  '- Invoice total shows a small wrong number → calc_grandTotal corrupted → ⚙ Repair',
-  '- Net profit massively wrong → COGS is 0, no library line item links → run Repair, add line items via Import from Library',
+  '- Quote landed cost looks wrong → check Settings → Rates & FX — rates may not be configured',
+  '- Price history not showing → price versioning only triggers when cost, duty %, or markup % changes on save',
+  '- Accounting export quality check warnings → review flagged invoices for missing Incoterm or Payment Terms before exporting',
   '- Line items missing after reopening → closed modal without saving OR Sheets pull overwrote lineItems → re-add items, Save Invoice, Push All',
+  '- Storage health red (≥85%) → export JSON backup immediately, consider clearing old data',
   '- Sync button shows error → invalid or expired Apps Script URL → Settings → verify URL, redeploy Apps Script',
-  '- Wrong deposit on invoice → payments from a renamed invoice → open $ → delete incorrect entries → re-add correct payment',
   '- Credit note not reducing balance → CN status must be CN Applied',
-  '',
-  '## Invoice Preview / PDF',
-  'Click 👁 PDF on any invoice row. New tab opens with formatted document. Use Ctrl+P / Cmd+P to save as PDF.',
-  'Bank details must be set in Settings → Company before sending to buyers.',
   '',
   '## Settings',
   'Company card: Name, Tagline, Address, Email, Phone, Website, Bank/Payment Details (printed on invoices), Default Invoice Terms.',
+  'Rates & FX card: all freight rate parameters and FX rates for quote engine.',
+  'Accounting Export card: field mapping reference for Xero, QuickBooks, and FreeAgent.',
+  'Reference Data card: browse all controlled lookup tables. Add custom ports.',
   'Google Sheets card: Apps Script URL, Secret Token.',
-  'Sync Options: auto-sync (keep off), Pull on load (keep off).',
-  'Data: Export CSV, Clear local data, ⚙ Repair invoice totals.',
-  'AI Assistant: Claude API Key (stored locally in browser, used only to call the Anthropic API).',
-  '',
-  '## Shipments Entity',
-  'Shipments is the sixth entity in Stackd Ops (Shipments tab). It tracks physical cargo movements. One shipment can link to multiple invoices via the Linked Invoices field.',
-  'Fields: Shipment Ref (e.g. SHP-001), BL Number (Bill of Lading e.g. MEDUWA872896), Vessel (e.g. MSC Mara), Carrier (e.g. MSC, OOCL), Origin Port, Destination Port, ETD (estimated departure date), ETA (estimated arrival date), Container Type (20GP / 40HQ / LCL / Other), Container Number (e.g. MSCU1234567), DG Onboard (checkbox — Dangerous Goods), Docs Status (Pending / In Progress / Complete), Status (Pending / Booked / In Transit / Arrived / Delivered), Linked Invoices (comma-separated invoice numbers e.g. INV10030, INV10031), Notes.',
-  'Shipments sync to Google Sheets alongside the other four entities. The Dashboard In Transit KPI counts shipments with status = In Transit.',
-  '',
-  '## Shipment Status Flow',
-  'Pending → Booked → In Transit → Arrived → Delivered.',
-  'In Transit = goods are on the water.',
-  'Arrived = at destination port, not yet cleared customs.',
-  'Delivered = cleared customs and delivered to buyer.',
-  '',
-  '## DG (Dangerous Goods)',
-  'DG = Dangerous Goods. If any product on the shipment is classified as DG (e.g. refrigerants, batteries), tick DG Onboard. This triggers IMDG compliance requirements.',
-  'The freight cost includes a DG surcharge of $250 per DG commodity line.',
-  'Examples: R404A refrigerant = IMDG Class 2.2. Lead-acid batteries = IMDG Class 8.',
-  '',
-  '## FPM Freight Rates',
-  'FCL 20GP: $1,800/container. FCL 40HQ: $2,800/container. LCL: $65/CBM.',
-  'DG surcharge: $250/line. Origin charges (Qingdao): $180. Destination charges (Bridgetown): $220.',
-  'Insurance: 0.5% of CIF value. FPM admin fee: $350/order.'
+  'Data: Export CSV, Backup All JSON, Restore from JSON, ⚙ Repair invoice totals, Clear local data.',
+  'AI Assistant: Claude API Key (stored locally in browser only).'
 ].join('\n');
 
 function saveAIKey() {
