@@ -1238,6 +1238,73 @@ test('invoiceRefs — stale-ref removal only removes current invoice ref, preser
   assertEqual(forB.length, 1, 'inv-B ref preserved');
 });
 
+// ── buildInvLines — Sheets Line Items tab ──────────────────────
+console.log('\nbuildInvLines — Sheets Line Items tab');
+
+test('buildInvLines — one row per line item across invoices', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV10100', buyer:'ACME', date:'2026-05-01', cur:'USD', type:'invoice',
+    lineItems:[
+      { rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:3, up:50 },
+      { rid:'r2', lid:'', desc:'Gadget', uom:'kg',  qty:2, up:80 }
+    ] });
+  ctx.DB.inv.push({ id:'i2', num:'INV10101', buyer:'Bob',  date:'2026-05-02', cur:'GBP', type:'invoice',
+    lineItems:[
+      { rid:'r3', lid:'', desc:'Part',   uom:'pcs', qty:10, up:5 }
+    ] });
+  var rows = ctx.buildInvLines();
+  assertEqual(rows.length, 3, 'three rows total across two invoices');
+  assertEqual(rows[0].invNum, 'INV10100', 'first row invoice number');
+  assertEqual(rows[2].invNum, 'INV10101', 'third row second invoice');
+});
+
+test('buildInvLines — row fields match spec columns', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', sku:'WGT-01', desc:'Widget', cost:30, price:50, cur:'USD', uom:'pcs', supId:'', priceHistory:[] });
+  ctx.DB.inv.push({ id:'i1', num:'INV10102', buyer:'ACME', date:'2026-05-03', cur:'USD', type:'invoice',
+    lineItems:[{ rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:4, up:50 }] });
+  var row = ctx.buildInvLines()[0];
+  assertEqual(row.invNum,    'INV10102', 'invNum');
+  assertEqual(row.buyer,     'ACME',     'buyer');
+  assertEqual(row.date,      '2026-05-03', 'date');
+  assertEqual(row.sku,       'WGT-01',   'sku from library');
+  assertEqual(row.desc,      'Widget',   'desc');
+  assertEqual(row.qty,       4,          'qty');
+  assertEqual(row.uom,       'pcs',      'uom');
+  assertEqual(row.unitCost,  30,         'unitCost from library');
+  assertEqual(row.unitPrice, 50,         'unitPrice');
+  assertEqual(row.lineTotal, 200,        'lineTotal = 4 * 50');
+  assertEqual(row.currency,  'USD',      'currency');
+});
+
+test('buildInvLines — quick-add lines (no lid) have empty sku and unitCost', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV10103', buyer:'Bob', date:'2026-05-04', cur:'USD', type:'invoice',
+    lineItems:[{ rid:'r1', lid:'', desc:'Custom item', uom:'pcs', qty:1, up:100 }] });
+  var row = ctx.buildInvLines()[0];
+  assertEqual(row.sku,      '', 'sku empty for quick-add line');
+  assertEqual(row.unitCost, '', 'unitCost empty for quick-add line');
+  assertEqual(row.lineTotal, 100, 'lineTotal still calculated');
+});
+
+test('buildInvLines — credit notes and goodwill credits are excluded', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'cn1', num:'CN10100', type:'credit_note', cnAmount:-200, lineItems:[], buyer:'ACME', date:'2026-05-01', cur:'USD' });
+  ctx.DB.inv.push({ id:'gw1', num:'CN10101', type:'goodwill_credit', cnAmount:-100, lineItems:[], buyer:'Bob', date:'2026-05-02', cur:'USD' });
+  ctx.DB.inv.push({ id:'i1',  num:'INV10104', type:'invoice', buyer:'Corp', date:'2026-05-03', cur:'USD',
+    lineItems:[{ rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:1, up:50 }] });
+  var rows = ctx.buildInvLines();
+  assertEqual(rows.length, 1, 'only invoice line items included; CNs skipped');
+  assertEqual(rows[0].invNum, 'INV10104', 'only the regular invoice row present');
+});
+
+test('buildInvLines — invoice with no line items contributes zero rows', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV10105', buyer:'ACME', date:'2026-05-01', cur:'USD', type:'invoice', lineItems:[] });
+  var rows = ctx.buildInvLines();
+  assertEqual(rows.length, 0, 'no rows for invoice with empty lineItems');
+});
+
 // ── Credit Note System (v2.9.8) ────────────────────────────────
 console.log('\nCredit Note System (v2.9.8)');
 
