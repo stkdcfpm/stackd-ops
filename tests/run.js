@@ -1238,6 +1238,167 @@ test('invoiceRefs — stale-ref removal only removes current invoice ref, preser
   assertEqual(forB.length, 1, 'inv-B ref preserved');
 });
 
+// ── Credit Note System (v2.9.8) ────────────────────────────────
+console.log('\nCredit Note System (v2.9.8)');
+
+function setupCNForm(cnNum, linkedInvNum, amount, goodwill) {
+  mockEl('if-n').value = cnNum || 'CN10080';
+  mockEl('if-b').value = 'Test Buyer';
+  ['if-ba','if-st','if-dst','if-cid','if-ex','if-sd','if-ft','if-wt','if-cbm','if-pk','if-pol','if-pod','if-coo'].forEach(function(f){ mockEl(f).value=''; });
+  mockEl('if-dt').value = '2026-05-01';
+  mockEl('if-cur').value = 'USD'; mockEl('if-tx').value = '0';
+  ['if-lf','if-ins','if-leg','if-isp','if-oth','if-dep'].forEach(function(f){ mockEl(f).value='0'; });
+  mockEl('if-inco').value = ''; mockEl('if-pt').value = '';
+  mockEl('if-terms').value = ''; mockEl('if-chi').checked = true;
+  mockEl('inv-sm').value = 'CN Draft';
+  mockEl('if-linked').value = linkedInvNum || '';
+  mockEl('if-cn-reason').value = 'Test credit reason';
+  mockEl('if-cn-amount').value = String(amount || 0);
+  mockEl('if-cn-goodwill').checked = !!goodwill;
+}
+
+test('vInv — CN bypasses line-item/incoterm/pt validation when cn-amount > 0', function() {
+  resetDB();
+  ctx.EI.i = null; ctx.cIL = [];
+  setupCNForm('CN10080', 'INV10080', 250, false);
+  var result = ctx.vInv();
+  assert(result, 'vInv returns true for valid standard CN with cn-amount > 0');
+});
+
+test('vInv — CN fails validation when cn-amount is 0', function() {
+  resetDB();
+  ctx.EI.i = null; ctx.cIL = [];
+  setupCNForm('CN10081', 'INV10081', 0, false);
+  var result = ctx.vInv();
+  assert(result === false, 'vInv returns false when cn-amount is 0');
+});
+
+test('prevInvId — credit_note routes to prevCNDoc', function() {
+  resetDB();
+  var called = '';
+  var origCN = ctx.prevCNDoc, origInv = ctx.prevInvDoc;
+  ctx.prevCNDoc = function(){ called = 'CN'; };
+  ctx.prevInvDoc = function(){ called = 'Inv'; };
+  ctx.DB.inv.push({ id:'cn-r1', num:'CN10082', type:'credit_note', cnAmount:-200, cur:'USD' });
+  ctx.prevInvId('cn-r1');
+  ctx.prevCNDoc = origCN; ctx.prevInvDoc = origInv;
+  assertEqual(called, 'CN', 'credit_note routes to prevCNDoc');
+});
+
+test('prevInvId — goodwill_credit routes to prevCNDoc', function() {
+  resetDB();
+  var called = '';
+  var origCN = ctx.prevCNDoc, origInv = ctx.prevInvDoc;
+  ctx.prevCNDoc = function(){ called = 'CN'; };
+  ctx.prevInvDoc = function(){ called = 'Inv'; };
+  ctx.DB.inv.push({ id:'gw-r1', num:'CN10083', type:'goodwill_credit', cnAmount:-100, cur:'USD' });
+  ctx.prevInvId('gw-r1');
+  ctx.prevCNDoc = origCN; ctx.prevInvDoc = origInv;
+  assertEqual(called, 'CN', 'goodwill_credit routes to prevCNDoc');
+});
+
+test('prevInvId — invoice routes to prevInvDoc not prevCNDoc', function() {
+  resetDB();
+  var called = '';
+  var origCN = ctx.prevCNDoc, origInv = ctx.prevInvDoc;
+  ctx.prevCNDoc = function(){ called = 'CN'; };
+  ctx.prevInvDoc = function(){ called = 'Inv'; };
+  ctx.DB.inv.push({ id:'inv-r1', num:'INV10082', type:'invoice', lineItems:[], taxRate:0 });
+  ctx.prevInvId('inv-r1');
+  ctx.prevCNDoc = origCN; ctx.prevInvDoc = origInv;
+  assertEqual(called, 'Inv', 'invoice routes to prevInvDoc');
+});
+
+test('prevCNDoc — HTML title says Credit Note and amount not in parentheses', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevCNDoc({ num:'CN10084', type:'credit_note', cnAmount:-350, cur:'USD', buyer:'ACME', buyerAddr:'', date:'2026-05-01', status:'CN Draft', cnReason:'Pricing error', linkedInvNum:'INV10084', linkedInvId:'' });
+  var html = getHtml();
+  assertContains(html, 'Credit Note', 'prevCNDoc title contains Credit Note');
+  assert(!html.includes('($'), 'amount not wrapped in accounting parentheses');
+});
+
+test('prevCNDoc — goodwill badge shows GOODWILL CREDIT', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevCNDoc({ num:'CN10085', type:'goodwill_credit', cnAmount:-200, cur:'USD', buyer:'ACME', buyerAddr:'', date:'2026-05-01', status:'CN Draft', cnReason:'Thank you gesture', linkedInvNum:'', linkedInvId:'' });
+  var html = getHtml();
+  assertContains(html, 'GOODWILL CREDIT', 'goodwill badge present');
+  assert(!html.includes('CREDIT NOTE'), 'CREDIT NOTE badge absent for goodwill type');
+});
+
+test('prevCNDoc — goodwill has no Against Invoice row', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevCNDoc({ num:'CN10086', type:'goodwill_credit', cnAmount:-100, cur:'USD', buyer:'ACME', buyerAddr:'', date:'2026-05-01', status:'CN Draft', cnReason:'Apology', linkedInvNum:'', linkedInvId:'' });
+  var html = getHtml();
+  assert(!html.includes('Against Invoice'), 'no Against Invoice row for goodwill credit');
+});
+
+test('cInv — applied CN reduces linked invoice balance', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'inv-b1', num:'INV10087', type:'invoice', lineItems:[{qty:2,up:500}], taxRate:0, dep:0 });
+  ctx.DB.inv.push({ id:'cn-b1', num:'CN10087', type:'credit_note', linkedInvId:'inv-b1', linkedInvNum:'INV10087', cnAmount:-200, status:'CN Applied' });
+  var c = ctx.cInv(ctx.DB.inv.find(function(i){ return i.id==='inv-b1'; }));
+  assertEqual(c.grand, 1000, 'grand = 2 * 500 = 1000');
+  assertEqual(c.bal,    800, 'balance = 1000 - 0 - 200 = 800');
+});
+
+test('cInv — applied CN case-insensitive linkedInvNum match', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'inv-b2', num:'INV10088', type:'invoice', lineItems:[{qty:1,up:600}], taxRate:0, dep:0 });
+  ctx.DB.inv.push({ id:'cn-b2', num:'CN10088', type:'credit_note', linkedInvNum:'inv10088', cnAmount:-150, status:'CN Applied' });
+  var c = ctx.cInv(ctx.DB.inv.find(function(i){ return i.id==='inv-b2'; }));
+  assertEqual(c.bal, 450, 'case-insensitive match: 600 - 150 = 450');
+});
+
+test('cInv — legacy CN without type field reduces balance via isCN(num)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'inv-b3', num:'INV10089', type:'invoice', lineItems:[{qty:1,up:1000}], taxRate:0, dep:0 });
+  ctx.DB.inv.push({ id:'cn-b3', num:'CN10089', linkedInvNum:'INV10089', cnAmount:-100, status:'CN Applied' });
+  var c = ctx.cInv(ctx.DB.inv.find(function(i){ return i.id==='inv-b3'; }));
+  assertEqual(c.bal, 900, 'legacy CN without type: 1000 - 100 = 900');
+});
+
+test('cInv — multiple applied CNs summed and deducted', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'inv-b4', num:'INV10090', type:'invoice', lineItems:[{qty:1,up:1000}], taxRate:0, dep:0 });
+  ctx.DB.inv.push({ id:'cn-b4a', num:'CN10090a', type:'credit_note', linkedInvNum:'INV10090', cnAmount:-200, status:'CN Applied' });
+  ctx.DB.inv.push({ id:'cn-b4b', num:'CN10090b', type:'credit_note', linkedInvNum:'INV10090', cnAmount:-150, status:'CN Applied' });
+  var c = ctx.cInv(ctx.DB.inv.find(function(i){ return i.id==='inv-b4'; }));
+  assertEqual(c.bal, 650, 'two CNs applied: 1000 - 200 - 150 = 650');
+});
+
+test('cInv — goodwill_credit early return uses cnAmount', function() {
+  resetDB();
+  var gw = { id:'gw1', num:'CN10091', type:'goodwill_credit', cnAmount:-300, lineItems:[], taxRate:0, dep:0 };
+  var c = ctx.cInv(gw);
+  assertEqual(c.grand, -300, 'goodwill grand = cnAmount (-300)');
+  assertEqual(c.bal,   -300, 'goodwill bal = cnAmount (-300)');
+});
+
+test('saveInv — goodwill credit saves with type goodwill_credit', function() {
+  resetDB();
+  ctx.EI.i = null; ctx.cIL = [];
+  setupCNForm('CN10092', '', 300, true);
+  ctx.saveInv();
+  var cn = ctx.DB.inv.find(function(i){ return i.num==='CN10092'; });
+  assert(cn, 'goodwill credit record saved');
+  assertEqual(cn.type, 'goodwill_credit', 'type is goodwill_credit');
+  assertEqual(cn.cnAmount, -300, 'cnAmount stored as negative');
+});
+
+test('saveInv — goodwill credit adds negative payments ledger entry', function() {
+  resetDB();
+  ctx.EI.i = null; ctx.cIL = [];
+  setupCNForm('CN10093', '', 400, true);
+  ctx.saveInv();
+  var cn = ctx.DB.inv.find(function(i){ return i.num==='CN10093'; });
+  var pmt = ctx.DB.payments.find(function(p){ return p.invId===cn.id && p.method==='Goodwill Credit'; });
+  assert(pmt, 'goodwill payment ledger entry created');
+  assertEqual(pmt.amount, -400, 'payment amount is -400');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
