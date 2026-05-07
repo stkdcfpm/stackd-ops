@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.9.7</title>
+<title>Stackd Ops v2.9.8</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -662,6 +662,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <div class="fld" id="fld-linked-inv" style="display:none;"><label style="color:var(--cr);">Credits Invoice #</label><input type="text" id="if-linked" placeholder="e.g. INV10029" style="border-bottom-color:var(--cr);"></div>
           <div class="fld" id="fld-cn-reason" style="display:none;"><label style="color:var(--cr);">Credit Reason</label><input type="text" id="if-cn-reason" placeholder="e.g. Pricing correction — agreed with buyer"></div>
           <div class="fld" id="fld-cn-amount" style="display:none;"><label style="color:var(--cr);">Credit Amount</label><input type="number" id="if-cn-amount" placeholder="0.00" step="0.01" style="border-bottom-color:var(--cr);background:rgba(184,40,58,.05);"></div>
+          <div class="fld" id="fld-cn-goodwill" style="display:none;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="if-cn-goodwill" onchange="onGoodwillChg(this.checked)" style="flex-shrink:0;"> <span style="color:var(--cr);">Goodwill credit — not linked to a specific invoice</span></label></div>
           <div class="fld"><label>Date</label><input type="date" id="if-dt"></div>
           <div class="fld"><label>Expiry / Due Date</label><input type="date" id="if-ex"></div>
           <div class="fld"><label>Customer ID</label><input type="text" id="if-cid"></div>
@@ -771,14 +772,27 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.7</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.8</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
-          <li>Fix: Sheets sync guard — prevents pull from silently wiping invoice/PO line items when remote copy arrives empty (REQ-SYN-001)</li>
-          <li>New: Invoice→library refs index — library items now track which invoices they appear on; picker shows green tick for items already on the current invoice; list view shows usage count (REQ-LIB-001)</li>
-          <li>Fix: PDF preview popups — switched from document.write() to Blob URL for all four preview types; resolves blank popups in modern Chrome on HTTPS</li>
+          <li>Fix: Credit note PDF now opens correct CREDIT NOTE document (was incorrectly rendering as Invoice)</li>
+          <li>Fix: Credit amounts display as negative values (-$450) on PDF and in list; no more accounting parentheses format</li>
+          <li>Fix: CN validation — credit notes can now be saved without line items; incoterm/payment terms not required for CNs</li>
+          <li>Fix: Applied CN balance deduction — case-insensitive invoice number matching; legacy CNs without type field now correctly reduce linked invoice balance</li>
+          <li>New: Goodwill Credit — credit not linked to a specific invoice; creates payments ledger entry; reduces Net Cash Position KPI</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.7</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Sheets sync guard — prevents pull from silently wiping invoice/PO line items when remote copy arrives empty</li>
+          <li>New: Invoice→library refs index — library items track which invoices they appear on; picker shows green tick; list shows usage count</li>
+          <li>Fix: PDF preview popups via Blob URL — resolves blank popups in modern Chrome on HTTPS</li>
         </ul>
       </div>
 
@@ -1906,8 +1920,8 @@ function cInv(inv) {
   var tax = liT * tx;
   var grand = liT + tax + chgs;
 
-  // Fall back to pre-calculated fields from Sheets if no live line items
-  if (inv.type==='credit_note' && inv.cnAmount) {
+  // Credit notes and goodwill credits: use cnAmount directly; no line-item calculation needed
+  if ((inv.type==='credit_note'||inv.type==='goodwill_credit'||(!inv.type&&isCN(inv.num))) && inv.cnAmount) {
     var cAmt=+inv.cnAmount||0;
     return {liT:cAmt,tax:0,taxRate:0,chgs:0,grand:cAmt,dep:0,bal:cAmt,cogs:0,gp:0,np:0,mgn:null};
   }
@@ -1925,7 +1939,9 @@ function cInv(inv) {
   }
 
   var appliedCNs = DB.inv ? DB.inv.filter(function(cn){
-    return cn.type==='credit_note' && (cn.linkedInvId===inv.id||cn.linkedInvNum===inv.num) && cn.status==='CN Applied';
+    var isCnRecord = cn.type==='credit_note' || (!cn.type && isCN(cn.num));
+    var linksThis = cn.linkedInvId===inv.id || (cn.linkedInvNum||'').toUpperCase()===(inv.num||'').toUpperCase();
+    return isCnRecord && linksThis && cn.status==='CN Applied';
   }).reduce(function(s,cn){ return s+Math.abs(+cn.cnAmount||0); },0) : 0;
   var bal = Math.max(0, grand - dep - appliedCNs);
 
@@ -1967,11 +1983,13 @@ function rDash() {
   var mg = ai.map(function(i){ return cInv(i).mgn; }).filter(function(m){ return m !== null; });
   var aM = mg.length ? mg.reduce(function(a,b){ return a+b; }, 0) / mg.length : 0;
 
-  // Net cash: total buyer deposits received minus total supplier deposits paid
+  // Net cash: total buyer deposits received minus total supplier deposits paid minus goodwill credits issued
   var tBuyerDep = ai.reduce(function(s,i){ return s + (+i.dep||0); }, 0);
   var tSupDep = DB.po.filter(function(p){ return p.status!=='Cancelled'; })
     .reduce(function(s,p){ return s + (+p.dep||0); }, 0);
-  var netCash = tBuyerDep - tSupDep;
+  var tGoodwillCredits = DB.inv.filter(function(i){ return i.type==='goodwill_credit' && i.status!=='Cancelled'; })
+    .reduce(function(s,i){ return s + Math.abs(+i.cnAmount||0); }, 0);
+  var netCash = tBuyerDep - tSupDep - tGoodwillCredits;
 
   var inTransit = DB.sh.filter(function(s){ return s.status === 'In Transit'; }).length;
 
@@ -2405,6 +2423,10 @@ function openInv() {
   G('if-dt').value=today(); G('if-ex').value=''; G('if-sd').value='';
   G('if-cur').value='USD'; G('if-tx').value='0'; G('ctx-wrap').style.display='none'; G('if-chi').checked=true;
   G('if-terms').value=AS.terms||'';
+  // Reset CN fields
+  ['if-linked','if-cn-reason','if-cn-amount'].forEach(function(f){var e=G(f);if(e)e.value='';});
+  var gcb=G('if-cn-goodwill'); if(gcb) gcb.checked=false;
+  ['fld-linked-inv','fld-cn-reason','fld-cn-amount','fld-cn-goodwill'].forEach(function(f){var e=G(f);if(e)e.style.display='none';});
   rILT(); calcInv(); G('ov-inv').classList.add('on'); setTimeout(function(){G('if-n').focus();},50);
 }
 function editInv(id) {
@@ -2424,6 +2446,20 @@ function editInv(id) {
   G('if-isp').value=inv.isp||''; G('if-oth').value=inv.oth||''; G('if-dep').value=inv.dep||'';
   G('if-inco').value=inv.incoterm||''; G('if-pt').value=inv.paymentTerms||'';
   G('if-terms').value=inv.terms||AS.terms||''; G('if-chi').checked=inv.chargesIncluded!==false;
+  // Restore CN fields when editing a credit note or goodwill credit
+  var editIsCN = inv.type==='credit_note' || inv.type==='goodwill_credit' || (!inv.type && isCN(inv.num));
+  if (editIsCN) {
+    onInvNumInput(inv.num);
+    var fL=G('if-linked'); if(fL) fL.value=inv.linkedInvNum||'';
+    var fR=G('if-cn-reason'); if(fR) fR.value=inv.cnReason||'';
+    var fA=G('if-cn-amount'); if(fA) fA.value=inv.cnAmount?Math.abs(+inv.cnAmount):'';
+    var gwCb=G('if-cn-goodwill');
+    if(gwCb) { gwCb.checked=inv.type==='goodwill_credit'; onGoodwillChg(gwCb.checked); }
+    G('inv-mt').textContent=inv.type==='goodwill_credit'?'Edit Goodwill Credit':'Edit Credit Note';
+  } else {
+    ['fld-linked-inv','fld-cn-reason','fld-cn-amount','fld-cn-goodwill'].forEach(function(f){var e=G(f);if(e)e.style.display='none';});
+    var gcb=G('if-cn-goodwill'); if(gcb) gcb.checked=false;
+  }
   // Update payments tab badge
   var pmCount = DB.payments.filter(function(p){ return p.invId === inv.id; }).length;
   var pmTab = G('tab-payments');
@@ -2548,7 +2584,7 @@ async function saveInv() {
     incoterm:G('if-inco').value, paymentTerms:G('if-pt').value.trim(),
     terms:G('if-terms').value.trim(), chargesIncluded:G('if-chi').checked, status:G('inv-sm').value,
     lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0}; }), pos:[],
-    type:isCN(G('if-n').value.trim())?'credit_note':'invoice',
+    type:(function(){ if(!isCN(G('if-n').value.trim())) return 'invoice'; return (G('if-cn-goodwill')&&G('if-cn-goodwill').checked)?'goodwill_credit':'credit_note'; })(),
     linkedInvNum:G('if-linked')?G('if-linked').value.trim():'',
     linkedInvId:(function(){ var l=G('if-linked')?G('if-linked').value.trim():''; var r=DB.inv.find(function(i){return i.num===l;}); return r?r.id:''; })(),
     cnReason:G('if-cn-reason')?G('if-cn-reason').value.trim():'',
@@ -2577,6 +2613,12 @@ async function saveInv() {
     }
   }
   else DB.inv.push(inv);
+  // Goodwill credit: maintain a payments ledger entry (remove stale, add current)
+  if (inv.type === 'goodwill_credit' && inv.cnAmount) {
+    DB.payments = DB.payments.filter(function(p){ return !(p.invId===inv.id && p.method==='Goodwill Credit'); });
+    DB.payments.push({ id:uid(), invId:inv.id, invNum:inv.num, amount:+inv.cnAmount||0, method:'Goodwill Credit', ref:inv.num, notes:inv.cnReason||'', date:inv.date||today() });
+    sv(K.pm, DB.payments);
+  }
   // Auto-record price history when invoice price deviates from catalogue price
   var liChanged = false;
   cIL.forEach(function(li) {
@@ -2798,10 +2840,16 @@ async function delPO(id) {
 function prevInv() {
   document.activeElement && document.activeElement.blur && document.activeElement.blur();
   window._lastPO=null;
+  var num=G('if-n').value||'DRAFT';
+  if (isCN(num)) {
+    var gwCb=G('if-cn-goodwill'); var isGW=gwCb&&gwCb.checked;
+    prevCNDoc({ num:num, buyer:G('if-b').value, buyerAddr:G('if-ba').value, cur:G('if-cur').value, date:G('if-dt').value, status:G('inv-sm').value, cnReason:G('if-cn-reason')?G('if-cn-reason').value:'', cnAmount:G('if-cn-amount')?-(Math.abs(+G('if-cn-amount').value||0)):0, linkedInvNum:G('if-linked')?G('if-linked').value:'', type:isGW?'goodwill_credit':'credit_note' });
+    return;
+  }
   var tx=getTR();
-  prevInvDoc({num:G('if-n').value||'DRAFT',buyer:G('if-b').value,buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,incoterm:G('if-inco').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,paymentTerms:G('if-pt').value,terms:G('if-terms').value,lineItems:cIL.slice()});
+  prevInvDoc({num:num,buyer:G('if-b').value,buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,incoterm:G('if-inco').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,paymentTerms:G('if-pt').value,terms:G('if-terms').value,lineItems:cIL.slice()});
 }
-function prevInvId(id) { var inv=DB.inv.find(function(x){return x.id===id;}); if(inv){ window._lastInv=inv; window._lastPO=null; prevInvDoc(inv); } }
+function prevInvId(id) { var inv=DB.inv.find(function(x){return x.id===id;}); if(inv){ window._lastInv=inv; window._lastPO=null; if(inv.type==='credit_note'||inv.type==='goodwill_credit'||(!inv.type&&isCN(inv.num))) prevCNDoc(inv); else prevInvDoc(inv); } }
 function prevPO() {
   document.activeElement && document.activeElement.blur && document.activeElement.blur();
   prevPODoc({num:G('pf-n').value||'DRAFT',supId:G('pf-sup').value,invNum:G('pf-inv').value,date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,paymentTerms:G('pf-pt').value,lineItems:cPL.slice(),dep:+G('pf-dep').value||0,oth:+G('pf-oth').value||0,notes:G('pf-nt').value});
@@ -3316,6 +3364,19 @@ function vInv() {
   if (!date)                       return vErr('if-dt', 'Invoice date is required');
   if (!RX.date.test(date) || isNaN(new Date(date).getTime())) return vErr('if-dt', 'Invoice date is not a valid date');
   vOk('if-dt');
+  var isCnForm = isCN(num);
+  if (isCnForm) {
+    // Credit notes: validate cn-amount > 0 instead of line items
+    var cnAmt = G('if-cn-amount') ? +G('if-cn-amount').value : 0;
+    if (!cnAmt || cnAmt <= 0) { toast('⚠ Credit Amount is required and must be greater than zero'); return false; }
+    var gwCheckedV = G('if-cn-goodwill') && G('if-cn-goodwill').checked;
+    if (!gwCheckedV) {
+      var linkedV = G('if-linked') ? G('if-linked').value.trim() : '';
+      if (!linkedV) return vErr('if-linked', 'Credits Invoice # is required for a standard credit note');
+      vOk('if-linked');
+    }
+    return vFormOk('ov-inv');
+  }
   if (cIL.length === 0) {
     var inv0 = EI.i ? DB.inv.find(function(i){ return i.id===EI.i; }) : null;
     if (!inv0 || !(+inv0.calc_grandTotal > 0)) {
@@ -3943,16 +4004,25 @@ function isCN(num) { return num && String(num).toUpperCase().startsWith('CN'); }
 
 function onInvNumInput(val) {
   var isCn = isCN(val);
-  var fL=G('fld-linked-inv'), fR=G('fld-cn-reason'), fA=G('fld-cn-amount');
-  if(fL) fL.style.display=isCn?'block':'none';
+  var fL=G('fld-linked-inv'), fR=G('fld-cn-reason'), fA=G('fld-cn-amount'), fG=G('fld-cn-goodwill');
+  var gwChecked = isCn && G('if-cn-goodwill') && G('if-cn-goodwill').checked;
+  if(fL) fL.style.display=(isCn && !gwChecked)?'block':'none';
   if(fR) fR.style.display=isCn?'block':'none';
   if(fA) fA.style.display=isCn?'block':'none';
-  if(isCn && val.length>2 && G('if-linked') && !G('if-linked').value) {
+  if(fG) fG.style.display=isCn?'block':'none';
+  if(!isCn && G('if-cn-goodwill')) { G('if-cn-goodwill').checked=false; }
+  if(isCn && val.length>2 && G('if-linked') && !G('if-linked').value && !gwChecked) {
     var sugNum='INV'+val.slice(2);
     var linked=DB.inv.find(function(i){return i.num===sugNum;});
     if(linked) G('if-linked').value=sugNum;
   }
-  var t=G('inv-mt'); if(t) t.textContent=isCn?'Credit Note':(EI.i?'Edit Invoice':'New Invoice');
+  var t=G('inv-mt'); if(t) t.textContent=isCn?(EI.i?'Edit Credit Note':'Credit Note'):(EI.i?'Edit Invoice':'New Invoice');
+}
+
+function onGoodwillChg(checked) {
+  var fL=G('fld-linked-inv');
+  if(fL) fL.style.display=checked?'none':'block';
+  if(checked && G('if-linked')) G('if-linked').value='';
 }
 
 function openCN(invId) {
@@ -3973,40 +4043,45 @@ function openCN(invId) {
 
 function prevCNDoc(inv) {
   var cur=inv.cur||'USD';
-  var amt=Math.abs(+inv.cnAmount||0);
+  var creditAmt=+inv.cnAmount||0; // stored negative; display as negative e.g. -$450
   var linked=DB.inv.find(function(i){return i.id===inv.linkedInvId||i.num===inv.linkedInvNum;});
   var bank=AS.bank?AS.bank.replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
+  var isGW=inv.type==='goodwill_credit';
+  var badgeLabel=isGW?'GOODWILL CREDIT':'CREDIT NOTE';
+  var docTitle=isGW?'Goodwill Credit':'Credit Note';
+  var reasonLabel=isGW?'Reason for Goodwill Credit':'Reason for Credit';
+  var descLine=isGW?san(inv.cnReason||'Goodwill credit'):'Credit &mdash; '+san(inv.cnReason||'As agreed');
   var svgC='<svg width="18" height="58" viewBox="0 0 18 58" style="flex-shrink:0;margin-top:2px;"><rect x="0" y="0" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="0" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="16" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="2" width="6" height="14" fill="#7A1515"/><rect x="10" y="2" width="6" height="14" fill="#7A1515"/><rect x="7" y="0" width="4" height="18" fill="#3D0808"/><rect x="0" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="20" width="18" height="18" fill="#0A0A0A"/><rect x="0" y="20" width="18" height="2" fill="#1E1E1E"/><rect x="0" y="36" width="18" height="2" fill="#1E1E1E"/><rect x="1" y="22" width="6" height="14" fill="#141414"/><rect x="10" y="22" width="6" height="14" fill="#141414"/><rect x="7" y="20" width="4" height="18" fill="#050505"/><rect x="0" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="40" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="40" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="56" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="42" width="6" height="14" fill="#7A1515"/><rect x="10" y="42" width="6" height="14" fill="#7A1515"/><rect x="7" y="40" width="4" height="18" fill="#3D0808"/><rect x="0" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="54" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="54" width="4" height="4" fill="#C0C0C0"/></svg>';
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Credit Note '+san(inv.num)+'</title>'
-    +'<style>body{font-family:Arial,sans-serif;font-size:9pt;color:#0f0c0d;margin:0;padding:0;}.page{max-width:210mm;margin:0 auto;padding:16mm 14mm;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #B8283A;}.cn-badge{background:#B8283A;color:white;font-family:Arial Black,sans-serif;font-size:1.6rem;letter-spacing:.1em;padding:6px 18px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #0f0c0d;padding:4px 6px;text-align:left;}td{font-size:9pt;padding:6px;border-bottom:1px solid #f0ece8;vertical-align:top;}.num{text-align:right;}.total{font-weight:700;font-size:11pt;color:#B8283A;}@media print{body{-webkit-print-color-adjust:exact;}}</style>'
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+docTitle+' '+san(inv.num)+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:9pt;color:#0f0c0d;margin:0;padding:0;}.page{max-width:210mm;margin:0 auto;padding:16mm 14mm;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #B8283A;}.cn-badge{background:#B8283A;color:white;font-family:Arial Black,sans-serif;font-size:1.2rem;letter-spacing:.08em;padding:6px 14px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #0f0c0d;padding:4px 6px;text-align:left;}td{font-size:9pt;padding:6px;border-bottom:1px solid #f0ece8;vertical-align:top;}.num{text-align:right;}.total{font-weight:700;font-size:11pt;color:#B8283A;}@media print{body{-webkit-print-color-adjust:exact;}}</style>'
     +'</head><body><div class="page"><div class="hdr">'
     +'<div style="display:flex;gap:14px;align-items:flex-start;">'+svgC
     +'<div><div style="font-family:Bebas Neue,sans-serif;font-size:2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
     +'<div style="font-size:.42rem;color:#8a7f82;display:flex;justify-content:space-between;margin-top:3px;"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div>'
     +'<div style="font-size:7.5pt;color:#8a7f82;margin-top:4px;">'+san(AS.addr||'Brighton, UK')+'</div>'
     +'<div style="font-size:7.5pt;color:#8a7f82;">'+san(AS.email||'cachafpm@gmail.com')+' &middot; '+san(AS.phone||'')+'</div></div></div>'
-    +'<div style="text-align:right;"><div class="cn-badge">CREDIT NOTE</div>'
+    +'<div style="text-align:right;"><div class="cn-badge">'+badgeLabel+'</div>'
     +'<table style="margin-top:8px;width:auto;margin-left:auto;font-size:8pt;">'
     +'<tr><td style="color:#8a7f82;padding-right:16px;">CN #</td><td style="text-align:right;font-weight:700;">'+san(inv.num)+'</td></tr>'
     +'<tr><td style="color:#8a7f82;">Date</td><td style="text-align:right;">'+fmtDate(inv.date)+'</td></tr>'
-    +'<tr><td style="color:#8a7f82;">Credits Invoice</td><td style="text-align:right;color:#B8283A;font-weight:700;">'+san(inv.linkedInvNum||'-')+'</td></tr>'
+    +(isGW?'':('<tr><td style="color:#8a7f82;">Against Invoice</td><td style="text-align:right;color:#B8283A;font-weight:700;">'+san(inv.linkedInvNum||'-')+'</td></tr>'))
     +'<tr><td style="color:#8a7f82;">Currency</td><td style="text-align:right;">'+san(cur)+'</td></tr>'
     +'</table></div></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px;">'
     +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">To</div>'
     +'<div style="font-weight:700;">'+san(inv.buyer||'-')+'</div>'
     +'<div style="font-size:8.5pt;color:#555;">'+san(inv.buyerAddr||'')+'</div></div>'
-    +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">Reason for Credit</div>'
+    +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">'+reasonLabel+'</div>'
     +'<div style="font-size:8.5pt;">'+san(inv.cnReason||inv.notes||'-')+'</div>'
-    +(linked?'<div style="font-size:7.5pt;color:#8a7f82;margin-top:6px;">Original invoice: '+san(linked.num)+' dated '+fmtDate(linked.date)+'</div>':'')
+    +((!isGW&&linked)?'<div style="font-size:7.5pt;color:#8a7f82;margin-top:6px;">Original invoice: '+san(linked.num)+' dated '+fmtDate(linked.date)+'</div>':'')
     +'</div></div>'
     +'<table><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>'
-    +'<tr><td>Credit &mdash; '+san(inv.cnReason||'As agreed')+'</td><td class="num" style="color:#B8283A;">('+fmt(amt,cur)+')</td></tr>'
+    +'<tr><td>'+descLine+'</td><td class="num" style="color:#B8283A;">'+fmt(creditAmt,cur)+'</td></tr>'
     +'</tbody></table>'
     +'<div style="display:flex;justify-content:flex-end;margin-top:8px;">'
-    +'<table style="width:220px;"><tr><td style="font-size:9pt;font-weight:700;">Total Credit</td><td class="num total">('+fmt(amt,cur)+')</td></tr>'
-    +'<tr><td style="font-size:8pt;color:#8a7f82;">Applied to '+san(inv.linkedInvNum||'invoice')+'</td>'
-    +'<td class="num" style="font-size:8pt;color:#8a7f82;">'+(inv.status==='CN Applied'?'&#10003; Applied':'Pending')+'</td></tr>'
+    +'<table style="width:240px;"><tr><td style="font-size:9pt;font-weight:700;">Total Credit</td><td class="num total">'+fmt(creditAmt,cur)+'</td></tr>'
+    +(isGW?'':('<tr><td style="font-size:8pt;color:#8a7f82;">Against Invoice '+san(inv.linkedInvNum||'')+'</td>'
+    +'<td class="num" style="font-size:8pt;color:#8a7f82;">'+(inv.status==='CN Applied'?'&#10003; Applied':'Pending')+'</td></tr>'))
     +'</table></div>'
     +'<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e0d8d4;display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:8pt;">'
     +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Payment / Refund Details</div><div>'+bank+'</div></div>'
@@ -4021,7 +4096,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.7).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.8).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -4117,8 +4192,14 @@ var AI_SYSTEM_PROMPT = [
   'All forms validate on submit and on blur (when you leave a field). Required fields are enforced — the form cannot save with missing required data. Errors show inline in red below the relevant field with a specific message. Valid fields show a green border after interaction. Duplicate reference numbers are blocked across all entities.',
   '',
   '## Credit Notes',
-  'Invoices tab → click CN on the invoice to credit. Pre-fills CN number, linked invoice, buyer, currency. Fill Credit Reason and Credit Amount → Save.',
-  'Change status to CN Applied to reduce the linked invoice\'s balance.',
+  'Invoices tab → click CN on the invoice to credit. Pre-fills CN number, linked invoice, buyer, currency. Fill Credit Reason and Credit Amount (enter a positive number — the system stores and displays it as negative) → Save.',
+  'Change status to CN Applied to reduce the linked invoice\'s outstanding balance. Multiple credit notes on the same invoice are all deducted.',
+  'Credit amounts display as negative values (e.g. -$450) on the PDF and in the invoice list.',
+  '',
+  '## Goodwill Credit',
+  'A goodwill credit is a credit not linked to a specific invoice. To raise one: Invoices → + New Invoice, type a CN prefix (e.g. CN10099), tick "Goodwill credit — not linked to a specific invoice", fill Buyer, Credit Amount, Reason, Date → Save.',
+  'A goodwill credit creates a negative entry in the payments ledger (method: Goodwill Credit) and reduces the Net Cash Position KPI on the dashboard.',
+  'The PDF is labelled GOODWILL CREDIT with the reason stated. No "Against Invoice" reference appears.',
   '',
   '## Tax Treatment',
   '- China → Caribbean / West Africa: 0% (zero-rated export)',
@@ -4162,7 +4243,7 @@ var AI_SYSTEM_PROMPT = [
   '- Line items missing after reopening → closed modal without saving OR Sheets pull overwrote lineItems → re-add items, Save Invoice, Push All. The sync guard (v2.9.7) now preserves existing line items on pull if the remote copy arrives empty — but always save before closing.',
   '- Storage health red (≥85%) → export JSON backup immediately, consider clearing old data',
   '- Sync button shows error → invalid or expired Apps Script URL → Settings → verify URL, redeploy Apps Script',
-  '- Credit note not reducing balance → CN status must be CN Applied',
+  '- Credit note not reducing balance → CN status must be CN Applied. Also check that the linked invoice number in the CN matches the invoice number exactly (case-insensitive).',
   '',
   '## Settings',
   'Company card: Name, Tagline, Address, Email, Phone, Website, Bank/Payment Details (printed on invoices), Default Invoice Terms.',
