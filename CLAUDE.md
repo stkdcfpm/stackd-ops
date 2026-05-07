@@ -4,7 +4,7 @@
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
 **Current version: v2.9.8**  
-**Test count: 113/113 PASS** (`node tests/run.js`)
+**Test count: 118/118 PASS** (`node tests/run.js`)
 
 ---
 
@@ -95,7 +95,7 @@ View routing: `showV(v, tab)` dispatches to render functions via the `fns` map. 
 
 | Version | Highlights |
 |---|---|
-| v2.9.8 | Credit note system fixes: PDF routing (BUG 1), negative amount display (BUG 2), balance deduction + legacy type fallback (BUG 3); Goodwill Credit feature |
+| v2.9.8 | Credit note system fixes: PDF routing (BUG 1), negative amount display (BUG 2), balance deduction + legacy type fallback (BUG 3); Goodwill Credit feature; Sheets Line Items tab on Push All |
 | v2.9.7 | REQ-SYN-001: Sheets sync guard (`isEmptyLI` hoisted); REQ-LIB-001: invoice→library refs index (`invoiceRefs`), library picker usage indicators; Blob URL PDF previews |
 | v2.9.6 | Brand lockup — Rajdhani 700 wordmark, JetBrains Mono tagline, D in #C8312E, HR rule; drops SVG container mark |
 | v2.9.5 | Accounting export — generic CSV/JSON + Xero/QuickBooks/FreeAgent mappers, data quality check, export modal |

@@ -1850,6 +1850,32 @@ async function pullAll() {
     console.error('pullAll error:', e);
   }
 }
+function buildInvLines() {
+  var rows = [];
+  DB.inv.forEach(function(inv) {
+    if (inv.type === 'credit_note' || inv.type === 'goodwill_credit') return;
+    var lis = inv.lineItems || [];
+    lis.forEach(function(li) {
+      var libItem = li.lid ? DB.li.find(function(x){ return x.id === li.lid; }) : null;
+      var qty = +li.qty || 0;
+      var up  = +li.up  || 0;
+      rows.push({
+        invNum:    inv.num    || '',
+        buyer:     inv.buyer  || '',
+        date:      inv.date   || '',
+        sku:       libItem ? (libItem.sku   || '') : '',
+        desc:      li.desc    || (libItem ? libItem.desc || '' : ''),
+        qty:       qty,
+        uom:       li.uom     || '',
+        unitCost:  libItem ? (+libItem.cost || '') : '',
+        unitPrice: up,
+        lineTotal: +((qty * up).toFixed(2)),
+        currency:  inv.cur    || 'USD'
+      });
+    });
+  });
+  return rows;
+}
 async function pushAll() {
   setSyncStatus('loading');
   try {
@@ -1857,6 +1883,7 @@ async function pushAll() {
     for (var pi = 0; pi < ents.length; pi++) {
       await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]]});
     }
+    await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
     setSyncStatus('ok'); toast('Pushed all'); setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) { setSyncStatus('err'); toast('Failed: ' + e.message); }
 }
@@ -4217,6 +4244,7 @@ var AI_SYSTEM_PROMPT = [
   'Settings → Google Sheets. Paste Apps Script URL → Save & Connect.',
   'SAFE WORKFLOW: make changes locally → ⚙ Repair → Push All.',
   'DO NOT enable auto-sync. DO NOT Pull unless recovering data. Always run ⚙ Repair immediately after any Pull.',
+  'Push All writes a dedicated "inv_lines" sheet tab with one row per invoice line item. Columns: Invoice #, Buyer, Date, SKU, Description, Qty, UOM, Unit Cost, Unit Price, Line Total, Currency. Credit notes and goodwill credits are excluded. Quick-add lines (no library link) have empty SKU and Unit Cost.',
   '',
   '## Data Backup & Restore',
   'Settings → Data → Backup All JSON: downloads a full snapshot of all entities to your device. Restore from JSON: uploads a previous backup and restores all data. Run backups regularly — all data is stored in your browser\'s localStorage and will be lost if you clear browser data.',
