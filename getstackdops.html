@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="The trade operations platform for serious international traders. Manage suppliers, shipments, quotes and more — built for the China to Caribbean route.">
+<title>STACKD — Source · Supply · Ship</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cr:#B8283A; --cr2:#8B1A2F; --crf:#fdf0f1;
+  --gold:#C9963A; --ink:#0F0C0D; --m:#8A7F82;
+  --bg:#FDFAF8; --card:#FFFFFF; --gn:#1A7A4A;
+  --ln:#E8E0DE; --light:#F8F5F3;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--ink);height:56px;display:flex;align-items:center;padding:0 40px;gap:24px;}
+.nav-brand{display:flex;flex-direction:column;justify-content:center;flex-shrink:0;margin-right:8px;}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.18em;color:white;line-height:1;}
+.nav-logo span{color:var(--cr);}
+.nav-tag{font-family:'DM Mono',monospace;font-size:.38rem;letter-spacing:.2em;color:#444;margin-top:1px;}
+.nav-links{display:flex;gap:2px;margin-left:auto;align-items:center;flex-wrap:wrap;}
+.nav-links a{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);text-decoration:none;padding:5px 11px;transition:color .15s;}
+.nav-links a:hover{color:white;}
+.nav-cta{background:var(--cr)!important;color:white!important;border-radius:2px;transition:background .15s!important;}
+.nav-cta:hover{background:var(--cr2)!important;}
+
+/* ── HERO ── */
+#hero{padding-top:56px;background:var(--ink);min-height:100vh;display:grid;grid-template-columns:1fr 1fr;}
+.hero-l{padding:90px 64px;display:flex;flex-direction:column;justify-content:center;}
+.hero-eye{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--cr);margin-bottom:24px;}
+.hero-h1{font-family:'Bebas Neue',sans-serif;-webkit-font-smoothing:subpixel-antialiased;font-size:5.2rem;line-height:.95;letter-spacing:.04em;color:white;margin-bottom:28px;}
+.hero-h1 span{color:var(--cr);}
+.hero-p{font-family:'Lora',serif;font-size:1rem;line-height:1.85;color:rgba(255,255,255,.6);max-width:460px;margin-bottom:44px;}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap;}
+.btn-p{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:var(--cr);color:white;border:none;padding:14px 26px;cursor:pointer;text-decoration:none;display:inline-block;transition:background .15s;}
+.btn-p:hover{background:var(--cr2);}
+.btn-s{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);padding:14px 26px;cursor:pointer;text-decoration:none;display:inline-block;transition:all .15s;}
+.btn-s:hover{color:white;border-color:rgba(255,255,255,.5);}
+.hero-r{border-left:1px solid rgba(255,255,255,.06);padding:90px 56px;display:flex;flex-direction:column;justify-content:center;gap:20px;}
+.stat-c{border-left:2px solid var(--cr);padding:18px 22px;background:rgba(255,255,255,.03);}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:.04em;color:white;line-height:1;margin-bottom:4px;}
+.stat-l{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);}
+.counter-c{border-left:2px solid var(--gold);padding:18px 22px;background:rgba(201,150,58,.06);}
+.counter-n{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;color:var(--gold);line-height:1;margin-bottom:4px;}
+.counter-l{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,150,58,.55);}
+.ldot{display:inline-block;width:6px;height:6px;background:var(--gold);border-radius:50%;margin-right:6px;vertical-align:middle;animation:lp 2s infinite;}
+@keyframes lp{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+/* ── FEATURES ── */
+#features{background:var(--bg);padding:100px 64px;}
+.sec-eye{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--cr);margin-bottom:14px;}
+.sec-h2{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.06em;color:var(--ink);margin-bottom:18px;}
+.sec-p{font-family:'Lora',serif;font-size:.98rem;line-height:1.85;color:var(--m);max-width:560px;margin-bottom:56px;}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--ln);}
+.feat-card{background:var(--card);padding:38px 32px;}
+.feat-card.dark{background:var(--ink);}
+.feat-num{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;color:var(--ln);line-height:1;margin-bottom:18px;}
+.feat-card.dark .feat-num{color:rgba(255,255,255,.08);}
+.feat-t{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:10px;}
+.feat-card.dark .feat-t{color:white;}
+.feat-b{font-family:'Lora',serif;font-size:.88rem;line-height:1.8;color:var(--m);}
+.feat-card.dark .feat-b{color:rgba(255,255,255,.5);}
+
+/* ── TOOLS ── */
+#tools{background:var(--light);padding:100px 64px;}
+.tools-intro{margin-bottom:56px;}
+.tools-tabs{display:flex;gap:2px;background:var(--ln);margin-bottom:2px;}
+.tool-tab{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:13px 22px;cursor:pointer;background:var(--card);color:var(--m);border:none;transition:all .15s;flex:1;text-align:left;}
+.tool-tab.on{background:var(--ink);color:white;}
+.tool-panel{display:none;background:var(--card);padding:44px;}
+.tool-panel.on{display:block;}
+.tool-h{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:.08em;color:var(--ink);margin-bottom:8px;}
+.tool-p{font-family:'Lora',serif;font-size:.9rem;line-height:1.75;color:var(--m);margin-bottom:28px;}
+.c-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.c-field{display:flex;flex-direction:column;gap:5px;}
+.c-field label{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);}
+.c-field input,.c-field select{font-family:'DM Mono',monospace;font-size:.7rem;border:none;border-bottom:1px solid var(--ln);padding:7px 0;background:transparent;color:var(--ink);outline:none;transition:border-color .15s;-webkit-appearance:none;}
+.c-field input:focus,.c-field select:focus{border-color:var(--cr);}
+.btn-run{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;background:var(--cr);color:white;border:none;padding:12px 0;cursor:pointer;width:100%;margin-top:8px;transition:background .15s;}
+.btn-run:hover{background:var(--cr2);}
+.result-box{display:none;background:var(--ink);padding:24px 28px;margin-top:20px;}
+.result-box.on{display:block;}
+.r-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.r-item .rl{font-family:'DM Mono',monospace;font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px;}
+.r-item .rv{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:white;}
+.r-item .rv.gold{color:var(--gold);}
+.r-item .rv.red{color:#f87171;}
+.r-item .rv.green{color:#4ade80;}
+.r-note{font-family:'DM Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.35);margin-top:16px;line-height:1.7;letter-spacing:.04em;}
+/* quiz */
+.q-step{display:none;}
+.q-step.on{display:block;}
+.q-text{font-family:'Lora',serif;font-size:1rem;color:var(--ink);margin-bottom:18px;font-weight:600;line-height:1.6;}
+.q-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;}
+.q-opt{display:flex;align-items:center;gap:10px;font-family:'DM Mono',monospace;font-size:.64rem;color:var(--ink);cursor:pointer;padding:10px 14px;border:1px solid var(--ln);transition:all .12s;}
+.q-opt:hover,.q-opt.sel{border-color:var(--cr);background:rgba(184,40,58,.04);}
+.q-opt input{accent-color:var(--cr);flex-shrink:0;}
+.q-nav{display:flex;justify-content:space-between;align-items:center;}
+.q-prog{font-family:'DM Mono',monospace;font-size:.52rem;color:var(--m);letter-spacing:.06em;}
+.q-result{display:none;background:var(--ink);padding:32px;}
+.q-result.on{display:block;}
+.q-tier{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:.1em;color:var(--cr);margin-bottom:8px;}
+.q-desc{font-family:'Lora',serif;font-size:.9rem;color:rgba(255,255,255,.65);line-height:1.75;margin-bottom:20px;}
+.q-price{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--gold);letter-spacing:.08em;margin-bottom:20px;}
+
+/* ── ROUTE ── */
+#route{background:var(--ink);padding:100px 64px;text-align:center;}
+#route .sec-h2{color:white;}
+.route-flow{display:flex;align-items:center;justify-content:center;gap:0;margin-top:56px;flex-wrap:wrap;}
+.route-node{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:28px 36px;text-align:center;min-width:160px;}
+.route-flag{font-size:2rem;margin-bottom:12px;}
+.route-name{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.1em;color:white;margin-bottom:4px;}
+.route-sub{font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);}
+.route-arrow{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--cr);padding:0 16px;}
+.route-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:40px;}
+.route-tag{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.45);}
+
+/* ── WHITEPAPER ── */
+#whitepaper{background:var(--bg);padding:100px 64px;}
+.wp-hero-inner{background:var(--ink);padding:56px;margin-bottom:56px;}
+.wp-tag{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:var(--cr);margin-bottom:18px;}
+.wp-h{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.06em;color:white;margin-bottom:18px;line-height:1.05;max-width:640px;}
+.wp-intro{font-family:'Lora',serif;font-size:.95rem;color:rgba(255,255,255,.55);line-height:1.8;max-width:540px;margin-bottom:28px;}
+.wp-meta{display:flex;gap:36px;}
+.wp-meta-item{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.28);}
+.wp-meta-item span{color:rgba(255,255,255,.65);display:block;font-size:.6rem;margin-top:3px;}
+.wp-body{max-width:720px;}
+.wp-body h2{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:.08em;color:var(--ink);margin:52px 0 16px;padding-bottom:10px;border-bottom:2px solid var(--cr);}
+.wp-body h3{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cr);margin:32px 0 12px;}
+.wp-body p{font-family:'Lora',serif;font-size:.95rem;line-height:1.9;color:var(--ink);margin-bottom:18px;}
+.wp-body ul{margin:0 0 18px 20px;}
+.wp-body li{font-family:'Lora',serif;font-size:.93rem;line-height:1.85;color:var(--ink);margin-bottom:8px;}
+.wp-pull{border-left:3px solid var(--cr);padding:20px 28px;background:var(--light);margin:36px 0;}
+.wp-pull p{font-family:'Lora',serif;font-size:1.05rem;font-style:italic;color:var(--ink);margin:0;line-height:1.7;}
+.wp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--ln);margin:36px 0;}
+.wp-stat{background:var(--ink);padding:22px 20px;}
+.wp-stat-n{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:var(--cr);line-height:1;margin-bottom:4px;}
+.wp-stat-l{font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35);}
+
+/* ── PRICING ── */
+#pricing{background:var(--light);padding:100px 64px;}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--ln);margin-top:56px;}
+.price-card{background:var(--card);padding:40px 32px;}
+.price-card.feat{background:var(--ink);}
+.price-badge{font-family:'DM Mono',monospace;font-size:.46rem;letter-spacing:.14em;text-transform:uppercase;background:var(--cr);color:white;padding:3px 9px;display:inline-block;margin-bottom:18px;}
+.price-tier{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.12em;color:var(--ink);margin-bottom:6px;}
+.price-card.feat .price-tier{color:white;}
+.price-n{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.04em;color:var(--cr);line-height:1;margin-bottom:4px;}
+.price-per{font-family:'DM Mono',monospace;font-size:.52rem;color:var(--m);letter-spacing:.08em;margin-bottom:26px;}
+.price-card.feat .price-per{color:rgba(255,255,255,.35);}
+.price-list{list-style:none;margin-bottom:28px;}
+.price-list li{font-family:'Lora',serif;font-size:.84rem;color:var(--m);padding:7px 0;border-bottom:1px solid var(--ln);display:flex;gap:9px;align-items:flex-start;line-height:1.5;}
+.price-card.feat .price-list li{color:rgba(255,255,255,.55);border-color:rgba(255,255,255,.07);}
+.price-list li::before{content:'→';font-family:'DM Mono',monospace;font-size:.66rem;color:var(--cr);flex-shrink:0;margin-top:1px;}
+.ent-bar{background:var(--ink);padding:44px 56px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center;margin-top:2px;}
+.ent-h{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:.1em;color:white;margin-bottom:8px;}
+.ent-p{font-family:'Lora',serif;font-size:.9rem;color:rgba(255,255,255,.5);line-height:1.7;max-width:520px;}
+
+/* ── ABOUT ── */
+#about{background:var(--bg);padding:100px 64px;}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-bottom:72px;align-items:start;}
+.about-l h2{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.08em;color:var(--ink);margin-bottom:28px;line-height:1.05;}
+.about-l h2 span{color:var(--cr);}
+.about-l p{font-family:'Lora',serif;font-size:.95rem;line-height:1.9;color:var(--m);margin-bottom:18px;}
+.about-r{display:flex;flex-direction:column;gap:2px;}
+.about-stat{background:var(--ink);padding:24px 28px;}
+.about-sn{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--cr);line-height:1;margin-bottom:4px;}
+.about-sl{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35);}
+.values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--ln);}
+.val-card{background:var(--card);padding:36px 30px;}
+.val-icon{font-size:1.4rem;margin-bottom:14px;}
+.val-t{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:10px;}
+.val-b{font-family:'Lora',serif;font-size:.87rem;line-height:1.75;color:var(--m);}
+
+/* ── CONTACT ── */
+#contact{background:var(--light);padding:100px 64px;}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--ln);margin-top:48px;}
+.contact-form{background:var(--card);padding:48px;}
+.contact-form h3{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.08em;color:var(--ink);margin-bottom:28px;}
+.f-field{display:flex;flex-direction:column;gap:5px;margin-bottom:18px;}
+.f-field label{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);}
+.f-field input,.f-field select,.f-field textarea{font-family:'DM Mono',monospace;font-size:.7rem;border:none;border-bottom:1px solid var(--ln);padding:8px 0;background:transparent;color:var(--ink);outline:none;transition:border-color .15s;-webkit-appearance:none;}
+.f-field input:focus,.f-field select:focus,.f-field textarea:focus{border-color:var(--cr);}
+.f-field textarea{resize:vertical;min-height:90px;line-height:1.6;}
+.f-success{display:none;background:var(--gn);color:white;padding:14px 18px;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;margin-top:14px;}
+.contact-info{background:var(--ink);padding:48px;}
+.contact-info h3{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.08em;color:white;margin-bottom:28px;}
+.c-item{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.07);}
+.c-item:last-of-type{border-bottom:none;margin-bottom:0;}
+.c-item-l{font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:5px;}
+.c-item-v{font-family:'Lora',serif;font-size:.92rem;color:white;line-height:1.6;}
+.c-item-v a{color:var(--cr);text-decoration:none;}
+.c-commit{background:rgba(184,40,58,.1);border-left:2px solid var(--cr);padding:16px 18px;margin-top:28px;}
+.c-commit p{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.05em;color:rgba(255,255,255,.6);line-height:1.7;}
+
+/* ── FOOTER ── */
+footer{background:var(--ink);padding:56px 64px 32px;}
+.foot-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px;}
+.foot-brand .logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.18em;color:white;line-height:1;}
+.foot-brand .logo span{color:var(--cr);}
+.foot-brand .tag{font-family:'DM Mono',monospace;font-size:.38rem;letter-spacing:.18em;color:#444;margin-top:2px;margin-bottom:14px;}
+.foot-brand p{font-family:'Lora',serif;font-size:.8rem;color:rgba(255,255,255,.3);line-height:1.7;max-width:260px;}
+.foot-col h4{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:14px;}
+.foot-col a{display:block;font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(255,255,255,.45);text-decoration:none;margin-bottom:9px;transition:color .15s;}
+.foot-col a:hover{color:white;}
+.foot-bot{border-top:1px solid rgba(255,255,255,.06);padding-top:22px;display:flex;justify-content:space-between;align-items:center;}
+.foot-bot p{font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.08em;color:rgba(255,255,255,.18);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  #hero,#about .about-grid,.contact-grid,.price-grid,.feat-grid,.values-grid{grid-template-columns:1fr;}
+  .hero-l,.hero-r,#features,#tools,#whitepaper,#pricing,#about,#contact,#route{padding:60px 28px;}
+  footer,.foot-top,.ent-bar{padding:40px 28px;grid-template-columns:1fr;}
+  .hero-h1{font-size:3.6rem;}
+  .r-grid,.wp-stats{grid-template-columns:1fr 1fr;}
+  .c-grid{grid-template-columns:1fr;}
+  .price-grid{background:none;gap:16px;}
+  .hero-r{border-left:none;border-top:1px solid rgba(255,255,255,.06);}
+  .tools-tabs{flex-direction:column;}
+  .tool-tab{text-align:left;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo"><span>S</span>TACKD</div>
+    <div class="nav-tag">SOURCE &middot; SUPPLY &middot; SHIP</div>
+  </div>
+  <div class="nav-links">
+    <a href="#features">Platform</a>
+    <a href="#tools">Tools</a>
+    <a href="#whitepaper">Insight</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+    <a href="https://stkdcfpm.github.io/stackd-ops" target="_blank" class="nav-cta">Launch Portal →</a>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <div class="hero-l">
+    <div class="hero-eye">Trade operations platform</div>
+    <h1 class="hero-h1">Your Business Deserves Better Than <span>a Group Chat</span></h1>
+    <p class="hero-p">Stackd is built for sole traders to mid-size firms managing international trade. Replace fragmented social platforms, spreadsheets, and manual tracking with one intelligent operations system — wherever you source, wherever you ship.</p>
+    <div class="hero-btns">
+      <a href="#contact" class="btn-p">Start Free Trial</a>
+      <a href="#tools" class="btn-s">Try the Tools Free</a>
+    </div>
+  </div>
+  <div class="hero-r">
+    <div class="stat-c">
+      <div class="stat-n">£53,441</div>
+      <div class="stat-l">Invoice revenue managed on Stackd</div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-n">9</div>
+      <div class="stat-l">Active supplier relationships tracked</div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-n">20</div>
+      <div class="stat-l">SKUs catalogued with live margin tracking</div>
+    </div>
+    <div class="counter-c">
+      <div class="counter-n"><span class="ldot"></span><span id="shipCount">4</span></div>
+      <div class="counter-l">Active shipments being tracked right now</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES ══ -->
+<section id="features">
+  <div class="sec-eye">The platform</div>
+  <h2 class="sec-h2">Everything a trade intermediary actually needs</h2>
+  <p class="sec-p">Six entities, one platform. Built from lived operational experience on the China–Caribbean trade lane. No enterprise bloat, no per-user pricing, no irrelevant features.</p>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-num">01</div>
+      <div class="feat-t">Supplier Management</div>
+      <p class="feat-b">Every supplier with contacts, payment terms, lead times, risk flags, and compliance certificate tracking. Built for Chinese manufacturers — WeChat numbers, dial codes, and all.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">02</div>
+      <div class="feat-t">Quote & Pricing Engine</div>
+      <p class="feat-b">Build quotes with full landed cost calculations — freight, duty, Dangerous Goods (DG) surcharges, insurance, and FX built in. Price history tracked per SKU. Convert to invoice in one click.</p>
+    </div>
+    <div class="feat-card dark">
+      <div class="feat-num">03</div>
+      <div class="feat-t">Shipment Tracking</div>
+      <p class="feat-b">BL number, vessel, carrier, ETD, ETA, container type, Dangerous Goods (DG) status — all in one view. Know where every container is without calling your freight forwarder at 11pm.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">04</div>
+      <div class="feat-t">Invoice & Payment Ledger</div>
+      <p class="feat-b">Full invoice lifecycle — draft, pro-forma, sent, partially paid, paid. Credit notes, payment recording, automatic status flips. Balance due calculated in real time.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">05</div>
+      <div class="feat-t">Purchase Orders</div>
+      <p class="feat-b">Auto-generated from invoice line items, grouped by supplier. One PO per supplier per shipment. Deposit tracking, FPM-funded deposit recovery, settlement status.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">06</div>
+      <div class="feat-t">AI Operations Assistant</div>
+      <p class="feat-b">An AI trained on your specific workflows, invoice rules, and Caribbean/West Africa tax treatment. Ask it anything — it knows your operations, not just generic procurement theory.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TOOLS ══ -->
+<section id="tools">
+  <div class="sec-eye">Free tools — no signup required</div>
+  <h2 class="sec-h2">Three calculators. No signup required.</h2>
+  <p class="sec-p tools-intro">Use them before you ever create an account. Built from the same logic that powers the Stackd platform. All figures in USD.</p>
+
+  <div class="tools-tabs">
+    <button class="tool-tab on" onclick="showTool('lcc')">Landed Cost Calculator</button>
+    <button class="tool-tab" onclick="showTool('ptc')">Paperwork Tax Calculator</button>
+    <button class="tool-tab" onclick="showTool('quiz')">Are You Ready to Scale?</button>
+  </div>
+
+  <!-- LANDED COST CALCULATOR -->
+  <div class="tool-panel on" id="tool-lcc">
+    <h2 class="tool-h">Landed Cost Calculator</h2>
+    <p class="tool-p">Enter your shipment details. Get a full landed cost breakdown including freight, origin charges, destination charges, insurance, duty, and Dangerous Goods surcharge if applicable.</p>
+    <div class="c-grid">
+      <div class="c-field"><label>Product Value (USD)</label><input type="number" id="lcc-val" placeholder="10000" min="0"></div>
+      <div class="c-field"><label>Freight Mode</label>
+        <select id="lcc-mode">
+          <option value="fcl20">FCL 20GP</option>
+          <option value="fcl40" selected>FCL 40HQ</option>
+          <option value="lcl">LCL</option>
+        </select>
+      </div>
+      <div class="c-field"><label>CBM (for LCL)</label><input type="number" id="lcc-cbm" placeholder="15" min="0"></div>
+      <div class="c-field"><label>Import Duty Rate (%)</label><input type="number" id="lcc-duty" placeholder="0" min="0" max="100"></div>
+      <div class="c-field"><label>Origin</label>
+        <select id="lcc-origin">
+          <optgroup label="East Asia">
+            <option value="qingdao">China — Qingdao</option>
+            <option value="shanghai">China — Shanghai</option>
+            <option value="shenzhen">China — Shenzhen</option>
+            <option value="guangzhou">China — Guangzhou</option>
+            <option value="ningbo">China — Ningbo</option>
+          </optgroup>
+          <optgroup label="Southeast Asia">
+            <option value="hochiminh">Vietnam — Ho Chi Minh City</option>
+            <option value="bangkok">Thailand — Laem Chabang</option>
+            <option value="jakarta">Indonesia — Jakarta</option>
+            <option value="klang">Malaysia — Port Klang</option>
+            <option value="dhaka">Bangladesh — Chittagong</option>
+          </optgroup>
+          <optgroup label="South Asia">
+            <option value="mumbai">India — Nhava Sheva / Mumbai</option>
+            <option value="karachi">Pakistan — Karachi</option>
+          </optgroup>
+          <optgroup label="Middle East">
+            <option value="jebel">UAE — Jebel Ali (Dubai)</option>
+            <option value="istanbul">Turkey — Istanbul / Mersin</option>
+          </optgroup>
+          <optgroup label="Europe">
+            <option value="hamburg">Germany — Hamburg</option>
+            <option value="rotterdam">Netherlands — Rotterdam</option>
+            <option value="felixstowe">UK — Felixstowe</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="c-field"><label>Destination</label>
+        <select id="lcc-dest">
+          <optgroup label="Caribbean">
+            <option value="bridgetown">Barbados — Bridgetown</option>
+            <option value="kingston">Jamaica — Kingston</option>
+            <option value="portofspain">Trinidad — Port of Spain</option>
+            <option value="nassau">Bahamas — Nassau</option>
+            <option value="georgetown">Guyana — Georgetown</option>
+          </optgroup>
+          <optgroup label="West Africa">
+            <option value="lagos">Nigeria — Lagos (Apapa)</option>
+            <option value="accra">Ghana — Tema / Accra</option>
+            <option value="abidjan">Ivory Coast — Abidjan</option>
+            <option value="dakar">Senegal — Dakar</option>
+            <option value="douala">Cameroon — Douala</option>
+          </optgroup>
+          <optgroup label="East Africa">
+            <option value="mombasa">Kenya — Mombasa</option>
+            <option value="dar">Tanzania — Dar es Salaam</option>
+          </optgroup>
+          <optgroup label="North Africa">
+            <option value="casablanca">Morocco — Casablanca</option>
+            <option value="alexandria">Egypt — Alexandria</option>
+          </optgroup>
+          <optgroup label="Europe / Americas">
+            <option value="felixstowe_d">UK — Felixstowe</option>
+            <option value="rotterdam_d">Netherlands — Rotterdam</option>
+            <option value="newyork">USA — New York / NJ</option>
+            <option value="miami">USA — Miami</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+    <div class="c-grid">
+      <div class="c-field">
+        <label>DG Onboard?</label>
+        <select id="lcc-dg">
+          <option value="no">No dangerous goods</option>
+          <option value="yes">Yes — DG onboard</option>
+        </select>
+      </div>
+      <div class="c-field">
+        <label>DG Commodity Lines (if applicable)</label>
+        <input type="number" id="lcc-dglines" placeholder="0" min="0" max="20">
+      </div>
+    </div>
+    <button class="btn-run" onclick="runLCC()">Calculate Landed Cost</button>
+    <details style="margin-top:20px;border:1px solid var(--ln);">
+      <summary style="font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);cursor:pointer;padding:12px 16px;list-style:none;display:flex;align-items:center;gap:8px;">
+        <span style="color:var(--cr);">▸</span> Trade Terms Glossary &amp; Definitions
+      </summary>
+      <div style="padding:18px 20px;background:var(--light);display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;">
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">BL / BOL</span>Bill of Lading — shipping document serving as receipt, title &amp; contract of carriage</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">DG</span>Dangerous Goods — cargo classified under IMDG Code requiring special handling (e.g. refrigerants, lithium batteries, chemicals)</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">CIF</span>Cost, Insurance &amp; Freight — seller pays freight and insurance to destination port</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">FOB</span>Free On Board — seller delivers goods onto the vessel at origin port</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">EXW</span>Ex Works — buyer collects from seller premises and bears all costs and risk</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">DAP / DDP</span>Delivered at Place / Delivered Duty Paid — seller delivers to destination, DDP includes import duty</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">FCL</span>Full Container Load — sole use of a sealed container</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">LCL</span>Less than Container Load — cargo shares a container with other shippers</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">20GP / 40HQ</span>20-foot General Purpose (~25 CBM) / 40-foot High Cube (~70 CBM) containers</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">ETD / ETA</span>Estimated Time of Departure / Arrival — scheduled port dates</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">CBM</span>Cubic Metre — standard measure of cargo volume</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">HS Code</span>Harmonised System code — 6-digit international product classification used for customs</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">Incoterms</span>International Commercial Terms — defines cost, risk &amp; responsibility between buyer and seller</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">POL / POD</span>Port of Loading / Port of Discharge</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--ink);padding:5px 0;display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--cr);font-weight:500;min-width:70px;flex-shrink:0;">COO</span>Certificate of Origin — certifies the country where goods were manufactured</div>
+      </div>
+    </details>
+    <div class="result-box" id="lcc-result">
+      <div class="r-grid">
+        <div class="r-item"><div class="rl">Product Value</div><div class="rv" id="lcc-r-val">-</div></div>
+        <div class="r-item"><div class="rl">Ocean Freight</div><div class="rv" id="lcc-r-freight">-</div></div>
+        <div class="r-item"><div class="rl">Origin Charges</div><div class="rv" id="lcc-r-origin">-</div></div>
+        <div class="r-item"><div class="rl">Destination Charges</div><div class="rv" id="lcc-r-dest">-</div></div>
+        <div class="r-item"><div class="rl">Insurance (0.5%)</div><div class="rv" id="lcc-r-ins">-</div></div>
+        <div class="r-item"><div class="rl">Import Duty</div><div class="rv" id="lcc-r-duty">-</div></div>
+        <div class="r-item"><div class="rl">DG Surcharge</div><div class="rv" id="lcc-r-dg">-</div></div>
+        <div class="r-item"><div class="rl">FPM Admin Fee</div><div class="rv" id="lcc-r-admin">-</div></div>
+        <div class="r-item"><div class="rl">Total Landed Cost</div><div class="rv gold" id="lcc-r-total">-</div></div>
+      </div>
+      <div class="r-note" id="lcc-r-note"></div>
+    </div>
+  </div>
+
+  <!-- PAPERWORK TAX CALCULATOR -->
+  <div class="tool-panel" id="tool-ptc">
+    <h2 class="tool-h">The Paperwork Tax Calculator</h2>
+    <p class="tool-p">How many hours per week are you losing to manual tracking, status chasing, and document management? Enter your current operation and we'll show you the real cost.</p>
+    <div class="c-grid">
+      <div class="c-field"><label>Containers per month</label>
+        <select id="ptc-cont">
+          <option value="1">1 container</option>
+          <option value="2">2 containers</option>
+          <option value="3" selected>3 containers</option>
+          <option value="5">5 containers</option>
+          <option value="10">10 containers</option>
+          <option value="15">15+ containers</option>
+        </select>
+      </div>
+      <div class="c-field"><label>Active suppliers</label>
+        <select id="ptc-sup">
+          <option value="3">1–5 suppliers</option>
+          <option value="8" selected>6–10 suppliers</option>
+          <option value="15">11–20 suppliers</option>
+          <option value="25">20+ suppliers</option>
+        </select>
+      </div>
+      <div class="c-field"><label>Active buyers</label>
+        <select id="ptc-buy">
+          <option value="1" selected>1–2 buyers</option>
+          <option value="4">3–5 buyers</option>
+          <option value="8">6–10 buyers</option>
+          <option value="15">10+ buyers</option>
+        </select>
+      </div>
+      <div class="c-field"><label>Current invoicing tool</label>
+        <select id="ptc-tool">
+          <option value="excel">Excel / Google Sheets</option>
+          <option value="word">Word / manual PDF</option>
+          <option value="whatsapp">WhatsApp only</option>
+          <option value="basic">Basic accounting software</option>
+        </select>
+      </div>
+    </div>
+    <div class="c-grid">
+      <div class="c-field"><label>Your hourly rate / value (£)</label><input type="number" id="ptc-rate" placeholder="50" min="10"></div>
+    </div>
+    <button class="btn-run" onclick="runPTC()">Calculate My Paperwork Tax</button>
+    <div class="result-box" id="ptc-result">
+      <div class="r-grid">
+        <div class="r-item"><div class="rl">Hours lost per week</div><div class="rv red" id="ptc-r-hrs">-</div></div>
+        <div class="r-item"><div class="rl">Hours lost per year</div><div class="rv red" id="ptc-r-yrhrs">-</div></div>
+        <div class="r-item"><div class="rl">Cost per year (at your rate)</div><div class="rv red" id="ptc-r-cost">-</div></div>
+        <div class="r-item"><div class="rl">Stackd annual cost</div><div class="rv green" id="ptc-r-stackd">-</div></div>
+        <div class="r-item"><div class="rl">Annual saving</div><div class="rv gold" id="ptc-r-save">-</div></div>
+        <div class="r-item"><div class="rl">ROI</div><div class="rv gold" id="ptc-r-roi">-</div></div>
+      </div>
+      <div class="r-note" id="ptc-r-note"></div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="tool-panel" id="tool-quiz">
+    <h2 class="tool-h">Are You Ready to Scale?</h2>
+    <p class="tool-p">5 questions. 2 minutes. Find out which Stackd tier fits where you are right now.</p>
+
+    <div class="q-step on" id="qs-0">
+      <div class="q-text">How many containers are you currently shipping per month?</div>
+      <div class="q-opts">
+        <label class="q-opt"><input type="radio" name="q0" value="1"> 1 container or less</label>
+        <label class="q-opt"><input type="radio" name="q0" value="2"> 2–3 containers</label>
+        <label class="q-opt"><input type="radio" name="q0" value="3"> 4–8 containers</label>
+        <label class="q-opt"><input type="radio" name="q0" value="4"> 9 or more containers</label>
+      </div>
+      <div class="q-nav">
+        <div class="q-prog">Question 1 of 5</div>
+        <button class="btn-p" style="padding:10px 22px;" onclick="qNext(0)">Next →</button>
+      </div>
+    </div>
+
+    <div class="q-step" id="qs-1">
+      <div class="q-text">How do you currently track your shipments?</div>
+      <div class="q-opts">
+        <label class="q-opt"><input type="radio" name="q1" value="1"> I call my freight forwarder or check WhatsApp</label>
+        <label class="q-opt"><input type="radio" name="q1" value="2"> I use a spreadsheet I update manually</label>
+        <label class="q-opt"><input type="radio" name="q1" value="3"> I have a basic tracking system but it's inconsistent</label>
+        <label class="q-opt"><input type="radio" name="q1" value="4"> I have proper shipment tracking in place</label>
+      </div>
+      <div class="q-nav">
+        <div class="q-prog">Question 2 of 5</div>
+        <button class="btn-p" style="padding:10px 22px;" onclick="qNext(1)">Next →</button>
+      </div>
+    </div>
+
+    <div class="q-step" id="qs-2">
+      <div class="q-text">How do you produce invoices for your buyers?</div>
+      <div class="q-opts">
+        <label class="q-opt"><input type="radio" name="q2" value="1"> Excel or Word template, sent as PDF by email</label>
+        <label class="q-opt"><input type="radio" name="q2" value="2"> Basic accounting software (Xero, QuickBooks)</label>
+        <label class="q-opt"><input type="radio" name="q2" value="3"> A mix of tools depending on the buyer</label>
+        <label class="q-opt"><input type="radio" name="q2" value="4"> Integrated with my procurement workflow</label>
+      </div>
+      <div class="q-nav">
+        <div class="q-prog">Question 3 of 5</div>
+        <button class="btn-p" style="padding:10px 22px;" onclick="qNext(2)">Next →</button>
+      </div>
+    </div>
+
+    <div class="q-step" id="qs-3">
+      <div class="q-text">How many active suppliers are you managing?</div>
+      <div class="q-opts">
+        <label class="q-opt"><input type="radio" name="q3" value="1"> Fewer than 5</label>
+        <label class="q-opt"><input type="radio" name="q3" value="2"> 5–15 suppliers</label>
+        <label class="q-opt"><input type="radio" name="q3" value="3"> 16–30 suppliers</label>
+        <label class="q-opt"><input type="radio" name="q3" value="4"> 30+ suppliers</label>
+      </div>
+      <div class="q-nav">
+        <div class="q-prog">Question 4 of 5</div>
+        <button class="btn-p" style="padding:10px 22px;" onclick="qNext(3)">Next →</button>
+      </div>
+    </div>
+
+    <div class="q-step" id="qs-4">
+      <div class="q-text">What is your biggest operational pain point right now?</div>
+      <div class="q-opts">
+        <label class="q-opt"><input type="radio" name="q4" value="1"> I can't track where my shipments are without making calls</label>
+        <label class="q-opt"><input type="radio" name="q4" value="2"> My invoicing is unprofessional or error-prone</label>
+        <label class="q-opt"><input type="radio" name="q4" value="3"> I don't know my true margin on each order</label>
+        <label class="q-opt"><input type="radio" name="q4" value="4"> I'm losing time across all of the above</label>
+      </div>
+      <div class="q-nav">
+        <div class="q-prog">Question 5 of 5</div>
+        <button class="btn-p" style="padding:10px 22px;" onclick="qFinish()">See My Result →</button>
+      </div>
+    </div>
+
+    <div class="q-result" id="q-result">
+      <div class="q-tier" id="q-tier">Growth</div>
+      <div class="q-desc" id="q-desc">Based on your answers, Growth tier is the right fit.</div>
+      <div class="q-price" id="q-price">£149/month · 14-day free trial · No credit card required</div>
+      <a href="#contact" class="btn-p" style="display:inline-block;">Start Free Trial →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ROUTE ══ -->
+<section id="route">
+  <div class="sec-eye" style="color:rgba(255,255,255,.4);text-align:center;">Global reach</div>
+  <h2 class="sec-h2" style="text-align:center;">Source Anywhere. Ship Everywhere.</h2>
+  <div class="route-flow">
+    <div class="route-node">
+      <div class="route-flag">🏭</div>
+      <div class="route-name">Any Origin</div>
+      <div class="route-sub">Asia · Europe · Middle East · Americas</div>
+    </div>
+    <div class="route-arrow">────→</div>
+    <div class="route-node" style="background:rgba(184,40,58,.12);border-color:rgba(184,40,58,.3);">
+      <div class="route-flag">📦</div>
+      <div class="route-name">Stackd</div>
+      <div class="route-sub">You · Trade Intermediary</div>
+    </div>
+    <div class="route-arrow">────→</div>
+    <div class="route-node">
+      <div class="route-flag">🌍</div>
+      <div class="route-name">Any Destination</div>
+      <div class="route-sub">Caribbean · Africa · Europe · Americas</div>
+    </div>
+  </div>
+  <div class="route-tags">
+    <div class="route-tag">China · Vietnam · India · Bangladesh · Turkey</div>
+    <div class="route-tag">Caribbean · West Africa · East Africa · North Africa</div>
+    <div class="route-tag">Europe · North America · South America</div>
+    <div class="route-tag">FCL 20GP · FCL 40HQ · LCL</div>
+    <div class="route-tag">CIF · FOB · EXW · DAP</div>
+    <div class="route-tag">HS Codes · Duty · DG Compliance</div>
+  </div>
+</section>
+
+<!-- ══ WHITE PAPER ══ -->
+<section id="whitepaper">
+  <div class="wp-hero-inner">
+    <div class="wp-tag">Industry insight · White paper</div>
+    <h2 class="wp-h">The Sole Trader's Guide to Scaling from 1 to 10 Containers Without Hiring</h2>
+    <p class="wp-intro">Most trade intermediaries hit an invisible ceiling at three containers a month. This paper explains why it happens, what breaks first, and the operational infrastructure that removes the constraint — without adding headcount.</p>
+    <div class="wp-meta">
+      <div class="wp-meta-item">Published<span>May 2026</span></div>
+      <div class="wp-meta-item">Read time<span>12 minutes</span></div>
+      <div class="wp-meta-item">Author<span>FPM International</span></div>
+    </div>
+  </div>
+
+  <div class="wp-body">
+    <h2>The Three-Container Ceiling</h2>
+    <p>There is a moment every growing trade intermediary recognises. Orders are coming in. Suppliers are performing. Buyers are happy. Revenue is climbing. And then — without warning — everything starts to feel harder. Response times slip. A shipment goes quiet for three days. An invoice goes out with the wrong line items. A buyer calls asking where their container is and you genuinely don't know.</p>
+    <p>This is the three-container ceiling. It is not a commercial problem. It is an operational one. The manual systems that worked perfectly at one container a month — WhatsApp for supplier communication, Excel for invoicing, phone calls for shipment tracking — do not scale. They were never designed to.</p>
+
+    <div class="wp-stats">
+      <div class="wp-stat"><div class="wp-stat-n">40%</div><div class="wp-stat-l">Of a sourcing agent's time is spent answering status questions</div></div>
+      <div class="wp-stat"><div class="wp-stat-n">3x</div><div class="wp-stat-l">The operational overhead increase from 1 to 3 containers per month</div></div>
+      <div class="wp-stat"><div class="wp-stat-n">£0</div><div class="wp-stat-l">What most sole traders invest in operational infrastructure before they are forced to</div></div>
+    </div>
+
+    <h2>What Breaks First</h2>
+    <p>Based on our own operational experience at FPM International and conversations across the UK's Caribbean and West African trade community, the same three systems fail in the same order.</p>
+
+    <h3>1. Shipment visibility</h3>
+    <p>When you have one container, you can track it manually. You know which freight forwarder is handling it, you have the BL number, and you check in once a day. When you have three containers across two freight forwarders on different trade lanes, the cognitive load becomes unmanageable. You are one WhatsApp message away from losing track of £80,000 of goods in transit.</p>
+    <p>The solution is not to call more frequently. It is to build a single source of truth — a system that knows where every container is, what its status is, when it is expected, and what documentation is outstanding — without requiring a human to maintain it.</p>
+
+    <div class="wp-pull">
+      <p>"I was spending two hours every morning just figuring out where everything was. That's before I'd done a single commercial thing. It was unsustainable." — Trade intermediary, South London, sourcing from Qingdao to Bridgetown.</p>
+    </div>
+
+    <h3>2. Invoice accuracy and margin visibility</h3>
+    <p>Excel invoices work until the moment they don't. A transposed digit in a unit price. A freight charge that should have been £450 entered as £45. A line item from last month's order copied into this month's invoice. These errors are inevitable at volume and they are expensive — both in the correction time and in the commercial credibility they erode with buyers.</p>
+    <p>Beyond accuracy, there is the deeper problem of margin visibility. Do you know your true margin on each order? Not the headline markup, but the net figure after freight, origin charges, destination charges, insurance, and local logistics? Most sole traders do not. They know they are profitable in aggregate, but they cannot tell you whether Order A or Order B delivered better returns. This makes pricing decisions guesswork.</p>
+
+    <h3>3. Supplier relationship management</h3>
+    <p>Your suppliers are the engine of your business. Their reliability, their compliance with certification requirements, their responsiveness when something goes wrong — these variables determine your commercial performance more than almost anything else. Yet most sole traders manage these relationships entirely in their heads, supplemented by a contact book and a WhatsApp history.</p>
+    <p>What happens when you take on a new supplier for a product category you have not sourced before? How do you assess their reliability? How do you know whether their factory visit notes match their delivery track record? Without a system, you cannot.</p>
+
+    <h2>The Operational Infrastructure Stack</h2>
+    <p>Scaling from one to ten containers does not require hiring an operations manager. It requires building the right infrastructure — a connected set of systems that automate the administrative work so that you can focus on the commercial work that only you can do.</p>
+    <p>The infrastructure stack has five layers, and they must be built in the right order. Building layer three before layer one is complete creates more problems than it solves.</p>
+
+    <h3>Layer 1 — Supplier master data</h3>
+    <p>Before you can do anything else, you need a single record for every supplier that contains: full legal name, country, contact person, email, phone including WeChat ID, currency, payment terms, lead time, required certifications, and any operational risk flags. This is not a contact book. It is a structured dataset that other systems can reference.</p>
+
+    <h3>Layer 2 — Product catalogue with COGS</h3>
+    <p>Every SKU you source needs a catalogue record with unit cost, unit sell price, unit of measure, and HS code. This is the foundation of accurate invoicing and true margin calculation. Without it, every invoice is built from memory and every margin calculation is approximate.</p>
+
+    <h3>Layer 3 — Invoice and payment ledger</h3>
+    <p>Invoices generated from the catalogue, not from a blank spreadsheet. Payment status tracked per invoice. Balance due calculated automatically. Credit notes issued against specific invoice references. This eliminates the most common source of commercial disputes with buyers.</p>
+
+    <h3>Layer 4 — Purchase order management</h3>
+    <p>POs auto-generated from invoice line items, grouped by supplier. Deposit tracking against each PO. Status updated from Draft through to Settled. This closes the loop between what you have sold and what you have committed to buy.</p>
+
+    <h3>Layer 5 — Shipment visibility</h3>
+    <p>Every active shipment with BL number, vessel name, carrier, origin and destination ports, ETD, ETA, container type, and DG status. This is the layer that eliminates the 11pm phone call. When a buyer asks where their container is, you answer in thirty seconds from a single screen.</p>
+
+    <h2>The Automation First Principle</h2>
+    <p>Every feature in an operational platform should be evaluated against one question: does this remove manual work, or does it just move it somewhere else?</p>
+    <p>This principle — automation first — governs every build decision at Stackd. When an invoice is saved, purchase orders are automatically generated for each supplier. When a payment is recorded and reaches the invoice total, the status automatically flips to Paid. When a shipment BL number is entered, the system polls the carrier API and updates status without human input.</p>
+    <p>The goal is not a more organised spreadsheet. The goal is a system that runs the administrative layer of your operation so that you do not have to.</p>
+
+    <div class="wp-pull">
+      <p>"Automation first is not a feature. It is a design philosophy. Every additional manual step in an operational system is a tax on the operator's time. That tax compounds with volume."</p>
+    </div>
+
+    <h2>The Numbers</h2>
+    <p>A sole trader managing three containers a month with eight active suppliers and two active buyers typically spends between 12 and 18 hours per week on administrative tasks: chasing shipment status, producing invoices, updating spreadsheets, communicating with suppliers about order confirmations, and reconciling payments.</p>
+    <p>At a conservative opportunity cost of £50 per hour, that is £600–£900 per week in administrative overhead — £31,200–£46,800 per year. The question is not whether operational infrastructure is worth investing in. The question is why it took this long.</p>
+    <p>Stackd's Growth tier, which covers all five layers of the operational infrastructure stack with unlimited shipments and up to three users, costs £149 per month — £1,788 per year. At the conservative end of the administrative overhead estimate, that is a return of more than 17:1 in recovered time value alone. And that is before accounting for the commercial upside of being able to take on more orders without hiring.</p>
+
+    <h2>Where to Start</h2>
+    <p>The most common mistake is attempting to implement the entire stack at once. A sole trader who tries to migrate their entire operation — all suppliers, all line items, all historical invoices — in a single weekend will spend most of that weekend fighting data quality problems and give up before seeing the benefit.</p>
+    <p>Start with one supplier. One product category. One active shipment. Enter those records correctly. See the system work. Then expand. The operational infrastructure for a ten-container-a-month business can be built in thirty days if it is approached incrementally.</p>
+    <p>The moment that changes everything is not when the system is fully populated. It is the first time a buyer asks where their container is and you answer in thirty seconds from a single screen without making a single phone call. That is the moment the investment pays for itself.</p>
+  </div>
+</section>
+
+<!-- ══ PRICING ══ -->
+<section id="pricing">
+  <div class="sec-eye">Simple pricing</div>
+  <h2 class="sec-h2">Pay for what you need. Upgrade as you grow.</h2>
+  <p class="sec-p">No per-user pricing at entry level. No annual contracts required. No credit card to start a trial. Monthly billing, cancel anytime.</p>
+
+  <div class="price-grid">
+    <div class="price-card">
+      <div class="price-tier">Starter</div>
+      <div class="price-n">£49</div>
+      <div class="price-per">per month · 1 user</div>
+      <ul class="price-list">
+        <li>Supplier management (unlimited)</li>
+        <li>Product catalogue with margin tracking</li>
+        <li>Invoice lifecycle + credit notes</li>
+        <li>Purchase orders</li>
+        <li>Payment ledger</li>
+        <li>Up to 5 active shipments</li>
+        <li>AI operations assistant</li>
+        <li>PDF invoice + PO generation</li>
+        <li>Google Sheets sync</li>
+      </ul>
+      <a href="#contact" class="btn-p" style="display:block;text-align:center;">Start Free Trial</a>
+    </div>
+
+    <div class="price-card feat">
+      <div class="price-badge">Most popular</div>
+      <div class="price-tier">Growth</div>
+      <div class="price-n">£149</div>
+      <div class="price-per">per month · up to 3 users</div>
+      <ul class="price-list">
+        <li>Everything in Starter</li>
+        <li>Unlimited active shipments</li>
+        <li>Live shipment API tracking</li>
+        <li>Quote &amp; pricing engine</li>
+        <li>Xero / QuickBooks export</li>
+        <li>Price versioning on catalogue</li>
+        <li>AI with live portal context</li>
+        <li>Supplier intelligence scores</li>
+        <li>Priority email support</li>
+      </ul>
+      <a href="#contact" class="btn-p" style="display:block;text-align:center;">Start Free Trial</a>
+    </div>
+
+    <div class="price-card">
+      <div class="price-tier">Scale</div>
+      <div class="price-n">£399</div>
+      <div class="price-per">per month · up to 10 users</div>
+      <ul class="price-list">
+        <li>Everything in Growth</li>
+        <li>Supplier + buyer portal</li>
+        <li>Multi-currency P&amp;L reporting</li>
+        <li>MTD-compatible VAT export</li>
+        <li>Custom document templates</li>
+        <li>Unlimited intelligence reports</li>
+        <li>WhatsApp &amp; WeChat integrations</li>
+        <li>Dedicated onboarding call</li>
+        <li>Priority phone support</li>
+      </ul>
+      <a href="#contact" class="btn-p" style="display:block;text-align:center;">Start Free Trial</a>
+    </div>
+  </div>
+
+  <div class="ent-bar">
+    <div>
+      <div class="ent-h">Enterprise &amp; Volume Traders</div>
+      <p class="ent-p">For freight forwarders, trading houses, and volume operators with complex requirements. Custom integrations, dedicated SLA, ERP connectivity, and supplier intelligence dashboards. Pricing based on volume, users, and integration requirements.</p>
+    </div>
+    <a href="#contact" class="btn-p" style="white-space:nowrap;flex-shrink:0;">Contact Us</a>
+  </div>
+</section>
+
+<!-- ══ ABOUT ══ -->
+<section id="about">
+  <div class="sec-eye">About Stackd</div>
+  <div class="about-grid">
+    <div class="about-l">
+      <h2>Built from <span>lived experience</span> on the trade lane</h2>
+      <p>Stackd was not designed in a product workshop or built from market research. It was built because FPM International — a Brighton-based trade intermediary sourcing from Chinese manufacturers and supplying Caribbean markets — ran out of road with spreadsheets and WhatsApp.</p>
+      <p>Every feature in Stackd exists because it solved a real operational problem at FPM. The shipment tracking tab exists because we were making phone calls at 11pm to find out where containers were. The AI assistant exists because we needed to translate supplier documents from Mandarin at 2am. The landed cost calculator exists because we were losing margin to miscalculated freight allocations.</p>
+      <p>This is not a product built for a market the founder read about. It is a product built from the inside of the problem — by an operator who lives it every week.</p>
+      <p>FPM International is Stackd's founding client. The platform manages FPM's live invoices, active supplier relationships, and shipment pipeline. When we ship a new feature, it goes into production at FPM before it goes anywhere else. That discipline keeps us honest about what actually works.</p>
+    </div>
+    <div class="about-r">
+      <div class="about-stat">
+        <div class="about-sn">v2.9.5</div>
+        <div class="about-sl">Current platform version</div>
+      </div>
+      <div class="about-stat">
+        <div class="about-sn">68</div>
+        <div class="about-sl">Automated tests on every deployment</div>
+      </div>
+      <div class="about-stat">
+        <div class="about-sn">18mo</div>
+        <div class="about-sl">In active production use at FPM</div>
+      </div>
+      <div class="about-stat">
+        <div class="about-sn">Brighton</div>
+        <div class="about-sl">UK · FPM International Ltd</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-eye" style="margin-bottom:14px;">Our principles</div>
+  <div class="values-grid">
+    <div class="val-card">
+      <div class="val-icon"><svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" fill="#B8283A" opacity=".08" rx="2"/><rect x="13" y="22" width="22" height="4" fill="#B8283A"/><rect x="22" y="13" width="4" height="22" fill="#B8283A"/></svg></div>
+      <div class="val-t">Automation First</div>
+      <p class="val-b">Every feature is evaluated against one question: does this remove manual work or does it just move it? If it does not eliminate a step the operator currently does manually, it does not ship. Non-negotiable.</p>
+    </div>
+    <div class="val-card">
+      <div class="val-icon"><svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" fill="#C9963A" opacity=".08" rx="2"/><polygon points="24,12 36,32 12,32" fill="none" stroke="#C9963A" stroke-width="2.5" stroke-linejoin="round"/><line x1="24" x2="24" y1="32" y2="37" stroke="#C9963A" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+      <div class="val-t">Built for the ICP</div>
+      <p class="val-b">Stackd is designed for one specific operator: the UK-based sole trader or micro-firm sourcing from China and selling to the Caribbean or West Africa. We will never dilute this focus to chase a broader market.</p>
+    </div>
+    <div class="val-card">
+      <div class="val-icon"><svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" fill="#1A7A4A" opacity=".08" rx="2"/><rect x="16" y="22" width="16" height="12" rx="1" stroke="#1A7A4A" stroke-width="2" fill="none"/><path d="M20 22v-4a4 4 0 0 1 8 0v4" stroke="#1A7A4A" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="24" cy="28" r="2" fill="#1A7A4A"/></svg></div>
+      <div class="val-t">Operator first, always</div>
+      <p class="val-b">Your data is yours. We do not sell it, share it, or use it for anything beyond running your account. The Supplier Intelligence product uses aggregate anonymous data only — individual transaction data is always private.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CONTACT ══ -->
+<section id="contact">
+  <div class="sec-eye">Get in touch</div>
+  <h2 class="sec-h2">Start your free trial or ask us anything</h2>
+  <p class="sec-p">No credit card required. 14-day trial with full Growth access. We respond within one business day.</p>
+
+  <div class="contact-grid">
+    <div class="contact-form">
+      <h3>Send us a message</h3>
+      <div class="f-grid"><div class="f-field"><label>Full name *</label><input type="text" id="cf-name" placeholder="Your name"></div><div class="f-field"><label>Email address *</label><input type="email" id="cf-email" placeholder="your@email.com"></div></div><div class="f-grid"><div class="f-field"><label>Company / Trading name</label><input type="text" id="cf-company" placeholder="Company Ltd / Trading As..."></div><div class="f-field"><label>Country of operation</label><input type="text" id="cf-country" placeholder="United Kingdom"></div></div><div class="f-field" style="display:none"><label>name placeholder</label>
+      
+      <div class="f-field"><label>Primary sector / product category</label>
+        <select id="cf-sector">
+          <option value="">Select sector...</option>
+          <option>Commercial equipment &amp; machinery</option>
+          <option>Consumer goods &amp; FMCG</option>
+          <option>Electronics &amp; technology</option>
+          <option>Food &amp; agriculture</option>
+          <option>Building materials &amp; construction</option>
+          <option>Textiles &amp; apparel</option>
+          <option>Automotive &amp; parts</option>
+          <option>Energy &amp; renewables</option>
+          <option>Multiple sectors</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="f-field"><label>Business type</label>
+        <select id="cf-type">
+          <option value="">Select...</option>
+          <option>Sole trader — trade intermediary</option>
+          <option>Small firm (2–10 people)</option>
+          <option>Freight forwarder</option>
+          <option>Sourcing agent</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="f-field"><label>Monthly container volume</label>
+        <select id="cf-vol">
+          <option value="">Select...</option>
+          <option>1 container / month</option>
+          <option>2–5 containers / month</option>
+          <option>6–15 containers / month</option>
+          <option>15+ containers / month</option>
+          <option>Not yet shipping — planning stage</option>
+        </select>
+      </div>
+      <div class="f-field"><label>Message</label><textarea id="cf-msg" placeholder="Tell us about your current setup and what you're trying to solve..."></textarea></div>
+      <button class="btn-p" style="width:100%;padding:14px;" onclick="submitForm()">Send Message</button>
+      <div class="f-success" id="f-success">✓ Message received. We'll be in touch within one business day.</div>
+    </div>
+
+    <div class="contact-info">
+      <h3>Direct contact</h3>
+      <div class="c-item">
+        <div class="c-item-l">Email</div>
+        <div class="c-item-v"><a href="mailto:hello@getstackdops.com">hello@getstackdops.com</a></div>
+      </div>
+      <div class="c-item">
+        <div class="c-item-l">Portal access</div>
+        <div class="c-item-v"><a href="https://stkdcfpm.github.io/stackd-ops" target="_blank">stkdcfpm.github.io/stackd-ops</a></div>
+      </div>
+      <div class="c-item">
+        <div class="c-item-l">Registered</div>
+        <div class="c-item-v">FPM International Ltd<br>Brighton, UK</div>
+      </div>
+      <div class="c-item">
+        <div class="c-item-l">Trade routes served</div>
+        <div class="c-item-v">China → Caribbean<br>China → West Africa<br>UK → Caribbean</div>
+      </div>
+      <div class="c-item">
+        <div class="c-item-l">Automation</div>
+        <div class="c-item-v" style="font-size:.82rem;color:rgba(255,255,255,.4);">Form submissions fire a webhook to your Zapier or Make.com workflow. Replace WEBHOOK_URL in the page source to activate auto-responses and CRM routing.</div>
+      </div>
+      <div class="c-commit">
+        <p>We respond to every message within one business day. For trial requests, we'll have you set up and in the portal within 24 hours. No sales calls unless you ask for one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="foot-top">
+    <div class="foot-brand">
+      <div class="logo"><span>S</span>TACKD</div>
+      <div class="tag">SOURCE &middot; SUPPLY &middot; SHIP</div>
+      <p>The trade operations platform for UK sole traders and micro-firms sourcing from China and selling to the Caribbean and West Africa.</p>
+    </div>
+    <div class="foot-col">
+      <h4>Platform</h4>
+      <a href="#features">Features</a>
+      <a href="#tools">Free Tools</a>
+      <a href="#pricing">Pricing</a>
+      <a href="https://stkdcfpm.github.io/stackd-ops" target="_blank">Launch Portal</a>
+    </div>
+    <div class="foot-col">
+      <h4>Company</h4>
+      <a href="#about">About</a>
+      <a href="#whitepaper">Insight</a>
+      <a href="#contact">Contact</a>
+      <a href="mailto:hello@getstackdops.com">hello@getstackdops.com</a>
+    </div>
+    <div class="foot-col">
+      <h4>Trade Routes</h4>
+      <a href="#route">China → Caribbean</a>
+      <a href="#route">China → West Africa</a>
+      <a href="#route">UK → Barbados</a>
+      <a href="#route">UK → Nigeria / Ghana</a>
+    </div>
+  </div>
+  <div class="foot-bot">
+    <p>© 2026 FPM International Ltd · getstackdops.com · Brighton, UK</p>
+    <p>Built from lived experience on the China–Caribbean trade lane</p>
+  </div>
+</footer>
+
+<script>
+// ── NAV SCROLL ──
+window.addEventListener('scroll', function() {
+  var nav = document.querySelector('nav');
+  if (window.scrollY > 10) {
+    nav.style.boxShadow = '0 2px 20px rgba(0,0,0,0.4)';
+  } else {
+    nav.style.boxShadow = 'none';
+  }
+});
+
+// ── LIVE COUNTER ──
+var baseCount = 4;
+var countEl = document.getElementById('shipCount');
+setInterval(function() {
+  baseCount += Math.random() > 0.85 ? 1 : 0;
+  countEl.textContent = baseCount;
+}, 8000);
+
+// ── TOOLS TABS ──
+function showTool(id) {
+  document.querySelectorAll('.tool-tab').forEach(function(t, i) {
+    t.classList.remove('on');
+  });
+  document.querySelectorAll('.tool-panel').forEach(function(p) {
+    p.classList.remove('on');
+  });
+  document.getElementById('tool-' + id).classList.add('on');
+  var tabs = document.querySelectorAll('.tool-tab');
+  var map = { lcc: 0, ptc: 1, quiz: 2 };
+  tabs[map[id]].classList.add('on');
+}
+
+document.getElementById('lcc-dg').addEventListener('change', function(){
+  document.getElementById('lcc-dg-row').style.display = this.value==='yes' ? 'grid' : 'none';
+});
+
+// ── LANDED COST CALCULATOR ──
+var RATES = {
+  fcl20: 1800, fcl40: 2800, lclPerCBM: 65, airPerKg: 5.5,
+  originCharges: {
+    qingdao:180, shanghai:195, shenzhen:190, guangzhou:185, ningbo:188,
+    hochiminh:160, bangkok:165, jakarta:170, klang:162, dhaka:155,
+    mumbai:175, karachi:158,
+    jebel:155, istanbul:145,
+    hamburg:138, rotterdam:135, felixstowe:140
+  },
+  insRate: 0.005, dgSurcharge: 250, fpmAdmin: 350,
+  destCharges: {
+    bridgetown:220, kingston:240, portofspain:230, nassau:250, georgetown:245,
+    lagos:280, accra:260, abidjan:290, dakar:275, douala:295,
+    mombasa:310, dar:305,
+    casablanca:230, alexandria:240,
+    felixstowe_d:180, rotterdam_d:170, newyork:320, miami:295
+  }
+};
+
+
+
+function runLCC() {
+  var val = +document.getElementById('lcc-val').value || 0;
+  var mode = document.getElementById('lcc-mode').value;
+  var cbm = +document.getElementById('lcc-cbm').value || 0;
+  var dutyPct = +document.getElementById('lcc-duty').value || 0;
+  var dest = document.getElementById('lcc-dest').value;
+  var dg = document.getElementById('lcc-dg').value === 'yes';
+  var dgLines = +document.getElementById('lcc-dglines').value || 0;
+
+  if (!val) { alert('Please enter a product value'); return; }
+
+  var freight = mode === 'fcl20' ? RATES.fcl20 : mode === 'fcl40' ? RATES.fcl40 : cbm * RATES.lclPerCBM;
+  var origin = RATES.originCharges;
+  var destCharge = RATES.destCharges[dest] || 240;
+  var ins = val * RATES.insRate;
+  var duty = val * (dutyPct / 100);
+  var dgAmt = dg ? dgLines * RATES.dgSurcharge : 0;
+  var admin = RATES.fpmAdmin;
+  var total = val + freight + origin + destCharge + ins + duty + dgAmt + admin;
+  var landedPct = ((total - val) / val * 100).toFixed(1);
+
+  document.getElementById('lcc-r-val').textContent = fmt(val);
+  document.getElementById('lcc-r-freight').textContent = fmt(freight);
+  document.getElementById('lcc-r-origin').textContent = fmt(origin);
+  document.getElementById('lcc-r-dest').textContent = fmt(destCharge);
+  document.getElementById('lcc-r-ins').textContent = fmt(ins);
+  document.getElementById('lcc-r-duty').textContent = fmt(duty);
+  document.getElementById('lcc-r-dg').textContent = dg ? fmt(dgAmt) : '—';
+  document.getElementById('lcc-r-admin').textContent = fmt(admin);
+  document.getElementById('lcc-r-total').textContent = fmt(total);
+  document.getElementById('lcc-r-note').textContent =
+    'Trade costs add ' + landedPct + '% to your product value on this route. ' +
+    (dg ? 'DG surcharge of $250 per commodity line applied. ' : '') +
+    'Rates are indicative based on standard FPM route benchmarks. Actual rates vary by carrier and season.';
+
+  document.getElementById('lcc-result').classList.add('on');
+}
+
+// ── PAPERWORK TAX CALCULATOR ──
+function runPTC() {
+  var cont = +document.getElementById('ptc-cont').value;
+  var sup = +document.getElementById('ptc-sup').value;
+  var buy = +document.getElementById('ptc-buy').value;
+  var rate = +document.getElementById('ptc-rate').value || 50;
+
+  // Hours calculation based on operational benchmarks
+  var shipHrs = cont * 2.5;   // tracking + status chasing per container
+  var supHrs = sup * 0.4;     // supplier comms per week
+  var invHrs = cont * 1.2;    // invoice production per shipment
+  var buyHrs = buy * 0.8;     // buyer queries per week
+  var adminHrs = 2.0;         // misc admin
+
+  var totalWkHrs = shipHrs + supHrs + invHrs + buyHrs + adminHrs;
+  var totalYrHrs = totalWkHrs * 52;
+  var totalCost = totalYrHrs * rate;
+
+  // Stackd cost based on container volume
+  var stackdMonthly = cont <= 2 ? 49 : cont <= 5 ? 149 : 399;
+  var stackdAnnual = stackdMonthly * 12;
+  var saving = totalCost - stackdAnnual;
+  var roi = ((saving / stackdAnnual) * 100).toFixed(0);
+
+  document.getElementById('ptc-r-hrs').textContent = totalWkHrs.toFixed(1) + 'hrs';
+  document.getElementById('ptc-r-yrhrs').textContent = Math.round(totalYrHrs) + 'hrs';
+  document.getElementById('ptc-r-cost').textContent = '£' + Math.round(totalCost).toLocaleString();
+  document.getElementById('ptc-r-stackd').textContent = '£' + stackdAnnual.toLocaleString() + '/yr';
+  document.getElementById('ptc-r-save').textContent = saving > 0 ? '£' + Math.round(saving).toLocaleString() : '£0';
+  document.getElementById('ptc-r-roi').textContent = roi > 0 ? roi + 'x' : '—';
+  document.getElementById('ptc-r-note').textContent =
+    'Based on ' + cont + ' container' + (cont > 1 ? 's' : '') + '/month, ' + sup + ' suppliers, ' + buy + ' buyer' + (buy > 1 ? 's' : '') + '. ' +
+    'Stackd ' + (stackdMonthly === 49 ? 'Starter' : stackdMonthly === 149 ? 'Growth' : 'Scale') + ' tier recommended at £' + stackdMonthly + '/month. ' +
+    'Opportunity cost calculated at £' + rate + '/hour.';
+
+  document.getElementById('ptc-result').classList.add('on');
+}
+
+// ── QUIZ ──
+var qScores = [0, 0, 0, 0, 0];
+
+function qNext(step) {
+  var sel = document.querySelector('input[name="q' + step + '"]:checked');
+  if (!sel) { alert('Please select an answer'); return; }
+  qScores[step] = +sel.value;
+  document.getElementById('qs-' + step).classList.remove('on');
+  document.getElementById('qs-' + (step + 1)).classList.add('on');
+}
+
+function qFinish() {
+  var sel = document.querySelector('input[name="q4"]:checked');
+  if (!sel) { alert('Please select an answer'); return; }
+  qScores[4] = +sel.value;
+  document.getElementById('qs-4').classList.remove('on');
+
+  var total = qScores.reduce(function(a, b) { return a + b; }, 0);
+  var tier, desc, price;
+
+  if (total <= 8) {
+    tier = 'Starter';
+    desc = 'You\'re at the beginning of your scale journey. Starter gives you the full operational platform — suppliers, invoicing, shipments, and AI — without paying for features you don\'t need yet. Start here and upgrade as you grow.';
+    price = '£49/month · 14-day free trial · No credit card required';
+  } else if (total <= 14) {
+    tier = 'Growth';
+    desc = 'You\'re at the point where manual systems are starting to create friction. Growth unlocks live shipment API tracking, the quote engine, Xero export, and price versioning — the features that remove the next layer of operational overhead.';
+    price = '£149/month · 14-day free trial · No credit card required';
+  } else {
+    tier = 'Scale';
+    desc = 'You\'re operating at a volume where operational infrastructure is the constraint on further growth. Scale gives you up to 10 users, a supplier and buyer portal, multi-currency P&L, and WhatsApp/WeChat integrations. This is the tier for operators who are serious about reaching 15 containers a month.';
+    price = '£399/month · 14-day free trial · No credit card required';
+  }
+
+  document.getElementById('q-tier').textContent = tier;
+  document.getElementById('q-desc').textContent = desc;
+  document.getElementById('q-price').textContent = price;
+  document.getElementById('q-result').classList.add('on');
+}
+
+// ── CONTACT FORM ──
+// Replace with your Zapier or Make.com catch webhook URL
+var WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/14481703/4y1gwlg/';
+
+function submitForm() {
+  var name  = document.getElementById('cf-name').value.trim();
+  var email = document.getElementById('cf-email').value.trim();
+  if (!name || !email) { alert('Please enter your name and email address'); return; }
+  var payload = {
+    name:    name,
+    email:   email,
+    company: (document.getElementById('cf-company')||{}).value||'',
+    country: (document.getElementById('cf-country')||{}).value||'',
+    type:    document.getElementById('cf-type').value,
+    sector:  (document.getElementById('cf-sector')||{}).value||'',
+    volume:  document.getElementById('cf-vol').value,
+    message: document.getElementById('cf-msg').value.trim(),
+    source:  'getstackdops.com',
+    ts:      new Date().toISOString()
+  };
+  if (WEBHOOK_URL && WEBHOOK_URL !== 'YOUR_ZAPIER_OR_MAKE_WEBHOOK_URL') {
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  }
+  document.getElementById('f-success').style.display = 'block';
+  ['cf-name','cf-email','cf-company','cf-country','cf-msg'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value='';
+  });
+  ['cf-type','cf-sector','cf-vol'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value='';
+  });
+}
+
+// ── SMOOTH HIGHLIGHT ON NAV CLICK ──
+document.querySelectorAll('nav a[href^="#"]').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    var id = a.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
