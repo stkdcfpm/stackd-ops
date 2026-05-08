@@ -4,7 +4,7 @@
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
 **Current version: v2.9.8**  
-**Test count: 118/118 PASS** (`node tests/run.js`)
+**Test count: 133/133 PASS** (`node tests/run.js`)
 
 ---
 
