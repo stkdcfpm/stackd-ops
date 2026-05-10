@@ -3,7 +3,7 @@
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.8**  
+**Current version: v2.9.9**  
 **Test count: 133/133 PASS** (`node tests/run.js`)
 
 ---
@@ -95,6 +95,7 @@ View routing: `showV(v, tab)` dispatches to render functions via the `fns` map. 
 
 | Version | Highlights |
 |---|---|
+| v2.9.9 | Line item dims (L/W/H, CBM/unit, DG flag); Load Calculator (multi-invoice CBM, container rec, DG flag, export); Forwarder Update Request (per-shipment pre-filled message, clipboard, webhook, Integrations settings); Quote Feasibility Check (DG warning, container rec, Caribbean electrical advisory) |
 | v2.9.8 | Credit note system fixes: PDF routing (BUG 1), negative amount display (BUG 2), balance deduction + legacy type fallback (BUG 3); Goodwill Credit feature; Sheets Line Items tab on Push All |
 | v2.9.7 | REQ-SYN-001: Sheets sync guard (`isEmptyLI` hoisted); REQ-LIB-001: invoice→library refs index (`invoiceRefs`), library picker usage indicators; Blob URL PDF previews |
 | v2.9.6 | Brand lockup — Rajdhani 700 wordmark, JetBrains Mono tagline, D in #C8312E, HR rule; drops SVG container mark |
