@@ -2,9 +2,10 @@
 // Usage: node tests/run.js
 'use strict';
 
-const fs   = require('fs');
-const path = require('path');
-const vm   = require('vm');
+const fs       = require('fs');
+const path     = require('path');
+const vm       = require('vm');
+const fixtures = require('./fixtures.js');
 
 // ── MOCK BROWSER ENVIRONMENT ───────────────────────────────────
 const mockElements = {};
@@ -105,9 +106,16 @@ function assertNotContains(str, sub, msg) {
   if (String(str).includes(sub)) throw new Error(
     (msg || 'Expected NOT to contain: ' + sub) + '\n    In: ' + String(str).slice(0, 300));
 }
+function assertApprox(a, b, msg) {
+  if (Math.round(a * 100) !== Math.round(b * 100)) throw new Error(
+    (msg ? msg + '\n    ' : '') + 'Expected ≈' + b + '  Got: ' + a);
+}
 
 function resetDB() {
   ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [] };
+}
+function loadFixtures() {
+  ctx.DB = JSON.parse(JSON.stringify(fixtures));
 }
 
 // ── TEST SUITE ─────────────────────────────────────────────────
@@ -1238,6 +1246,73 @@ test('invoiceRefs — stale-ref removal only removes current invoice ref, preser
   assertEqual(forB.length, 1, 'inv-B ref preserved');
 });
 
+// ── buildInvLines — Sheets Line Items tab ──────────────────────
+console.log('\nbuildInvLines — Sheets Line Items tab');
+
+test('buildInvLines — one row per line item across invoices', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV10100', buyer:'ACME', date:'2026-05-01', cur:'USD', type:'invoice',
+    lineItems:[
+      { rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:3, up:50 },
+      { rid:'r2', lid:'', desc:'Gadget', uom:'kg',  qty:2, up:80 }
+    ] });
+  ctx.DB.inv.push({ id:'i2', num:'INV10101', buyer:'Bob',  date:'2026-05-02', cur:'GBP', type:'invoice',
+    lineItems:[
+      { rid:'r3', lid:'', desc:'Part',   uom:'pcs', qty:10, up:5 }
+    ] });
+  var rows = ctx.buildInvLines();
+  assertEqual(rows.length, 3, 'three rows total across two invoices');
+  assertEqual(rows[0].invNum, 'INV10100', 'first row invoice number');
+  assertEqual(rows[2].invNum, 'INV10101', 'third row second invoice');
+});
+
+test('buildInvLines — row fields match spec columns', function() {
+  resetDB();
+  ctx.DB.li.push({ id:'lib1', sku:'WGT-01', desc:'Widget', cost:30, price:50, cur:'USD', uom:'pcs', supId:'', priceHistory:[] });
+  ctx.DB.inv.push({ id:'i1', num:'INV10102', buyer:'ACME', date:'2026-05-03', cur:'USD', type:'invoice',
+    lineItems:[{ rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:4, up:50 }] });
+  var row = ctx.buildInvLines()[0];
+  assertEqual(row.invNum,    'INV10102', 'invNum');
+  assertEqual(row.buyer,     'ACME',     'buyer');
+  assertEqual(row.date,      '2026-05-03', 'date');
+  assertEqual(row.sku,       'WGT-01',   'sku from library');
+  assertEqual(row.desc,      'Widget',   'desc');
+  assertEqual(row.qty,       4,          'qty');
+  assertEqual(row.uom,       'pcs',      'uom');
+  assertEqual(row.unitCost,  30,         'unitCost from library');
+  assertEqual(row.unitPrice, 50,         'unitPrice');
+  assertEqual(row.lineTotal, 200,        'lineTotal = 4 * 50');
+  assertEqual(row.currency,  'USD',      'currency');
+});
+
+test('buildInvLines — quick-add lines (no lid) have empty sku and unitCost', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV10103', buyer:'Bob', date:'2026-05-04', cur:'USD', type:'invoice',
+    lineItems:[{ rid:'r1', lid:'', desc:'Custom item', uom:'pcs', qty:1, up:100 }] });
+  var row = ctx.buildInvLines()[0];
+  assertEqual(row.sku,      '', 'sku empty for quick-add line');
+  assertEqual(row.unitCost, '', 'unitCost empty for quick-add line');
+  assertEqual(row.lineTotal, 100, 'lineTotal still calculated');
+});
+
+test('buildInvLines — credit notes and goodwill credits are excluded', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'cn1', num:'CN10100', type:'credit_note', cnAmount:-200, lineItems:[], buyer:'ACME', date:'2026-05-01', cur:'USD' });
+  ctx.DB.inv.push({ id:'gw1', num:'CN10101', type:'goodwill_credit', cnAmount:-100, lineItems:[], buyer:'Bob', date:'2026-05-02', cur:'USD' });
+  ctx.DB.inv.push({ id:'i1',  num:'INV10104', type:'invoice', buyer:'Corp', date:'2026-05-03', cur:'USD',
+    lineItems:[{ rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:1, up:50 }] });
+  var rows = ctx.buildInvLines();
+  assertEqual(rows.length, 1, 'only invoice line items included; CNs skipped');
+  assertEqual(rows[0].invNum, 'INV10104', 'only the regular invoice row present');
+});
+
+test('buildInvLines — invoice with no line items contributes zero rows', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV10105', buyer:'ACME', date:'2026-05-01', cur:'USD', type:'invoice', lineItems:[] });
+  var rows = ctx.buildInvLines();
+  assertEqual(rows.length, 0, 'no rows for invoice with empty lineItems');
+});
+
 // ── Credit Note System (v2.9.8) ────────────────────────────────
 console.log('\nCredit Note System (v2.9.8)');
 
@@ -1397,6 +1472,116 @@ test('saveInv — goodwill credit adds negative payments ledger entry', function
   var pmt = ctx.DB.payments.find(function(p){ return p.invId===cn.id && p.method==='Goodwill Credit'; });
   assert(pmt, 'goodwill payment ledger entry created');
   assertEqual(pmt.amount, -400, 'payment amount is -400');
+});
+
+// ── Fixture regression — production-like anonymised dataset ───
+console.log('\nFixture regression — production-like anonymised dataset');
+
+test('fixture — 9 suppliers, 20 items, 7 invoice/CN records, 5 payments, 1 shipment', function() {
+  loadFixtures();
+  assertEqual(ctx.DB.sup.length,      9, 'supplier count');
+  assertEqual(ctx.DB.li.length,      20, 'line item count');
+  assertEqual(ctx.DB.inv.length,      7, 'invoice+CN count');
+  assertEqual(ctx.DB.payments.length, 5, 'payment count');
+  assertEqual(ctx.DB.sh.length,       1, 'shipment count');
+});
+
+test('INV10028 — live line items: grand ≈$31,355.87', function() {
+  loadFixtures();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV10028'; });
+  assertApprox(ctx.cInv(inv).grand, 31355.87, 'INV10028 grand');
+});
+
+test('INV10028 — two payments total $31,055.87: balance $300', function() {
+  loadFixtures();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV10028'; });
+  assertEqual(ctx.cInv(inv).bal, 300, 'INV10028 balance');
+});
+
+test('INV10030 — live line items: grand ≈$14,180', function() {
+  loadFixtures();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV10030'; });
+  assertApprox(ctx.cInv(inv).grand, 14180, 'INV10030 grand');
+});
+
+test('INV10030 — deposit $4,000 + CN Applied $500: balance ≈$9,680', function() {
+  loadFixtures();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV10030'; });
+  assertApprox(ctx.cInv(inv).bal, 9680, 'INV10030 bal with CN');
+});
+
+test('INV10030 — without CN Applied: balance ≈$10,180', function() {
+  loadFixtures();
+  ctx.DB.inv = ctx.DB.inv.filter(function(i){ return i.num !== 'CN10001'; });
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV10030'; });
+  assertApprox(ctx.cInv(inv).bal, 10180, 'INV10030 bal without CN');
+});
+
+test('INV10029 — no live items: calc_ fallback grand $957.08', function() {
+  loadFixtures();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV10029'; });
+  assertEqual(ctx.cInv(inv).grand, 957.08, 'INV10029 calc_ fallback grand');
+});
+
+test('INV10029 — fully paid: balance $0', function() {
+  loadFixtures();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV10029'; });
+  assertEqual(ctx.cInv(inv).bal, 0, 'INV10029 fully paid');
+});
+
+test('INV10032 — freight-only lines: grand $6,071, balance $6,071', function() {
+  loadFixtures();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV10032'; });
+  var r = ctx.cInv(inv);
+  assertEqual(r.grand, 6071, 'INV10032 grand');
+  assertEqual(r.bal,   6071, 'INV10032 balance');
+});
+
+test('CN10001 — credit_note cInv early return: grand and bal = cnAmount', function() {
+  loadFixtures();
+  var cn = ctx.DB.inv.find(function(i){ return i.num === 'CN10001'; });
+  var r = ctx.cInv(cn);
+  assertEqual(r.grand, -500, 'CN10001 grand = cnAmount');
+  assertEqual(r.bal,   -500, 'CN10001 bal = cnAmount');
+});
+
+test('CN10002 — goodwill_credit cInv early return: grand = cnAmount', function() {
+  loadFixtures();
+  var gw = ctx.DB.inv.find(function(i){ return i.num === 'CN10002'; });
+  assertEqual(ctx.cInv(gw).grand, -200, 'CN10002 goodwill grand');
+});
+
+test('buildInvLines — 25 rows from 5 invoices, excludes 2 CN records', function() {
+  loadFixtures();
+  assertEqual(ctx.buildInvLines().length, 25, 'buildInvLines row count');
+});
+
+test('buildInvLines — resolves catalogue SKU and unit cost for lid-linked rows', function() {
+  loadFixtures();
+  var rows = ctx.buildInvLines();
+  var row = rows.find(function(r){ return r.invNum === 'INV10028' && r.sku === 'VF-2050R-F'; });
+  assert(row, 'VF-2050R-F row found in INV10028');
+  assertEqual(row.qty,       1,    'qty');
+  assertEqual(row.unitPrice, 3120, 'unitPrice');
+  assertEqual(row.lineTotal, 3120, 'lineTotal');
+  assertEqual(row.unitCost,  2600, 'unitCost resolved from library');
+});
+
+test('buildInvLines — non-catalogue rows have empty SKU and unitCost', function() {
+  loadFixtures();
+  var rows = ctx.buildInvLines();
+  var row = rows.find(function(r){ return r.invNum === 'INV10028' && r.desc.includes('container'); });
+  assert(row, 'container row found in INV10028');
+  assertEqual(row.sku,      '', 'non-catalogue sku empty');
+  assertEqual(row.unitCost, '', 'non-catalogue unitCost empty');
+});
+
+test('goodwill credit — payments ledger entry has negative amount', function() {
+  loadFixtures();
+  var pmt = ctx.DB.payments.find(function(p){ return p.method === 'Goodwill Credit'; });
+  assert(pmt,              'goodwill payment entry exists');
+  assertEqual(pmt.amount,  -200,     'goodwill amount is negative');
+  assertEqual(pmt.invNum,  'CN10002', 'linked to CN10002');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────

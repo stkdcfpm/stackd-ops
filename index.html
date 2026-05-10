@@ -686,16 +686,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         </div>
       </div>
       <div class="ms"><div class="mst r">Line Items</div>
-        <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description</th><th style="width:65px">UOM</th><th style="width:52px">Qty</th><th style="width:105px">Unit Price</th><th style="width:85px" class="num">Total</th><th style="width:22px"></th></tr></thead><tbody id="il-tb"></tbody></table>
+        <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description</th><th style="width:52px">UOM</th><th style="width:40px">Qty</th><th style="width:80px">Unit Cost</th><th style="width:83px">Unit Price</th><th style="width:62px" class="num">Margin</th><th style="width:75px" class="num">Total</th><th style="width:65px">Type</th><th style="width:22px"></th></tr></thead><tbody id="il-tb"></tbody></table>
         <div style="display:flex;gap:7px;margin-top:5px;">
           <button class="btn btn-o" onclick="openPicker()">Import from Library</button>
         </div>
         <!-- Quick add form -->
-        <div style="display:grid;grid-template-columns:2fr 60px 60px 90px auto;gap:6px;margin-top:8px;align-items:end;">
+        <div style="display:grid;grid-template-columns:90px 2fr 52px 52px 88px 92px auto;gap:6px;margin-top:8px;align-items:end;">
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Type</label><select id="qal-type" onchange="qaTypeChg()" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="product">Product</option><option value="pass-through">Pass-through</option><option value="charge">Charge</option></select></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Description</label><input type="text" id="qal-desc" placeholder="e.g. Local Freight"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">UOM</label><input type="text" id="qal-uom" placeholder="pcs" value="pcs" list="dl-uom" autocomplete="off"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Qty</label><input type="number" id="qal-qty" placeholder="1" value="1" min="0" step="any"></div>
-          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Unit Price</label><input type="number" id="qal-up" placeholder="0.00" step="0.01"></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Unit Cost ($)</label><input type="number" id="qal-uc" placeholder="0.00" step="0.01"></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Unit Price ($)</label><input type="number" id="qal-up" placeholder="0.00" step="0.01" oninput="if(G('qal-type').value==='pass-through'){G('qal-uc').value=this.value;}"></div>
           <button class="btn btn-s" style="white-space:nowrap;" onclick="quickAddLine()">+ Add</button>
         </div>
       </div>
@@ -1850,6 +1852,32 @@ async function pullAll() {
     console.error('pullAll error:', e);
   }
 }
+function buildInvLines() {
+  var rows = [];
+  DB.inv.forEach(function(inv) {
+    if (inv.type === 'credit_note' || inv.type === 'goodwill_credit') return;
+    var lis = inv.lineItems || [];
+    lis.forEach(function(li) {
+      var libItem = li.lid ? DB.li.find(function(x){ return x.id === li.lid; }) : null;
+      var qty = +li.qty || 0;
+      var up  = +li.up  || 0;
+      rows.push({
+        invNum:    inv.num    || '',
+        buyer:     inv.buyer  || '',
+        date:      inv.date   || '',
+        sku:       libItem ? (libItem.sku   || '') : '',
+        desc:      li.desc    || (libItem ? libItem.desc || '' : ''),
+        qty:       qty,
+        uom:       li.uom     || '',
+        unitCost:  libItem ? (+libItem.cost || '') : (li.unitCost !== undefined ? +li.unitCost : ''),
+        unitPrice: up,
+        lineTotal: +((qty * up).toFixed(2)),
+        currency:  inv.cur    || 'USD'
+      });
+    });
+  });
+  return rows;
+}
 async function pushAll() {
   setSyncStatus('loading');
   try {
@@ -1857,6 +1885,7 @@ async function pushAll() {
     for (var pi = 0; pi < ents.length; pi++) {
       await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]]});
     }
+    await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
     setSyncStatus('ok'); toast('Pushed all'); setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) { setSyncStatus('err'); toast('Failed: ' + e.message); }
 }
@@ -1949,11 +1978,12 @@ function cInv(inv) {
   var cogs = 0;
   var cogsLive = lis.reduce(function(s,li){
     var r = DB.li.find(function(x){ return x.id === li.lid; });
-    return s + (r ? (+r.cost||0) * (+li.qty||0) : 0);
+    if (r) return s + (+r.cost||0) * (+li.qty||0);
+    return s + (+li.unitCost||0) * (+li.qty||0);
   }, 0);
-  // Use live COGS only if library matches exist for ALL line items with a lid
   var hasLidMatches = lis.some(function(li){ return li.lid && DB.li.find(function(x){ return x.id===li.lid; }); });
-  if (cogsLive > 0 && hasLidMatches) {
+  var hasExplicitCost = lis.some(function(li){ return li.unitCost !== undefined; });
+  if (hasLidMatches || hasExplicitCost) {
     cogs = cogsLive;
   } else if (inv.calc_cogs && +inv.calc_cogs > 0) {
     cogs = +inv.calc_cogs;
@@ -2479,39 +2509,82 @@ function editInv(id) {
 function txChg() { G('ctx-wrap').style.display = G('if-tx').value==='custom' ? 'block' : 'none'; calcInv(); }
 function getTR() { var v=G('if-tx').value; return v==='custom' ? (+G('if-txc').value||0)/100 : +v||0; }
 
+function qaTypeChg() {
+  var t = G('qal-type').value;
+  var ucEl = G('qal-uc');
+  if (!ucEl) return;
+  if (t === 'pass-through') {
+    ucEl.value = G('qal-up') ? G('qal-up').value : '';
+    ucEl.readOnly = true;
+    ucEl.style.background = '#f5f5f5';
+    ucEl.style.color = 'var(--m)';
+  } else {
+    ucEl.readOnly = false;
+    ucEl.style.background = 'transparent';
+    ucEl.style.color = 'var(--ink)';
+  }
+}
 function quickAddLine() {
   var desc = G('qal-desc') ? G('qal-desc').value.trim() : '';
   var uom  = G('qal-uom')  ? G('qal-uom').value.trim()  : 'pcs';
   var qty  = G('qal-qty')  ? +G('qal-qty').value  : 1;
   var up   = G('qal-up')   ? +G('qal-up').value   : 0;
+  var lt   = G('qal-type') ? G('qal-type').value   : 'product';
+  var uc   = lt === 'pass-through' ? up : (G('qal-uc') ? +G('qal-uc').value : 0);
   if (!desc) { toast('⚠ Enter a description'); return; }
   if (qty === 0) qty = 1;
-  cIL.push({ rid:uid(), lid:'', desc:desc, uom:uom, qty:qty, up:up });
+  cIL.push({ rid:uid(), lid:'', desc:desc, uom:uom, qty:qty, up:up, unitCost:uc, lineType:lt });
   rILT(); calcInv();
   // Clear form
   if (G('qal-desc')) G('qal-desc').value = '';
   if (G('qal-up'))   G('qal-up').value   = '';
+  if (G('qal-uc'))   G('qal-uc').value   = '';
   if (G('qal-qty'))  G('qal-qty').value  = '1';
+  if (G('qal-type')) { G('qal-type').value = 'product'; qaTypeChg(); }
   toast('✓ Line item added — click Save Invoice to keep');
 }
 
 function addILI(lid, desc, uom, qty, up) {
-  cIL.push({ rid:uid(), lid:lid||'', desc:desc||'', uom:uom||'', qty:qty||1, up:up||0 });
+  var libItem = lid ? DB.li.find(function(x){return x.id===lid;}) : null;
+  cIL.push({ rid:uid(), lid:lid||'', desc:desc||'', uom:uom||'', qty:qty||1, up:up||0, unitCost:libItem?(+libItem.cost||0):0, lineType:'product' });
   rILT(); calcInv();
 }
 function remILI(rid) { cIL=cIL.filter(function(x){return x.rid!==rid;}); rILT(); calcInv(); }
 function rILT() {
   var tb=G('il-tb'), cur=G('if-cur').value||'USD';
-  if(!cIL.length){ tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--m);font-size:.58rem;padding:12px;">No line items - add manually or import from library</td></tr>'; return; }
+  if(!cIL.length){ tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--m);font-size:.58rem;padding:12px;">No line items - add manually or import from library</td></tr>'; return; }
   tb.innerHTML=cIL.map(function(li,i){
+    var lt = li.lineType || 'product';
+    var libItem = li.lid ? DB.li.find(function(x){return x.id===li.lid;}) : null;
+    var uc = lt==='pass-through' ? (+li.up||0) : (libItem ? (+libItem.cost||0) : (+li.unitCost||0));
+    var ucReadonly = lt==='pass-through' || !!libItem;
+    var ucStyle = 'width:74px;text-align:right;' + (ucReadonly ? 'background:#f5f5f5;color:var(--m);' : '');
     var tot = (+li.qty||0)*(+li.up||0);
+    var lineMgn;
+    if (lt==='pass-through') {
+      lineMgn = '<span style="font-size:.5rem;background:#ddd;color:#555;padding:1px 5px;border-radius:2px;white-space:nowrap;">0% PASS</span>';
+    } else if (lt==='charge') {
+      lineMgn = '<span style="font-size:.5rem;background:rgba(201,150,58,.15);color:var(--gold);padding:1px 5px;border-radius:2px;">CHRG</span>';
+    } else {
+      var mgnVal = (+li.up>0 && uc>0) ? (((+li.up-uc)/(+li.up))*100).toFixed(1) : null;
+      lineMgn = mgnVal!==null ? '<span style="font-size:.54rem;color:' + (+mgnVal>=20?'var(--gn)':+mgnVal>=10?'var(--gold)':'var(--cr)') + ';">' + mgnVal + '%</span>' : '<span style="color:var(--m);font-size:.52rem;">-</span>';
+    }
+    var typeOpts = [['product','Product'],['pass-through','Pass-thru'],['charge','Charge']].map(function(t){
+      return '<option value="'+t[0]+'"'+(lt===t[0]?' selected':'')+'>'+t[1]+'</option>';
+    }).join('');
+    var priceOninput = lt==='pass-through'
+      ? 'cIL['+i+'].up=+this.value;cIL['+i+'].unitCost=+this.value;calcInv()'
+      : 'cIL['+i+'].up=+this.value;calcInv()';
     return '<tr>' +
       '<td style="color:var(--m);font-size:.52rem;">' + (i+1) + '</td>' +
-      '<td><input type="text" value="' + (li.desc||'').replace(/"/g,'&quot;') + '" oninput="cIL[' + i + '].desc=this.value;calcInv()" placeholder="Description"></td>' +
-      '<td><input type="text" value="' + (li.uom||'') + '" oninput="cIL[' + i + '].uom=this.value" placeholder="pcs" style="width:58px;"></td>' +
-      '<td><input type="number" value="' + (li.qty||1) + '" min="0" step="any" oninput="cIL[' + i + '].qty=+this.value;calcInv()" style="width:48px;"></td>' +
-      '<td><input type="number" value="' + (li.up||0) + '" min="0" step="0.01" oninput="cIL[' + i + '].up=+this.value;calcInv()" style="width:95px;text-align:right;"></td>' +
+      '<td><input type="text" value="' + (li.desc||'').replace(/"/g,'&quot;') + '" oninput="cIL['+i+'].desc=this.value;calcInv()" placeholder="Description"></td>' +
+      '<td><input type="text" value="' + (li.uom||'') + '" oninput="cIL['+i+'].uom=this.value" placeholder="pcs" style="width:47px;"></td>' +
+      '<td><input type="number" value="' + (li.qty||1) + '" min="0" step="any" oninput="cIL['+i+'].qty=+this.value;calcInv()" style="width:36px;"></td>' +
+      '<td><input type="number" value="' + uc + '" min="0" step="0.01" '+(ucReadonly?'readonly ':'')+' oninput="cIL['+i+'].unitCost=+this.value;calcInv()" style="'+ucStyle+'"></td>' +
+      '<td><input type="number" value="' + (li.up||0) + '" min="0" step="0.01" oninput="'+priceOninput+'" style="width:78px;text-align:right;"></td>' +
+      '<td class="num">' + lineMgn + '</td>' +
       '<td class="num litot">' + fmt(tot,cur) + '</td>' +
+      '<td><select style="font-size:.5rem;border:none;background:var(--bg);color:var(--m);cursor:pointer;padding:2px;width:100%;" onchange="(function(s){cIL['+i+'].lineType=s.value;if(s.value===\'pass-through\'){cIL['+i+'].unitCost=+cIL['+i+'].up||0;}rILT();calcInv();})(this);">'+typeOpts+'</select></td>' +
       '<td><button class="ab" onclick="remILI(\'' + li.rid + '\')">&#10005;</button></td>' +
       '</tr>';
   }).join('');
@@ -2540,7 +2613,7 @@ function calcInv() {
   var tx=getTR(), tax=liT*tx;
   var lf=+G('if-lf').value||0, ins=+G('if-ins').value||0, leg=+G('if-leg').value||0, isp=+G('if-isp').value||0, oth=+G('if-oth').value||0;
   var chgs=lf+ins+leg+isp+oth, grand=liT+tax+chgs, dep=+G('if-dep').value||0, bal=grand-dep;
-  var cogs=cIL.reduce(function(s,li){var r=DB.li.find(function(x){return x.id===li.lid;});return s+(r?(+r.cost||0)*(+li.qty||0):0);},0);
+  var cogs=cIL.reduce(function(s,li){var r=DB.li.find(function(x){return x.id===li.lid;});if(r)return s+(+r.cost||0)*(+li.qty||0);return s+(+li.unitCost||0)*(+li.qty||0);},0);
   var gp=liT-cogs, np=(G('if-chi').checked!==false)?(grand-cogs):(grand-cogs-chgs), mgn=grand>0?(np/grand)*100:null;
 
   G('chg-bd').innerHTML =
@@ -2583,7 +2656,7 @@ async function saveInv() {
     isp:+G('if-isp').value||0, oth:+G('if-oth').value||0, dep:+G('if-dep').value||0,
     incoterm:G('if-inco').value, paymentTerms:G('if-pt').value.trim(),
     terms:G('if-terms').value.trim(), chargesIncluded:G('if-chi').checked, status:G('inv-sm').value,
-    lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0}; }), pos:[],
+    lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0,unitCost:+li.unitCost||0,lineType:li.lineType||'product'}; }), pos:[],
     type:(function(){ if(!isCN(G('if-n').value.trim())) return 'invoice'; return (G('if-cn-goodwill')&&G('if-cn-goodwill').checked)?'goodwill_credit':'credit_note'; })(),
     linkedInvNum:G('if-linked')?G('if-linked').value.trim():'',
     linkedInvId:(function(){ var l=G('if-linked')?G('if-linked').value.trim():''; var r=DB.inv.find(function(i){return i.num===l;}); return r?r.id:''; })(),
@@ -4217,6 +4290,7 @@ var AI_SYSTEM_PROMPT = [
   'Settings → Google Sheets. Paste Apps Script URL → Save & Connect.',
   'SAFE WORKFLOW: make changes locally → ⚙ Repair → Push All.',
   'DO NOT enable auto-sync. DO NOT Pull unless recovering data. Always run ⚙ Repair immediately after any Pull.',
+  'Push All writes a dedicated "inv_lines" sheet tab with one row per invoice line item. Columns: Invoice #, Buyer, Date, SKU, Description, Qty, UOM, Unit Cost, Unit Price, Line Total, Currency. Credit notes and goodwill credits are excluded. Quick-add lines (no library link) have empty SKU and Unit Cost.',
   '',
   '## Data Backup & Restore',
   'Settings → Data → Backup All JSON: downloads a full snapshot of all entities to your device. Restore from JSON: uploads a previous backup and restores all data. Run backups regularly — all data is stored in your browser\'s localStorage and will be lost if you clear browser data.',
@@ -5767,7 +5841,10 @@ function repairCalcFields() {
                   calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
     'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6227', calc_liTotal:'7048.24',
                   calc_taxAmt:'0', calc_grossProfit:'1021.24', calc_netProfit:'1021.24',
-                  calc_margin:'14.1', calc_balanceDue:'7248.24', lf:0, ins:0 }
+                  calc_margin:'14.1', calc_balanceDue:'7248.24', lf:0, ins:0 },
+    'INV10032': { calc_grandTotal:'6071.00', calc_cogs:'6071.00', calc_liTotal:'6071.00',
+                  calc_taxAmt:'0', calc_grossProfit:'0', calc_netProfit:'0',
+                  calc_margin:'0', calc_balanceDue:'6071.00', lf:0, ins:0 }
   };
   var changed = false;
   DB.inv.forEach(function(inv) {
