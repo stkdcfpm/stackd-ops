@@ -675,7 +675,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <select id="inv-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option><option disabled>── Credit Notes ──</option><option>CN Draft</option><option>CN Issued</option><option>CN Applied</option></select>
       <button class="mx" onclick="closeM('ov-inv')">&#215;</button></div>
     <div class="mb">
-      <div class="ms"><div class="mst">Invoice Details</div>
+      <div class="ms"><div class="mst" id="inv-sect-hdr">Invoice Details</div>
         <div class="fg fg4">
           <div class="fld"><label id="lbl-inv-num">Invoice #</label><input type="text" id="if-n" placeholder="INV10032 or CN10029" oninput="onInvNumInput(this.value)"></div>
           <div class="fld" id="fld-linked-inv" style="display:none;"><label style="color:var(--cr);">Credits Invoice #</label><input type="text" id="if-linked" placeholder="e.g. INV10029" style="border-bottom-color:var(--cr);"></div>
@@ -760,8 +760,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;">
         <button class="btn btn-g" onclick="closeM('ov-inv')">Cancel</button>
-        <button class="btn btn-o" onclick="prevInv()">Preview Invoice</button>
-        <button class="btn btn-s" onclick="saveInv()">Save Invoice</button>
+        <button class="btn btn-o" id="inv-prev-btn" onclick="prevInv()">Preview Invoice</button>
+        <button class="btn btn-s" id="inv-save-btn" onclick="saveInv()">Save Invoice</button>
       </div>
     </div>
   </div>
@@ -4174,6 +4174,10 @@ function onInvNumInput(val) {
     if(linked) G('if-linked').value=sugNum;
   }
   var t=G('inv-mt'); if(t) t.textContent=isCn?(EI.i?'Edit Credit Note':'Credit Note'):(EI.i?'Edit Invoice':'New Invoice');
+  var h=G('inv-sect-hdr'); if(h) h.textContent=isCn?'Credit Note Details':'Invoice Details';
+  var n=G('lbl-inv-num'); if(n) n.textContent=isCn?'Credit Note #':'Invoice #';
+  var sv=G('inv-save-btn'); if(sv) sv.textContent=isCn?'Save Credit Note':'Save Invoice';
+  var pv=G('inv-prev-btn'); if(pv) pv.textContent=isCn?'Preview Credit Note':'Preview Invoice';
 }
 
 function onGoodwillChg(checked) {
