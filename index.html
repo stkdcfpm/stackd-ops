@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.9.8</title>
+<title>Stackd Ops v2.9.9</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -205,7 +205,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.6</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.9</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -298,6 +298,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <input class="sb" type="text" placeholder="Search shipments..." id="sh-q" oninput="rShp()">
     <select class="sb" style="max-width:160px;" id="sh-sf" onchange="rShp()"><option value="">All statuses</option><option>Booked</option><option>Confirmed</option><option>In Transit</option><option>At Origin Port</option><option>At Destination Port</option><option>In Customs</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option><option>On Hold</option><option>Cancelled</option></select>
     <button class="btn btn-s" onclick="openShp()">+ New Shipment</button>
+    <button class="btn btn-g" onclick="openLoadCalc()" style="margin-left:6px;">&#128220; Load Calculator</button>
   </div>
   <div class="tw" style="overflow-x:auto;">
     <table class="tbl"><thead><tr>
@@ -521,6 +522,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
     </div>
     <div class="card">
+      <div class="ct">Integrations</div>
+      <div class="fld" style="margin-bottom:10px;">
+        <label>Forwarder Webhook URL <span style="font-size:.44rem;color:var(--m);">(Power Automate or Zapier — receives JSON with shipmentRef + message)</span></label>
+        <input type="text" id="cfg-fwd-webhook" placeholder="https://prod.example.com/triggers/..." autocomplete="off">
+      </div>
+      <button class="btn btn-s" onclick="saveFwdWebhook()">Save Webhook</button>
+    </div>
+    <div class="card">
       <div class="ct">Accounting Export — Field Mapping Reference</div>
       <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Read-only reference. Gaps indicate data not available in Stackd that the platform expects.</p>
       <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Xero Invoice Import</div>
@@ -640,6 +649,16 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div style="background:var(--ink);padding:10px 14px;display:flex;gap:20px;margin-bottom:12px;">
       <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Unit Margin</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gold);" id="lmv">-</div></div>
       <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Margin %</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;" id="lmp">-</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:12px;">
+      <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Length (cm)</label><input type="number" id="lf-diml" placeholder="0" step="0.1" min="0" oninput="calcLICBM()"></div>
+      <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Width (cm)</label><input type="number" id="lf-dimw" placeholder="0" step="0.1" min="0" oninput="calcLICBM()"></div>
+      <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Height (cm)</label><input type="number" id="lf-dimh" placeholder="0" step="0.1" min="0" oninput="calcLICBM()"></div>
+      <div class="fld" style="margin:0;"><label style="font-size:.44rem;">CBM / unit</label><input type="text" id="lf-cbm-calc" readonly style="background:#f5f5f5;color:var(--m);font-family:'DM Mono',monospace;" placeholder="—"></div>
+      <div style="display:flex;align-items:center;gap:5px;padding-bottom:4px;">
+        <input type="checkbox" id="lf-dg" style="width:auto;margin:0;">
+        <label for="lf-dg" style="margin:0;cursor:pointer;font-size:.52rem;white-space:nowrap;">DG Item</label>
+      </div>
     </div>
     <div class="fld"><label>Notes</label><textarea id="lf-nt" placeholder="HS code, certifications, packaging notes..."></textarea></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
@@ -774,9 +793,23 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.8</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.9</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Line item dimensions — L/W/H (cm) and CBM/unit calculation on each catalogue item; DG flag on library items; dims stored on record</li>
+          <li>New: Load Calculator — multi-invoice CBM calculator on Shipments tab; container recommendation; DG flag; plain text export</li>
+          <li>New: Forwarder Update Request — pre-filled message per shipment row; copy-to-clipboard; optional Power Automate webhook; Integrations card in Settings</li>
+          <li>New: Quote Feasibility Check — DG warning, container recommendation from CBM, Caribbean electrical items advisory</li>
+          <li>Fix: Shipment modal now stores forwarder name and email; auto-populated in update request message</li>
+          <li>Fix: Line item CSV import template updated with Length/Width/Height/DG columns</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.8</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: Credit note PDF now opens correct CREDIT NOTE document (was incorrectly rendering as Invoice)</li>
@@ -1162,12 +1195,46 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <select id="shf-st"><option>Booked</option><option>Confirmed</option><option>In Transit</option><option>At Origin Port</option><option>At Destination Port</option><option>In Customs</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option><option>On Hold</option><option>Cancelled</option></select></div>
         <div class="fld"><label>Linked Invoices <span style="font-size:.44rem;color:var(--m);">(comma-separated)</span></label>
           <input type="text" id="shf-invs" placeholder="INV10030, INV10031"></div>
+        <div class="fld"><label>Forwarder Name</label><input type="text" id="shf-fwd" placeholder="ABC Freight Ltd"></div>
+        <div class="fld"><label>Forwarder Email</label><input type="text" id="shf-fwde" placeholder="ops@abcfreight.com"></div>
         <div class="fld" style="grid-column:1/-1"><label>Notes</label>
           <textarea id="shf-nt" placeholder="Customs agent, port notes, delays..."></textarea></div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button class="btn btn-g" onclick="closeM('ov-shp')">Cancel</button>
         <button class="btn btn-s" onclick="saveShp()">Save Shipment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOAD CALCULATOR MODAL -->
+<div class="ov" id="ov-lc" onclick="if(event.target===this)closeM('ov-lc')">
+  <div class="modal" style="max-width:640px;">
+    <div class="mh"><h2>Load Calculator</h2><button class="mx" onclick="closeM('ov-lc')">&#215;</button></div>
+    <div class="mb">
+      <p style="font-size:.54rem;color:var(--m);margin-bottom:12px;">Select invoices to include in the load. CBM is read from the Est. Cubic Weight field on each invoice. DG flag is raised if any linked library item has DG checked.</p>
+      <div id="lc-inv-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--ln);padding:8px;margin-bottom:12px;font-size:.56rem;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="btn btn-s" onclick="runLoadCalc()">Calculate</button>
+        <button class="btn btn-g" onclick="exportLoadSummary()" id="lc-exp-btn" style="display:none;">&#8681; Export Summary</button>
+      </div>
+      <div id="lc-result" style="font-size:.56rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FORWARDER UPDATE REQUEST MODAL -->
+<div class="ov" id="ov-fwd" onclick="if(event.target===this)closeM('ov-fwd')">
+  <div class="modal" style="max-width:580px;">
+    <div class="mh"><h2>Forwarder Update Request</h2><button class="mx" onclick="closeM('ov-fwd')">&#215;</button></div>
+    <div class="mb">
+      <div style="font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:6px;">Message Preview</div>
+      <textarea id="fwd-msg" rows="12" style="width:100%;font-family:'DM Mono',monospace;font-size:.54rem;border:1px solid var(--ln);padding:10px;resize:vertical;outline:none;background:#fafafa;"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button class="btn btn-s" onclick="copyFwdReq()">&#128203; Copy to Clipboard</button>
+        <button class="btn btn-g" id="fwd-send-btn" onclick="sendFwdReq()" style="display:none;">&#8593; Send via Webhook</button>
+        <span id="fwd-st" style="font-size:.52rem;color:var(--m);align-self:center;"></span>
       </div>
     </div>
   </div>
@@ -1218,6 +1285,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (USD)</div><div id="qt-sell-usd" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
         <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (GBP)</div><div id="qt-sell-gbp" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
       </div>
+      <div id="qt-feasibility" style="margin-bottom:12px;"></div>
       <div class="fld" style="margin-bottom:12px;"><label>Notes</label>
         <textarea id="qf-nt" placeholder="Special conditions, scope, exclusions..." rows="2"></textarea>
       </div>
@@ -2377,10 +2445,17 @@ function liMgn() {
   G('lmp').textContent = m!==null ? fp(m) : '-';
   G('lmp').style.color = m!==null ? (m>=20?'#4ade80':m>=10?'var(--gold)':'#f87171') : '#888';
 }
+function calcLICBM() {
+  var l=+G('lf-diml').value||0, w=+G('lf-dimw').value||0, h=+G('lf-dimh').value||0;
+  var el=G('lf-cbm-calc'); if(!el) return;
+  el.value = (l&&w&&h) ? (l*w*h/1000000).toFixed(6) : '';
+}
 function openLI() {
   EI.l=null; G('li-mt').textContent='New Line Item';
   ['lf-s','lf-d','lf-sp','lf-u','lf-nt','lf-hs'].forEach(function(f){ var e=G(f); if(e) e.value=''; });
   G('lf-c').value=''; G('lf-p').value=''; G('lf-cur').value='USD'; G('lf-sup').value='';
+  G('lf-diml').value=''; G('lf-dimw').value=''; G('lf-dimh').value=''; G('lf-cbm-calc').value='';
+  if(G('lf-dg')) G('lf-dg').checked=false;
   vClrAll(['lf-d','lf-sup','lf-hs','lf-c','lf-p']);
   liMgn(); G('ov-li').classList.add('on'); setTimeout(function(){ G('lf-s').focus(); }, 50);
 }
@@ -2391,6 +2466,9 @@ function editLI(id) {
   G('lf-u').value=li.uom||''; G('lf-nt').value=li.notes||'';
   G('lf-c').value=li.cost||''; G('lf-p').value=li.price||'';
   G('lf-cur').value=li.cur||'USD'; G('lf-sup').value=li.supId||'';
+  G('lf-diml').value=li.dims?li.dims.l:''; G('lf-dimw').value=li.dims?li.dims.w:''; G('lf-dimh').value=li.dims?li.dims.h:'';
+  if(G('lf-dg')) G('lf-dg').checked=!!li.dg;
+  calcLICBM();
   liMgn(); G('ov-li').classList.add('on');
 }
 async function saveLI() {
@@ -2407,7 +2485,9 @@ async function saveLI() {
     history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Catalogue price updated' });
   }
 
-  var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history,invoiceRefs:existing?(existing.invoiceRefs||[]):[]};
+  var diml=+G('lf-diml').value||0, dimw=+G('lf-dimw').value||0, dimh=+G('lf-dimh').value||0;
+  var dims=(diml&&dimw&&dimh)?{l:diml,w:dimw,h:dimh}:(existing&&existing.dims)||null;
+  var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history,invoiceRefs:existing?(existing.invoiceRefs||[]):[],dims:dims,dg:!!(G('lf-dg')&&G('lf-dg').checked)};
   if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
   sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li);
 }
@@ -3543,8 +3623,8 @@ var TEMPLATES = {
     example: ['Jinan Jinbao Equipment Co.','China','Wang Lei','wanglei@jinbao.cn','+86 531 8800 1234','USD','Commercial refrigeration. CE certified. Lead time 30 days.']
   },
   li: {
-    headers: ['SKU','Description','Specifications','HS Code','Supplier Name','Unit of Measure','Unit Cost','Unit Price','Currency','Notes'],
-    example: ['REF-COMM-600L','Commercial Upright Refrigerator 600L','600L 220V/50Hz R404A 4 glass doors','8418.50','Jinan Jinbao Equipment Co.','pcs','120','200','USD','CE certified. Min order 5 units.']
+    headers: ['SKU','Description','Specifications','HS Code','Supplier Name','Unit of Measure','Unit Cost','Unit Price','Currency','Length (cm)','Width (cm)','Height (cm)','DG Item (Y/N)','Notes'],
+    example: ['REF-COMM-600L','Commercial Upright Refrigerator 600L','600L 220V/50Hz R404A 4 glass doors','8418.50','Jinan Jinbao Equipment Co.','pcs','120','200','USD','60','80','195','N','CE certified. Min order 5 units.']
   },
   inv: {
     headers: ['Invoice #','Buyer','Buyer Address','Destination','Date (YYYY-MM-DD)','Expiry Date','Status','Currency','Items Subtotal','Grand Total','COGS','Buyer Deposit','Tax Rate (decimal)','Local Freight','Insurance','Freight Type','Port of Loading','Port of Discharge','Country of Origin','Notes'],
@@ -3671,11 +3751,15 @@ function processImport(entity, csvText) {
         if(sku) return l.sku===sku&&l.supId===(sup?sup.id:'');
         return l.desc.toLowerCase()===desc.toLowerCase()&&l.supId===(sup?sup.id:'');
       });
+      var diml=+r['Length (cm)']||0, dimw=+r['Width (cm)']||0, dimh=+r['Height (cm)']||0;
+      var dims=(diml&&dimw&&dimh)?{l:diml,w:dimw,h:dimh}:(existing&&existing.dims)||null;
+      var dgRaw=(r['DG Item (Y/N)']||'').trim().toLowerCase();
+      var dg=dgRaw==='y'||dgRaw==='yes'||dgRaw==='true';
       var rec = { id:existing?existing.id:uid(), sku:sku, desc:desc,
         specs:r['Specifications']||r['specs']||'', hs:r['HS Code']||r['hs']||'',
         supId:sup?sup.id:'', uom:r['Unit of Measure']||r['uom']||'pcs',
         cost:+r['Unit Cost']||+r['cost']||0, price:+r['Unit Price']||+r['price']||0,
-        cur:r['Currency']||r['cur']||'USD', notes:r['Notes']||r['notes']||'', updAt:now };
+        cur:r['Currency']||r['cur']||'USD', notes:r['Notes']||r['notes']||'', dims:dims, dg:dg, updAt:now };
       if (existing) { var i=DB.li.findIndex(function(l){return l.id===existing.id;}); DB.li[i]=rec; updated++; impLog('Updated: '+(sku||desc)); }
       else { DB.li.push(rec); added++; }
     });
@@ -4169,7 +4253,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.8).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.9).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -4192,7 +4276,8 @@ var AI_SYSTEM_PROMPT = [
   'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes.',
   '',
   '## Line Items (Product Catalogue)',
-  'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency.',
+  'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox.',
+  'Dimensions (L/W/H cm): optional per-unit dimensions. CBM/unit is calculated automatically (L×W×H÷1,000,000) and shown read-only. Stored as dims:{l,w,h} on the record. Used by Load Calculator. DG Item flag marks the product as Dangerous Goods — propagates into quote feasibility check and load calculator DG alerts.',
   'Invoice usage: each library item tracks which invoices it has been used on (invoiceRefs index). The list view shows "used on N invoice(s)" against each item. The Import from Library picker marks items already on the current invoice with a green tick.',
   'Rule: wrong unit cost or price corrupts profit calculations on every invoice using that product.',
   '',
@@ -4204,6 +4289,7 @@ var AI_SYSTEM_PROMPT = [
   'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
   'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
   'Convert to PO: when a quote is Accepted, click Convert to PO to create a linked PO. The Quote ID is stored on the PO for traceability.',
+  'Feasibility Check: shown automatically in the quote modal when lines are present. Flags: DG cargo (red/critical — IMDG compliance required), container mismatch (amber — CBM vs selected freight mode), Caribbean electrical goods advisory (amber — voltage/cert check). Cleared automatically when lines are removed.',
   'Print preview: click 👁 on any quote row to open a formatted quote document in a new tab.',
   '',
   '## Rates & FX (Settings)',
@@ -4282,9 +4368,11 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Shipments',
   'Shipments tab → + New Shipment. Ref format: SHP-001.',
-  'Fields: BL Number, Vessel, Carrier, Origin Port (UN/LOCODE lookup), Destination Port (UN/LOCODE lookup), ETD, ETA, Container Type (20GP / 40HQ / LCL / Other), Container Number, DG Onboard, Docs Status (Pending / In Progress / Complete), Status, Linked Invoices, Notes.',
+  'Fields: BL Number, Vessel, Carrier, Origin Port (UN/LOCODE lookup), Destination Port (UN/LOCODE lookup), ETD, ETA, Container Type (20GP / 40HQ / LCL / Other), Container Number, DG Onboard, Docs Status (Pending / In Progress / Complete), Status, Linked Invoices, Forwarder Name, Forwarder Email, Notes.',
   'Status flow: Pending → Booked → In Transit → Arrived → Delivered.',
   'DG Onboard: tick if any product is classified as Dangerous Goods (e.g. refrigerants, batteries). Triggers IMDG compliance requirements.',
+  'Load Calculator: &#128220; Load Calculator button on Shipments toolbar. Select invoices → Calculate to sum CBM from invoice cubic weight fields, get container recommendation, and flag DG. Export as plain text summary.',
+  'Forwarder Update Request: &#128231; button on each shipment row. Opens a pre-filled message with all shipment details. Copy to clipboard or send via webhook (configure in Settings → Integrations). Forwarder name/email auto-populates from the shipment record.',
   '',
   '## Google Sheets Sync',
   'Settings → Google Sheets. Paste Apps Script URL → Save & Connect.',
@@ -4308,6 +4396,7 @@ var AI_SYSTEM_PROMPT = [
   '6. Add product to Line Items catalogue before using Import from Library.',
   '7. Rates in Settings → Rates & FX override the default freight rate estimates — always configure these before creating quotes.',
   '8. PDF previews open in a new tab via a Blob URL — allow pop-ups for this page if the preview does not appear.',
+  '9. Forwarder webhook URL (Settings → Integrations) is optional — if absent, Send via Webhook button is hidden on the update request modal. Copy to Clipboard always works without it.',
   '',
   '## Troubleshooting',
   '- Dashboard KPIs wrong → Settings → ⚙ Repair invoice totals',
@@ -4461,6 +4550,7 @@ function rCfg() {
   G('c-bank').value=AS.bank||''; G('c-terms').value=AS.terms||'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.';
   if(G('cfg-ai-key')) G('cfg-ai-key').value=AI.key||'';
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
+  if(G('cfg-fwd-webhook')) G('cfg-fwd-webhook').value=SS.fwdWebhook||'';
   qteFillRates();
   rRefData('countries');
 }
@@ -4866,6 +4956,7 @@ function rShp() {
       '<td style="font-size:.52rem;">' + san((s.linkedInvs||[]).join(', ')||'-') + '</td>' +
       '<td style="white-space:nowrap;">' +
         '<button class="btn btn-g" style="padding:2px 7px;font-size:.5rem;" onclick="editShp(\'' + s.id + '\')">&#9998;</button> ' +
+        '<button class="btn btn-g" style="padding:2px 7px;font-size:.5rem;" onclick="openFwdReq(\'' + s.id + '\')" title="Request Forwarder Update">&#128231;</button> ' +
         '<button class="btn btn-g" style="padding:2px 7px;font-size:.5rem;border-color:#c00;color:#c00;" onclick="delShp(\'' + s.id + '\')">&#10005;</button>' +
       '</td></tr>';
   }).join('');
@@ -4874,7 +4965,7 @@ function rShp() {
 function openShp() {
   EI.sh = null;
   G('shp-mt').textContent = 'New Shipment';
-  ['shf-ref','shf-bl','shf-vessel','shf-carrier','shf-op','shf-dp','shf-cnum','shf-invs','shf-nt'].forEach(function(id){ if(G(id)) G(id).value=''; });
+  ['shf-ref','shf-bl','shf-vessel','shf-carrier','shf-op','shf-dp','shf-cnum','shf-invs','shf-fwd','shf-fwde','shf-nt'].forEach(function(id){ if(G(id)) G(id).value=''; });
   if(G('shf-etd')) G('shf-etd').value='';
   if(G('shf-eta')) G('shf-eta').value='';
   vClrAll(['shf-ref','shf-etd','shf-eta']);
@@ -4899,6 +4990,8 @@ function editShp(id) {
   G('shf-dg').checked=!!s.dg; G('shf-docs').value=s.docsStatus||'Pending';
   G('shf-st').value=s.status||'Pending';
   G('shf-invs').value=(s.linkedInvs||[]).join(', ');
+  if(G('shf-fwd')) G('shf-fwd').value=s.forwarder||'';
+  if(G('shf-fwde')) G('shf-fwde').value=s.forwarderEmail||'';
   G('shf-nt').value=s.notes||'';
   G('ov-shp').classList.add('on');
 }
@@ -4924,6 +5017,8 @@ async function saveShp() {
     docsStatus: G('shf-docs').value,
     status: G('shf-st').value,
     linkedInvs: linkedInvs,
+    forwarder: G('shf-fwd') ? G('shf-fwd').value.trim() : '',
+    forwarderEmail: G('shf-fwde') ? G('shf-fwde').value.trim() : '',
     notes: G('shf-nt').value.trim(),
     updAt: new Date().toISOString()
   };
@@ -4941,6 +5036,171 @@ async function delShp(id) {
   if (!confirm('Delete this shipment?')) return;
   DB.sh = DB.sh.filter(function(s){ return s.id!==id; });
   sv(K.sh, DB.sh); rShp(); rDash(); toast('Deleted'); await delEnt('sh', id);
+}
+
+// ── LOAD CALCULATOR ─────────────────────────────────────────────
+var _lcResult = null;
+
+function openLoadCalc() {
+  var list = G('lc-inv-list');
+  if (!list) return;
+  if (!DB.inv.length) { list.innerHTML = '<div style="color:var(--m);">No invoices found.</div>'; }
+  else {
+    list.innerHTML = DB.inv.map(function(inv){
+      var hasDG = (inv.lineItems||[]).some(function(li){
+        var cat = DB.li.find(function(x){ return x.id===li.lid; });
+        return cat && cat.dg;
+      });
+      return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;">'
+        + '<input type="checkbox" value="' + san(inv.id) + '" style="width:auto;margin:0;">'
+        + ' <span style="font-weight:500;color:var(--cr);min-width:90px;">' + san(inv.num||inv.id) + '</span>'
+        + ' <span style="color:var(--ink);">' + san(inv.buyer||'-') + '</span>'
+        + ' <span style="color:var(--m);margin-left:auto;">' + san(inv.cbm||'–') + '</span>'
+        + (hasDG ? ' <span style="background:#c00;color:white;font-size:.4rem;padding:1px 4px;border-radius:2px;">DG</span>' : '')
+        + '</label>';
+    }).join('');
+  }
+  if (G('lc-result')) G('lc-result').innerHTML = '';
+  if (G('lc-exp-btn')) G('lc-exp-btn').style.display = 'none';
+  _lcResult = null;
+  G('ov-lc').classList.add('on');
+}
+
+function runLoadCalc() {
+  var checks = G('lc-inv-list').querySelectorAll('input[type=checkbox]:checked');
+  if (!checks.length) { toast('Select at least one invoice'); return; }
+  var ids = Array.prototype.map.call(checks, function(c){ return c.value; });
+  var totalCBM = 0, hasDG = false, lines = [], invNums = [];
+  ids.forEach(function(id) {
+    var inv = DB.inv.find(function(x){ return x.id===id; });
+    if (!inv) return;
+    invNums.push(inv.num||inv.id);
+    var cbmVal = parseFloat((inv.cbm||'').replace(/[^\d.]/g,'')) || 0;
+    totalCBM += cbmVal;
+    if (!hasDG) {
+      hasDG = (inv.lineItems||[]).some(function(li){
+        var cat = DB.li.find(function(x){ return x.id===li.lid; });
+        return (cat && cat.dg) || li.dg;
+      });
+    }
+    lines.push({ num: inv.num||inv.id, buyer: inv.buyer||'-', cbm: cbmVal });
+  });
+
+  var rec = totalCBM <= 25 ? '20GP' : totalCBM <= 65 ? '40HQ' : 'Multiple 40HQ';
+  var recNote = totalCBM <= 25 ? '20GP (max ~25 CBM)' : totalCBM <= 65 ? '40HQ (max ~65 CBM)' : 'Exceeds single 40HQ — consider split shipment';
+  _lcResult = { invNums: invNums, lines: lines, totalCBM: totalCBM, hasDG: hasDG, rec: rec, recNote: recNote };
+
+  var html = '<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">'
+    + '<thead><tr><th style="text-align:left;padding:3px 6px;border-bottom:1px solid var(--ln);">Invoice</th><th style="text-align:left;padding:3px 6px;border-bottom:1px solid var(--ln);">Buyer</th><th style="text-align:right;padding:3px 6px;border-bottom:1px solid var(--ln);">CBM</th></tr></thead><tbody>'
+    + lines.map(function(l){
+      return '<tr><td style="padding:3px 6px;color:var(--cr);font-weight:500;">' + san(l.num) + '</td><td style="padding:3px 6px;">' + san(l.buyer) + '</td><td style="padding:3px 6px;text-align:right;font-family:\'DM Mono\',monospace;">' + l.cbm.toFixed(2) + '</td></tr>';
+    }).join('')
+    + '<tr style="border-top:2px solid var(--ink);"><td colspan="2" style="padding:4px 6px;font-weight:600;">Total CBM</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;font-weight:600;">' + totalCBM.toFixed(2) + '</td></tr>'
+    + '</tbody></table>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">'
+    + '<div style="background:#f8f8f8;padding:8px 12px;"><div style="font-size:.44rem;color:var(--m);letter-spacing:.08em;text-transform:uppercase;">Container Rec.</div><div style="font-weight:600;color:var(--cr);">' + san(recNote) + '</div></div>'
+    + (hasDG ? '<div style="background:#fde8e8;padding:8px 12px;border-left:3px solid #c00;"><div style="font-size:.44rem;color:#c00;letter-spacing:.08em;text-transform:uppercase;font-weight:600;">DG Cargo Flagged</div><div style="font-size:.52rem;color:#c00;">Dangerous goods present — notify forwarder and verify IMDG compliance.</div></div>' : '')
+    + '</div>';
+  G('lc-result').innerHTML = html;
+  if (G('lc-exp-btn')) G('lc-exp-btn').style.display = '';
+}
+
+function exportLoadSummary() {
+  if (!_lcResult) return;
+  var r = _lcResult;
+  var lines = ['STACKD OPS — LOAD SUMMARY', '========================', ''];
+  lines.push('Invoices: ' + r.invNums.join(', '));
+  lines.push('');
+  lines.push('Invoice          Buyer                          CBM');
+  lines.push('-'.repeat(55));
+  r.lines.forEach(function(l){
+    lines.push((l.num + '          ').slice(0,16) + (l.buyer + '                              ').slice(0,31) + l.cbm.toFixed(2));
+  });
+  lines.push('-'.repeat(55));
+  lines.push('TOTAL CBM:                                      ' + r.totalCBM.toFixed(2));
+  lines.push('');
+  lines.push('Container Recommendation: ' + r.recNote);
+  if (r.hasDG) lines.push('DG CARGO: YES — IMDG compliance required');
+  lines.push('');
+  lines.push('Generated: ' + new Date().toLocaleString());
+  var blob = new Blob([lines.join('\n')], {type:'text/plain'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'stackd-load-summary-' + today() + '.txt';
+  a.click();
+}
+
+// ── FORWARDER UPDATE REQUEST ────────────────────────────────────
+var _fwdShpId = null;
+
+function openFwdReq(shpId) {
+  var s = DB.sh.find(function(x){ return x.id===shpId; });
+  if (!s) return;
+  _fwdShpId = shpId;
+  var today_str = new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+  var fwdName = s.forwarder ? s.forwarder : 'Forwarder';
+  var fwdEmail = s.forwarderEmail || '';
+  var msg = 'To: ' + (fwdEmail || fwdName) + '\n'
+    + 'Subject: Shipment Status Update Request — ' + (s.ref||'') + '\n\n'
+    + 'Hi ' + fwdName + ',\n\n'
+    + 'Please could you provide an update on the following shipment:\n\n'
+    + '  Ref:            ' + (s.ref||'-') + '\n'
+    + '  BL Number:      ' + (s.blNum||'-') + '\n'
+    + '  Vessel:         ' + (s.vessel||'-') + '\n'
+    + '  Carrier:        ' + (s.carrier||'-') + '\n'
+    + '  Origin:         ' + (s.originPort||'-') + '\n'
+    + '  Destination:    ' + (s.destPort||'-') + '\n'
+    + '  ETD:            ' + (s.etd||'-') + '\n'
+    + '  ETA:            ' + (s.eta||'-') + '\n'
+    + '  Container:      ' + (s.containerType||'-') + (s.containerNum ? ' · ' + s.containerNum : '') + '\n'
+    + (s.dg ? '  DG Cargo:       YES\n' : '')
+    + '  Status:         ' + (s.status||'-') + '\n\n'
+    + 'Linked invoices: ' + ((s.linkedInvs||[]).join(', ')||'-') + '\n\n'
+    + 'Specifically we need:\n'
+    + '  1. Confirmed vessel and voyage number\n'
+    + '  2. Updated ETA at destination port\n'
+    + '  3. Any customs or documentation issues\n'
+    + '  4. Estimated out-for-delivery date\n\n'
+    + 'Please respond at your earliest convenience.\n\n'
+    + 'Many thanks,\n'
+    + (AS.name||'FPM International') + '\n'
+    + (AS.email||'') + '\n'
+    + 'Date: ' + today_str;
+  if (G('fwd-msg')) G('fwd-msg').value = msg;
+  if (G('fwd-st')) G('fwd-st').textContent = '';
+  var webhook = SS.fwdWebhook || '';
+  if (G('fwd-send-btn')) G('fwd-send-btn').style.display = webhook ? '' : 'none';
+  G('ov-fwd').classList.add('on');
+}
+
+function copyFwdReq() {
+  var msg = G('fwd-msg'); if (!msg) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(msg.value).then(function(){ toast('Copied to clipboard'); if(G('fwd-st')) G('fwd-st').textContent = 'Copied.'; });
+  } else {
+    msg.select(); document.execCommand('copy'); toast('Copied to clipboard'); if(G('fwd-st')) G('fwd-st').textContent = 'Copied.';
+  }
+}
+
+async function sendFwdReq() {
+  var webhook = SS.fwdWebhook; if (!webhook) { toast('No webhook URL configured'); return; }
+  var msg = G('fwd-msg') ? G('fwd-msg').value : '';
+  var btn = G('fwd-send-btn'); if (btn) btn.disabled = true;
+  if (G('fwd-st')) G('fwd-st').textContent = 'Sending...';
+  try {
+    var shp = _fwdShpId ? DB.sh.find(function(x){ return x.id===_fwdShpId; }) : null;
+    await fetch(webhook, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ shipmentRef: shp?shp.ref:'', message: msg, ts: new Date().toISOString() }) });
+    if (G('fwd-st')) G('fwd-st').textContent = 'Sent.'; toast('Update request sent');
+  } catch(e) {
+    if (G('fwd-st')) G('fwd-st').textContent = 'Error: ' + e.message; toast('Send failed');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function saveFwdWebhook() {
+  SS.fwdWebhook = G('cfg-fwd-webhook') ? G('cfg-fwd-webhook').value.trim() : '';
+  sv(K.ss, SS); toast('Webhook saved');
 }
 
 // ── ONBOARDING ─────────────────────────────────────────────────
@@ -5246,6 +5506,51 @@ function calcQte() {
   if (G('qt-mkp-disp')) G('qt-mkp-disp').textContent = markup + '%';
   if (G('qt-sell-usd')) G('qt-sell-usd').textContent = fmt(sellUSD,'USD');
   if (G('qt-sell-gbp')) G('qt-sell-gbp').textContent = '£' + fn(sellGBP,0);
+  calcFeasibility();
+}
+
+function calcFeasibility() {
+  var el = G('qt-feasibility'); if (!el) return;
+  if (!cQL.length) { el.innerHTML = ''; return; }
+  var notices = [];
+  var hasDG = cQL.some(function(l){ return qlFld(l.rid,'dg'); });
+  var totalCBM = cQL.reduce(function(s,l){ return s+(+qlFld(l.rid,'cbm')||0); }, 0);
+  var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
+
+  if (hasDG) {
+    notices.push({ level:'critical', msg:'DG cargo detected — dangerous goods require IMDG-compliant packaging, documentation, and carrier approval. Confirm with forwarder before issuing quote.' });
+  }
+
+  if (totalCBM > 0) {
+    var recContainer = totalCBM <= 25 ? '20GP' : totalCBM <= 65 ? '40HQ' : null;
+    if (recContainer && mode !== 'LCL' && mode.indexOf(recContainer) === -1) {
+      notices.push({ level:'warn', msg:'Total CBM is ' + totalCBM.toFixed(2) + ' — recommended container is ' + recContainer + ' but freight mode is set to ' + mode + '.' });
+    } else if (!recContainer && mode !== 'LCL') {
+      notices.push({ level:'warn', msg:'Total CBM is ' + totalCBM.toFixed(2) + ' — exceeds single 40HQ capacity (~65 CBM). Consider split shipment or LCL.' });
+    } else if (mode === 'LCL') {
+      notices.push({ level:'info', msg:'LCL mode · ' + totalCBM.toFixed(2) + ' CBM total.' });
+    } else {
+      notices.push({ level:'ok', msg:'CBM ' + totalCBM.toFixed(2) + ' fits ' + recContainer + '.' });
+    }
+  }
+
+  var elecKeywords = /\b(refriger|fridge|freezer|air.?con|compressor|motor|pump|generator|transformer|inverter|solar|battery|UPS|electric)/i;
+  var hasElectrical = cQL.some(function(l){
+    var desc = qlFld(l.rid,'desc')||'';
+    return elecKeywords.test(desc);
+  });
+  var destEl = G('qf-client') ? G('qf-client').value : '';
+  var caribbeanDest = /\b(barbados|trinidad|jamaica|guyana|belize|grenada|bahamas|dominica|st\.?\s*lucia|antigua|carib)/i.test(destEl);
+  if (hasElectrical && caribbeanDest) {
+    notices.push({ level:'warn', msg:'Electrical goods destined for Caribbean market — verify voltage (110V/60Hz) and confirm CE/UL certification compliance before quoting.' });
+  }
+
+  if (!notices.length) { el.innerHTML = ''; return; }
+  var colours = { critical:'#fde8e8', warn:'#fffbea', info:'#eaf4ff', ok:'#eafaf1' };
+  var borders  = { critical:'#c00', warn:'var(--gold)', info:'#3b82f6', ok:'#1a7a4a' };
+  el.innerHTML = notices.map(function(n){
+    return '<div style="background:' + colours[n.level] + ';border-left:3px solid ' + borders[n.level] + ';padding:7px 11px;margin-bottom:6px;font-size:.54rem;">' + san(n.msg) + '</div>';
+  }).join('');
 }
 
 function vQte() {
