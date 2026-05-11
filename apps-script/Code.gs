@@ -4,6 +4,7 @@
 
 var SYNC_TOKEN = PropertiesService.getScriptProperties().getProperty('SYNC_TOKEN') || '';
 var REQUIREMENTS_TRACKER_ID = '1q05sSoCMmiqaNNixDWVk2_aJPwEqx37vDbOPNh2gqGw';
+var PROJECT_TRACKER_ID      = '1gC6d7ClOFpaocK_lNI685x5yMK5_UHiMgriFlF_UrLg';
 
 // Maps Stackd entity keys to sheet tab names
 var SHEET_NAMES = {
