@@ -26,12 +26,13 @@ function doPost(e) {
 
     var action = payload.action;
 
-    if (action === 'upsert')                    return jsonResp(handleUpsert(payload));
-    if (action === 'bulk_upsert')               return jsonResp(handleBulkUpsert(payload));
-    if (action === 'delete')                    return jsonResp(handleDelete(payload));
-    if (action === 'get_all')                   return jsonResp(handleGetAll(payload));
-    if (action === 'import_from_master')        return jsonResp(handleImportFromMaster(payload));
+    if (action === 'upsert')                      return jsonResp(handleUpsert(payload));
+    if (action === 'bulk_upsert')                 return jsonResp(handleBulkUpsert(payload));
+    if (action === 'delete')                      return jsonResp(handleDelete(payload));
+    if (action === 'get_all')                     return jsonResp(handleGetAll(payload));
+    if (action === 'import_from_master')          return jsonResp(handleImportFromMaster(payload));
     if (action === 'update_requirements_tracker') return jsonResp(handleUpdateRequirementsTracker(payload));
+    if (action === 'update_project_tracker')      return jsonResp(handleUpdateProjectTracker(payload));
 
     return jsonResp({ status: 'error', message: 'Unknown action: ' + action });
   } catch (err) {
@@ -147,9 +148,20 @@ function handleImportFromMaster(payload) {
 }
 
 // ── update_requirements_tracker ─────────────────────────────────
-// Updates one or more cells in the Requirements Tracker spreadsheet.
 // Payload: { updates: [{ id: 41, field: "Status", value: "Done" }, ...] }
 function handleUpdateRequirementsTracker(payload) {
+  return handleTrackerUpdate(payload, REQUIREMENTS_TRACKER_ID, 'Requirements Tracker');
+}
+
+// ── update_project_tracker ─────────────────────────────────────
+// Payload: { updates: [{ id: 35, field: "Status", value: "Done" }, ...] }
+function handleUpdateProjectTracker(payload) {
+  return handleTrackerUpdate(payload, PROJECT_TRACKER_ID, 'Project Tracker');
+}
+
+// ── handleTrackerUpdate (shared) ──────────────────────────────
+// Generic cell-writer used by both tracker actions.
+function handleTrackerUpdate(payload, sheetId, sheetName) {
   var updates = payload.updates;
   if (!Array.isArray(updates) || updates.length === 0) {
     return { success: false, error: 'updates array is required and must be non-empty' };
@@ -157,28 +169,26 @@ function handleUpdateRequirementsTracker(payload) {
 
   var ss;
   try {
-    ss = SpreadsheetApp.openById(REQUIREMENTS_TRACKER_ID);
+    ss = SpreadsheetApp.openById(sheetId);
   } catch (err) {
-    return { success: false, error: 'Could not open Requirements Tracker: ' + err.message };
+    return { success: false, error: 'Could not open ' + sheetName + ': ' + err.message };
   }
 
-  // Find the Requirements Tracker sheet; fall back to first sheet
-  var sheet = ss.getSheetByName('Requirements Tracker') || ss.getSheets()[0];
-  if (!sheet) return { success: false, error: 'No sheets found in Requirements Tracker spreadsheet' };
+  var sheet = ss.getSheetByName(sheetName) || ss.getSheets()[0];
+  if (!sheet) return { success: false, error: 'No sheets found in ' + sheetName + ' spreadsheet' };
 
-  var data    = sheet.getDataRange().getValues();
-  if (data.length < 1) return { success: false, error: 'Requirements Tracker sheet is empty' };
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 1) return { success: false, error: sheetName + ' sheet is empty' };
 
-  var headers = data[0].map(String);            // row 1 — column names
-  var idColIdx = headers.indexOf('ID');          // column A is expected to be "ID"
-  if (idColIdx === -1) idColIdx = 0;            // fall back to column A if header not named "ID"
+  var headers  = data[0].map(String);
+  var idColIdx = headers.indexOf('ID');
+  if (idColIdx === -1) idColIdx = 0;
 
-  // Build a row-index map: id value → 1-based sheet row number
   var rowMap = {};
   for (var i = 1; i < data.length; i++) {
     var rowId = data[i][idColIdx];
     if (rowId !== '' && rowId !== null && rowId !== undefined) {
-      rowMap[String(rowId)] = i + 1;            // +1 because sheet rows are 1-based
+      rowMap[String(rowId)] = i + 1;
     }
   }
 
@@ -191,21 +201,18 @@ function handleUpdateRequirementsTracker(payload) {
       errors.push({ id: u.id, field: u.field, error: 'Row ID ' + u.id + ' not found' });
       return;
     }
-
     var colIdx = headers.indexOf(u.field);
     if (colIdx === -1) {
       errors.push({ id: u.id, field: u.field, error: 'Column "' + u.field + '" not found' });
       return;
     }
-
-    sheet.getRange(rowNum, colIdx + 1).setValue(u.value);  // colIdx is 0-based; Range is 1-based
+    sheet.getRange(rowNum, colIdx + 1).setValue(u.value);
     updated.push({ id: u.id, field: u.field });
   });
 
   if (errors.length && !updated.length) {
     return { success: false, error: errors[0].error, errors: errors };
   }
-
   var result = { success: true, updated: updated };
   if (errors.length) result.errors = errors;
   return result;
