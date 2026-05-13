@@ -41,7 +41,6 @@ function doPost(e) {
 }
 
 // ── upsert ──────────────────────────────────────────────────────
-// Inserts or updates a single record, matched by record.id
 function handleUpsert(payload) {
   var sheet = getEntitySheet(payload.entity);
   if (!sheet) return { status: 'error', message: 'Unknown entity: ' + payload.entity };
@@ -51,7 +50,6 @@ function handleUpsert(payload) {
   var headers = getHeaders(sheet);
   var idCol   = headers.indexOf('id');
   if (idCol === -1) {
-    // Sheet is empty — write headers then append
     writeHeaders(sheet, rec);
     appendRow(sheet, getHeaders(sheet), rec);
     return { status: 'ok' };
@@ -72,7 +70,6 @@ function handleUpsert(payload) {
 }
 
 // ── bulk_upsert ─────────────────────────────────────────────────
-// Replaces the entire sheet content with the provided records array
 function handleBulkUpsert(payload) {
   var sheet = getEntitySheet(payload.entity);
   if (!sheet) return { status: 'error', message: 'Unknown entity: ' + payload.entity };
@@ -141,8 +138,6 @@ function handleGetAll(payload) {
 }
 
 // ── import_from_master ──────────────────────────────────────────
-// Reads from the active spreadsheet's named sheet and returns records.
-// Acts as a get_all alias when no separate master file is configured.
 function handleImportFromMaster(payload) {
   return handleGetAll(payload);
 }
@@ -160,7 +155,6 @@ function handleUpdateProjectTracker(payload) {
 }
 
 // ── handleTrackerUpdate (shared) ──────────────────────────────
-// Generic cell-writer used by both tracker actions.
 function handleTrackerUpdate(payload, sheetId, sheetName) {
   var updates = payload.updates;
   if (!Array.isArray(updates) || updates.length === 0) {
@@ -213,6 +207,7 @@ function handleTrackerUpdate(payload, sheetId, sheetName) {
   if (errors.length && !updated.length) {
     return { success: false, error: errors[0].error, errors: errors };
   }
+
   var result = { success: true, updated: updated };
   if (errors.length) result.errors = errors;
   return result;
