@@ -1770,46 +1770,100 @@ test('iCalc — calc_balanceDue used for bal', function() {
   assertEqual(ctx.iCalc(inv).bal, 400, 'bal from calc_balanceDue');
 });
 
-test('rDash — Revenue sums calc_grandTotal across invoices', function() {
+test('iCalc — credit_note bypasses calc_ fields and delegates to cInv', function() {
   resetDB();
-  ctx.DB.inv = [
-    { id:'d1', status:'Draft',  lineItems:[], taxRate:0, calc_grandTotal:'31055.80', calc_netProfit:'4717.80', calc_cogs:'26338', calc_margin:'15.2', calc_balanceDue:'0' },
-    { id:'d2', status:'Draft',  lineItems:[], taxRate:0, calc_grandTotal:'957.08',   calc_netProfit:'0',       calc_cogs:'894.47',calc_margin:'0',    calc_balanceDue:'0' },
-    { id:'d3', status:'Draft',  lineItems:[], taxRate:0, calc_grandTotal:'14180',    calc_netProfit:'4652.18', calc_cogs:'9527.82',calc_margin:'32.8', calc_balanceDue:'10180' },
-    { id:'d4', status:'Draft',  lineItems:[], taxRate:0, calc_grandTotal:'7248.24',  calc_netProfit:'1021.24', calc_cogs:'6227',  calc_margin:'14.1', calc_balanceDue:'7248.24' }
-  ];
-  var tR = ctx.DB.inv.filter(function(i){ return i.status!=='Cancelled'; })
-    .reduce(function(s,i){ return s + ctx.iCalc(i).grand; }, 0);
-  assertEqual(Math.round(tR), 53441, 'Revenue = $53,441');
+  // A CN with calc_netProfit set — iCalc must NOT use it; CNs are not real-revenue records
+  var cn = { id:'icn1', type:'credit_note', cnAmount:200, lineItems:[], taxRate:0, dep:0,
+             calc_grandTotal:'9999', calc_netProfit:'9999' };
+  var c = ctx.iCalc(cn);
+  assertEqual(c.grand, 200, 'CN grand = cnAmount, not calc_grandTotal');
+  assertEqual(c.np,    0,   'CN np = 0 from cInv, not calc_netProfit');
 });
 
-test('rDash — Net Profit sums calc_netProfit across invoices', function() {
+test('iCalc — goodwill_credit bypasses calc_ fields', function() {
   resetDB();
-  ctx.DB.inv = [
-    { id:'dp1', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'4717.80', calc_grandTotal:'31055.80', calc_balanceDue:'0', calc_margin:'15.2', calc_cogs:'26338' },
-    { id:'dp2', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'0',       calc_grandTotal:'957.08',   calc_balanceDue:'0', calc_margin:'0',    calc_cogs:'894.47' },
-    { id:'dp3', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'4652.18', calc_grandTotal:'14180',    calc_balanceDue:'10180', calc_margin:'32.8', calc_cogs:'9527.82' },
-    { id:'dp4', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'1021.24', calc_grandTotal:'7248.24',  calc_balanceDue:'7248.24', calc_margin:'14.1', calc_cogs:'6227' }
-  ];
-  var tNP = ctx.DB.inv.filter(function(i){ return i.status!=='Cancelled'; })
-    .reduce(function(s,i){ return s + ctx.iCalc(i).np; }, 0);
-  assertEqual(Math.round(tNP), 10391, 'Net Profit = $10,391');
+  var gw = { id:'igw1', type:'goodwill_credit', cnAmount:150, lineItems:[], taxRate:0, dep:0,
+             calc_grandTotal:'9999', calc_netProfit:'9999' };
+  var c = ctx.iCalc(gw);
+  assertEqual(c.np, 0, 'goodwill_credit np = 0 from cInv');
 });
 
-test('rDash — Outstanding sums calc_balanceDue for non-Paid invoices', function() {
+test('rDash ai filter — excludes credit_note records from active count', function() {
   resetDB();
   ctx.DB.inv = [
-    { id:'do1', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'31055.80', calc_balanceDue:'0',       calc_netProfit:'4717.80', calc_margin:'15.2', calc_cogs:'26338' },
-    { id:'do2', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'957.08',   calc_balanceDue:'0',       calc_netProfit:'0',       calc_margin:'0',    calc_cogs:'894.47' },
-    { id:'do3', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'14180',    calc_balanceDue:'10180',   calc_netProfit:'4652.18', calc_margin:'32.8', calc_cogs:'9527.82' },
-    { id:'do4', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'7248.24',  calc_balanceDue:'7248.24', calc_netProfit:'1021.24', calc_margin:'14.1', calc_cogs:'6227' }
+    { id:'f1', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'1000', calc_netProfit:'100', calc_cogs:'900', calc_margin:'10', calc_balanceDue:'1000' },
+    { id:'f2', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'2000', calc_netProfit:'200', calc_cogs:'1800', calc_margin:'10', calc_balanceDue:'2000' },
+    { id:'f3', type:'credit_note',  status:'CN Applied', cnAmount:100,  lineItems:[], taxRate:0 },
+    { id:'f4', type:'goodwill_credit', status:'CN Draft', cnAmount:50,  lineItems:[], taxRate:0 }
   ];
-  var ai = ctx.DB.inv.filter(function(i){ return i.status!=='Cancelled'; });
+  var ai = ctx.DB.inv.filter(function(i){
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    if (!i.type && ctx.isCN(i.num)) return false;
+    return true;
+  });
+  assertEqual(ai.length, 2, 'only 2 real invoices in ai');
+});
+
+test('rDash — Revenue excludes credit note grand totals', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'r1', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'31055.80', calc_netProfit:'4717.80', calc_cogs:'26338', calc_margin:'15.2', calc_balanceDue:'0' },
+    { id:'r2', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'957.08',   calc_netProfit:'0',       calc_cogs:'894.47', calc_margin:'0',   calc_balanceDue:'0' },
+    { id:'r3', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'14180',    calc_netProfit:'4652.18', calc_cogs:'9527.82', calc_margin:'32.8', calc_balanceDue:'10180' },
+    { id:'r4', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'7248.24',  calc_netProfit:'1021.24', calc_cogs:'6227',   calc_margin:'14.1', calc_balanceDue:'7248.24' },
+    { id:'r5', type:'credit_note', status:'CN Applied', cnAmount:500, lineItems:[], taxRate:0 }
+  ];
+  var ai = ctx.DB.inv.filter(function(i){
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    if (!i.type && ctx.isCN(i.num)) return false;
+    return true;
+  });
+  var tR = ai.reduce(function(s,i){ return s + ctx.iCalc(i).grand; }, 0);
+  assertEqual(Math.round(tR), 53441, 'Revenue = $53,441 (CN excluded)');
+  assertEqual(ai.length, 4, '4 invoices in active count');
+});
+
+test('rDash — Net Profit excludes credit note contributions', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'np1', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'4717.80', calc_grandTotal:'31055.80', calc_balanceDue:'0',       calc_margin:'15.2', calc_cogs:'26338'   },
+    { id:'np2', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'0',       calc_grandTotal:'957.08',   calc_balanceDue:'0',       calc_margin:'0',    calc_cogs:'894.47'  },
+    { id:'np3', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'4652.18', calc_grandTotal:'14180',    calc_balanceDue:'10180',   calc_margin:'32.8', calc_cogs:'9527.82' },
+    { id:'np4', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'1021.24', calc_grandTotal:'7248.24',  calc_balanceDue:'7248.24', calc_margin:'14.1', calc_cogs:'6227'    },
+    { id:'np5', type:'credit_note', status:'CN Applied', cnAmount:166, lineItems:[], taxRate:0, calc_netProfit:'-166' }
+  ];
+  var ai = ctx.DB.inv.filter(function(i){
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    if (!i.type && ctx.isCN(i.num)) return false;
+    return true;
+  });
+  var tNP = ai.reduce(function(s,i){ return s + ctx.iCalc(i).np; }, 0);
+  assertEqual(Math.round(tNP), 10391, 'NP = $10,391 (CN with calc_netProfit excluded)');
+});
+
+test('rDash — Outstanding still reflects CN-reduced balance on linked invoices', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'ou1', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'31055.80', calc_balanceDue:'0',       calc_netProfit:'4717.80', calc_margin:'15.2', calc_cogs:'26338'   },
+    { id:'ou2', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'957.08',   calc_balanceDue:'0',       calc_netProfit:'0',       calc_margin:'0',    calc_cogs:'894.47'  },
+    { id:'ou3', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'14180',    calc_balanceDue:'10180',   calc_netProfit:'4652.18', calc_margin:'32.8', calc_cogs:'9527.82' },
+    { id:'ou4', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'7248.24',  calc_balanceDue:'7248.24', calc_netProfit:'1021.24', calc_margin:'14.1', calc_cogs:'6227'    },
+    { id:'ou5', type:'credit_note', status:'CN Applied', cnAmount:500, lineItems:[], taxRate:0 }
+  ];
+  var ai = ctx.DB.inv.filter(function(i){
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    if (!i.type && ctx.isCN(i.num)) return false;
+    return true;
+  });
   var tOut = ai.reduce(function(s,i){
     if (i.status==='Paid'||i.status==='Cancelled') return s;
     return s + Math.max(0, ctx.iCalc(i).bal);
   }, 0);
-  assertEqual(Math.round(tOut), 17428, 'Outstanding = $17,428');
+  assertEqual(Math.round(tOut), 17428, 'Outstanding = $17,428 (uses calc_balanceDue on invoices)');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
