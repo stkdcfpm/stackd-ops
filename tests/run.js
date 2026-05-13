@@ -1741,6 +1741,77 @@ test('buildPdfHeader — returns HTML string with border colour', function() {
   assertContains(html, 'ACME', 'company name in header');
 });
 
+// ── iCalc / dashboard calc_ priority (v2.9.11) ─────────────────
+console.log('\niCalc / dashboard calc_ priority (v2.9.11)');
+
+test('iCalc — uses calc_grandTotal over live liT', function() {
+  resetDB();
+  var inv = { id:'ic1', status:'Draft', lineItems:[{qty:1,up:100}], taxRate:0, chargesIncluded:true,
+              calc_grandTotal:'9999', calc_netProfit:'500', calc_cogs:'9499',
+              calc_grossProfit:'500', calc_margin:'5', calc_balanceDue:'9999' };
+  var c = ctx.iCalc(inv);
+  assertEqual(c.grand, 9999, 'grand from calc_grandTotal');
+  assertEqual(c.np,    500,  'np from calc_netProfit');
+  assertEqual(c.cogs,  9499, 'cogs from calc_cogs');
+});
+
+test('iCalc — falls back to cInv when calc_ fields absent', function() {
+  resetDB();
+  var inv = { id:'ic2', status:'Draft', lineItems:[{qty:2,up:50}], taxRate:0, chargesIncluded:true };
+  var c = ctx.iCalc(inv);
+  assertEqual(c.grand, 100, 'grand from live cInv');
+});
+
+test('iCalc — calc_balanceDue used for bal', function() {
+  resetDB();
+  var inv = { id:'ic3', status:'Draft', lineItems:[], taxRate:0, chargesIncluded:true,
+              calc_grandTotal:'1000', calc_balanceDue:'400', calc_netProfit:'0',
+              calc_cogs:'0', calc_grossProfit:'0', calc_margin:'0' };
+  assertEqual(ctx.iCalc(inv).bal, 400, 'bal from calc_balanceDue');
+});
+
+test('rDash — Revenue sums calc_grandTotal across invoices', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'d1', status:'Draft',  lineItems:[], taxRate:0, calc_grandTotal:'31055.80', calc_netProfit:'4717.80', calc_cogs:'26338', calc_margin:'15.2', calc_balanceDue:'0' },
+    { id:'d2', status:'Draft',  lineItems:[], taxRate:0, calc_grandTotal:'957.08',   calc_netProfit:'0',       calc_cogs:'894.47',calc_margin:'0',    calc_balanceDue:'0' },
+    { id:'d3', status:'Draft',  lineItems:[], taxRate:0, calc_grandTotal:'14180',    calc_netProfit:'4652.18', calc_cogs:'9527.82',calc_margin:'32.8', calc_balanceDue:'10180' },
+    { id:'d4', status:'Draft',  lineItems:[], taxRate:0, calc_grandTotal:'7248.24',  calc_netProfit:'1021.24', calc_cogs:'6227',  calc_margin:'14.1', calc_balanceDue:'7248.24' }
+  ];
+  var tR = ctx.DB.inv.filter(function(i){ return i.status!=='Cancelled'; })
+    .reduce(function(s,i){ return s + ctx.iCalc(i).grand; }, 0);
+  assertEqual(Math.round(tR), 53441, 'Revenue = $53,441');
+});
+
+test('rDash — Net Profit sums calc_netProfit across invoices', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'dp1', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'4717.80', calc_grandTotal:'31055.80', calc_balanceDue:'0', calc_margin:'15.2', calc_cogs:'26338' },
+    { id:'dp2', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'0',       calc_grandTotal:'957.08',   calc_balanceDue:'0', calc_margin:'0',    calc_cogs:'894.47' },
+    { id:'dp3', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'4652.18', calc_grandTotal:'14180',    calc_balanceDue:'10180', calc_margin:'32.8', calc_cogs:'9527.82' },
+    { id:'dp4', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'1021.24', calc_grandTotal:'7248.24',  calc_balanceDue:'7248.24', calc_margin:'14.1', calc_cogs:'6227' }
+  ];
+  var tNP = ctx.DB.inv.filter(function(i){ return i.status!=='Cancelled'; })
+    .reduce(function(s,i){ return s + ctx.iCalc(i).np; }, 0);
+  assertEqual(Math.round(tNP), 10391, 'Net Profit = $10,391');
+});
+
+test('rDash — Outstanding sums calc_balanceDue for non-Paid invoices', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'do1', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'31055.80', calc_balanceDue:'0',       calc_netProfit:'4717.80', calc_margin:'15.2', calc_cogs:'26338' },
+    { id:'do2', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'957.08',   calc_balanceDue:'0',       calc_netProfit:'0',       calc_margin:'0',    calc_cogs:'894.47' },
+    { id:'do3', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'14180',    calc_balanceDue:'10180',   calc_netProfit:'4652.18', calc_margin:'32.8', calc_cogs:'9527.82' },
+    { id:'do4', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'7248.24',  calc_balanceDue:'7248.24', calc_netProfit:'1021.24', calc_margin:'14.1', calc_cogs:'6227' }
+  ];
+  var ai = ctx.DB.inv.filter(function(i){ return i.status!=='Cancelled'; });
+  var tOut = ai.reduce(function(s,i){
+    if (i.status==='Paid'||i.status==='Cancelled') return s;
+    return s + Math.max(0, ctx.iCalc(i).bal);
+  }, 0);
+  assertEqual(Math.round(tOut), 17428, 'Outstanding = $17,428');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
