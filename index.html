@@ -1968,7 +1968,8 @@ async function sGet(entity) {
 }
 async function syncEnt(entity, rec) {
   if (!SS.url || !SS.auto) return;
-  try { setSyncStatus('loading'); await sPost({action:'upsert', entity:entity, record:rec}); setSyncStatus('ok'); setTimeout(function(){ setSyncStatus('idle'); }, 3000); }
+  var ent = (entity === 'inv' && (rec.type === 'credit_note' || rec.type === 'goodwill_credit')) ? 'cn' : entity;
+  try { setSyncStatus('loading'); await sPost({action:'upsert', entity:ent, record:rec}); setSyncStatus('ok'); setTimeout(function(){ setSyncStatus('idle'); }, 3000); }
   catch(e) { setSyncStatus('err'); }
 }
 async function delEnt(entity, id) {
@@ -1980,10 +1981,15 @@ async function syncAll() {
   if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
   setSyncStatus('loading');
   try {
-    var synEnts = ['sup','li','inv','po','sh'];
+    var synEnts = ['sup','li','po','sh','qt'];
     for (var si = 0; si < synEnts.length; si++) {
       await sPost({action:'bulk_upsert', entity:synEnts[si], records:DB[synEnts[si]]});
     }
+    var invOnly = DB.inv.filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
+                       .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
+    var cnOnly  = DB.inv.filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+    await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
+    if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
   } catch(e) { setSyncStatus('err'); toast('Sync failed: ' + e.message); }
 }
@@ -2011,7 +2017,7 @@ async function pullAll() {
   if (!SS.url) { toast('No URL configured'); return; }
   setSyncStatus('loading');
   try {
-    var entities = ['sup','li','inv','po','sh'];
+    var entities = ['sup','li','inv','po','sh','qt'];
     for (var ei = 0; ei < entities.length; ei++) {
       var ent = entities[ei];
       var d = await sGet(ent);
@@ -2092,10 +2098,15 @@ function buildInvLines() {
 async function pushAll() {
   setSyncStatus('loading');
   try {
-    var ents = ['sup','li','inv','po','sh'];
+    var ents = ['sup','li','po','sh','qt','payments'];
     for (var pi = 0; pi < ents.length; pi++) {
       await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]]});
     }
+    var invOnly = DB.inv.filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
+                       .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
+    var cnOnly  = DB.inv.filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+    await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
+    await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
     setSyncStatus('ok'); toast('Pushed all'); setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) { setSyncStatus('err'); toast('Failed: ' + e.message); }
@@ -3090,6 +3101,8 @@ function rInv() {
 }
 async function delInv(id) {
   if(!confirm('Delete this invoice?')) return;
+  var _delRec = DB.inv.find(function(i){ return i.id===id; });
+  var _isCnDel = _delRec && (_delRec.type==='credit_note' || _delRec.type==='goodwill_credit');
   DB.inv=DB.inv.filter(function(i){return i.id!==id;});
   var libRefsChanged = false;
   DB.li.forEach(function(cat) {
@@ -3098,7 +3111,7 @@ async function delInv(id) {
     cat.invoiceRefs = cat.invoiceRefs.filter(function(r){ return r.invId !== id; });
     if (cat.invoiceRefs.length !== before) libRefsChanged = true;
   });
-  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt('inv',id);
+  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt(_isCnDel ? 'cn' : 'inv', id);
 }
 
 // ── PO MODAL & TABLE ───────────────────────────────────────────

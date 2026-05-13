@@ -1172,6 +1172,46 @@ test('invoiceRefs — delInv removes all refs for that invoice', function() {
   assertEqual(remaining.length, 0, 'invoiceRef cleaned up after delInv');
 });
 
+test('delInv — routes credit_note delete to cn entity', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'cn-del1', num:'CN10301', type:'credit_note', cnAmount:-100, lineItems:[], taxRate:0 });
+  var capturedEntity;
+  var origDelEnt = ctx.delEnt;
+  ctx.delEnt = function(entity) { capturedEntity = entity; return Promise.resolve(); };
+  ctx.confirm = function(){ return true; };
+  ctx.delInv('cn-del1');
+  ctx.confirm = function(){ return false; };
+  ctx.delEnt = origDelEnt;
+  assertEqual(capturedEntity, 'cn', 'credit_note delete routed to cn entity');
+  assertEqual(ctx.DB.inv.find(function(i){ return i.id==='cn-del1'; }), undefined, 'CN removed from DB.inv');
+});
+
+test('delInv — routes goodwill_credit delete to cn entity', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'gw-del1', num:'CN10302', type:'goodwill_credit', cnAmount:-50, lineItems:[], taxRate:0 });
+  var capturedEntity;
+  var origDelEnt = ctx.delEnt;
+  ctx.delEnt = function(entity) { capturedEntity = entity; return Promise.resolve(); };
+  ctx.confirm = function(){ return true; };
+  ctx.delInv('gw-del1');
+  ctx.confirm = function(){ return false; };
+  ctx.delEnt = origDelEnt;
+  assertEqual(capturedEntity, 'cn', 'goodwill_credit delete routed to cn entity');
+});
+
+test('delInv — routes regular invoice delete to inv entity', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'inv-reg1', num:'INV10303', status:'Draft', lineItems:[], taxRate:0 });
+  var capturedEntity;
+  var origDelEnt = ctx.delEnt;
+  ctx.delEnt = function(entity) { capturedEntity = entity; return Promise.resolve(); };
+  ctx.confirm = function(){ return true; };
+  ctx.delInv('inv-reg1');
+  ctx.confirm = function(){ return false; };
+  ctx.delEnt = origDelEnt;
+  assertEqual(capturedEntity, 'inv', 'regular invoice delete routed to inv entity');
+});
+
 test('invoiceRefs — saveInv with empty cIL does not modify invoiceRefs', function() {
   resetDB();
   ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[],

@@ -13,6 +13,9 @@ var SHEET_NAMES = {
   inv:       'Invoices',
   po:        'Purchase Orders',
   sh:        'Shipments',
+  qt:        'Quotes',
+  payments:  'Payments',
+  cn:        'Credit Notes',
   inv_lines: 'inv_lines'
 };
 
