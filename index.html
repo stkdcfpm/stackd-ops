@@ -4334,18 +4334,18 @@ async function runDataRepair() {
   status.style.color = 'var(--gold)';
 
   var known = {
-    'INV10028': { calc_grandTotal:'31055.80', calc_cogs:'26338', calc_liTotal:'30755.80',
-                  calc_taxAmt:'0', calc_grossProfit:'4717.80', calc_netProfit:'4717.80',
-                  calc_margin:'15.2', calc_balanceDue:'0', lf:1098, ins:300 },
+    'INV10028': { calc_grandTotal:'31055.80', calc_cogs:'25226.00', calc_liTotal:'30755.80',
+                  calc_taxAmt:'0', calc_grossProfit:'5829.80', calc_netProfit:'5829.80',
+                  calc_margin:'18.8', calc_balanceDue:'0', lf:1098, ins:0 },
     'INV10029': { calc_grandTotal:'957.08', calc_cogs:'894.47', calc_liTotal:'894.47',
                   calc_taxAmt:'62.61', calc_grossProfit:'0', calc_netProfit:'0',
                   calc_margin:'0', calc_balanceDue:'0', dep:957.08, lf:0, ins:0, taxRate:0.07 },
     'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730',
                   calc_taxAmt:'0', calc_grossProfit:'4652.18', calc_netProfit:'4652.18',
                   calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
-    'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6227', calc_liTotal:'7048.24',
-                  calc_taxAmt:'0', calc_grossProfit:'1021.24', calc_netProfit:'1021.24',
-                  calc_margin:'14.1', calc_balanceDue:'7248.24', lf:0, ins:0 }
+    'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6370.00', calc_liTotal:'7048.24',
+                  calc_taxAmt:'0', calc_grossProfit:'878.24', calc_netProfit:'878.24',
+                  calc_margin:'12.1', calc_balanceDue:'7248.24', lf:0, ins:0 }
   };
 
   var repaired = [];
@@ -6524,18 +6524,18 @@ function wireTips() {
 function repairCalcFields() {
   // Repair known invoice totals if calc_grandTotal got wiped
   var known = {
-    'INV10028': { calc_grandTotal:'31055.80', calc_cogs:'26338', calc_liTotal:'30755.80',
-                  calc_taxAmt:'0', calc_grossProfit:'4717.80', calc_netProfit:'4717.80',
-                  calc_margin:'15.2', calc_balanceDue:'0', lf:1098, ins:300 },
+    'INV10028': { calc_grandTotal:'31055.80', calc_cogs:'25226.00', calc_liTotal:'30755.80',
+                  calc_taxAmt:'0', calc_grossProfit:'5829.80', calc_netProfit:'5829.80',
+                  calc_margin:'18.8', calc_balanceDue:'0', lf:1098, ins:0 },
     'INV10029': { calc_grandTotal:'957.08', calc_cogs:'894.47', calc_liTotal:'894.47',
                   calc_taxAmt:'62.61', calc_grossProfit:'0', calc_netProfit:'0',
                   calc_margin:'0', calc_balanceDue:'0', dep:957.08, lf:0, ins:0, taxRate:0.07 },
     'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730',
                   calc_taxAmt:'0', calc_grossProfit:'4652.18', calc_netProfit:'4652.18',
                   calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
-    'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6227', calc_liTotal:'7048.24',
-                  calc_taxAmt:'0', calc_grossProfit:'1021.24', calc_netProfit:'1021.24',
-                  calc_margin:'14.1', calc_balanceDue:'7248.24', lf:0, ins:0 },
+    'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6370.00', calc_liTotal:'7048.24',
+                  calc_taxAmt:'0', calc_grossProfit:'878.24', calc_netProfit:'878.24',
+                  calc_margin:'12.1', calc_balanceDue:'7248.24', lf:0, ins:0 },
     'INV10032': { calc_grandTotal:'6071.00', calc_cogs:'6071.00', calc_liTotal:'6071.00',
                   calc_taxAmt:'0', calc_grossProfit:'0', calc_netProfit:'0',
                   calc_margin:'0', calc_balanceDue:'6071.00', lf:0, ins:0 }
