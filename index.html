@@ -2212,7 +2212,11 @@ function cInv(inv) {
 
 // ── DASHBOARD ──────────────────────────────────────────────────
 // Returns invoice financials preferring stored calc_ fields; falls back to live cInv() only when absent.
+// Credit note records are returned via cInv() directly — calc_ fields do not apply to CNs.
 function iCalc(inv) {
+  if (inv.type === 'credit_note' || inv.type === 'goodwill_credit' || (!inv.type && isCN(inv.num))) {
+    return cInv(inv);
+  }
   var c = cInv(inv);
   return {
     grand: inv.calc_grandTotal  ? parseFloat(inv.calc_grandTotal)                 : c.grand,
@@ -2227,7 +2231,12 @@ function iCalc(inv) {
   };
 }
 function rDash() {
-  var ai = DB.inv.filter(function(i){ return i.status !== 'Cancelled'; });
+  var ai = DB.inv.filter(function(i){
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    if (!i.type && isCN(i.num)) return false;
+    return true;
+  });
   var tR   = ai.reduce(function(s,i){ return s + iCalc(i).grand; }, 0);
   var tNP  = ai.reduce(function(s,i){ return s + iCalc(i).np;    }, 0);
   var tOut = ai.reduce(function(s,i){
