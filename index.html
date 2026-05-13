@@ -2211,17 +2211,35 @@ function cInv(inv) {
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────────
+// Returns invoice financials preferring stored calc_ fields; falls back to live cInv() only when absent.
+function iCalc(inv) {
+  var c = cInv(inv);
+  return {
+    grand: inv.calc_grandTotal  ? parseFloat(inv.calc_grandTotal)                 : c.grand,
+    cogs:  inv.calc_cogs        ? parseFloat(inv.calc_cogs)                       : c.cogs,
+    gp:    inv.calc_grossProfit !== undefined ? parseFloat(inv.calc_grossProfit)  : c.gp,
+    np:    inv.calc_netProfit   !== undefined ? parseFloat(inv.calc_netProfit)    : c.np,
+    mgn:   inv.calc_margin      !== undefined ? parseFloat(inv.calc_margin)       : c.mgn,
+    liT:   inv.calc_liTotal     ? parseFloat(inv.calc_liTotal)                    : c.liT,
+    tax: c.tax, taxRate: c.taxRate,
+    dep: c.dep,
+    bal: inv.calc_balanceDue !== undefined ? parseFloat(inv.calc_balanceDue) : c.bal
+  };
+}
 function rDash() {
   var ai = DB.inv.filter(function(i){ return i.status !== 'Cancelled'; });
-  var tR = ai.reduce(function(s,i){ return s + cInv(i).grand; }, 0);
-  var tNP = ai.reduce(function(s,i){ return s + cInv(i).np; }, 0);
-  var tOut = ai.reduce(function(s,i){ return s + ((i.status!=='Paid'&&i.status!=='Cancelled') ? Math.max(0, cInv(i).bal) : 0); }, 0);
+  var tR   = ai.reduce(function(s,i){ return s + iCalc(i).grand; }, 0);
+  var tNP  = ai.reduce(function(s,i){ return s + iCalc(i).np;    }, 0);
+  var tOut = ai.reduce(function(s,i){
+    if (i.status==='Paid'||i.status==='Cancelled') return s;
+    return s + Math.max(0, iCalc(i).bal);
+  }, 0);
   var tPO = DB.po.filter(function(p){ return p.status!=='Cancelled' && p.status!=='Settled'; })
     .reduce(function(s,p){
       var t = (p.lineItems||[]).reduce(function(a,l){ return a + (+l.qty||0)*(+l.cost||0); }, 0);
       return s + t - (+p.dep||0);
     }, 0);
-  var mg = ai.map(function(i){ return cInv(i).mgn; }).filter(function(m){ return m !== null; });
+  var mg = ai.map(function(i){ return iCalc(i).mgn; }).filter(function(m){ return m !== null && !isNaN(m); });
   var aM = mg.length ? mg.reduce(function(a,b){ return a+b; }, 0) / mg.length : 0;
 
   // Net cash: total buyer deposits received minus total supplier deposits paid minus goodwill credits issued
@@ -2248,7 +2266,7 @@ function rDash() {
     pl.innerHTML = '<div class="empty"><div class="ei">&#128196;</div><p>No invoices yet.</p></div>';
   } else {
     pl.innerHTML = DB.inv.slice().reverse().slice(0,10).map(function(inv){
-      var c = cInv(inv);
+      var c = iCalc(inv);
       var sc = (inv.status||'draft').toLowerCase().replace(/ /g, '-');
       return '<div class="pi" onclick="editInv(\'' + inv.id + '\')">' +
         '<span class="pref">' + (san(inv.num)||'-') + '</span>' +
@@ -2261,23 +2279,23 @@ function rDash() {
     }).join('');
   }
 
-  var mxN = Math.max.apply(null, ai.map(function(i){ return Math.abs(cInv(i).np); }).concat([1]));
+  var mxN = Math.max.apply(null, ai.map(function(i){ return Math.abs(iCalc(i).np); }).concat([1]));
   G('np-chart').innerHTML = ai.length ? ai.slice(-7).map(function(i){
-    var np = cInv(i).np;
+    var np = iCalc(i).np;
     return '<div class="br"><div class="bl2">' + (i.num||i.buyer||'-') + '</div>' +
       '<div class="bt"><div class="bf ' + (np>=0?'go':'cr') + '" style="width:' + (Math.abs(np)/mxN*100) + '%"></div></div>' +
       '<div class="bv">' + fmt(np, i.cur||'USD') + '</div></div>';
   }).join('') : '<p style="font-size:.56rem;color:var(--m)">No data</p>';
 
   var dm = {};
-  ai.forEach(function(i){ var d = i.dst||'Unknown'; dm[d] = (dm[d]||0) + cInv(i).grand; });
+  ai.forEach(function(i){ var d = i.dst||'Unknown'; dm[d] = (dm[d]||0) + iCalc(i).grand; });
   var mxD = Math.max.apply(null, Object.values(dm).concat([1]));
   G('dest-chart').innerHTML = Object.entries(dm).sort(function(a,b){return b[1]-a[1];}).slice(0,5).map(function(e){
     return '<div class="br"><div class="bl2">' + san(e[0]) + '</div><div class="bt"><div class="bf cr" style="width:' + (e[1]/mxD*100) + '%"></div></div><div class="bv">' + fmt(e[1]) + '</div></div>';
   }).join('') || '<p style="font-size:.56rem;color:var(--m)">No data</p>';
 
   var bd = {'Under 10%':0, '10-20%':0, '20-30%':0, 'Over 30%':0};
-  ai.forEach(function(i){ var m=cInv(i).mgn||0; if(m<10)bd['Under 10%']++; else if(m<20)bd['10-20%']++; else if(m<30)bd['20-30%']++; else bd['Over 30%']++; });
+  ai.forEach(function(i){ var m=iCalc(i).mgn||0; if(m<10)bd['Under 10%']++; else if(m<20)bd['10-20%']++; else if(m<30)bd['20-30%']++; else bd['Over 30%']++; });
   var mxB = Math.max.apply(null, Object.values(bd).concat([1]));
   G('mgn-chart').innerHTML = Object.entries(bd).map(function(e){
     return '<div class="br"><div class="bl2">' + e[0] + '</div><div class="bt"><div class="bf go" style="width:' + (e[1]/mxB*100) + '%"></div></div><div class="bv">' + e[1] + '</div></div>';
@@ -3015,8 +3033,8 @@ function rInv() {
   var fi=invRecs.filter(function(i){ return (!q||(i.num||'').toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.dst||'').toLowerCase().includes(q)) && (!sf||i.status===sf); });
   var invTb = G('inv-tb'), invEm = G('inv-em');
   if(invTb) invTb.innerHTML=fi.slice().reverse().map(function(inv){
-    var c=cInv(inv), cur=inv.cur||'USD';
-    var mc=c.mgn===null?'':(c.mgn>=20?'phi':c.mgn>=10?'pmi':'plo');
+    var c=iCalc(inv), cur=inv.cur||'USD';
+    var mc=c.mgn===null||isNaN(c.mgn)?'':(c.mgn>=20?'phi':c.mgn>=10?'pmi':'plo');
     var sc=(inv.status||'draft').toLowerCase().replace(/ /g,'-');
     return '<tr>' +
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + '</td>' +
@@ -3226,10 +3244,9 @@ function prevInvDoc(inv) {
   var tx = +inv.taxRate||0, tax=liT*tx;
   var lf=+inv.lf||0, ins=+inv.ins||0, leg=+inv.leg||0, isp=+inv.isp||0, oth=+inv.oth||0;
   var grand=liT+tax+lf+ins+leg+isp+oth, dep=+inv.dep||0, bal=grand-dep;
-  if ((grand===0 || grand < dep) && inv.calc_grandTotal && +inv.calc_grandTotal > 0) {
+  if (inv.calc_grandTotal && +inv.calc_grandTotal > 0) {
     grand=+inv.calc_grandTotal;
-    liT=+inv.calc_liTotal||grand; tax=+inv.calc_taxAmt||0;
-    lf=+inv.lf||0; ins=+inv.ins||0; leg=+inv.leg||0; isp=+inv.isp||0; oth=+inv.oth||0;
+    liT=+inv.calc_liTotal||liT; tax=+inv.calc_taxAmt||0;
     dep=+inv.dep||0; bal=grand-dep;
   }
   var bank = AS.bank ? AS.bank.replace(/\n/g,'<br>') : '<em>Bank details pending &mdash; contact '+AS.email+'</em>';
