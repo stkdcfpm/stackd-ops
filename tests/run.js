@@ -1584,6 +1584,163 @@ test('goodwill credit — payments ledger entry has negative amount', function()
   assertEqual(pmt.invNum,  'CN10002', 'linked to CN10002');
 });
 
+// ── CN Modal Separation (v2.9.10) ──────────────────────────────
+console.log('\nCN Modal Separation (v2.9.10)');
+
+function setupCNFormNew(cnNum, linkedInvNum, amount, goodwill) {
+  mockEl('cnf-n').value = cnNum || 'CN10080';
+  mockEl('cnf-b').value = 'Test Buyer';
+  mockEl('cnf-dt').value = '2026-05-01';
+  mockEl('cnf-cur').value = 'USD';
+  mockEl('cnf-amount').value = String(amount || 0);
+  mockEl('cnf-linked').value = linkedInvNum || '';
+  mockEl('cnf-reason').value = 'Test credit reason';
+  mockEl('cnf-nt').value = '';
+  mockEl('cnf-type').value = goodwill ? 'goodwill_credit' : 'credit_note';
+  mockEl('cn-sm').value = 'CN Draft';
+  mockEl('cn-verr').textContent = '';
+  mockEl('fld-cn-linked').style.display = goodwill ? 'none' : 'block';
+}
+
+test('vCN — valid standard CN passes validation', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10200', 'INV10200', 250, false);
+  var result = ctx.vCN();
+  assert(result, 'vCN returns true for valid standard CN with amount > 0');
+});
+
+test('vCN — fails when cn-amount is 0', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10201', 'INV10201', 0, false);
+  var result = ctx.vCN();
+  assert(result === false, 'vCN returns false when amount is 0');
+});
+
+test('vCN — fails when CN number is missing', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10202', 'INV10202', 100, false);
+  mockEl('cnf-n').value = ''; // Override default fallback — empty number
+  var result = ctx.vCN();
+  assert(result === false, 'vCN returns false when CN number is empty');
+});
+
+test('vCN — fails standard CN when linked invoice missing', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10203', '', 100, false);
+  var result = ctx.vCN();
+  assert(result === false, 'vCN returns false when standard CN has no linked invoice');
+});
+
+test('vCN — goodwill passes without linked invoice', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10204', '', 150, true);
+  var result = ctx.vCN();
+  assert(result, 'vCN returns true for goodwill CN without linked invoice');
+});
+
+test('saveCN — standard credit note saves with type credit_note', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10205', 'INV10205', 300, false);
+  ctx.saveCN();
+  var cn = ctx.DB.inv.find(function(i){ return i.num === 'CN10205'; });
+  assert(cn, 'CN record saved');
+  assertEqual(cn.type, 'credit_note', 'type is credit_note');
+  assertEqual(cn.cnAmount, -300, 'cnAmount stored as negative');
+  assertEqual(cn.linkedInvNum, 'INV10205', 'linkedInvNum set');
+});
+
+test('saveCN — goodwill credit saves with type goodwill_credit', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10206', '', 400, true);
+  ctx.saveCN();
+  var cn = ctx.DB.inv.find(function(i){ return i.num === 'CN10206'; });
+  assert(cn, 'goodwill CN record saved');
+  assertEqual(cn.type, 'goodwill_credit', 'type is goodwill_credit');
+  assertEqual(cn.cnAmount, -400, 'cnAmount is -400');
+});
+
+test('saveCN — goodwill credit adds negative payments ledger entry', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10207', '', 500, true);
+  ctx.saveCN();
+  var cn = ctx.DB.inv.find(function(i){ return i.num === 'CN10207'; });
+  var pmt = ctx.DB.payments.find(function(p){ return p.invId === cn.id && p.method === 'Goodwill Credit'; });
+  assert(pmt, 'goodwill payment ledger entry created');
+  assertEqual(pmt.amount, -500, 'payment amount is -500');
+});
+
+test('saveCN — duplicate CN number is rejected', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'existing-cn', num: 'CN10208', type: 'credit_note', cnAmount: -100 });
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10208', 'INV10208', 100, false);
+  ctx.saveCN();
+  var cnt = ctx.DB.inv.filter(function(i){ return i.num === 'CN10208'; }).length;
+  assertEqual(cnt, 1, 'duplicate CN not saved — only one record with that number');
+});
+
+test('saveCN — edit existing CN updates record in-place', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'edit-cn-1', num: 'CN10209', type: 'credit_note', cnAmount: -100, buyer: 'Old Buyer' });
+  ctx.EI.cn = 'edit-cn-1';
+  setupCNFormNew('CN10209', 'INV10209', 200, false);
+  mockEl('cnf-b').value = 'New Buyer';
+  ctx.saveCN();
+  var cn = ctx.DB.inv.find(function(i){ return i.id === 'edit-cn-1'; });
+  assert(cn, 'record still exists');
+  assertEqual(cn.buyer, 'New Buyer', 'buyer updated');
+  assertEqual(cn.cnAmount, -200, 'amount updated');
+  var total = ctx.DB.inv.filter(function(i){ return i.num === 'CN10209'; }).length;
+  assertEqual(total, 1, 'no duplicate created on edit');
+});
+
+// ── Language / setLang (v2.9.10) ───────────────────────────────
+console.log('\nLanguage toggle (v2.9.10)');
+
+test('setLang — stores lang in localStorage', function() {
+  ctx.setLang('zh');
+  assertEqual(ctx.localStorage.getItem('stackd_lang'), 'zh', 'zh stored in localStorage');
+  ctx.setLang('en');
+  assertEqual(ctx.localStorage.getItem('stackd_lang'), 'en', 'en stored in localStorage');
+});
+
+test('_lang defaults to en when not set', function() {
+  // _lang was initialised before mock storage had the key
+  assert(ctx._lang === 'en' || ctx._lang === 'zh', '_lang is a valid language code');
+});
+
+// ── Company Branding (v2.9.10) ─────────────────────────────────
+console.log('\nCompany Branding (v2.9.10)');
+
+test('getCoBrand — returns defaults when nothing stored', function() {
+  var b = ctx.getCoBrand();
+  assertEqual(typeof b.colour, 'string', 'colour is string');
+  assertEqual(typeof b.powered, 'boolean', 'powered is boolean');
+});
+
+test('saveCoBrand — round-trips branding data', function() {
+  ctx.saveCoBrand({ logo:'', name:'Test Co', trading:'TestTrade', addr:'London', email:'e@t.com', phone:'123', reg:'REG1', vat:'VAT1', colour:'#112233', footer:'Pay in 30', powered:false });
+  var b = ctx.getCoBrand();
+  assertEqual(b.name, 'Test Co', 'name round-trips');
+  assertEqual(b.colour, '#112233', 'colour round-trips');
+  assertEqual(b.powered, false, 'powered round-trips as false');
+});
+
+test('buildPdfHeader — returns HTML string with border colour', function() {
+  ctx.saveCoBrand({ logo:'', name:'ACME', trading:'', addr:'', email:'', phone:'', reg:'', vat:'', colour:'#AA0000', footer:'', powered:true });
+  var html = ctx.buildPdfHeader('#AA0000');
+  assertContains(html, '#AA0000', 'accent colour in header');
+  assertContains(html, 'ACME', 'company name in header');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {

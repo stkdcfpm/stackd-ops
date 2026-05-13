@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.9.9</title>
+<title>Stackd Ops v2.9.10</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -205,7 +205,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.9</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)">Settings</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.10</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -253,7 +253,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="view" id="v-sup">
   <div class="tb">
     <input class="sb" type="text" placeholder="Search suppliers..." id="sup-q" oninput="rSup()">
-    <button class="btn btn-s" onclick="openSup()">+ New Supplier</button>
+    <button class="btn btn-s" data-en="+ New Supplier" data-zh="+ 新建供应商" onclick="openSup()">+ New Supplier</button>
   </div>
   <div class="tw"><table class="tbl"><thead><tr><th>Name</th><th>Country</th><th>Contact</th><th>Email</th><th>Phone</th><th>Cur.</th><th>Notes</th><th></th></tr></thead><tbody id="sup-tb"></tbody></table></div>
   <div id="sup-em" class="empty" style="display:none;"><div class="ei">&#127981;</div><p>No suppliers yet.</p></div>
@@ -263,7 +263,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   <div class="tb">
     <input class="sb" type="text" placeholder="Search items..." id="li-q" oninput="rLI()">
     <select class="sb" style="max-width:170px;" id="li-sf" onchange="rLI()"><option value="">All suppliers</option></select>
-    <button class="btn btn-s" onclick="openLI()">+ New Line Item</button>
+    <button class="btn btn-s" data-en="+ New Line Item" data-zh="+ 新建商品" onclick="openLI()">+ New Line Item</button>
     <button class="btn btn-g" onclick="expPriceHistoryCSV()" title="Export price history for all line items">&#8595; Price History CSV</button>
   </div>
   <div class="tw"><table class="tbl"><thead><tr><th>SKU</th><th>Description</th><th>Specs</th><th>HS Code</th><th>Supplier</th><th class="num">Unit Cost</th><th class="num">Unit Price</th><th>UOM</th><th class="num">Margin</th><th>Cur.</th><th></th></tr></thead><tbody id="li-tb"></tbody></table></div>
@@ -272,14 +272,28 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <div class="view" id="v-inv">
   <div class="tb">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">INVOICES</div>
     <input class="sb" type="text" placeholder="Search invoices..." id="inv-q" oninput="rInv()">
-    <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option><option disabled>── Credit Notes ──</option><option>CN Draft</option><option>CN Issued</option><option>CN Applied</option></select>
-    <button class="btn btn-s" onclick="openInv()">+ New Invoice</button>
+    <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
+    <button class="btn btn-s" data-en="+ New Invoice" data-zh="+ 新建发票" onclick="openInv()">+ New Invoice</button>
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
     <button class="btn btn-g" onclick="openAcctExport('inv')">&#8595; Accounting Export</button>
   </div>
-  <div class="tw"><table class="tbl"><thead><tr><th>Invoice #</th><th>Buyer</th><th>Dest.</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">COGS</th><th class="num">Gross Profit</th><th class="num">Net Profit</th><th class="num">Margin</th><th class="num">Tax%</th><th class="num">Dep. Rec.</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="inv-tb"></tbody></table></div>
+  <div class="tw" style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Invoice #</th><th>Buyer</th><th>Dest.</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">COGS</th><th class="num">Gross Profit</th><th class="num">Net Profit</th><th class="num">Margin</th><th class="num">Tax%</th><th class="num">Dep. Rec.</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="inv-tb"></tbody></table></div>
   <div id="inv-em" class="empty" style="display:none;"><div class="ei">&#129534;</div><p>No invoices yet.</p></div>
+
+  <div style="border-top:2px solid var(--ln);margin-top:24px;padding-top:16px;">
+    <div class="tb" style="margin-bottom:8px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--cr);">CREDIT NOTES</div>
+      <button class="btn btn-g" onclick="openNewCN()" style="border-color:var(--cr);color:var(--cr);">+ New Credit Note</button>
+    </div>
+    <div class="tw" style="overflow-x:auto;">
+      <table class="tbl"><thead><tr>
+        <th>CN #</th><th>Buyer</th><th>Type</th><th>Linked Invoice</th><th>Date</th><th>Credit Amount</th><th>Status</th><th></th>
+      </tr></thead><tbody id="cn-tb"></tbody></table>
+    </div>
+    <div id="cn-em" class="empty" style="display:none;"><div class="ei">&#128196;</div><p>No credit notes yet.</p></div>
+  </div>
 </div>
 
 <div class="view" id="v-po">
@@ -297,7 +311,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   <div class="tb">
     <input class="sb" type="text" placeholder="Search shipments..." id="sh-q" oninput="rShp()">
     <select class="sb" style="max-width:160px;" id="sh-sf" onchange="rShp()"><option value="">All statuses</option><option>Booked</option><option>Confirmed</option><option>In Transit</option><option>At Origin Port</option><option>At Destination Port</option><option>In Customs</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option><option>On Hold</option><option>Cancelled</option></select>
-    <button class="btn btn-s" onclick="openShp()">+ New Shipment</button>
+    <button class="btn btn-s" data-en="+ New Shipment" data-zh="+ 新建货运" onclick="openShp()">+ New Shipment</button>
     <button class="btn btn-g" onclick="openLoadCalc()" style="margin-left:6px;">&#128220; Load Calculator</button>
   </div>
   <div class="tw" style="overflow-x:auto;">
@@ -315,7 +329,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="view" id="v-qt">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;color:var(--h);">QUOTES</div>
-    <button class="btn btn-s" onclick="openQte()">+ New Quote</button>
+    <button class="btn btn-s" data-en="+ New Quote" data-zh="+ 新建报价" onclick="openQte()">+ New Quote</button>
   </div>
   <table class="tbl" id="qt-tbl" style="display:none;">
     <thead><tr>
@@ -427,6 +441,17 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="view" id="v-cfg">
   <div style="max-width:520px;display:flex;flex-direction:column;gap:12px;">
     <div class="card">
+      <div class="ct">Language &amp; Localisation</div>
+      <div class="fld" style="margin-bottom:10px;">
+        <label>Interface Language</label>
+        <select id="cfg-lang" onchange="setLang(this.value)" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 8px;background:white;cursor:pointer;">
+          <option value="en">English (EN)</option>
+          <option value="zh">简体中文 (ZH)</option>
+        </select>
+      </div>
+      <p style="font-size:.5rem;color:var(--m);margin:0;">Switching language updates all interface labels instantly. Your data is not affected.</p>
+    </div>
+    <div class="card">
       <div class="ct">Company (Stackd)</div>
       <div class="fg fg2" style="margin-bottom:12px;">
         <div class="fld"><label>Company Name</label><input type="text" id="c-name"></div>
@@ -439,6 +464,34 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div class="fld" style="margin-bottom:12px;"><label id="lbl-cfg-bank">Bank / Payment Details (leave blank until Stackd account open)</label><textarea id="c-bank" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:70px;margin-top:3px;" placeholder="Account Name: Stackd&#10;Sort Code: xx-xx-xx&#10;Account No: xxxxxxxx"></textarea></div>
       <div class="fld" style="margin-bottom:12px;"><label id="lbl-cfg-terms">Default Invoice Terms</label><textarea id="c-terms" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:52px;margin-top:3px;"></textarea></div>
       <button class="btn btn-s" onclick="saveCfg()">Save Settings</button>
+    </div>
+    <div class="card">
+      <div class="ct">Company Branding</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="fld"><label>Company Legal Name <span style="color:var(--cr);">*</span></label><input type="text" id="co-name" placeholder="FPM International Ltd"></div>
+        <div class="fld"><label>Trading Name <span style="font-size:.44rem;color:var(--m);">(if different)</span></label><input type="text" id="co-trading" placeholder="FPM International"></div>
+        <div class="fld" style="grid-column:1/-1"><label>Company Address</label><textarea id="co-addr" rows="2" placeholder="Brighton, UK"></textarea></div>
+        <div class="fld"><label>Email</label><input type="text" id="co-email" placeholder="info@company.com"></div>
+        <div class="fld"><label>Phone</label><input type="text" id="co-phone" placeholder="+44..."></div>
+        <div class="fld"><label>Registration Number</label><input type="text" id="co-reg" placeholder="12345678"></div>
+        <div class="fld"><label>VAT Number <span style="font-size:.44rem;color:var(--m);">(optional)</span></label><input type="text" id="co-vat" placeholder="GB123456789"></div>
+        <div class="fld"><label>Document Accent Colour</label><input type="text" id="co-colour" placeholder="#B8283A" oninput="updCoPreview()"></div>
+        <div class="fld" style="grid-column:1/-1"><label>Document Footer Text <span style="font-size:.44rem;color:var(--m);">(payment terms, bank details)</span></label><textarea id="co-footer" rows="3" placeholder="Payment due within 30 days. Bank details: ..."></textarea></div>
+        <div class="fld" style="grid-column:1/-1">
+          <label>Company Logo <span style="font-size:.44rem;color:var(--m);">(PNG/JPG, max 100KB, stored as base64)</span></label>
+          <input type="file" id="co-logo-file" accept="image/png,image/jpeg" onchange="onCoLogoUpload(this)" style="font-size:.54rem;">
+          <div id="co-logo-preview" style="margin-top:6px;"></div>
+        </div>
+        <div class="fld" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="co-powered" style="width:auto;margin:0;">
+          <label for="co-powered" style="margin:0;cursor:pointer;font-size:.52rem;">Show "Powered by Stackd" in document footer</label>
+        </div>
+      </div>
+      <div style="background:#f8f8f8;padding:10px;margin-bottom:12px;" id="co-doc-preview">
+        <div style="font-size:.44rem;color:var(--m);margin-bottom:6px;letter-spacing:.08em;text-transform:uppercase;">Document Header Preview</div>
+        <div id="co-preview-inner" style="border:1px solid #e0e0e0;padding:10px;background:white;font-size:8pt;"></div>
+      </div>
+      <button class="btn btn-s" onclick="saveCoBrandSettings()">Save Branding</button>
     </div>
     <div class="card">
       <div class="ct">Google Sheets</div>
@@ -672,16 +725,12 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="ov" id="ov-inv" onclick="if(event.target===this)closeM('ov-inv')">
   <div class="modal" style="max-width:900px;">
     <div class="mh"><h2 id="inv-mt">New Invoice</h2>
-      <select id="inv-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option><option disabled>── Credit Notes ──</option><option>CN Draft</option><option>CN Issued</option><option>CN Applied</option></select>
+      <select id="inv-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
       <button class="mx" onclick="closeM('ov-inv')">&#215;</button></div>
     <div class="mb">
-      <div class="ms"><div class="mst" id="inv-sect-hdr">Invoice Details</div>
+      <div class="ms"><div class="mst">Invoice Details</div>
         <div class="fg fg4">
-          <div class="fld"><label id="lbl-inv-num">Invoice #</label><input type="text" id="if-n" placeholder="INV10032 or CN10029" oninput="onInvNumInput(this.value)"></div>
-          <div class="fld" id="fld-linked-inv" style="display:none;"><label style="color:var(--cr);">Credits Invoice #</label><input type="text" id="if-linked" placeholder="e.g. INV10029" style="border-bottom-color:var(--cr);"></div>
-          <div class="fld" id="fld-cn-reason" style="display:none;"><label style="color:var(--cr);">Credit Reason</label><input type="text" id="if-cn-reason" placeholder="e.g. Pricing correction — agreed with buyer"></div>
-          <div class="fld" id="fld-cn-amount" style="display:none;"><label style="color:var(--cr);">Credit Amount</label><input type="number" id="if-cn-amount" placeholder="0.00" step="0.01" style="border-bottom-color:var(--cr);background:rgba(184,40,58,.05);"></div>
-          <div class="fld" id="fld-cn-goodwill" style="display:none;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="if-cn-goodwill" onchange="onGoodwillChg(this.checked)" style="flex-shrink:0;"> <span style="color:var(--cr);">Goodwill credit — not linked to a specific invoice</span></label></div>
+          <div class="fld"><label>Invoice #</label><input type="text" id="if-n" placeholder="INV10032"></div>
           <div class="fld"><label>Date</label><input type="date" id="if-dt"></div>
           <div class="fld"><label>Expiry / Due Date</label><input type="date" id="if-ex"></div>
           <div class="fld"><label>Customer ID</label><input type="text" id="if-cid"></div>
@@ -760,8 +809,49 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;">
         <button class="btn btn-g" onclick="closeM('ov-inv')">Cancel</button>
-        <button class="btn btn-o" id="inv-prev-btn" onclick="prevInv()">Preview Invoice</button>
-        <button class="btn btn-s" id="inv-save-btn" onclick="saveInv()">Save Invoice</button>
+        <button class="btn btn-o" onclick="prevInv()">Preview Invoice</button>
+        <button class="btn btn-s" onclick="saveInv()">Save Invoice</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREDIT NOTE MODAL -->
+<div class="ov" id="ov-cn" onclick="if(event.target===this)closeM('ov-cn')">
+  <div class="modal" style="max-width:640px;">
+    <div class="mh">
+      <h2 id="cn-mt">New Credit Note</h2>
+      <select id="cn-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;">
+        <option>CN Draft</option><option>CN Issued</option><option>CN Applied</option>
+      </select>
+      <button class="mx" onclick="closeM('ov-cn')">&#215;</button>
+    </div>
+    <div class="mb">
+      <div class="ms"><div class="mst">Credit Note Details</div>
+        <div class="fg fg4">
+          <div class="fld"><label>Credit Note #</label><input type="text" id="cnf-n" placeholder="CN10030"></div>
+          <div class="fld"><label>Credit Note Type</label>
+            <select id="cnf-type" onchange="onCNTypeChg()">
+              <option value="credit_note">Standard Credit Note</option>
+              <option value="goodwill_credit">Goodwill Credit</option>
+            </select>
+          </div>
+          <div class="fld" id="fld-cn-linked" style="display:block;"><label style="color:var(--cr);">Linked Invoice #</label><input type="text" id="cnf-linked" placeholder="e.g. INV10029" style="border-bottom-color:var(--cr);"></div>
+          <div class="fld"><label>Issue Date</label><input type="date" id="cnf-dt"></div>
+          <div class="fld" style="grid-column:span 2"><label>Buyer / Company</label><input type="text" id="cnf-b"></div>
+          <div class="fld"><label>Currency</label>
+            <select id="cnf-cur"><option>USD</option><option>GBP</option><option>EUR</option><option>BBD</option></select>
+          </div>
+          <div class="fld"><label style="color:var(--cr);">Credit Amount</label><input type="number" id="cnf-amount" placeholder="0.00" step="0.01" style="border-bottom-color:var(--cr);background:rgba(184,40,58,.05);"></div>
+          <div class="fld" style="grid-column:1/-1"><label>Reason for Credit</label><input type="text" id="cnf-reason" placeholder="e.g. Pricing correction — agreed with buyer"></div>
+          <div class="fld" style="grid-column:1/-1"><label>Notes</label><textarea id="cnf-nt" rows="2" placeholder="Additional notes..."></textarea></div>
+        </div>
+      </div>
+      <div id="cn-verr" style="font-size:.54rem;color:var(--cr);margin-bottom:8px;min-height:16px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-g" onclick="closeM('ov-cn')">Cancel</button>
+        <button class="btn btn-o" onclick="prevCN()">Preview Credit Note</button>
+        <button class="btn btn-s" onclick="saveCN()">Save Credit Note</button>
       </div>
     </div>
   </div>
@@ -793,9 +883,20 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.9</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.10</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: EN/ZH Language Toggle — EN/ZH buttons in nav bar; nav tabs, invoice/quote labels translate to Simplified Chinese; Settings → Language &amp; Localisation card; AI assistant replies in Mandarin when ZH active</li>
+          <li>New: Invoice/CN Modal Separation — Credit Notes now have a dedicated modal (ov-cn) with CN-specific fields; Invoices tab split into INVOICES and CREDIT NOTES sections; + New Credit Note button; CN rows show type, linked invoice, and credit amount</li>
+          <li>New: Company Branding on PDFs — Settings → Company Branding card; logo upload (PNG/JPG, base64); company name, address, accent colour, footer text, VAT/reg, "Powered by Stackd" toggle; invoice and CN PDFs now use dynamic header/footer; pre-populated with FPM International Ltd on first load</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.9</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Line item dimensions — L/W/H (cm) and CBM/unit calculation on each catalogue item; DG flag on library items; dims stored on record</li>
@@ -1349,8 +1450,8 @@ function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'Stackd', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'Brighton, UK', email:'cachafpm@gmail.com', phone:'+44 7930 438631', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
-let EI = { s:null, l:null, i:null, p:null, sh:null, qt:null };
-let cIL = [], cPL = [], cQL = [];
+let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null };
+let cIL = [], cPL = [], cQL = [], cCNL = [];
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 
@@ -1373,6 +1474,48 @@ const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB
 
 const QR_DEFAULTS = { fxGBPUSD:1.27, fxGBPRMB:9.20, fxGBPBBD:2.54, lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, originCharges:250, destCharges:350, dgSurcharge:150, insRate:0.005, fpmAdmin:75 };
 var QR = (function(){ var saved = ld('st_qr'); return saved ? Object.assign({}, QR_DEFAULTS, saved) : Object.assign({}, QR_DEFAULTS); })();
+
+// ── LANGUAGE ──────────────────────────────────────────────────
+var _lang = localStorage.getItem('stackd_lang') || 'en';
+function setLang(lang) {
+  _lang = lang;
+  localStorage.setItem('stackd_lang', lang);
+  document.querySelectorAll('[data-en]').forEach(function(el) {
+    el.textContent = lang === 'zh' ? (el.getAttribute('data-zh')||el.getAttribute('data-en')) : el.getAttribute('data-en');
+  });
+  var en = document.getElementById('lt-en'), zh = document.getElementById('lt-zh');
+  if (en) { en.style.background = lang==='en' ? 'var(--cr)' : 'transparent'; en.style.color = lang==='en' ? 'white' : ''; }
+  if (zh) { zh.style.background = lang==='zh' ? 'var(--cr)' : 'transparent'; zh.style.color = lang==='zh' ? 'white' : ''; }
+  if (G('cfg-lang')) G('cfg-lang').value = lang;
+  updateAILang(lang);
+}
+function updateAILang(lang) {
+  // Called by setLang — AI chat picks up _lang when building prompts
+}
+function initLang() { setLang(_lang); }
+
+// ── COMPANY BRANDING ───────────────────────────────────────────
+function getCoBrand() {
+  return {
+    logo:    localStorage.getItem('stackd_co_logo')||'',
+    name:    localStorage.getItem('stackd_co_name')||'',
+    trading: localStorage.getItem('stackd_co_trading')||'',
+    addr:    localStorage.getItem('stackd_co_addr')||'',
+    email:   localStorage.getItem('stackd_co_email')||'',
+    phone:   localStorage.getItem('stackd_co_phone')||'',
+    reg:     localStorage.getItem('stackd_co_reg')||'',
+    vat:     localStorage.getItem('stackd_co_vat')||'',
+    colour:  localStorage.getItem('stackd_co_colour')||'#B8283A',
+    footer:  localStorage.getItem('stackd_co_footer')||'',
+    powered: localStorage.getItem('stackd_co_powered')!=='false'
+  };
+}
+function saveCoBrand(b) {
+  ['logo','name','trading','addr','email','phone','reg','vat','colour','footer'].forEach(function(k){
+    localStorage.setItem('stackd_co_'+k, b[k]||'');
+  });
+  localStorage.setItem('stackd_co_powered', b.powered?'true':'false');
+}
 
 function fmt(n, c) {
   c = c || 'USD';
@@ -2541,6 +2684,8 @@ function openInv() {
 }
 function editInv(id) {
   var inv=DB.inv.find(function(x){return x.id===id;}); if(!inv) return;
+  // Redirect CN records to the dedicated CN modal
+  if (inv.type==='credit_note'||inv.type==='goodwill_credit'||(!inv.type&&isCN(inv.num))) { openEditCN(id); return; }
   EI.i=id; cIL=JSON.parse(JSON.stringify(inv.lineItems||[]));
   G('inv-mt').textContent='Edit Invoice'; G('inv-sm').value=inv.status||'Draft';
   G('if-n').value=inv.num||''; G('if-b').value=inv.buyer||''; G('if-ba').value=inv.buyerAddr||'';
@@ -2861,10 +3006,15 @@ function autoPos(inv) {
 
 // ── INVOICES TABLE ─────────────────────────────────────────────
 function rInv() {
-  var q=(G('inv-q').value||'').toLowerCase(), sf=G('inv-sf').value;
-  var f=DB.inv.filter(function(i){ return (!q||(i.num||'').toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.dst||'').toLowerCase().includes(q)) && (!sf||i.status===sf); });
-  G('inv-em').style.display=f.length?'none':'block';
-  G('inv-tb').innerHTML=f.slice().reverse().map(function(inv){
+  var q=(G('inv-q')&&G('inv-q').value||'').toLowerCase(), sf=G('inv-sf')&&G('inv-sf').value||'';
+  // Split records: invoices vs credit notes
+  var isCnRec = function(r) { return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
+  var invRecs = DB.inv.filter(function(i){ return !isCnRec(i); });
+  var cnRecs  = DB.inv.filter(function(i){ return isCnRec(i); });
+  // Filter invoices
+  var fi=invRecs.filter(function(i){ return (!q||(i.num||'').toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.dst||'').toLowerCase().includes(q)) && (!sf||i.status===sf); });
+  var invTb = G('inv-tb'), invEm = G('inv-em');
+  if(invTb) invTb.innerHTML=fi.slice().reverse().map(function(inv){
     var c=cInv(inv), cur=inv.cur||'USD';
     var mc=c.mgn===null?'':(c.mgn>=20?'phi':c.mgn>=10?'pmi':'plo');
     var sc=(inv.status||'draft').toLowerCase().replace(/ /g,'-');
@@ -2889,6 +3039,27 @@ function rInv() {
         '<button class="ab" onclick="delInv(\'' + inv.id + '\')" title="Delete">&#10005;</button>' +
       '</td></tr>';
   }).join('');
+  if(invEm) invEm.style.display=fi.length?'none':'block';
+  // Filter CNs by search only (no status filter for CN table)
+  var fc=cnRecs.filter(function(i){ return !q||(i.num||'').toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q); });
+  var cnTb = G('cn-tb'), cnEm = G('cn-em');
+  if(cnTb) cnTb.innerHTML=fc.slice().reverse().map(function(cn){
+    var scc=cn.status==='CN Applied'?'s-paid':cn.status==='CN Issued'?'s-sent':'s-draft';
+    return '<tr>'+
+      '<td style="font-weight:500;color:var(--cr);">'+san(cn.num||'-')+'</td>'+
+      '<td>'+san(cn.buyer||'-')+'</td>'+
+      '<td>'+(cn.type==='goodwill_credit'?'<span class="tag">Goodwill</span>':'<span class="tag s-draft">Standard</span>')+'</td>'+
+      '<td style="font-size:.52rem;">'+san(cn.linkedInvNum||'—')+'</td>'+
+      '<td>'+san(cn.date||'-')+'</td>'+
+      '<td style="color:var(--cr);font-weight:600;">'+fmt(+cn.cnAmount||0, cn.cur||'USD')+'</td>'+
+      '<td><span class="tag '+scc+'">'+san(cn.status||'CN Draft')+'</span></td>'+
+      '<td style="white-space:nowrap;">'+
+        '<button class="btn btn-g" style="padding:2px 7px;font-size:.5rem;" onclick="openEditCN(\''+cn.id+'\')">&#9998;</button> '+
+        '<button class="btn btn-g" style="padding:2px 7px;font-size:.5rem;" onclick="prevInvId(\''+cn.id+'\')">&#128438;</button> '+
+        '<button class="btn btn-g" style="padding:2px 7px;font-size:.5rem;border-color:#c00;color:#c00;" onclick="delInv(\''+cn.id+'\')">&#10005;</button>'+
+      '</td></tr>';
+  }).join('');
+  if(cnEm) cnEm.style.display=fc.length?'none':'block';
 }
 async function delInv(id) {
   if(!confirm('Delete this invoice?')) return;
@@ -3014,6 +3185,37 @@ function fmtDate(d) {
   return String(d).slice(0,10);
 }
 
+// ── PDF BRANDING HELPERS ────────────────────────────────────────
+function buildPdfHeader(colour) {
+  var b = getCoBrand();
+  var c = colour || b.colour || '#B8283A';
+  var logoHtml = b.logo
+    ? '<img src="' + b.logo + '" style="max-height:60px;max-width:180px;object-fit:contain;">'
+    : '<div style="font-weight:700;font-size:14pt;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
+      + (b.trading && b.trading !== b.name ? '<div style="font-size:10pt;color:#555;">' + san(b.trading) + '</div>' : '');
+  var rightHtml = '<div style="font-weight:700;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
+    + (b.addr ? '<div style="font-size:7.5pt;color:#555;">' + san(b.addr).replace(/\n/g,'<br>') + '</div>' : '')
+    + (b.email ? '<div style="font-size:7.5pt;color:#555;">' + san(b.email) + (b.phone ? ' · ' + san(b.phone) : '') + '</div>' : '')
+    + (b.reg ? '<div style="font-size:7.5pt;color:#888;">Reg: ' + san(b.reg) + (b.vat ? ' · VAT: ' + san(b.vat) : '') + '</div>' : '');
+  return '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2px solid ' + c + ';margin-bottom:24px;">'
+    + '<div>' + logoHtml + '</div>'
+    + '<div style="text-align:right;">' + rightHtml + '</div>'
+    + '</div>';
+}
+
+function buildPdfFooter() {
+  var b = getCoBrand();
+  if (!b.footer && !b.powered) return '';
+  var left = b.footer ? '<div style="font-size:7.5pt;color:#555;">' + san(b.footer).replace(/\n/g,'<br>') + '</div>' : '';
+  var right = b.powered ? '<div style="font-size:7pt;color:#AAAAAA;text-align:right;">Powered by Stackd · getstackdops.com</div>' : '';
+  return '<div style="margin-top:24px;padding-top:10px;border-top:1px solid #e0d8d4;display:flex;justify-content:space-between;align-items:flex-start;">'
+    + '<div>' + left
+    + (b.reg ? '<div style="font-size:7pt;color:#aaa;">' + (b.reg ? 'Reg: ' + san(b.reg) : '') + (b.vat ? ' · VAT: ' + san(b.vat) : '') + '</div>' : '')
+    + '</div>'
+    + right
+    + '</div>';
+}
+
 function prevInvDoc(inv) {
   window._lastInv = inv;
   window._lastPO  = null;
@@ -3072,6 +3274,8 @@ function prevInvDoc(inv) {
 
   var invNum = inv.num || 'DRAFT';
   var docTitle = 'Invoice ' + invNum;
+  var b = getCoBrand();
+  var docColour = b.colour || '#B8283A';
 
   var html = '<!DOCTYPE html><html><head>'
     +'<meta charset="UTF-8">'
@@ -3082,7 +3286,7 @@ function prevInvDoc(inv) {
     +'body{font-family:"DM Mono",monospace;font-size:.72rem;color:#111;background:white;}'
     +'.topbar{background:#0f0c0d;padding:10px 24px;display:flex;align-items:center;gap:12px;}'
     +'.topbar-title{font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.1em;color:#8a7f82;flex:1;}'
-    +'.btn-print{font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:#B8283A;color:white;border:none;padding:8px 20px;cursor:pointer;}'
+    +'.btn-print{font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:'+docColour+';color:white;border:none;padding:8px 20px;cursor:pointer;}'
     +'.btn-close{font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid #333;color:#8a7f82;padding:8px 14px;cursor:pointer;}'
     +'.doc{padding:32px 40px;max-width:760px;margin:0 auto;}'
     +'@media print{.topbar{display:none!important;}.doc{padding:0;}}'
@@ -3094,15 +3298,10 @@ function prevInvDoc(inv) {
       +'<button class="btn-close" onclick="window.close()">Close</button>'
     +'</div>'
     +'<div class="doc">'
-      // Header
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:18px;border-bottom:2px solid #111;">'
-        +'<div>'
-          +'<div style="font-family:Bebas Neue,sans-serif;font-size:2.2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
-          +'<div style="font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:#8a7f82;margin-top:2px;">'+(AS.tag||'Source &middot; Supply &middot; Ship')+'</div>'
-          +'<div style="font-size:.6rem;color:#555;margin-top:8px;line-height:1.8;">'+(AS.addr||'')+'<br>'+(AS.email||'')+' &nbsp;&middot;&nbsp; '+(AS.phone||'')+'</div>'
-        +'</div>'
-        +'<div style="text-align:right;">'
-          +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:#B8283A;margin-bottom:8px;">INVOICE</div>'
+      // Company header from branding
+      +buildPdfHeader(docColour)
+      +'<div style="text-align:right;margin-top:-20px;margin-bottom:20px;">'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:'+docColour+';margin-bottom:8px;">INVOICE</div>'
           +'<table style="font-size:.62rem;margin-left:auto;"><tbody>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Invoice #</td><td style="text-align:right;">'+invNum+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Date</td><td style="text-align:right;">'+(fmtDate(inv.date))+'</td></tr>'
@@ -3112,7 +3311,6 @@ function prevInvDoc(inv) {
             +(inv.paymentTerms?'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Payment Terms</td><td style="text-align:right;">'+san(inv.paymentTerms)+'</td></tr>':'')
           +'</tbody></table>'
         +'</div>'
-      +'</div>'
       // Parties
       +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid #ddd;">'
         +'<div><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Customer</div>'
@@ -3140,7 +3338,7 @@ function prevInvDoc(inv) {
           +charges
           +'<div style="display:flex;justify-content:space-between;border-top:2px solid #111;padding-top:8px;margin-top:4px;">'
             +'<span style="font-family:Bebas Neue,sans-serif;font-size:.95rem;letter-spacing:.1em;">BALANCE DUE</span>'
-            +'<span style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;color:#B8283A;">'+cur+' '+fn(bal)+'</span>'
+            +'<span style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;color:'+docColour+';">'+cur+' '+fn(bal)+'</span>'
           +'</div>'
         +'</div>'
       +'</div>'
@@ -3152,6 +3350,7 @@ function prevInvDoc(inv) {
           +'<div style="line-height:1.8;color:#333;">'+bank+'</div></div>'
       +'</div>'
       +(orgRows?'<div style="display:flex;padding-top:10px;border-top:1px solid #eee;">'+orgRows+'</div>':'')
+      +buildPdfFooter()
     +'</div>'
     +'</body></html>';
 
@@ -4159,47 +4358,137 @@ async function runDataRepair() {
 // ── CREDIT NOTES ──────────────────────────────────────────────
 function isCN(num) { return num && String(num).toUpperCase().startsWith('CN'); }
 
+// Legacy — kept for backward compatibility with old invoice-modal CN flow
 function onInvNumInput(val) {
   var isCn = isCN(val);
   var fL=G('fld-linked-inv'), fR=G('fld-cn-reason'), fA=G('fld-cn-amount'), fG=G('fld-cn-goodwill');
-  var gwChecked = isCn && G('if-cn-goodwill') && G('if-cn-goodwill').checked;
-  if(fL) fL.style.display=(isCn && !gwChecked)?'block':'none';
-  if(fR) fR.style.display=isCn?'block':'none';
-  if(fA) fA.style.display=isCn?'block':'none';
-  if(fG) fG.style.display=isCn?'block':'none';
-  if(!isCn && G('if-cn-goodwill')) { G('if-cn-goodwill').checked=false; }
-  if(isCn && val.length>2 && G('if-linked') && !G('if-linked').value && !gwChecked) {
-    var sugNum='INV'+val.slice(2);
-    var linked=DB.inv.find(function(i){return i.num===sugNum;});
-    if(linked) G('if-linked').value=sugNum;
-  }
-  var t=G('inv-mt'); if(t) t.textContent=isCn?(EI.i?'Edit Credit Note':'Credit Note'):(EI.i?'Edit Invoice':'New Invoice');
-  var h=G('inv-sect-hdr'); if(h) h.textContent=isCn?'Credit Note Details':'Invoice Details';
-  var n=G('lbl-inv-num'); if(n) n.textContent=isCn?'Credit Note #':'Invoice #';
-  var sv=G('inv-save-btn'); if(sv) sv.textContent=isCn?'Save Credit Note':'Save Invoice';
-  var pv=G('inv-prev-btn'); if(pv) pv.textContent=isCn?'Preview Credit Note':'Preview Invoice';
+  if(fL) fL.style.display='none';
+  if(fR) fR.style.display='none';
+  if(fA) fA.style.display='none';
+  if(fG) fG.style.display='none';
 }
 
 function onGoodwillChg(checked) {
-  var fL=G('fld-linked-inv');
-  if(fL) fL.style.display=checked?'none':'block';
-  if(checked && G('if-linked')) G('if-linked').value='';
+  // Legacy — kept for backward compat
+}
+
+function onCNTypeChg() {
+  var t = G('cnf-type'); if(!t) return;
+  var type = t.value;
+  var lnk = G('fld-cn-linked');
+  if (lnk) lnk.style.display = type === 'goodwill_credit' ? 'none' : 'block';
+  if (G('cnf-linked') && type === 'goodwill_credit') G('cnf-linked').value = '';
+}
+
+function openNewCN() {
+  EI.cn = null; cCNL = [];
+  if(G('cn-mt')) G('cn-mt').textContent = 'New Credit Note';
+  ['cnf-n','cnf-linked','cnf-reason','cnf-nt'].forEach(function(id){ if(G(id)) G(id).value=''; });
+  if(G('cnf-amount')) G('cnf-amount').value='';
+  if(G('cnf-dt')) G('cnf-dt').value='';
+  if(G('cnf-b')) G('cnf-b').value='';
+  if(G('cnf-cur')) G('cnf-cur').value='USD';
+  if(G('cnf-type')) G('cnf-type').value='credit_note';
+  if(G('cn-sm')) G('cn-sm').value='CN Draft';
+  if(G('fld-cn-linked')) G('fld-cn-linked').style.display='block';
+  if(G('cn-verr')) G('cn-verr').textContent='';
+  if(G('ov-cn')) G('ov-cn').classList.add('on');
+  setTimeout(function(){ if(G('cnf-n')) G('cnf-n').focus(); }, 50);
 }
 
 function openCN(invId) {
-  var inv=DB.inv.find(function(i){return i.id===invId;}); if(!inv) return;
-  var cnNum='CN'+inv.num.replace(/^INV/i,'');
-  openInv();
-  setTimeout(function(){
-    G('if-n').value=cnNum; onInvNumInput(cnNum);
-    G('if-linked').value=inv.num;
-    G('if-b').value=inv.buyer;
-    G('if-ba').value=inv.buyerAddr||'';
-    G('if-dst').value=inv.dst||'';
-    G('if-cur').value=inv.cur||'USD';
-    G('inv-sm').value='CN Draft';
-    G('inv-mt').textContent='Credit Note';
-  },50);
+  // Called from the CN button on invoice rows — pre-fills linked invoice
+  var inv = DB.inv.find(function(x){ return x.id===invId; });
+  if (!inv) return;
+  openNewCN();
+  var cnNum = 'CN' + (inv.num||'').replace(/^INV/i,'');
+  if(G('cnf-n')) G('cnf-n').value = cnNum;
+  if(G('cnf-linked')) G('cnf-linked').value = inv.num||'';
+  if(G('cnf-b')) G('cnf-b').value = inv.buyer||'';
+  if(G('cnf-cur')) G('cnf-cur').value = inv.cur||'USD';
+}
+
+function openEditCN(id) {
+  var cn = DB.inv.find(function(x){ return x.id===id; });
+  if (!cn) return;
+  EI.cn = id; cCNL = [];
+  if(G('cn-mt')) G('cn-mt').textContent = 'Edit Credit Note';
+  if(G('cnf-n')) G('cnf-n').value = cn.num||'';
+  if(G('cnf-type')) G('cnf-type').value = cn.type||'credit_note';
+  if(G('cnf-linked')) G('cnf-linked').value = cn.linkedInvNum||'';
+  if(G('cnf-dt')) G('cnf-dt').value = cn.date||'';
+  if(G('cnf-b')) G('cnf-b').value = cn.buyer||'';
+  if(G('cnf-cur')) G('cnf-cur').value = cn.cur||'USD';
+  if(G('cnf-amount')) G('cnf-amount').value = Math.abs(+cn.cnAmount||0);
+  if(G('cnf-reason')) G('cnf-reason').value = cn.cnReason||cn.notes||'';
+  if(G('cnf-nt')) G('cnf-nt').value = cn.notes||'';
+  if(G('cn-sm')) G('cn-sm').value = cn.status||'CN Draft';
+  if(G('fld-cn-linked')) G('fld-cn-linked').style.display = cn.type==='goodwill_credit' ? 'none' : 'block';
+  if(G('cn-verr')) G('cn-verr').textContent='';
+  if(G('ov-cn')) G('ov-cn').classList.add('on');
+}
+
+function vCN() {
+  var num = G('cnf-n') ? G('cnf-n').value.trim() : '';
+  var amt = G('cnf-amount') ? +G('cnf-amount').value : 0;
+  var type = G('cnf-type') ? G('cnf-type').value : 'credit_note';
+  var errs = [];
+  if (!num) errs.push('Credit Note # is required');
+  if (!amt || amt <= 0) errs.push('Credit Amount must be greater than zero');
+  if (type === 'credit_note' && G('cnf-linked') && !G('cnf-linked').value.trim()) errs.push('Linked Invoice # is required for a standard credit note');
+  if (errs.length) { if(G('cn-verr')) G('cn-verr').textContent = errs.join(' · '); return false; }
+  if(G('cn-verr')) G('cn-verr').textContent = '';
+  return true;
+}
+
+async function saveCN() {
+  if (!vCN()) return;
+  var num = G('cnf-n').value.trim();
+  var hasDup = DB.inv.some(function(x){ return x.num === num && x.id !== EI.cn; });
+  if (hasDup) { if(G('cn-verr')) G('cn-verr').textContent = 'Credit Note # already exists'; return; }
+  var amt = -(Math.abs(+G('cnf-amount').value||0));
+  var type = G('cnf-type').value;
+  var cn = {
+    id: EI.cn || uid(),
+    num: num,
+    type: type,
+    buyer: G('cnf-b').value.trim(),
+    buyerAddr: '',
+    cur: G('cnf-cur').value,
+    date: G('cnf-dt').value,
+    status: G('cn-sm').value,
+    cnAmount: amt,
+    cnReason: G('cnf-reason').value.trim(),
+    linkedInvNum: type === 'goodwill_credit' ? '' : (G('cnf-linked') ? G('cnf-linked').value.trim() : ''),
+    linkedInvId: (function(){ var l = type==='goodwill_credit'?'':(G('cnf-linked')?G('cnf-linked').value.trim():''); var r=DB.inv.find(function(i){return i.num===l;}); return r?r.id:''; })(),
+    notes: G('cnf-nt').value.trim(),
+    lineItems: [],
+    taxRate: 0, lf: 0, ins: 0, dep: 0,
+    updAt: new Date().toISOString()
+  };
+  // Goodwill credit → payments ledger entry
+  if (type === 'goodwill_credit') {
+    DB.payments = DB.payments.filter(function(p){ return p.invId !== cn.id; });
+    DB.payments.push({ id: uid(), invId: cn.id, invNum: cn.num, date: cn.date||today(), amount: amt, method: 'Goodwill Credit', ref: cn.cnReason||'Goodwill credit', notes: '' });
+    sv(K.pm, DB.payments);
+  }
+  if (EI.cn) {
+    var idx = DB.inv.findIndex(function(x){ return x.id===EI.cn; });
+    if (idx > -1) DB.inv[idx] = cn; else DB.inv.push(cn);
+  } else {
+    DB.inv.push(cn);
+  }
+  sv(K.i, DB.inv); closeM('ov-cn'); rInv(); rDash();
+  audit(EI.cn?'UPDATE':'CREATE','cn',cn.id,cn); toast('Credit note saved');
+  await syncEnt('inv', cn).catch(function(){});
+}
+
+function prevCN() {
+  var num = G('cnf-n') ? G('cnf-n').value.trim() : '';
+  if (!num) { toast('Enter a Credit Note # first'); return; }
+  var type = G('cnf-type') ? G('cnf-type').value : 'credit_note';
+  var amt = G('cnf-amount') ? -(Math.abs(+G('cnf-amount').value||0)) : 0;
+  prevCNDoc({ num:num, buyer:G('cnf-b')?G('cnf-b').value:'', buyerAddr:'', cur:G('cnf-cur')?G('cnf-cur').value:'USD', date:G('cnf-dt')?G('cnf-dt').value:'', status:G('cn-sm')?G('cn-sm').value:'CN Draft', cnReason:G('cnf-reason')?G('cnf-reason').value:'', cnAmount:amt, linkedInvNum:G('cnf-linked')?G('cnf-linked').value:'', type:type });
 }
 
 function prevCNDoc(inv) {
@@ -4212,22 +4501,19 @@ function prevCNDoc(inv) {
   var docTitle=isGW?'Goodwill Credit':'Credit Note';
   var reasonLabel=isGW?'Reason for Goodwill Credit':'Reason for Credit';
   var descLine=isGW?san(inv.cnReason||'Goodwill credit'):'Credit &mdash; '+san(inv.cnReason||'As agreed');
-  var svgC='<svg width="18" height="58" viewBox="0 0 18 58" style="flex-shrink:0;margin-top:2px;"><rect x="0" y="0" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="0" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="16" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="2" width="6" height="14" fill="#7A1515"/><rect x="10" y="2" width="6" height="14" fill="#7A1515"/><rect x="7" y="0" width="4" height="18" fill="#3D0808"/><rect x="0" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="0" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="14" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="20" width="18" height="18" fill="#0A0A0A"/><rect x="0" y="20" width="18" height="2" fill="#1E1E1E"/><rect x="0" y="36" width="18" height="2" fill="#1E1E1E"/><rect x="1" y="22" width="6" height="14" fill="#141414"/><rect x="10" y="22" width="6" height="14" fill="#141414"/><rect x="7" y="20" width="4" height="18" fill="#050505"/><rect x="0" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="20" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="34" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="40" width="18" height="18" fill="#5C0E0E"/><rect x="0" y="40" width="18" height="2" fill="#8B1A1A"/><rect x="0" y="56" width="18" height="2" fill="#8B1A1A"/><rect x="1" y="42" width="6" height="14" fill="#7A1515"/><rect x="10" y="42" width="6" height="14" fill="#7A1515"/><rect x="7" y="40" width="4" height="18" fill="#3D0808"/><rect x="0" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="40" width="4" height="4" fill="#C0C0C0"/><rect x="0" y="54" width="4" height="4" fill="#C0C0C0"/><rect x="14" y="54" width="4" height="4" fill="#C0C0C0"/></svg>';
+  var b=getCoBrand();
+  var docColour=b.colour||'#B8283A';
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+docTitle+' '+san(inv.num)+'</title>'
-    +'<style>body{font-family:Arial,sans-serif;font-size:9pt;color:#0f0c0d;margin:0;padding:0;}.page{max-width:210mm;margin:0 auto;padding:16mm 14mm;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #B8283A;}.cn-badge{background:#B8283A;color:white;font-family:Arial Black,sans-serif;font-size:1.2rem;letter-spacing:.08em;padding:6px 14px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #0f0c0d;padding:4px 6px;text-align:left;}td{font-size:9pt;padding:6px;border-bottom:1px solid #f0ece8;vertical-align:top;}.num{text-align:right;}.total{font-weight:700;font-size:11pt;color:#B8283A;}@media print{body{-webkit-print-color-adjust:exact;}}</style>'
-    +'</head><body><div class="page"><div class="hdr">'
-    +'<div style="display:flex;gap:14px;align-items:flex-start;">'+svgC
-    +'<div><div style="font-family:Bebas Neue,sans-serif;font-size:2rem;letter-spacing:.18em;line-height:1;"><span style="color:#B8283A;">S</span>TACKD</div>'
-    +'<div style="font-size:.42rem;color:#8a7f82;display:flex;justify-content:space-between;margin-top:3px;"><span>SOURCE</span><span>&middot;</span><span>SUPPLY</span><span>&middot;</span><span>SHIP</span></div>'
-    +'<div style="font-size:7.5pt;color:#8a7f82;margin-top:4px;">'+san(AS.addr||'Brighton, UK')+'</div>'
-    +'<div style="font-size:7.5pt;color:#8a7f82;">'+san(AS.email||'cachafpm@gmail.com')+' &middot; '+san(AS.phone||'')+'</div></div></div>'
-    +'<div style="text-align:right;"><div class="cn-badge">'+badgeLabel+'</div>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:9pt;color:#0f0c0d;margin:0;padding:0;}.page{max-width:210mm;margin:0 auto;padding:16mm 14mm;}.cn-badge{background:'+docColour+';color:white;font-family:Arial Black,sans-serif;font-size:1.2rem;letter-spacing:.08em;padding:6px 14px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #0f0c0d;padding:4px 6px;text-align:left;}td{font-size:9pt;padding:6px;border-bottom:1px solid #f0ece8;vertical-align:top;}.num{text-align:right;}.total{font-weight:700;font-size:11pt;color:'+docColour+';}@media print{body{-webkit-print-color-adjust:exact;}}</style>'
+    +'</head><body><div class="page">'
+    +buildPdfHeader(docColour)
+    +'<div style="text-align:right;margin-bottom:16px;"><div class="cn-badge">'+badgeLabel+'</div>'
     +'<table style="margin-top:8px;width:auto;margin-left:auto;font-size:8pt;">'
     +'<tr><td style="color:#8a7f82;padding-right:16px;">CN #</td><td style="text-align:right;font-weight:700;">'+san(inv.num)+'</td></tr>'
     +'<tr><td style="color:#8a7f82;">Date</td><td style="text-align:right;">'+fmtDate(inv.date)+'</td></tr>'
-    +(isGW?'':('<tr><td style="color:#8a7f82;">Against Invoice</td><td style="text-align:right;color:#B8283A;font-weight:700;">'+san(inv.linkedInvNum||'-')+'</td></tr>'))
+    +(isGW?'':('<tr><td style="color:#8a7f82;">Against Invoice</td><td style="text-align:right;color:'+docColour+';font-weight:700;">'+san(inv.linkedInvNum||'-')+'</td></tr>'))
     +'<tr><td style="color:#8a7f82;">Currency</td><td style="text-align:right;">'+san(cur)+'</td></tr>'
-    +'</table></div></div>'
+    +'</table></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px;">'
     +'<div><div style="font-size:7pt;color:#8a7f82;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #e0d8d4;padding-bottom:3px;margin-bottom:6px;">To</div>'
     +'<div style="font-weight:700;">'+san(inv.buyer||'-')+'</div>'
@@ -4237,7 +4523,7 @@ function prevCNDoc(inv) {
     +((!isGW&&linked)?'<div style="font-size:7.5pt;color:#8a7f82;margin-top:6px;">Original invoice: '+san(linked.num)+' dated '+fmtDate(linked.date)+'</div>':'')
     +'</div></div>'
     +'<table><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>'
-    +'<tr><td>'+descLine+'</td><td class="num" style="color:#B8283A;">'+fmt(creditAmt,cur)+'</td></tr>'
+    +'<tr><td>'+descLine+'</td><td class="num" style="color:'+docColour+';">'+fmt(creditAmt,cur)+'</td></tr>'
     +'</tbody></table>'
     +'<div style="display:flex;justify-content:flex-end;margin-top:8px;">'
     +'<table style="width:240px;"><tr><td style="font-size:9pt;font-weight:700;">Total Credit</td><td class="num total">'+fmt(creditAmt,cur)+'</td></tr>'
@@ -4247,6 +4533,7 @@ function prevCNDoc(inv) {
     +'<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e0d8d4;display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:8pt;">'
     +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Payment / Refund Details</div><div>'+bank+'</div></div>'
     +'<div><div style="color:#8a7f82;text-transform:uppercase;letter-spacing:.08em;font-size:6.5pt;margin-bottom:4px;">Notes</div><div>'+san(inv.notes||'')+'</div></div></div>'
+    +buildPdfFooter()
     +'</div></body></html>';
   var blob = new Blob([html], {type:'text/html'});
   var url = URL.createObjectURL(blob);
@@ -4257,7 +4544,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.9).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.10).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -4355,12 +4642,13 @@ var AI_SYSTEM_PROMPT = [
   'All forms validate on submit and on blur (when you leave a field). Required fields are enforced — the form cannot save with missing required data. Errors show inline in red below the relevant field with a specific message. Valid fields show a green border after interaction. Duplicate reference numbers are blocked across all entities.',
   '',
   '## Credit Notes',
-  'Invoices tab → click CN on the invoice to credit. Pre-fills CN number, linked invoice, buyer, currency. Fill Credit Reason and Credit Amount (enter a positive number — the system stores and displays it as negative) → Save.',
+  'Invoices tab → CREDIT NOTES section → + New Credit Note (or click CN on an invoice row to raise a CN pre-linked to that invoice). The Credit Note modal has its own dedicated form separate from the invoice modal.',
+  'Fields: CN #, Credit Note Type (Standard / Goodwill), Linked Invoice # (required for Standard), Issue Date, Buyer, Currency, Credit Amount (enter a positive number — stored and displayed as negative), Reason for Credit, Notes.',
   'Change status to CN Applied to reduce the linked invoice\'s outstanding balance. Multiple credit notes on the same invoice are all deducted.',
   'Credit amounts display as negative values (e.g. -$450) on the PDF and in the invoice list.',
   '',
   '## Goodwill Credit',
-  'A goodwill credit is a credit not linked to a specific invoice. To raise one: Invoices → + New Invoice, type a CN prefix (e.g. CN10099), tick "Goodwill credit — not linked to a specific invoice", fill Buyer, Credit Amount, Reason, Date → Save.',
+  'A goodwill credit is a credit not linked to a specific invoice. Invoices tab → + New Credit Note → set Credit Note Type to "Goodwill Credit". The Linked Invoice field hides. Fill Buyer, Credit Amount, Reason, Date → Save.',
   'A goodwill credit creates a negative entry in the payments ledger (method: Goodwill Credit) and reduces the Net Cash Position KPI on the dashboard.',
   'The PDF is labelled GOODWILL CREDIT with the reason stated. No "Against Invoice" reference appears.',
   '',
@@ -4413,11 +4701,14 @@ var AI_SYSTEM_PROMPT = [
   '- Credit note not reducing balance → CN status must be CN Applied. Also check that the linked invoice number in the CN matches the invoice number exactly (case-insensitive).',
   '',
   '## Settings',
+  'Language & Localisation card: switch interface between English (EN) and Simplified Chinese (ZH). Nav tabs and key labels update instantly. AI assistant replies in Mandarin when ZH is active.',
   'Company card: Name, Tagline, Address, Email, Phone, Website, Bank/Payment Details (printed on invoices), Default Invoice Terms.',
+  'Company Branding card: logo (PNG/JPG, stored as base64), company legal name, trading name, address, email, phone, registration number, VAT number, document accent colour, footer text, "Powered by Stackd" toggle. These fields populate all invoice and CN PDF headers/footers. Pre-populated with FPM International Ltd on first load.',
   'Rates & FX card: all freight rate parameters and FX rates for quote engine.',
   'Accounting Export card: field mapping reference for Xero, QuickBooks, and FreeAgent.',
   'Reference Data card: browse all controlled lookup tables. Add custom ports.',
   'Google Sheets card: Apps Script URL, Secret Token.',
+  'Integrations card: Forwarder webhook URL for Power Automate / Make.',
   'Data: Export CSV, Backup All JSON, Restore from JSON, ⚙ Repair invoice totals, Clear local data.',
   'AI Assistant: Claude API Key (stored locally in browser only).'
 ].join('\n');
@@ -4504,7 +4795,8 @@ async function sendAIMsg() {
           var tabNames = {dash:'Dashboard',sup:'Suppliers',li:'Line Items',inv:'Invoices',po:'Purchase Orders',sh:'Shipments',import:'Import Data',cfg:'Settings'};
           var tab = window.currentTab || 'dash';
           var ctx = 'The user is currently on the ' + (tabNames[tab]||tab) + ' tab of Stackd Ops.\n\n';
-          return ctx + AI_SYSTEM_PROMPT;
+          var langPrefix = _lang === 'zh' ? '请用中文回答所有问题。使用正式的商业用语和国际贸易术语。\n\n' : '';
+          return langPrefix + ctx + AI_SYSTEM_PROMPT;
         })(),
         messages: _aiHistory
       })
@@ -4555,8 +4847,75 @@ function rCfg() {
   if(G('cfg-ai-key')) G('cfg-ai-key').value=AI.key||'';
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
   if(G('cfg-fwd-webhook')) G('cfg-fwd-webhook').value=SS.fwdWebhook||'';
+  if(G('cfg-lang')) G('cfg-lang').value = _lang;
+  rCoBrand();
   qteFillRates();
   rRefData('countries');
+}
+
+function rCoBrand() {
+  var b = getCoBrand();
+  if(G('co-name')) G('co-name').value = b.name;
+  if(G('co-trading')) G('co-trading').value = b.trading;
+  if(G('co-addr')) G('co-addr').value = b.addr;
+  if(G('co-email')) G('co-email').value = b.email;
+  if(G('co-phone')) G('co-phone').value = b.phone;
+  if(G('co-reg')) G('co-reg').value = b.reg;
+  if(G('co-vat')) G('co-vat').value = b.vat;
+  if(G('co-colour')) G('co-colour').value = b.colour;
+  if(G('co-footer')) G('co-footer').value = b.footer;
+  if(G('co-powered')) G('co-powered').checked = b.powered;
+  if(b.logo && G('co-logo-preview')) G('co-logo-preview').innerHTML = '<img src="' + b.logo + '" style="max-height:50px;max-width:160px;object-fit:contain;">';
+  updCoPreview();
+}
+
+function updCoPreview() {
+  var el = G('co-preview-inner'); if (!el) return;
+  var b = getCoBrand();
+  var colour = (G('co-colour') ? G('co-colour').value.trim() : '') || b.colour || '#B8283A';
+  var name = (G('co-name') ? G('co-name').value.trim() : '') || b.name || 'Your Company';
+  var trading = G('co-trading') ? G('co-trading').value.trim() : '';
+  var logo = b.logo;
+  var left = logo
+    ? '<img src="' + logo + '" style="max-height:40px;max-width:120px;object-fit:contain;">'
+    : '<div style="font-weight:700;font-size:11pt;">' + san(name) + '</div>' + (trading && trading !== name ? '<div style="font-size:8pt;color:#888;">' + san(trading) + '</div>' : '');
+  el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:2px solid ' + colour + ';">'
+    + '<div>' + left + '</div>'
+    + '<div style="text-align:right;font-size:7.5pt;color:#555;">'
+    + '<div style="font-weight:700;">' + san(name) + '</div>'
+    + '</div></div>';
+}
+
+function onCoLogoUpload(input) {
+  var file = input.files[0]; if (!file) return;
+  if (file.size > 102400) { toast('Logo exceeds 100KB — compress before uploading for best results'); }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    localStorage.setItem('stackd_co_logo', e.target.result);
+    var prev = G('co-logo-preview');
+    if (prev) prev.innerHTML = '<img src="' + e.target.result + '" style="max-height:50px;max-width:160px;object-fit:contain;">';
+    updCoPreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveCoBrandSettings() {
+  var colour = G('co-colour') ? G('co-colour').value.trim() : '';
+  if (colour && !/^#[0-9a-fA-F]{6}$/.test(colour)) { toast('Invalid hex colour — using default #B8283A'); colour = '#B8283A'; }
+  saveCoBrand({
+    logo: localStorage.getItem('stackd_co_logo')||'',
+    name: G('co-name') ? G('co-name').value.trim() : '',
+    trading: G('co-trading') ? G('co-trading').value.trim() : '',
+    addr: G('co-addr') ? G('co-addr').value.trim() : '',
+    email: G('co-email') ? G('co-email').value.trim() : '',
+    phone: G('co-phone') ? G('co-phone').value.trim() : '',
+    reg: G('co-reg') ? G('co-reg').value.trim() : '',
+    vat: G('co-vat') ? G('co-vat').value.trim() : '',
+    colour: colour || '#B8283A',
+    footer: G('co-footer') ? G('co-footer').value.trim() : '',
+    powered: G('co-powered') ? G('co-powered').checked : true
+  });
+  toast('Branding saved'); updCoPreview();
 }
 function saveCfg() {
   AS={name:G('c-name').value,tag:G('c-tag').value,addr:G('c-addr').value,email:G('c-email').value,phone:G('c-phone').value,web:G('c-web').value,bank:G('c-bank').value,terms:G('c-terms').value};
@@ -6171,6 +6530,22 @@ function repairCalcFields() {
 
 function initApp() {
   try {
+    // Pre-populate company branding on first load
+    if (!localStorage.getItem('stackd_co_name')) {
+      localStorage.setItem('stackd_co_name', 'FPM International Ltd');
+      localStorage.setItem('stackd_co_trading', 'FPM International');
+      localStorage.setItem('stackd_co_colour', '#B8283A');
+    }
+    // Data integrity check
+    (function() {
+      var warn = [];
+      DB.inv.forEach(function(r) {
+        var isCnRecord = r.type === 'credit_note' || r.type === 'goodwill_credit' || (!r.type && isCN(r.num));
+        if (!isCnRecord && r.cnAmount) warn.push(r.num + ': invoice record has cnAmount field');
+        if (isCnRecord && r.lineItems && r.lineItems.length > 0 && r.lineItems.some(function(li){ return li.up > 0; })) warn.push(r.num + ': CN record has priced line items');
+      });
+      if (warn.length) console.warn('[Stackd] Data integrity warnings:', warn);
+    })();
     wireTips();
     wireBlurValidation();
     populateRefDataLists();
@@ -6186,6 +6561,7 @@ function initApp() {
     checkOnboarding();
     window.currentTab = 'dash';
     updateAIChips('dash');
+    initLang();
   } catch(e) {
     console.error('initApp failed:', e);
     toast('Failed to initialise — check console (F12) for details', 5000);
