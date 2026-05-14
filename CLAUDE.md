@@ -1,3 +1,5 @@
+For full project context including business strategy, FPM data, and programme roadmap, read STACKD_CONTEXT.md in this repo root.
+
 # Stackd Ops — Claude Code Context
 
 ## What this project is
