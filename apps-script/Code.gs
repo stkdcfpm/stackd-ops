@@ -33,6 +33,7 @@ function doPost(e) {
     if (action === 'import_from_master')          return jsonResp(handleImportFromMaster(payload));
     if (action === 'update_requirements_tracker') return jsonResp(handleUpdateRequirementsTracker(payload));
     if (action === 'update_project_tracker')      return jsonResp(handleUpdateProjectTracker(payload));
+    if (action === 'update_shipment')             return jsonResp(handleUpdateShipment(payload));
 
     return jsonResp({ status: 'error', message: 'Unknown action: ' + action });
   } catch (err) {
@@ -211,6 +212,58 @@ function handleTrackerUpdate(payload, sheetId, sheetName) {
   var result = { success: true, updated: updated };
   if (errors.length) result.errors = errors;
   return result;
+}
+
+// ── update_shipment ─────────────────────────────────────────────
+// Payload: { shipmentRef, blNum, vessel, carrier, containerNum, containerType,
+//            etd, eta, dg, docsStatus, status, notes }
+// Finds row in Shipments sheet by ref, updates only provided fields.
+function handleUpdateShipment(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Shipments');
+  if (!sheet) return { success: false, error: 'Shipments sheet not found' };
+
+  if (!payload.shipmentRef) return { success: false, error: 'shipmentRef is required' };
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { success: false, error: 'Shipment not found' };
+
+  var headers = data[0].map(String);
+  var refCol  = headers.indexOf('ref');
+  if (refCol === -1) return { success: false, error: 'Shipments sheet missing ref column' };
+
+  var rowIdx = -1;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][refCol]) === String(payload.shipmentRef)) { rowIdx = i; break; }
+  }
+  if (rowIdx === -1) return { success: false, error: 'Shipment not found' };
+
+  // Map payload fields to sheet column names
+  var FIELD_MAP = {
+    blNum:         'blNum',
+    vessel:        'vessel',
+    carrier:       'carrier',
+    containerNum:  'containerNum',
+    containerType: 'containerType',
+    etd:           'etd',
+    eta:           'eta',
+    dg:            'dg',
+    docsStatus:    'docsStatus',
+    status:        'status',
+    notes:         'notes'
+  };
+
+  Object.keys(FIELD_MAP).forEach(function(payloadKey) {
+    if (payload[payloadKey] === undefined) return;
+    var colName = FIELD_MAP[payloadKey];
+    var colIdx  = headers.indexOf(colName);
+    if (colIdx === -1) return; // column absent in sheet — skip silently
+    var val = payload[payloadKey];
+    if (val !== null && val !== undefined && typeof val === 'object') val = JSON.stringify(val);
+    sheet.getRange(rowIdx + 1, colIdx + 1).setValue(val);
+  });
+
+  return { success: true, updated: payload.shipmentRef };
 }
 
 // ── helpers ──────────────────────────────────────────────────────
