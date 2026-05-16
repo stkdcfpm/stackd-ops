@@ -3045,6 +3045,8 @@ function rInv() {
     var c=iCalc(inv), cur=inv.cur||'USD';
     var mc=c.mgn===null||isNaN(c.mgn)?'':(c.mgn>=20?'phi':c.mgn>=10?'pmi':'plo');
     var sc=(inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    // Balance Due: calc_balanceDue is source of truth; live iCalc().bal only if absent
+    var balDue = (inv.calc_balanceDue !== undefined && inv.calc_balanceDue !== '') ? parseFloat(inv.calc_balanceDue) : c.bal;
     return '<tr>' +
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td><td>' + (san(inv.dst)||'-') + '</td>' +
@@ -3057,7 +3059,7 @@ function rInv() {
       '<td class="num"><span class="pill ' + mc + '">' + fp(c.mgn) + '</span></td>' +
       '<td class="num" style="font-size:.54rem;color:var(--m);">' + ((+c.taxRate||0)*100).toFixed(1) + '%</td>' +
       '<td class="num" style="color:var(--cr);">' + (c.dep?fmt(c.dep,cur):'-') + '</td>' +
-      '<td class="num" style="color:var(--bl);">' + fmt(c.bal,cur) + '</td>' +
+      '<td class="num" style="color:var(--bl);">' + fmt(balDue,cur) + '</td>' +
       '<td style="white-space:nowrap;">' +
         '<button class="ab" onclick="editInv(\'' + inv.id + '\')" title="Edit">&#9998;</button>' +
         '<button class="ab" onclick="openPayments(\'' + inv.id + '\',\'' + inv.num + '\')" title="Payments" style="color:var(--gn);">$</button>' +
@@ -3252,12 +3254,14 @@ function prevInvDoc(inv) {
   var liT = lis.reduce(function(s,li){ return s+(+li.qty||0)*(+li.up||0); },0);
   var tx = +inv.taxRate||0, tax=liT*tx;
   var lf=+inv.lf||0, ins=+inv.ins||0, leg=+inv.leg||0, isp=+inv.isp||0, oth=+inv.oth||0;
-  var grand=liT+tax+lf+ins+leg+isp+oth, dep=+inv.dep||0, bal=grand-dep;
+  var grand=liT+tax+lf+ins+leg+isp+oth, dep=+inv.dep||0;
   if (inv.calc_grandTotal && +inv.calc_grandTotal > 0) {
     grand=+inv.calc_grandTotal;
     liT=+inv.calc_liTotal||liT; tax=+inv.calc_taxAmt||0;
-    dep=+inv.dep||0; bal=grand-dep;
+    dep=+inv.dep||0;
   }
+  // calc_balanceDue is source of truth; fall back to live grand-dep only if absent
+  var bal = (inv.calc_balanceDue !== undefined && inv.calc_balanceDue !== '') ? parseFloat(inv.calc_balanceDue) : iCalc(inv).bal;
   var bank = AS.bank ? AS.bank.replace(/\n/g,'<br>') : '<em>Bank details pending &mdash; contact '+AS.email+'</em>';
 
   var liRows = lis.map(function(li,i){
@@ -4505,7 +4509,7 @@ async function saveCN() {
     DB.inv.push(cn);
   }
   // When a CN is Applied and linked to an invoice, recalculate that invoice's balance due
-  if (cn.status === 'Applied' && cn.linkedInvNum) {
+  if (cn.status === 'CN Applied' && cn.linkedInvNum) {
     var linkedInv = DB.inv.find(function(x){ return (x.num||x.invNum) === cn.linkedInvNum; });
     if (linkedInv) {
       var totalCredits = DB.inv
