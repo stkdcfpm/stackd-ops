@@ -1987,14 +1987,26 @@ function populateRefDataLists() {
 async function sPost(payload) {
   if (!SS.url) throw new Error('No URL configured');
   if (SS.token) payload._token = SS.token;
-  var r = await fetch(SS.url, { method:'POST', body: JSON.stringify(payload) });
-  return JSON.parse(await r.text());
+  var r = await fetch(SS.url, {
+    method: 'POST',
+    redirect: 'follow',
+    body: JSON.stringify(payload)
+  });
+  var text = await r.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('Script returned HTML instead of JSON — check deployment settings'); }
 }
 async function sGet(entity) {
   var payload = { action: 'pull_entity', entity: entity };
   if (SS.token) payload._token = SS.token;
-  var r = await fetch(SS.url, { method: 'POST', body: JSON.stringify(payload) });
-  return JSON.parse(await r.text());
+  var r = await fetch(SS.url, {
+    method: 'POST',
+    redirect: 'follow',
+    body: JSON.stringify(payload)
+  });
+  var text = await r.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('Script returned HTML instead of JSON — check deployment settings'); }
 }
 async function syncEnt(entity, rec) {
   if (!SS.url || !SS.auto) return;
