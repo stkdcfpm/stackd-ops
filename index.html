@@ -626,6 +626,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <tr><td>Reference</td><td>payment.reference</td><td>—</td></tr>
       </tbody></table>
     </div>
+    <div class="card">
+      <div class="ct">Advanced</div>
+      <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Owner-only overrides. Actions here are logged to the audit trail.</p>
+      <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">Unlock Invoice for Correction</div>
+      <p style="font-size:.54rem;color:var(--m);margin-bottom:10px;line-height:1.7;">Invoices with status Sent, Partially Paid, Paid, or Cancelled are locked for HMRC compliance. Use this override only to correct a data entry error. The adjustment reason is logged permanently.</p>
+      <div class="fg fg2" style="margin-bottom:8px;">
+        <div class="fld"><label>Invoice #</label><input type="text" id="adv-unlock-num" placeholder="INV10030" autocomplete="off"></div>
+        <div class="fld"><label>Reason for unlock</label><input type="text" id="adv-unlock-reason" placeholder="Data entry error — wrong line item price" autocomplete="off"></div>
+      </div>
+      <div class="fld" style="margin-bottom:10px;"><label>Type CONFIRM to proceed</label><input type="text" id="adv-unlock-confirm" placeholder="CONFIRM" autocomplete="off" style="max-width:180px;"></div>
+      <button class="btn btn-s" style="background:var(--gold);color:#000;border-color:var(--gold);" onclick="unlockInv()">Unlock Invoice</button>
+      <div id="adv-unlock-status" style="font-size:.54rem;color:var(--m);margin-top:8px;min-height:16px;"></div>
+    </div>
   </div>
 </div>
 
@@ -1454,6 +1467,17 @@ let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null };
 let cIL = [], cPL = [], cQL = [], cCNL = [];
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
+
+// ── INVOICE STATUS LOCKING ──────────────────────────────────────
+var LOCKED_STATUSES = ['Sent', 'Partially Paid', 'Paid', 'Cancelled'];
+var STATUS_ORDER    = ['Draft', 'Pro-forma', 'Sent', 'Partially Paid', 'Paid', 'Cancelled'];
+var _unlockedInvIds = {}; // in-memory override set — cleared on page reload
+
+function canTransitionStatus(from, to) {
+  // Cancelled is a terminal state reachable from any status
+  if (to === 'Cancelled') return true;
+  return STATUS_ORDER.indexOf(to) > STATUS_ORDER.indexOf(from);
+}
 
 // ── UTILS ──────────────────────────────────────────────────────
 const G = id => document.getElementById(id);
@@ -2709,10 +2733,49 @@ function openInv() {
   ['fld-linked-inv','fld-cn-reason','fld-cn-amount','fld-cn-goodwill'].forEach(function(f){var e=G(f);if(e)e.style.display='none';});
   rILT(); calcInv(); G('ov-inv').classList.add('on'); setTimeout(function(){G('if-n').focus();},50);
 }
+function showInvReadOnly(inv) {
+  var c = iCalc(inv), cur = inv.cur||'USD';
+  var balDue = (inv.calc_balanceDue !== undefined && inv.calc_balanceDue !== '') ? parseFloat(inv.calc_balanceDue) : c.bal;
+  var r = function(label, val) {
+    return val ? '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--ln);font-size:.6rem;"><span style="color:var(--m);width:140px;flex-shrink:0;">'+label+'</span><span>'+san(String(val))+'</span></div>' : '';
+  };
+  // Ensure overlay exists
+  if (!G('ov-inv-ro')) {
+    var el = document.createElement('div');
+    el.id = 'ov-inv-ro'; el.className = 'ov';
+    el.onclick = function(e){ if(e.target===el) closeM('ov-inv-ro'); };
+    document.body.appendChild(el);
+  }
+  G('ov-inv-ro').innerHTML =
+    '<div class="modal" style="max-width:640px;">' +
+    '<div class="mh"><h2>Invoice '+san(inv.num||'')+'</h2><button class="mx" onclick="closeM(\'ov-inv-ro\')">&#215;</button></div>' +
+    '<div class="mb">' +
+    '<div style="background:#1a1018;border-left:3px solid var(--gold);padding:10px 14px;margin-bottom:16px;font-size:.58rem;line-height:1.7;">' +
+    '&#128274; <strong>This invoice is locked — status: '+san(inv.status||'')+'</strong><br>' +
+    'Issued invoices cannot be edited under HMRC record-keeping requirements.<br>' +
+    'To make an adjustment, raise a Credit Note.' +
+    '</div>' +
+    r('Invoice #', inv.num) + r('Buyer', inv.buyer) + r('Destination', inv.dst) +
+    r('Date', inv.date) + r('Status', inv.status) + r('Currency', cur) +
+    r('Grand Total', fmt(c.grand, cur)) + r('Deposit Received', inv.dep ? fmt(+inv.dep, cur) : null) +
+    r('Balance Due', fmt(balDue, cur)) +
+    r('Incoterm', inv.incoterm) + r('Payment Terms', inv.paymentTerms) +
+    r('Freight Type', inv.ft) + r('Port of Loading', inv.pol) + r('Port of Discharge', inv.pod) +
+    r('Country of Origin', inv.coo) + r('Notes', inv.terms) +
+    '<div style="display:flex;gap:8px;margin-top:16px;">' +
+    '<button class="btn btn-s" onclick="closeM(\'ov-inv-ro\');openCN(\''+inv.id+'\')">Raise Credit Note</button>' +
+    '<button class="btn btn-g" onclick="closeM(\'ov-inv-ro\')">Close</button>' +
+    '</div>' +
+    '</div></div>';
+  G('ov-inv-ro').classList.add('on');
+}
+
 function editInv(id) {
   var inv=DB.inv.find(function(x){return x.id===id;}); if(!inv) return;
   // Redirect CN records to the dedicated CN modal
   if (inv.type==='credit_note'||inv.type==='goodwill_credit'||(!inv.type&&isCN(inv.num))) { openEditCN(id); return; }
+  // Lock check — redirect locked invoices to read-only view unless unlocked via override
+  if (LOCKED_STATUSES.indexOf(inv.status) !== -1 && !_unlockedInvIds[id]) { showInvReadOnly(inv); return; }
   EI.i=id; cIL=JSON.parse(JSON.stringify(inv.lineItems||[]));
   G('inv-mt').textContent='Edit Invoice'; G('inv-sm').value=inv.status||'Draft';
   G('if-n').value=inv.num||''; G('if-b').value=inv.buyer||''; G('if-ba').value=inv.buyerAddr||'';
@@ -2916,6 +2979,13 @@ async function saveInv() {
     cnAmount:G('if-cn-amount')?-(Math.abs(+G('if-cn-amount').value||0)):0,
     updAt:new Date().toISOString()
   };
+  // Status transition guard — only applies when both statuses are known workflow values
+  if (EI.i && !_unlockedInvIds[EI.i] && STATUS_ORDER.indexOf(inv.status) !== -1) {
+    var _existing = DB.inv.find(function(x){ return x.id===EI.i; });
+    if (_existing && _existing.status !== inv.status && !canTransitionStatus(_existing.status||'Draft', inv.status)) {
+      toast('⚠ Status cannot move backward: ' + (_existing.status||'Draft') + ' → ' + inv.status); return;
+    }
+  }
   // Preserve calc_ fields and lineItems from existing record when no live line items
   if(EI.i){
     var idx=DB.inv.findIndex(function(x){return x.id===EI.i;});
@@ -2990,6 +3060,7 @@ async function saveInv() {
   }
 
   sv(K.i,DB.inv); closeM('ov-inv'); rInv(); rDash();
+  if (EI.i && _unlockedInvIds[EI.i]) delete _unlockedInvIds[EI.i]; // consume override after save
   audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv); toast('Invoice saved'); renderOnboarding();
   await syncEnt('inv',inv);
   if(!EI.i) autoPos(inv);
@@ -3061,7 +3132,9 @@ function rInv() {
       '<td class="num" style="color:var(--cr);">' + (c.dep?fmt(c.dep,cur):'-') + '</td>' +
       '<td class="num" style="color:var(--bl);">' + fmt(balDue,cur) + '</td>' +
       '<td style="white-space:nowrap;">' +
-        '<button class="ab" onclick="editInv(\'' + inv.id + '\')" title="Edit">&#9998;</button>' +
+        (LOCKED_STATUSES.indexOf(inv.status) !== -1
+          ? '<button class="ab" onclick="editInv(\'' + inv.id + '\')" title="Locked — view only" style="color:var(--gold);">&#128274;</button>'
+          : '<button class="ab" onclick="editInv(\'' + inv.id + '\')" title="Edit">&#9998;</button>') +
         '<button class="ab" onclick="openPayments(\'' + inv.id + '\',\'' + inv.num + '\')" title="Payments" style="color:var(--gn);">$</button>' +
         '<button class="ab" onclick="prevInvId(\'' + inv.id + '\')" title="Preview Invoice" style="color:var(--gn);font-size:.52rem;border:1px solid var(--gn);padding:2px 6px;border-radius:2px;">&#128065; PDF</button>' +
         '<button class="ab" onclick="openCN(\'' + inv.id + '\')" title="Raise CN" style="color:var(--cr);font-size:.5rem;font-weight:600;">CN</button>' +
@@ -3260,8 +3333,8 @@ function prevInvDoc(inv) {
     liT=+inv.calc_liTotal||liT; tax=+inv.calc_taxAmt||0;
     dep=+inv.dep||0;
   }
-  // calc_balanceDue is source of truth; fall back to live grand-dep only if absent
-  var bal = (inv.calc_balanceDue !== undefined && inv.calc_balanceDue !== '') ? parseFloat(inv.calc_balanceDue) : iCalc(inv).bal;
+  // PDF shows Grand Total − Deposit Received only. CN deductions appear on the CN document.
+  var bal = grand - dep;
   var bank = AS.bank ? AS.bank.replace(/\n/g,'<br>') : '<em>Bank details pending &mdash; contact '+AS.email+'</em>';
 
   var liRows = lis.map(function(li,i){
@@ -5607,6 +5680,26 @@ async function sendFwdReq() {
 function saveFwdWebhook() {
   SS.fwdWebhook = G('cfg-fwd-webhook') ? G('cfg-fwd-webhook').value.trim() : '';
   sv(K.ss, SS); toast('Webhook saved');
+}
+
+function unlockInv() {
+  var st = G('adv-unlock-status');
+  var numEl = G('adv-unlock-num'), reasonEl = G('adv-unlock-reason'), confirmEl = G('adv-unlock-confirm');
+  var num = numEl ? numEl.value.trim() : '';
+  var reason = reasonEl ? reasonEl.value.trim() : '';
+  var confirm = confirmEl ? confirmEl.value.trim() : '';
+  if (!num) { st.textContent = 'Invoice # is required.'; st.style.color = 'var(--cr)'; return; }
+  if (!reason) { st.textContent = 'Reason is required.'; st.style.color = 'var(--cr)'; return; }
+  if (confirm !== 'CONFIRM') { st.textContent = 'Type CONFIRM exactly to proceed.'; st.style.color = 'var(--cr)'; return; }
+  var inv = DB.inv.find(function(x){ return (x.num||x.invNum||'').toUpperCase() === num.toUpperCase(); });
+  if (!inv) { st.textContent = 'Invoice not found: ' + num; st.style.color = 'var(--cr)'; return; }
+  if (LOCKED_STATUSES.indexOf(inv.status) === -1) { st.textContent = inv.num + ' is not locked (status: ' + inv.status + ').'; st.style.color = 'var(--m)'; return; }
+  _unlockedInvIds[inv.id] = true;
+  audit('UNLOCK', 'invoice', inv.id, { num: inv.num, status: inv.status, reason: reason });
+  st.textContent = inv.num + ' unlocked for editing. This session only — lock re-engages on page reload.';
+  st.style.color = 'var(--gn)';
+  if (numEl) numEl.value = ''; if (reasonEl) reasonEl.value = ''; if (confirmEl) confirmEl.value = '';
+  toast('Invoice ' + inv.num + ' unlocked — edit via Invoices tab');
 }
 
 // ── ONBOARDING ─────────────────────────────────────────────────
