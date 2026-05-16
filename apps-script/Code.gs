@@ -1,146 +1,153 @@
 // Stackd Ops — Google Apps Script webhook
-// Deployed as a Web App (Execute as: Me, Access: Anyone with the link + token)
-// Paste the deployment URL into Stackd Ops → Settings → Google Sheets
+// Deploy as Web App: Execute as Me, Access: Anyone with the link
+// Paste deployment URL into Stackd Ops → Settings → Google Sheets
 
-var SYNC_TOKEN = PropertiesService.getScriptProperties().getProperty('SYNC_TOKEN') || '';
+var SPREADSHEET_ID = '15nefFkvuPzRl3hN4TOimEvPXpF__NMSYrOFBa0qoqSQ';
+var TOKEN          = 'fpm-stackd-2026';
+
+var SHEETS = {
+  sup:      'Suppliers',
+  li:       'Line Items',
+  inv:      'Invoices',
+  cn:       'Credit Notes',
+  po:       'Purchase Orders',
+  payments: 'Payments',
+  sh:       'Shipments',
+  qt:       'Quotes'
+};
+
+var HEADERS = {
+  sup:      ['Supplier ID','Name','Country','Contact','Email','Phone','Currency','Payment Terms','Lead Time','DG Capable','Notes'],
+  li:       ['SKU','Description','UOM','Unit Cost','Unit Price','Currency','HS Code','Supplier','Length','Width','Height','CBM','DG Flag','Notes'],
+  inv:      ['Invoice #','Buyer','Buyer Address','Destination','Date','Status','Currency','Grand Total','COGS','Net Profit','Margin','Tax Rate','Local Freight','Balance Due','Incoterms','Port of Loading','Port of Discharge','Shipment Ref','Notes'],
+  cn:       ['CN #','Linked Invoice','Buyer','Date','Status','Credit Amount','Reason','Type','Notes'],
+  po:       ['PO #','Supplier','Linked Invoice','Date','Status','Currency','COGS Total','Deposit','Balance Due','Notes'],
+  payments: ['Payment ID','Invoice #','Date','Amount','Currency','Method','Notes'],
+  sh:       ['Shipment Ref','BL Number','Vessel','Carrier','Origin Port','Dest Port','ETD','ETA','Status','Container Type','Container Number','DG Onboard','Docs Status','Forwarder Name','Forwarder Email','Linked Invoices','Notes'],
+  qt:       ['Quote #','Buyer','Date','Status','Currency','Grand Total','Freight','DG Surcharge','Insurance','Duty','Margin','Notes']
+};
+
 var REQUIREMENTS_TRACKER_ID = '1q05sSoCMmiqaNNixDWVk2_aJPwEqx37vDbOPNh2gqGw';
 var PROJECT_TRACKER_ID      = '1gC6d7ClOFpaocK_lNI685x5yMK5_UHiMgriFlF_UrLg';
 
-// Maps Stackd entity keys to sheet tab names
-var SHEET_NAMES = {
-  sup:       'Suppliers',
-  li:        'Line Items',
-  inv:       'Invoices',
-  po:        'Purchase Orders',
-  sh:        'Shipments',
-  cn:        'Credit Notes',
-  qt:        'Quotes',
-  inv_lines: 'inv_lines'
-};
+// ── helpers ──────────────────────────────────────────────────────
+
+function respond(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getSheet(entity) {
+  var name = SHEETS[entity];
+  if (!name) return null;
+  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    if (HEADERS[entity]) sheet.appendRow(HEADERS[entity]);
+  }
+  return sheet;
+}
+
+function pingResponse() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  return {
+    status:    'ok',
+    message:   'Stackd Ops active',
+    sheetId:   ss.getId(),
+    sheetName: ss.getName(),
+    sheetUrl:  ss.getUrl(),
+    tabs:      ss.getSheets().map(function(s){ return s.getName(); })
+  };
+}
+
+// ── doGet ────────────────────────────────────────────────────────
 
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || '';
-  if (action === 'getSheetId') {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        status: 'ok',
-        sheetId: ss.getId(),
-        sheetName: ss.getName(),
-        sheetUrl: ss.getUrl(),
-        tabs: ss.getSheets().map(function(s){ return s.getName(); })
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-  return ContentService
-    .createTextOutput(JSON.stringify({ status: 'error', message: 'Unknown action: ' + action }))
-    .setMimeType(ContentService.MimeType.JSON);
+  var token  = (e && e.parameter && e.parameter._token) || '';
+  if (token !== TOKEN) return respond({ status: 'error', message: 'Unauthorised' });
+  if (action === 'ping') return respond(pingResponse());
+  return respond({ status: 'error', message: 'Unknown GET action' });
 }
+
+// ── doPost ───────────────────────────────────────────────────────
 
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
-
-    if (SYNC_TOKEN && payload._token !== SYNC_TOKEN) {
-      return jsonResp({ status: 'error', message: 'Unauthorized' });
-    }
+    if (payload._token !== TOKEN) return respond({ status: 'error', message: 'Unauthorised' });
 
     var action = payload.action;
 
-    if (action === 'upsert')                      return jsonResp(handleUpsert(payload));
-    if (action === 'bulk_upsert')                 return jsonResp(handleBulkUpsert(payload));
-    if (action === 'delete')                      return jsonResp(handleDelete(payload));
-    if (action === 'get_all')                     return jsonResp(handleGetAll(payload));
-    if (action === 'import_from_master')          return jsonResp(handleImportFromMaster(payload));
-    if (action === 'update_requirements_tracker') return jsonResp(handleUpdateRequirementsTracker(payload));
-    if (action === 'update_project_tracker')      return jsonResp(handleUpdateProjectTracker(payload));
-    if (action === 'update_shipment')             return jsonResp(handleUpdateShipment(payload));
+    if (action === 'ping')                      return respond(pingResponse());
+    if (action === 'push_entity')               return respond(handlePushEntity(payload));
+    if (action === 'pull_entity')               return respond(handlePullEntity(payload));
+    if (action === 'update_shipment')           return respond(handleUpdateShipment(payload));
+    if (action === 'update_requirements_tracker') return respond(handleTrackerUpdate(payload, REQUIREMENTS_TRACKER_ID, 'Requirements Tracker'));
+    if (action === 'update_project_tracker')    return respond(handleTrackerUpdate(payload, PROJECT_TRACKER_ID, 'Project Tracker'));
 
-    return jsonResp({ status: 'error', message: 'Unknown action: ' + action });
+    return respond({ status: 'error', message: 'Unknown action: ' + action });
   } catch (err) {
-    return jsonResp({ status: 'error', message: err.message });
+    return respond({ status: 'error', message: err.message });
   }
 }
 
-// ── upsert ──────────────────────────────────────────────────────
-function handleUpsert(payload) {
-  var sheet = getEntitySheet(payload.entity);
-  if (!sheet) return { status: 'error', message: 'Unknown entity: ' + payload.entity };
-  var rec = payload.record;
-  if (!rec || !rec.id) return { status: 'error', message: 'record.id is required' };
+// ── push_entity ──────────────────────────────────────────────────
+// Clears data rows (row 2+), writes all records. Preserves row 1 headers.
 
-  var headers = getHeaders(sheet);
-  var idCol   = headers.indexOf('id');
-  if (idCol === -1) {
-    writeHeaders(sheet, rec);
-    appendRow(sheet, getHeaders(sheet), rec);
-    return { status: 'ok' };
-  }
-
-  var data    = sheet.getDataRange().getValues();
-  var rowIdx  = -1;
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][idCol]) === String(rec.id)) { rowIdx = i; break; }
-  }
-
-  if (rowIdx === -1) {
-    appendRow(sheet, headers, rec);
-  } else {
-    updateRow(sheet, rowIdx + 1, headers, rec);
-  }
-  return { status: 'ok' };
-}
-
-// ── bulk_upsert ─────────────────────────────────────────────────
-function handleBulkUpsert(payload) {
-  var sheet = getEntitySheet(payload.entity);
-  if (!sheet) return { status: 'error', message: 'Unknown entity: ' + payload.entity };
+function handlePushEntity(payload) {
+  var entity  = payload.entity;
   var records = payload.records;
+  if (!entity) return { status: 'error', message: 'entity is required' };
   if (!Array.isArray(records)) return { status: 'error', message: 'records must be an array' };
+
+  var sheet = getSheet(entity);
+  if (!sheet) return { status: 'error', message: 'Unknown entity: ' + entity };
+
+  // Clear from row 2 down
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
 
   if (records.length === 0) return { status: 'ok', written: 0 };
 
+  // Derive column order from first record
   var headers = Object.keys(records[0]);
-  sheet.clearContents();
-  sheet.appendRow(headers);
+
+  // Ensure header row matches — write if sheet was just created empty or keys differ
+  var existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String).filter(function(h){ return h !== ''; });
+  if (existingHeaders.length === 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  } else {
+    headers = existingHeaders; // honour whatever headers are already in row 1
+  }
 
   var rows = records.map(function(rec) {
     return headers.map(function(h) {
       var v = rec[h];
-      return (v !== null && v !== undefined && typeof v === 'object') ? JSON.stringify(v) : (v !== undefined ? v : '');
+      if (v === null || v === undefined) return '';
+      if (typeof v === 'object') return JSON.stringify(v);
+      return v;
     });
   });
-  if (rows.length) {
-    sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
-  }
+
+  sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
   return { status: 'ok', written: records.length };
 }
 
-// ── delete ──────────────────────────────────────────────────────
-function handleDelete(payload) {
-  var sheet = getEntitySheet(payload.entity);
-  if (!sheet) return { status: 'error', message: 'Unknown entity: ' + payload.entity };
-  var headers = getHeaders(sheet);
-  var idCol   = headers.indexOf('id');
-  if (idCol === -1) return { status: 'ok' };
+// ── pull_entity ──────────────────────────────────────────────────
+// Reads all data rows. Returns records array.
+
+function handlePullEntity(payload) {
+  var entity = payload.entity;
+  if (!entity) return { status: 'error', message: 'entity is required' };
+
+  var sheet = getSheet(entity);
+  if (!sheet) return { status: 'error', message: 'Unknown entity: ' + entity };
 
   var data = sheet.getDataRange().getValues();
-  for (var i = data.length - 1; i >= 1; i--) {
-    if (String(data[i][idCol]) === String(payload.id)) {
-      sheet.deleteRow(i + 1);
-      return { status: 'ok' };
-    }
-  }
-  return { status: 'ok' };
-}
-
-// ── get_all ─────────────────────────────────────────────────────
-function handleGetAll(payload) {
-  var sheet = getEntitySheet(payload.entity);
-  if (!sheet) return { status: 'error', message: 'Unknown entity: ' + payload.entity };
-
-  var data = sheet.getDataRange().getValues();
-  if (data.length < 2) return { status: 'ok', records: [] };
+  if (data.length < 2) return { status: 'ok', entity: entity, records: [] };
 
   var headers = data[0].map(String);
   var records = [];
@@ -150,33 +157,66 @@ function handleGetAll(payload) {
     for (var j = 0; j < headers.length; j++) {
       var v = row[j];
       if (typeof v === 'string' && (v.charAt(0) === '[' || v.charAt(0) === '{')) {
-        try { v = JSON.parse(v); } catch (e) {}
+        try { v = JSON.parse(v); } catch (err) {}
       }
       rec[headers[j]] = v;
     }
     records.push(rec);
   }
-  return { status: 'ok', records: records };
+  return { status: 'ok', entity: entity, records: records };
 }
 
-// ── import_from_master ──────────────────────────────────────────
-function handleImportFromMaster(payload) {
-  return handleGetAll(payload);
+// ── update_shipment ──────────────────────────────────────────────
+// Finds row by shipmentRef (column A = 'Shipment Ref'), updates provided fields.
+
+function handleUpdateShipment(payload) {
+  if (!payload.shipmentRef) return { status: 'error', message: 'shipmentRef is required' };
+
+  var sheet = getSheet('sh');
+  if (!sheet) return { status: 'error', message: 'Shipments sheet not found' };
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { status: 'error', message: 'Shipment not found' };
+
+  var headers = data[0].map(String);
+  var refCol  = headers.indexOf('Shipment Ref');
+  if (refCol === -1) return { status: 'error', message: 'Shipments tab missing "Shipment Ref" column' };
+
+  var rowIdx = -1;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][refCol]) === String(payload.shipmentRef)) { rowIdx = i; break; }
+  }
+  if (rowIdx === -1) return { status: 'error', message: 'Shipment not found: ' + payload.shipmentRef };
+
+  var FIELD_MAP = {
+    blNum:         'BL Number',
+    vessel:        'Vessel',
+    carrier:       'Carrier',
+    containerNum:  'Container Number',
+    containerType: 'Container Type',
+    etd:           'ETD',
+    eta:           'ETA',
+    dg:            'DG Onboard',
+    docsStatus:    'Docs Status',
+    status:        'Status',
+    notes:         'Notes'
+  };
+
+  Object.keys(FIELD_MAP).forEach(function(key) {
+    if (payload[key] === undefined) return;
+    var colIdx = headers.indexOf(FIELD_MAP[key]);
+    if (colIdx === -1) return;
+    var val = payload[key];
+    if (val !== null && val !== undefined && typeof val === 'object') val = JSON.stringify(val);
+    sheet.getRange(rowIdx + 1, colIdx + 1).setValue(val);
+  });
+
+  return { status: 'ok', success: true, updated: payload.shipmentRef };
 }
 
-// ── update_requirements_tracker ─────────────────────────────────
-// Payload: { updates: [{ id: 41, field: "Status", value: "Done" }, ...] }
-function handleUpdateRequirementsTracker(payload) {
-  return handleTrackerUpdate(payload, REQUIREMENTS_TRACKER_ID, 'Requirements Tracker');
-}
+// ── tracker update (shared) ──────────────────────────────────────
+// Payload: { updates: [{ id, field, value }, ...] }
 
-// ── update_project_tracker ─────────────────────────────────────
-// Payload: { updates: [{ id: 35, field: "Status", value: "Done" }, ...] }
-function handleUpdateProjectTracker(payload) {
-  return handleTrackerUpdate(payload, PROJECT_TRACKER_ID, 'Project Tracker');
-}
-
-// ── handleTrackerUpdate (shared) ──────────────────────────────
 function handleTrackerUpdate(payload, sheetId, sheetName) {
   var updates = payload.updates;
   if (!Array.isArray(updates) || updates.length === 0) {
@@ -191,10 +231,10 @@ function handleTrackerUpdate(payload, sheetId, sheetName) {
   }
 
   var sheet = ss.getSheetByName(sheetName) || ss.getSheets()[0];
-  if (!sheet) return { success: false, error: 'No sheets found in ' + sheetName + ' spreadsheet' };
+  if (!sheet) return { success: false, error: 'No sheets found in ' + sheetName };
 
   var data = sheet.getDataRange().getValues();
-  if (data.length < 1) return { success: false, error: sheetName + ' sheet is empty' };
+  if (data.length < 1) return { success: false, error: sheetName + ' is empty' };
 
   var headers  = data[0].map(String);
   var idColIdx = headers.indexOf('ID');
@@ -203,131 +243,21 @@ function handleTrackerUpdate(payload, sheetId, sheetName) {
   var rowMap = {};
   for (var i = 1; i < data.length; i++) {
     var rowId = data[i][idColIdx];
-    if (rowId !== '' && rowId !== null && rowId !== undefined) {
-      rowMap[String(rowId)] = i + 1;
-    }
+    if (rowId !== '' && rowId !== null && rowId !== undefined) rowMap[String(rowId)] = i + 1;
   }
 
-  var updated = [];
-  var errors  = [];
-
+  var updated = [], errors = [];
   updates.forEach(function(u) {
     var rowNum = rowMap[String(u.id)];
-    if (!rowNum) {
-      errors.push({ id: u.id, field: u.field, error: 'Row ID ' + u.id + ' not found' });
-      return;
-    }
+    if (!rowNum) { errors.push({ id: u.id, field: u.field, error: 'Row ID ' + u.id + ' not found' }); return; }
     var colIdx = headers.indexOf(u.field);
-    if (colIdx === -1) {
-      errors.push({ id: u.id, field: u.field, error: 'Column "' + u.field + '" not found' });
-      return;
-    }
+    if (colIdx === -1) { errors.push({ id: u.id, field: u.field, error: 'Column "' + u.field + '" not found' }); return; }
     sheet.getRange(rowNum, colIdx + 1).setValue(u.value);
     updated.push({ id: u.id, field: u.field });
   });
 
-  if (errors.length && !updated.length) {
-    return { success: false, error: errors[0].error, errors: errors };
-  }
-
+  if (errors.length && !updated.length) return { success: false, error: errors[0].error, errors: errors };
   var result = { success: true, updated: updated };
   if (errors.length) result.errors = errors;
   return result;
-}
-
-// ── update_shipment ─────────────────────────────────────────────
-// Payload: { shipmentRef, blNum, vessel, carrier, containerNum, containerType,
-//            etd, eta, dg, docsStatus, status, notes }
-// Finds row in Shipments sheet by ref, updates only provided fields.
-function handleUpdateShipment(payload) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('Shipments');
-  if (!sheet) return { success: false, error: 'Shipments sheet not found' };
-
-  if (!payload.shipmentRef) return { success: false, error: 'shipmentRef is required' };
-
-  var data = sheet.getDataRange().getValues();
-  if (data.length < 2) return { success: false, error: 'Shipment not found' };
-
-  var headers = data[0].map(String);
-  var refCol  = headers.indexOf('ref');
-  if (refCol === -1) return { success: false, error: 'Shipments sheet missing ref column' };
-
-  var rowIdx = -1;
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][refCol]) === String(payload.shipmentRef)) { rowIdx = i; break; }
-  }
-  if (rowIdx === -1) return { success: false, error: 'Shipment not found' };
-
-  // Map payload fields to sheet column names
-  var FIELD_MAP = {
-    blNum:         'blNum',
-    vessel:        'vessel',
-    carrier:       'carrier',
-    containerNum:  'containerNum',
-    containerType: 'containerType',
-    etd:           'etd',
-    eta:           'eta',
-    dg:            'dg',
-    docsStatus:    'docsStatus',
-    status:        'status',
-    notes:         'notes'
-  };
-
-  Object.keys(FIELD_MAP).forEach(function(payloadKey) {
-    if (payload[payloadKey] === undefined) return;
-    var colName = FIELD_MAP[payloadKey];
-    var colIdx  = headers.indexOf(colName);
-    if (colIdx === -1) return; // column absent in sheet — skip silently
-    var val = payload[payloadKey];
-    if (val !== null && val !== undefined && typeof val === 'object') val = JSON.stringify(val);
-    sheet.getRange(rowIdx + 1, colIdx + 1).setValue(val);
-  });
-
-  return { success: true, updated: payload.shipmentRef };
-}
-
-// ── helpers ──────────────────────────────────────────────────────
-
-function getEntitySheet(entity) {
-  var name = SHEET_NAMES[entity];
-  if (!name) return null;
-  var ss    = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(name);
-  if (!sheet) sheet = ss.insertSheet(name);
-  return sheet;
-}
-
-function getHeaders(sheet) {
-  var data = sheet.getDataRange().getValues();
-  if (data.length === 0) return [];
-  return data[0].map(String);
-}
-
-function writeHeaders(sheet, rec) {
-  var headers = Object.keys(rec);
-  sheet.clearContents();
-  sheet.appendRow(headers);
-}
-
-function appendRow(sheet, headers, rec) {
-  var row = headers.map(function(h) {
-    var v = rec[h];
-    return (v !== null && v !== undefined && typeof v === 'object') ? JSON.stringify(v) : (v !== undefined ? v : '');
-  });
-  sheet.appendRow(row);
-}
-
-function updateRow(sheet, rowNum, headers, rec) {
-  var row = headers.map(function(h) {
-    var v = rec[h];
-    return (v !== null && v !== undefined && typeof v === 'object') ? JSON.stringify(v) : (v !== undefined ? v : '');
-  });
-  sheet.getRange(rowNum, 1, 1, row.length).setValues([row]);
-}
-
-function jsonResp(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
 }
