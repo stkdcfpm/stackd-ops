@@ -1998,7 +1998,8 @@ async function sGet(entity) {
 }
 async function syncEnt(entity, rec) {
   if (!SS.url || !SS.auto) return;
-  try { setSyncStatus('loading'); await sPost({action:'upsert', entity:entity, record:rec}); setSyncStatus('ok'); setTimeout(function(){ setSyncStatus('idle'); }, 3000); }
+  var ent = (entity === 'inv' && (rec.type === 'credit_note' || rec.type === 'goodwill_credit')) ? 'cn' : entity;
+  try { setSyncStatus('loading'); await sPost({action:'upsert', entity:ent, record:rec}); setSyncStatus('ok'); setTimeout(function(){ setSyncStatus('idle'); }, 3000); }
   catch(e) { setSyncStatus('err'); }
 }
 async function delEnt(entity, id) {
@@ -2010,15 +2011,15 @@ async function syncAll() {
   if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
   setSyncStatus('loading');
   try {
-    var isCnRec = function(r){ return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
-    var invRecords = DB.inv.filter(function(x){ return !isCnRec(x); }).map(function(x){ return Object.assign({},x,{num:x.num||x.invNum||''}); });
-    var cnRecords  = DB.inv.filter(isCnRec);
-    var synEnts = ['sup','li','po','payments','sh','qt'];
+    var synEnts = ['sup','li','po','sh','qt','payments'];
     for (var si = 0; si < synEnts.length; si++) {
-      await sPost({action:'push_entity', entity:synEnts[si], records:DB[synEnts[si]]});
+      await sPost({action:'bulk_upsert', entity:synEnts[si], records:DB[synEnts[si]] || []});
     }
-    await sPost({action:'push_entity', entity:'inv', records:invRecords});
-    await sPost({action:'push_entity', entity:'cn',  records:cnRecords});
+    var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
+                       .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
+    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+    await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
+    if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
   } catch(e) { setSyncStatus('err'); toast('Sync failed: ' + e.message); }
 }
@@ -2046,21 +2047,46 @@ async function pullAll() {
   if (!SS.url) { toast('No URL configured'); return; }
   setSyncStatus('loading');
   try {
-    var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt','calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
-
-    // ── Invoices (non-CN records from inv tab) ────────────────────
-    var dInv = await sGet('inv');
-    if (dInv.status === 'ok' && dInv.records && dInv.records.length) {
-      var pulledInv = dInv.records;
-      var pulledInvIds = {};
-      for (var pi = 0; pi < pulledInv.length; pi++) pulledInvIds[pulledInv[pi].id] = true;
-      var localOnlyInv = DB.inv.filter(function(r){ return !pulledInvIds[r.id]; });
-      for (var pi = 0; pi < pulledInv.length; pi++) {
-        var localInv = DB.inv.find(function(r){ return r.id === pulledInv[pi].id; });
-        if (localInv) {
-          if (isEmptyLI(pulledInv[pi].lineItems, 'inv') && !isEmptyLI(localInv.lineItems, 'inv')) pulledInv[pi].lineItems = localInv.lineItems;
-          if (isEmptyLI(pulledInv[pi].pos, 'pos')       && !isEmptyLI(localInv.pos, 'pos'))       pulledInv[pi].pos       = localInv.pos;
-          calcFields.forEach(function(f){ if ((+pulledInv[pi][f]||0) === 0 && (+localInv[f]||0) > 0) pulledInv[pi][f] = localInv[f]; });
+    var entities = ['sup','li','inv','po','sh','qt'];
+    for (var ei = 0; ei < entities.length; ei++) {
+      var ent = entities[ei];
+      var d = await sGet(ent);
+      if (d.status === 'ok' && d.records && d.records.length) {
+        var pulled = d.records;
+        var pulledIds = {};
+        for (var pi = 0; pi < pulled.length; pi++) pulledIds[pulled[pi].id] = true;
+        var localOnly = DB[ent].filter(function(r){ return !pulledIds[r.id]; });
+        // For invoices and POs: preserve local lineItems/pos if pulled record has empty arrays
+        // This prevents a Sheets sync from wiping line items added locally
+        if (ent === 'inv' || ent === 'po') {
+          for (var pi = 0; pi < pulled.length; pi++) {
+            var localRec = DB[ent].find(function(r){ return r.id === pulled[pi].id; });
+            if (localRec) {
+              if (ent === 'inv') {
+                if (isEmptyLI(pulled[pi].lineItems, 'inv') && !isEmptyLI(localRec.lineItems, 'inv')) {
+                  pulled[pi].lineItems = localRec.lineItems;
+                }
+                if (isEmptyLI(pulled[pi].pos, 'pos') && !isEmptyLI(localRec.pos, 'pos')) {
+                  pulled[pi].pos = localRec.pos;
+                }
+                // Also preserve calc fields if local has them and pulled doesn't
+                var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt',
+                  'calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
+                calcFields.forEach(function(f) {
+                  var pulledVal = +pulled[pi][f] || 0;
+                  var localVal  = +localRec[f]  || 0;
+                  if (pulledVal === 0 && localVal > 0) {
+                    pulled[pi][f] = localRec[f];
+                  }
+                });
+              }
+              if (ent === 'po') {
+                if (isEmptyLI(pulled[pi].lineItems, 'po') && !isEmptyLI(localRec.lineItems, 'po')) {
+                  pulled[pi].lineItems = localRec.lineItems;
+                }
+              }
+            }
+          }
         }
       }
       DB.inv = pulledInv.concat(localOnlyInv);
@@ -2139,16 +2165,16 @@ function buildInvLines() {
 async function pushAll() {
   setSyncStatus('loading');
   try {
-    var isCnRec = function(r){ return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
-    var invRecords = DB.inv.filter(function(x){ return !isCnRec(x); })
-      .map(function(x){ return Object.assign({},x,{num:x.num||x.invNum||''}); });
-    var cnRecords  = DB.inv.filter(isCnRec);
-    var ents = ['sup','li','po','payments','sh','qt'];
+    var ents = ['sup','li','po','sh','qt','payments'];
     for (var pi = 0; pi < ents.length; pi++) {
-      await sPost({action:'push_entity', entity:ents[pi], records:DB[ents[pi]]});
+      await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]] || []});
     }
-    await sPost({action:'push_entity', entity:'inv', records:invRecords});
-    await sPost({action:'push_entity', entity:'cn',  records:cnRecords});
+    var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
+                       .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
+    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+    await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
+    await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
+    await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
     setSyncStatus('ok'); toast('Pushed all'); setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) { setSyncStatus('err'); toast('Failed: ' + e.message); }
 }
@@ -2303,8 +2329,7 @@ function rDash() {
       return s + t - (+p.dep||0);
     }, 0);
   var mg = ai.map(function(i){ return iCalc(i).mgn; }).filter(function(m){ return m !== null && !isNaN(m); });
-  // Weighted average margin: total net profit ÷ total revenue
-  var aM = tR > 0 ? tNP / tR * 100 : 0;
+  var aM = mg.length ? mg.reduce(function(a,b){ return a+b; }, 0) / mg.length : 0;
 
   // Net cash: total buyer deposits received minus total supplier deposits paid minus goodwill credits issued
   var tBuyerDep = ai.reduce(function(s,i){ return s + (+i.dep||0); }, 0);
@@ -3368,6 +3393,8 @@ function prevStmtPdf() {
 
 async function delInv(id) {
   if(!confirm('Delete this invoice?')) return;
+  var _delRec = DB.inv.find(function(i){ return i.id===id; });
+  var _isCnDel = _delRec && (_delRec.type==='credit_note' || _delRec.type==='goodwill_credit');
   DB.inv=DB.inv.filter(function(i){return i.id!==id;});
   var libRefsChanged = false;
   DB.li.forEach(function(cat) {
@@ -3376,7 +3403,7 @@ async function delInv(id) {
     cat.invoiceRefs = cat.invoiceRefs.filter(function(r){ return r.invId !== id; });
     if (cat.invoiceRefs.length !== before) libRefsChanged = true;
   });
-  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt('inv',id);
+  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt(_isCnDel ? 'cn' : 'inv', id);
 }
 
 // ── PO MODAL & TABLE ───────────────────────────────────────────
@@ -3530,11 +3557,11 @@ function prevInvDoc(inv) {
   var liT = lis.reduce(function(s,li){ return s+(+li.qty||0)*(+li.up||0); },0);
   var tx = +inv.taxRate||0, tax=liT*tx;
   var lf=+inv.lf||0, ins=+inv.ins||0, leg=+inv.leg||0, isp=+inv.isp||0, oth=+inv.oth||0;
-  var grand=liT+tax+lf+ins+leg+isp+oth, dep=+inv.dep||0;
+  var grand=liT+tax+lf+ins+leg+isp+oth, dep=+inv.dep||0, bal=grand-dep;
   if (inv.calc_grandTotal && +inv.calc_grandTotal > 0) {
     grand=+inv.calc_grandTotal;
     liT=+inv.calc_liTotal||liT; tax=+inv.calc_taxAmt||0;
-    dep=+inv.dep||0;
+    dep=+inv.dep||0; bal=grand-dep;
   }
   // PDF shows Grand Total − Deposit Received only. CN deductions appear on the CN document.
   var bal = grand - dep;
@@ -4622,10 +4649,10 @@ async function runDataRepair() {
                   calc_margin:'0', calc_balanceDue:'0', dep:957.08, lf:0, ins:0, taxRate:0.07 },
     'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730',
                   calc_taxAmt:'0', calc_grossProfit:'4652.18', calc_netProfit:'4652.18',
-                  calc_margin:'32.8', calc_balanceDue:'9730', lf:450, ins:0 },
+                  calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
     'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6370.00', calc_liTotal:'7048.24',
                   calc_taxAmt:'0', calc_grossProfit:'878.24', calc_netProfit:'878.24',
-                  calc_margin:'12.1', calc_balanceDue:'7048.24', lf:0, ins:0 }
+                  calc_margin:'12.1', calc_balanceDue:'7248.24', lf:0, ins:0 }
   };
 
   var repaired = [];
@@ -6931,10 +6958,10 @@ function repairCalcFields() {
                   calc_margin:'0', calc_balanceDue:'0', dep:957.08, lf:0, ins:0, taxRate:0.07 },
     'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730',
                   calc_taxAmt:'0', calc_grossProfit:'4652.18', calc_netProfit:'4652.18',
-                  calc_margin:'32.8', calc_balanceDue:'9730', lf:450, ins:0 },
+                  calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
     'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6370.00', calc_liTotal:'7048.24',
                   calc_taxAmt:'0', calc_grossProfit:'878.24', calc_netProfit:'878.24',
-                  calc_margin:'12.1', calc_balanceDue:'7048.24', lf:0, ins:0 },
+                  calc_margin:'12.1', calc_balanceDue:'7248.24', lf:0, ins:0 },
     'INV10032': { calc_grandTotal:'6071.00', calc_cogs:'6071.00', calc_liTotal:'6071.00',
                   calc_taxAmt:'0', calc_grossProfit:'0', calc_netProfit:'0',
                   calc_margin:'0', calc_balanceDue:'6071.00', lf:0, ins:0 }
