@@ -1981,7 +1981,7 @@ async function syncAll() {
   if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
   setSyncStatus('loading');
   try {
-    var synEnts = ['sup','li','po','sh','qt'];
+    var synEnts = ['sup','li','po','sh','qt','payments'];
     for (var si = 0; si < synEnts.length; si++) {
       await sPost({action:'bulk_upsert', entity:synEnts[si], records:DB[synEnts[si]] || []});
     }
