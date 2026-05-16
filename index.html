@@ -1991,7 +1991,7 @@ async function sPost(payload) {
   return JSON.parse(await r.text());
 }
 async function sGet(entity) {
-  var payload = { action: 'get_all', entity: entity };
+  var payload = { action: 'pull_entity', entity: entity };
   if (SS.token) payload._token = SS.token;
   var r = await fetch(SS.url, { method: 'POST', body: JSON.stringify(payload) });
   return JSON.parse(await r.text());
@@ -2010,10 +2010,15 @@ async function syncAll() {
   if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
   setSyncStatus('loading');
   try {
-    var synEnts = ['sup','li','inv','po','sh'];
+    var isCnRec = function(r){ return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
+    var invRecords = DB.inv.filter(function(x){ return !isCnRec(x); }).map(function(x){ return Object.assign({},x,{num:x.num||x.invNum||''}); });
+    var cnRecords  = DB.inv.filter(isCnRec);
+    var synEnts = ['sup','li','po','payments','sh','qt'];
     for (var si = 0; si < synEnts.length; si++) {
-      await sPost({action:'bulk_upsert', entity:synEnts[si], records:DB[synEnts[si]]});
+      await sPost({action:'push_entity', entity:synEnts[si], records:DB[synEnts[si]]});
     }
+    await sPost({action:'push_entity', entity:'inv', records:invRecords});
+    await sPost({action:'push_entity', entity:'cn',  records:cnRecords});
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
   } catch(e) { setSyncStatus('err'); toast('Sync failed: ' + e.message); }
 }
@@ -2041,50 +2046,62 @@ async function pullAll() {
   if (!SS.url) { toast('No URL configured'); return; }
   setSyncStatus('loading');
   try {
-    var entities = ['sup','li','inv','po','sh'];
-    for (var ei = 0; ei < entities.length; ei++) {
-      var ent = entities[ei];
-      var d = await sGet(ent);
-      if (d.status === 'ok' && d.records && d.records.length) {
-        var pulled = d.records;
-        var pulledIds = {};
-        for (var pi = 0; pi < pulled.length; pi++) pulledIds[pulled[pi].id] = true;
-        var localOnly = DB[ent].filter(function(r){ return !pulledIds[r.id]; });
-        // For invoices and POs: preserve local lineItems/pos if pulled record has empty arrays
-        // This prevents a Sheets sync from wiping line items added locally
-        if (ent === 'inv' || ent === 'po') {
-          for (var pi = 0; pi < pulled.length; pi++) {
-            var localRec = DB[ent].find(function(r){ return r.id === pulled[pi].id; });
-            if (localRec) {
-              if (ent === 'inv') {
-                if (isEmptyLI(pulled[pi].lineItems, 'inv') && !isEmptyLI(localRec.lineItems, 'inv')) {
-                  pulled[pi].lineItems = localRec.lineItems;
-                }
-                if (isEmptyLI(pulled[pi].pos, 'pos') && !isEmptyLI(localRec.pos, 'pos')) {
-                  pulled[pi].pos = localRec.pos;
-                }
-                // Also preserve calc fields if local has them and pulled doesn't
-                var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt',
-                  'calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
-                calcFields.forEach(function(f) {
-                  var pulledVal = +pulled[pi][f] || 0;
-                  var localVal  = +localRec[f]  || 0;
-                  if (pulledVal === 0 && localVal > 0) {
-                    pulled[pi][f] = localRec[f];
-                  }
-                });
-              }
-              if (ent === 'po') {
-                if (isEmptyLI(pulled[pi].lineItems, 'po') && !isEmptyLI(localRec.lineItems, 'po')) {
-                  pulled[pi].lineItems = localRec.lineItems;
-                }
-              }
-            }
-          }
+    var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt','calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
+
+    // ── Invoices (non-CN records from inv tab) ────────────────────
+    var dInv = await sGet('inv');
+    if (dInv.status === 'ok' && dInv.records && dInv.records.length) {
+      var pulledInv = dInv.records;
+      var pulledInvIds = {};
+      for (var pi = 0; pi < pulledInv.length; pi++) pulledInvIds[pulledInv[pi].id] = true;
+      var localOnlyInv = DB.inv.filter(function(r){ return !pulledInvIds[r.id]; });
+      for (var pi = 0; pi < pulledInv.length; pi++) {
+        var localInv = DB.inv.find(function(r){ return r.id === pulledInv[pi].id; });
+        if (localInv) {
+          if (isEmptyLI(pulledInv[pi].lineItems, 'inv') && !isEmptyLI(localInv.lineItems, 'inv')) pulledInv[pi].lineItems = localInv.lineItems;
+          if (isEmptyLI(pulledInv[pi].pos, 'pos')       && !isEmptyLI(localInv.pos, 'pos'))       pulledInv[pi].pos       = localInv.pos;
+          calcFields.forEach(function(f){ if ((+pulledInv[pi][f]||0) === 0 && (+localInv[f]||0) > 0) pulledInv[pi][f] = localInv[f]; });
         }
-        DB[ent] = pulled.concat(localOnly);
+      }
+      DB.inv = pulledInv.concat(localOnlyInv);
+    }
+
+    // ── Credit notes (cn tab — merge back into DB.inv) ────────────
+    var dCn = await sGet('cn');
+    if (dCn.status === 'ok' && dCn.records && dCn.records.length) {
+      var pulledCn = dCn.records;
+      var pulledCnIds = {};
+      for (var ci = 0; ci < pulledCn.length; ci++) pulledCnIds[pulledCn[ci].id] = true;
+      DB.inv = DB.inv.filter(function(r){ return !pulledCnIds[r.id]; }).concat(pulledCn);
+    }
+
+    // ── Purchase orders (with line item preservation) ─────────────
+    var dPo = await sGet('po');
+    if (dPo.status === 'ok' && dPo.records && dPo.records.length) {
+      var pulledPo = dPo.records;
+      var pulledPoIds = {};
+      for (var pi = 0; pi < pulledPo.length; pi++) pulledPoIds[pulledPo[pi].id] = true;
+      var localOnlyPo = DB.po.filter(function(r){ return !pulledPoIds[r.id]; });
+      for (var pi = 0; pi < pulledPo.length; pi++) {
+        var localPo = DB.po.find(function(r){ return r.id === pulledPo[pi].id; });
+        if (localPo && isEmptyLI(pulledPo[pi].lineItems, 'po') && !isEmptyLI(localPo.lineItems, 'po')) pulledPo[pi].lineItems = localPo.lineItems;
+      }
+      DB.po = pulledPo.concat(localOnlyPo);
+    }
+
+    // ── Simple entities (replace from Sheets, preserve local-only) ─
+    var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt'];
+    for (var ei = 0; ei < simpleEnts.length; ei++) {
+      var sentKey = simpleEnts[ei];
+      var sd = await sGet(sentKey);
+      if (sd.status === 'ok' && sd.records && sd.records.length) {
+        var spulled = sd.records;
+        var spulledIds = {};
+        for (var si = 0; si < spulled.length; si++) spulledIds[spulled[si].id] = true;
+        DB[sentKey] = spulled.concat(DB[sentKey].filter(function(r){ return !spulledIds[r.id]; }));
       }
     }
+
     saveAll(); renderAll(); setSyncStatus('ok'); toast('Pulled from Sheets');
     setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) {
@@ -2123,19 +2140,15 @@ async function pushAll() {
   setSyncStatus('loading');
   try {
     var isCnRec = function(r){ return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
-    // Invoices: ensure num field is populated (backward compat with invNum)
     var invRecords = DB.inv.filter(function(x){ return !isCnRec(x); })
       .map(function(x){ return Object.assign({},x,{num:x.num||x.invNum||''}); });
-    // Credit notes tab
-    var cnRecords = DB.inv.filter(isCnRec);
-    var ents = ['sup','li','po','sh'];
+    var cnRecords  = DB.inv.filter(isCnRec);
+    var ents = ['sup','li','po','payments','sh','qt'];
     for (var pi = 0; pi < ents.length; pi++) {
-      await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]]});
+      await sPost({action:'push_entity', entity:ents[pi], records:DB[ents[pi]]});
     }
-    await sPost({action:'bulk_upsert', entity:'inv', records:invRecords});
-    await sPost({action:'bulk_upsert', entity:'cn',  records:cnRecords});
-    await sPost({action:'bulk_upsert', entity:'qt',  records:DB.qt});
-    await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
+    await sPost({action:'push_entity', entity:'inv', records:invRecords});
+    await sPost({action:'push_entity', entity:'cn',  records:cnRecords});
     setSyncStatus('ok'); toast('Pushed all'); setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) { setSyncStatus('err'); toast('Failed: ' + e.message); }
 }
@@ -2144,8 +2157,10 @@ async function testConn() {
   if (!url) { G('conn-st').textContent = 'Enter URL first'; return; }
   G('conn-st').textContent = 'Testing...';
   try {
-    var d = JSON.parse(await (await fetch(url + '?action=ping')).text());
-    G('conn-st').textContent = '\u2713 Connected'; G('conn-st').style.color = 'var(--gn)';
+    var tok = (G('cfg-token') ? G('cfg-token').value.trim() : '') || SS.token || '';
+    var d = JSON.parse(await (await fetch(url + '?action=ping&_token=' + encodeURIComponent(tok))).text());
+    G('conn-st').textContent = d.status === 'ok' ? '\u2713 Connected' : '\u2715 ' + (d.message || 'Error');
+    G('conn-st').style.color = d.status === 'ok' ? 'var(--gn)' : 'var(--cr)';
   } catch(e) { G('conn-st').textContent = '\u2715 ' + e.message; G('conn-st').style.color = 'var(--cr)'; }
 }
 function setUrl() {
@@ -4365,7 +4380,7 @@ async function importFromSheets(entity) {
   setSyncStatus('loading');
 
   try {
-    var resp = await sPost({ action: 'import_from_master', entity: entity });
+    var resp = await sPost({ action: 'pull_entity', entity: entity });
 
     if (resp.status !== 'ok') {
       status.textContent = '⚠ ' + resp.message;
