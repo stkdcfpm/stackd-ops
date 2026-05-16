@@ -1422,9 +1422,13 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <div class="ov" id="ov-ai" onclick="if(event.target===this)closeM('ov-ai')">
   <div class="modal" style="max-width:540px;width:100%;display:flex;flex-direction:column;height:600px;max-height:88vh;padding:0;">
     <div class="mh" style="flex-shrink:0;">
-      <div>
+      <div style="flex:1;">
         <h2 style="font-size:.82rem;">AI Assistant</h2>
-        <div style="font-size:.46rem;color:var(--m);margin-top:1px;">Ask anything about using Stackd Ops &middot; Powered by Claude</div>
+        <div class="ai-sub" style="font-size:.46rem;color:var(--m);margin-top:1px;">Ask anything about using Stackd Ops &middot; Powered by Claude</div>
+      </div>
+      <div style="display:flex;gap:4px;margin-right:8px;">
+        <button id="ai-mode-ops" onclick="toggleAIMode('ops')" style="font-family:'DM Mono',monospace;font-size:.46rem;padding:3px 8px;border-radius:2px;cursor:pointer;border:1px solid var(--cr);background:var(--cr);color:white;">Ops</button>
+        <button id="ai-mode-comp" onclick="toggleAIMode('compliance')" style="font-family:'DM Mono',monospace;font-size:.46rem;padding:3px 8px;border-radius:2px;cursor:pointer;border:1px solid #BA7517;background:transparent;color:var(--m);">Compliance</button>
       </div>
       <button onclick="clearAIChat()" style="font-family:'DM Mono',monospace;font-size:.5rem;color:var(--m);background:transparent;border:1px solid var(--ln);padding:3px 8px;border-radius:2px;cursor:pointer;margin-right:6px;">Clear</button>
       <button class="mx" onclick="closeM('ov-ai')">&#215;</button>
@@ -1468,6 +1472,7 @@ let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null };
 let cIL = [], cPL = [], cQL = [], cCNL = [];
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
+var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
 
 // ── INVOICE STATUS LOCKING ──────────────────────────────────────
 var LOCKED_STATUSES = ['Sent', 'Partially Paid', 'Paid', 'Cancelled'];
@@ -5012,6 +5017,68 @@ var AI_SYSTEM_PROMPT = [
   'AI Assistant: Claude API Key (stored locally in browser only).'
 ].join('\n');
 
+var AI_COMPLIANCE_PROMPT = [
+  'You are a compliance reviewer embedded in Stackd Ops, FPM International\'s trade operations portal.',
+  'You review accounting treatments, HMRC obligations, data handling practices, and operational decisions for correctness and regulatory compliance.',
+  '',
+  'You are NOT the general operations assistant. If the user asks how to use portal features, redirect them: "Switch to Operations mode for portal how-to questions."',
+  '',
+  'Your scope: HMRC VAT and invoice compliance (UK), trade document correctness (invoices, credit notes, statements), accounting treatment for trade transactions, GDPR obligations for a UK-registered sole-trader/micro-firm, and general compliance questions.',
+  '',
+  '## FPM International — context',
+  'Entity: FPM International Ltd. Registered Companies House May 2026. SIC 46190 + 62012. Brighton, UK.',
+  'Business model: Trade intermediary. Sources from Chinese manufacturers, supplies Caribbean markets (primarily Barbados).',
+  'VAT status: Not yet VAT-registered (as at May 2026). MTD compliance is a backlog item — required before VAT registration.',
+  'ICO registration: Not yet registered — required before onboarding first external client.',
+  '',
+  '## Invoice compliance (HMRC VAT Notice 700/21)',
+  'The original invoice PDF must show: Grand Total − Deposit Received = Balance Due.',
+  'Credit note deductions must NOT appear on the original invoice PDF.',
+  'Credit note deductions appear on: (a) the credit note document, (b) the buyer statement.',
+  'Stackd Ops v2.9.12 implements this correctly — prevInvDoc() uses grand − deposit only.',
+  '',
+  '## Invoice status locking (v2.9.12)',
+  'Invoices become immutable once status reaches Sent, Partially Paid, Paid, or Cancelled.',
+  'Backward status transitions are blocked. Unlock requires typing CONFIRM and a written reason, permanently logged to audit trail.',
+  '',
+  '## Credit note compliance',
+  'CN status: CN Draft → CN Issued → CN Applied.',
+  'CN Applied triggers auto-recalculation of linked invoice calc_balanceDue.',
+  'Credit amounts stored as positive numbers, displayed as negative on documents.',
+  '',
+  '## Verified calc fields (13 May 2026)',
+  'INV10028: calc_grandTotal=25226, calc_balanceDue=0 (Paid)',
+  'INV10029: calc_grandTotal=10283, calc_balanceDue=0 (Paid)',
+  'INV10030: calc_grandTotal=10180, calc_balanceDue=9730 (CN10030 $450 applied)',
+  'INV10031: calc_grandTotal=7248.24, calc_balanceDue=7048.24 (CN10031 $200 applied)',
+  '',
+  '## Tax treatment',
+  'China → Caribbean / West Africa: 0% zero-rated export. Correct.',
+  'China → UK: 0% default; 20% if buyer is UK VAT-registered.',
+  'USA → Barbados (Reolink pattern): 0% tax. Unit cost includes US sales tax. Zero margin is correct for pass-through.',
+  'Tax is always a buyer pass-through — never Stackd income.',
+  '',
+  '## GDPR obligations (R-001)',
+  'Supplier contact data in localStorage — operational necessity, proportionate.',
+  'ICO registration required before onboarding first external client. £40/year.',
+  'T&Cs and Privacy Policy required before v3.0.0 launch.',
+  'Full GDPR remediation via v3.0.0 Supabase migration (Q1 2027).',
+  'Hard deadline: do not onboard external clients before ICO registration is complete.',
+  '',
+  '## MTD compliance (R-004)',
+  'MTD-compatible VAT export is CRITICAL — do not defer to v3.x. Required before FPM registers for VAT.',
+  '',
+  '## Known compliance gaps',
+  'MTD-001: No MTD-compatible export — CRITICAL, v2.9.x target.',
+  'R-001: localStorage PII exposure — v3.0.0 Q1 2027.',
+  'ICO: ICO registration outstanding — required before first external client.',
+  '',
+  '## Behaviour',
+  'Be direct and specific. Cite the relevant rule or legislation.',
+  'If a treatment is correct, say so clearly. If incorrect, state the risk and correct treatment.',
+  'For portal how-to questions, redirect: "Switch to Operations mode for portal how-to questions."'
+].join('\n');
+
 function saveAIKey() {
   var key = (G('cfg-ai-key') ? G('cfg-ai-key').value.trim() : '');
   AI.key = key;
@@ -5023,11 +5090,14 @@ function saveAIKey() {
 
 function openAIChat() {
   G('ov-ai').classList.add('on');
+  toggleAIMode(_aiMode);
   var msgs = G('ai-msgs');
   if (!msgs.children.length) {
     var welcome = document.createElement('div');
     welcome.style.cssText = 'font-size:.58rem;color:var(--m);text-align:center;padding:20px 10px;line-height:1.7;';
-    welcome.textContent = 'Hello! I\'m the Stackd Ops AI assistant. Ask me anything about using the portal — workflows, data entry, troubleshooting, or field explanations.';
+    welcome.textContent = _aiMode === 'compliance'
+      ? 'Compliance Reviewer active. Ask about HMRC treatment, accounting correctness, or GDPR obligations. Switch to Operations mode for portal how-to questions.'
+      : 'Hello! I\'m the Stackd Ops AI assistant. Ask me anything about using the portal — workflows, data entry, troubleshooting, or field explanations.';
     msgs.appendChild(welcome);
   }
   setTimeout(function(){ if(G('ai-input')) G('ai-input').focus(); }, 80);
@@ -5037,6 +5107,24 @@ function clearAIChat() {
   _aiHistory = [];
   G('ai-msgs').innerHTML = '';
   openAIChat();
+}
+
+function toggleAIMode(mode) {
+  _aiMode = mode;
+  localStorage.setItem('stackd_ai_mode', mode);
+  var isComp = mode === 'compliance';
+  var mh = G('ov-ai') ? G('ov-ai').querySelector('.mh') : null;
+  if (mh) {
+    var title = mh.querySelector('h2');
+    var sub   = mh.querySelector('.ai-sub');
+    if (title) title.textContent = isComp ? 'Compliance Reviewer' : 'AI Assistant';
+    if (sub)   sub.style.color   = isComp ? '#BA7517' : 'var(--m)';
+  }
+  var btnOps  = G('ai-mode-ops');
+  var btnComp = G('ai-mode-comp');
+  if (btnOps)  { btnOps.style.background  = isComp ? 'transparent' : 'var(--cr)'; btnOps.style.color  = isComp ? 'var(--m)' : 'white'; }
+  if (btnComp) { btnComp.style.background = isComp ? '#BA7517'      : 'transparent'; btnComp.style.color = isComp ? 'white'    : 'var(--m)'; }
+  updateAIChips(window.currentTab || 'dash');
 }
 
 function _aiMsgEl(role) {
@@ -5095,7 +5183,8 @@ async function sendAIMsg() {
           var tab = window.currentTab || 'dash';
           var ctx = 'The user is currently on the ' + (tabNames[tab]||tab) + ' tab of Stackd Ops.\n\n';
           var langPrefix = _lang === 'zh' ? '请用中文回答所有问题。使用正式的商业用语和国际贸易术语。\n\n' : '';
-          return langPrefix + ctx + AI_SYSTEM_PROMPT;
+          var basePrompt = _aiMode === 'compliance' ? AI_COMPLIANCE_PROMPT : AI_SYSTEM_PROMPT;
+          return langPrefix + ctx + basePrompt;
         })(),
         messages: _aiHistory
       })
@@ -5938,10 +6027,12 @@ var TAB_CHIPS = {
   cfg:    ['Why should I not enable auto-sync?', 'How do I repair invoice totals?', 'How do I connect Google Sheets?']
 };
 
+var COMPLIANCE_CHIPS = ['Review this brief', 'Check this accounting treatment', 'Is this HMRC compliant?', 'Review this data fix'];
+
 function updateAIChips(tab) {
   var el = G('ai-chips');
   if (!el) return;
-  var chips = TAB_CHIPS[tab] || TAB_CHIPS['dash'];
+  var chips = _aiMode === 'compliance' ? COMPLIANCE_CHIPS : (TAB_CHIPS[tab] || TAB_CHIPS['dash']);
   el.innerHTML = chips.map(function(c){
     return '<button onclick="useAIChip(' + JSON.stringify(c) + ')" style="font-family:\'DM Mono\',monospace;font-size:.5rem;background:var(--card);border:1px solid var(--ln);padding:4px 9px;border-radius:2px;cursor:pointer;color:var(--m);text-align:left;">' + san(c) + '</button>';
   }).join('');
