@@ -1983,11 +1983,11 @@ async function syncAll() {
   try {
     var synEnts = ['sup','li','po','sh','qt'];
     for (var si = 0; si < synEnts.length; si++) {
-      await sPost({action:'bulk_upsert', entity:synEnts[si], records:DB[synEnts[si]]});
+      await sPost({action:'bulk_upsert', entity:synEnts[si], records:DB[synEnts[si]] || []});
     }
-    var invOnly = DB.inv.filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
+    var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
-    var cnOnly  = DB.inv.filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
     await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
     if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
@@ -2100,11 +2100,11 @@ async function pushAll() {
   try {
     var ents = ['sup','li','po','sh','qt','payments'];
     for (var pi = 0; pi < ents.length; pi++) {
-      await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]]});
+      await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]] || []});
     }
-    var invOnly = DB.inv.filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
+    var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
-    var cnOnly  = DB.inv.filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
     await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
     await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
