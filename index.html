@@ -4342,10 +4342,10 @@ async function runDataRepair() {
                   calc_margin:'0', calc_balanceDue:'0', dep:957.08, lf:0, ins:0, taxRate:0.07 },
     'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730',
                   calc_taxAmt:'0', calc_grossProfit:'4652.18', calc_netProfit:'4652.18',
-                  calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
+                  calc_margin:'32.8', calc_balanceDue:'9730', lf:450, ins:0 },
     'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6370.00', calc_liTotal:'7048.24',
                   calc_taxAmt:'0', calc_grossProfit:'878.24', calc_netProfit:'878.24',
-                  calc_margin:'12.1', calc_balanceDue:'7248.24', lf:0, ins:0 }
+                  calc_margin:'12.1', calc_balanceDue:'7048.24', lf:0, ins:0 }
   };
 
   var repaired = [];
@@ -4503,6 +4503,19 @@ async function saveCN() {
     if (idx > -1) DB.inv[idx] = cn; else DB.inv.push(cn);
   } else {
     DB.inv.push(cn);
+  }
+  // When a CN is Applied and linked to an invoice, recalculate that invoice's balance due
+  if (cn.status === 'Applied' && cn.linkedInvNum) {
+    var linkedInv = DB.inv.find(function(x){ return (x.num||x.invNum) === cn.linkedInvNum; });
+    if (linkedInv) {
+      var totalCredits = DB.inv
+        .filter(function(x){ return (x.type === 'credit_note' || x.type === 'goodwill_credit') && x.linkedInvNum === cn.linkedInvNum && x.status === 'Applied'; })
+        .reduce(function(sum, c){ return sum + Math.abs(parseFloat(c.cnAmount||0)); }, 0);
+      var totalPayments = DB.payments
+        .filter(function(p){ return p.invId === linkedInv.id || p.invNum === linkedInv.num; })
+        .reduce(function(sum, p){ return sum + parseFloat(p.amount||0); }, 0);
+      linkedInv.calc_balanceDue = (parseFloat(linkedInv.calc_grandTotal||0) - totalPayments - totalCredits).toFixed(2);
+    }
   }
   sv(K.i, DB.inv); closeM('ov-cn'); rInv(); rDash();
   audit(EI.cn?'UPDATE':'CREATE','cn',cn.id,cn); toast('Credit note saved');
@@ -6532,10 +6545,10 @@ function repairCalcFields() {
                   calc_margin:'0', calc_balanceDue:'0', dep:957.08, lf:0, ins:0, taxRate:0.07 },
     'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730',
                   calc_taxAmt:'0', calc_grossProfit:'4652.18', calc_netProfit:'4652.18',
-                  calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
+                  calc_margin:'32.8', calc_balanceDue:'9730', lf:450, ins:0 },
     'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6370.00', calc_liTotal:'7048.24',
                   calc_taxAmt:'0', calc_grossProfit:'878.24', calc_netProfit:'878.24',
-                  calc_margin:'12.1', calc_balanceDue:'7248.24', lf:0, ins:0 },
+                  calc_margin:'12.1', calc_balanceDue:'7048.24', lf:0, ins:0 },
     'INV10032': { calc_grandTotal:'6071.00', calc_cogs:'6071.00', calc_liTotal:'6071.00',
                   calc_taxAmt:'0', calc_grossProfit:'0', calc_netProfit:'0',
                   calc_margin:'0', calc_balanceDue:'6071.00', lf:0, ins:0 }
