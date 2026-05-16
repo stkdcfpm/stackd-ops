@@ -9,8 +9,8 @@
 
 | Field | Value |
 |-------|-------|
-| Last updated | 14 May 2026 |
-| Current version | v2.9.11 |
+| Last updated | 16 May 2026 |
+| Current version | v2.9.12 |
 | Test count | 157 / 157 passing |
 | Build branch | main |
 | Deployment | stkdcfpm.github.io/stackd-ops |
@@ -111,8 +111,6 @@ Invoice number stored as `num` not `invNum` in current records. Dashboard and ca
 | ID | Area | Summary | Target |
 |----|------|---------|--------|
 | QTE-GAP-001 | Quote status | No workflow enforcement — Convert to PO available on any status | Backlog |
-| DASH-001 | Avg Margin | Simple average not weighted — should be total profit / total revenue | v2.9.12 |
-| SYNC-001 | Sheets template | CN tab, Quotes tab, invoice num field — not yet updated | v2.9.12 |
 | TRIAL-001 | Trial conversion | No demo shipment mode — wedge feature not delivered without active BL | v2.9.13 CRITICAL |
 | PRICE-001 | Price versioning | Static catalogue — no price history per SKU | v2.9.14 |
 | MTD-001 | Tax compliance | No MTD-compatible export — affects VAT-registered customers | v2.9.x CRITICAL |
@@ -123,6 +121,7 @@ Invoice number stored as `num` not `invNum` in current records. Dashboard and ca
 
 | Version | Key changes |
 |---------|------------|
+| v2.9.12 | Weighted avg margin (weighted, not simple). Invoice status locking (Sent/Partially Paid/Paid/Cancelled immutable). Buyer statement view + PDF. CN Applied auto-updates linked invoice calc_balanceDue. Sheets: CN tab, Quotes tab, inv.num field fix. Apps Script update_shipment. STACKD_CONTEXT.md added. |
 | v2.9.11 | Dashboard reads calc_ fields as source of truth. CN exclusion from KPIs. repairCalcFields corrected PVC COGS. 157 tests. |
 | v2.9.10 | EN/ZH language toggle. Invoice/CN modal separation. Company branding on PDFs (FPM International Ltd). |
 | v2.9.9 | Line item dimensions + CBM. Load calculator. Forwarder update request + webhook. Quote feasibility check. |
@@ -140,9 +139,9 @@ Invoice number stored as `num` not `invNum` in current records. Dashboard and ca
 
 | Version | Focus | Status |
 |---------|-------|--------|
-| v2.9.12 | Sheets template — CN tab, Quotes tab, invoice num field, all entity sync | To Do |
-| v2.9.12 | Weighted average margin in rDash() | To Do |
-| v2.9.12 | Apps Script update_shipment handler for Make.com Flow 2 | To Do |
+| v2.9.12 | Sheets template — CN tab, Quotes tab, invoice num field, all entity sync | Done |
+| v2.9.12 | Weighted average margin in rDash() | Done |
+| v2.9.12 | Apps Script update_shipment handler for Make.com Flow 2 | Done |
 
 **Sprint 2 (27 May — 9 Jun 2026):**
 
@@ -322,4 +321,4 @@ Apps Script write bridge live: actions `update_requirements_tracker` and `update
 ---
 
 *STACKD · Source · Supply · Ship · FPM International Ltd · getstackdops.com*
-*Living document — last updated 14 May 2026*
+*Living document — last updated 16 May 2026*

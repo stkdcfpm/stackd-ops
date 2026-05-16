@@ -278,6 +278,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <button class="btn btn-s" data-en="+ New Invoice" data-zh="+ 新建发票" onclick="openInv()">+ New Invoice</button>
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
     <button class="btn btn-g" onclick="openAcctExport('inv')">&#8595; Accounting Export</button>
+    <button class="btn btn-g" onclick="openStatement()" title="Buyer Statement">&#128196; Statement</button>
   </div>
   <div class="tw" style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Invoice #</th><th>Buyer</th><th>Dest.</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">COGS</th><th class="num">Gross Profit</th><th class="num">Net Profit</th><th class="num">Margin</th><th class="num">Tax%</th><th class="num">Dep. Rec.</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="inv-tb"></tbody></table></div>
   <div id="inv-em" class="empty" style="display:none;"><div class="ei">&#129534;</div><p>No invoices yet.</p></div>
@@ -2116,10 +2117,19 @@ function buildInvLines() {
 async function pushAll() {
   setSyncStatus('loading');
   try {
-    var ents = ['sup','li','inv','po','sh'];
+    var isCnRec = function(r){ return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
+    // Invoices: ensure num field is populated (backward compat with invNum)
+    var invRecords = DB.inv.filter(function(x){ return !isCnRec(x); })
+      .map(function(x){ return Object.assign({},x,{num:x.num||x.invNum||''}); });
+    // Credit notes tab
+    var cnRecords = DB.inv.filter(isCnRec);
+    var ents = ['sup','li','po','sh'];
     for (var pi = 0; pi < ents.length; pi++) {
       await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]]});
     }
+    await sPost({action:'bulk_upsert', entity:'inv', records:invRecords});
+    await sPost({action:'bulk_upsert', entity:'cn',  records:cnRecords});
+    await sPost({action:'bulk_upsert', entity:'qt',  records:DB.qt});
     await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
     setSyncStatus('ok'); toast('Pushed all'); setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) { setSyncStatus('err'); toast('Failed: ' + e.message); }
@@ -2273,7 +2283,8 @@ function rDash() {
       return s + t - (+p.dep||0);
     }, 0);
   var mg = ai.map(function(i){ return iCalc(i).mgn; }).filter(function(m){ return m !== null && !isNaN(m); });
-  var aM = mg.length ? mg.reduce(function(a,b){ return a+b; }, 0) / mg.length : 0;
+  // Weighted average margin: total net profit ÷ total revenue
+  var aM = tR > 0 ? tNP / tR * 100 : 0;
 
   // Net cash: total buyer deposits received minus total supplier deposits paid minus goodwill credits issued
   var tBuyerDep = ai.reduce(function(s,i){ return s + (+i.dep||0); }, 0);
@@ -3163,6 +3174,168 @@ function rInv() {
   }).join('');
   if(cnEm) cnEm.style.display=fc.length?'none':'block';
 }
+
+// ── BUYER STATEMENT ─────────────────────────────────────────────
+function openStatement() {
+  if (!G('ov-stmt')) {
+    var el = document.createElement('div');
+    el.id = 'ov-stmt'; el.className = 'ov';
+    el.onclick = function(e){ if(e.target===el) closeM('ov-stmt'); };
+    document.body.appendChild(el);
+  }
+  var isCnRec = function(r){ return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
+  var buyers = [];
+  DB.inv.forEach(function(x){ if(!isCnRec(x) && x.buyer && buyers.indexOf(x.buyer)===-1) buyers.push(x.buyer); });
+  buyers.sort();
+  var opts = buyers.map(function(b){ return '<option value="'+san(b)+'">'+san(b)+'</option>'; }).join('');
+  G('ov-stmt').innerHTML =
+    '<div class="modal" style="max-width:820px;">' +
+    '<div class="mh"><h2>Buyer Statement</h2><button class="mx" onclick="closeM(\'ov-stmt\')">&#215;</button></div>' +
+    '<div class="mb">' +
+    '<div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;">' +
+    '<label style="font-size:.58rem;color:var(--m);">Buyer</label>' +
+    '<select id="stmt-buyer" style="font-family:\'DM Mono\',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:var(--bg);flex:1;" onchange="renderStatement(this.value)">'+
+    '<option value="">— select buyer —</option>'+opts+
+    '</select>' +
+    '<button class="btn btn-g" onclick="prevStmtPdf()">&#128438; PDF</button>' +
+    '</div>' +
+    '<div id="stmt-body"></div>' +
+    '</div></div>';
+  G('ov-stmt').classList.add('on');
+  if (buyers.length === 1) { G('stmt-buyer').value = buyers[0]; renderStatement(buyers[0]); }
+}
+
+function renderStatement(buyer) {
+  var el = G('stmt-body'); if (!el) return;
+  if (!buyer) { el.innerHTML = ''; return; }
+  var isCnRec = function(r){ return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
+  var invRecs = DB.inv.filter(function(x){ return !isCnRec(x) && x.buyer === buyer && x.status !== 'Cancelled'; });
+  var cnRecs  = DB.inv.filter(function(x){ return isCnRec(x) && x.buyer === buyer; });
+  var cur = invRecs.length ? (invRecs[0].cur||'USD') : 'USD';
+
+  var totalGrand = 0, totalPaid = 0, totalCredits = 0;
+  var invRows = invRecs.map(function(inv) {
+    var c = iCalc(inv);
+    var paid = DB.payments.filter(function(p){ return p.invId===inv.id||p.invNum===inv.num; })
+                          .reduce(function(s,p){ return s+(+p.amount||0); }, 0);
+    var credits = DB.inv.filter(function(cn){ return isCnRec(cn) && cn.linkedInvNum===inv.num && cn.status==='CN Applied'; })
+                        .reduce(function(s,cn){ return s+Math.abs(+cn.cnAmount||0); }, 0);
+    var balDue = (inv.calc_balanceDue!==undefined&&inv.calc_balanceDue!=='') ? parseFloat(inv.calc_balanceDue) : c.bal;
+    var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    totalGrand += c.grand; totalPaid += paid; totalCredits += credits;
+    return '<tr>' +
+      '<td style="font-weight:500;color:var(--cr);">'+san(inv.num||'-')+'</td>' +
+      '<td style="font-size:.54rem;color:var(--m);">'+san(inv.date||'-')+'</td>' +
+      '<td class="num">'+fmt(c.grand,cur)+'</td>' +
+      '<td class="num" style="color:var(--gn);">'+fmt(paid,cur)+'</td>' +
+      '<td class="num" style="color:var(--gold);">'+fmt(credits,cur)+'</td>' +
+      '<td class="num" style="color:var(--bl);">'+fmt(balDue,cur)+'</td>' +
+      '<td><span class="tag s-'+sc+'">'+san(inv.status||'-')+'</span></td>' +
+    '</tr>';
+  }).join('');
+
+  var totalOut = Math.max(0, totalGrand - totalPaid - totalCredits);
+  var cnRows = cnRecs.map(function(cn) {
+    var scc = cn.status==='CN Applied'?'s-paid':cn.status==='CN Issued'?'s-sent':'s-draft';
+    return '<tr>' +
+      '<td style="font-weight:500;color:var(--cr);">'+san(cn.num||'-')+'</td>' +
+      '<td style="font-size:.54rem;color:var(--m);">'+san(cn.date||'-')+'</td>' +
+      '<td>'+san(cn.linkedInvNum||'—')+'</td>' +
+      '<td class="num" style="color:var(--cr);">'+fmt(+cn.cnAmount||0,cur)+'</td>' +
+      '<td><span class="tag '+scc+'">'+san(cn.status||'CN Draft')+'</span></td>' +
+    '</tr>';
+  }).join('');
+
+  el.innerHTML =
+    '<div style="font-size:.52rem;color:var(--m);margin-bottom:6px;letter-spacing:.08em;text-transform:uppercase;">Invoices</div>' +
+    '<table class="tbl" style="margin-bottom:16px;"><thead><tr>' +
+    '<th>Invoice #</th><th>Date</th><th class="num">Grand Total</th><th class="num">Payments</th><th class="num">Credits</th><th class="num">Balance Due</th><th>Status</th>' +
+    '</tr></thead><tbody>'+invRows+'</tbody>' +
+    '<tfoot><tr style="font-weight:700;border-top:2px solid var(--ln);">' +
+    '<td colspan="2" style="font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;">Totals</td>' +
+    '<td class="num">'+fmt(totalGrand,cur)+'</td>' +
+    '<td class="num" style="color:var(--gn);">'+fmt(totalPaid,cur)+'</td>' +
+    '<td class="num" style="color:var(--gold);">'+fmt(totalCredits,cur)+'</td>' +
+    '<td class="num" style="color:var(--bl);">'+fmt(totalOut,cur)+'</td>' +
+    '<td></td></tr></tfoot></table>' +
+    '<div style="background:var(--bg);border-left:3px solid var(--bl);padding:8px 14px;margin-bottom:16px;font-size:.7rem;">' +
+    '<strong>Total Outstanding: '+fmt(totalOut,cur)+'</strong></div>' +
+    (cnRecs.length ? '<div style="font-size:.52rem;color:var(--m);margin-bottom:6px;letter-spacing:.08em;text-transform:uppercase;">Credit Notes</div>' +
+    '<table class="tbl"><thead><tr><th>CN #</th><th>Date</th><th>Linked Invoice</th><th class="num">Credit Amount</th><th>Status</th></tr></thead>' +
+    '<tbody>'+cnRows+'</tbody></table>' : '');
+}
+
+function prevStmtPdf() {
+  var buyer = G('stmt-buyer') ? G('stmt-buyer').value : '';
+  if (!buyer) { toast('Select a buyer first'); return; }
+  var isCnRec = function(r){ return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
+  var invRecs = DB.inv.filter(function(x){ return !isCnRec(x) && x.buyer === buyer && x.status !== 'Cancelled'; });
+  var cnRecs  = DB.inv.filter(function(x){ return isCnRec(x) && x.buyer === buyer; });
+  var cur = invRecs.length ? (invRecs[0].cur||'USD') : 'USD';
+  var b = getCoBrand(); var docColour = b.colour||'#B8283A';
+  var today_str = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+
+  var totalGrand=0, totalPaid=0, totalCredits=0;
+  var invRows = invRecs.map(function(inv){
+    var c=iCalc(inv);
+    var paid=DB.payments.filter(function(p){return p.invId===inv.id||p.invNum===inv.num;}).reduce(function(s,p){return s+(+p.amount||0);},0);
+    var credits=DB.inv.filter(function(cn){return isCnRec(cn)&&cn.linkedInvNum===inv.num&&cn.status==='CN Applied';}).reduce(function(s,cn){return s+Math.abs(+cn.cnAmount||0);},0);
+    var balDue=(inv.calc_balanceDue!==undefined&&inv.calc_balanceDue!=='')?parseFloat(inv.calc_balanceDue):c.bal;
+    totalGrand+=c.grand; totalPaid+=paid; totalCredits+=credits;
+    return '<tr style="border-bottom:1px solid #eee;font-size:.62rem;"><td style="padding:6px;">'+san(inv.num||'-')+'</td><td style="padding:6px;color:#888;">'+san(inv.date||'-')+'</td><td style="padding:6px;text-align:right;">'+fn(c.grand)+'</td><td style="padding:6px;text-align:right;color:#1a7a4a;">'+fn(paid)+'</td><td style="padding:6px;text-align:right;color:#b97400;">'+fn(credits)+'</td><td style="padding:6px;text-align:right;font-weight:600;">'+fn(balDue)+'</td><td style="padding:6px;">'+san(inv.status||'-')+'</td></tr>';
+  }).join('');
+  var totalOut = Math.max(0, totalGrand-totalPaid-totalCredits);
+  var cnRows = cnRecs.map(function(cn){
+    return '<tr style="border-bottom:1px solid #eee;font-size:.62rem;"><td style="padding:6px;">'+san(cn.num||'-')+'</td><td style="padding:6px;color:#888;">'+san(cn.date||'-')+'</td><td style="padding:6px;">'+san(cn.linkedInvNum||'—')+'</td><td style="padding:6px;text-align:right;color:'+docColour+';">'+fn(+cn.cnAmount||0)+'</td><td style="padding:6px;">'+san(cn.status||'CN Draft')+'</td></tr>';
+  }).join('');
+
+  var thStyle = 'padding:6px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;text-align:left;border-bottom:1px solid #111;';
+  var thR = thStyle+'text-align:right;';
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Statement — '+san(buyer)+'</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">' +
+    '<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"DM Mono",monospace;font-size:.72rem;color:#111;background:white;}' +
+    '.topbar{background:#0f0c0d;padding:10px 24px;display:flex;align-items:center;gap:12px;}' +
+    '.btn-print{font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:'+docColour+';color:white;border:none;padding:8px 20px;cursor:pointer;}' +
+    '.btn-close{font-family:"DM Mono",monospace;font-size:.6rem;border:1px solid #333;background:transparent;color:#8a7f82;padding:8px 14px;cursor:pointer;}' +
+    '.doc{padding:32px 40px;max-width:820px;margin:0 auto;}' +
+    '@media print{.topbar{display:none!important;}.doc{padding:0;}}</style>' +
+    '</head><body>' +
+    '<div class="topbar"><span style="font-family:\'DM Mono\',monospace;font-size:.6rem;letter-spacing:.1em;color:#8a7f82;flex:1;">Buyer Statement — '+san(buyer)+'</span>' +
+    '<button class="btn-print" onclick="setTimeout(function(){print();},200)">&#128438;&nbsp; Print / Save PDF</button>' +
+    '<button class="btn-close" onclick="window.close()">Close</button></div>' +
+    '<div class="doc">'+buildPdfHeader(docColour)+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #111;">' +
+    '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;letter-spacing:.15em;color:'+docColour+';">STATEMENT OF ACCOUNT</div>' +
+    '<div style="font-size:.6rem;color:#8a7f82;margin-top:4px;">As at '+today_str+'</div></div>' +
+    '<div style="text-align:right;font-size:.62rem;"><div style="color:#8a7f82;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;">To</div><div style="font-weight:700;">'+san(buyer)+'</div></div></div>' +
+    '<div style="font-size:.52rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">Invoices</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;"><thead><tr>' +
+    '<th style="'+thStyle+'">Invoice #</th><th style="'+thStyle+'">Date</th>' +
+    '<th style="'+thR+'">Grand Total</th><th style="'+thR+'">Payments</th>' +
+    '<th style="'+thR+'">Credits</th><th style="'+thR+'">Balance Due</th><th style="'+thStyle+'">Status</th>' +
+    '</tr></thead><tbody>'+invRows+'</tbody>' +
+    '<tfoot><tr style="font-weight:700;border-top:2px solid #111;">' +
+    '<td colspan="2" style="padding:8px;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;">Totals</td>' +
+    '<td style="padding:8px;text-align:right;">'+fn(totalGrand)+'</td>' +
+    '<td style="padding:8px;text-align:right;color:#1a7a4a;">'+fn(totalPaid)+'</td>' +
+    '<td style="padding:8px;text-align:right;color:#b97400;">'+fn(totalCredits)+'</td>' +
+    '<td style="padding:8px;text-align:right;font-weight:700;font-size:.75rem;">'+cur+' '+fn(totalOut)+'</td>' +
+    '<td></td></tr></tfoot></table>' +
+    '<div style="background:#f5f0ee;border-left:4px solid '+docColour+';padding:10px 16px;margin-bottom:20px;">' +
+    '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;letter-spacing:.1em;">TOTAL OUTSTANDING: '+cur+' '+fn(totalOut)+'</span></div>' +
+    (cnRecs.length ? '<div style="font-size:.52rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">Credit Notes</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;"><thead><tr>' +
+    '<th style="'+thStyle+'">CN #</th><th style="'+thStyle+'">Date</th><th style="'+thStyle+'">Linked Invoice</th>' +
+    '<th style="'+thR+'">Credit Amount</th><th style="'+thStyle+'">Status</th>' +
+    '</tr></thead><tbody>'+cnRows+'</tbody></table>' : '') +
+    buildPdfFooter()+'</div></body></html>';
+
+  var blob=new Blob([html],{type:'text/html'});
+  var url=URL.createObjectURL(blob);
+  var w=window.open(url,'_blank');
+  if(!w){URL.revokeObjectURL(url);alert('Allow pop-ups for this page then try again.');}else{w.focus();}
+}
+
 async function delInv(id) {
   if(!confirm('Delete this invoice?')) return;
   DB.inv=DB.inv.filter(function(i){return i.id!==id;});
