@@ -18,6 +18,25 @@ var SHEET_NAMES = {
   inv_lines: 'inv_lines'
 };
 
+function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) || '';
+  if (action === 'getSheetId') {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: 'ok',
+        sheetId: ss.getId(),
+        sheetName: ss.getName(),
+        sheetUrl: ss.getUrl(),
+        tabs: ss.getSheets().map(function(s){ return s.getName(); })
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'error', message: 'Unknown action: ' + action }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
