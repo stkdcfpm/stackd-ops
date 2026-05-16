@@ -30,49 +30,18 @@ var HEADERS = {
 var REQUIREMENTS_TRACKER_ID = '1q05sSoCMmiqaNNixDWVk2_aJPwEqx37vDbOPNh2gqGw';
 var PROJECT_TRACKER_ID      = '1gC6d7ClOFpaocK_lNI685x5yMK5_UHiMgriFlF_UrLg';
 
-// ── helpers ──────────────────────────────────────────────────────
-
-function respond(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function getSheet(entity) {
-  var name = SHEETS[entity];
-  if (!name) return null;
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var sheet = ss.getSheetByName(name);
-  if (!sheet) {
-    sheet = ss.insertSheet(name);
-    if (HEADERS[entity]) sheet.appendRow(HEADERS[entity]);
-  }
-  return sheet;
-}
-
-function pingResponse() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  return {
-    status:    'ok',
-    message:   'Stackd Ops active',
-    sheetId:   ss.getId(),
-    sheetName: ss.getName(),
-    sheetUrl:  ss.getUrl(),
-    tabs:      ss.getSheets().map(function(s){ return s.getName(); })
-  };
-}
-
-// ── doGet ────────────────────────────────────────────────────────
-
-function doGet(e) {
-  var action = (e && e.parameter && e.parameter.action) || '';
-  var token  = (e && e.parameter && e.parameter._token) || '';
-  if (token !== TOKEN) return respond({ status: 'error', message: 'Unauthorised' });
-  if (action === 'ping') return respond(pingResponse());
-  return respond({ status: 'error', message: 'Unknown GET action' });
-}
-
-// ── doPost ───────────────────────────────────────────────────────
+// Maps Stackd entity keys to sheet tab names
+var SHEET_NAMES = {
+  sup:       'Suppliers',
+  li:        'Line Items',
+  inv:       'Invoices',
+  po:        'Purchase Orders',
+  sh:        'Shipments',
+  qt:        'Quotes',
+  payments:  'Payments',
+  cn:        'Credit Notes',
+  inv_lines: 'inv_lines'
+};
 
 function doPost(e) {
   try {
