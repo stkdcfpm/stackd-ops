@@ -3225,21 +3225,26 @@ function renderStatement(buyer) {
     totalGrand += c.grand; totalPaid += paid; totalCredits += credits;
     return '<tr>' +
       '<td style="font-weight:500;color:var(--cr);">'+san(inv.num||'-')+'</td>' +
-      '<td style="font-size:.54rem;color:var(--m);">'+san(inv.date||'-')+'</td>' +
+      '<td style="font-size:.54rem;color:var(--m);">'+san((inv.date||'').split('T')[0]||'—')+'</td>' +
       '<td class="num">'+fmt(c.grand,cur)+'</td>' +
       '<td class="num" style="color:var(--gn);">'+fmt(paid,cur)+'</td>' +
-      '<td class="num" style="color:var(--gold);">'+fmt(credits,cur)+'</td>' +
+      '<td class="num" style="color:var(--gold);">'+fmt(-credits,cur)+'</td>' +
       '<td class="num" style="color:var(--bl);">'+fmt(balDue,cur)+'</td>' +
       '<td><span class="tag s-'+sc+'">'+san(inv.status||'-')+'</span></td>' +
     '</tr>';
   }).join('');
 
-  var totalOut = Math.max(0, totalGrand - totalPaid - totalCredits);
+  var totalOut = invRecs.reduce(function(s, x) {
+    if (x.status === 'Paid' || x.status === 'Cancelled') return s;
+    var xc = iCalc(x);
+    var xb = (x.calc_balanceDue !== undefined && x.calc_balanceDue !== '') ? parseFloat(x.calc_balanceDue) : xc.bal;
+    return s + Math.max(0, xb);
+  }, 0);
   var cnRows = cnRecs.map(function(cn) {
     var scc = cn.status==='CN Applied'?'s-paid':cn.status==='CN Issued'?'s-sent':'s-draft';
     return '<tr>' +
       '<td style="font-weight:500;color:var(--cr);">'+san(cn.num||'-')+'</td>' +
-      '<td style="font-size:.54rem;color:var(--m);">'+san(cn.date||'-')+'</td>' +
+      '<td style="font-size:.54rem;color:var(--m);">'+san((cn.date||'').split('T')[0]||'—')+'</td>' +
       '<td>'+san(cn.linkedInvNum||'—')+'</td>' +
       '<td class="num" style="color:var(--cr);">'+fmt(+cn.cnAmount||0,cur)+'</td>' +
       '<td><span class="tag '+scc+'">'+san(cn.status||'CN Draft')+'</span></td>' +
@@ -3255,7 +3260,7 @@ function renderStatement(buyer) {
     '<td colspan="2" style="font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;">Totals</td>' +
     '<td class="num">'+fmt(totalGrand,cur)+'</td>' +
     '<td class="num" style="color:var(--gn);">'+fmt(totalPaid,cur)+'</td>' +
-    '<td class="num" style="color:var(--gold);">'+fmt(totalCredits,cur)+'</td>' +
+    '<td class="num" style="color:var(--gold);">'+fmt(-totalCredits,cur)+'</td>' +
     '<td class="num" style="color:var(--bl);">'+fmt(totalOut,cur)+'</td>' +
     '<td></td></tr></tfoot></table>' +
     '<div style="background:var(--bg);border-left:3px solid var(--bl);padding:8px 14px;margin-bottom:16px;font-size:.7rem;">' +
@@ -3282,11 +3287,16 @@ function prevStmtPdf() {
     var credits=DB.inv.filter(function(cn){return isCnRec(cn)&&cn.linkedInvNum===inv.num&&cn.status==='CN Applied';}).reduce(function(s,cn){return s+Math.abs(+cn.cnAmount||0);},0);
     var balDue=(inv.calc_balanceDue!==undefined&&inv.calc_balanceDue!=='')?parseFloat(inv.calc_balanceDue):c.bal;
     totalGrand+=c.grand; totalPaid+=paid; totalCredits+=credits;
-    return '<tr style="border-bottom:1px solid #eee;font-size:.62rem;"><td style="padding:6px;">'+san(inv.num||'-')+'</td><td style="padding:6px;color:#888;">'+san(inv.date||'-')+'</td><td style="padding:6px;text-align:right;">'+fn(c.grand)+'</td><td style="padding:6px;text-align:right;color:#1a7a4a;">'+fn(paid)+'</td><td style="padding:6px;text-align:right;color:#b97400;">'+fn(credits)+'</td><td style="padding:6px;text-align:right;font-weight:600;">'+fn(balDue)+'</td><td style="padding:6px;">'+san(inv.status||'-')+'</td></tr>';
+    return '<tr style="border-bottom:1px solid #eee;font-size:.62rem;"><td style="padding:6px;">'+san(inv.num||'-')+'</td><td style="padding:6px;color:#888;">'+san((inv.date||'').split('T')[0]||'—')+'</td><td style="padding:6px;text-align:right;">'+fn(c.grand)+'</td><td style="padding:6px;text-align:right;color:#1a7a4a;">'+fn(paid)+'</td><td style="padding:6px;text-align:right;color:#b97400;">'+fn(-credits)+'</td><td style="padding:6px;text-align:right;font-weight:600;">'+fn(balDue)+'</td><td style="padding:6px;">'+san(inv.status||'-')+'</td></tr>';
   }).join('');
-  var totalOut = Math.max(0, totalGrand-totalPaid-totalCredits);
+  var totalOut = invRecs.reduce(function(s, x) {
+    if (x.status === 'Paid' || x.status === 'Cancelled') return s;
+    var xc = iCalc(x);
+    var xb = (x.calc_balanceDue !== undefined && x.calc_balanceDue !== '') ? parseFloat(x.calc_balanceDue) : xc.bal;
+    return s + Math.max(0, xb);
+  }, 0);
   var cnRows = cnRecs.map(function(cn){
-    return '<tr style="border-bottom:1px solid #eee;font-size:.62rem;"><td style="padding:6px;">'+san(cn.num||'-')+'</td><td style="padding:6px;color:#888;">'+san(cn.date||'-')+'</td><td style="padding:6px;">'+san(cn.linkedInvNum||'—')+'</td><td style="padding:6px;text-align:right;color:'+docColour+';">'+fn(+cn.cnAmount||0)+'</td><td style="padding:6px;">'+san(cn.status||'CN Draft')+'</td></tr>';
+    return '<tr style="border-bottom:1px solid #eee;font-size:.62rem;"><td style="padding:6px;">'+san(cn.num||'-')+'</td><td style="padding:6px;color:#888;">'+san((cn.date||'').split('T')[0]||'—')+'</td><td style="padding:6px;">'+san(cn.linkedInvNum||'—')+'</td><td style="padding:6px;text-align:right;color:'+docColour+';">'+fn(+cn.cnAmount||0)+'</td><td style="padding:6px;">'+san(cn.status||'CN Draft')+'</td></tr>';
   }).join('');
 
   var thStyle = 'padding:6px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;text-align:left;border-bottom:1px solid #111;';
@@ -3318,7 +3328,7 @@ function prevStmtPdf() {
     '<td colspan="2" style="padding:8px;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;">Totals</td>' +
     '<td style="padding:8px;text-align:right;">'+fn(totalGrand)+'</td>' +
     '<td style="padding:8px;text-align:right;color:#1a7a4a;">'+fn(totalPaid)+'</td>' +
-    '<td style="padding:8px;text-align:right;color:#b97400;">'+fn(totalCredits)+'</td>' +
+    '<td style="padding:8px;text-align:right;color:#b97400;">'+fn(-totalCredits)+'</td>' +
     '<td style="padding:8px;text-align:right;font-weight:700;font-size:.75rem;">'+cur+' '+fn(totalOut)+'</td>' +
     '<td></td></tr></tfoot></table>' +
     '<div style="background:#f5f0ee;border-left:4px solid '+docColour+';padding:10px 16px;margin-bottom:20px;">' +
