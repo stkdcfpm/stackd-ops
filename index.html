@@ -742,7 +742,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <select id="inv-sm" style="font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--ln);padding:4px 9px;background:white;cursor:pointer;"><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
       <button class="mx" onclick="closeM('ov-inv')">&#215;</button></div>
     <div class="mb">
-      <div class="ms"><div class="mst">Invoice Details</div>
+      <div class="ms"><div class="mst" id="inv-sect-hdr">Invoice Details</div>
         <div class="fg fg4">
           <div class="fld"><label>Invoice #</label><input type="text" id="if-n" placeholder="INV10032"></div>
           <div class="fld"><label>Date</label><input type="date" id="if-dt"></div>
@@ -823,8 +823,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;">
         <button class="btn btn-g" onclick="closeM('ov-inv')">Cancel</button>
-        <button class="btn btn-o" onclick="prevInv()">Preview Invoice</button>
-        <button class="btn btn-s" onclick="saveInv()">Save Invoice</button>
+        <button class="btn btn-o" id="inv-prev-btn" onclick="prevInv()">Preview Invoice</button>
+        <button class="btn btn-s" id="inv-save-btn" onclick="saveInv()">Save Invoice</button>
       </div>
     </div>
   </div>
