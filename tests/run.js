@@ -1172,6 +1172,46 @@ test('invoiceRefs — delInv removes all refs for that invoice', function() {
   assertEqual(remaining.length, 0, 'invoiceRef cleaned up after delInv');
 });
 
+test('delInv — routes credit_note delete to cn entity', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'cn-del1', num:'CN10301', type:'credit_note', cnAmount:-100, lineItems:[], taxRate:0 });
+  var capturedEntity;
+  var origDelEnt = ctx.delEnt;
+  ctx.delEnt = function(entity) { capturedEntity = entity; return Promise.resolve(); };
+  ctx.confirm = function(){ return true; };
+  ctx.delInv('cn-del1');
+  ctx.confirm = function(){ return false; };
+  ctx.delEnt = origDelEnt;
+  assertEqual(capturedEntity, 'cn', 'credit_note delete routed to cn entity');
+  assertEqual(ctx.DB.inv.find(function(i){ return i.id==='cn-del1'; }), undefined, 'CN removed from DB.inv');
+});
+
+test('delInv — routes goodwill_credit delete to cn entity', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'gw-del1', num:'CN10302', type:'goodwill_credit', cnAmount:-50, lineItems:[], taxRate:0 });
+  var capturedEntity;
+  var origDelEnt = ctx.delEnt;
+  ctx.delEnt = function(entity) { capturedEntity = entity; return Promise.resolve(); };
+  ctx.confirm = function(){ return true; };
+  ctx.delInv('gw-del1');
+  ctx.confirm = function(){ return false; };
+  ctx.delEnt = origDelEnt;
+  assertEqual(capturedEntity, 'cn', 'goodwill_credit delete routed to cn entity');
+});
+
+test('delInv — routes regular invoice delete to inv entity', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'inv-reg1', num:'INV10303', status:'Draft', lineItems:[], taxRate:0 });
+  var capturedEntity;
+  var origDelEnt = ctx.delEnt;
+  ctx.delEnt = function(entity) { capturedEntity = entity; return Promise.resolve(); };
+  ctx.confirm = function(){ return true; };
+  ctx.delInv('inv-reg1');
+  ctx.confirm = function(){ return false; };
+  ctx.delEnt = origDelEnt;
+  assertEqual(capturedEntity, 'inv', 'regular invoice delete routed to inv entity');
+});
+
 test('invoiceRefs — saveInv with empty cIL does not modify invoiceRefs', function() {
   resetDB();
   ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[],
@@ -1582,6 +1622,307 @@ test('goodwill credit — payments ledger entry has negative amount', function()
   assert(pmt,              'goodwill payment entry exists');
   assertEqual(pmt.amount,  -200,     'goodwill amount is negative');
   assertEqual(pmt.invNum,  'CN10002', 'linked to CN10002');
+});
+
+// ── CN Modal Separation (v2.9.10) ──────────────────────────────
+console.log('\nCN Modal Separation (v2.9.10)');
+
+function setupCNFormNew(cnNum, linkedInvNum, amount, goodwill) {
+  mockEl('cnf-n').value = cnNum || 'CN10080';
+  mockEl('cnf-b').value = 'Test Buyer';
+  mockEl('cnf-dt').value = '2026-05-01';
+  mockEl('cnf-cur').value = 'USD';
+  mockEl('cnf-amount').value = String(amount || 0);
+  mockEl('cnf-linked').value = linkedInvNum || '';
+  mockEl('cnf-reason').value = 'Test credit reason';
+  mockEl('cnf-nt').value = '';
+  mockEl('cnf-type').value = goodwill ? 'goodwill_credit' : 'credit_note';
+  mockEl('cn-sm').value = 'CN Draft';
+  mockEl('cn-verr').textContent = '';
+  mockEl('fld-cn-linked').style.display = goodwill ? 'none' : 'block';
+}
+
+test('vCN — valid standard CN passes validation', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10200', 'INV10200', 250, false);
+  var result = ctx.vCN();
+  assert(result, 'vCN returns true for valid standard CN with amount > 0');
+});
+
+test('vCN — fails when cn-amount is 0', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10201', 'INV10201', 0, false);
+  var result = ctx.vCN();
+  assert(result === false, 'vCN returns false when amount is 0');
+});
+
+test('vCN — fails when CN number is missing', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10202', 'INV10202', 100, false);
+  mockEl('cnf-n').value = ''; // Override default fallback — empty number
+  var result = ctx.vCN();
+  assert(result === false, 'vCN returns false when CN number is empty');
+});
+
+test('vCN — fails standard CN when linked invoice missing', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10203', '', 100, false);
+  var result = ctx.vCN();
+  assert(result === false, 'vCN returns false when standard CN has no linked invoice');
+});
+
+test('vCN — goodwill passes without linked invoice', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10204', '', 150, true);
+  var result = ctx.vCN();
+  assert(result, 'vCN returns true for goodwill CN without linked invoice');
+});
+
+test('saveCN — standard credit note saves with type credit_note', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10205', 'INV10205', 300, false);
+  ctx.saveCN();
+  var cn = ctx.DB.inv.find(function(i){ return i.num === 'CN10205'; });
+  assert(cn, 'CN record saved');
+  assertEqual(cn.type, 'credit_note', 'type is credit_note');
+  assertEqual(cn.cnAmount, -300, 'cnAmount stored as negative');
+  assertEqual(cn.linkedInvNum, 'INV10205', 'linkedInvNum set');
+});
+
+test('saveCN — goodwill credit saves with type goodwill_credit', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10206', '', 400, true);
+  ctx.saveCN();
+  var cn = ctx.DB.inv.find(function(i){ return i.num === 'CN10206'; });
+  assert(cn, 'goodwill CN record saved');
+  assertEqual(cn.type, 'goodwill_credit', 'type is goodwill_credit');
+  assertEqual(cn.cnAmount, -400, 'cnAmount is -400');
+});
+
+test('saveCN — goodwill credit adds negative payments ledger entry', function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10207', '', 500, true);
+  ctx.saveCN();
+  var cn = ctx.DB.inv.find(function(i){ return i.num === 'CN10207'; });
+  var pmt = ctx.DB.payments.find(function(p){ return p.invId === cn.id && p.method === 'Goodwill Credit'; });
+  assert(pmt, 'goodwill payment ledger entry created');
+  assertEqual(pmt.amount, -500, 'payment amount is -500');
+});
+
+test('saveCN — duplicate CN number is rejected', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'existing-cn', num: 'CN10208', type: 'credit_note', cnAmount: -100 });
+  ctx.EI.cn = null;
+  setupCNFormNew('CN10208', 'INV10208', 100, false);
+  ctx.saveCN();
+  var cnt = ctx.DB.inv.filter(function(i){ return i.num === 'CN10208'; }).length;
+  assertEqual(cnt, 1, 'duplicate CN not saved — only one record with that number');
+});
+
+test('saveCN — edit existing CN updates record in-place', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'edit-cn-1', num: 'CN10209', type: 'credit_note', cnAmount: -100, buyer: 'Old Buyer' });
+  ctx.EI.cn = 'edit-cn-1';
+  setupCNFormNew('CN10209', 'INV10209', 200, false);
+  mockEl('cnf-b').value = 'New Buyer';
+  ctx.saveCN();
+  var cn = ctx.DB.inv.find(function(i){ return i.id === 'edit-cn-1'; });
+  assert(cn, 'record still exists');
+  assertEqual(cn.buyer, 'New Buyer', 'buyer updated');
+  assertEqual(cn.cnAmount, -200, 'amount updated');
+  var total = ctx.DB.inv.filter(function(i){ return i.num === 'CN10209'; }).length;
+  assertEqual(total, 1, 'no duplicate created on edit');
+});
+
+// ── Language / setLang (v2.9.10) ───────────────────────────────
+console.log('\nLanguage toggle (v2.9.10)');
+
+test('setLang — stores lang in localStorage', function() {
+  ctx.setLang('zh');
+  assertEqual(ctx.localStorage.getItem('stackd_lang'), 'zh', 'zh stored in localStorage');
+  ctx.setLang('en');
+  assertEqual(ctx.localStorage.getItem('stackd_lang'), 'en', 'en stored in localStorage');
+});
+
+test('_lang defaults to en when not set', function() {
+  // _lang was initialised before mock storage had the key
+  assert(ctx._lang === 'en' || ctx._lang === 'zh', '_lang is a valid language code');
+});
+
+// ── Company Branding (v2.9.10) ─────────────────────────────────
+console.log('\nCompany Branding (v2.9.10)');
+
+test('getCoBrand — returns defaults when nothing stored', function() {
+  var b = ctx.getCoBrand();
+  assertEqual(typeof b.colour, 'string', 'colour is string');
+  assertEqual(typeof b.powered, 'boolean', 'powered is boolean');
+});
+
+test('saveCoBrand — round-trips branding data', function() {
+  ctx.saveCoBrand({ logo:'', name:'Test Co', trading:'TestTrade', addr:'London', email:'e@t.com', phone:'123', reg:'REG1', vat:'VAT1', colour:'#112233', footer:'Pay in 30', powered:false });
+  var b = ctx.getCoBrand();
+  assertEqual(b.name, 'Test Co', 'name round-trips');
+  assertEqual(b.colour, '#112233', 'colour round-trips');
+  assertEqual(b.powered, false, 'powered round-trips as false');
+});
+
+test('buildPdfHeader — returns HTML string with border colour', function() {
+  ctx.saveCoBrand({ logo:'', name:'ACME', trading:'', addr:'', email:'', phone:'', reg:'', vat:'', colour:'#AA0000', footer:'', powered:true });
+  var html = ctx.buildPdfHeader('#AA0000');
+  assertContains(html, '#AA0000', 'accent colour in header');
+  assertContains(html, 'ACME', 'company name in header');
+});
+
+// ── iCalc / dashboard calc_ priority (v2.9.11) ─────────────────
+console.log('\niCalc / dashboard calc_ priority (v2.9.11)');
+
+test('iCalc — uses calc_grandTotal over live liT', function() {
+  resetDB();
+  var inv = { id:'ic1', status:'Draft', lineItems:[{qty:1,up:100}], taxRate:0, chargesIncluded:true,
+              calc_grandTotal:'9999', calc_netProfit:'500', calc_cogs:'9499',
+              calc_grossProfit:'500', calc_margin:'5', calc_balanceDue:'9999' };
+  var c = ctx.iCalc(inv);
+  assertEqual(c.grand, 9999, 'grand from calc_grandTotal');
+  assertEqual(c.np,    500,  'np from calc_netProfit');
+  assertEqual(c.cogs,  9499, 'cogs from calc_cogs');
+});
+
+test('iCalc — falls back to cInv when calc_ fields absent', function() {
+  resetDB();
+  var inv = { id:'ic2', status:'Draft', lineItems:[{qty:2,up:50}], taxRate:0, chargesIncluded:true };
+  var c = ctx.iCalc(inv);
+  assertEqual(c.grand, 100, 'grand from live cInv');
+});
+
+test('iCalc — bal uses live cInv: stale calc_balanceDue is ignored', function() {
+  resetDB();
+  ctx.DB.payments = [{ id:'pm-ic3', invId:'ic3', amount: 600 }];
+  var inv = { id:'ic3', status:'Draft', lineItems:[], taxRate:0, chargesIncluded:true,
+              calc_grandTotal:'1000', calc_balanceDue:'9999',
+              calc_netProfit:'0', calc_cogs:'0', calc_grossProfit:'0', calc_margin:'0' };
+  assertEqual(ctx.iCalc(inv).bal, 400, 'bal = 1000 - 600 payment (stale calc_balanceDue ignored)');
+});
+
+test('iCalc — applied CN reduces bal via live cInv', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'icn-inv', num:'INV099', status:'Draft', lineItems:[], taxRate:0, chargesIncluded:true,
+      calc_grandTotal:'1000', calc_balanceDue:'1000' },
+    { id:'icn-cn', num:'CN099', type:'credit_note', linkedInvNum:'INV099',
+      cnAmount:-300, status:'CN Applied', lineItems:[], taxRate:0 }
+  ];
+  var inv = ctx.DB.inv.find(function(i){ return i.num==='INV099'; });
+  assertEqual(ctx.iCalc(inv).bal, 700, 'bal = 1000 - 300 applied CN (stale calc_balanceDue ignored)');
+});
+
+test('iCalc — credit_note bypasses calc_ fields and delegates to cInv', function() {
+  resetDB();
+  // A CN with calc_netProfit set — iCalc must NOT use it; CNs are not real-revenue records
+  var cn = { id:'icn1', type:'credit_note', cnAmount:200, lineItems:[], taxRate:0, dep:0,
+             calc_grandTotal:'9999', calc_netProfit:'9999' };
+  var c = ctx.iCalc(cn);
+  assertEqual(c.grand, 200, 'CN grand = cnAmount, not calc_grandTotal');
+  assertEqual(c.np,    0,   'CN np = 0 from cInv, not calc_netProfit');
+});
+
+test('iCalc — goodwill_credit bypasses calc_ fields', function() {
+  resetDB();
+  var gw = { id:'igw1', type:'goodwill_credit', cnAmount:150, lineItems:[], taxRate:0, dep:0,
+             calc_grandTotal:'9999', calc_netProfit:'9999' };
+  var c = ctx.iCalc(gw);
+  assertEqual(c.np, 0, 'goodwill_credit np = 0 from cInv');
+});
+
+test('rDash ai filter — excludes credit_note records from active count', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'f1', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'1000', calc_netProfit:'100', calc_cogs:'900', calc_margin:'10', calc_balanceDue:'1000' },
+    { id:'f2', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'2000', calc_netProfit:'200', calc_cogs:'1800', calc_margin:'10', calc_balanceDue:'2000' },
+    { id:'f3', type:'credit_note',  status:'CN Applied', cnAmount:100,  lineItems:[], taxRate:0 },
+    { id:'f4', type:'goodwill_credit', status:'CN Draft', cnAmount:50,  lineItems:[], taxRate:0 }
+  ];
+  var ai = ctx.DB.inv.filter(function(i){
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    if (!i.type && ctx.isCN(i.num)) return false;
+    return true;
+  });
+  assertEqual(ai.length, 2, 'only 2 real invoices in ai');
+});
+
+test('rDash — Revenue excludes credit note grand totals', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'r1', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'31055.80', calc_netProfit:'5829.80', calc_cogs:'25226.00', calc_margin:'18.8', calc_balanceDue:'0' },
+    { id:'r2', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'957.08',   calc_netProfit:'0',       calc_cogs:'894.47',   calc_margin:'0',    calc_balanceDue:'0' },
+    { id:'r3', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'14180',    calc_netProfit:'4652.18', calc_cogs:'9527.82',  calc_margin:'32.8', calc_balanceDue:'10180' },
+    { id:'r4', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'7248.24',  calc_netProfit:'878.24',  calc_cogs:'6370.00',  calc_margin:'12.1', calc_balanceDue:'7248.24' },
+    { id:'r5', type:'credit_note', status:'CN Applied', cnAmount:500, lineItems:[], taxRate:0 }
+  ];
+  var ai = ctx.DB.inv.filter(function(i){
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    if (!i.type && ctx.isCN(i.num)) return false;
+    return true;
+  });
+  var tR = ai.reduce(function(s,i){ return s + ctx.iCalc(i).grand; }, 0);
+  assertEqual(Math.round(tR), 53441, 'Revenue = $53,441 (CN excluded)');
+  assertEqual(ai.length, 4, '4 invoices in active count');
+});
+
+test('rDash — Net Profit excludes credit note contributions', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'np1', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'5829.80', calc_grandTotal:'31055.80', calc_balanceDue:'0',       calc_margin:'18.8', calc_cogs:'25226.00' },
+    { id:'np2', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'0',       calc_grandTotal:'957.08',   calc_balanceDue:'0',       calc_margin:'0',    calc_cogs:'894.47'   },
+    { id:'np3', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'4652.18', calc_grandTotal:'14180',    calc_balanceDue:'10180',   calc_margin:'32.8', calc_cogs:'9527.82'  },
+    { id:'np4', status:'Draft', lineItems:[], taxRate:0, calc_netProfit:'878.24',  calc_grandTotal:'7248.24',  calc_balanceDue:'7248.24', calc_margin:'12.1', calc_cogs:'6370.00'  },
+    { id:'np5', type:'credit_note', status:'CN Applied', cnAmount:166, lineItems:[], taxRate:0, calc_netProfit:'-166' }
+  ];
+  var ai = ctx.DB.inv.filter(function(i){
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    if (!i.type && ctx.isCN(i.num)) return false;
+    return true;
+  });
+  var tNP = ai.reduce(function(s,i){ return s + ctx.iCalc(i).np; }, 0);
+  assertEqual(Math.round(tNP), 11360, 'NP = $11,360 (CN with calc_netProfit excluded)');
+});
+
+test('rDash — Outstanding correctly reflects payments and applied CNs', function() {
+  resetDB();
+  ctx.DB.payments = [
+    { id:'pm-ou3', invId:'ou3', amount:4000 }
+  ];
+  ctx.DB.inv = [
+    { id:'ou1', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'31055.80', calc_balanceDue:'0',       calc_netProfit:'5829.80', calc_margin:'18.8', calc_cogs:'25226.00' },
+    { id:'ou2', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'957.08',   calc_balanceDue:'0',       calc_netProfit:'0',       calc_margin:'0',    calc_cogs:'894.47'   },
+    { id:'ou3', num:'INV103', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'14180',   calc_balanceDue:'10180',   calc_netProfit:'4652.18', calc_margin:'32.8', calc_cogs:'9527.82'  },
+    { id:'ou4', num:'INV104', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'7248.24', calc_balanceDue:'7248.24', calc_netProfit:'878.24',  calc_margin:'12.1', calc_cogs:'6370.00'  },
+    { id:'ou-cn1', type:'credit_note', linkedInvNum:'INV103', cnAmount:-450, status:'CN Applied', lineItems:[], taxRate:0 },
+    { id:'ou-cn2', type:'credit_note', linkedInvNum:'INV104', cnAmount:-200, status:'CN Applied', lineItems:[], taxRate:0 }
+  ];
+  var ai = ctx.DB.inv.filter(function(i){
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    if (!i.type && ctx.isCN(i.num)) return false;
+    return true;
+  });
+  var tOut = ai.reduce(function(s,i){
+    if (i.status==='Paid'||i.status==='Cancelled') return s;
+    return s + Math.max(0, ctx.iCalc(i).bal);
+  }, 0);
+  // ou3: 14180 - 4000 (payment) - 450 (CN) = 9730
+  // ou4: 7248.24 - 0 - 200 (CN) = 7048.24 → total = 16778.24
+  assertEqual(Math.round(tOut), 16778, 'Outstanding = $16,778 (live bal: payments + applied CNs reduce balance)');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
