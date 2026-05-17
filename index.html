@@ -2344,7 +2344,7 @@ function iCalc(inv) {
     liT:   inv.calc_liTotal     ? parseFloat(inv.calc_liTotal)                    : c.liT,
     tax: c.tax, taxRate: c.taxRate,
     dep: c.dep,
-    bal: inv.calc_balanceDue !== undefined ? parseFloat(inv.calc_balanceDue) : c.bal
+    bal: c.bal
   };
 }
 function rDash() {
@@ -2829,7 +2829,7 @@ function openInv() {
 }
 function showInvReadOnly(inv) {
   var c = iCalc(inv), cur = inv.cur||'USD';
-  var balDue = (inv.calc_balanceDue !== undefined && inv.calc_balanceDue !== '') ? parseFloat(inv.calc_balanceDue) : c.bal;
+  var balDue = c.bal;
   var r = function(label, val) {
     return val ? '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--ln);font-size:.6rem;"><span style="color:var(--m);width:140px;flex-shrink:0;">'+label+'</span><span>'+san(String(val))+'</span></div>' : '';
   };
@@ -3210,8 +3210,7 @@ function rInv() {
     var c=iCalc(inv), cur=inv.cur||'USD';
     var mc=c.mgn===null||isNaN(c.mgn)?'':(c.mgn>=20?'phi':c.mgn>=10?'pmi':'plo');
     var sc=(inv.status||'draft').toLowerCase().replace(/ /g,'-');
-    // Balance Due: calc_balanceDue is source of truth; live iCalc().bal only if absent
-    var balDue = (inv.calc_balanceDue !== undefined && inv.calc_balanceDue !== '') ? parseFloat(inv.calc_balanceDue) : c.bal;
+    var balDue = c.bal;
     return '<tr>' +
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td><td>' + (san(inv.dst)||'-') + '</td>' +
@@ -3303,7 +3302,7 @@ function renderStatement(buyer) {
                           .reduce(function(s,p){ return s+(+p.amount||0); }, 0);
     var credits = DB.inv.filter(function(cn){ return isCnRec(cn) && cn.linkedInvNum===inv.num && cn.status==='CN Applied'; })
                         .reduce(function(s,cn){ return s+Math.abs(+cn.cnAmount||0); }, 0);
-    var balDue = (inv.calc_balanceDue!==undefined&&inv.calc_balanceDue!=='') ? parseFloat(inv.calc_balanceDue) : c.bal;
+    var balDue = c.bal;
     var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
     totalGrand += c.grand; totalPaid += paid; totalCredits += credits;
     return '<tr>' +
@@ -3320,7 +3319,7 @@ function renderStatement(buyer) {
   var totalOut = invRecs.reduce(function(s, x) {
     if (x.status === 'Paid' || x.status === 'Cancelled') return s;
     var xc = iCalc(x);
-    var xb = (x.calc_balanceDue !== undefined && x.calc_balanceDue !== '') ? parseFloat(x.calc_balanceDue) : xc.bal;
+    var xb = xc.bal;
     return s + Math.max(0, xb);
   }, 0);
   var cnRows = cnRecs.map(function(cn) {
@@ -3368,14 +3367,14 @@ function prevStmtPdf() {
     var c=iCalc(inv);
     var paid=DB.payments.filter(function(p){return p.invId===inv.id||p.invNum===inv.num;}).reduce(function(s,p){return s+(+p.amount||0);},0);
     var credits=DB.inv.filter(function(cn){return isCnRec(cn)&&cn.linkedInvNum===inv.num&&cn.status==='CN Applied';}).reduce(function(s,cn){return s+Math.abs(+cn.cnAmount||0);},0);
-    var balDue=(inv.calc_balanceDue!==undefined&&inv.calc_balanceDue!=='')?parseFloat(inv.calc_balanceDue):c.bal;
+    var balDue=c.bal;
     totalGrand+=c.grand; totalPaid+=paid; totalCredits+=credits;
     return '<tr style="border-bottom:1px solid #eee;font-size:.62rem;"><td style="padding:6px;">'+san(inv.num||'-')+'</td><td style="padding:6px;color:#888;">'+san((inv.date||'').split('T')[0]||'—')+'</td><td style="padding:6px;text-align:right;">'+fn(c.grand)+'</td><td style="padding:6px;text-align:right;color:#1a7a4a;">'+fn(paid)+'</td><td style="padding:6px;text-align:right;color:#b97400;">'+fn(-credits)+'</td><td style="padding:6px;text-align:right;font-weight:600;">'+fn(balDue)+'</td><td style="padding:6px;">'+san(inv.status||'-')+'</td></tr>';
   }).join('');
   var totalOut = invRecs.reduce(function(s, x) {
     if (x.status === 'Paid' || x.status === 'Cancelled') return s;
     var xc = iCalc(x);
-    var xb = (x.calc_balanceDue !== undefined && x.calc_balanceDue !== '') ? parseFloat(x.calc_balanceDue) : xc.bal;
+    var xb = xc.bal;
     return s + Math.max(0, xb);
   }, 0);
   var cnRows = cnRecs.map(function(cn){
@@ -4855,7 +4854,7 @@ async function saveCN() {
     var linkedInv = DB.inv.find(function(x){ return (x.num||x.invNum) === cn.linkedInvNum; });
     if (linkedInv) {
       var totalCredits = DB.inv
-        .filter(function(x){ return (x.type === 'credit_note' || x.type === 'goodwill_credit') && x.linkedInvNum === cn.linkedInvNum && x.status === 'Applied'; })
+        .filter(function(x){ return (x.type === 'credit_note' || x.type === 'goodwill_credit') && x.linkedInvNum === cn.linkedInvNum && x.status === 'CN Applied'; })
         .reduce(function(sum, c){ return sum + Math.abs(parseFloat(c.cnAmount||0)); }, 0);
       var totalPayments = DB.payments
         .filter(function(p){ return p.invId === linkedInv.id || p.invNum === linkedInv.num; })
