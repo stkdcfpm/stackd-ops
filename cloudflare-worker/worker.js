@@ -10,6 +10,9 @@
 // headers the browser requires. No auth, no secrets — the sync token is
 // carried in the POST body by the portal.
 
+// Only forward to valid Apps Script deployment paths — prevents use as an open proxy
+const VALID_PATH = /^\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
+
 export default {
   async fetch(request) {
     if (request.method === 'OPTIONS') {
@@ -23,6 +26,9 @@ export default {
     }
 
     const url = new URL(request.url);
+    if (!VALID_PATH.test(url.pathname)) {
+      return new Response('Forbidden', { status: 403, headers: { 'Access-Control-Allow-Origin': '*' } });
+    }
     const target = 'https://script.google.com' + url.pathname + url.search;
 
     const response = await fetch(target, {

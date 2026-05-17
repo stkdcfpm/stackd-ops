@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.10**  
-**Test count: 148/148 PASS** (`node tests/run.js`)
+**Current version: v2.9.13**  
+**Test count: 169/169 PASS** (`node tests/run.js`)
 
 ---
 
@@ -97,6 +97,9 @@ View routing: `showV(v, tab)` dispatches to render functions via the `fns` map. 
 
 | Version | Highlights |
 |---|---|
+| v2.9.13 | AI compliance review mode (AI_COMPLIANCE_PROMPT, toggleAIMode()); Security gate fixes: XSS san() coverage on PDF blob builders (prevInvDoc/prevPODoc), AS.bank, colour CSS injection guard; HTTPS enforcement on saveCfgUrl/saveFwdWebhook; Cloudflare Worker deployment-ID path validation; .catch() on all syncEnt/delEnt calls; vCN() rewritten to use vErr/vOk/vClr helpers; linkedInv lookup cleanup. Data fix: INV10031 grand total corrected to $7,042.19 (was $7,248.24 — lf double-counted). Tests: +21 new tests for canTransitionStatus, saveCN CN-Applied mutation, mapRec/FIELD_MAPS, unlockInv. 169/169 pass. Known gaps: SEC-GAP-001–004 documented. |
+| v2.9.12 | Invoice status locking (LOCKED_STATUSES, canTransitionStatus, read-only view, unlockInv with CONFIRM+reason+audit); Buyer Statement (per-buyer PDF, renderStatement, openStatement, prevStmtPdf); CN balance deduction (saveCN updates calc_balanceDue, iCalc.bal always live from cInv); Sheets sync rewrite (FIELD_MAPS, mapRec, syncEnt/delEnt/syncAll/pushAll, Cloudflare Worker CORS proxy, Code.gs handleBulkUpsert/handleUpsert/handleDelete/BIZ_KEYS/logAudit); STACKD_CONTEXT.md added |
+| v2.9.11 | Dashboard KPI fixes: calc_ fields as source of truth (iCalc prefers calc_grandTotal), CN exclusion from revenue/profit/count KPIs, repairCalcFields INV10028/INV10031 COGS corrections |
 | v2.9.10 | EN/ZH Language Toggle (nav toggle, setLang(), data-en/data-zh, Settings card, AI Mandarin mode); Invoice/CN Modal Separation (dedicated ov-cn modal, saveCN(), two-section v-inv, CN table); Company Branding on PDFs (Settings card, logo upload, buildPdfHeader/Footer, FPM International pre-populate) |
 | v2.9.9 | Line item dims (L/W/H, CBM/unit, DG flag); Load Calculator (multi-invoice CBM, container rec, DG flag, export); Forwarder Update Request (per-shipment pre-filled message, clipboard, webhook, Integrations settings); Quote Feasibility Check (DG warning, container rec, Caribbean electrical advisory) |
 | v2.9.8 | Credit note system fixes: PDF routing (BUG 1), negative amount display (BUG 2), balance deduction + legacy type fallback (BUG 3); Goodwill Credit feature; Sheets Line Items tab on Push All |
@@ -120,6 +123,10 @@ See `docs/known-gaps.md` for full entries.
 |---|---|---|
 | QTE-GAP-001 | Quote status | No workflow enforcement — Convert to PO available on any status; no transition guards |
 | LIB-GAP-001 | Library sync | `syncEnt('li')` not called when `invoiceRefs` mutates — remote Sheets copy will lag until next explicit lib save |
+| SEC-GAP-001 | Code.gs secrets | Spreadsheet IDs and sync token hardcoded in source — migrate to Script Properties before public repo or new collaborators |
+| SEC-GAP-002 | Sheets sync GDPR | PII transmitted externally; opt-in only; accepted until first external client. Add DPA documentation. |
+| SEC-GAP-003 | API key in browser | Anthropic key in localStorage — inherent no-server constraint; XSS hygiene is primary mitigation |
+| SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof; can be bypassed via DevTools/import |
 
 ---
 
