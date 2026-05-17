@@ -205,7 +205,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste Apps Script URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.10</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.10</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -496,7 +496,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     </div>
     <div class="card">
       <div class="ct">Google Sheets</div>
-      <div class="fld" style="margin-bottom:10px;"><label>Apps Script Web App URL</label><input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div class="fld" style="margin-bottom:10px;"><label>Endpoint URL (Cloudflare Worker proxy)</label><input type="text" id="cfg-url" placeholder="https://your-worker.workers.dev/macros/s/.../exec"></div>
       <div class="fld"><label>Secret Token <span style="font-size:.44rem;color:var(--m);">(optional)</span></label>
         <input type="text" id="cfg-token" placeholder="e.g. fpm-stackd-2026" autocomplete="off">
       </div>
@@ -1987,25 +1987,60 @@ function populateRefDataLists() {
 async function sPost(payload) {
   if (!SS.url) throw new Error('No URL configured');
   if (SS.token) payload._token = SS.token;
-  var r = await fetch(SS.url, { method:'POST', body: JSON.stringify(payload) });
-  return JSON.parse(await r.text());
+  var r = await fetch(SS.url, {
+    method: 'POST',
+    redirect: 'follow',
+    body: JSON.stringify(payload)
+  });
+  var text = await r.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('Script returned HTML instead of JSON — check deployment settings'); }
 }
 async function sGet(entity) {
   var payload = { action: 'pull_entity', entity: entity };
   if (SS.token) payload._token = SS.token;
-  var r = await fetch(SS.url, { method: 'POST', body: JSON.stringify(payload) });
-  return JSON.parse(await r.text());
+  var r = await fetch(SS.url, {
+    method: 'POST',
+    redirect: 'follow',
+    body: JSON.stringify(payload)
+  });
+  var text = await r.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('Script returned HTML instead of JSON — check deployment settings'); }
 }
 async function syncEnt(entity, rec) {
   if (!SS.url || !SS.auto) return;
   var ent = (entity === 'inv' && (rec.type === 'credit_note' || rec.type === 'goodwill_credit')) ? 'cn' : entity;
-  try { setSyncStatus('loading'); await sPost({action:'upsert', entity:ent, record:rec}); setSyncStatus('ok'); setTimeout(function(){ setSyncStatus('idle'); }, 3000); }
+  try { setSyncStatus('loading'); await sPost({action:'upsert', entity:ent, record:mapRec(ent, rec)}); setSyncStatus('ok'); setTimeout(function(){ setSyncStatus('idle'); }, 3000); }
   catch(e) { setSyncStatus('err'); }
 }
-async function delEnt(entity, id) {
+async function delEnt(entity, keyVal) {
   if (!SS.url) return;
-  try { await sPost({action:'delete', entity:entity, id:id}); }
+  try { await sPost({action:'delete', entity:entity, keyVal:keyVal}); }
   catch(e) { toast('Sync delete failed — Sheets may be out of date'); }
+}
+var FIELD_MAPS = {
+  sup: { id:'Supplier ID', name:'Name', country:'Country', contact:'Contact', email:'Email', phone:'Phone', cur:'Currency', payTerms:'Payment Terms', leadTime:'Lead Time', dgCapable:'DG Capable', notes:'Notes' },
+  li:  { sku:'SKU', desc:'Description', uom:'UOM', cost:'Unit Cost', price:'Unit Price', cur:'Currency', hs:'HS Code', supId:'Supplier', notes:'Notes' },
+  inv: { num:'Invoice #', buyer:'Buyer', buyerAddr:'Buyer Address', dst:'Destination', date:'Date', status:'Status', cur:'Currency', calc_grandTotal:'Grand Total', calc_cogs:'COGS', calc_netProfit:'Net Profit', calc_margin:'Margin', taxRate:'Tax Rate', lf:'Local Freight', calc_balanceDue:'Balance Due', incoterm:'Incoterms', pol:'Port of Loading', pod:'Port of Discharge', notes:'Notes' },
+  cn:  { num:'CN #', linkedInvNum:'Linked Invoice', buyer:'Buyer', date:'Date', status:'Status', cnAmount:'Credit Amount', cnReason:'Reason', type:'Type', notes:'Notes' },
+  po:  { num:'PO #', supId:'Supplier', invNum:'Linked Invoice', date:'Date', status:'Status', cur:'Currency', dep:'Deposit', notes:'Notes' },
+  payments: { id:'Payment ID', invNum:'Invoice #', date:'Date', amount:'Amount', cur:'Currency', method:'Method', notes:'Notes' },
+  sh:  { ref:'Shipment Ref', blNum:'BL Number', vessel:'Vessel', carrier:'Carrier', originPort:'Origin Port', destPort:'Dest Port', etd:'ETD', eta:'ETA', status:'Status', containerType:'Container Type', containerNum:'Container Number', dg:'DG Onboard', docsStatus:'Docs Status', forwarder:'Forwarder Name', forwarderEmail:'Forwarder Email', linkedInvs:'Linked Invoices', notes:'Notes' },
+  qt:  { num:'Quote #', client:'Buyer', dt:'Date', status:'Status', currency:'Currency', calc_totalLanded:'Grand Total', markup:'Margin', notes:'Notes' }
+};
+function mapRec(entity, rec) {
+  var map = FIELD_MAPS[entity];
+  if (!map) return rec;
+  var out = {};
+  Object.keys(map).forEach(function(k) {
+    var v = rec[k];
+    if (v === undefined || v === null) { out[map[k]] = ''; return; }
+    if (Array.isArray(v)) { out[map[k]] = v.join(', '); return; }
+    if (typeof v === 'object') { out[map[k]] = JSON.stringify(v); return; }
+    out[map[k]] = v;
+  });
+  return out;
 }
 async function syncAll() {
   if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
@@ -2013,11 +2048,12 @@ async function syncAll() {
   try {
     var synEnts = ['sup','li','po','sh','qt','payments'];
     for (var si = 0; si < synEnts.length; si++) {
-      await sPost({action:'bulk_upsert', entity:synEnts[si], records:DB[synEnts[si]] || []});
+      await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[synEnts[si]] || []).map(function(r){ return mapRec(synEnts[si], r); })});
     }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
-                       .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
-    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+                       .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
+    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; })
+                       .map(function(r){ return mapRec('cn', r); });
     await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
     if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
@@ -2167,11 +2203,12 @@ async function pushAll() {
   try {
     var ents = ['sup','li','po','sh','qt','payments'];
     for (var pi = 0; pi < ents.length; pi++) {
-      await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]] || []});
+      await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[ents[pi]] || []).map(function(r){ return mapRec(ents[pi], r); })});
     }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
-                       .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
-    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+                       .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
+    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; })
+                       .map(function(r){ return mapRec('cn', r); });
     await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
     await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
@@ -2191,7 +2228,7 @@ async function testConn() {
 }
 function setUrl() {
   var url = G('url-in').value.trim();
-  if (!url.startsWith('https://script.google.com')) { toast('Not a valid Apps Script URL'); return; }
+  if (!url.startsWith('https://')) { toast('Enter a valid HTTPS URL'); return; }
   SS.url = url; sv(K.ss, SS);
   G('banner').style.display = 'none'; G('cfg-url').value = url;
   toast('Connected'); syncAll();
@@ -2754,7 +2791,8 @@ async function delLI(id) {
   var msg = 'Delete this line item?';
   if (warns.length) msg += '\n\nWarning: This item is referenced in:\n  ' + warns.join('\n  ') + '\n\nExisting line entries on those documents will be preserved but the catalogue link will be broken.';
   if (!confirm(msg)) return;
-  DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li); rLI(); toast('Deleted'); await delEnt('li',id);
+  var _liSku = (DB.li.find(function(l){return l.id===id;})||{}).sku||id;
+  DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li); rLI(); toast('Deleted'); await delEnt('li',_liSku);
 }
 
 // ── INVOICE MODAL ──────────────────────────────────────────────
@@ -3403,7 +3441,7 @@ async function delInv(id) {
     cat.invoiceRefs = cat.invoiceRefs.filter(function(r){ return r.invId !== id; });
     if (cat.invoiceRefs.length !== before) libRefsChanged = true;
   });
-  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt(_isCnDel ? 'cn' : 'inv', id);
+  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt(_isCnDel ? 'cn' : 'inv', _delRec ? _delRec.num : id);
 }
 
 // ── PO MODAL & TABLE ───────────────────────────────────────────
@@ -3489,7 +3527,8 @@ function rPO() {
 }
 async function delPO(id) {
   if(!confirm('Delete?')) return;
-  DB.po=DB.po.filter(function(p){return p.id!==id;}); sv(K.p,DB.po); rPO(); rDash(); toast('Deleted'); await delEnt('po',id);
+  var _poNum = (DB.po.find(function(p){return p.id===id;})||{}).num||id;
+  DB.po=DB.po.filter(function(p){return p.id!==id;}); sv(K.p,DB.po); rPO(); rDash(); toast('Deleted'); await delEnt('po',_poNum);
 }
 
 // ── PRINT PREVIEWS ─────────────────────────────────────────────
@@ -5827,8 +5866,9 @@ async function saveShp() {
 
 async function delShp(id) {
   if (!confirm('Delete this shipment?')) return;
+  var _shRef = (DB.sh.find(function(s){return s.id===id;})||{}).ref||id;
   DB.sh = DB.sh.filter(function(s){ return s.id!==id; });
-  sv(K.sh, DB.sh); rShp(); rDash(); toast('Deleted'); await delEnt('sh', id);
+  sv(K.sh, DB.sh); rShp(); rDash(); toast('Deleted'); await delEnt('sh', _shRef);
 }
 
 // ── LOAD CALCULATOR ─────────────────────────────────────────────
@@ -6919,7 +6959,7 @@ var TIPS = {
   // Settings
   'cfg-bank':    'Your Stackd business bank account details. Leave blank until the account is open. Appears on invoice payment section.',
   'cfg-terms':   'Default invoice terms pre-filled on every new invoice. Can be edited per invoice.',
-  'cfg-url':     'Your Google Apps Script web app URL. Format: https://script.google.com/macros/s/.../exec'
+  'cfg-url':     'Cloudflare Worker proxy URL. Format: https://your-worker.workers.dev/macros/s/.../exec'
 };
 
 function tipLabel(labelText, tipKey) {
