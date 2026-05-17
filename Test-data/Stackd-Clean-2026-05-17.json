@@ -1,1 +1,1169 @@
-
+{
+  "_version": 1,
+  "_exported": "2026-05-17T09:00:00.000Z",
+  "_app": "Stackd Ops",
+  "_note": "Reconciled clean dataset. Base: May 8. Enriched: supplier contacts/emails from May 16. Added: Liding Rich, SHP-002, packaging SKUs. Removed: all duplicates, test records, corrupted import data.",
+  "sup": [
+    {
+      "id": "mo98b4ito9o",
+      "name": "Shangdong Jinbao New Materials Co., Ltd.",
+      "country": "China",
+      "contact": "Nora",
+      "email": "jinbao106@jinbaoplastic.com",
+      "phone": "+86 158 5312 5705",
+      "cur": "USD",
+      "payTerms": "TBC",
+      "leadTime": "30 days",
+      "dgCapable": false,
+      "notes": "PVC Foam Board suppliers Shandong Jinbao New Materials Co., Ltd.\nPVC Foam Board. Payment terms TBC. Lead time 30 days. Fire certificate required \u2014 verify authenticity each shipment. HS Code 3921.90.",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "mo98b4ithts",
+      "name": "Anhui HYY Import And Export Co., Ltd.",
+      "country": "China",
+      "contact": "Raisa Wu",
+      "email": "sale08@ahhyynet.com",
+      "phone": "+86 198 5516 5580",
+      "cur": "USD",
+      "payTerms": "TBC",
+      "leadTime": "TBC",
+      "dgCapable": false,
+      "notes": "Onion Mesh Bags PE Anhui HYY Import & Export Co., Ltd.\nOnion mesh bags PE. Payment terms TBC. Lead time TBC. Standard goods, no cert required. HS Code 6305.33. Used on INV10030 \u2014 100,000 units @ $0.0671.",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "mo98b4it0x6",
+      "name": "Shanghai Bokni Refrigeration Equipment Co., Ltd.",
+      "country": "China",
+      "contact": "Eva Zhou",
+      "email": "eva@bokni.com",
+      "phone": "+86 173 2101 3888",
+      "cur": "USD",
+      "payTerms": "TBC",
+      "leadTime": "TBC",
+      "dgCapable": false,
+      "notes": "Centrifrugal Juicers Shanghai Bokni Refrigeration Equipment Co., Ltd.\nCentrifugal juicers. Payment terms TBC. Lead time TBC. BKN-2000 model supplied on INV10030 x3 @ $340 each. Verify voltage spec (220V) each order.",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "mo98b4it7p7",
+      "name": "Zhengzhou Rongchang Machinery Manufacturing Co., Ltd.",
+      "country": "China",
+      "contact": "Michelle Zhou",
+      "email": "michellezhou@zzrcmm.com",
+      "phone": "+86 152 3836 4602",
+      "cur": "USD",
+      "payTerms": "TBC",
+      "leadTime": "TBC",
+      "dgCapable": false,
+      "notes": "Sugar Cane Juicer Zhengzhou Rongchang Machinery Manufacturing Co., Ltd.\nSugar cane juicers (commercial). Payment terms TBC. Lead time TBC. Secondary contact: Tiffany Qin. Faddish model supplied on INV10030 @ $480. Verify voltage spec (220V) each order.",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "mo98b4itvep",
+      "name": "Xingtai Xingcha Machinery Manufacturing Co., Ltd.",
+      "country": "China",
+      "contact": "XC Mach Peter",
+      "email": "xingcha_sale003@outlook.com",
+      "phone": "+86 177 8006 7880",
+      "cur": "USD",
+      "payTerms": "TBC",
+      "leadTime": "TBC",
+      "dgCapable": false,
+      "notes": "Pallet Jacks Xingtai Xingcha Machinery Manufacturing Co., Ltd.\nPallet jacks. Payment terms TBC. Lead time TBC. XINGCHA model supplied on INV10028 x2 @ $750 each. Standard goods, no cert required. HS Code 8427.90.",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "mo98b4itobx",
+      "name": "Fuzhou Bote Kitchen Equipment Co., Ltd",
+      "country": "China",
+      "contact": "Tina Lin",
+      "email": "sales1@cinsamlex.cn",
+      "phone": "+86 134 0056 5269",
+      "cur": "USD",
+      "payTerms": "30% deposit / 70% on BL",
+      "leadTime": "45 days",
+      "dgCapable": false,
+      "notes": "Freezer and Kitchen Equipment",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "mo98b4itqu8",
+      "name": "Zhongshan Chuhui Lighting Co., Ltd.",
+      "country": "China",
+      "contact": "Jars Kuang",
+      "email": "celux2006@163.com",
+      "phone": "+86 18971571008",
+      "cur": "USD",
+      "payTerms": "TBC",
+      "leadTime": "TBC",
+      "dgCapable": false,
+      "notes": "Solar LED floodlights. IP66. INV10031. Zhongshan Chuhui Lighting Co., Ltd.\nSolar LED floodlights (200W, 400W, 500W, 1000W). Payment terms TBC. Lead time TBC. Secondary contact: Bruce Wu (celux2006@163.com). Supplied on INV10031 x15 units per wattage. No DG. No cert required.",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "momz1pkgm3d",
+      "name": "Reolink (via Amazon Business)",
+      "country": "USA",
+      "contact": "Amazon Business",
+      "email": "amazon.com/business",
+      "phone": "+1",
+      "cur": "USD",
+      "payTerms": "N/A",
+      "leadTime": "N/A",
+      "dgCapable": false,
+      "notes": "Security cameras. Purchased via Amazon Business \u2014 no trade account. US sales tax baked into COGS, taxRate = 0 on invoice. RLC-540A, RLC-510A, RLK16-410B8-5MP on INV10029. Zero margin pass-through.",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "momogk0xgr0",
+      "name": "Changzhou Intellligent Weighing Electronic Co., Ltd.",
+      "country": "China",
+      "contact": "Nina Cao",
+      "email": "nina@intelweighing.com",
+      "phone": 18348170,
+      "cur": "USD",
+      "payTerms": "TBC",
+      "leadTime": "TBC",
+      "dgCapable": false,
+      "notes": "Changzhou Intelligent Weighing Electronic Co., Ltd.\nPlatform scales. Payment terms TBC. Lead time TBC. FS-M1212 model supplied on INV10028 x3 @ $234 each. No cert required. HS Code 8423.81. mobile: +8613913585281 +8618118118348170",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "mo98b4itlzm",
+      "name": "Liding Rich Co., Limited",
+      "country": "Hong Kong",
+      "contact": "Jeffrey Xie",
+      "email": "sales11@lidingrich.com",
+      "phone": "+86 139 2375 4616",
+      "cur": "USD",
+      "payTerms": "TBC",
+      "leadTime": "TBC",
+      "dgCapable": false,
+      "notes": "Action Cameras",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    }
+  ],
+  "li": [
+    {
+      "id": "momz2ghxkji",
+      "sku": "VF-2050R-F",
+      "desc": "VF-2050R Commercial Upright Freezer 3 Door",
+      "specs": "3 door, commercial upright freezer",
+      "hs": "8418.5",
+      "supId": "momz1pkgyjb",
+      "uom": "pcs",
+      "cost": 2600,
+      "price": 3120,
+      "cur": "USD",
+      "notes": "INV10028 x1. Verify 220V compliance each order.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6vgm",
+          "invNum": "INV10028",
+          "date": "2026-01-03"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxu98",
+      "sku": "VF-2050R-C",
+      "desc": "VF-2050R Commercial Upright Chiller 3 Door",
+      "specs": "3 door, commercial upright chiller",
+      "hs": "8418.5",
+      "supId": "momz1pkgyjb",
+      "uom": "pcs",
+      "cost": 1500,
+      "price": 1800,
+      "cur": "USD",
+      "notes": "INV10028 x1. Verify 220V compliance each order.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6vgm",
+          "invNum": "INV10028",
+          "date": "2026-01-03"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxlji",
+      "sku": "3600LA2Y",
+      "desc": "3600LA2Y Commercial Upright Freezer 5 Door",
+      "specs": "5 door, commercial upright freezer",
+      "hs": "8418.5",
+      "supId": "momz1pkgyjb",
+      "uom": "pcs",
+      "cost": 4238,
+      "price": 5085.6,
+      "cur": "USD",
+      "notes": "INV10028 x1. Verify 220V compliance each order.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6vgm",
+          "invNum": "INV10028",
+          "date": "2026-01-03"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxs25",
+      "sku": "CS-1",
+      "desc": "Cold Storage Unit 7.93x2.44m",
+      "specs": "7.93x2.44m cold storage room",
+      "hs": "8418.69",
+      "supId": "momz1pkgyjb",
+      "uom": "pcs",
+      "cost": 2300,
+      "price": 2760,
+      "cur": "USD",
+      "notes": "INV10030 x1.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6iba",
+          "invNum": "INV10030",
+          "date": "2026-03-15"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxeus",
+      "sku": "CS-2",
+      "desc": "Cold Storage Unit 5.9x5.3x2.6m",
+      "specs": "5.9x5.3x2.6m cold storage room",
+      "hs": "8418.69",
+      "supId": "momz1pkgyjb",
+      "uom": "pcs",
+      "cost": 2300,
+      "price": 2760,
+      "cur": "USD",
+      "notes": "INV10030 x1.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6iba",
+          "invNum": "INV10030",
+          "date": "2026-03-15"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghx0ee",
+      "sku": "XINGCHA-PJ",
+      "desc": "Manual Pallet Jack 2500kg",
+      "specs": "2500kg capacity manual pallet jack",
+      "hs": "8427.9",
+      "supId": "momz1pkgu4i",
+      "uom": "pcs",
+      "cost": 630,
+      "price": 750,
+      "cur": "USD",
+      "notes": "INV10028 x2.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6vgm",
+          "invNum": "INV10028",
+          "date": "2026-01-03"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghx8bc",
+      "sku": "FS-M1212",
+      "desc": "FS-M1212 Platform Scale",
+      "specs": "FS-M1212 electronic platform scale",
+      "hs": "8423.81",
+      "supId": "momz1pkgkts",
+      "uom": "pcs",
+      "cost": 195,
+      "price": 234,
+      "cur": "USD",
+      "notes": "INV10028 x3.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6vgm",
+          "invNum": "INV10028",
+          "date": "2026-01-03"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghx5iz",
+      "sku": "PVC-34",
+      "desc": "PVC Foam Board 34mm",
+      "specs": "34mm PVC foam board sheet",
+      "hs": "3921.9",
+      "supId": "momz1pkg7kn",
+      "uom": "sheets",
+      "cost": 25,
+      "price": 27.98,
+      "cur": "USD",
+      "notes": "INV10031. Fire cert required \u2014 verify each shipment.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "priceHistory": [
+        {
+          "date": "2026-01-03",
+          "cost": 25,
+          "price": 22,
+          "invoiceRef": "INV10028",
+          "notes": "Price at time of order"
+        },
+        {
+          "date": "2026-03-26",
+          "cost": 25,
+          "price": 26.13,
+          "invoiceRef": "INV10031",
+          "notes": "Price at time of order"
+        }
+      ],
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6vgm",
+          "invNum": "INV10028",
+          "date": "2026-01-03"
+        },
+        {
+          "invId": "momz2pc6biq",
+          "invNum": "INV10031",
+          "date": "2026-03-26"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxf3g",
+      "sku": "PVC-12",
+      "desc": "PVC Foam Board 12mm",
+      "specs": "12mm PVC foam board sheet",
+      "hs": "3921.9",
+      "supId": "momz1pkg7kn",
+      "uom": "sheets",
+      "cost": 12.96,
+      "price": 15,
+      "cur": "USD",
+      "notes": "INV10031. Fire cert required \u2014 verify each shipment.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6vgm",
+          "invNum": "INV10028",
+          "date": "2026-01-03"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxhpe",
+      "sku": "PVC-14",
+      "desc": "PVC Foam Board 14mm",
+      "specs": "14mm PVC foam board sheet",
+      "hs": "3921.9",
+      "supId": "momz1pkg7kn",
+      "uom": "sheets",
+      "cost": 7.76,
+      "price": 9,
+      "cur": "USD",
+      "notes": "INV10031. Fire cert required \u2014 verify each shipment.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6vgm",
+          "invNum": "INV10028",
+          "date": "2026-01-03"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxpoa",
+      "sku": "MESH-ONI-50",
+      "desc": "Onion Mesh Bag PE 50cm",
+      "specs": "PE onion mesh bag 50cm",
+      "hs": "6305.33",
+      "supId": "momz1pkg5ae",
+      "uom": "pcs",
+      "cost": 0.06,
+      "price": 0.07,
+      "cur": "USD",
+      "notes": "INV10030 x100000. Standard goods, no cert required.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "priceHistory": [
+        {
+          "date": "2026-03-15",
+          "cost": 0.06,
+          "price": 0.0671,
+          "invoiceRef": "INV10030",
+          "notes": "Price at time of order"
+        }
+      ],
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6iba",
+          "invNum": "INV10030",
+          "date": "2026-03-15"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxh5i",
+      "sku": "BKN-2000",
+      "desc": "BKN-2000 Commercial Centrifugal Juicer",
+      "specs": "BKN-2000 commercial centrifugal juicer",
+      "hs": "8435.1",
+      "supId": "momz1pkghir",
+      "uom": "pcs",
+      "cost": 290,
+      "price": 340,
+      "cur": "USD",
+      "notes": "INV10030 x3. Verify 220V compliance each order.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6iba",
+          "invNum": "INV10030",
+          "date": "2026-03-15"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxz7m",
+      "sku": "FADDISH-SCJ",
+      "desc": "Faddish Commercial Sugar Cane Juicer",
+      "specs": "Faddish commercial sugar cane juicer",
+      "hs": "8435.1",
+      "supId": "momz1pkg9ej",
+      "uom": "pcs",
+      "cost": 330,
+      "price": 480,
+      "cur": "USD",
+      "notes": "INV10030 x1. Secondary contact: Tiffany Qin. Verify 220V each order.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6iba",
+          "invNum": "INV10030",
+          "date": "2026-03-15"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxhtz",
+      "sku": "SOL-200W",
+      "desc": "Solar LED Floodlight 200W",
+      "specs": "200W solar LED floodlight",
+      "hs": "9405.4",
+      "supId": "momz1pkgxc8",
+      "uom": "pcs",
+      "cost": 18.1,
+      "price": 21.27,
+      "cur": "USD",
+      "notes": "INV10031 x15. Secondary contact: Bruce Wu.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6biq",
+          "invNum": "INV10031",
+          "date": "2026-03-26"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxrtm",
+      "sku": "SOL-400W",
+      "desc": "Solar LED Floodlight 400W",
+      "specs": "400W solar LED floodlight",
+      "hs": "9405.4",
+      "supId": "momz1pkgxc8",
+      "uom": "pcs",
+      "cost": 27.1,
+      "price": 31.72,
+      "cur": "USD",
+      "notes": "INV10031 x15. Secondary contact: Bruce Wu.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6biq",
+          "invNum": "INV10031",
+          "date": "2026-03-26"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxywf",
+      "sku": "SOL-500W",
+      "desc": "Solar LED Floodlight 500W",
+      "specs": "500W solar LED floodlight",
+      "hs": "9405.4",
+      "supId": "momz1pkgxc8",
+      "uom": "pcs",
+      "cost": 36,
+      "price": 41.86,
+      "cur": "USD",
+      "notes": "INV10031 x15. Secondary contact: Bruce Wu.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6biq",
+          "invNum": "INV10031",
+          "date": "2026-03-26"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghx8o7",
+      "sku": "SOL-1000W",
+      "desc": "Solar LED Floodlight 1000W",
+      "specs": "1000W solar LED floodlight",
+      "hs": "9405.4",
+      "supId": "momz1pkgxc8",
+      "uom": "pcs",
+      "cost": 41.8,
+      "price": 48.53,
+      "cur": "USD",
+      "notes": "INV10031 x15. Secondary contact: Bruce Wu.",
+      "updAt": "2026-05-01T13:52:23.300Z",
+      "invoiceRefs": [
+        {
+          "invId": "momz2pc6biq",
+          "invNum": "INV10031",
+          "date": "2026-03-26"
+        }
+      ]
+    },
+    {
+      "id": "momz2ghxfhq",
+      "sku": "RLC-540A",
+      "desc": "Reolink RLC-540A Security Camera",
+      "specs": "RLC-540A outdoor security camera",
+      "hs": "8525.8",
+      "supId": "momz1pkgm3d",
+      "uom": "pcs",
+      "cost": 59.49,
+      "price": 59.49,
+      "cur": "USD",
+      "notes": "INV10029. US purchase \u2014 tax baked into COGS. Zero margin pass-through.",
+      "updAt": "2026-05-01T13:52:23.300Z"
+    },
+    {
+      "id": "momz2ghxzmz",
+      "sku": "RLC-510A",
+      "desc": "Reolink RLC-510A Security Camera",
+      "specs": "RLC-510A outdoor security camera",
+      "hs": "8525.8",
+      "supId": "momz1pkgm3d",
+      "uom": "pcs",
+      "cost": 104.99,
+      "price": 104.99,
+      "cur": "USD",
+      "notes": "INV10029. US purchase \u2014 tax baked into COGS. Zero margin pass-through.",
+      "updAt": "2026-05-01T13:52:23.300Z"
+    },
+    {
+      "id": "momz2ghx7da",
+      "sku": "RLK16-410B8",
+      "desc": "Reolink RLK16-410B8-5MP NVR Kit",
+      "specs": "RLK16-410B8-5MP 16-channel NVR security kit",
+      "hs": "8525.8",
+      "supId": "momz1pkgm3d",
+      "uom": "pcs",
+      "cost": 729.99,
+      "price": 729.99,
+      "cur": "USD",
+      "notes": "INV10029. US purchase \u2014 tax baked into COGS. Zero margin pass-through.",
+      "updAt": "2026-05-01T13:52:23.300Z"
+    },
+    {
+      "id": "mogaytabnzg",
+      "sku": "FREIGHT-LOCAL",
+      "desc": "Local Freight",
+      "specs": "Local freight charge",
+      "supId": "TEST-SUP-001",
+      "uom": "lot",
+      "cost": 0,
+      "price": 200,
+      "cur": "USD",
+      "notes": "Local freight. INV10031.",
+      "updAt": "2026-04-27T07:08:58.139Z"
+    },
+    {
+      "id": "mogaytabvlp",
+      "sku": "PKG-PALLET-DISC",
+      "desc": "Pallets Discount",
+      "specs": "Credit for pallet return/discount",
+      "supId": "TEST-SUP-001",
+      "uom": "pcs",
+      "cost": 0,
+      "price": -57,
+      "cur": "USD",
+      "notes": "Pallet credit. INV10031.",
+      "updAt": "2026-04-27T07:08:58.139Z"
+    },
+    {
+      "id": "mogaytabw3g",
+      "sku": "PVC-FOAM-19MM",
+      "desc": "PVC Foam Board 1220x2440mm 19.05mm",
+      "specs": "19.05mm (3/4 inch), 1220x2440mm, Density 0.5g/cm3, White",
+      "supId": "TEST-SUP-001",
+      "uom": "sheets",
+      "cost": 25,
+      "price": 27.98,
+      "cur": "USD",
+      "notes": "Packaging/construction. INV10031.",
+      "updAt": "2026-04-27T07:08:58.139Z"
+    },
+    {
+      "id": "mogaytabxvc",
+      "sku": "PKG-PALLET",
+      "desc": "Pallets",
+      "specs": "Wooden pallets for PVC foam board packaging",
+      "supId": "TEST-SUP-001",
+      "uom": "pcs",
+      "cost": 57,
+      "price": 57,
+      "cur": "USD",
+      "notes": "Packaging cost \u2014 at cost. INV10031.",
+      "updAt": "2026-04-27T07:08:58.139Z"
+    }
+  ],
+  "inv": [
+    {
+      "id": "momz2pc6vgm",
+      "num": "INV10028",
+      "buyer": "Thorpes International Produce Inc",
+      "buyerAddr": "Barbares Hill, Bridgetown, Barbados",
+      "shipTo": "",
+      "dst": "Barbados",
+      "custId": "",
+      "date": "2026-01-03",
+      "expiry": "2026-01-31",
+      "shipDate": "",
+      "ft": "Sea - FCL 40HQ",
+      "wt": "30000kgs",
+      "cbm": "",
+      "pk": "17",
+      "pol": "Qingdao",
+      "pod": "Bridgetown",
+      "coo": "China",
+      "cur": "USD",
+      "taxRate": 0,
+      "lf": 1098,
+      "ins": 300,
+      "leg": 0,
+      "isp": 0,
+      "oth": 0,
+      "dep": 31055.87,
+      "incoterm": "EXW",
+      "paymentTerms": "Net 30",
+      "terms": "Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.",
+      "chargesIncluded": true,
+      "status": "Paid",
+      "lineItems": [
+        {
+          "rid": "movz4umsy76",
+          "lid": "momz2ghxkji",
+          "desc": "VF-2050R Commercial Upright Freezer 3 Door",
+          "uom": "pcs",
+          "qty": 1,
+          "up": 3120
+        },
+        {
+          "rid": "movz4unam50",
+          "lid": "momz2ghxu98",
+          "desc": "VF-2050R Commercial Upright Chiller 3 Door",
+          "uom": "pcs",
+          "qty": 1,
+          "up": 1800
+        },
+        {
+          "rid": "movz4uncsx4",
+          "lid": "momz2ghxlji",
+          "desc": "3600LA2Y Commercial Upright Freezer 5 Door",
+          "uom": "pcs",
+          "qty": 1,
+          "up": 5085.6
+        },
+        {
+          "rid": "movz4undf6v",
+          "lid": "momz2ghx0ee",
+          "desc": "Manual Pallet Jack 2500kg",
+          "uom": "pcs",
+          "qty": 2,
+          "up": 750
+        },
+        {
+          "rid": "movz4unf0i9",
+          "lid": "momz2ghx8bc",
+          "desc": "FS-M1212 Platform Scale",
+          "uom": "pcs",
+          "qty": 3,
+          "up": 234
+        },
+        {
+          "rid": "movz4unhsrr",
+          "lid": "momz2ghx5iz",
+          "desc": "PVC Foam Board 34mm",
+          "uom": "sheets",
+          "qty": 200,
+          "up": 22
+        },
+        {
+          "rid": "movz4uni5ov",
+          "lid": "momz2ghxf3g",
+          "desc": "PVC Foam Board 12mm",
+          "uom": "sheets",
+          "qty": 300,
+          "up": 15
+        },
+        {
+          "rid": "movz4unk29p",
+          "lid": "momz2ghxhpe",
+          "desc": "PVC Foam Board 14mm",
+          "uom": "sheets",
+          "qty": 300,
+          "up": 9
+        },
+        {
+          "rid": "movz7o3j8mg",
+          "lid": "",
+          "desc": "Qingdao to BB 40FT HQ container charge incl. local charges storage and local customs",
+          "uom": "lot",
+          "qty": 1,
+          "up": 5540.07
+        },
+        {
+          "rid": "movzbn5l1xw",
+          "lid": "",
+          "desc": "Pallets x9",
+          "uom": "pcs",
+          "qty": 9,
+          "up": 67.8
+        }
+      ],
+      "pos": [],
+      "type": "invoice",
+      "linkedInvNum": "",
+      "linkedInvId": "",
+      "cnReason": "",
+      "cnAmount": 0,
+      "updAt": "2026-05-07T22:22:05.956Z",
+      "calc_grandTotal": "31055.80",
+      "calc_cogs": "26338",
+      "calc_liTotal": "30755.80",
+      "calc_taxAmt": "0",
+      "calc_grossProfit": "4717.80",
+      "calc_netProfit": "4717.80",
+      "calc_margin": "15.2",
+      "calc_balanceDue": "0"
+    },
+    {
+      "id": "momz2pc6eut",
+      "num": "INV10029",
+      "buyer": "Thorpes International Produce Inc",
+      "buyerAddr": "Barbares Hill, Bridgetown, Barbados",
+      "shipTo": "",
+      "dst": "Barbados",
+      "custId": "",
+      "date": "2026-01-03",
+      "expiry": "2026-01-31",
+      "shipDate": "",
+      "ft": "Air",
+      "wt": "",
+      "cbm": "",
+      "pk": "",
+      "pol": "Miami",
+      "pod": "Bridgetown",
+      "coo": "USA",
+      "cur": "USD",
+      "taxRate": 0.07,
+      "lf": 0,
+      "ins": 0,
+      "leg": 0,
+      "isp": 0,
+      "oth": 0,
+      "dep": 957.08,
+      "terms": "Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.",
+      "status": "Paid",
+      "lineItems": [],
+      "pos": [],
+      "chargesIncluded": true,
+      "notes": "Reolink security cameras. US origin. US sales tax baked into COGS. Zero margin pass-through. Fully paid.",
+      "calc_grandTotal": "957.08",
+      "calc_cogs": "894.47",
+      "calc_grossProfit": "0",
+      "calc_netProfit": "0",
+      "calc_margin": "0",
+      "calc_balanceDue": "0",
+      "calc_liTotal": "894.47",
+      "calc_taxAmt": "62.61",
+      "updAt": "2026-05-01T14:21:23.468Z"
+    },
+    {
+      "id": "momz2pc6iba",
+      "num": "INV10030",
+      "buyer": "Thorpes International Produce Inc",
+      "buyerAddr": "Barbares Hill, Bridgetown, Barbados",
+      "shipTo": "",
+      "dst": "Barbados",
+      "custId": "",
+      "date": "2026-03-15",
+      "expiry": "2026-04-15",
+      "shipDate": "",
+      "ft": "Sea - FCL 20",
+      "wt": "",
+      "cbm": "",
+      "pk": "7",
+      "pol": "Qingdao",
+      "pod": "Bridgetown",
+      "coo": "China",
+      "cur": "USD",
+      "taxRate": 0,
+      "lf": 450,
+      "ins": 0,
+      "leg": 0,
+      "isp": 0,
+      "oth": 0,
+      "dep": 4000,
+      "incoterm": "CIF",
+      "paymentTerms": "Net 30",
+      "terms": "Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.",
+      "chargesIncluded": true,
+      "status": "Partially Paid",
+      "lineItems": [
+        {
+          "rid": "mouoc8qlnte",
+          "lid": "momz2ghxpoa",
+          "desc": "Onion Mesh Bag PE 50cm",
+          "uom": "pcs",
+          "qty": 100000,
+          "up": 0.0671
+        },
+        {
+          "rid": "mouoc8qnfj8",
+          "lid": "momz2ghxh5i",
+          "desc": "BKN-2000 Commercial Centrifugal Juicer",
+          "uom": "pcs",
+          "qty": 3,
+          "up": 340
+        },
+        {
+          "rid": "mouoc8qpsn9",
+          "lid": "momz2ghxz7m",
+          "desc": "Faddish Commercial Sugar Cane Juicer",
+          "uom": "pcs",
+          "qty": 1,
+          "up": 480
+        },
+        {
+          "rid": "mouoka4ud4x",
+          "lid": "momz2ghxs25",
+          "desc": "Cold Storage Unit 7.93x2.44m",
+          "uom": "pcs",
+          "qty": 1,
+          "up": 2760
+        },
+        {
+          "rid": "mouoka510sa",
+          "lid": "momz2ghxeus",
+          "desc": "Cold Storage Unit 5.9x5.3x2.6m",
+          "uom": "pcs",
+          "qty": 1,
+          "up": 2760
+        }
+      ],
+      "pos": [],
+      "type": "invoice",
+      "linkedInvNum": "",
+      "linkedInvId": "",
+      "cnReason": "",
+      "cnAmount": 0,
+      "updAt": "2026-05-07T21:25:46.989Z",
+      "calc_grandTotal": "14180",
+      "calc_cogs": "9527.82",
+      "calc_liTotal": "13730",
+      "calc_taxAmt": "0",
+      "calc_grossProfit": "4652.18",
+      "calc_netProfit": "4652.18",
+      "calc_margin": "32.8",
+      "calc_balanceDue": "10180"
+    },
+    {
+      "id": "momz2pc6biq",
+      "num": "INV10031",
+      "buyer": "Thorpes International Produce Inc",
+      "buyerAddr": "Barbares Hill, Bridgetown, Barbados",
+      "shipTo": "",
+      "dst": "Barbados",
+      "custId": "",
+      "date": "2026-03-26",
+      "expiry": "2026-04-26",
+      "shipDate": "2026-05-23",
+      "ft": "Sea - FCL 20",
+      "wt": "",
+      "cbm": "",
+      "pk": "4",
+      "pol": "Qingdao",
+      "pod": "Bridgetown",
+      "coo": "China",
+      "cur": "USD",
+      "taxRate": 0,
+      "lf": 0,
+      "ins": 0,
+      "leg": 0,
+      "isp": 0,
+      "oth": 0,
+      "dep": 0,
+      "incoterm": "EXW",
+      "paymentTerms": "Net 30",
+      "terms": "Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.",
+      "chargesIncluded": true,
+      "status": "Sent",
+      "lineItems": [
+        {
+          "rid": "mow2jmh7s34",
+          "lid": "momz2ghx5iz",
+          "desc": "PVC Foam Board 34mm",
+          "uom": "sheets",
+          "qty": 173,
+          "up": 26.13
+        },
+        {
+          "rid": "mow2jmhdz9b",
+          "lid": "momz2ghxhtz",
+          "desc": "Solar LED Floodlight 200W",
+          "uom": "pcs",
+          "qty": 15,
+          "up": 21.27
+        },
+        {
+          "rid": "mow2jmhf0q2",
+          "lid": "momz2ghxrtm",
+          "desc": "Solar LED Floodlight 400W",
+          "uom": "pcs",
+          "qty": 15,
+          "up": 31.72
+        },
+        {
+          "rid": "mow2jmhg5qq",
+          "lid": "momz2ghxywf",
+          "desc": "Solar LED Floodlight 500W",
+          "uom": "pcs",
+          "qty": 15,
+          "up": 41.86
+        },
+        {
+          "rid": "mow2jmhhlo2",
+          "lid": "momz2ghx8o7",
+          "desc": "Solar LED Floodlight 1000W",
+          "uom": "pcs",
+          "qty": 15,
+          "up": 48.53
+        },
+        {
+          "rid": "mow2l8l790d",
+          "lid": "",
+          "desc": "Pallets x3",
+          "uom": "pcs",
+          "qty": 3,
+          "up": 57
+        }
+      ],
+      "pos": [],
+      "type": "invoice",
+      "linkedInvNum": "INV10030",
+      "linkedInvId": "momz2pc6iba",
+      "cnReason": "Local Freight charge subsumed into agent Freight",
+      "cnAmount": -450,
+      "updAt": "2026-05-08T12:52:14.036Z",
+      "calc_grandTotal": "7248.24",
+      "calc_cogs": "6227",
+      "calc_liTotal": "7048.24",
+      "calc_taxAmt": "0",
+      "calc_grossProfit": "1021.24",
+      "calc_netProfit": "1021.24",
+      "calc_margin": "14.1",
+      "calc_balanceDue": "7248.24"
+    },
+    {
+      "id": "mox1tlirujm",
+      "num": "INV10032",
+      "buyer": "Thorpes International Produce Inc.",
+      "buyerAddr": "",
+      "shipTo": "",
+      "dst": "",
+      "custId": "",
+      "date": "2026-05-08",
+      "expiry": "2026-05-06",
+      "shipDate": "",
+      "ft": "",
+      "wt": "",
+      "cbm": "",
+      "pk": "",
+      "pol": "Qingdao (CN QIN)",
+      "pod": "Bridgetown (BB BGI)",
+      "coo": "China",
+      "cur": "USD",
+      "taxRate": 0,
+      "lf": 0,
+      "ins": 0,
+      "leg": 0,
+      "isp": 0,
+      "oth": 0,
+      "dep": 0,
+      "incoterm": "FOB",
+      "paymentTerms": "TT in advance",
+      "terms": "Payment due within 30 days of invoice date. All prices may require adjustments for tax, local shipping and any resulting FX fees incurred.",
+      "chargesIncluded": true,
+      "status": "Sent",
+      "lineItems": [
+        {
+          "rid": "mox0x9wp043",
+          "lid": "",
+          "desc": "Ocean Freight",
+          "uom": "lot",
+          "qty": 1,
+          "up": 4600
+        },
+        {
+          "rid": "mox0xsedt3l",
+          "lid": "",
+          "desc": "Customs Clearance",
+          "uom": "lot",
+          "qty": 1,
+          "up": 124
+        },
+        {
+          "rid": "mox1qtl7lnl",
+          "lid": "",
+          "desc": "Local Freight",
+          "uom": "lot",
+          "qty": 1,
+          "up": 1085
+        },
+        {
+          "rid": "mox1rjq1its",
+          "lid": "",
+          "desc": "Loading Charge",
+          "uom": "lot",
+          "qty": 1,
+          "up": 262
+        }
+      ],
+      "pos": [],
+      "type": "invoice",
+      "linkedInvNum": "",
+      "linkedInvId": "",
+      "cnReason": "",
+      "cnAmount": 0,
+      "updAt": "2026-05-08T15:10:20.243Z"
+    }
+  ],
+  "po": [],
+  "payments": [
+    {
+      "id": "momzrblym5v",
+      "invNum": "INV10028",
+      "date": "2025-12-30",
+      "amount": 10000,
+      "cur": "USD",
+      "method": "Bank Transfer",
+      "notes": "Part payment INV10028",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "momzsoidvhk",
+      "invNum": "INV10028",
+      "date": "2026-01-29",
+      "amount": 21055.87,
+      "cur": "USD",
+      "method": "Bank Transfer",
+      "notes": "Final Payment INV10028",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "mon013u4nis",
+      "invNum": "INV10030",
+      "date": "2026-04-07",
+      "amount": 4000,
+      "cur": "USD",
+      "method": "Bank Transfer",
+      "notes": "Deposit received",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    },
+    {
+      "id": "mon03r7vixr",
+      "invNum": "INV10029",
+      "date": "2026-05-01",
+      "amount": 957.08,
+      "cur": "USD",
+      "method": "Bank Transfer",
+      "notes": "Amazon Business purchase",
+      "updAt": "2026-05-17T09:00:00.000Z"
+    }
+  ],
+  "sh": [
+    {
+      "id": "moopnsq2uxh",
+      "ref": "SHP-001",
+      "blNum": "MEDUWA872896",
+      "vessel": "MSC MARA",
+      "carrier": "MSC",
+      "originPort": "Qingdao (CN QIN)",
+      "destPort": "Bridgetown (BB BGI)",
+      "etd": "2026-02-20",
+      "eta": "2026-04-12",
+      "containerType": "40HQ",
+      "containerNum": "",
+      "dg": true,
+      "docsStatus": "Complete",
+      "status": "Delivered",
+      "linkedInvs": [
+        "INV10028"
+      ],
+      "notes": "Panama transit done - Rodman",
+      "updAt": "2026-05-02T19:04:35.115Z"
+    },
+    {
+      "id": "mp46siccfjz",
+      "ref": "SHP-002",
+      "blNum": "TBS - Pending Booking",
+      "vessel": "TBC",
+      "carrier": "MSC",
+      "originPort": "Qingdao (CN QIN)",
+      "destPort": "Bridgetown (BB BGI)",
+      "etd": "2026-06-01",
+      "eta": "2026-06-21",
+      "containerType": "40HQ",
+      "containerNum": "",
+      "dg": false,
+      "docsStatus": "Pending",
+      "status": "Booked",
+      "linkedInvs": [
+        "INV10032"
+      ],
+      "forwarder": "TAIJIE International Logistics Co., Ltd.",
+      "forwarderEmail": "klaudia.zhang.tao@tj-logistics.com.cn",
+      "notes": "Demo shipment \u2014 pending vessel confirmation",
+      "updAt": "2026-05-13T15:00:41.052Z"
+    }
+  ],
+  "qt": [],
+  "settings": {
+    "url": "https://script.google.com/macros/s/AKfycbw2DHiobMUazrtq6Q65uRwux5gcjRfUoVMdEeMXmNNjE8IvRWW1FOe5A5s5y00sb8AJ/exec",
+    "auto": true,
+    "pol": true,
+    "token": "fpm-stack-2026"
+  },
+  "company": {
+    "name": "Stackd",
+    "tag": "Source \u00b7 Supply \u00b7 Ship",
+    "addr": "Brighton, UK",
+    "email": "cachafpm@gmail.com",
+    "phone": "+44 7930 438631",
+    "web": "www.getstackdops.com",
+    "bank": "",
+    "terms": "Payment due within 30 days of invoice date. All prices may require adjustments for tax, local shipping and any resulting FX fees incurred."
+  }
+}
