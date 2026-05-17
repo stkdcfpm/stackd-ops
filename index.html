@@ -2011,13 +2011,36 @@ async function sGet(entity) {
 async function syncEnt(entity, rec) {
   if (!SS.url || !SS.auto) return;
   var ent = (entity === 'inv' && (rec.type === 'credit_note' || rec.type === 'goodwill_credit')) ? 'cn' : entity;
-  try { setSyncStatus('loading'); await sPost({action:'upsert', entity:ent, record:rec}); setSyncStatus('ok'); setTimeout(function(){ setSyncStatus('idle'); }, 3000); }
+  try { setSyncStatus('loading'); await sPost({action:'upsert', entity:ent, record:mapRec(ent, rec)}); setSyncStatus('ok'); setTimeout(function(){ setSyncStatus('idle'); }, 3000); }
   catch(e) { setSyncStatus('err'); }
 }
-async function delEnt(entity, id) {
+async function delEnt(entity, keyVal) {
   if (!SS.url) return;
-  try { await sPost({action:'delete', entity:entity, id:id}); }
+  try { await sPost({action:'delete', entity:entity, keyVal:keyVal}); }
   catch(e) { toast('Sync delete failed — Sheets may be out of date'); }
+}
+var FIELD_MAPS = {
+  sup: { id:'Supplier ID', name:'Name', country:'Country', contact:'Contact', email:'Email', phone:'Phone', cur:'Currency', payTerms:'Payment Terms', leadTime:'Lead Time', dgCapable:'DG Capable', notes:'Notes' },
+  li:  { sku:'SKU', desc:'Description', uom:'UOM', cost:'Unit Cost', price:'Unit Price', cur:'Currency', hs:'HS Code', supId:'Supplier', notes:'Notes' },
+  inv: { num:'Invoice #', buyer:'Buyer', buyerAddr:'Buyer Address', dst:'Destination', date:'Date', status:'Status', cur:'Currency', calc_grandTotal:'Grand Total', calc_cogs:'COGS', calc_netProfit:'Net Profit', calc_margin:'Margin', taxRate:'Tax Rate', lf:'Local Freight', calc_balanceDue:'Balance Due', incoterm:'Incoterms', pol:'Port of Loading', pod:'Port of Discharge', notes:'Notes' },
+  cn:  { num:'CN #', linkedInvNum:'Linked Invoice', buyer:'Buyer', date:'Date', status:'Status', cnAmount:'Credit Amount', cnReason:'Reason', type:'Type', notes:'Notes' },
+  po:  { num:'PO #', supId:'Supplier', invNum:'Linked Invoice', date:'Date', status:'Status', cur:'Currency', dep:'Deposit', notes:'Notes' },
+  payments: { id:'Payment ID', invNum:'Invoice #', date:'Date', amount:'Amount', cur:'Currency', method:'Method', notes:'Notes' },
+  sh:  { ref:'Shipment Ref', blNum:'BL Number', vessel:'Vessel', carrier:'Carrier', originPort:'Origin Port', destPort:'Dest Port', etd:'ETD', eta:'ETA', status:'Status', containerType:'Container Type', containerNum:'Container Number', dg:'DG Onboard', docsStatus:'Docs Status', forwarder:'Forwarder Name', forwarderEmail:'Forwarder Email', linkedInvs:'Linked Invoices', notes:'Notes' },
+  qt:  { num:'Quote #', client:'Buyer', dt:'Date', status:'Status', currency:'Currency', calc_totalLanded:'Grand Total', markup:'Margin', notes:'Notes' }
+};
+function mapRec(entity, rec) {
+  var map = FIELD_MAPS[entity];
+  if (!map) return rec;
+  var out = {};
+  Object.keys(map).forEach(function(k) {
+    var v = rec[k];
+    if (v === undefined || v === null) { out[map[k]] = ''; return; }
+    if (Array.isArray(v)) { out[map[k]] = v.join(', '); return; }
+    if (typeof v === 'object') { out[map[k]] = JSON.stringify(v); return; }
+    out[map[k]] = v;
+  });
+  return out;
 }
 async function syncAll() {
   if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
@@ -2025,11 +2048,12 @@ async function syncAll() {
   try {
     var synEnts = ['sup','li','po','sh','qt','payments'];
     for (var si = 0; si < synEnts.length; si++) {
-      await sPost({action:'bulk_upsert', entity:synEnts[si], records:DB[synEnts[si]] || []});
+      await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[synEnts[si]] || []).map(function(r){ return mapRec(synEnts[si], r); })});
     }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
-                       .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
-    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+                       .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
+    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; })
+                       .map(function(r){ return mapRec('cn', r); });
     await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
     if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
@@ -2179,11 +2203,12 @@ async function pushAll() {
   try {
     var ents = ['sup','li','po','sh','qt','payments'];
     for (var pi = 0; pi < ents.length; pi++) {
-      await sPost({action:'bulk_upsert', entity:ents[pi], records:DB[ents[pi]] || []});
+      await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[ents[pi]] || []).map(function(r){ return mapRec(ents[pi], r); })});
     }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
-                       .map(function(r){ return Object.assign({}, r, {type: r.type || 'invoice'}); });
-    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; });
+                       .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
+    var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; })
+                       .map(function(r){ return mapRec('cn', r); });
     await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
     await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
@@ -2766,7 +2791,8 @@ async function delLI(id) {
   var msg = 'Delete this line item?';
   if (warns.length) msg += '\n\nWarning: This item is referenced in:\n  ' + warns.join('\n  ') + '\n\nExisting line entries on those documents will be preserved but the catalogue link will be broken.';
   if (!confirm(msg)) return;
-  DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li); rLI(); toast('Deleted'); await delEnt('li',id);
+  var _liSku = (DB.li.find(function(l){return l.id===id;})||{}).sku||id;
+  DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li); rLI(); toast('Deleted'); await delEnt('li',_liSku);
 }
 
 // ── INVOICE MODAL ──────────────────────────────────────────────
@@ -3415,7 +3441,7 @@ async function delInv(id) {
     cat.invoiceRefs = cat.invoiceRefs.filter(function(r){ return r.invId !== id; });
     if (cat.invoiceRefs.length !== before) libRefsChanged = true;
   });
-  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt(_isCnDel ? 'cn' : 'inv', id);
+  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt(_isCnDel ? 'cn' : 'inv', _delRec ? _delRec.num : id);
 }
 
 // ── PO MODAL & TABLE ───────────────────────────────────────────
@@ -3501,7 +3527,8 @@ function rPO() {
 }
 async function delPO(id) {
   if(!confirm('Delete?')) return;
-  DB.po=DB.po.filter(function(p){return p.id!==id;}); sv(K.p,DB.po); rPO(); rDash(); toast('Deleted'); await delEnt('po',id);
+  var _poNum = (DB.po.find(function(p){return p.id===id;})||{}).num||id;
+  DB.po=DB.po.filter(function(p){return p.id!==id;}); sv(K.p,DB.po); rPO(); rDash(); toast('Deleted'); await delEnt('po',_poNum);
 }
 
 // ── PRINT PREVIEWS ─────────────────────────────────────────────
@@ -5839,8 +5866,9 @@ async function saveShp() {
 
 async function delShp(id) {
   if (!confirm('Delete this shipment?')) return;
+  var _shRef = (DB.sh.find(function(s){return s.id===id;})||{}).ref||id;
   DB.sh = DB.sh.filter(function(s){ return s.id!==id; });
-  sv(K.sh, DB.sh); rShp(); rDash(); toast('Deleted'); await delEnt('sh', id);
+  sv(K.sh, DB.sh); rShp(); rDash(); toast('Deleted'); await delEnt('sh', _shRef);
 }
 
 // ── LOAD CALCULATOR ─────────────────────────────────────────────
