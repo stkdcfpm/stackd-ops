@@ -1802,12 +1802,25 @@ test('iCalc — falls back to cInv when calc_ fields absent', function() {
   assertEqual(c.grand, 100, 'grand from live cInv');
 });
 
-test('iCalc — calc_balanceDue used for bal', function() {
+test('iCalc — bal uses live cInv: stale calc_balanceDue is ignored', function() {
   resetDB();
+  ctx.DB.payments = [{ id:'pm-ic3', invId:'ic3', amount: 600 }];
   var inv = { id:'ic3', status:'Draft', lineItems:[], taxRate:0, chargesIncluded:true,
-              calc_grandTotal:'1000', calc_balanceDue:'400', calc_netProfit:'0',
-              calc_cogs:'0', calc_grossProfit:'0', calc_margin:'0' };
-  assertEqual(ctx.iCalc(inv).bal, 400, 'bal from calc_balanceDue');
+              calc_grandTotal:'1000', calc_balanceDue:'9999',
+              calc_netProfit:'0', calc_cogs:'0', calc_grossProfit:'0', calc_margin:'0' };
+  assertEqual(ctx.iCalc(inv).bal, 400, 'bal = 1000 - 600 payment (stale calc_balanceDue ignored)');
+});
+
+test('iCalc — applied CN reduces bal via live cInv', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'icn-inv', num:'INV099', status:'Draft', lineItems:[], taxRate:0, chargesIncluded:true,
+      calc_grandTotal:'1000', calc_balanceDue:'1000' },
+    { id:'icn-cn', num:'CN099', type:'credit_note', linkedInvNum:'INV099',
+      cnAmount:-300, status:'CN Applied', lineItems:[], taxRate:0 }
+  ];
+  var inv = ctx.DB.inv.find(function(i){ return i.num==='INV099'; });
+  assertEqual(ctx.iCalc(inv).bal, 700, 'bal = 1000 - 300 applied CN (stale calc_balanceDue ignored)');
 });
 
 test('iCalc — credit_note bypasses calc_ fields and delegates to cInv', function() {
@@ -1884,14 +1897,18 @@ test('rDash — Net Profit excludes credit note contributions', function() {
   assertEqual(Math.round(tNP), 11360, 'NP = $11,360 (CN with calc_netProfit excluded)');
 });
 
-test('rDash — Outstanding still reflects CN-reduced balance on linked invoices', function() {
+test('rDash — Outstanding correctly reflects payments and applied CNs', function() {
   resetDB();
+  ctx.DB.payments = [
+    { id:'pm-ou3', invId:'ou3', amount:4000 }
+  ];
   ctx.DB.inv = [
     { id:'ou1', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'31055.80', calc_balanceDue:'0',       calc_netProfit:'5829.80', calc_margin:'18.8', calc_cogs:'25226.00' },
     { id:'ou2', status:'Paid',  lineItems:[], taxRate:0, calc_grandTotal:'957.08',   calc_balanceDue:'0',       calc_netProfit:'0',       calc_margin:'0',    calc_cogs:'894.47'   },
-    { id:'ou3', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'14180',    calc_balanceDue:'10180',   calc_netProfit:'4652.18', calc_margin:'32.8', calc_cogs:'9527.82'  },
-    { id:'ou4', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'7248.24',  calc_balanceDue:'7248.24', calc_netProfit:'878.24',  calc_margin:'12.1', calc_cogs:'6370.00'  },
-    { id:'ou5', type:'credit_note', status:'CN Applied', cnAmount:500, lineItems:[], taxRate:0 }
+    { id:'ou3', num:'INV103', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'14180',   calc_balanceDue:'10180',   calc_netProfit:'4652.18', calc_margin:'32.8', calc_cogs:'9527.82'  },
+    { id:'ou4', num:'INV104', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'7248.24', calc_balanceDue:'7248.24', calc_netProfit:'878.24',  calc_margin:'12.1', calc_cogs:'6370.00'  },
+    { id:'ou-cn1', type:'credit_note', linkedInvNum:'INV103', cnAmount:-450, status:'CN Applied', lineItems:[], taxRate:0 },
+    { id:'ou-cn2', type:'credit_note', linkedInvNum:'INV104', cnAmount:-200, status:'CN Applied', lineItems:[], taxRate:0 }
   ];
   var ai = ctx.DB.inv.filter(function(i){
     if (i.status === 'Cancelled') return false;
@@ -1903,7 +1920,9 @@ test('rDash — Outstanding still reflects CN-reduced balance on linked invoices
     if (i.status==='Paid'||i.status==='Cancelled') return s;
     return s + Math.max(0, ctx.iCalc(i).bal);
   }, 0);
-  assertEqual(Math.round(tOut), 17428, 'Outstanding = $17,428 (uses calc_balanceDue on invoices)');
+  // ou3: 14180 - 4000 (payment) - 450 (CN) = 9730
+  // ou4: 7248.24 - 0 - 200 (CN) = 7048.24 → total = 16778.24
+  assertEqual(Math.round(tOut), 16778, 'Outstanding = $16,778 (live bal: payments + applied CNs reduce balance)');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
