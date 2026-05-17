@@ -1928,6 +1928,97 @@ test('rDash — Outstanding correctly reflects payments and applied CNs', functi
   assertEqual(Math.round(tOut), 22643, 'Outstanding = $22,643 (live bal: payments + applied CNs; INV10031 corrected)');
 });
 
+// ── GATE TESTS ─────────────────────────────────────────────────
+
+test('canTransitionStatus — forward transitions are permitted', function() {
+  assertEqual(ctx.canTransitionStatus('Draft', 'Pro-forma'), true, 'Draft→Pro-forma allowed');
+  assertEqual(ctx.canTransitionStatus('Draft', 'Sent'), true, 'Draft→Sent allowed');
+  assertEqual(ctx.canTransitionStatus('Sent', 'Partially Paid'), true, 'Sent→Partially Paid allowed');
+  assertEqual(ctx.canTransitionStatus('Partially Paid', 'Paid'), true, 'Partially Paid→Paid allowed');
+});
+
+test('canTransitionStatus — backward transitions are blocked', function() {
+  assertEqual(ctx.canTransitionStatus('Sent', 'Draft'), false, 'Sent→Draft blocked');
+  assertEqual(ctx.canTransitionStatus('Paid', 'Sent'), false, 'Paid→Sent blocked');
+  assertEqual(ctx.canTransitionStatus('Partially Paid', 'Pro-forma'), false, 'Partially Paid→Pro-forma blocked');
+});
+
+test('canTransitionStatus — Cancelled is reachable from any status', function() {
+  assertEqual(ctx.canTransitionStatus('Draft', 'Cancelled'), true, 'Draft→Cancelled allowed');
+  assertEqual(ctx.canTransitionStatus('Sent', 'Cancelled'), true, 'Sent→Cancelled allowed');
+  assertEqual(ctx.canTransitionStatus('Paid', 'Cancelled'), true, 'Paid→Cancelled allowed');
+});
+
+test('saveCN — CN Applied updates linked invoice calc_balanceDue', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'sa-inv', num:'INV200', status:'Sent', lineItems:[], taxRate:0,
+      calc_grandTotal:'5000', calc_balanceDue:'5000' }
+  ];
+  ctx.DB.payments = [];
+  var cnSave = { id:'sa-cn', num:'CN200', type:'credit_note', linkedInvNum:'INV200',
+    linkedInvId:'sa-inv', cnAmount:-300, status:'CN Applied',
+    buyer:'', date:'2026-01-01', cnReason:'', notes:'', lineItems:[], taxRate:0, lf:0, ins:0, dep:0,
+    updAt:new Date().toISOString() };
+  mockEl('cnf-n').value = 'CN200';
+  mockEl('cnf-amount').value = '300';
+  mockEl('cnf-type').value = 'credit_note';
+  mockEl('cnf-linked').value = 'INV200';
+  mockEl('cnf-b').value = '';
+  mockEl('cnf-cur').value = 'USD';
+  mockEl('cnf-dt').value = '2026-01-01';
+  mockEl('cn-sm').value = 'CN Applied';
+  mockEl('cnf-reason').value = '';
+  mockEl('cnf-nt').value = '';
+  ctx.EI.cn = null;
+  ctx.saveCN();
+  var linkedInv = ctx.DB.inv.find(function(i){ return i.num === 'INV200'; });
+  assertEqual(linkedInv && linkedInv.calc_balanceDue, '4700.00', 'calc_balanceDue updated to 5000-300=4700');
+});
+
+test('mapRec — inv entity maps DB fields to display headers', function() {
+  var rec = { num:'INV001', buyer:'Test Co', date:'2026-01-01', status:'Draft',
+               cur:'USD', calc_grandTotal:'1000', calc_balanceDue:'1000',
+               calc_cogs:'800', calc_netProfit:'200', calc_margin:'20',
+               taxRate:0, lf:0, notes:'' };
+  var mapped = ctx.mapRec('inv', rec);
+  assertEqual(mapped['Invoice #'], 'INV001', 'num → Invoice #');
+  assertEqual(mapped['Buyer'], 'Test Co', 'buyer → Buyer');
+  assertEqual(mapped['Grand Total'], '1000', 'calc_grandTotal → Grand Total');
+  assertEqual(mapped['Status'], 'Draft', 'status → Status');
+});
+
+test('mapRec — cn entity maps CN-specific fields', function() {
+  var rec = { num:'CN001', linkedInvNum:'INV001', buyer:'Test Co', date:'2026-01-01',
+               status:'CN Applied', cnAmount:-300, cnReason:'Overcharge', type:'credit_note', notes:'' };
+  var mapped = ctx.mapRec('cn', rec);
+  assertEqual(mapped['CN #'], 'CN001', 'num → CN #');
+  assertEqual(mapped['Linked Invoice'], 'INV001', 'linkedInvNum → Linked Invoice');
+  assertEqual(mapped['Credit Amount'], -300, 'cnAmount → Credit Amount');
+  assertEqual(mapped['Status'], 'CN Applied', 'status → Status');
+});
+
+test('unlockInv — sets _unlockedInvIds for a locked invoice', function() {
+  resetDB();
+  ctx.DB.inv = [{ id:'ul1', num:'INV999', status:'Sent', lineItems:[], taxRate:0 }];
+  mockEl('adv-unlock-num').value = 'INV999';
+  mockEl('adv-unlock-reason').value = 'Test unlock reason';
+  mockEl('adv-unlock-confirm').value = 'CONFIRM';
+  mockEl('adv-unlock-status').value = '';
+  ctx.unlockInv();
+  assertEqual(ctx._unlockedInvIds['ul1'], true, '_unlockedInvIds set for unlocked invoice');
+});
+
+test('unlockInv — rejects wrong CONFIRM text', function() {
+  resetDB();
+  ctx.DB.inv = [{ id:'ul2', num:'INV998', status:'Sent', lineItems:[], taxRate:0 }];
+  mockEl('adv-unlock-num').value = 'INV998';
+  mockEl('adv-unlock-reason').value = 'Some reason';
+  mockEl('adv-unlock-confirm').value = 'confirm';
+  ctx.unlockInv();
+  assertEqual(ctx._unlockedInvIds['ul2'], undefined, '_unlockedInvIds NOT set when CONFIRM not typed exactly');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
