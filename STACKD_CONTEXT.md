@@ -198,33 +198,95 @@ Theme: Stabilise and ship before China trip
 
 ## China trip — 20-30 May 2026
 
-**Flights:** CZ304/CZ303 LHR ↔ Guangzhou (premium economy)
-
-| Date | Day | Location | Activity |
-|------|-----|----------|----------|
-| Wed 20 May | Depart | London | CZ304 evening |
-| Thu 21 May | Arrive | Guangzhou | Atour Hotel |
-| Fri 22 May | Day 1 | Foshan | Hanse factory (Fenghuang 2 Rd, Chancheng) + Lecong market |
-| Sat 23 May | Travel | → Qingdao | CAN→TAO 11:40. Romerry Hotel |
-| Sun 24 May | Free | Qingdao | Rest + prep |
-| Mon 25 May | Bank Holiday | Jinan day trip | Jinbao PVC — HSR ~1h20m each way |
-| Tue 26 May | Day 2 | Qingdao + Jinan area | Confirmed supplier. Shandong Create Refrigeration afternoon (Boxing County, 1h45m from Jinan, hard out 16:30) |
-| Wed 27 May | Day 3 | Qingdao → Guangzhou | Supplier 2 morning. TAO→CAN 08:10 |
-| Thu 28 May | Day 4 | Guangzhou/Dongguan | Dongguan supplier TBC |
-| Fri 29 May | Day 5 | Shenzhen | CBMmart (Bagualing Industrial Zone, Futian) morning. Huaqiangbei afternoon |
-| Sat 30 May | Depart | → London | HSR Shenzhen→Guangzhou. CZ303 |
-
 **Trip objectives:**
 1. Freight forwarder — demo Stackd live, get pilot agreement, leave-behind document
 2. China agents — identify 3-5, offer 60-day free Growth tier
 3. Supplier meetings — update Stackd notes in real time
 
-**Demo assets ready:**
-- Stackd portal v2.9.11 live
+**Flights (BOOKED):**
+- CZ304: Wed 20 May, 22:10 LHR → Thu 21 May 16:55 CAN (Premium Economy)
+- CZ303: Sat 30 May, 13:40 CAN → 19:20 LHR (Premium Economy)
+
+**Domestic flights (TO BOOK):**
+- CAN→TAO: Sat 23 May, 11:40 departure (NOT early morning)
+- TAO→CAN: Wed 27 May, 08:10 departure (early morning)
+
+**Hotels (8 nights total):**
+
+| Hotel | Nights | Dates | Cost | Status |
+|-------|--------|-------|------|--------|
+| Guangzhou Atour Hotel | 3 | Thu 21, Fri 22, Wed 27 | £135 (£45/night) | TO BOOK |
+| Romerry Hotel Qingdao | 4 | Sat 23–Tue 26 | £152 (£38/night) | TO BOOK |
+| Shenzhen (TBC) | 1 | Fri 29 | £50 | TO BOOK |
+
+**Itinerary:**
+
+| Date | Day | Location | Activity | Accommodation |
+|------|-----|----------|----------|---------------|
+| Wed 20 May | 0 | London → GZ | CZ304 22:10 departure | On flight |
+| Thu 21 May | 1 | Guangzhou | Arrive 16:55, rest, jet lag recovery | Atour Hotel (1) |
+| Fri 22 May | 2 | Foshan | Hanse factory (Fenghuang 2 Rd, Chancheng) + Lecong market | Atour Hotel (2) |
+| Sat 23 May | 3 | → Qingdao | CAN→TAO 11:40, arrive afternoon | Romerry Hotel (1) |
+| Sun 24 May | 4 | Qingdao | Rest + prep | Romerry Hotel (2) |
+| Mon 25 May | 5 | Jinan day trip | Jinbao PVC (Nora) — HSR round-trip ~1h20m each way | Romerry Hotel (3) |
+| Tue 26 May | 6 | Qingdao + Boxing | Confirmed supplier (AM) + Shandong Create (PM, Boxing County, 1h45m from Jinan, hard out 16:30) ⚠️ | Romerry Hotel (4) |
+| Wed 27 May | 7 | → Guangzhou | Supplier 2 (AM) + TAO→CAN 08:10 | Atour Hotel (3) |
+| Thu 28 May | 8 | Dongguan | Supplier TBC | Shenzhen area |
+| Fri 29 May | 9 | Shenzhen | CBMmart (Bagualing Industrial Zone, Futian) AM + Huaqiangbei PM | Shenzhen hotel (1) |
+| Sat 30 May | 10 | → London | HSR Shenzhen→Guangzhou, CZ303 13:40 | Home in Brighton |
+
+**Confirmed suppliers:**
+
+| Supplier | Contact | Location | Meeting | Notes |
+|----------|---------|----------|---------|-------|
+| Hanse factory | TBC | Fenghuang 2 Rd, Chancheng District, Foshan | Fri 22 May | Lecong market same day |
+| Shandong Jinbao | Nora (jinbao106@jinbaoplastic.com) | Jinan | Mon 25 May | PVC Foam Board. Fire cert each shipment. HSR day trip from Qingdao |
+| Confirmed supplier | TBC | Qingdao | Tue 26 May AM | Name not yet specified |
+| Shandong Create Refrigeration | TBC | Boxing County (via Jinan) | Tue 26 May PM | Hard out 16:30. 1h45m from Jinan |
+| Supplier 2 | TBC | Qingdao | Wed 27 May AM | Before 08:10 flight |
+| Dongguan supplier | TBC | Dongguan | Thu 28 May | Status: TBC |
+| CBMmart | TBC | Bagualing Industrial Zone, Futian, Shenzhen | Fri 29 May AM | — |
+
+**HSR bookings needed** (book Sat 26 Apr when 30-day window opens):
+- Mon 25 May: Qingdao ↔ Jinan return (£16)
+- Sat 30 May: Shenzhen → Guangzhou (£8, don't pre-book — trains every 10 min)
+
+**⚠️ Critical issue — Tue 26 May routing:**
+
+Context file states both: (a) Qingdao confirmed supplier morning, (b) Shandong Create afternoon in Boxing County.
+
+Problem: Boxing County is 280km from Qingdao (not near). It's 1h45m from Jinan.
+
+Possible solutions:
+- **Option A:** Very early Qingdao supplier (06:00–09:00) → HSR to Jinan 10:00 → Taxi to Boxing 12:00–14:00 → Meeting 14:00–16:30
+- **Option B:** Move Qingdao supplier to Wed morning slot, use Tue for Jinan → Boxing only
+- **Option C:** Skip Boxing supplier (not recommended — already confirmed)
+
+**Action required:** Confirm supplier meeting times and resolve Tue 26 logistics before booking HSR.
+
+**Pre-departure checklist:**
+
+| Date | Action | Status |
+|------|--------|--------|
+| Week of 23–29 Mar | Book all 3 hotels | TO DO |
+| Tue 24 Mar @ 3pm | Book domestic flights (CAN→TAO 11:40, TAO→CAN 08:10) | TO DO |
+| Sat 26 Apr | Book HSR tickets (30-day window) | TO DO |
+| Early Apr | Order 100 bilingual business cards | TO DO |
+| Early Apr | Get £100–150 CNY cash (¥800–1,200) | TO DO |
+| Sun 18 May | VPN setup (ExpressVPN) — CRITICAL, cannot do in China | TO DO |
+| Mon 19 May | eSIM install (Saily) — 5GB, 10 days, £11 | TO DO |
+| Mon 19 May | Download all apps + offline maps | TO DO |
+| Mon 19 May | Final pack | TO DO |
+
+Apps to download in UK before departure: WeChat, Baidu Maps (offline maps for all 6 cities), Alipay, Didi, Trip.com, Pleco, Google Translate (Chinese offline pack 800MB)
+
+**Demo assets ready for freight forwarder meetings:**
+- Stackd portal v2.9.12 live at stkdcfpm.github.io/stackd-ops
 - SHP-002 demo shipment in portal (Booked status)
-- Make.com Flow 1 + Flow 2 — build before departure
-- Forwarder leave-behind document — built
-- Make.com setup guide — built
+- Make.com flows (build before departure)
+- Forwarder leave-behind document (built)
+
+**Documents created (19 May 2026):** China_Trip_Full_With_Prices.docx, China_Trip_Cost_Scale.docx, China_Trip_Quick_Summary.docx, Qingdao_Guide.docx, Everything_Else_You_Need.docx, What_You_Need_To_Do.docx
 
 ---
 
