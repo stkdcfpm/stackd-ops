@@ -507,6 +507,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" onclick="pushAll()">&#8593; Push All</button>
       </div>
       <p id="conn-st" style="font-size:.56rem;color:var(--m);"></p>
+      <div style="margin-top:8px;font-size:13px;font-family:monospace;"><span id="sync-status-display" style="color:#8A8277;">Checking...</span></div>
     </div>
     <div class="card">
       <div class="ct">Sync Options</div>
@@ -2043,7 +2044,7 @@ function mapRec(entity, rec) {
   return out;
 }
 async function syncAll() {
-  if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
+  if (!SS.url || !SS.url.startsWith('https://')) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
   setSyncStatus('loading');
   try {
     var synEnts = ['sup','li','po','sh','qt','payments'];
@@ -2057,7 +2058,20 @@ async function syncAll() {
     await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
     if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
+    localStorage.setItem('st_last_sync', new Date().toISOString());
+    renderSyncStatus();
   } catch(e) { setSyncStatus('err'); toast('Sync failed: ' + e.message); }
+}
+function renderSyncStatus() {
+  var el = document.getElementById('sync-status-display');
+  if (!el) return;
+  var ts = localStorage.getItem('st_last_sync');
+  if (!ts) { el.textContent = 'Never synced'; el.style.color = '#8A8277'; return; }
+  var d = new Date(ts);
+  var mins = Math.floor((Date.now() - d.getTime()) / 60000);
+  var label = mins < 1 ? 'Just now' : mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.floor(mins/60) + 'h ago' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  el.textContent = '✓ Last synced ' + label;
+  el.style.color = mins < 30 ? '#375623' : mins < 120 ? '#7F6000' : '#833C00';
 }
 function isEmptyLI(v, fieldType) {
   // fieldType: 'inv' — valid element has typeof el.up !== 'undefined'
@@ -7066,6 +7080,7 @@ function initApp() {
     window.currentTab = 'dash';
     updateAIChips('dash');
     initLang();
+    renderSyncStatus();
   } catch(e) {
     console.error('initApp failed:', e);
     toast('Failed to initialise — check console (F12) for details', 5000);
