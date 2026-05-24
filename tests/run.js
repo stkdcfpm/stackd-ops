@@ -2019,6 +2019,54 @@ test('unlockInv — rejects wrong CONFIRM text', function() {
   assertEqual(ctx._unlockedInvIds['ul2'], undefined, '_unlockedInvIds NOT set when CONFIRM not typed exactly');
 });
 
+// ── SYNC GUARD & TIMESTAMP TESTS ──────────────────────────────
+test('syncAll() — guard fires when SS.url is empty', function() {
+  var loadingCalled = false;
+  var origSS = Object.assign({}, ctx.SS);
+  ctx.SS.url = '';
+  var origSet = ctx.setSyncStatus;
+  ctx.setSyncStatus = function(s) { if (s === 'loading') loadingCalled = true; };
+  ctx.syncAll();
+  ctx.setSyncStatus = origSet;
+  ctx.SS = Object.assign(ctx.SS, origSS);
+  assert(!loadingCalled, 'setSyncStatus(loading) should NOT be called when SS.url is empty');
+});
+
+test('syncAll() — guard fires when SS.url lacks https:// prefix', function() {
+  var loadingCalled = false;
+  var origUrl = ctx.SS.url;
+  ctx.SS.url = 'http://insecure.example.com/exec';
+  var origSet = ctx.setSyncStatus;
+  ctx.setSyncStatus = function(s) { if (s === 'loading') loadingCalled = true; };
+  ctx.syncAll();
+  ctx.setSyncStatus = origSet;
+  ctx.SS.url = origUrl;
+  assert(!loadingCalled, 'setSyncStatus(loading) should NOT be called when SS.url is not https://');
+});
+
+test('renderSyncStatus() — shows "Never synced" when st_last_sync absent', function() {
+  delete mockStorage['st_last_sync'];
+  mockEl('sync-status-display').textContent = '';
+  ctx.renderSyncStatus();
+  assertEqual(mockEl('sync-status-display').textContent, 'Never synced', 'should display Never synced');
+});
+
+test('renderSyncStatus() — shows green colour for recent timestamp', function() {
+  mockStorage['st_last_sync'] = new Date(Date.now() - 5 * 60000).toISOString(); // 5 min ago
+  mockEl('sync-status-display').style.color = '';
+  ctx.renderSyncStatus();
+  assertEqual(mockEl('sync-status-display').style.color, '#375623', 'should be green for sync < 30m ago');
+  delete mockStorage['st_last_sync'];
+});
+
+test('renderSyncStatus() — shows amber for sync between 30m and 2h ago', function() {
+  mockStorage['st_last_sync'] = new Date(Date.now() - 60 * 60000).toISOString(); // 60 min ago
+  mockEl('sync-status-display').style.color = '';
+  ctx.renderSyncStatus();
+  assertEqual(mockEl('sync-status-display').style.color, '#7F6000', 'should be amber for sync 30m–2h ago');
+  delete mockStorage['st_last_sync'];
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
