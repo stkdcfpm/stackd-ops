@@ -1468,7 +1468,7 @@ function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 
 let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
-let AS = ld(K.as) || { name:'Stackd', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'Brighton, UK', email:'cachafpm@gmail.com', phone:'+44 7930 438631', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
+let AS = ld(K.as) || { name:'', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'', email:'', phone:'', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
 let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null };
 let cIL = [], cPL = [], cQL = [], cCNL = [];
 let AI = ld(K.ai) || { key: '' };
@@ -2138,8 +2138,8 @@ async function pullAll() {
             }
           }
         }
+        DB[ent] = pulled.concat(localOnly);
       }
-      DB.inv = pulledInv.concat(localOnlyInv);
     }
 
     // ── Credit notes (cn tab — merge back into DB.inv) ────────────
@@ -2235,7 +2235,7 @@ async function testConn() {
   G('conn-st').textContent = 'Testing...';
   try {
     var tok = (G('cfg-token') ? G('cfg-token').value.trim() : '') || SS.token || '';
-    var d = JSON.parse(await (await fetch(url + '?action=ping&_token=' + encodeURIComponent(tok))).text());
+    var d = JSON.parse(await (await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'ping', _token:tok}) })).text());
     G('conn-st').textContent = d.status === 'ok' ? '\u2713 Connected' : '\u2715 ' + (d.message || 'Error');
     G('conn-st').style.color = d.status === 'ok' ? 'var(--gn)' : 'var(--cr)';
   } catch(e) { G('conn-st').textContent = '\u2715 ' + e.message; G('conn-st').style.color = 'var(--cr)'; }
@@ -2423,7 +2423,7 @@ function rDash() {
   var mxN = Math.max.apply(null, ai.map(function(i){ return Math.abs(iCalc(i).np); }).concat([1]));
   G('np-chart').innerHTML = ai.length ? ai.slice(-7).map(function(i){
     var np = iCalc(i).np;
-    return '<div class="br"><div class="bl2">' + (i.num||i.buyer||'-') + '</div>' +
+    return '<div class="br"><div class="bl2">' + san(i.num||i.buyer||'-') + '</div>' +
       '<div class="bt"><div class="bf ' + (np>=0?'go':'cr') + '" style="width:' + (Math.abs(np)/mxN*100) + '%"></div></div>' +
       '<div class="bv">' + fmt(np, i.cur||'USD') + '</div></div>';
   }).join('') : '<p style="font-size:.56rem;color:var(--m)">No data</p>';
@@ -2446,7 +2446,7 @@ function rDash() {
   var mxP = Math.max.apply(null, apo.map(function(p){ return (p.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0); }).concat([1]));
   G('po-chart').innerHTML = apo.length ? apo.slice(-6).map(function(p){
     var t = (p.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0);
-    return '<div class="br"><div class="bl2">' + (p.num||gsn(p.supId)||'-') + '</div><div class="bt"><div class="bf bl" style="width:' + (t/mxP*100) + '%"></div></div><div class="bv">' + fmt(t-(+p.dep||0),p.cur||'USD') + '</div></div>';
+    return '<div class="br"><div class="bl2">' + san(p.num||gsn(p.supId)||'-') + '</div><div class="bt"><div class="bf bl" style="width:' + (t/mxP*100) + '%"></div></div><div class="bv">' + fmt(t-(+p.dep||0),p.cur||'USD') + '</div></div>';
   }).join('') : '<p style="font-size:.56rem;color:var(--m)">No active POs</p>';
 
   // Shipment Pipeline mini-list
@@ -2476,7 +2476,7 @@ function rDash() {
       shpMap.innerHTML = Object.keys(statusCounts).length
         ? Object.entries(statusCounts).map(function(e){
             return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--ln);">' +
-              '<span class="tag ' + shpStatusClass(e[0]) + '">' + e[0] + '</span>' +
+              '<span class="tag ' + shpStatusClass(e[0]) + '">' + san(e[0]) + '</span>' +
               '<span style="font-size:.56rem;color:var(--ink);font-weight:600;">' + e[1] + '</span></div>';
           }).join('')
         : '<p style="font-size:.56rem;color:var(--m);">No shipments</p>';
@@ -2602,7 +2602,7 @@ function renderAccts() {
     var settled = s.pos.filter(function(p){return p.status==='Settled';}).length;
 
     return '<tr>' +
-      '<td style="font-weight:500;color:var(--cr);">' + s.name + '</td>' +
+      '<td style="font-weight:500;color:var(--cr);">' + san(s.name) + '</td>' +
       '<td class="num">' + s.pos.length + '</td>' +
       '<td class="num">' + fmt(totalCOGS) + '</td>' +
       '<td class="num" style="color:var(--bl);">' + fmt(totalDep) + '</td>' +
@@ -2656,10 +2656,10 @@ function rSup() {
   var f = DB.sup.filter(function(s){ return !q || (s.name||'').toLowerCase().includes(q) || (s.country||'').toLowerCase().includes(q); });
   G('sup-em').style.display = f.length ? 'none' : 'block';
   G('sup-tb').innerHTML = f.map(function(s){
-    return '<tr><td style="font-weight:500;color:var(--cr)">' + (s.name||'-') + '</td><td>' + (s.country||'-') + '</td><td>' + (s.ct||'-') + '</td><td>' + (s.email||'-') + '</td><td>' + (s.phone||'-') + '</td><td>' + (s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (s.notes||'') + '</td>' +
+    return '<tr><td style="font-weight:500;color:var(--cr)">' + san(s.name||'-') + '</td><td>' + san(s.country||'-') + '</td><td>' + san(s.ct||'-') + '</td><td>' + san(s.email||'-') + '</td><td>' + san(s.phone||'-') + '</td><td>' + san(s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(s.notes||'') + '</td>' +
       '<td><button class="ab" onclick="editSup(\'' + s.id + '\')">&#9998;</button><button class="ab" onclick="delSup(\'' + s.id + '\')">&#10005;</button></td></tr>';
   }).join('');
-  var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');
+  var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
   ['lf-sup','pf-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
   G('li-sf').innerHTML = '<option value="">All suppliers</option>' + opts;
 }
@@ -4894,7 +4894,7 @@ function prevCNDoc(inv) {
   var cur=inv.cur||'USD';
   var creditAmt=+inv.cnAmount||0; // stored negative; display as negative e.g. -$450
   var linked=DB.inv.find(function(i){return i.id===inv.linkedInvId||i.num===inv.linkedInvNum;});
-  var bank=AS.bank?AS.bank.replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
+  var bank=AS.bank?san(AS.bank).replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
   var isGW=inv.type==='goodwill_credit';
   var badgeLabel=isGW?'GOODWILL CREDIT':'CREDIT NOTE';
   var docTitle=isGW?'Goodwill Credit':'Credit Note';
@@ -6859,11 +6859,11 @@ function renderPaymentsTab(invId) {
       '</tr></thead><tbody>';
     payments.forEach(function(pm) {
       html += '<tr>' +
-        '<td style="white-space:nowrap;">' + (pm.date||'-') + '</td>' +
+        '<td style="white-space:nowrap;">' + san(pm.date||'-') + '</td>' +
         '<td class="num" style="color:var(--gn);font-weight:600;">' + fmt(pm.amount,cur) + '</td>' +
-        '<td>' + (pm.method||'-') + '</td>' +
-        '<td style="font-size:.54rem;color:var(--m);">' + (pm.reference||'-') + '</td>' +
-        '<td style="font-size:.54rem;color:var(--m);">' + (pm.notes||'-') + '</td>' +
+        '<td>' + san(pm.method||'-') + '</td>' +
+        '<td style="font-size:.54rem;color:var(--m);">' + san(pm.reference||'-') + '</td>' +
+        '<td style="font-size:.54rem;color:var(--m);">' + san(pm.notes||'-') + '</td>' +
         '<td><button class="btn btn-g" style="font-size:.5rem;padding:2px 7px;" onclick="deletePayment(\'' + pm.id + '\')">\u00d7</button></td>' +
         '</tr>';
     });
