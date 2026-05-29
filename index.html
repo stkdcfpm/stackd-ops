@@ -1452,6 +1452,49 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <datalist id="dl-freight"></datalist>
 
 <script>
+// ── SECTION INDEX ──────────────────────────────────────────────
+// To jump to a section: grep for the anchor string, e.g. "── STATE ──"
+// Section                        Line
+// STATE                          1455
+// INVOICE STATUS LOCKING         1478
+// UTILS                          1489
+// LANGUAGE                       1509
+// COMPANY BRANDING               1528
+// REFERENCE DATA                 1591
+// REFERENCE DATA ACCESSORS       1827
+// SHEETS SYNC                    1987
+// VIEWS                          2261
+// INVOICE CALCULATION            2276
+// DASHBOARD                      2345
+// SUPPLIERS                      2653
+// LINE ITEMS                     2701
+// INVOICE MODAL                  2813
+// INVOICES TABLE                 3214
+// BUYER STATEMENT                3275
+// PO MODAL & TABLE               3461
+// PRINT PREVIEWS                 3548
+// PDF BRANDING HELPERS           3573
+// VALIDATION                     3857
+// VALIDATION HELPERS             3869
+// BULK IMPORT                    4202
+// GOOGLE SHEETS DIRECT IMPORT    4447
+// CREDIT NOTES                   4743
+// SETTINGS                       4943
+// ACCOUNTING EXPORT              5524
+// SHIPMENTS                      5767
+// LOAD CALCULATOR                5903
+// FORWARDER UPDATE REQUEST       5995
+// ONBOARDING                     6090
+// TAB-AWARE AI                   6131
+// QUOTE ENGINE                   6165
+// PRINT                          6629
+// PAYMENT METHODS                6756
+// PAYMENT FUNCTIONS              6759
+// TOOLTIPS                       6934
+// INIT                           7003
+// AUTH                           7099
+// ───────────────────────────────────────────────────────────────
+
 // ── STATE ──────────────────────────────────────────────────────
 const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai'};
 
@@ -5276,6 +5319,7 @@ async function sendAIMsg() {
         'content-type': 'application/json',
         'x-api-key': AI.key,
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'prompt-caching-2024-07-31',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
@@ -5288,7 +5332,11 @@ async function sendAIMsg() {
           var ctx = 'The user is currently on the ' + (tabNames[tab]||tab) + ' tab of Stackd Ops.\n\n';
           var langPrefix = _lang === 'zh' ? '请用中文回答所有问题。使用正式的商业用语和国际贸易术语。\n\n' : '';
           var basePrompt = _aiMode === 'compliance' ? AI_COMPLIANCE_PROMPT : AI_SYSTEM_PROMPT;
-          return langPrefix + ctx + basePrompt;
+          var baseText = Array.isArray(basePrompt) ? basePrompt.join('\n') : String(basePrompt);
+          return [
+            { type: 'text', text: baseText, cache_control: { type: 'ephemeral' } },
+            { type: 'text', text: langPrefix + ctx }
+          ];
         })(),
         messages: _aiHistory
       })
