@@ -2331,7 +2331,7 @@ async function testConn() {
   G('conn-st').textContent = 'Testing...';
   try {
     var tok = (G('cfg-token') ? G('cfg-token').value.trim() : '') || SS.token || '';
-    var d = JSON.parse(await (await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'ping', _token:tok}) })).text());
+    var d = JSON.parse(await (await fetch(url, { method:'POST', redirect:'follow', body:JSON.stringify({action:'ping', _token:tok}) })).text());
     G('conn-st').textContent = d.status === 'ok' ? '\u2713 Connected' : '\u2715 ' + (d.message || 'Error');
     G('conn-st').style.color = d.status === 'ok' ? 'var(--gn)' : 'var(--cr)';
   } catch(e) { G('conn-st').textContent = '\u2715 ' + e.message; G('conn-st').style.color = 'var(--cr)'; }
