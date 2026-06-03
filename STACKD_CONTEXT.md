@@ -70,7 +70,7 @@
 **Google Sheets sync:**
 - Auto-sync: ON (re-enabled 13 May 2026 after data stabilisation)
 - Apps Script URL: in Stackd Settings → Google Sheets
-- Sync token: fpm-stackd-2026
+- Sync token: [stored in Apps Script → Script Properties as TOKEN — rotate before any new repo access]
 - Tracker write bridge: live on main — actions update_requirements_tracker and update_project_tracker
 
 ---
@@ -280,8 +280,8 @@ Enterprise base: £1,200/month + £25/user beyond 10 + integration fees.
 
 | Tracker | Sheet ID |
 |---------|----------|
-| Requirements Tracker | 1q05sSoCMmiqaNNixDWVk2_aJPwEqx37vDbOPNh2gqGw |
-| Project Tracker | 1gC6d7ClOFpaocK_lNI685x5yMK5_UHiMgriFlF_UrLg |
+| Requirements Tracker | [stored in Apps Script → Script Properties as REQUIREMENTS_TRACKER_ID] |
+| Project Tracker | [stored in Apps Script → Script Properties as PROJECT_TRACKER_ID] |
 
 Apps Script write bridge live: actions `update_requirements_tracker` and `update_project_tracker`.
 
