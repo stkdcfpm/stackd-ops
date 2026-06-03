@@ -49,6 +49,33 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Detail:** Invoice locking prevents accidental edits via the UI but can be bypassed by direct localStorage modification, browser DevTools, or JSON import. The lock re-engages on page reload. This is the correct design for a no-server app and is consistent with HMRC guidance that electronic audit trails supplement rather than replace paper records. It must not be presented to auditors as a cryptographic or tamper-proof control.  
 **Decision:** By design. Document in operator guide.
 
+### SEC-GAP-005 — Forwarder webhook transmits shipment data without in-product notice
+**Area:** Settings → Integrations → Power Automate Webhook URL; `sendFwdRequest()`  
+**Logged:** v2.9.14 (audit)  
+**Detail:** When a forwarder webhook URL is configured, `sendFwdRequest()` POSTs shipment data (origin/destination ports, ETD, cargo description, forwarder contact details) to an external endpoint. No in-product notice is shown at configuration time. The webhook is opt-in — if `SS.fwdWebhook` is not set, no data is transmitted. Forwarder contact data (name, email) is PII.  
+**Risk level:** Low at current scale. Becomes a formal compliance obligation before onboarding external clients.  
+**Decision:** Accepted. Add brief disclosure note in Settings → Integrations card alongside SEC-GAP-002 work.
+
+### SEC-GAP-006 — `stackd_co_*` localStorage keys outside the `K` registry
+**Area:** Company branding — `stackd_co_name`, `stackd_co_addr`, `stackd_co_accent`, `stackd_co_footer`, `stackd_co_vat`, `stackd_co_logo`, `stackd_co_powered`  
+**Logged:** v2.9.14 (audit)  
+**Detail:** Company branding settings are stored directly under `stackd_co_*` keys without registration in the `K` constant. This means they are invisible to `saveAll()`, the snapshot export (`expAll`), and the import handler (`doImport`). A full data export/import will silently omit branding settings. The `ldArr` safety wrapper also does not apply.  
+**Risk level:** Low — branding is cosmetic and easily re-entered. Medium if logo (base64 blob) is large and causes silent localStorage quota pressure.  
+**Decision:** Deferred. Register keys in `K` and add to export/import in a future settings consolidation sprint.
+
+### SEC-GAP-007 — `testConn()` sync token exposed in URL query string *(FIXED v2.9.14)*
+**Area:** Settings → Google Sheets card → Test Connection  
+**Logged:** v2.9.14 (audit); **Fixed:** v2.9.14  
+**Detail:** Prior to v2.9.14, `testConn()` appended `_token` as a URL query parameter (`?action=ping&_token=...`). Query string parameters appear in server access logs, browser history, and referrer headers. Fixed by moving to POST body: `fetch(url, { method:'POST', body: JSON.stringify({action:'ping', _token:tok}) })`.
+
+### SEC-GAP-008 — No Content Security Policy header
+**Area:** GitHub Pages deployment; `index.html`  
+**Logged:** v2.9.14 (audit)  
+**Detail:** The app ships no `Content-Security-Policy` header or meta tag. A CSP would restrict `script-src`, `connect-src` (Anthropic API, Cloudflare Worker), and `img-src` (base64 logos), providing defence-in-depth against XSS even if `san()` is missed in a future change.  
+**Risk level:** Low while XSS hygiene is maintained. A CSP would upgrade protection to medium.  
+**Mitigation path:** Add a `<meta http-equiv="Content-Security-Policy">` tag to `index.html`. GitHub Pages does not support server-set headers.  
+**Decision:** Deferred. Implement alongside next security sprint.
+
 ---
 
 ## Library (Line Items)
@@ -61,3 +88,51 @@ Items deferred from initial build. Review after pilot period before wider rollou
 - Call `syncEnt('li', ...)` after each `invoiceRefs` mutation in `saveInv()` / `delInv()`
 - Add a reconcile pass in the sync pull to rebuild `invoiceRefs` from pulled invoice data  
 **Decision:** Deferred. The index is local-first; stale remote copy has no operational impact at current scale.
+
+---
+
+## Code Quality
+
+### CODE-GAP-001 — `pullAll()` undefined variable crash *(FIXED v2.9.14)*
+**Area:** `pullAll()` — entity merge block  
+**Logged:** v2.9.14 (audit); **Fixed:** v2.9.14  
+**Detail:** Prior to v2.9.14, the merge line `DB.inv = pulledInv.concat(localOnlyInv)` sat outside the per-entity `if` block and referenced variables (`pulledInv`, `localOnlyInv`) that do not exist in scope. The loop uses `pulled` and `localOnly`. This caused a ReferenceError crash on every `pullAll()` invocation. Fixed by moving the assignment inside the `if` block and using the correct variable names: `DB[ent] = pulled.concat(localOnly)`.
+
+---
+
+## Data Quality
+
+### DATA-GAP-001 — `repairCalcFields()` contains FPM-specific hardcoded invoice IDs
+**Area:** `repairCalcFields()` — dashboard KPI correction utility  
+**Logged:** v2.9.14 (DAMA DMBOK audit)  
+**Detail:** `repairCalcFields()` contains hardcoded corrections for specific FPM invoice IDs (`INV10028`, `INV10031`) with hardcoded COGS values. This function runs on dashboard load and silently mutates `calc_` fields on those records. It will produce incorrect results if the same invoice IDs exist in a different operator's dataset, and will be a maintenance burden as FPM data evolves. This is a blocking concern for any multi-tenant or whitelabel deployment.  
+**Options for post-pilot:**
+- Remove `repairCalcFields()` entirely and apply the corrections directly to the stored data
+- Gate behind a `if (AS.tag === 'FPM-internal')` check
+- Migrate to a one-time migration script that corrects and then removes itself  
+**Decision:** Deferred. Acceptable at single-operator scale. Must be resolved before any multi-operator deployment.
+
+### DATA-GAP-002 — PII hardcoded in company settings defaults *(FIXED v2.9.14)*
+**Area:** `let AS = ld(K.as) || { ... }` — company branding defaults  
+**Logged:** v2.9.14 (audit); **Fixed:** v2.9.14  
+**Detail:** Prior to v2.9.14, `AS` defaults included FPM International's real company name, address, bank details, and contact information. This meant any operator who deployed Stackd Ops without configuring company settings would unknowingly use FPM data on their PDFs, and the data would be visible in source control. Fixed by replacing all defaults with empty strings.
+
+---
+
+## SDLC & Process
+
+### SDLC-GAP-001 — Version identity inconsistency across the codebase
+**Area:** `<title>`, nav version badge, in-app changelog, `AI_SYSTEM_PROMPT`, `CLAUDE.md`, `STACKD_CONTEXT.md`  
+**Logged:** v2.9.14 (audit)  
+**Detail:** At the time of the v2.9.14 audit, `<title>` and the nav badge displayed v2.9.10; `AI_SYSTEM_PROMPT` declared v2.9.13; `CLAUDE.md` declared v2.9.13; `STACKD_CONTEXT.md` referenced v2.9.12 as current. The in-app changelog was frozen at v2.9.10. Version identity was fractured across at least 5 locations. Fixed in v2.9.14. The "On version delivery" checklist in `CLAUDE.md` must be followed on every release to prevent recurrence.  
+**Decision:** Resolved. Checklist-enforced going forward.
+
+### SDLC-GAP-002 — Gate evidence trail exists only in chat, not in persistent artefacts
+**Area:** Agent pipeline — `requirements-gate`, `spec-gate`, `build-gate`, `security-gate`  
+**Logged:** v2.9.14 (BABOK / agent architecture audit)  
+**Detail:** Gate agents produce structured reports in the Claude chat session. These reports are not persisted to Git, Notion, or any durable store. A gate PASS in session has no artefact that proves it ran. This means the audit trail only exists in Claude session history (ephemeral) and is not verifiable by a third party or auditor. The agent architecture doc notes "Every gate produces a logged evidence record" but this is aspirational — the Notion MCP integration is not yet wired.  
+**Options for post-pilot:**
+- Write gate output to a `docs/gate-evidence/` directory in Git as markdown files
+- Wire Notion MCP to post gate results to the Requirements Tracker
+- Add a mandatory "evidence tag" to every PR that references a gate run  
+**Decision:** Deferred. Implement before ICO registration or first external client onboarding.
