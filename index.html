@@ -529,12 +529,13 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     </div>
     <div class="card" id="cfg-rates">
       <div class="ct">Rates &amp; FX
-        <button class="btn btn-g" style="margin-left:auto;font-size:.48rem;padding:2px 9px;" onclick="saveRates()">Save Rates</button>
+        <button class="btn btn-o" id="qr-live-btn" style="margin-left:auto;font-size:.48rem;padding:2px 9px;" onclick="fetchLiveRates()">&#8635; Live Rates</button>
+        <button class="btn btn-g" style="font-size:.48rem;padding:2px 9px;margin-left:6px;" onclick="saveRates()">Save Rates</button>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:.56rem;">
-        <div class="fld"><label>GBP → USD FX</label><input type="number" id="qr-fxGBPUSD" step="0.01" min="0"></div>
-        <div class="fld"><label>GBP → RMB FX</label><input type="number" id="qr-fxGBPRMB" step="0.01" min="0"></div>
-        <div class="fld"><label>GBP → BBD FX</label><input type="number" id="qr-fxGBPBBD" step="0.01" min="0"></div>
+        <div class="fld"><label>GBP → USD FX</label><input type="number" id="qr-fxGBPUSD" step="0.0001" min="0"></div>
+        <div class="fld"><label>GBP → RMB FX</label><input type="number" id="qr-fxGBPRMB" step="0.0001" min="0"></div>
+        <div class="fld"><label>GBP → BBD FX</label><input type="number" id="qr-fxGBPBBD" step="0.0001" min="0"></div>
         <div class="fld"><label>LCL Rate ($/CBM)</label><input type="number" id="qr-lclPerCBM" step="1" min="0"></div>
         <div class="fld"><label>FCL 20GP ($)</label><input type="number" id="qr-fcl20GP" step="10" min="0"></div>
         <div class="fld"><label>FCL 40HQ ($)</label><input type="number" id="qr-fcl40HQ" step="10" min="0"></div>
@@ -544,7 +545,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld"><label>Insurance Rate (%)</label><input type="number" id="qr-insRate" step="0.01" min="0"></div>
         <div class="fld"><label>FPM Admin ($)</label><input type="number" id="qr-fpmAdmin" step="5" min="0"></div>
       </div>
-      <p style="font-size:.5rem;color:var(--m);margin-top:8px;">Rates used by the Quote Engine. Changes apply to new calculations immediately after save.</p>
+      <div style="margin-top:10px;font-size:.5rem;font-family:'DM Mono',monospace;"><span id="qr-fx-status" style="color:#8A8277;">No live rates fetched — using saved values</span></div>
+      <p style="font-size:.5rem;color:var(--m);margin-top:4px;">FX rates pulled from ECB via frankfurter.app (free, no key). Other rates set manually. Changes apply immediately after save.</p>
     </div>
     <div class="card">
       <div class="ct">Reference Data
@@ -1442,6 +1444,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           </select>
         </div>
       </div>
+      <div id="qt-rates-warn" style="margin-bottom:8px;"></div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:.08em;color:var(--cr);margin-bottom:6px;">LINE ITEMS</div>
       <div id="qt-lines" style="overflow-x:auto;margin-bottom:8px;"></div>
       <button class="btn btn-g" style="font-size:.5rem;padding:3px 10px;margin-bottom:14px;" onclick="addQteLine()">+ Add Line</button>
@@ -6342,6 +6345,7 @@ function openQte() {
   G('qt-prev-btn').style.display = 'none';
   G('qt-po-btn').style.display = 'none';
   rQLT();
+  renderQteRatesWarn();
   G('ov-qt').classList.add('on');
 }
 
@@ -6365,6 +6369,7 @@ function editQte(id) {
   G('qt-po-btn').style.display = q.linkedPOId ? 'none' : '';
   rQLT();
   calcQte();
+  renderQteRatesWarn();
   G('ov-qt').classList.add('on');
 }
 
@@ -6706,6 +6711,7 @@ function qteFillRates() {
   numFields.forEach(function(f){ var el=G('qr-'+f); if(el) el.value = QR[f] !== undefined ? QR[f] : QR_DEFAULTS[f]; });
   var insEl = G('qr-insRate');
   if (insEl) insEl.value = fn((QR.insRate||QR_DEFAULTS.insRate)*100, 2);
+  renderFxStatus();
 }
 
 function ratesFromForm() {
@@ -6719,7 +6725,55 @@ function ratesFromForm() {
 function saveRates() {
   Object.assign(QR, QR_DEFAULTS, ratesFromForm());
   sv('st_qr', QR);
+  localStorage.removeItem('st_qr_ts');
+  renderFxStatus();
   toast('Rates saved');
+}
+
+async function fetchLiveRates() {
+  var btn = G('qr-live-btn');
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  try {
+    var resp = await fetch('https://api.frankfurter.app/latest?from=GBP&to=USD,CNY,BBD', { redirect: 'follow' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    var r = data.rates || {};
+    if (r.USD) QR.fxGBPUSD = Math.round(r.USD * 10000) / 10000;
+    if (r.CNY) QR.fxGBPRMB = Math.round(r.CNY * 10000) / 10000;
+    if (r.BBD) QR.fxGBPBBD = Math.round(r.BBD * 10000) / 10000;
+    sv('st_qr', QR);
+    localStorage.setItem('st_qr_ts', new Date().toISOString());
+    qteFillRates();
+    toast('FX updated — ECB ' + (data.date || new Date().toLocaleDateString('en-GB')));
+  } catch(e) {
+    toast('Rate fetch failed: ' + e.message);
+  } finally {
+    if (btn) { btn.textContent = '↻ Live Rates'; btn.disabled = false; }
+  }
+}
+
+function renderFxStatus() {
+  var el = G('qr-fx-status');
+  if (!el) return;
+  var ts = localStorage.getItem('st_qr_ts');
+  if (!ts) { el.textContent = 'No live rates fetched — values set manually'; el.style.color = '#8A8277'; return; }
+  var mins = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+  var label = mins < 1 ? 'just now' : mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.floor(mins / 60) + 'h ago' : Math.floor(mins / 1440) + 'd ago';
+  el.textContent = '↻ ECB rates · fetched ' + label;
+  el.style.color = mins < 480 ? '#375623' : mins < 1440 ? '#7F6000' : '#833C00';
+}
+
+function renderQteRatesWarn() {
+  var el = G('qt-rates-warn');
+  if (!el) return;
+  var ts = localStorage.getItem('st_qr_ts');
+  var ageMs = ts ? Date.now() - new Date(ts).getTime() : Infinity;
+  if (ageMs < 86400000) { el.innerHTML = ''; return; }
+  var ageH = isFinite(ageMs) ? Math.floor(ageMs / 3600000) : null;
+  var msg = ageH !== null
+    ? 'FX rates were last refreshed ' + ageH + 'h ago. Update in Settings → Rates & FX before finalising this quote.'
+    : 'FX rates have never been refreshed from live data. Update in Settings → Rates & FX.';
+  el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;">⚠ ' + msg + '</div>';
 }
 
 // ── PRINT ─────────────────────────────────────────────────────

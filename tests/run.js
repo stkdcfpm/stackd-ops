@@ -2067,6 +2067,70 @@ test('renderSyncStatus() — shows amber for sync between 30m and 2h ago', funct
   delete mockStorage['st_last_sync'];
 });
 
+// ── FX RATES TESTS ─────────────────────────────────────────────
+test('renderFxStatus() — shows "no live rates" when st_qr_ts absent', function() {
+  delete mockStorage['st_qr_ts'];
+  mockEl('qr-fx-status').textContent = '';
+  mockEl('qr-fx-status').style.color = '';
+  ctx.renderFxStatus();
+  const txt = mockEl('qr-fx-status').textContent;
+  assert(txt.includes('manually') || txt.includes('No live'), 'should indicate no live fetch: got "' + txt + '"');
+  assertEqual(mockEl('qr-fx-status').style.color, '#8A8277', 'should be grey');
+});
+
+test('renderFxStatus() — shows green for rates fetched < 8h ago', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 2 * 3600000).toISOString(); // 2h ago
+  mockEl('qr-fx-status').style.color = '';
+  ctx.renderFxStatus();
+  assertEqual(mockEl('qr-fx-status').style.color, '#375623', 'should be green for rates < 8h old');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('renderFxStatus() — shows amber for rates fetched 8–24h ago', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 10 * 3600000).toISOString(); // 10h ago
+  mockEl('qr-fx-status').style.color = '';
+  ctx.renderFxStatus();
+  assertEqual(mockEl('qr-fx-status').style.color, '#7F6000', 'should be amber for rates 8–24h old');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('renderFxStatus() — shows red for rates older than 24h', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 30 * 3600000).toISOString(); // 30h ago
+  mockEl('qr-fx-status').style.color = '';
+  ctx.renderFxStatus();
+  assertEqual(mockEl('qr-fx-status').style.color, '#833C00', 'should be red for rates > 24h old');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('renderQteRatesWarn() — no warning when rates are fresh', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 3600000).toISOString(); // 1h ago
+  mockEl('qt-rates-warn').innerHTML = 'old';
+  ctx.renderQteRatesWarn();
+  assertEqual(mockEl('qt-rates-warn').innerHTML, '', 'should clear warning when rates < 24h old');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('renderQteRatesWarn() — shows warning when no live rates ever fetched', function() {
+  delete mockStorage['st_qr_ts'];
+  mockEl('qt-rates-warn').innerHTML = '';
+  ctx.renderQteRatesWarn();
+  assert(mockEl('qt-rates-warn').innerHTML.includes('never'), 'should show "never" warning when no timestamp');
+});
+
+test('renderQteRatesWarn() — shows warning when rates are stale (>24h)', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 30 * 3600000).toISOString(); // 30h ago
+  mockEl('qt-rates-warn').innerHTML = '';
+  ctx.renderQteRatesWarn();
+  assert(mockEl('qt-rates-warn').innerHTML.includes('30h'), 'should show age in hours');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('saveRates() — clears st_qr_ts on manual save', function() {
+  mockStorage['st_qr_ts'] = new Date().toISOString();
+  ctx.saveRates();
+  assert(!mockStorage['st_qr_ts'], 'st_qr_ts should be removed after manual saveRates');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
