@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.14**  
-**Test count: 174/174 PASS** (`node tests/run.js`)
+**Current version: v2.9.15**  
+**Test count: 190/190 PASS** (`node tests/run.js`)
 
 ---
 
