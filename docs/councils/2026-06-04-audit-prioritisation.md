@@ -66,7 +66,7 @@ The backup/recovery gap is the most dangerous item not on the list — higher pr
 |---|---|---|
 | SEC-GAP-001 mislabelled | Code fix shipped (v2.9.14+): `Code.gs` reads from PropertiesService; hardcoded values and `STACKD_CONTEXT.md` references redacted | Code done ✓ — **manual step pending** (set Script Properties, rotate token, redeploy) |
 | SEC-GAP-003 billing exposure | Noted in gaps register; no architectural fix possible without server layer | Accepted risk — monitor XSS hygiene |
-| Multi-currency KPI inaccuracy | Added to sprint backlog | Pending |
+| Multi-currency KPI inaccuracy | `toGBP()` helper added; all dashboard KPI aggregations convert to GBP equiv. via QR FX rates (v2.9.15) | Done ✓ |
 | testConn CORS regression | Fixed (removed Content-Type header causing OPTIONS preflight) | Done ✓ |
 | CSP deferral inverts stack | SEC-GAP-008 logged; CSP meta tag added to sprint backlog | Pending |
 | Backup/recovery gap | Not yet on gap register — needs a formal gap entry | Pending |
