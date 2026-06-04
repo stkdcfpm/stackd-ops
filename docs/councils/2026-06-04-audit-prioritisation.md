@@ -68,8 +68,8 @@ The backup/recovery gap is the most dangerous item not on the list — higher pr
 | SEC-GAP-003 billing exposure | Noted in gaps register; no architectural fix possible without server layer | Accepted risk — monitor XSS hygiene |
 | Multi-currency KPI inaccuracy | `toGBP()` helper added; all dashboard KPI aggregations convert to GBP equiv. via QR FX rates (v2.9.15) | Done ✓ |
 | testConn CORS regression | Fixed (removed Content-Type header causing OPTIONS preflight) | Done ✓ |
-| CSP deferral inverts stack | SEC-GAP-008 logged; CSP meta tag added to sprint backlog | Pending |
-| Backup/recovery gap | Not yet on gap register — needs a formal gap entry | Pending |
-| localStorage quota cliff | Noted in council; not yet on gap register | Pending |
+| CSP deferral inverts stack | CSP meta tag added to `index.html` `<head>` (v2.9.16): restricts `connect-src https:`, `object-src 'none'`, `base-uri 'self'` | Done ✓ |
+| Backup/recovery gap | BACKUP-GAP-001 added to known-gaps.md; `checkStorageQuota()` warns at 75%/90% usage (v2.9.16); DR procedure still undocumented | Partially done — DR procedure pending |
+| localStorage quota cliff | BACKUP-GAP-002 added to known-gaps.md; quota warning shipped (v2.9.16); write-side guard pending | Partially done |
 | Sync layer under multi-operator | Architectural risk noted; no immediate fix without backend | Deferred — document before adding second operator |
 | "How many operators, what timeline?" | Not answered — must be decided before rollout planning | **Owner action required** |
