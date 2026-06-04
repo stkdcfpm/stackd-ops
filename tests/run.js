@@ -2131,6 +2131,64 @@ test('saveRates() — clears st_qr_ts on manual save', function() {
   assert(!mockStorage['st_qr_ts'], 'st_qr_ts should be removed after manual saveRates');
 });
 
+// ── toGBP / MULTI-CURRENCY KPI ─────────────────────────────────
+
+test('toGBP — GBP passthrough', function() {
+  var r = ctx.toGBP(100, 'GBP');
+  assertEqual(r, 100, 'GBP amount unchanged');
+});
+
+test('toGBP — USD conversion uses QR.fxGBPUSD', function() {
+  ctx.QR.fxGBPUSD = 1.25;
+  var r = ctx.toGBP(125, 'USD');
+  assertEqual(r, 100, '125 USD → 100 GBP at 1.25 rate');
+});
+
+test('toGBP — RMB conversion uses QR.fxGBPRMB', function() {
+  ctx.QR.fxGBPRMB = 9.0;
+  var r = ctx.toGBP(900, 'RMB');
+  assertEqual(r, 100, '900 RMB → 100 GBP at 9.0 rate');
+});
+
+test('toGBP — CNY alias matches RMB', function() {
+  ctx.QR.fxGBPRMB = 9.0;
+  var r = ctx.toGBP(900, 'CNY');
+  assertEqual(r, 100, '900 CNY → 100 GBP at 9.0 rate');
+});
+
+test('toGBP — BBD conversion uses QR.fxGBPBBD', function() {
+  ctx.QR.fxGBPBBD = 2.5;
+  var r = ctx.toGBP(250, 'BBD');
+  assertEqual(r, 100, '250 BBD → 100 GBP at 2.5 rate');
+});
+
+test('toGBP — unknown currency passes through unchanged', function() {
+  var r = ctx.toGBP(100, 'EUR');
+  assertEqual(r, 100, 'Unknown currency passes through');
+});
+
+test('toGBP — defaults to USD when currency omitted', function() {
+  ctx.QR.fxGBPUSD = 1.25;
+  var r = ctx.toGBP(125);
+  assertEqual(r, 100, 'Omitted currency defaults to USD');
+});
+
+test('rDash — KPI tiles render GBP symbol when invoices have mixed currencies', function() {
+  resetDB();
+  ctx.QR.fxGBPUSD = 1.25;
+  ctx.DB.inv = [
+    { id:'mc1', cur:'GBP', status:'Draft', lineItems:[], taxRate:0, dep:0,
+      calc_grandTotal:'1000', calc_netProfit:'100', calc_cogs:'900', calc_margin:'10', calc_balanceDue:'1000' },
+    { id:'mc2', cur:'USD', status:'Draft', lineItems:[], taxRate:0, dep:0,
+      calc_grandTotal:'125',  calc_netProfit:'25',  calc_cogs:'100', calc_margin:'20', calc_balanceDue:'125'  }
+  ];
+  ctx.rDash();
+  var kpis = mockElements['kpis'] ? mockElements['kpis'].innerHTML : '';
+  assert(kpis.includes('£'), 'KPI tiles should display GBP (£) symbol');
+  // Revenue: £1000 GBP + £100 GBP (125 USD / 1.25) = £1100
+  assert(kpis.includes('1,100'), 'Revenue ≈ £1,100 GBP after conversion');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
