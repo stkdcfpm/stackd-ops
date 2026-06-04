@@ -20,6 +20,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | Known gaps log | `docs/known-gaps.md` |
 | Version history | `docs/version-history.md` |
 | Agent architecture | `docs/agent-architecture.md` |
+| Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
 | Branch for new work | `claude/sync-race-condition-fixes-Q6Ion` |
 
 ---
