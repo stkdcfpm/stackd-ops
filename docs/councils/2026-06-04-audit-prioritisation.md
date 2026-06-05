@@ -72,4 +72,4 @@ The backup/recovery gap is the most dangerous item not on the list — higher pr
 | Backup/recovery gap | BACKUP-GAP-001 added to known-gaps.md; `checkStorageQuota()` warns at 75%/90% usage (v2.9.16); DR procedure still undocumented | Partially done — DR procedure pending |
 | localStorage quota cliff | BACKUP-GAP-002 added to known-gaps.md; quota warning shipped (v2.9.16); write-side guard pending | Partially done |
 | Sync layer under multi-operator | Architectural risk noted; no immediate fix without backend | Deferred — document before adding second operator |
-| "How many operators, what timeline?" | Not answered — must be decided before rollout planning | **Owner action required** |
+| "How many operators, what timeline?" | **Answered 2026-06-05: 3 operators.** Architecture survivable at this scale per council verdict. Sync layer and localStorage limits must be reviewed before operator 2 is onboarded. | Done ✓ |
