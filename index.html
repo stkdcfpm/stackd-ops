@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.21</title>
+<title>Stackd Ops v2.9.22</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -207,7 +207,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.21</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.22</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -904,9 +904,21 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.21</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.22</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <code>pullAll()</code> double-fetch eliminated — was making 5 redundant API calls per pull (each entity fetched twice). Now one fetch per entity. Pull is faster and no longer wastes Apps Script quota.</li>
+          <li>Fix: <code>delEnt()</code> now respects the auto-sync toggle — deletes no longer propagate to Sheets when auto-sync is off (was inconsistent with <code>syncEnt</code>).</li>
+          <li>Fix: <code>pullAll()</code> now updates the "Last synced" timestamp after a successful pull (previously only <code>syncAll</code> set it).</li>
+          <li>Docs: SYNC-GAP-001 documented — Push All / Sync is a clear-and-rewrite operation; process rule added for multi-operator use.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.21</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: DATA-GAP-001 — FPM-specific hardcoded invoice corrections moved to a one-time migration (<code>runFPMMigration()</code>, flag <code>st_fpm_repair_v1</code>). <code>repairCalcFields()</code> is now generic and operator-safe. Settings → Repair invoice totals updated accordingly.</li>
@@ -2189,7 +2201,7 @@ async function syncEnt(entity, rec) {
   catch(e) { setSyncStatus('err'); }
 }
 async function delEnt(entity, keyVal) {
-  if (!SS.url) return;
+  if (!SS.url || !SS.auto) return;
   try { await sPost({action:'delete', entity:entity, keyVal:keyVal}); }
   catch(e) { toast('Sync delete failed — Sheets may be out of date'); }
 }
@@ -2287,88 +2299,69 @@ async function pullAll() {
   if (!SS.url) { toast('No URL configured'); return; }
   setSyncStatus('loading');
   try {
-    var entities = ['sup','li','inv','po','sh','qt'];
-    for (var ei = 0; ei < entities.length; ei++) {
-      var ent = entities[ei];
-      var d = await sGet(ent);
-      if (d.status === 'ok' && d.records && d.records.length) {
-        var pulled = d.records;
-        var pulledIds = {};
-        for (var pi = 0; pi < pulled.length; pi++) pulledIds[pulled[pi].id] = true;
-        var localOnly = DB[ent].filter(function(r){ return !pulledIds[r.id]; });
-        // For invoices and POs: preserve local lineItems/pos if pulled record has empty arrays
-        // This prevents a Sheets sync from wiping line items added locally
-        if (ent === 'inv' || ent === 'po') {
-          for (var pi = 0; pi < pulled.length; pi++) {
-            var localRec = DB[ent].find(function(r){ return r.id === pulled[pi].id; });
-            if (localRec) {
-              if (ent === 'inv') {
-                if (isEmptyLI(pulled[pi].lineItems, 'inv') && !isEmptyLI(localRec.lineItems, 'inv')) {
-                  pulled[pi].lineItems = localRec.lineItems;
-                }
-                if (isEmptyLI(pulled[pi].pos, 'pos') && !isEmptyLI(localRec.pos, 'pos')) {
-                  pulled[pi].pos = localRec.pos;
-                }
-                // Also preserve calc fields if local has them and pulled doesn't
-                var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt',
-                  'calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
-                calcFields.forEach(function(f) {
-                  var pulledVal = +pulled[pi][f] || 0;
-                  var localVal  = +localRec[f]  || 0;
-                  if (pulledVal === 0 && localVal > 0) {
-                    pulled[pi][f] = localRec[f];
-                  }
-                });
-              }
-              if (ent === 'po') {
-                if (isEmptyLI(pulled[pi].lineItems, 'po') && !isEmptyLI(localRec.lineItems, 'po')) {
-                  pulled[pi].lineItems = localRec.lineItems;
-                }
-              }
-            }
-          }
+    // ── Invoices (with line-item + calc field preservation) ────────
+    var dInv = await sGet('inv');
+    if (dInv.status === 'ok' && dInv.records && dInv.records.length) {
+      var invPulled = dInv.records;
+      var invPulledIds = {};
+      for (var ii = 0; ii < invPulled.length; ii++) invPulledIds[invPulled[ii].id] = true;
+      var invLocalOnly = DB.inv.filter(function(r){ return !invPulledIds[r.id]; });
+      var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt',
+                        'calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
+      for (var ii = 0; ii < invPulled.length; ii++) {
+        var invLocal = DB.inv.find(function(r){ return r.id === invPulled[ii].id; });
+        if (invLocal) {
+          if (isEmptyLI(invPulled[ii].lineItems, 'inv') && !isEmptyLI(invLocal.lineItems, 'inv'))
+            invPulled[ii].lineItems = invLocal.lineItems;
+          if (isEmptyLI(invPulled[ii].pos, 'pos') && !isEmptyLI(invLocal.pos, 'pos'))
+            invPulled[ii].pos = invLocal.pos;
+          calcFields.forEach(function(f) {
+            if ((+invPulled[ii][f] || 0) === 0 && (+invLocal[f] || 0) > 0)
+              invPulled[ii][f] = invLocal[f];
+          });
         }
-        DB[ent] = pulled.concat(localOnly);
       }
+      DB.inv = invPulled.concat(invLocalOnly);
     }
 
-    // ── Credit notes (cn tab — merge back into DB.inv) ────────────
+    // ── Credit notes (merged back into DB.inv) ─────────────────────
     var dCn = await sGet('cn');
     if (dCn.status === 'ok' && dCn.records && dCn.records.length) {
-      var pulledCn = dCn.records;
-      var pulledCnIds = {};
-      for (var ci = 0; ci < pulledCn.length; ci++) pulledCnIds[pulledCn[ci].id] = true;
-      DB.inv = DB.inv.filter(function(r){ return !pulledCnIds[r.id]; }).concat(pulledCn);
+      var cnPulledIds = {};
+      for (var ci = 0; ci < dCn.records.length; ci++) cnPulledIds[dCn.records[ci].id] = true;
+      DB.inv = DB.inv.filter(function(r){ return !cnPulledIds[r.id]; }).concat(dCn.records);
     }
 
-    // ── Purchase orders (with line item preservation) ─────────────
+    // ── Purchase orders (with line-item preservation) ──────────────
     var dPo = await sGet('po');
     if (dPo.status === 'ok' && dPo.records && dPo.records.length) {
-      var pulledPo = dPo.records;
-      var pulledPoIds = {};
-      for (var pi = 0; pi < pulledPo.length; pi++) pulledPoIds[pulledPo[pi].id] = true;
-      var localOnlyPo = DB.po.filter(function(r){ return !pulledPoIds[r.id]; });
-      for (var pi = 0; pi < pulledPo.length; pi++) {
-        var localPo = DB.po.find(function(r){ return r.id === pulledPo[pi].id; });
-        if (localPo && isEmptyLI(pulledPo[pi].lineItems, 'po') && !isEmptyLI(localPo.lineItems, 'po')) pulledPo[pi].lineItems = localPo.lineItems;
+      var poPulled = dPo.records;
+      var poPulledIds = {};
+      for (var pi = 0; pi < poPulled.length; pi++) poPulledIds[poPulled[pi].id] = true;
+      var poLocalOnly = DB.po.filter(function(r){ return !poPulledIds[r.id]; });
+      for (var pi = 0; pi < poPulled.length; pi++) {
+        var poLocal = DB.po.find(function(r){ return r.id === poPulled[pi].id; });
+        if (poLocal && isEmptyLI(poPulled[pi].lineItems, 'po') && !isEmptyLI(poLocal.lineItems, 'po'))
+          poPulled[pi].lineItems = poLocal.lineItems;
       }
-      DB.po = pulledPo.concat(localOnlyPo);
+      DB.po = poPulled.concat(poLocalOnly);
     }
 
-    // ── Simple entities (replace from Sheets, preserve local-only) ─
+    // ── Simple entities (Sheets wins; local-only records preserved) ─
     var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt'];
     for (var ei = 0; ei < simpleEnts.length; ei++) {
-      var sentKey = simpleEnts[ei];
-      var sd = await sGet(sentKey);
+      var eKey = simpleEnts[ei];
+      var sd = await sGet(eKey);
       if (sd.status === 'ok' && sd.records && sd.records.length) {
-        var spulled = sd.records;
-        var spulledIds = {};
-        for (var si = 0; si < spulled.length; si++) spulledIds[spulled[si].id] = true;
-        DB[sentKey] = spulled.concat(DB[sentKey].filter(function(r){ return !spulledIds[r.id]; }));
+        var sPulledIds = {};
+        for (var si = 0; si < sd.records.length; si++) sPulledIds[sd.records[si].id] = true;
+        DB[eKey] = sd.records.concat(DB[eKey].filter(function(r){ return !sPulledIds[r.id]; }));
       }
     }
 
     saveAll(); renderAll(); setSyncStatus('ok'); toast('Pulled from Sheets');
+    localStorage.setItem('st_last_sync', new Date().toISOString());
+    renderSyncStatus();
     setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) {
     setSyncStatus('err');
@@ -5111,7 +5104,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.21).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.22).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',

@@ -2,6 +2,7 @@
 
 | Version | Highlights |
 |---|---|
+| v2.9.22 | Fix: `pullAll()` double-fetch eliminated — 5 redundant API calls per pull removed; each entity now fetched exactly once. Fix: `delEnt()` now respects auto-sync toggle (consistent with `syncEnt`). Fix: `pullAll()` now updates `st_last_sync` timestamp. Docs: SYNC-GAP-001 documented — Push All destructive semantics + process rule for multi-operator use. Tests: 193/193 pass. |
 | v2.9.21 | Fix: DATA-GAP-001 — FPM-specific hardcoded invoice corrections (`INV10028`–`INV10032`) extracted from `repairCalcFields()` into `runFPMMigration()` (one-time, `st_fpm_repair_v1` flag). `repairCalcFields()` is now operator-safe (generic cnAmount strip only). `runDataRepair()` updated to call generic repair only. Tests: 193/193 pass. |
 | v2.9.20 | Fix: `expAll()` snapshot now includes `branding: getCoBrand()` — company name, address, logo, VAT, accent colour, footer; `doImport()` calls `saveCoBrand()` on restore. Closes SEC-GAP-006 partial. Tests: 193/193 pass. |
 | v2.9.19 | Fix: Favicon (inline SVG `<link rel="icon">`) eliminates 404 console error. Fix: `repairCalcFields()` now strips stray `cnAmount` from non-CN invoice records on init — self-heals INV10031 data corruption. Tests: 193/193 pass. |
