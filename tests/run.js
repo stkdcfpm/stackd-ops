@@ -2189,6 +2189,29 @@ test('rDash — KPI tiles render GBP symbol when invoices have mixed currencies'
   assert(kpis.includes('1,100'), 'Revenue ≈ £1,100 GBP after conversion');
 });
 
+// ── STORAGE QUOTA GUARD ────────────────────────────────────────
+
+test('checkStorageQuota() — runs without error when localStorage is empty', function() {
+  Object.keys(mockStorage).forEach(function(k){ delete mockStorage[k]; });
+  ctx.checkStorageQuota(); // must not throw
+  assert(true, 'no error on empty storage');
+});
+
+test('checkStorageQuota() — runs without error when localStorage has data', function() {
+  mockStorage['st_i'] = JSON.stringify([{ id: 'i1', status: 'Draft' }]);
+  ctx.checkStorageQuota(); // must not throw
+  assert(true, 'no error with data in storage');
+});
+
+test('checkStorageQuota() — no toast when usage is below 75%', function() {
+  Object.keys(mockStorage).forEach(function(k){ delete mockStorage[k]; });
+  mockStorage['st_i'] = 'small';
+  if (mockElements['toast']) mockElements['toast'].textContent = '';
+  ctx.checkStorageQuota();
+  var t = mockElements['toast'] ? mockElements['toast'].textContent : '';
+  assert(!t || t === '', 'no toast for low storage usage');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {

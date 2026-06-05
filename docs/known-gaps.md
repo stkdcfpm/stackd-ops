@@ -68,13 +68,10 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.14 (audit); **Fixed:** v2.9.14  
 **Detail:** Prior to v2.9.14, `testConn()` appended `_token` as a URL query parameter (`?action=ping&_token=...`). Query string parameters appear in server access logs, browser history, and referrer headers. Fixed by moving to POST body: `fetch(url, { method:'POST', body: JSON.stringify({action:'ping', _token:tok}) })`.
 
-### SEC-GAP-008 — No Content Security Policy header
+### SEC-GAP-008 — No Content Security Policy header *(FIXED v2.9.16)*
 **Area:** GitHub Pages deployment; `index.html`  
-**Logged:** v2.9.14 (audit)  
-**Detail:** The app ships no `Content-Security-Policy` header or meta tag. A CSP would restrict `script-src`, `connect-src` (Anthropic API, Cloudflare Worker), and `img-src` (base64 logos), providing defence-in-depth against XSS even if `san()` is missed in a future change.  
-**Risk level:** Low while XSS hygiene is maintained. A CSP would upgrade protection to medium.  
-**Mitigation path:** Add a `<meta http-equiv="Content-Security-Policy">` tag to `index.html`. GitHub Pages does not support server-set headers.  
-**Decision:** Deferred. Implement alongside next security sprint.
+**Logged:** v2.9.14 (audit); **Fixed:** v2.9.16  
+**Detail:** Prior to v2.9.16, the app shipped no `Content-Security-Policy` header or meta tag. Fixed by adding `<meta http-equiv="Content-Security-Policy">` to `<head>` with policy: `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'`. `'unsafe-inline'` for scripts/styles is required by the single-file architecture but `connect-src https:`, `object-src 'none'`, and `base-uri 'self'` provide meaningful defence-in-depth.
 
 ---
 
@@ -126,6 +123,32 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.14 (audit)  
 **Detail:** At the time of the v2.9.14 audit, `<title>` and the nav badge displayed v2.9.10; `AI_SYSTEM_PROMPT` declared v2.9.13; `CLAUDE.md` declared v2.9.13; `STACKD_CONTEXT.md` referenced v2.9.12 as current. The in-app changelog was frozen at v2.9.10. Version identity was fractured across at least 5 locations. Fixed in v2.9.14. The "On version delivery" checklist in `CLAUDE.md` must be followed on every release to prevent recurrence.  
 **Decision:** Resolved. Checklist-enforced going forward.
+
+---
+
+## Data Safety
+
+### BACKUP-GAP-001 — No backup/recovery mechanism audited or enforced
+**Area:** All data — `localStorage` is the sole persistence layer  
+**Logged:** v2.9.15 (LLM Council audit verdict 2026-06-04)  
+**Detail:** The app holds live invoices, POs, shipments, payments, quotes, and supplier records with no server-side persistence, no transaction log, and no automatic backup. `localStorage` is wiped by: browser "Clear site data", private/incognito browsing, device failure, browser profile corruption, or OS reinstall. The JSON export (Settings → Data → Export All) is the only recovery path, but it is undocumented, untested as a restore procedure, and not prompted to the user. One corrupted browser profile = total data loss with no recovery option. **The council rated this the highest-probability failure mode — above any security gap.**  
+**Mitigation shipped (v2.9.15):** `checkStorageQuota()` warns at 75% and 90% storage usage, prompting an export. Does not solve the underlying gap.  
+**Options for post-pilot:**
+- Auto-export JSON to a user-nominated local folder on every save (File System Access API)
+- Add a periodic export reminder (e.g. weekly toast with one-click export)
+- Document and test the full export→import round-trip as the official DR procedure  
+**Decision:** Partially mitigated (quota warning). Full DR procedure must be documented and tested before first external client.
+
+### BACKUP-GAP-002 — localStorage quota cliff with no guard *(partially fixed v2.9.15)*
+**Area:** All `localStorage` writes — `sv()`, `saveAll()`, `stackd_co_*` keys  
+**Logged:** v2.9.15 (LLM Council audit verdict 2026-06-04)  
+**Detail:** Browser `localStorage` has a hard limit of approximately 5–10 MB (varies by browser). When the limit is reached, `localStorage.setItem()` throws a `QuotaExceededError` silently — no data is written, no user feedback is shown, and the app continues as if the save succeeded. The `ldArr` safety wrapper catches read errors but not write errors. Large datasets (many invoices with line items), large base64 logo uploads, or extensive sync history could approach the limit undetected.  
+**Mitigation shipped (v2.9.15):** `checkStorageQuota()` runs on app init and warns via toast at 75% (≈3.75 MB) and 90% (≈4.5 MB) of a conservative 5 MB baseline. Write-side error catching remains unimplemented.  
+**Options for post-pilot:**
+- Wrap `sv()` in try/catch for `QuotaExceededError` and surface a blocking modal before data is lost
+- Add quota check before logo upload (base64 blobs are the highest risk item)
+- Implement `navigator.storage.estimate()` where available for more accurate quota detection  
+**Decision:** Partially mitigated. Write-side guard and logo-size check needed before wider rollout.
 
 ### SDLC-GAP-002 — Gate evidence trail exists only in chat, not in persistent artefacts
 **Area:** Agent pipeline — `requirements-gate`, `spec-gate`, `build-gate`, `security-gate`  
