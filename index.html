@@ -2298,8 +2298,10 @@ function isEmptyLI(v, fieldType) {
 async function pullAll() {
   if (!SS.url) { toast('No URL configured'); return; }
   setSyncStatus('loading');
+  var failed = [];
+
+  // ── Invoices (with line-item + calc field preservation) ────────
   try {
-    // ── Invoices (with line-item + calc field preservation) ────────
     var dInv = await sGet('inv');
     if (dInv.status === 'ok' && dInv.records && dInv.records.length) {
       var invPulled = dInv.records;
@@ -2323,16 +2325,20 @@ async function pullAll() {
       }
       DB.inv = invPulled.concat(invLocalOnly);
     }
+  } catch(e) { failed.push('inv'); console.warn('[Stackd] pullAll: inv failed —', e.message); }
 
-    // ── Credit notes (merged back into DB.inv) ─────────────────────
+  // ── Credit notes (merged back into DB.inv) ─────────────────────
+  try {
     var dCn = await sGet('cn');
     if (dCn.status === 'ok' && dCn.records && dCn.records.length) {
       var cnPulledIds = {};
       for (var ci = 0; ci < dCn.records.length; ci++) cnPulledIds[dCn.records[ci].id] = true;
       DB.inv = DB.inv.filter(function(r){ return !cnPulledIds[r.id]; }).concat(dCn.records);
     }
+  } catch(e) { failed.push('cn'); console.warn('[Stackd] pullAll: cn failed —', e.message); }
 
-    // ── Purchase orders (with line-item preservation) ──────────────
+  // ── Purchase orders (with line-item preservation) ──────────────
+  try {
     var dPo = await sGet('po');
     if (dPo.status === 'ok' && dPo.records && dPo.records.length) {
       var poPulled = dPo.records;
@@ -2346,27 +2352,31 @@ async function pullAll() {
       }
       DB.po = poPulled.concat(poLocalOnly);
     }
+  } catch(e) { failed.push('po'); console.warn('[Stackd] pullAll: po failed —', e.message); }
 
-    // ── Simple entities (Sheets wins; local-only records preserved) ─
-    var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt'];
-    for (var ei = 0; ei < simpleEnts.length; ei++) {
-      var eKey = simpleEnts[ei];
+  // ── Simple entities (Sheets wins; local-only records preserved) ─
+  var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt'];
+  for (var ei = 0; ei < simpleEnts.length; ei++) {
+    var eKey = simpleEnts[ei];
+    try {
       var sd = await sGet(eKey);
       if (sd.status === 'ok' && sd.records && sd.records.length) {
         var sPulledIds = {};
         for (var si = 0; si < sd.records.length; si++) sPulledIds[sd.records[si].id] = true;
         DB[eKey] = sd.records.concat(DB[eKey].filter(function(r){ return !sPulledIds[r.id]; }));
       }
-    }
+    } catch(e) { failed.push(eKey); console.warn('[Stackd] pullAll: ' + eKey + ' failed —', e.message); }
+  }
 
-    saveAll(); renderAll(); setSyncStatus('ok'); toast('Pulled from Sheets');
+  saveAll(); renderAll();
+  if (failed.length) {
+    setSyncStatus('err');
+    toast('Pull partial — ' + failed.join(', ') + ' failed. Check Apps Script deployment.', 6000);
+  } else {
+    setSyncStatus('ok'); toast('Pulled from Sheets');
     localStorage.setItem('st_last_sync', new Date().toISOString());
     renderSyncStatus();
     setTimeout(function(){ setSyncStatus('idle'); }, 3000);
-  } catch(e) {
-    setSyncStatus('err');
-    toast('Pull failed: ' + e.message);
-    console.error('pullAll error:', e);
   }
 }
 function buildInvLines() {
