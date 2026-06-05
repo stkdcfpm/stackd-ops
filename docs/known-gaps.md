@@ -111,6 +111,18 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ---
 
+## Sync
+
+### SYNC-GAP-001 — `Push All` / `Sync` is a destructive clear-and-rewrite for other operators' Sheets records
+**Area:** `syncAll()` / `pushAll()` → `handleBulkUpsert` in `apps-script/Code.gs`  
+**Logged:** v2.9.22 (sync layer review)  
+**Detail:** The `bulk_upsert` action in `Code.gs` clears all data rows from a sheet tab and rewrites it entirely from the calling operator's local data. If Operator A runs Push All or Sync while Operator B has records in Sheets that A doesn't have locally (because A hasn't pulled since B pushed), those records are silently deleted from Sheets. Individual record auto-saves (`syncEnt`, called on every save) use row-level upsert and are safe for concurrent use. Only the bulk operations (`syncAll`, `pushAll`) are destructive.  
+**Risk level:** Low if operators work on disjoint datasets (separate buyers/invoices). HIGH if operators share or cross-reference the same records.  
+**Process rule (enforced by discipline, not code):** Only one operator runs Push All at a time. Always pull before pushing. Individual save auto-sync is safe at all times.  
+**Decision:** Accepted at 3-operator scale with process discipline. Architectural fix (server-side merge) is out of scope for a localStorage-first app.
+
+---
+
 ## SDLC & Process
 
 ### SDLC-GAP-001 — Version identity inconsistency across the codebase
