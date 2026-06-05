@@ -2,6 +2,7 @@
 
 | Version | Highlights |
 |---|---|
+| v2.9.18 | Compliance: GDPR disclosure notes added to Settings → Google Sheets card (SEC-GAP-002) and Settings → Integrations card (SEC-GAP-005) — states what data is transmitted and under what conditions. Tests: 193/193 pass. |
 | v2.9.17 | Fix: Live FX rate source switched from frankfurter.app (301 CORS-blocked) to fawazahmed0/currency-api via jsDelivr CDN (free, no key, CORS-enabled). Fix: AI system prompt updated to describe ↻ Live Rates feature. Tests: 193/193 pass. |
 | v2.9.16 | Security: CSP meta tag added (`default-src 'none'`; `connect-src https:`; `object-src 'none'`; `base-uri 'self'`) — closes SEC-GAP-008. Data safety: `checkStorageQuota()` runs on init, warns at 75%/90% of 5 MB limit — partial mitigation of BACKUP-GAP-002. Gap register: BACKUP-GAP-001 and BACKUP-GAP-002 formally documented. Tests: 193/193 pass. |
 | v2.9.15 | Dashboard multi-currency fix: all KPI aggregations (revenue, profit, outstanding, PO balance, deposits) now convert to GBP equiv. via `toGBP()` helper using stored QR FX rates. KPI tiles labelled "≈ GBP". Bar charts updated. Tests: 190/190 pass. |
