@@ -99,15 +99,10 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ## Data Quality
 
-### DATA-GAP-001 — `repairCalcFields()` contains FPM-specific hardcoded invoice IDs
+### DATA-GAP-001 — `repairCalcFields()` contains FPM-specific hardcoded invoice IDs *(FIXED v2.9.21)*
 **Area:** `repairCalcFields()` — dashboard KPI correction utility  
-**Logged:** v2.9.14 (DAMA DMBOK audit)  
-**Detail:** `repairCalcFields()` contains hardcoded corrections for specific FPM invoice IDs (`INV10028`, `INV10031`) with hardcoded COGS values. This function runs on dashboard load and silently mutates `calc_` fields on those records. It will produce incorrect results if the same invoice IDs exist in a different operator's dataset, and will be a maintenance burden as FPM data evolves. This is a blocking concern for any multi-tenant or whitelabel deployment.  
-**Options for post-pilot:**
-- Remove `repairCalcFields()` entirely and apply the corrections directly to the stored data
-- Gate behind a `if (AS.tag === 'FPM-internal')` check
-- Migrate to a one-time migration script that corrects and then removes itself  
-**Decision:** Deferred. Acceptable at single-operator scale. Must be resolved before any multi-operator deployment.
+**Logged:** v2.9.14 (DAMA DMBOK audit); **Fixed:** v2.9.21  
+**Detail:** `repairCalcFields()` previously contained hardcoded corrections for FPM invoice IDs (`INV10028`–`INV10032`) with hardcoded COGS values, running on every `initApp()`. Fixed by extracting the FPM-specific data into `runFPMMigration()` — a one-time migration guarded by a `st_fpm_repair_v1` localStorage flag. `repairCalcFields()` now contains only the generic cnAmount strip (operator-safe, no hardcoded IDs). `runDataRepair()` (Settings → ⚙ Repair invoice totals) updated to call the generic repair only. New operators start with the migration flag pre-satisfied and are never touched by FPM data.
 
 ### DATA-GAP-002 — PII hardcoded in company settings defaults *(FIXED v2.9.14)*
 **Area:** `let AS = ld(K.as) || { ... }` — company branding defaults  

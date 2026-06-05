@@ -2,6 +2,7 @@
 
 | Version | Highlights |
 |---|---|
+| v2.9.21 | Fix: DATA-GAP-001 — FPM-specific hardcoded invoice corrections (`INV10028`–`INV10032`) extracted from `repairCalcFields()` into `runFPMMigration()` (one-time, `st_fpm_repair_v1` flag). `repairCalcFields()` is now operator-safe (generic cnAmount strip only). `runDataRepair()` updated to call generic repair only. Tests: 193/193 pass. |
 | v2.9.20 | Fix: `expAll()` snapshot now includes `branding: getCoBrand()` — company name, address, logo, VAT, accent colour, footer; `doImport()` calls `saveCoBrand()` on restore. Closes SEC-GAP-006 partial. Tests: 193/193 pass. |
 | v2.9.19 | Fix: Favicon (inline SVG `<link rel="icon">`) eliminates 404 console error. Fix: `repairCalcFields()` now strips stray `cnAmount` from non-CN invoice records on init — self-heals INV10031 data corruption. Tests: 193/193 pass. |
 | v2.9.18 | Compliance: GDPR disclosure notes added to Settings → Google Sheets card (SEC-GAP-002) and Settings → Integrations card (SEC-GAP-005) — states what data is transmitted and under what conditions. Tests: 193/193 pass. |
