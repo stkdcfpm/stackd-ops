@@ -73,6 +73,13 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.14 (audit); **Fixed:** v2.9.16  
 **Detail:** Prior to v2.9.16, the app shipped no `Content-Security-Policy` header or meta tag. Fixed by adding `<meta http-equiv="Content-Security-Policy">` to `<head>` with policy: `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'`. `'unsafe-inline'` for scripts/styles is required by the single-file architecture but `connect-src https:`, `object-src 'none'`, and `base-uri 'self'` provide meaningful defence-in-depth.
 
+### SEC-GAP-011 — `pullAll()` overwrites local records with no conflict resolution
+**Area:** `pullAll()` — sync pull merge logic  
+**Logged:** v2.9.23 (sync layer review); see also SYNC-GAP-001 (push-side equivalent)  
+**Detail:** When `pullAll()` fetches records from Sheets, the merge for any record that exists both locally and in Sheets is unconditional: Sheets wins. No `updAt` timestamp comparison is performed. If Operator A edits a record locally and has not yet pushed, and Operator B pushes their version in the interim, Operator A's next pull silently overwrites their local edits with no warning, no diff, and no audit entry. Records carry `updAt` fields but these are not consulted during pull merge. Note: the push-side equivalent (bulk_upsert clear-and-rewrite destroying records the operator doesn't hold locally) is documented separately as SYNC-GAP-001.  
+**Risk level:** Low if operators work on disjoint datasets. Medium if two operators edit the same record within the same session before either syncs — silent data loss with no indication a conflict occurred.  
+**Decision:** Accepted at 3-operator scale with process discipline (pull before editing, push after saving). Architectural fix — timestamp-based merge in `pullAll()` using `updAt` — deferred; requires `updAt` to be added to `FIELD_MAPS` so it survives a Sheets round-trip. Full resolution: server-side conflict resolution (Supabase backend, v3.0.0 roadmap).
+
 ---
 
 ## Library (Line Items)
@@ -166,3 +173,13 @@ Items deferred from initial build. Review after pilot period before wider rollou
 - Wire Notion MCP to post gate results to the Requirements Tracker
 - Add a mandatory "evidence tag" to every PR that references a gate run  
 **Decision:** Deferred. Implement before ICO registration or first external client onboarding.
+
+---
+
+## Process & Accounting
+
+### PROC-GAP-001 — Multi-currency KPI aggregation without FX conversion *(FIXED v2.9.15)*
+**Area:** Dashboard → KPI tiles (Invoice Revenue, Net Profit, Outstanding from Buyers, Net Cash Position)  
+**Logged:** v2.9.x (LLM Council audit verdict 2026-06-04); **Fixed:** v2.9.15  
+**Detail:** Prior to v2.9.15, dashboard KPI aggregations totalled amounts across USD, GBP, and BBD invoices as if they were the same currency — no FX conversion applied, no warning shown. An operator making margin or cash flow decisions from the dashboard was working from silently incorrect mixed-currency figures. The council rated this a business-correctness failure, not a display issue, and required an interim warning before any second operator was onboarded. Fixed in v2.9.15 by adding `toGBP()` helper (converts via stored `QR` FX rates) and applying it to all dashboard KPI aggregations. KPI tiles are now labelled "≈ GBP" to indicate converted values. Residual risk: KPI accuracy depends on QR FX rates being current; stale rates produce approximations rather than hard errors, which is acceptable for operational dashboards.  
+**Decision:** Resolved. Fixed before any second operator was onboarded, satisfying the council's pre-rollout condition.

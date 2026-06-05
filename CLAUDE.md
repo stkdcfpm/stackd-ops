@@ -121,6 +121,8 @@ See `docs/known-gaps.md` for full entries.
 | SEC-GAP-002 | Sheets sync GDPR | PII transmitted externally; opt-in; accepted until first external client |
 | SEC-GAP-003 | API key in browser | Anthropic key in localStorage — inherent no-server constraint |
 | SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof |
+| SEC-GAP-011 | Sync / data integrity | `pullAll()` overwrites local records unconditionally — Sheets wins, no timestamp-based conflict resolution |
+| PROC-GAP-001 | Dashboard / accounting | Multi-currency KPI aggregation without FX conversion — Fixed v2.9.15 via `toGBP()` |
 
 ---
 
