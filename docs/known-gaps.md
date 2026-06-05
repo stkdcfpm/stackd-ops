@@ -34,7 +34,7 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.12 (security gate review)  
 **Detail:** When Sheets sync is configured and enabled, supplier contact data (name, email, phone), buyer name/address, forwarder email, and invoice/payment records are transmitted to a Cloudflare Worker and on to Google Sheets. Under GDPR this requires a Data Processing Agreement with Google (covered by Google Workspace ToS for commercial accounts) and Cloudflare (covered by Cloudflare ToS). No in-product privacy notice is shown at data entry. The sync is opt-in — if `SS.url` is not configured, no data is transmitted.  
 **Risk level:** Low while FPM operates as a sole-operator internal tool with no external client data in the system. Becomes a formal compliance obligation before onboarding first external client.  
-**Decision:** Accepted. Document DPA status before ICO registration. Add brief disclosure note in Settings → Google Sheets card in a future version.
+**Decision:** Accepted. Document DPA status before ICO registration. **In-product disclosure note added to Settings → Google Sheets card (v2.9.18).** Becomes a formal compliance obligation before onboarding first external client.
 
 ### SEC-GAP-003 — Anthropic API key stored in browser localStorage
 **Area:** Settings → AI Assistant card; `AI.key` in `localStorage`  
@@ -54,7 +54,7 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.14 (audit)  
 **Detail:** When a forwarder webhook URL is configured, `sendFwdRequest()` POSTs shipment data (origin/destination ports, ETD, cargo description, forwarder contact details) to an external endpoint. No in-product notice is shown at configuration time. The webhook is opt-in — if `SS.fwdWebhook` is not set, no data is transmitted. Forwarder contact data (name, email) is PII.  
 **Risk level:** Low at current scale. Becomes a formal compliance obligation before onboarding external clients.  
-**Decision:** Accepted. Add brief disclosure note in Settings → Integrations card alongside SEC-GAP-002 work.
+**Decision:** Accepted. **In-product disclosure note added to Settings → Integrations card (v2.9.18).** Becomes a formal compliance obligation before onboarding external clients.
 
 ### SEC-GAP-006 — `stackd_co_*` localStorage keys outside the `K` registry
 **Area:** Company branding — `stackd_co_name`, `stackd_co_addr`, `stackd_co_accent`, `stackd_co_footer`, `stackd_co_vat`, `stackd_co_logo`, `stackd_co_powered`  
