@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.16</title>
+<title>Stackd Ops v2.9.17</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -206,7 +206,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.16</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.17</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -547,7 +547,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld"><label>FPM Admin ($)</label><input type="number" id="qr-fpmAdmin" step="5" min="0"></div>
       </div>
       <div style="margin-top:10px;font-size:.5rem;font-family:'DM Mono',monospace;"><span id="qr-fx-status" style="color:#8A8277;">No live rates fetched — using saved values</span></div>
-      <p style="font-size:.5rem;color:var(--m);margin-top:4px;">FX rates pulled from ECB via frankfurter.app (free, no key). Other rates set manually. Changes apply immediately after save.</p>
+      <p style="font-size:.5rem;color:var(--m);margin-top:4px;">↻ Live Rates fetches current GBP→USD/CNY/BBD from the fawazahmed0 currency API (jsDelivr CDN, free, no key). Other rates set manually. Changes apply immediately after save.</p>
     </div>
     <div class="card">
       <div class="ct">Reference Data
@@ -901,9 +901,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.16</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.17</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Live FX rate source switched to fawazahmed0/currency-api (jsDelivr CDN) — frankfurter.app returned a CORS-blocked 301 redirect; new source is free, no-key, CORS-enabled</li>
+          <li>Fix: AI assistant system prompt updated with live FX rates feature description — assistant was unaware of ↻ Live Rates and gave stale v2.9.14-era responses</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.16</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Security: Content Security Policy meta tag added — restricts <code>connect-src https:</code>, <code>object-src 'none'</code>, <code>base-uri 'self'</code>; defence-in-depth against XSS exfiltration (SEC-GAP-008)</li>
@@ -5092,7 +5102,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.16).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.17).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -5133,6 +5143,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Rates & FX (Settings)',
   'Settings → Rates & FX. Configure: GBP/USD rate, GBP/RMB rate, GBP/BBD rate, LCL rate per CBM, FCL 20GP rate, FCL 40HQ rate, Origin charges, Destination charges, DG surcharge per line, Insurance rate (% of CIF), FPM admin fee. These defaults populate new quotes but can be overridden per quote.',
+  'Live FX rates: click ↻ Live Rates to fetch current GBP→USD/CNY/BBD rates from a free CDN-backed source (no API key). A freshness label shows when rates were last fetched (green = <8h, amber = 8–24h, red = >24h). A warning appears inside the quote modal when rates are older than 24h. Clicking Save Rates manually clears the timestamp and marks rates as manually set.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
@@ -6784,17 +6795,17 @@ async function fetchLiveRates() {
   var btn = G('qr-live-btn');
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
   try {
-    var resp = await fetch('https://api.frankfurter.app/latest?from=GBP&to=USD,CNY,BBD', { redirect: 'follow' });
+    var resp = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/gbp.json');
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     var data = await resp.json();
-    var r = data.rates || {};
-    if (r.USD) QR.fxGBPUSD = Math.round(r.USD * 10000) / 10000;
-    if (r.CNY) QR.fxGBPRMB = Math.round(r.CNY * 10000) / 10000;
-    if (r.BBD) QR.fxGBPBBD = Math.round(r.BBD * 10000) / 10000;
+    var r = data.gbp || {};
+    if (r.usd) QR.fxGBPUSD = Math.round(r.usd * 10000) / 10000;
+    if (r.cny) QR.fxGBPRMB = Math.round(r.cny * 10000) / 10000;
+    if (r.bbd) QR.fxGBPBBD = Math.round(r.bbd * 10000) / 10000;
     sv('st_qr', QR);
     localStorage.setItem('st_qr_ts', new Date().toISOString());
     qteFillRates();
-    toast('FX updated — ECB ' + (data.date || new Date().toLocaleDateString('en-GB')));
+    toast('FX rates updated · ' + (data.date || new Date().toLocaleDateString('en-GB')));
   } catch(e) {
     toast('Rate fetch failed: ' + e.message);
   } finally {
@@ -6809,7 +6820,7 @@ function renderFxStatus() {
   if (!ts) { el.textContent = 'No live rates fetched — values set manually'; el.style.color = '#8A8277'; return; }
   var mins = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
   var label = mins < 1 ? 'just now' : mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.floor(mins / 60) + 'h ago' : Math.floor(mins / 1440) + 'd ago';
-  el.textContent = '↻ ECB rates · fetched ' + label;
+  el.textContent = '↻ Live rates · fetched ' + label;
   el.style.color = mins < 480 ? '#375623' : mins < 1440 ? '#7F6000' : '#833C00';
 }
 
