@@ -61,7 +61,7 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.14 (audit)  
 **Detail:** Company branding settings are stored directly under `stackd_co_*` keys without registration in the `K` constant. This means they are invisible to `saveAll()`, the snapshot export (`expAll`), and the import handler (`doImport`). A full data export/import will silently omit branding settings. The `ldArr` safety wrapper also does not apply.  
 **Risk level:** Low — branding is cosmetic and easily re-entered. Medium if logo (base64 blob) is large and causes silent localStorage quota pressure.  
-**Decision:** Deferred. Register keys in `K` and add to export/import in a future settings consolidation sprint.
+**Decision:** Partially fixed v2.9.20 — `expAll()` now includes `branding: getCoBrand()` in the snapshot; `doImport()` calls `saveCoBrand(data.branding)` on restore. Keys remain outside `K` (formal registration deferred to a future settings consolidation). The `ldArr` safety wrapper gap remains open.
 
 ### SEC-GAP-007 — `testConn()` sync token exposed in URL query string *(FIXED v2.9.14)*
 **Area:** Settings → Google Sheets card → Test Connection  
