@@ -103,7 +103,9 @@ At the end of each version delivery, update:
 - **This file** — bump Current version, update Test count, update branch name if changed, tick off sprint items
 - **`docs/version-history.md`** — prepend new version row
 - **`docs/known-gaps.md`** — add new gap entries as they are identified
-- **`AI_SYSTEM_PROMPT` in `index.html`** — review against every change shipped. If any new entity, field, feature, workflow, setting, or known quirk was added or changed, update the prompt. The prompt must always accurately describe the current state of the portal. A version is not complete until the prompt is current.
+- **`AI_SYSTEM_PROMPT` in `index.html`** — **mandatory on every version, no exceptions.** Review against every change shipped. If any new entity, field, feature, workflow, setting, or known quirk was added or changed, update the prompt. Ask: "If the user asked the AI about this feature, would the answer be accurate?" A version is not complete until the prompt reflects current portal behaviour.
+- **In-app changelog** — prepend a new version block with bullet-point summary of changes
+- **Raise a PR** — push the branch and raise a PR so the user can test functionality in the portal before merging
 
 ---
 
