@@ -142,16 +142,16 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ## Data Safety
 
-### BACKUP-GAP-001 — No backup/recovery mechanism audited or enforced
+### BACKUP-GAP-001 — No backup/recovery mechanism audited or enforced *(Partially resolved v2.9.23)*
 **Area:** All data — `localStorage` is the sole persistence layer  
 **Logged:** v2.9.15 (LLM Council audit verdict 2026-06-04)  
-**Detail:** The app holds live invoices, POs, shipments, payments, quotes, and supplier records with no server-side persistence, no transaction log, and no automatic backup. `localStorage` is wiped by: browser "Clear site data", private/incognito browsing, device failure, browser profile corruption, or OS reinstall. The JSON export (Settings → Data → Export All) is the only recovery path, but it is undocumented, untested as a restore procedure, and not prompted to the user. One corrupted browser profile = total data loss with no recovery option. **The council rated this the highest-probability failure mode — above any security gap.**  
-**Mitigation shipped (v2.9.15):** `checkStorageQuota()` warns at 75% and 90% storage usage, prompting an export. Does not solve the underlying gap.  
-**Options for post-pilot:**
-- Auto-export JSON to a user-nominated local folder on every save (File System Access API)
-- Add a periodic export reminder (e.g. weekly toast with one-click export)
-- Document and test the full export→import round-trip as the official DR procedure  
-**Decision:** Partially mitigated (quota warning). Full DR procedure must be documented and tested before first external client.
+**Detail:** The app holds live invoices, POs, shipments, payments, quotes, and supplier records with no server-side persistence, no transaction log, and no automatic backup. `localStorage` is wiped by: browser "Clear site data", private/incognito browsing, device failure, browser profile corruption, or OS reinstall. The JSON export (Settings → Data → Export All) is the only recovery path. **The council rated this the highest-probability failure mode — above any security gap.**  
+**Resolved in v2.9.23:**
+- DR procedure documented and tested — see `docs/dr-procedure.md`
+- Export expanded to include QR rates, custom ports, custom payment terms, custom UOM, and migration flags (previously missing from backup)
+- Export snapshot version bumped to `_version: 2`
+**Remaining gap:** No automatic backup — export must be triggered manually by the operator. No periodic reminder prompt implemented.  
+**Decision:** DR procedure complete. Automatic backup / periodic reminder deferred to post-pilot. Full resolution: Supabase backend (v3.0.0) provides server-side persistence.
 
 ### BACKUP-GAP-002 — localStorage quota cliff with no guard *(partially fixed v2.9.15)*
 **Area:** All `localStorage` writes — `sv()`, `saveAll()`, `stackd_co_*` keys  
