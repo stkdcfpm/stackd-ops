@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.24</title>
+<title>Stackd Ops v2.9.25</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -904,9 +904,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.24</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.25</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: QTE-GAP-001 — Convert to PO now restricted to <code>Accepted</code> status only. Button hidden on Draft/Sent/Declined/Expired; appears automatically when status is set to Accepted. Hard guard added in <code>qteToPoConvert()</code>. "PO RAISED" badge shown in edit modal title once a PO is linked.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.24</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: BACKUP-GAP-002 — <code>sv()</code> quota error upgraded from dismissible toast to blocking modal with one-click backup export. Logo upload now wrapped in try/catch; quota modal fires if logo write fails. Silent data-loss on storage-full condition eliminated.</li>
@@ -1545,7 +1554,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           </select>
         </div>
         <div class="fld"><label>Status</label>
-          <select id="qf-st">
+          <select id="qf-st" onchange="updQtePoBtn()">
             <option value="Draft">Draft</option><option value="Sent">Sent</option>
             <option value="Accepted">Accepted</option><option value="Declined">Declined</option><option value="Expired">Expired</option>
           </select>
@@ -5150,7 +5159,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.24).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.25).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -5185,7 +5194,7 @@ var AI_SYSTEM_PROMPT = [
   'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX. Override rates per quote if needed.',
   'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
   'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
-  'Convert to PO: when a quote is Accepted, click Convert to PO to create a linked PO. The Quote ID is stored on the PO for traceability.',
+  'Convert to PO: only available when quote status is Accepted. Set the status dropdown to Accepted — the Convert to PO button appears automatically. Clicking it creates a linked PO; the quote modal title then shows a "PO RAISED" badge and the button is hidden. The PO carries the Quote ID for traceability.',
   'Feasibility Check: shown automatically in the quote modal when lines are present. Flags: DG cargo (red/critical — IMDG compliance required), container mismatch (amber — CBM vs selected freight mode), Caribbean electrical goods advisory (amber — voltage/cert check). Cleared automatically when lines are removed.',
   'Print preview: click 👁 on any quote row to open a formatted quote document in a new tab.',
   '',
@@ -6459,6 +6468,13 @@ function rQte() {
   }).join('');
 }
 
+function updQtePoBtn() {
+  var st = G('qf-st') ? G('qf-st').value : '';
+  var q = EI.qt ? DB.qt.find(function(x){ return x.id === EI.qt; }) : null;
+  var poBtn = G('qt-po-btn');
+  if (poBtn) poBtn.style.display = (st === 'Accepted' && !(q && q.linkedPOId)) ? '' : 'none';
+}
+
 function openQte() {
   EI.qt = null; cQL = [];
   G('qt-title').textContent = 'New Quote';
@@ -6484,7 +6500,7 @@ function editQte(id) {
   if (!q) return;
   EI.qt = id;
   cQL = (q.lines || []).map(function(l){ return Object.assign({}, l); });
-  G('qt-title').textContent = 'Edit Quote';
+  G('qt-title').innerHTML = 'Edit Quote' + (q.linkedPOId ? ' <span style="background:var(--gold);color:#333;font-size:.48rem;padding:2px 8px;border-radius:2px;font-weight:700;letter-spacing:.05em;vertical-align:middle;">PO RAISED</span>' : '');
   G('qf-num').value = q.num || '';
   G('qf-client').value = q.client || '';
   G('qf-dt').value = q.dt || '';
@@ -6496,7 +6512,7 @@ function editQte(id) {
   G('qf-nt').value = q.notes || '';
   G('qt-verr').textContent = '';
   G('qt-prev-btn').style.display = '';
-  G('qt-po-btn').style.display = q.linkedPOId ? 'none' : '';
+  updQtePoBtn();
   rQLT();
   calcQte();
   renderQteRatesWarn();
@@ -6759,6 +6775,7 @@ function qteToPoConvert() {
   var q = DB.qt.find(function(x){ return x.id===id; });
   if (!q) return;
   if (q.linkedPOId) { toast('This quote already has a linked PO'); return; }
+  if (q.status !== 'Accepted') { toast('Set quote status to Accepted before converting to PO'); return; }
   var firstSup = (q.lines||[]).find(function(l){ return l.supId; });
   var poNum = 'PO-' + q.num;
   var po = {
