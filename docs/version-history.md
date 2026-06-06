@@ -2,6 +2,7 @@
 
 | Version | Highlights |
 |---|---|
+| v2.9.25 | Fix: QTE-GAP-001 — Convert to PO restricted to `Accepted` status only; button hidden on other statuses, updates live on status change; hard guard in `qteToPoConvert()`; "PO RAISED" badge in edit modal title. Tests: 197/197 pass. |
 | v2.9.24 | Fix: BACKUP-GAP-002 — `sv()` quota error upgraded from toast to blocking modal (`showQuotaModal()`) with one-click backup export; `onCoLogoUpload()` wrapped in try/catch with quota modal on failure. Silent save-failed condition eliminated. Docs: SDLC-GAP-003 logged — staging/preview environment gap; council verdict recorded. Tests: 193/193 pass. |
 | v2.9.23 | Fix: BACKUP-GAP-001 — JSON backup expanded to include QR rates, custom ports, custom payment terms, custom UOM, migration flags (all previously excluded). Snapshot `_version` bumped to 2. Docs: DR procedure documented (`docs/dr-procedure.md`) — backup schedule, restore walkthrough, recovery scenarios. Docs: SEC-GAP-001 closed — manual deployment complete. Tests: 193/193 pass. |
 | v2.9.22 | Fix: `pullAll()` double-fetch eliminated — 5 redundant API calls per pull removed; each entity now fetched exactly once. Fix: `delEnt()` now respects auto-sync toggle (consistent with `syncEnt`). Fix: `pullAll()` now updates `st_last_sync` timestamp. Docs: SYNC-GAP-001 documented — Push All destructive semantics + process rule for multi-operator use. Tests: 193/193 pass. |
