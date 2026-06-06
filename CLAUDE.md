@@ -5,7 +5,7 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.22**  
+**Current version: v2.9.23**  
 **Test count: 193/193 PASS** (`node tests/run.js`)
 
 ---
@@ -19,6 +19,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | Tests | `tests/run.js` — Node.js VM sandbox, run with `node tests/run.js` |
 | Known gaps log | `docs/known-gaps.md` |
 | Version history | `docs/version-history.md` |
+| DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
 | Branch for new work | `claude/sync-race-condition-fixes-Q6Ion` |
