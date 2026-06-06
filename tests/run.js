@@ -808,6 +808,44 @@ test('version sellPrice equals landed * (1 + markup/100)', () => {
   assert(v.landed > 0, 'landed is positive');
 });
 
+// ── qteToPoConvert ─────────────────────────────────────────────
+console.log('\nqteToPoConvert');
+
+test('qteToPoConvert blocked when status is Draft', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt1', num:'QTE-0001', status:'Draft', currency:'USD', lines:[], linkedPOId:null }];
+  ctx.EI.qt = 'qt1';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 0, 'no PO created for Draft quote');
+  assert(ctx.DB.qt[0].linkedPOId === null, 'linkedPOId unchanged');
+});
+
+test('qteToPoConvert blocked when status is Sent', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt2', num:'QTE-0002', status:'Sent', currency:'USD', lines:[], linkedPOId:null }];
+  ctx.EI.qt = 'qt2';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 0, 'no PO created for Sent quote');
+});
+
+test('qteToPoConvert creates PO when status is Accepted', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt3', num:'QTE-0003', status:'Accepted', currency:'USD', lines:[{ rid:'r1', supId:'s1', desc:'Goods', qty:5, cost:200, uom:'pcs' }], linkedPOId:null }];
+  ctx.EI.qt = 'qt3';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 1, 'PO created for Accepted quote');
+  assertEqual(ctx.DB.qt[0].linkedPOId, ctx.DB.po[0].id, 'linkedPOId set on quote');
+  assertEqual(ctx.DB.po[0].quoteNum, 'QTE-0003', 'PO carries quote reference');
+});
+
+test('qteToPoConvert blocked when quote already has linkedPOId', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt4', num:'QTE-0004', status:'Accepted', currency:'USD', lines:[], linkedPOId:'existing-po-id' }];
+  ctx.EI.qt = 'qt4';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 0, 'no duplicate PO when already linked');
+});
+
 // ── Accounting Export ──────────────────────────────────────────
 console.log('\nAccounting Export');
 
