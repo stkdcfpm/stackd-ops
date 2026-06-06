@@ -21,13 +21,13 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ## Security — Accepted Architecture Risks
 
-### SEC-GAP-001 — Apps Script sync token and spreadsheet IDs in source control
+### SEC-GAP-001 — Apps Script sync token and spreadsheet IDs in source control *(FIXED)*
 **Area:** `apps-script/Code.gs`  
 **Logged:** v2.9.12 (security gate review)  
-**Code fix:** v2.9.15 — hardcoded values removed from `Code.gs` and `STACKD_CONTEXT.md`. Source now reads all four values from `PropertiesService.getScriptProperties()`. **Manual step pending:** set the four Script Properties in the Apps Script editor and redeploy. Token must be rotated to a new value before setting.  
+**Code fix:** v2.9.15 — hardcoded values removed from `Code.gs` and `STACKD_CONTEXT.md`. Source now reads all four values from `PropertiesService.getScriptProperties()`.  
+**Manual step:** Complete — Script Properties set (`SPREADSHEET_ID`, `TOKEN`, `REQUIREMENTS_TRACKER_ID`, `PROJECT_TRACKER_ID`), token rotated, Apps Script redeployed. Test Connection confirmed ✓ (2026-06-06).  
 **Detail:** `SPREADSHEET_ID`, `TOKEN`, `REQUIREMENTS_TRACKER_ID`, and `PROJECT_TRACKER_ID` were hardcoded in `Code.gs`, which is version-controlled. The sync token is a simple shared-secret guard. The spreadsheet IDs are Google Workspace GUIDs. Anyone with access to the private repo and the Apps Script deployment URL could call any sync action.  
-**Risk level:** Medium for a private repo with controlled collaborator access. Would become HIGH if the repo is ever made public.  
-**Decision:** Code change shipped. Awaiting manual deployment step (see walkthrough in session notes).
+**Decision:** Fully resolved.
 
 ### SEC-GAP-002 — Sheets sync transmits PII externally without formal DPA
 **Area:** `syncEnt`, `delEnt`, `syncAll`, `pushAll` — Cloudflare Worker → Google Apps Script  
