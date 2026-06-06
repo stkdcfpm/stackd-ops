@@ -153,16 +153,23 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Remaining gap:** No automatic backup — export must be triggered manually by the operator. No periodic reminder prompt implemented.  
 **Decision:** DR procedure complete. Automatic backup / periodic reminder deferred to post-pilot. Full resolution: Supabase backend (v3.0.0) provides server-side persistence.
 
-### BACKUP-GAP-002 — localStorage quota cliff with no guard *(partially fixed v2.9.15)*
+### BACKUP-GAP-002 — localStorage quota cliff with no guard *(Fixed v2.9.24)*
 **Area:** All `localStorage` writes — `sv()`, `saveAll()`, `stackd_co_*` keys  
-**Logged:** v2.9.15 (LLM Council audit verdict 2026-06-04)  
-**Detail:** Browser `localStorage` has a hard limit of approximately 5–10 MB (varies by browser). When the limit is reached, `localStorage.setItem()` throws a `QuotaExceededError` silently — no data is written, no user feedback is shown, and the app continues as if the save succeeded. The `ldArr` safety wrapper catches read errors but not write errors. Large datasets (many invoices with line items), large base64 logo uploads, or extensive sync history could approach the limit undetected.  
-**Mitigation shipped (v2.9.15):** `checkStorageQuota()` runs on app init and warns via toast at 75% (≈3.75 MB) and 90% (≈4.5 MB) of a conservative 5 MB baseline. Write-side error catching remains unimplemented.  
-**Options for post-pilot:**
-- Wrap `sv()` in try/catch for `QuotaExceededError` and surface a blocking modal before data is lost
-- Add quota check before logo upload (base64 blobs are the highest risk item)
-- Implement `navigator.storage.estimate()` where available for more accurate quota detection  
-**Decision:** Partially mitigated. Write-side guard and logo-size check needed before wider rollout.
+**Logged:** v2.9.15 (LLM Council audit verdict 2026-06-04); **Fixed:** v2.9.24  
+**Detail:** Browser `localStorage` has a hard limit of approximately 5–10 MB (varies by browser). When the limit is reached, `localStorage.setItem()` throws a `QuotaExceededError` silently — no data is written, no user feedback is shown, and the app continues as if the save succeeded.  
+**Fixed in v2.9.24:**
+- `sv()` `QuotaExceededError` handler upgraded from a 9-second dismissible toast to `showQuotaModal()` — a blocking overlay modal with a one-click "Export Backup Now" button that immediately triggers `expAll()`. Cannot be silently missed.
+- `onCoLogoUpload()` `localStorage.setItem` wrapped in try/catch with `showQuotaModal()` on quota error — logo write was previously outside `sv()` and had no error handling at all.
+- `checkStorageQuota()` init-time 75%/90% toasts remain as early warnings.
+**Remaining open item:** `navigator.storage.estimate()` (more accurate than byte-counting) — deferred; current heuristic is sufficient for practical purposes.
+
+### SDLC-GAP-003 — No staging/preview environment for PR review
+**Area:** SDLC — branch preview, PR testing before merge  
+**Logged:** v2.9.24 (LLM Council verdict 2026-06-06)  
+**Detail:** There is no way to preview a PR branch as a running app before merging. GitHub Pages serves static HTML without executing JS (wrong MIME type). The obvious fix — Netlify PR preview deployments — is blocked by a structural constraint: `localStorage` is origin-scoped, so a preview on `*.netlify.app` presents an empty app to reviewers with no data. The council unanimously identified this as a show-stopper for Netlify-style previews.  
+**What is in place:** GitHub Actions CI (`qa.yml`) runs `node tests/run.js` on every PR — 193 tests, catches regressions automatically. This is the primary regression guard.  
+**Council recommendation (2026-06-06):** Same-origin preview via a GitHub Actions workflow that deploys each PR branch to `stkdcfpm.github.io/stackd-ops/preview/PR-N/` — solves both MIME type and origin isolation in one move. Defer Netlify until there is a concrete need for serverless functions.  
+**Decision:** CI covers regression detection. Same-origin gh-pages preview deferred to post-pilot. Netlify deferred indefinitely unless SEC-GAP-003 (API key in browser) is escalated to require a server-side proxy.
 
 ### SDLC-GAP-002 — Gate evidence trail exists only in chat, not in persistent artefacts
 **Area:** Agent pipeline — `requirements-gate`, `spec-gate`, `build-gate`, `security-gate`  

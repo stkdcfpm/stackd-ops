@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.23</title>
+<title>Stackd Ops v2.9.24</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -904,9 +904,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.23</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.24</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: BACKUP-GAP-002 — <code>sv()</code> quota error upgraded from dismissible toast to blocking modal with one-click backup export. Logo upload now wrapped in try/catch; quota modal fires if logo write fails. Silent data-loss on storage-full condition eliminated.</li>
+          <li>Docs: SDLC-GAP-003 logged — staging/preview environment gap; council verdict documented.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.23</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: BACKUP-GAP-001 — JSON backup now includes QR rates, custom ports, custom payment terms, custom UOM, and migration flags (all were silently excluded before). Snapshot version bumped to v2.</li>
@@ -1691,7 +1701,7 @@ function sv(k, d) {
   try { localStorage.setItem(k, JSON.stringify(d)); }
   catch(e) {
     if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014) {
-      toast('⚠ Storage full! Export a backup now from Settings → Data. Last save was not written.', 9000);
+      showQuotaModal();
     } else {
       toast('⚠ Save error: ' + e.message, 5000);
     }
@@ -1765,6 +1775,21 @@ function toast(m, d) {
   t.textContent = m;
   t.classList.add('on');
   setTimeout(function(){ t.classList.remove('on'); }, d);
+}
+
+function showQuotaModal() {
+  if (G('quota-modal')) return;
+  var overlay = document.createElement('div');
+  overlay.id = 'quota-modal';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = '<div style="background:#fff;border-radius:8px;padding:28px 32px;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);">'
+    + '<div style="color:#c0392b;font-weight:700;font-size:1.05rem;margin-bottom:10px;">&#9888; Storage Full — Save Failed</div>'
+    + '<p style="margin:0 0 18px;font-size:.85rem;color:#333;line-height:1.6;"><strong>The last save was not written.</strong> Your browser storage is full. Export a backup immediately, then free space by removing the company logo or old data.</p>'
+    + '<div style="display:flex;gap:10px;">'
+    + '<button class="btn btn-p" style="flex:1;" onclick="expAll();document.getElementById(\'quota-modal\').remove();">&#8595; Export Backup Now</button>'
+    + '<button class="btn btn-s" onclick="document.getElementById(\'quota-modal\').remove();">Dismiss</button>'
+    + '</div></div>';
+  document.body.appendChild(overlay);
 }
 
 function audit(act, ent, id, d) {
@@ -5125,7 +5150,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.23).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.24).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -5572,7 +5597,16 @@ function onCoLogoUpload(input) {
   if (file.size > 102400) { toast('Logo exceeds 100KB — compress before uploading for best results'); }
   var reader = new FileReader();
   reader.onload = function(e) {
-    localStorage.setItem('stackd_co_logo', e.target.result);
+    try {
+      localStorage.setItem('stackd_co_logo', e.target.result);
+    } catch(err) {
+      if (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED' || err.code === 22 || err.code === 1014) {
+        showQuotaModal();
+      } else {
+        toast('⚠ Logo save failed: ' + err.message, 5000);
+      }
+      return;
+    }
     var prev = G('co-logo-preview');
     if (prev) prev.innerHTML = '<img src="' + e.target.result + '" style="max-height:50px;max-width:160px;object-fit:contain;">';
     updCoPreview();
