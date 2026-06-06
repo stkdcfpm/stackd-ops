@@ -124,6 +124,7 @@ See `docs/known-gaps.md` for full entries.
 | SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof |
 | SEC-GAP-011 | Sync / data integrity | `pullAll()` overwrites local records unconditionally — Sheets wins, no timestamp-based conflict resolution |
 | PROC-GAP-001 | Dashboard / accounting | Multi-currency KPI aggregation without FX conversion — Fixed v2.9.15 via `toGBP()` |
+| SDLC-GAP-003 | Staging / preview | No same-origin PR preview environment — Netlify blocked by localStorage origin isolation; gh-pages path preview deferred post-pilot |
 
 ---
 
