@@ -21,13 +21,13 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ## Security — Accepted Architecture Risks
 
-### SEC-GAP-001 — Apps Script sync token and spreadsheet IDs in source control
+### SEC-GAP-001 — Apps Script sync token and spreadsheet IDs in source control *(FIXED)*
 **Area:** `apps-script/Code.gs`  
 **Logged:** v2.9.12 (security gate review)  
-**Code fix:** v2.9.15 — hardcoded values removed from `Code.gs` and `STACKD_CONTEXT.md`. Source now reads all four values from `PropertiesService.getScriptProperties()`. **Manual step pending:** set the four Script Properties in the Apps Script editor and redeploy. Token must be rotated to a new value before setting.  
+**Code fix:** v2.9.15 — hardcoded values removed from `Code.gs` and `STACKD_CONTEXT.md`. Source now reads all four values from `PropertiesService.getScriptProperties()`.  
+**Manual step:** Complete — Script Properties set (`SPREADSHEET_ID`, `TOKEN`, `REQUIREMENTS_TRACKER_ID`, `PROJECT_TRACKER_ID`), token rotated, Apps Script redeployed. Test Connection confirmed ✓ (2026-06-06).  
 **Detail:** `SPREADSHEET_ID`, `TOKEN`, `REQUIREMENTS_TRACKER_ID`, and `PROJECT_TRACKER_ID` were hardcoded in `Code.gs`, which is version-controlled. The sync token is a simple shared-secret guard. The spreadsheet IDs are Google Workspace GUIDs. Anyone with access to the private repo and the Apps Script deployment URL could call any sync action.  
-**Risk level:** Medium for a private repo with controlled collaborator access. Would become HIGH if the repo is ever made public.  
-**Decision:** Code change shipped. Awaiting manual deployment step (see walkthrough in session notes).
+**Decision:** Fully resolved.
 
 ### SEC-GAP-002 — Sheets sync transmits PII externally without formal DPA
 **Area:** `syncEnt`, `delEnt`, `syncAll`, `pushAll` — Cloudflare Worker → Google Apps Script  
@@ -72,6 +72,13 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Area:** GitHub Pages deployment; `index.html`  
 **Logged:** v2.9.14 (audit); **Fixed:** v2.9.16  
 **Detail:** Prior to v2.9.16, the app shipped no `Content-Security-Policy` header or meta tag. Fixed by adding `<meta http-equiv="Content-Security-Policy">` to `<head>` with policy: `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'`. `'unsafe-inline'` for scripts/styles is required by the single-file architecture but `connect-src https:`, `object-src 'none'`, and `base-uri 'self'` provide meaningful defence-in-depth.
+
+### SEC-GAP-011 — `pullAll()` overwrites local records with no conflict resolution
+**Area:** `pullAll()` — sync pull merge logic  
+**Logged:** v2.9.23 (sync layer review); see also SYNC-GAP-001 (push-side equivalent)  
+**Detail:** When `pullAll()` fetches records from Sheets, the merge for any record that exists both locally and in Sheets is unconditional: Sheets wins. No `updAt` timestamp comparison is performed. If Operator A edits a record locally and has not yet pushed, and Operator B pushes their version in the interim, Operator A's next pull silently overwrites their local edits with no warning, no diff, and no audit entry. Records carry `updAt` fields but these are not consulted during pull merge. Note: the push-side equivalent (bulk_upsert clear-and-rewrite destroying records the operator doesn't hold locally) is documented separately as SYNC-GAP-001.  
+**Risk level:** Low if operators work on disjoint datasets. Medium if two operators edit the same record within the same session before either syncs — silent data loss with no indication a conflict occurred.  
+**Decision:** Accepted at 3-operator scale with process discipline (pull before editing, push after saving). Architectural fix — timestamp-based merge in `pullAll()` using `updAt` — deferred; requires `updAt` to be added to `FIELD_MAPS` so it survives a Sheets round-trip. Full resolution: server-side conflict resolution (Supabase backend, v3.0.0 roadmap).
 
 ---
 
@@ -135,16 +142,16 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ## Data Safety
 
-### BACKUP-GAP-001 — No backup/recovery mechanism audited or enforced
+### BACKUP-GAP-001 — No backup/recovery mechanism audited or enforced *(Partially resolved v2.9.23)*
 **Area:** All data — `localStorage` is the sole persistence layer  
 **Logged:** v2.9.15 (LLM Council audit verdict 2026-06-04)  
-**Detail:** The app holds live invoices, POs, shipments, payments, quotes, and supplier records with no server-side persistence, no transaction log, and no automatic backup. `localStorage` is wiped by: browser "Clear site data", private/incognito browsing, device failure, browser profile corruption, or OS reinstall. The JSON export (Settings → Data → Export All) is the only recovery path, but it is undocumented, untested as a restore procedure, and not prompted to the user. One corrupted browser profile = total data loss with no recovery option. **The council rated this the highest-probability failure mode — above any security gap.**  
-**Mitigation shipped (v2.9.15):** `checkStorageQuota()` warns at 75% and 90% storage usage, prompting an export. Does not solve the underlying gap.  
-**Options for post-pilot:**
-- Auto-export JSON to a user-nominated local folder on every save (File System Access API)
-- Add a periodic export reminder (e.g. weekly toast with one-click export)
-- Document and test the full export→import round-trip as the official DR procedure  
-**Decision:** Partially mitigated (quota warning). Full DR procedure must be documented and tested before first external client.
+**Detail:** The app holds live invoices, POs, shipments, payments, quotes, and supplier records with no server-side persistence, no transaction log, and no automatic backup. `localStorage` is wiped by: browser "Clear site data", private/incognito browsing, device failure, browser profile corruption, or OS reinstall. The JSON export (Settings → Data → Export All) is the only recovery path. **The council rated this the highest-probability failure mode — above any security gap.**  
+**Resolved in v2.9.23:**
+- DR procedure documented and tested — see `docs/dr-procedure.md`
+- Export expanded to include QR rates, custom ports, custom payment terms, custom UOM, and migration flags (previously missing from backup)
+- Export snapshot version bumped to `_version: 2`
+**Remaining gap:** No automatic backup — export must be triggered manually by the operator. No periodic reminder prompt implemented.  
+**Decision:** DR procedure complete. Automatic backup / periodic reminder deferred to post-pilot. Full resolution: Supabase backend (v3.0.0) provides server-side persistence.
 
 ### BACKUP-GAP-002 — localStorage quota cliff with no guard *(partially fixed v2.9.15)*
 **Area:** All `localStorage` writes — `sv()`, `saveAll()`, `stackd_co_*` keys  
@@ -166,3 +173,13 @@ Items deferred from initial build. Review after pilot period before wider rollou
 - Wire Notion MCP to post gate results to the Requirements Tracker
 - Add a mandatory "evidence tag" to every PR that references a gate run  
 **Decision:** Deferred. Implement before ICO registration or first external client onboarding.
+
+---
+
+## Process & Accounting
+
+### PROC-GAP-001 — Multi-currency KPI aggregation without FX conversion *(FIXED v2.9.15)*
+**Area:** Dashboard → KPI tiles (Invoice Revenue, Net Profit, Outstanding from Buyers, Net Cash Position)  
+**Logged:** v2.9.x (LLM Council audit verdict 2026-06-04); **Fixed:** v2.9.15  
+**Detail:** Prior to v2.9.15, dashboard KPI aggregations totalled amounts across USD, GBP, and BBD invoices as if they were the same currency — no FX conversion applied, no warning shown. An operator making margin or cash flow decisions from the dashboard was working from silently incorrect mixed-currency figures. The council rated this a business-correctness failure, not a display issue, and required an interim warning before any second operator was onboarded. Fixed in v2.9.15 by adding `toGBP()` helper (converts via stored `QR` FX rates) and applying it to all dashboard KPI aggregations. KPI tiles are now labelled "≈ GBP" to indicate converted values. Residual risk: KPI accuracy depends on QR FX rates being current; stale rates produce approximations rather than hard errors, which is acceptable for operational dashboards.  
+**Decision:** Resolved. Fixed before any second operator was onboarded, satisfying the council's pre-rollout condition.

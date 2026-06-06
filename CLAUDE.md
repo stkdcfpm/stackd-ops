@@ -5,7 +5,7 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.22**  
+**Current version: v2.9.23**  
 **Test count: 193/193 PASS** (`node tests/run.js`)
 
 ---
@@ -19,6 +19,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | Tests | `tests/run.js` — Node.js VM sandbox, run with `node tests/run.js` |
 | Known gaps log | `docs/known-gaps.md` |
 | Version history | `docs/version-history.md` |
+| DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
 | Branch for new work | `claude/sync-race-condition-fixes-Q6Ion` |
@@ -121,6 +122,8 @@ See `docs/known-gaps.md` for full entries.
 | SEC-GAP-002 | Sheets sync GDPR | PII transmitted externally; opt-in; accepted until first external client |
 | SEC-GAP-003 | API key in browser | Anthropic key in localStorage — inherent no-server constraint |
 | SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof |
+| SEC-GAP-011 | Sync / data integrity | `pullAll()` overwrites local records unconditionally — Sheets wins, no timestamp-based conflict resolution |
+| PROC-GAP-001 | Dashboard / accounting | Multi-currency KPI aggregation without FX conversion — Fixed v2.9.15 via `toGBP()` |
 
 ---
 
