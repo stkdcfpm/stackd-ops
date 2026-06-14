@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.25</title>
+<title>Stackd Ops v2.9.26</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -906,9 +906,21 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.25</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.26</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: AI Compliance Review mode — mode toggle pills (Ops / Compliance) in AI assistant panel; dedicated <code>AI_COMPLIANCE_PROMPT</code> covering HMRC VAT 700/21, invoice locking, CN treatment, verified calc_ values, GDPR obligations, and MTD gap; compliance-specific quick-action chips; mode persisted to localStorage</li>
+          <li>Design: Phase 1 visual redesign (CSS-only) — <code>border-radius: 6px</code> on cards/modals, <code>box-shadow</code> depth layer, semantic left-border colour on KPI cards via <code>:has()</code>, refined table row hover, action button fade-in, modal slide-in animation, consistent <code>border-radius: 4px</code> on inputs/buttons/tags/toasts</li>
+          <li>Fix: Buyer statement Total Outstanding — now sums per-invoice balance for non-Paid/non-Cancelled records only (was incorrect gross calculation)</li>
+          <li>Fix: Statement dates show <code>YYYY-MM-DD</code> (ISO timestamp stripped); credit amounts displayed as negative on statement and PDF</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.25</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: QTE-GAP-001 — Convert to PO now restricted to <code>Accepted</code> status only. Button hidden on Draft/Sent/Declined/Expired; appears automatically when status is set to Accepted. Hard guard added in <code>qteToPoConvert()</code>. "PO RAISED" badge shown in edit modal title once a PO is linked.</li>
@@ -5161,7 +5173,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.25).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.26).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
