@@ -5,7 +5,7 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.25**  
+**Current version: v2.9.26**  
 **Test count: 197/197 PASS** (`node tests/run.js`)
 
 ---
@@ -137,3 +137,6 @@ See `docs/known-gaps.md` for full entries.
 | 10 | Sync URL guard + status timestamp | ✓ done (v2.9.14) |
 | 11 | Security fixes (XSS, pullAll crash, testConn token, PII) | ✓ done (v2.9.14) |
 | 12 | Prompt caching (Layer 4) + section index (Layer 3A) + CLAUDE.md restructure (Layer 1) | ✓ done (v2.9.14) |
+| 13 | AI Compliance Review mode + AI_COMPLIANCE_PROMPT | ✓ done (v2.9.26) |
+| 14 | Phase 1 visual redesign — depth, radius, refined interactions | ✓ done (v2.9.26) |
+| 15 | Buyer statement fixes — Total Outstanding, ISO dates, credits negative | ✓ done (v2.9.26) |
