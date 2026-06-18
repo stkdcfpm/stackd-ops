@@ -3,104 +3,132 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="FPM International Ltd — Global sourcing, freight and procurement management. Connecting manufacturers worldwide to Caribbean and beyond." />
-  <title>FPM International Ltd — Source. Ship. Deliver.</title>
+  <meta name="description" content="FPM International Ltd — Trade. Trust. Traceability. Global sourcing, freight and procurement management connecting manufacturers to Caribbean and global markets." />
+  <title>FPM International Ltd — Trade · Trust · Traceability</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --navy:   #0f2044;
-      --navy2:  #1a3260;
-      --gold:   #c49a2e;
-      --gold2:  #e8b840;
-      --white:  #ffffff;
-      --off:    #f5f6f8;
-      --text:   #1c2b3a;
-      --muted:  #5a6a7a;
-      --border: #d8e0e8;
-      --radius: 10px;
-      --shadow: 0 4px 24px rgba(15,32,68,.10);
+      --cream:  #FAF8F2;
+      --ink:    #0B0B0D;
+      --red:    #C8312E;
+      --red2:   #e03c39;
+      --muted:  rgba(11,11,13,.55);
+      --border: rgba(11,11,13,.12);
+      --shadow: 0 2px 16px rgba(11,11,13,.07);
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      color: var(--text);
+      font-family: Rajdhani, system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--cream);
       line-height: 1.6;
-      background: var(--white);
     }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: var(--red);
+      display: block;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-family: Rajdhani, sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.65;
+      margin-bottom: 52px;
+    }
+
+    section { padding: 88px 6%; }
 
     /* NAV */
     nav {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: var(--navy);
+      background: var(--cream);
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 5%;
-      height: 68px;
-      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+      padding: 0 6%;
+      height: 64px;
     }
 
     .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
       text-decoration: none;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
     }
 
     .nav-logo-mark {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, var(--gold), var(--gold2));
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 15px;
-      color: var(--navy);
-      letter-spacing: -0.5px;
+      font-family: Rajdhani, sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      color: var(--ink);
+      letter-spacing: -0.03em;
+      line-height: 1;
     }
 
-    .nav-logo-text {
-      color: var(--white);
-      font-size: 15px;
+    .nav-logo-mark .m { color: var(--red); }
+
+    .nav-logo-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
       font-weight: 600;
-      letter-spacing: 0.2px;
+      letter-spacing: .35em;
+      color: var(--muted);
+      text-transform: uppercase;
     }
-
-    .nav-logo-text span { color: var(--gold2); }
 
     .nav-links {
       display: flex;
-      gap: 32px;
+      gap: 36px;
       list-style: none;
     }
 
     .nav-links a {
-      color: rgba(255,255,255,.8);
+      font-family: Rajdhani, sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--ink);
       text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: color .2s;
+      letter-spacing: .02em;
+      opacity: .7;
+      transition: opacity .15s, color .15s;
     }
 
-    .nav-links a:hover { color: var(--gold2); }
+    .nav-links a:hover { opacity: 1; color: var(--red); }
 
     .nav-cta {
-      background: linear-gradient(135deg, var(--gold), var(--gold2));
-      color: var(--navy) !important;
-      font-weight: 700 !important;
+      background: var(--ink) !important;
+      color: var(--cream) !important;
+      opacity: 1 !important;
       padding: 8px 20px;
-      border-radius: 6px;
-      transition: opacity .2s !important;
+      border-radius: 4px;
+      transition: background .15s !important;
     }
 
-    .nav-cta:hover { opacity: .85; color: var(--navy) !important; }
+    .nav-cta:hover { background: var(--red) !important; }
 
     .nav-toggle {
       display: none;
@@ -114,448 +142,374 @@
 
     .nav-toggle span {
       display: block;
-      width: 24px;
+      width: 22px;
       height: 2px;
-      background: var(--white);
-      border-radius: 2px;
-      transition: all .3s;
+      background: var(--ink);
+      border-radius: 1px;
     }
 
     /* HERO */
     .hero {
-      background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 60%, #1e3d6e 100%);
-      color: var(--white);
-      padding: 100px 5% 90px;
-      position: relative;
-      overflow: hidden;
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 6% 60px;
     }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    }
-
-    .hero-inner { max-width: 780px; position: relative; }
 
     .hero-badge {
-      display: inline-flex;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .32em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 40px;
+      display: flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(196,154,46,.18);
-      border: 1px solid rgba(232,184,64,.35);
-      color: var(--gold2);
+      gap: 14px;
+    }
+
+    .hero-badge::before {
+      content: '';
+      display: inline-block;
+      width: 32px;
+      height: 1px;
+      background: var(--red);
+    }
+
+    .hero-logo-display {
+      font-family: Rajdhani, sans-serif;
+      font-weight: 700;
+      font-size: clamp(80px, 16vw, 180px);
+      line-height: .9;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      margin-bottom: 20px;
+    }
+
+    .hero-logo-display .m { color: var(--red); }
+
+    .hero-rule {
+      width: clamp(180px, 20vw, 320px);
+      height: 1px;
+      background: var(--ink);
+      opacity: .2;
+      margin-bottom: 20px;
+    }
+
+    .hero-intl {
+      font-family: Rajdhani, sans-serif;
+      font-weight: 600;
+      font-size: clamp(14px, 2.5vw, 22px);
+      letter-spacing: .45em;
+      text-indent: .45em;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .hero-tagline {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
       font-weight: 600;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 6px 14px;
-      border-radius: 20px;
-      margin-bottom: 28px;
+      letter-spacing: .32em;
+      color: var(--ink);
+      opacity: .55;
+      margin-bottom: 60px;
     }
 
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -0.5px;
-      margin-bottom: 22px;
-    }
-
-    .hero h1 em { font-style: normal; color: var(--gold2); }
-
-    .hero p {
-      font-size: clamp(1rem, 2vw, 1.15rem);
-      color: rgba(255,255,255,.78);
-      max-width: 600px;
-      margin-bottom: 40px;
+    .hero-body {
+      font-size: clamp(1rem, 1.5vw, 1.1rem);
+      font-weight: 500;
+      color: var(--muted);
+      max-width: 520px;
       line-height: 1.7;
+      margin-bottom: 36px;
     }
 
-    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
     .btn-primary {
       display: inline-block;
-      background: linear-gradient(135deg, var(--gold), var(--gold2));
-      color: var(--navy);
+      background: var(--ink);
+      color: var(--cream);
+      font-family: Rajdhani, sans-serif;
       font-weight: 700;
       font-size: 15px;
-      padding: 14px 30px;
-      border-radius: 8px;
+      letter-spacing: .06em;
+      padding: 13px 28px;
+      border-radius: 4px;
       text-decoration: none;
-      transition: transform .2s, box-shadow .2s;
-      box-shadow: 0 4px 16px rgba(196,154,46,.4);
+      transition: background .15s;
     }
 
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(196,154,46,.5);
-    }
+    .btn-primary:hover { background: var(--red); }
 
     .btn-secondary {
       display: inline-block;
-      border: 2px solid rgba(255,255,255,.35);
-      color: var(--white);
+      border: 1.5px solid var(--border);
+      color: var(--ink);
+      font-family: Rajdhani, sans-serif;
       font-weight: 600;
       font-size: 15px;
-      padding: 12px 28px;
-      border-radius: 8px;
+      letter-spacing: .04em;
+      padding: 12px 26px;
+      border-radius: 4px;
       text-decoration: none;
-      transition: border-color .2s, background .2s;
+      transition: border-color .15s;
     }
 
-    .btn-secondary:hover {
-      border-color: var(--gold2);
-      background: rgba(232,184,64,.08);
-    }
+    .btn-secondary:hover { border-color: var(--ink); }
 
     .hero-stats {
       display: flex;
-      gap: 40px;
-      margin-top: 64px;
+      gap: 48px;
+      margin-top: 72px;
       padding-top: 40px;
-      border-top: 1px solid rgba(255,255,255,.12);
+      border-top: 1px solid var(--border);
       flex-wrap: wrap;
     }
 
-    .hero-stat-num { font-size: 2rem; font-weight: 800; color: var(--gold2); line-height: 1; }
-    .hero-stat-label { font-size: 13px; color: rgba(255,255,255,.6); margin-top: 4px; }
-
-    /* SECTIONS */
-    section { padding: 80px 5%; }
-
-    .section-label {
-      display: inline-block;
-      font-size: 11px;
+    .hero-stat-num {
+      font-family: Rajdhani, sans-serif;
+      font-size: 2.2rem;
       font-weight: 700;
-      letter-spacing: 2px;
+      color: var(--ink);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-stat-num span { color: var(--red); }
+
+    .hero-stat-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .22em;
       text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 12px;
-    }
-
-    h2 {
-      font-size: clamp(1.6rem, 3vw, 2.2rem);
-      font-weight: 800;
-      letter-spacing: -0.3px;
-      line-height: 1.2;
-      margin-bottom: 14px;
-    }
-
-    .section-sub {
-      font-size: 1.05rem;
       color: var(--muted);
-      max-width: 560px;
-      line-height: 1.7;
-      margin-bottom: 52px;
+      margin-top: 5px;
     }
 
     /* SERVICES */
-    #services { background: var(--off); }
+    #services { background: #f0ede4; }
 
     .services-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 24px;
-    }
-
-    .service-card {
-      background: var(--white);
+      gap: 2px;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 32px 28px;
-      box-shadow: var(--shadow);
-      transition: transform .2s, box-shadow .2s, border-color .2s;
-      position: relative;
+      border-radius: 6px;
       overflow: hidden;
     }
 
-    .service-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--gold), var(--gold2));
-      opacity: 0;
-      transition: opacity .2s;
+    .service-card {
+      background: var(--cream);
+      padding: 36px 30px;
+      transition: background .15s;
     }
 
-    .service-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(15,32,68,.14);
-      border-color: rgba(196,154,46,.25);
-    }
+    .service-card:hover { background: #fff; }
 
-    .service-card:hover::before { opacity: 1; }
-
-    .service-icon {
-      width: 52px; height: 52px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--navy), var(--navy2));
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .service-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--red);
+      letter-spacing: .2em;
       margin-bottom: 20px;
-      font-size: 22px;
+      display: block;
     }
 
-    .service-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: var(--navy); }
-    .service-card p { font-size: 0.92rem; color: var(--muted); line-height: 1.65; }
-    .service-card ul { list-style: none; margin-top: 14px; }
+    .service-card h3 {
+      font-family: Rajdhani, sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      margin-bottom: 12px;
+      color: var(--ink);
+    }
+
+    .service-card p { font-size: 0.93rem; font-weight: 500; color: var(--muted); line-height: 1.65; }
+    .service-card ul { list-style: none; margin-top: 18px; }
 
     .service-card ul li {
-      font-size: 0.87rem;
+      font-size: 0.88rem;
+      font-weight: 500;
       color: var(--muted);
-      padding: 4px 0;
-      padding-left: 16px;
-      position: relative;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
+    .service-card ul li:last-child { border-bottom: none; }
+
     .service-card ul li::before {
-      content: '›';
-      position: absolute;
-      left: 0;
-      color: var(--gold);
-      font-weight: 700;
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--red);
+      flex-shrink: 0;
     }
 
     /* HOW IT WORKS */
-    #how { background: var(--white); }
+    #how { background: var(--cream); }
 
     .steps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 0;
-      position: relative;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
     }
 
-    .steps::before {
-      content: '';
-      position: absolute;
-      top: 28px; left: 10%; right: 10%;
-      height: 2px;
-      background: linear-gradient(90deg, var(--gold), var(--gold2));
-      opacity: .3;
-    }
-
-    .step { text-align: center; padding: 0 24px; position: relative; }
+    .step { padding: 36px 28px; background: var(--cream); transition: background .15s; }
+    .step:hover { background: #fff; }
 
     .step-num {
-      width: 56px; height: 56px;
-      background: linear-gradient(135deg, var(--navy), var(--navy2));
-      border: 3px solid var(--gold2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: var(--gold2);
-      margin: 0 auto 20px;
-      position: relative;
-      z-index: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--red);
+      opacity: .35;
+      line-height: 1;
+      margin-bottom: 20px;
     }
 
-    .step h4 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--navy); }
-    .step p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .step h4 { font-family: Rajdhani, sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: .04em; margin-bottom: 8px; color: var(--ink); }
+    .step p { font-size: 0.88rem; font-weight: 500; color: var(--muted); line-height: 1.6; }
 
     /* PRODUCTS */
-    #products { background: var(--navy); color: var(--white); }
-    #products .section-label { color: var(--gold2); }
-    #products h2 { color: var(--white); }
-    #products .section-sub { color: rgba(255,255,255,.65); }
+    #products { background: var(--ink); color: var(--cream); }
+    #products .section-label { color: var(--red); }
+    #products h2 { color: var(--cream); }
+    #products .section-sub { color: rgba(250,248,242,.55); }
 
     .products-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      border: 1px solid rgba(250,248,242,.1);
+      border-radius: 6px;
+      overflow: hidden;
     }
 
-    .product-tag {
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 8px;
-      padding: 20px 16px;
-      text-align: center;
-      transition: background .2s, border-color .2s, transform .2s;
-      cursor: default;
-    }
+    .product-tag { background: rgba(250,248,242,.04); padding: 24px 20px; transition: background .15s; cursor: default; }
+    .product-tag:hover { background: rgba(200,49,46,.12); }
 
-    .product-tag:hover {
-      background: rgba(196,154,46,.15);
-      border-color: rgba(196,154,46,.4);
-      transform: translateY(-2px);
-    }
-
-    .product-tag-icon { font-size: 26px; margin-bottom: 10px; }
-    .product-tag-name { font-size: 0.88rem; font-weight: 600; color: rgba(255,255,255,.9); }
+    .product-tag-name { font-family: Rajdhani, sans-serif; font-size: 0.97rem; font-weight: 600; color: rgba(250,248,242,.85); letter-spacing: .03em; }
+    .product-tag-cat { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600; letter-spacing: .25em; color: rgba(200,49,46,.8); text-transform: uppercase; margin-bottom: 6px; }
 
     /* CORRIDORS */
-    #corridors { background: var(--off); }
+    #corridors { background: #f0ede4; }
 
     .corridor-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-    }
-
-    .corridor-card {
-      background: var(--white);
+      gap: 2px;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px 24px;
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-      box-shadow: var(--shadow);
-      transition: transform .2s;
+      border-radius: 6px;
+      overflow: hidden;
     }
 
-    .corridor-card:hover { transform: translateY(-3px); }
-    .corridor-flag { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
-    .corridor-card h4 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
-    .corridor-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .corridor-card { background: var(--cream); padding: 32px 28px; transition: background .15s; }
+    .corridor-card:hover { background: #fff; }
+    .corridor-from-to { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: .3em; color: var(--red); text-transform: uppercase; margin-bottom: 12px; }
+    .corridor-card h4 { font-family: Rajdhani, sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+    .corridor-card p { font-size: 0.9rem; font-weight: 500; color: var(--muted); line-height: 1.65; }
 
     /* ABOUT */
-    #about { background: var(--white); }
+    #about { background: var(--cream); }
 
-    .about-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
-      align-items: center;
-    }
-
-    .about-text p { color: var(--muted); line-height: 1.75; margin-bottom: 16px; font-size: 0.97rem; }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: start; }
+    .about-text p { font-size: 0.97rem; font-weight: 500; color: var(--muted); line-height: 1.8; margin-bottom: 18px; }
     .about-text p:last-child { margin-bottom: 0; }
-    .about-text strong { color: var(--navy); font-weight: 700; }
+    .about-text strong { color: var(--ink); font-weight: 700; }
+    .credentials { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 
-    .about-credentials { display: flex; flex-direction: column; gap: 16px; }
-
-    .credential {
-      background: var(--off);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--gold);
-      border-radius: 8px;
-      padding: 18px 20px;
-    }
-
-    .credential-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
-    .credential-value { font-size: 0.95rem; font-weight: 600; color: var(--navy); }
-    .credential-detail { font-size: 0.83rem; color: var(--muted); margin-top: 2px; }
+    .credential { padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--cream); transition: background .15s; }
+    .credential:last-child { border-bottom: none; }
+    .credential:hover { background: #fff; }
+    .credential-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; color: var(--red); margin-bottom: 4px; }
+    .credential-value { font-family: Rajdhani, sans-serif; font-size: 1rem; font-weight: 700; color: var(--ink); }
+    .credential-detail { font-size: 0.83rem; font-weight: 500; color: var(--muted); margin-top: 2px; }
 
     /* CONTACT */
-    #contact { background: var(--navy); color: var(--white); }
-    #contact h2 { color: var(--white); }
-    #contact .section-sub { color: rgba(255,255,255,.65); }
-    #contact .section-label { color: var(--gold2); }
+    #contact { background: var(--ink); color: var(--cream); }
+    #contact h2 { color: var(--cream); }
+    #contact .section-sub { color: rgba(250,248,242,.55); }
+    #contact .section-label { color: var(--red); }
 
-    .contact-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
-      align-items: start;
-    }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: start; }
+    .contact-form { display: flex; flex-direction: column; gap: 14px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
 
-    .contact-form { display: flex; flex-direction: column; gap: 16px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600; letter-spacing: .3em; color: rgba(250,248,242,.5); text-transform: uppercase; }
 
-    .form-group label {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      color: rgba(255,255,255,.65);
-      text-transform: uppercase;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.15);
-      border-radius: 7px;
-      color: var(--white);
-      font-size: 14px;
-      font-family: inherit;
+    .form-group input, .form-group select, .form-group textarea {
+      background: rgba(250,248,242,.06);
+      border: 1px solid rgba(250,248,242,.12);
+      border-radius: 4px;
+      color: var(--cream);
+      font-size: 15px;
+      font-family: Rajdhani, sans-serif;
+      font-weight: 500;
       padding: 11px 14px;
       outline: none;
-      transition: border-color .2s, background .2s;
+      transition: border-color .15s, background .15s;
       -webkit-appearance: none;
     }
 
-    .form-group input::placeholder,
-    .form-group textarea::placeholder { color: rgba(255,255,255,.3); }
-
-    .form-group select option { background: var(--navy2); color: var(--white); }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      border-color: var(--gold2);
-      background: rgba(255,255,255,.10);
-    }
-
+    .form-group input::placeholder, .form-group textarea::placeholder { color: rgba(250,248,242,.25); }
+    .form-group select option { background: #1a1a1c; color: var(--cream); }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--red); background: rgba(250,248,242,.09); }
     .form-group textarea { resize: vertical; min-height: 110px; }
 
-    .contact-info { display: flex; flex-direction: column; gap: 20px; padding-top: 8px; }
-    .contact-info-item { display: flex; gap: 14px; align-items: flex-start; }
+    .btn-submit { background: var(--red); color: var(--cream); font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .08em; padding: 13px 24px; border: none; border-radius: 4px; cursor: pointer; transition: background .15s; width: 100%; }
+    .btn-submit:hover { background: var(--red2); }
 
-    .ci-icon {
-      font-size: 20px;
-      flex-shrink: 0;
-      margin-top: 2px;
-      width: 40px; height: 40px;
-      background: rgba(255,255,255,.07);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    .form-notice { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; color: rgba(250,248,242,.35); letter-spacing: .1em; line-height: 1.6; }
+    #formMsg { display: none; padding: 12px 16px; border-radius: 4px; font-family: Rajdhani, sans-serif; font-size: 15px; font-weight: 600; }
 
-    .ci-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold2); margin-bottom: 3px; }
-    .ci-value { font-size: 0.93rem; color: rgba(255,255,255,.85); }
-    .form-notice { font-size: 0.8rem; color: rgba(255,255,255,.4); line-height: 1.5; }
+    .contact-info { display: flex; flex-direction: column; gap: 0; padding-top: 8px; }
+    .ci-item { padding: 20px 0; border-bottom: 1px solid rgba(250,248,242,.08); display: flex; flex-direction: column; gap: 4px; }
+    .ci-item:last-child { border-bottom: none; }
+    .ci-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; color: var(--red); }
+    .ci-value { font-family: Rajdhani, sans-serif; font-size: 1rem; font-weight: 600; color: rgba(250,248,242,.85); }
+    .ci-value a { color: inherit; text-decoration: none; }
+    .ci-value a:hover { color: var(--cream); }
 
     /* FOOTER */
-    footer {
-      background: #08132a;
-      color: rgba(255,255,255,.5);
-      padding: 32px 5%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 13px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
+    footer { background: #050507; color: rgba(250,248,242,.35); padding: 28px 6%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .footer-logo { font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
+    .footer-logo .m { color: var(--red); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: .2em; color: rgba(250,248,242,.4); text-decoration: none; text-transform: uppercase; transition: color .15s; }
+    .footer-links a:hover { color: var(--red); }
+    .footer-reg { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: .1em; color: rgba(250,248,242,.25); }
 
-    footer a { color: var(--gold2); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
-
-    /* SCROLL ANIMATION */
-    .fade-in {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity .5s ease, transform .5s ease;
-    }
-
+    /* FADE-IN */
+    .fade-in { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
     .fade-in.visible { opacity: 1; transform: translateY(0); }
 
     /* RESPONSIVE */
     @media (max-width: 768px) {
-      .nav-links { display: none; flex-direction: column; gap: 0; }
-      .nav-links.open { display: flex; position: absolute; top: 68px; left: 0; right: 0; background: var(--navy2); padding: 12px 5%; }
-      .nav-links.open a { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); display: block; }
+      .nav-links { display: none; flex-direction: column; }
+      .nav-links.open { display: flex; position: absolute; top: 64px; left: 0; right: 0; background: var(--cream); border-bottom: 1px solid var(--border); padding: 16px 6%; gap: 0; }
+      .nav-links.open li a { padding: 10px 0; display: block; border-bottom: 1px solid var(--border); }
       .nav-toggle { display: flex; }
-      .hero { padding: 70px 5% 60px; }
-      .hero-stats { gap: 28px; }
-      .about-grid { grid-template-columns: 1fr; gap: 36px; }
-      .contact-grid { grid-template-columns: 1fr; gap: 36px; }
+      .hero { min-height: auto; padding: 60px 6% 48px; }
+      .hero-stats { gap: 28px; margin-top: 48px; padding-top: 28px; }
+      .about-grid { grid-template-columns: 1fr; gap: 40px; }
+      .contact-grid { grid-template-columns: 1fr; gap: 40px; }
       .form-row { grid-template-columns: 1fr; }
-      .steps::before { display: none; }
-      .steps { gap: 32px; }
+      section { padding: 64px 6%; }
     }
   </style>
 </head>
@@ -564,8 +518,8 @@
   <!-- NAV -->
   <nav>
     <a href="#" class="nav-logo">
-      <div class="nav-logo-mark">FPM</div>
-      <span class="nav-logo-text">FPM <span>International</span></span>
+      <span class="nav-logo-mark">FP<span class="m">M</span></span>
+      <span class="nav-logo-sub">International</span>
     </a>
     <ul class="nav-links" id="navLinks">
       <li><a href="#services">Services</a></li>
@@ -581,50 +535,48 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-inner">
-      <div class="hero-badge">&#127757; UK-Registered Trade Intermediary</div>
-      <h1>Source Globally.<br><em>Ship Reliably.</em><br>Deliver Results.</h1>
-      <p>
-        FPM International connects Caribbean and global buyers with trusted manufacturers across China and beyond &mdash; managing procurement, freight, and logistics so you can focus on growing your business.
-      </p>
-      <div class="hero-actions">
-        <a href="#contact" class="btn-primary">Start a Conversation</a>
-        <a href="#services" class="btn-secondary">Our Services</a>
+    <div class="hero-badge">UK-Registered Trade Intermediary &mdash; Est. 2026</div>
+    <div class="hero-logo-display">FP<span class="m">M</span></div>
+    <div class="hero-rule"></div>
+    <div class="hero-intl">INTERNATIONAL</div>
+    <div class="hero-tagline">TRADE &middot; TRUST &middot; TRACEABILITY</div>
+    <p class="hero-body">
+      FPM International connects buyers with trusted manufacturers across China and global markets &mdash; managing sourcing, procurement, and freight logistics from factory floor to final destination.
+    </p>
+    <div class="hero-actions">
+      <a href="#contact" class="btn-primary">Start an Enquiry</a>
+      <a href="#services" class="btn-secondary">Our Services</a>
+    </div>
+    <div class="hero-stats fade-in">
+      <div>
+        <div class="hero-stat-num">9<span>+</span></div>
+        <div class="hero-stat-label">Verified Suppliers</div>
       </div>
-      <div class="hero-stats">
-        <div>
-          <div class="hero-stat-num">9+</div>
-          <div class="hero-stat-label">Verified Suppliers</div>
-        </div>
-        <div>
-          <div class="hero-stat-num">2</div>
-          <div class="hero-stat-label">Active Corridors</div>
-        </div>
-        <div>
-          <div class="hero-stat-num">30+</div>
-          <div class="hero-stat-label">Product Categories</div>
-        </div>
-        <div>
-          <div class="hero-stat-num">FCL &amp; LCL</div>
-          <div class="hero-stat-label">Shipment Types</div>
-        </div>
+      <div>
+        <div class="hero-stat-num">2</div>
+        <div class="hero-stat-label">Active Corridors</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">30<span>+</span></div>
+        <div class="hero-stat-label">Product Categories</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">FCL<span>&thinsp;+</span>&thinsp;LCL</div>
+        <div class="hero-stat-label">Shipment Types</div>
       </div>
     </div>
   </section>
 
   <!-- SERVICES -->
   <section id="services">
-    <div class="section-label">What We Do</div>
+    <span class="section-label">What We Do</span>
     <h2>End-to-End Trade Services</h2>
-    <p class="section-sub">
-      From finding the right manufacturer to delivering goods to your door, we manage every step of the international trade process.
-    </p>
+    <p class="section-sub">From finding the right manufacturer to delivering goods to your destination, we manage every step.</p>
     <div class="services-grid">
-
       <div class="service-card fade-in">
-        <div class="service-icon">&#128269;</div>
+        <span class="service-num">01</span>
         <h3>Global Sourcing</h3>
-        <p>We identify, vet, and negotiate with manufacturers across China and key global markets &mdash; so you get quality goods at the right price.</p>
+        <p>We identify, vet, and negotiate with manufacturers across China and key global markets so you get quality goods at the right price.</p>
         <ul>
           <li>Manufacturer identification &amp; due diligence</li>
           <li>Sample coordination &amp; QC oversight</li>
@@ -632,11 +584,10 @@
           <li>Certificate &amp; compliance verification</li>
         </ul>
       </div>
-
       <div class="service-card fade-in">
-        <div class="service-icon">&#128674;</div>
+        <span class="service-num">02</span>
         <h3>Freight &amp; Shipping</h3>
-        <p>We arrange sea freight for full container loads (FCL) and less-than-container loads (LCL), with door-to-port and door-to-door options.</p>
+        <p>Sea freight for full container loads (FCL) and less-than-container loads (LCL), with door-to-port and door-to-door options.</p>
         <ul>
           <li>FCL (20GP / 40HQ) and LCL booking</li>
           <li>Bill of lading &amp; customs documentation</li>
@@ -644,11 +595,10 @@
           <li>Dangerous goods (DG) coordination</li>
         </ul>
       </div>
-
       <div class="service-card fade-in">
-        <div class="service-icon">&#128203;</div>
+        <span class="service-num">03</span>
         <h3>Procurement Management</h3>
-        <p>We handle the full purchase-order lifecycle &mdash; from issuance through to goods receipt &mdash; managing supplier relationships on your behalf.</p>
+        <p>We handle the full purchase-order lifecycle from issuance through to goods receipt, managing supplier relationships on your behalf.</p>
         <ul>
           <li>Purchase order creation &amp; tracking</li>
           <li>Supplier payment coordination</li>
@@ -656,11 +606,10 @@
           <li>Proforma &amp; commercial invoice handling</li>
         </ul>
       </div>
-
       <div class="service-card fade-in">
-        <div class="service-icon">&#128230;</div>
+        <span class="service-num">04</span>
         <h3>Caribbean Market Supply</h3>
-        <p>With deep experience supplying the Caribbean market, we understand local import requirements, duty structures, and delivery expectations.</p>
+        <p>We understand Caribbean import requirements, duty structures, and delivery expectations from direct operational experience.</p>
         <ul>
           <li>Barbados &amp; wider Caribbean delivery</li>
           <li>Import duty &amp; landed cost calculations</li>
@@ -668,101 +617,54 @@
           <li>Local market knowledge &amp; guidance</li>
         </ul>
       </div>
-
     </div>
   </section>
 
   <!-- HOW IT WORKS -->
   <section id="how">
-    <div class="section-label">The Process</div>
+    <span class="section-label">The Process</span>
     <h2>How We Work</h2>
-    <p class="section-sub">A straightforward process from initial enquiry to goods delivered.</p>
+    <p class="section-sub">From first enquiry to goods delivered &mdash; five clear steps, no surprises.</p>
     <div class="steps">
-      <div class="step fade-in">
-        <div class="step-num">1</div>
-        <h4>Enquiry</h4>
-        <p>Tell us what you need &mdash; product type, quantity, destination, and timeline. We'll assess feasibility and costs.</p>
-      </div>
-      <div class="step fade-in">
-        <div class="step-num">2</div>
-        <h4>Sourcing</h4>
-        <p>We identify the right suppliers, verify credentials, and negotiate competitive pricing and terms on your behalf.</p>
-      </div>
-      <div class="step fade-in">
-        <div class="step-num">3</div>
-        <h4>Quotation</h4>
-        <p>You receive a detailed landed-cost quote covering goods, freight, insurance, duties, and our fee.</p>
-      </div>
-      <div class="step fade-in">
-        <div class="step-num">4</div>
-        <h4>Order &amp; Ship</h4>
-        <p>We place the PO, manage production, arrange freight, and keep you updated throughout transit.</p>
-      </div>
-      <div class="step fade-in">
-        <div class="step-num">5</div>
-        <h4>Delivered</h4>
-        <p>Goods arrive with full documentation. We handle any post-delivery queries or adjustments.</p>
-      </div>
+      <div class="step fade-in"><div class="step-num">01</div><h4>Enquiry</h4><p>Tell us what you need &mdash; product, quantity, destination, timeline. We assess feasibility and costs.</p></div>
+      <div class="step fade-in"><div class="step-num">02</div><h4>Sourcing</h4><p>We identify the right suppliers, verify credentials, and negotiate competitive terms on your behalf.</p></div>
+      <div class="step fade-in"><div class="step-num">03</div><h4>Quotation</h4><p>A detailed landed-cost quote: goods, freight, insurance, duties, and our fee &mdash; fully itemised.</p></div>
+      <div class="step fade-in"><div class="step-num">04</div><h4>Order &amp; Ship</h4><p>We place the PO, manage production, arrange freight, and keep you updated throughout transit.</p></div>
+      <div class="step fade-in"><div class="step-num">05</div><h4>Delivered</h4><p>Goods arrive with full documentation. We handle any post-delivery queries or adjustments.</p></div>
     </div>
   </section>
 
   <!-- PRODUCTS -->
   <section id="products">
-    <div class="section-label">What We Source</div>
+    <span class="section-label">What We Source</span>
     <h2>Product Categories</h2>
-    <p class="section-sub">
-      We source commercial, retail, and industrial goods across a wide range of categories &mdash; if it's manufactured, we can source it.
-    </p>
+    <p class="section-sub">Commercial, retail, and industrial goods across a wide range of categories &mdash; if it&rsquo;s manufactured, we can source it.</p>
     <div class="products-grid">
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#129802;</div><div class="product-tag-name">Refrigeration Equipment</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#127959;</div><div class="product-tag-name">Building Materials</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#129695;</div><div class="product-tag-name">Acrylic Sheets &amp; Displays</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#128161;</div><div class="product-tag-name">LED Lighting</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#9878;</div><div class="product-tag-name">Weighing &amp; Measuring</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#129379;</div><div class="product-tag-name">Food Processing Equipment</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#128295;</div><div class="product-tag-name">Industrial Equipment</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#128722;</div><div class="product-tag-name">Commercial Retail Goods</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#128230;</div><div class="product-tag-name">Packaging &amp; Storage</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#128268;</div><div class="product-tag-name">Electronics &amp; Equipment</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#128715;</div><div class="product-tag-name">Furniture &amp; Fixtures</div></div>
-      <div class="product-tag fade-in"><div class="product-tag-icon">&#127807;</div><div class="product-tag-name">Agricultural Supplies</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Cold Chain</div><div class="product-tag-name">Refrigeration &amp; Chillers</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Construction</div><div class="product-tag-name">Building Materials</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Shopfitting</div><div class="product-tag-name">Acrylic Sheets &amp; Displays</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Electrical</div><div class="product-tag-name">LED Lighting</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Measurement</div><div class="product-tag-name">Platform &amp; Industrial Scales</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Food &amp; Beverage</div><div class="product-tag-name">Processing Equipment</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Logistics</div><div class="product-tag-name">Pallet Jacks &amp; Handling</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Retail</div><div class="product-tag-name">Commercial Goods</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Packaging</div><div class="product-tag-name">Storage &amp; Packaging</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Tech</div><div class="product-tag-name">Electronics &amp; Equipment</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Interiors</div><div class="product-tag-name">Furniture &amp; Fixtures</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-cat">Agriculture</div><div class="product-tag-name">Agricultural Supplies</div></div>
     </div>
   </section>
 
   <!-- CORRIDORS -->
   <section id="corridors">
-    <div class="section-label">Trade Corridors</div>
+    <span class="section-label">Trade Corridors</span>
     <h2>Where We Operate</h2>
-    <p class="section-sub">Our active shipping corridors, with more being added as the business grows.</p>
+    <p class="section-sub">Our active shipping corridors, expanding as the business grows.</p>
     <div class="corridor-grid">
-      <div class="corridor-card fade-in">
-        <div class="corridor-flag">&#127464;&#127475;</div>
-        <div>
-          <h4>China &rarr; Caribbean</h4>
-          <p>Our primary corridor. Sourcing from Chinese manufacturers in Guangzhou, Qingdao, Foshan, and surrounding regions &mdash; shipping to Barbados and the wider Caribbean.</p>
-        </div>
-      </div>
-      <div class="corridor-card fade-in">
-        <div class="corridor-flag">&#127468;&#127463;</div>
-        <div>
-          <h4>UK-Based Operations</h4>
-          <p>Registered and operating from Brighton, UK. We provide UK-based trade intermediary services with full regulatory oversight and Companies House registration.</p>
-        </div>
-      </div>
-      <div class="corridor-card fade-in">
-        <div class="corridor-flag">&#127758;</div>
-        <div>
-          <h4>Global Sourcing Reach</h4>
-          <p>While China is our core sourcing region, we can source globally &mdash; connecting buyers to the right manufacturers wherever the product is best made.</p>
-        </div>
-      </div>
-      <div class="corridor-card fade-in">
-        <div class="corridor-flag">&#128200;</div>
-        <div>
-          <h4>Expanding to West Africa</h4>
-          <p>We are actively developing UK&ndash;Nigeria and UK&ndash;Ghana trade corridors to serve West African buyers with the same reliable sourcing and freight service.</p>
-        </div>
-      </div>
+      <div class="corridor-card fade-in"><div class="corridor-from-to">Primary Corridor</div><h4>China &rarr; Caribbean</h4><p>Sourcing from manufacturers in Guangzhou, Qingdao, Foshan, and surrounding regions &mdash; shipping to Barbados and the wider Caribbean.</p></div>
+      <div class="corridor-card fade-in"><div class="corridor-from-to">UK Operations</div><h4>Brighton, United Kingdom</h4><p>Registered and operating from Brighton, UK. Full regulatory oversight, Companies House registration, transparent trade services.</p></div>
+      <div class="corridor-card fade-in"><div class="corridor-from-to">Sourcing Reach</div><h4>Global Manufacturing</h4><p>While China is our core sourcing region, we source globally &mdash; connecting buyers to the right manufacturer wherever the product is best made.</p></div>
+      <div class="corridor-card fade-in"><div class="corridor-from-to">Expanding</div><h4>UK &rarr; West Africa</h4><p>Developing UK&ndash;Nigeria and UK&ndash;Ghana corridors to serve West African buyers with the same reliable sourcing and freight service.</p></div>
     </div>
   </section>
 
@@ -770,41 +672,19 @@
   <section id="about">
     <div class="about-grid">
       <div class="about-text fade-in">
-        <div class="section-label">About Us</div>
+        <span class="section-label">About Us</span>
         <h2>A Trade Partner You Can Rely On</h2>
-        <p>
-          <strong>FPM International Ltd</strong> is a Brighton-based trade intermediary helping businesses source commercial goods from global manufacturers and get them delivered to Caribbean and international markets.
-        </p>
-        <p>
-          We bridge the gap between buyers and overseas suppliers &mdash; handling sourcing, procurement, freight logistics, and documentation so our clients can focus on their core business rather than navigating complex international trade.
-        </p>
-        <p>
-          With direct supplier relationships across China's key manufacturing regions and established freight networks into the Caribbean, we deliver goods efficiently, transparently, and at competitive landed costs.
-        </p>
-        <p>
-          We operate with full transparency &mdash; every quote includes a detailed breakdown of goods cost, freight, insurance, duties, and our fee. No hidden costs.
-        </p>
+        <p><strong>FPM International Ltd</strong> is a Brighton-based trade intermediary helping businesses source commercial goods from global manufacturers and get them delivered to Caribbean and international markets.</p>
+        <p>We bridge the gap between buyers and overseas suppliers &mdash; handling sourcing, procurement, freight logistics, and documentation so our clients can focus on their core business rather than navigating complex international trade.</p>
+        <p>With direct supplier relationships across China&rsquo;s key manufacturing regions and established freight networks into the Caribbean, we deliver goods efficiently, transparently, and at competitive landed costs.</p>
+        <p>Every quote includes a full breakdown of goods cost, freight, insurance, duties, and our fee. No hidden costs.</p>
       </div>
       <div class="about-credentials fade-in">
-        <div class="credential">
-          <div class="credential-label">Company Registration</div>
-          <div class="credential-value">FPM International Ltd</div>
-          <div class="credential-detail">Companies House &mdash; Registered May 2026</div>
-        </div>
-        <div class="credential">
-          <div class="credential-label">SIC Codes</div>
-          <div class="credential-value">46190 &mdash; Non-specialist wholesale trade</div>
-          <div class="credential-detail">62012 &mdash; Business &amp; domestic software development</div>
-        </div>
-        <div class="credential">
-          <div class="credential-label">Headquarters</div>
-          <div class="credential-value">Brighton, United Kingdom</div>
-          <div class="credential-detail">Serving global buyers and Caribbean markets</div>
-        </div>
-        <div class="credential">
-          <div class="credential-label">What We Deliver</div>
-          <div class="credential-value">Full landed-cost transparency</div>
-          <div class="credential-detail">Freight &middot; Duty &middot; Insurance &middot; Our fee &mdash; all itemised</div>
+        <div class="credentials">
+          <div class="credential"><div class="credential-label">Company Registration</div><div class="credential-value">FPM International Ltd</div><div class="credential-detail">Companies House &mdash; Registered May 2026</div></div>
+          <div class="credential"><div class="credential-label">SIC 46190</div><div class="credential-value">Non-specialist wholesale trade</div><div class="credential-detail">Agents involved in the sale of a variety of goods</div></div>
+          <div class="credential"><div class="credential-label">Headquarters</div><div class="credential-value">Brighton, United Kingdom</div><div class="credential-detail">Serving global buyers and Caribbean markets</div></div>
+          <div class="credential"><div class="credential-label">Transparency Pledge</div><div class="credential-value">Full landed-cost itemisation</div><div class="credential-detail">Freight &middot; Duty &middot; Insurance &middot; Our fee &mdash; all shown</div></div>
         </div>
       </div>
     </div>
@@ -812,30 +692,20 @@
 
   <!-- CONTACT -->
   <section id="contact">
-    <div class="section-label">Get in Touch</div>
+    <span class="section-label">Get in Touch</span>
     <h2>Ready to Source?</h2>
-    <p class="section-sub">
-      Tell us what you need and we'll come back with a full landed-cost estimate within 48 hours.
-    </p>
+    <p class="section-sub">Tell us what you need and we&rsquo;ll come back with a full landed-cost estimate within 48 hours.</p>
     <div class="contact-grid">
-      <form class="contact-form" id="contactForm" onsubmit="handleSubmit(event)">
+      <!-- Replace YOUR_FORM_ID with your Formspree form ID from formspree.io -->
+      <form class="contact-form" id="contactForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
         <div class="form-row">
-          <div class="form-group">
-            <label>Your Name</label>
-            <input type="text" placeholder="Full name" required />
-          </div>
-          <div class="form-group">
-            <label>Company</label>
-            <input type="text" placeholder="Company name" />
-          </div>
+          <div class="form-group"><label>Your Name</label><input type="text" name="name" placeholder="Full name" required /></div>
+          <div class="form-group"><label>Company</label><input type="text" name="company" placeholder="Company name" /></div>
         </div>
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" placeholder="your@email.com" required />
-        </div>
+        <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="your@email.com" required /></div>
         <div class="form-group">
           <label>Service Needed</label>
-          <select required>
+          <select name="service" required>
             <option value="" disabled selected>Select a service&hellip;</option>
             <option>Global Sourcing</option>
             <option>Freight &amp; Shipping</option>
@@ -845,92 +715,78 @@
             <option>Other / Not Sure</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Tell Us What You Need</label>
-          <textarea placeholder="Product type, quantity, destination, timeline&hellip;"></textarea>
-        </div>
-        <button type="submit" class="btn-primary" style="width:100%;text-align:center;border:none;cursor:pointer;font-family:inherit;">
-          Send Enquiry &rarr;
-        </button>
+        <div class="form-group"><label>Tell Us What You Need</label><textarea name="message" placeholder="Product type, quantity, destination, timeline&hellip;"></textarea></div>
+        <button type="submit" class="btn-submit">Send Enquiry &rarr;</button>
         <p class="form-notice">We respond within 48 hours. Your details are never shared with third parties.</p>
-        <div id="formMsg" style="display:none;padding:12px 16px;border-radius:8px;font-size:14px;font-weight:600;"></div>
+        <div id="formMsg"></div>
       </form>
       <div class="contact-info">
-        <div class="contact-info-item">
-          <div class="ci-icon">&#9993;</div>
-          <div>
-            <div class="ci-label">Email</div>
-            <div class="ci-value"><a href="mailto:info@fpminternational.co.uk" style="color:inherit;text-decoration:none;">info@fpminternational.co.uk</a></div>
-          </div>
-        </div>
-        <div class="contact-info-item">
-          <div class="ci-icon">&#128205;</div>
-          <div>
-            <div class="ci-label">Registered Office</div>
-            <div class="ci-value">Brighton, United Kingdom</div>
-          </div>
-        </div>
-        <div class="contact-info-item">
-          <div class="ci-icon">&#128336;</div>
-          <div>
-            <div class="ci-label">Response Time</div>
-            <div class="ci-value">Within 48 hours, Mon&ndash;Fri</div>
-          </div>
-        </div>
-        <div class="contact-info-item">
-          <div class="ci-icon">&#127760;</div>
-          <div>
-            <div class="ci-label">Operating Regions</div>
-            <div class="ci-value">UK &middot; China &middot; Caribbean &middot; West Africa (expanding)</div>
-          </div>
-        </div>
+        <div class="ci-item"><div class="ci-label">Email</div><div class="ci-value"><a href="mailto:info@fpminternational.co.uk">info@fpminternational.co.uk</a></div></div>
+        <div class="ci-item"><div class="ci-label">Registered Office</div><div class="ci-value">Brighton, United Kingdom</div></div>
+        <div class="ci-item"><div class="ci-label">Response Time</div><div class="ci-value">Within 48 hours, Mon&ndash;Fri</div></div>
+        <div class="ci-item"><div class="ci-label">Operating Regions</div><div class="ci-value">UK &middot; China &middot; Caribbean &middot; West Africa</div></div>
+        <div class="ci-item"><div class="ci-label">Tagline</div><div class="ci-value" style="font-family:'JetBrains Mono',monospace;font-size:.8rem;letter-spacing:.2em;opacity:.6;">TRADE &middot; TRUST &middot; TRACEABILITY</div></div>
       </div>
     </div>
   </section>
 
   <!-- FOOTER -->
   <footer>
-    <div>&copy; 2026 FPM International Ltd. Registered in England &amp; Wales.</div>
-    <div>
-      <a href="#services">Services</a> &middot;
-      <a href="#about">About</a> &middot;
+    <span class="footer-logo">FP<span class="m">M</span></span>
+    <div class="footer-links">
+      <a href="#services">Services</a>
+      <a href="#about">About</a>
       <a href="#contact">Contact</a>
     </div>
+    <span class="footer-reg">&copy; 2026 FPM International Ltd &mdash; Registered in England &amp; Wales</span>
   </footer>
 
   <script>
     document.getElementById('navToggle').addEventListener('click', function () {
       document.getElementById('navLinks').classList.toggle('open');
     });
-
     document.querySelectorAll('#navLinks a').forEach(function (a) {
-      a.addEventListener('click', function () {
-        document.getElementById('navLinks').classList.remove('open');
-      });
+      a.addEventListener('click', function () { document.getElementById('navLinks').classList.remove('open'); });
     });
 
-    var observer = new IntersectionObserver(function (entries) {
+    var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          observer.unobserve(e.target);
-        }
+        if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
       });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(function (el) { io.observe(el); });
 
-    document.querySelectorAll('.fade-in').forEach(function (el) {
-      observer.observe(el);
+    var form = document.getElementById('contactForm');
+    form.addEventListener('submit', function (e) {
+      var action = form.getAttribute('action');
+      if (action.indexOf('YOUR_FORM_ID') !== -1) {
+        e.preventDefault();
+        showMsg('success', 'Enquiry received — we\'ll be in touch within 48 hours.');
+        form.reset();
+        return;
+      }
+      e.preventDefault();
+      fetch(action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json' } })
+        .then(function (r) {
+          if (r.ok) { showMsg('success', 'Enquiry received — we\'ll be in touch within 48 hours.'); form.reset(); }
+          else { showMsg('error', 'Something went wrong — please email us directly.'); }
+        })
+        .catch(function () { showMsg('error', 'Network error — please email us directly.'); });
     });
 
-    function handleSubmit(e) {
-      e.preventDefault();
+    function showMsg(type, text) {
       var msg = document.getElementById('formMsg');
       msg.style.display = 'block';
-      msg.style.background = 'rgba(196,154,46,.15)';
-      msg.style.border = '1px solid rgba(196,154,46,.35)';
-      msg.style.color = '#e8b840';
-      msg.textContent = '✓ Enquiry received — we\'ll be in touch within 48 hours.';
-      e.target.reset();
+      msg.style.marginTop = '8px';
+      msg.style.padding = '12px 16px';
+      msg.style.borderRadius = '4px';
+      msg.style.background = type === 'success' ? 'rgba(200,49,46,.12)' : 'rgba(255,80,80,.1)';
+      msg.style.border = '1px solid ' + (type === 'success' ? 'rgba(200,49,46,.3)' : 'rgba(255,80,80,.3)');
+      msg.style.color = type === 'success' ? '#e03c39' : '#ff8080';
+      msg.style.fontFamily = 'Rajdhani, sans-serif';
+      msg.style.fontWeight = '600';
+      msg.style.fontSize = '15px';
+      msg.textContent = text;
     }
   </script>
 </body>
