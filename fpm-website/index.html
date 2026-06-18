@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="FPM International Ltd — Global sourcing, freight and procurement management. Connecting manufacturers worldwide to Caribbean and beyond." />
+  <title>FPM International Ltd — Source. Ship. Deliver.</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0f2044;
+      --navy2:  #1a3260;
+      --gold:   #c49a2e;
+      --gold2:  #e8b840;
+      --white:  #ffffff;
+      --off:    #f5f6f8;
+      --text:   #1c2b3a;
+      --muted:  #5a6a7a;
+      --border: #d8e0e8;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(15,32,68,.10);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background: var(--white);
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5%;
+      height: 68px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-logo-mark {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+    }
+
+    .nav-logo-text {
+      color: var(--white);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .nav-logo-text span { color: var(--gold2); }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: rgba(255,255,255,.8);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color .2s;
+    }
+
+    .nav-links a:hover { color: var(--gold2); }
+
+    .nav-cta {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: var(--navy) !important;
+      font-weight: 700 !important;
+      padding: 8px 20px;
+      border-radius: 6px;
+      transition: opacity .2s !important;
+    }
+
+    .nav-cta:hover { opacity: .85; color: var(--navy) !important; }
+
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      flex-direction: column;
+      gap: 5px;
+      padding: 4px;
+    }
+
+    .nav-toggle span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--white);
+      border-radius: 2px;
+      transition: all .3s;
+    }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 60%, #1e3d6e 100%);
+      color: var(--white);
+      padding: 100px 5% 90px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .hero-inner { max-width: 780px; position: relative; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(196,154,46,.18);
+      border: 1px solid rgba(232,184,64,.35);
+      color: var(--gold2);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 em { font-style: normal; color: var(--gold2); }
+
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: rgba(255,255,255,.78);
+      max-width: 600px;
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+
+    .btn-primary {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: var(--navy);
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 30px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: transform .2s, box-shadow .2s;
+      box-shadow: 0 4px 16px rgba(196,154,46,.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(196,154,46,.5);
+    }
+
+    .btn-secondary {
+      display: inline-block;
+      border: 2px solid rgba(255,255,255,.35);
+      color: var(--white);
+      font-weight: 600;
+      font-size: 15px;
+      padding: 12px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: border-color .2s, background .2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--gold2);
+      background: rgba(232,184,64,.08);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 64px;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,255,255,.12);
+      flex-wrap: wrap;
+    }
+
+    .hero-stat-num { font-size: 2rem; font-weight: 800; color: var(--gold2); line-height: 1; }
+    .hero-stat-label { font-size: 13px; color: rgba(255,255,255,.6); margin-top: 4px; }
+
+    /* SECTIONS */
+    section { padding: 80px 5%; }
+
+    .section-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    .section-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 52px;
+    }
+
+    /* SERVICES */
+    #services { background: var(--off); }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .service-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      box-shadow: var(--shadow);
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--gold2));
+      opacity: 0;
+      transition: opacity .2s;
+    }
+
+    .service-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(15,32,68,.14);
+      border-color: rgba(196,154,46,.25);
+    }
+
+    .service-card:hover::before { opacity: 1; }
+
+    .service-icon {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--navy), var(--navy2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 22px;
+    }
+
+    .service-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: var(--navy); }
+    .service-card p { font-size: 0.92rem; color: var(--muted); line-height: 1.65; }
+    .service-card ul { list-style: none; margin-top: 14px; }
+
+    .service-card ul li {
+      font-size: 0.87rem;
+      color: var(--muted);
+      padding: 4px 0;
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .service-card ul li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    /* HOW IT WORKS */
+    #how { background: var(--white); }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0;
+      position: relative;
+    }
+
+    .steps::before {
+      content: '';
+      position: absolute;
+      top: 28px; left: 10%; right: 10%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), var(--gold2));
+      opacity: .3;
+    }
+
+    .step { text-align: center; padding: 0 24px; position: relative; }
+
+    .step-num {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, var(--navy), var(--navy2));
+      border: 3px solid var(--gold2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--gold2);
+      margin: 0 auto 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step h4 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--navy); }
+    .step p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* PRODUCTS */
+    #products { background: var(--navy); color: var(--white); }
+    #products .section-label { color: var(--gold2); }
+    #products h2 { color: var(--white); }
+    #products .section-sub { color: rgba(255,255,255,.65); }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .product-tag {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px;
+      padding: 20px 16px;
+      text-align: center;
+      transition: background .2s, border-color .2s, transform .2s;
+      cursor: default;
+    }
+
+    .product-tag:hover {
+      background: rgba(196,154,46,.15);
+      border-color: rgba(196,154,46,.4);
+      transform: translateY(-2px);
+    }
+
+    .product-tag-icon { font-size: 26px; margin-bottom: 10px; }
+    .product-tag-name { font-size: 0.88rem; font-weight: 600; color: rgba(255,255,255,.9); }
+
+    /* CORRIDORS */
+    #corridors { background: var(--off); }
+
+    .corridor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .corridor-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      box-shadow: var(--shadow);
+      transition: transform .2s;
+    }
+
+    .corridor-card:hover { transform: translateY(-3px); }
+    .corridor-flag { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
+    .corridor-card h4 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .corridor-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ABOUT */
+    #about { background: var(--white); }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .about-text p { color: var(--muted); line-height: 1.75; margin-bottom: 16px; font-size: 0.97rem; }
+    .about-text p:last-child { margin-bottom: 0; }
+    .about-text strong { color: var(--navy); font-weight: 700; }
+
+    .about-credentials { display: flex; flex-direction: column; gap: 16px; }
+
+    .credential {
+      background: var(--off);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--gold);
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+
+    .credential-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+    .credential-value { font-size: 0.95rem; font-weight: 600; color: var(--navy); }
+    .credential-detail { font-size: 0.83rem; color: var(--muted); margin-top: 2px; }
+
+    /* CONTACT */
+    #contact { background: var(--navy); color: var(--white); }
+    #contact h2 { color: var(--white); }
+    #contact .section-sub { color: rgba(255,255,255,.65); }
+    #contact .section-label { color: var(--gold2); }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+    }
+
+    .contact-form { display: flex; flex-direction: column; gap: 16px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,.65);
+      text-transform: uppercase;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 7px;
+      color: var(--white);
+      font-size: 14px;
+      font-family: inherit;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color .2s, background .2s;
+      -webkit-appearance: none;
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: rgba(255,255,255,.3); }
+
+    .form-group select option { background: var(--navy2); color: var(--white); }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--gold2);
+      background: rgba(255,255,255,.10);
+    }
+
+    .form-group textarea { resize: vertical; min-height: 110px; }
+
+    .contact-info { display: flex; flex-direction: column; gap: 20px; padding-top: 8px; }
+    .contact-info-item { display: flex; gap: 14px; align-items: flex-start; }
+
+    .ci-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,.07);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ci-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold2); margin-bottom: 3px; }
+    .ci-value { font-size: 0.93rem; color: rgba(255,255,255,.85); }
+    .form-notice { font-size: 0.8rem; color: rgba(255,255,255,.4); line-height: 1.5; }
+
+    /* FOOTER */
+    footer {
+      background: #08132a;
+      color: rgba(255,255,255,.5);
+      padding: 32px 5%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    footer a { color: var(--gold2); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* SCROLL ANIMATION */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .nav-links { display: none; flex-direction: column; gap: 0; }
+      .nav-links.open { display: flex; position: absolute; top: 68px; left: 0; right: 0; background: var(--navy2); padding: 12px 5%; }
+      .nav-links.open a { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); display: block; }
+      .nav-toggle { display: flex; }
+      .hero { padding: 70px 5% 60px; }
+      .hero-stats { gap: 28px; }
+      .about-grid { grid-template-columns: 1fr; gap: 36px; }
+      .contact-grid { grid-template-columns: 1fr; gap: 36px; }
+      .form-row { grid-template-columns: 1fr; }
+      .steps::before { display: none; }
+      .steps { gap: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">FPM</div>
+      <span class="nav-logo-text">FPM <span>International</span></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#products">Products</a></li>
+      <li><a href="#corridors">Corridors</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact" class="nav-cta">Get in Touch</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">&#127757; UK-Registered Trade Intermediary</div>
+      <h1>Source Globally.<br><em>Ship Reliably.</em><br>Deliver Results.</h1>
+      <p>
+        FPM International connects Caribbean and global buyers with trusted manufacturers across China and beyond &mdash; managing procurement, freight, and logistics so you can focus on growing your business.
+      </p>
+      <div class="hero-actions">
+        <a href="#contact" class="btn-primary">Start a Conversation</a>
+        <a href="#services" class="btn-secondary">Our Services</a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-num">9+</div>
+          <div class="hero-stat-label">Verified Suppliers</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">2</div>
+          <div class="hero-stat-label">Active Corridors</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">30+</div>
+          <div class="hero-stat-label">Product Categories</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">FCL &amp; LCL</div>
+          <div class="hero-stat-label">Shipment Types</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services">
+    <div class="section-label">What We Do</div>
+    <h2>End-to-End Trade Services</h2>
+    <p class="section-sub">
+      From finding the right manufacturer to delivering goods to your door, we manage every step of the international trade process.
+    </p>
+    <div class="services-grid">
+
+      <div class="service-card fade-in">
+        <div class="service-icon">&#128269;</div>
+        <h3>Global Sourcing</h3>
+        <p>We identify, vet, and negotiate with manufacturers across China and key global markets &mdash; so you get quality goods at the right price.</p>
+        <ul>
+          <li>Manufacturer identification &amp; due diligence</li>
+          <li>Sample coordination &amp; QC oversight</li>
+          <li>Price negotiation &amp; contract terms</li>
+          <li>Certificate &amp; compliance verification</li>
+        </ul>
+      </div>
+
+      <div class="service-card fade-in">
+        <div class="service-icon">&#128674;</div>
+        <h3>Freight &amp; Shipping</h3>
+        <p>We arrange sea freight for full container loads (FCL) and less-than-container loads (LCL), with door-to-port and door-to-door options.</p>
+        <ul>
+          <li>FCL (20GP / 40HQ) and LCL booking</li>
+          <li>Bill of lading &amp; customs documentation</li>
+          <li>Shipment tracking &amp; status updates</li>
+          <li>Dangerous goods (DG) coordination</li>
+        </ul>
+      </div>
+
+      <div class="service-card fade-in">
+        <div class="service-icon">&#128203;</div>
+        <h3>Procurement Management</h3>
+        <p>We handle the full purchase-order lifecycle &mdash; from issuance through to goods receipt &mdash; managing supplier relationships on your behalf.</p>
+        <ul>
+          <li>Purchase order creation &amp; tracking</li>
+          <li>Supplier payment coordination</li>
+          <li>Lead time management</li>
+          <li>Proforma &amp; commercial invoice handling</li>
+        </ul>
+      </div>
+
+      <div class="service-card fade-in">
+        <div class="service-icon">&#128230;</div>
+        <h3>Caribbean Market Supply</h3>
+        <p>With deep experience supplying the Caribbean market, we understand local import requirements, duty structures, and delivery expectations.</p>
+        <ul>
+          <li>Barbados &amp; wider Caribbean delivery</li>
+          <li>Import duty &amp; landed cost calculations</li>
+          <li>Commercial documentation for customs</li>
+          <li>Local market knowledge &amp; guidance</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="section-label">The Process</div>
+    <h2>How We Work</h2>
+    <p class="section-sub">A straightforward process from initial enquiry to goods delivered.</p>
+    <div class="steps">
+      <div class="step fade-in">
+        <div class="step-num">1</div>
+        <h4>Enquiry</h4>
+        <p>Tell us what you need &mdash; product type, quantity, destination, and timeline. We'll assess feasibility and costs.</p>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">2</div>
+        <h4>Sourcing</h4>
+        <p>We identify the right suppliers, verify credentials, and negotiate competitive pricing and terms on your behalf.</p>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">3</div>
+        <h4>Quotation</h4>
+        <p>You receive a detailed landed-cost quote covering goods, freight, insurance, duties, and our fee.</p>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">4</div>
+        <h4>Order &amp; Ship</h4>
+        <p>We place the PO, manage production, arrange freight, and keep you updated throughout transit.</p>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">5</div>
+        <h4>Delivered</h4>
+        <p>Goods arrive with full documentation. We handle any post-delivery queries or adjustments.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section id="products">
+    <div class="section-label">What We Source</div>
+    <h2>Product Categories</h2>
+    <p class="section-sub">
+      We source commercial, retail, and industrial goods across a wide range of categories &mdash; if it's manufactured, we can source it.
+    </p>
+    <div class="products-grid">
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#129802;</div><div class="product-tag-name">Refrigeration Equipment</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#127959;</div><div class="product-tag-name">Building Materials</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#129695;</div><div class="product-tag-name">Acrylic Sheets &amp; Displays</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#128161;</div><div class="product-tag-name">LED Lighting</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#9878;</div><div class="product-tag-name">Weighing &amp; Measuring</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#129379;</div><div class="product-tag-name">Food Processing Equipment</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#128295;</div><div class="product-tag-name">Industrial Equipment</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#128722;</div><div class="product-tag-name">Commercial Retail Goods</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#128230;</div><div class="product-tag-name">Packaging &amp; Storage</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#128268;</div><div class="product-tag-name">Electronics &amp; Equipment</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#128715;</div><div class="product-tag-name">Furniture &amp; Fixtures</div></div>
+      <div class="product-tag fade-in"><div class="product-tag-icon">&#127807;</div><div class="product-tag-name">Agricultural Supplies</div></div>
+    </div>
+  </section>
+
+  <!-- CORRIDORS -->
+  <section id="corridors">
+    <div class="section-label">Trade Corridors</div>
+    <h2>Where We Operate</h2>
+    <p class="section-sub">Our active shipping corridors, with more being added as the business grows.</p>
+    <div class="corridor-grid">
+      <div class="corridor-card fade-in">
+        <div class="corridor-flag">&#127464;&#127475;</div>
+        <div>
+          <h4>China &rarr; Caribbean</h4>
+          <p>Our primary corridor. Sourcing from Chinese manufacturers in Guangzhou, Qingdao, Foshan, and surrounding regions &mdash; shipping to Barbados and the wider Caribbean.</p>
+        </div>
+      </div>
+      <div class="corridor-card fade-in">
+        <div class="corridor-flag">&#127468;&#127463;</div>
+        <div>
+          <h4>UK-Based Operations</h4>
+          <p>Registered and operating from Brighton, UK. We provide UK-based trade intermediary services with full regulatory oversight and Companies House registration.</p>
+        </div>
+      </div>
+      <div class="corridor-card fade-in">
+        <div class="corridor-flag">&#127758;</div>
+        <div>
+          <h4>Global Sourcing Reach</h4>
+          <p>While China is our core sourcing region, we can source globally &mdash; connecting buyers to the right manufacturers wherever the product is best made.</p>
+        </div>
+      </div>
+      <div class="corridor-card fade-in">
+        <div class="corridor-flag">&#128200;</div>
+        <div>
+          <h4>Expanding to West Africa</h4>
+          <p>We are actively developing UK&ndash;Nigeria and UK&ndash;Ghana trade corridors to serve West African buyers with the same reliable sourcing and freight service.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="about-grid">
+      <div class="about-text fade-in">
+        <div class="section-label">About Us</div>
+        <h2>A Trade Partner You Can Rely On</h2>
+        <p>
+          <strong>FPM International Ltd</strong> is a Brighton-based trade intermediary helping businesses source commercial goods from global manufacturers and get them delivered to Caribbean and international markets.
+        </p>
+        <p>
+          We bridge the gap between buyers and overseas suppliers &mdash; handling sourcing, procurement, freight logistics, and documentation so our clients can focus on their core business rather than navigating complex international trade.
+        </p>
+        <p>
+          With direct supplier relationships across China's key manufacturing regions and established freight networks into the Caribbean, we deliver goods efficiently, transparently, and at competitive landed costs.
+        </p>
+        <p>
+          We operate with full transparency &mdash; every quote includes a detailed breakdown of goods cost, freight, insurance, duties, and our fee. No hidden costs.
+        </p>
+      </div>
+      <div class="about-credentials fade-in">
+        <div class="credential">
+          <div class="credential-label">Company Registration</div>
+          <div class="credential-value">FPM International Ltd</div>
+          <div class="credential-detail">Companies House &mdash; Registered May 2026</div>
+        </div>
+        <div class="credential">
+          <div class="credential-label">SIC Codes</div>
+          <div class="credential-value">46190 &mdash; Non-specialist wholesale trade</div>
+          <div class="credential-detail">62012 &mdash; Business &amp; domestic software development</div>
+        </div>
+        <div class="credential">
+          <div class="credential-label">Headquarters</div>
+          <div class="credential-value">Brighton, United Kingdom</div>
+          <div class="credential-detail">Serving global buyers and Caribbean markets</div>
+        </div>
+        <div class="credential">
+          <div class="credential-label">What We Deliver</div>
+          <div class="credential-value">Full landed-cost transparency</div>
+          <div class="credential-detail">Freight &middot; Duty &middot; Insurance &middot; Our fee &mdash; all itemised</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="section-label">Get in Touch</div>
+    <h2>Ready to Source?</h2>
+    <p class="section-sub">
+      Tell us what you need and we'll come back with a full landed-cost estimate within 48 hours.
+    </p>
+    <div class="contact-grid">
+      <form class="contact-form" id="contactForm" onsubmit="handleSubmit(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Your Name</label>
+            <input type="text" placeholder="Full name" required />
+          </div>
+          <div class="form-group">
+            <label>Company</label>
+            <input type="text" placeholder="Company name" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" placeholder="your@email.com" required />
+        </div>
+        <div class="form-group">
+          <label>Service Needed</label>
+          <select required>
+            <option value="" disabled selected>Select a service&hellip;</option>
+            <option>Global Sourcing</option>
+            <option>Freight &amp; Shipping</option>
+            <option>Procurement Management</option>
+            <option>Caribbean Market Supply</option>
+            <option>Full End-to-End Service</option>
+            <option>Other / Not Sure</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tell Us What You Need</label>
+          <textarea placeholder="Product type, quantity, destination, timeline&hellip;"></textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%;text-align:center;border:none;cursor:pointer;font-family:inherit;">
+          Send Enquiry &rarr;
+        </button>
+        <p class="form-notice">We respond within 48 hours. Your details are never shared with third parties.</p>
+        <div id="formMsg" style="display:none;padding:12px 16px;border-radius:8px;font-size:14px;font-weight:600;"></div>
+      </form>
+      <div class="contact-info">
+        <div class="contact-info-item">
+          <div class="ci-icon">&#9993;</div>
+          <div>
+            <div class="ci-label">Email</div>
+            <div class="ci-value"><a href="mailto:info@fpminternational.co.uk" style="color:inherit;text-decoration:none;">info@fpminternational.co.uk</a></div>
+          </div>
+        </div>
+        <div class="contact-info-item">
+          <div class="ci-icon">&#128205;</div>
+          <div>
+            <div class="ci-label">Registered Office</div>
+            <div class="ci-value">Brighton, United Kingdom</div>
+          </div>
+        </div>
+        <div class="contact-info-item">
+          <div class="ci-icon">&#128336;</div>
+          <div>
+            <div class="ci-label">Response Time</div>
+            <div class="ci-value">Within 48 hours, Mon&ndash;Fri</div>
+          </div>
+        </div>
+        <div class="contact-info-item">
+          <div class="ci-icon">&#127760;</div>
+          <div>
+            <div class="ci-label">Operating Regions</div>
+            <div class="ci-value">UK &middot; China &middot; Caribbean &middot; West Africa (expanding)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>&copy; 2026 FPM International Ltd. Registered in England &amp; Wales.</div>
+    <div>
+      <a href="#services">Services</a> &middot;
+      <a href="#about">About</a> &middot;
+      <a href="#contact">Contact</a>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('navToggle').addEventListener('click', function () {
+      document.getElementById('navLinks').classList.toggle('open');
+    });
+
+    document.querySelectorAll('#navLinks a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        document.getElementById('navLinks').classList.remove('open');
+      });
+    });
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.fade-in').forEach(function (el) {
+      observer.observe(el);
+    });
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      var msg = document.getElementById('formMsg');
+      msg.style.display = 'block';
+      msg.style.background = 'rgba(196,154,46,.15)';
+      msg.style.border = '1px solid rgba(196,154,46,.35)';
+      msg.style.color = '#e8b840';
+      msg.textContent = '✓ Enquiry received — we\'ll be in touch within 48 hours.';
+      e.target.reset();
+    }
+  </script>
+</body>
+</html>
