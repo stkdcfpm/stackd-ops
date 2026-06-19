@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.26**  
-**Test count: 197/197 PASS** (`node tests/run.js`)
+**Current version: v2.9.27**  
+**Test count: 213/213 PASS** (`node tests/run.js`)
 
 ---
 
@@ -22,7 +22,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
-| Branch for new work | `claude/sync-race-condition-fixes-Q6Ion` |
+| Branch for new work | `claude/jolly-curie-jrwdpr` |
 
 ---
 
@@ -31,7 +31,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 ```js
 const K = { s, l, i, p, pm, sh, qt, ss, as, au, ai }  // localStorage keys
 let DB = { sup, li, inv, po, payments, sh, qt }         // all entity arrays
-let EI = { s, l, i, cn, p, sh, qt }                    // currently-editing ID (null = new)
+let EI = { s, l, i, cn, p, sh, qt, co }                // currently-editing ID (null = new)
 let cIL = [], cPL = [], cQL = [], cCNL = []             // live line-item arrays for modals
 const QR_DEFAULTS = { fxGBPUSD, fxGBPRMB, fxGBPBBD, lclPerCBM, fcl20GP,
                       fcl40HQ, originCharges, destCharges, dgSurcharge,
@@ -54,6 +54,7 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }             // active rates (editabl
 | payments | st_pm | Payment ledger entries |
 | sh | st_sh | Shipments |
 | qt | st_qt | Quotes (v2.9.4) |
+| co | st_co | Contacts (v2.9.27) |
 
 ---
 
@@ -125,6 +126,11 @@ See `docs/known-gaps.md` for full entries.
 | SEC-GAP-011 | Sync / data integrity | `pullAll()` overwrites local records unconditionally — Sheets wins, no timestamp-based conflict resolution |
 | PROC-GAP-001 | Dashboard / accounting | Multi-currency KPI aggregation without FX conversion — Fixed v2.9.15 via `toGBP()` |
 | SDLC-GAP-003 | Staging / preview | No same-origin PR preview environment — Netlify blocked by localStorage origin isolation; gh-pages path preview deferred post-pilot |
+| CON-GAP-001 | Contacts / GDPR | No automated purge of stale contacts — manual deletion only; UI flags >700d |
+| CON-GAP-002 | Contacts / dedup | Email dedup is soft (force-new allowed); no enforcement of true uniqueness; edit-path email changes not deduped |
+| CON-GAP-003 | Contacts / Sheets sync | Contacts entity not synced to Google Sheets — localStorage only |
+| CON-GAP-004 | Contacts / data integrity | Deleting a contact leaves dangling sourceContactId on associated quotes; runtime guards no-op safely |
+| CON-GAP-005 | Contacts / import | Restoring a v2 backup (no con key) preserves live contacts rather than clearing them; WARNING dialog text is not updated to reflect this |
 
 ---
 
@@ -140,3 +146,4 @@ See `docs/known-gaps.md` for full entries.
 | 13 | AI Compliance Review mode + AI_COMPLIANCE_PROMPT | ✓ done (v2.9.26) |
 | 14 | Phase 1 visual redesign — depth, radius, refined interactions | ✓ done (v2.9.26) |
 | 15 | Buyer statement fixes — Total Outstanding, ISO dates, credits negative | ✓ done (v2.9.26) |
+| 16 | Contacts/Leads entity — pipeline, GDPR basis, quote integration, dedup | ✓ done (v2.9.27) |
