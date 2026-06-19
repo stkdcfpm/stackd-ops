@@ -184,11 +184,11 @@ function rCon() {
 function openCon() {
   EI.co = null;
   G('con-title').textContent = 'New Contact';
-  ['co-name','co-email','co-phone','co-company','co-notes','co-enq-summary'].forEach(function(id){ G(id).value = ''; });
-  G('co-status').value = 'lead';
-  G('co-source').value = 'manual';
-  vClr('co-name');    // clear any stale validation state from previous saveCon() call
-  vClr('co-email');
+  ['ct-name','ct-email','ct-phone','ct-company','ct-notes','ct-enq-summary'].forEach(function(id){ G(id).value = ''; });
+  G('ct-status').value = 'lead';
+  G('ct-source').value = 'manual';
+  vClr('ct-name');    // clear any stale validation state from previous saveCon() call
+  vClr('ct-email');
   G('ov-con').classList.add('on');
 }
 
@@ -197,16 +197,16 @@ function editCon(id) {
   if (!c) return;
   EI.co = id;
   G('con-title').textContent = 'Edit Contact';
-  G('co-name').value = c.name || '';
-  G('co-email').value = c.email || '';
-  G('co-phone').value = c.phone || '';
-  G('co-company').value = c.company || '';
-  G('co-status').value = c.status || 'lead';
-  G('co-source').value = c.source || 'manual';
-  G('co-notes').value = c.notes || '';
-  G('co-enq-summary').value = '';
-  vClr('co-name');
-  vClr('co-email');
+  G('ct-name').value = c.name || '';
+  G('ct-email').value = c.email || '';
+  G('ct-phone').value = c.phone || '';
+  G('ct-company').value = c.company || '';
+  G('ct-status').value = c.status || 'lead';
+  G('ct-source').value = c.source || 'manual';
+  G('ct-notes').value = c.notes || '';
+  G('ct-enq-summary').value = '';
+  vClr('ct-name');
+  vClr('ct-email');
   G('ov-con').classList.add('on');
 }
 ```
@@ -217,14 +217,14 @@ function editCon(id) {
 
 ```js
 function saveCon() {
-  var name   = G('co-name').value.trim();
-  var email  = G('co-email').value.trim();
-  var status = G('co-status').value;
-  if (!name)  { vErr('co-name',  'Name is required');  return; }
-  if (!email) { vErr('co-email', 'Email is required'); return; }
-  vOk('co-name'); vOk('co-email');
+  var name   = G('ct-name').value.trim();
+  var email  = G('ct-email').value.trim();
+  var status = G('ct-status').value;
+  if (!name)  { vErr('ct-name',  'Name is required');  return; }
+  if (!email) { vErr('ct-email', 'Email is required'); return; }
+  vOk('ct-name'); vOk('ct-email');
 
-  var enqSummary = G('co-enq-summary').value.trim();
+  var enqSummary = G('ct-enq-summary').value.trim();
 
   if (!EI.co) {
     var dup = DB.con.find(function(c){
@@ -255,15 +255,15 @@ function saveCon() {
     id:              EI.co || uid(),
     name:            name,
     email:           email,
-    phone:           G('co-phone').value.trim(),
-    company:         G('co-company').value.trim(),
+    phone:           G('ct-phone').value.trim(),
+    company:         G('ct-company').value.trim(),
     status:          status,
-    source:          G('co-source').value,
+    source:          G('ct-source').value,
     gdprBasis:       gdprBasis,
     createdAt:       existC ? (existC.createdAt || new Date().toISOString()) : new Date().toISOString(),
     lastContactedAt: enqSummary ? new Date().toISOString() : (existC ? (existC.lastContactedAt || '') : ''),
     enquiries:       enqs,
-    notes:           G('co-notes').value.trim()
+    notes:           G('ct-notes').value.trim()
   };
 
   if (EI.co) {
@@ -445,31 +445,31 @@ The dialog WARNING text remains unchanged. CON-GAP-005 acknowledges that contact
   <div class="card modal-card">
     <h2 id="con-title">Contact</h2>
     <label>Name*</label>
-    <input id="co-name" type="text" placeholder="Full name">
-    <span id="co-name-err" class="verr"></span>
+    <input id="ct-name" type="text" placeholder="Full name">
+    <span id="ct-name-err" class="verr"></span>
     <label>Email*</label>
-    <input id="co-email" type="email" placeholder="email@example.com">
-    <span id="co-email-err" class="verr"></span>
+    <input id="ct-email" type="email" placeholder="email@example.com">
+    <span id="ct-email-err" class="verr"></span>
     <label>Phone</label>
-    <input id="co-phone" type="tel" placeholder="+44...">
+    <input id="ct-phone" type="tel" placeholder="+44...">
     <label>Company</label>
-    <input id="co-company" type="text" placeholder="Company name">
+    <input id="ct-company" type="text" placeholder="Company name">
     <label>Status</label>
-    <select id="co-status">
+    <select id="ct-status">
       <option value="lead">Lead</option>
       <option value="qualified">Qualified</option>
       <option value="converted">Converted</option>
       <option value="closed">Closed</option>
     </select>
     <label>Source</label>
-    <select id="co-source">
+    <select id="ct-source">
       <option value="manual">Manual</option>
       <option value="chat">Chat</option>
     </select>
     <label>New enquiry note</label>
-    <input id="co-enq-summary" type="text" placeholder="What did they enquire about?">
+    <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
     <label>Internal notes</label>
-    <textarea id="co-notes" rows="3" placeholder="Internal notes..."></textarea>
+    <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
     <div class="btn-row">
       <button onclick="saveCon()">Save</button>
       <button class="btn-sec" onclick="closeM('ov-con')">Cancel</button>
@@ -534,7 +534,7 @@ Test cases (15 new):
 12. `doImport()` with data.con array: DB.con set correctly
 13. `doImport()` with data.con absent — precondition: DB.con has 1 record before import; after import with backup lacking `con` key, DB.con still has 1 record
 14. `doImport()` with data.con non-array: DB.con reset to []
-15. `openCon()`: co-name-err and co-email-err validation state cleared (vClr called)
+15. `openCon()`: ct-name-err and ct-email-err validation state cleared (vClr called)
 
 ---
 
