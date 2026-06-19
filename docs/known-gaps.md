@@ -191,3 +191,26 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.x (LLM Council audit verdict 2026-06-04); **Fixed:** v2.9.15  
 **Detail:** Prior to v2.9.15, dashboard KPI aggregations totalled amounts across USD, GBP, and BBD invoices as if they were the same currency — no FX conversion applied, no warning shown. An operator making margin or cash flow decisions from the dashboard was working from silently incorrect mixed-currency figures. The council rated this a business-correctness failure, not a display issue, and required an interim warning before any second operator was onboarded. Fixed in v2.9.15 by adding `toGBP()` helper (converts via stored `QR` FX rates) and applying it to all dashboard KPI aggregations. KPI tiles are now labelled "≈ GBP" to indicate converted values. Residual risk: KPI accuracy depends on QR FX rates being current; stale rates produce approximations rather than hard errors, which is acceptable for operational dashboards.  
 **Decision:** Resolved. Fixed before any second operator was onboarded, satisfying the council's pre-rollout condition.
+
+---
+
+## External Services — FPM Website (fpmsg.co.uk)
+
+### CHAT-GAP-001 — AI chat conversation history includes prospect PII in Anthropic API calls
+
+**Area:** fpmsg.co.uk — AI chat assistant (`index.html` chat IIFE) → Cloudflare Worker → Anthropic API  
+**Logged:** v1.0 AI chat release (2026-06-19); SPEC-001 §9  
+**Detail:** Once a prospect enters their name (turn N in `contact_capture` phase) and email (turn N+1), both values are present in `state.messages`. The full message history is sent to `/api/chat` on every subsequent turn, meaning name and email are transmitted to Anthropic's servers as part of the conversation context. SPEC-001 §9 documents this as architecturally incompatible with strict withholding: removing prior messages would break conversational coherence.
+
+**Mitigation in place:**  
+- Anthropic's standard Commercial Terms incorporate a Data Processing Addendum with Standard Contractual Clauses (Module 2) and UK GDPR Addendum — applicable automatically, no separate signing required.  
+- Anthropic does not train on API inputs or outputs under Commercial Terms.  
+- Default retention: inputs and outputs deleted within 30 days.  
+- Privacy notice at fpmsg.co.uk/privacy.html discloses the Anthropic data flow and retention period (published 2026-06-19).  
+
+**AC-DM-001.5 — Zero Data Retention (ZDR):** Assessed 2026-06-19. ZDR requires a minimum ~$100K/year annual commitment reviewed per-organisation — not appropriate at pilot scale. Standard DPA + SCCs + 30-day retention is the applicable safeguard. Gate closed; no further action required at current volume.  
+
+**AC-DM-001.6 — Web3Forms DPA:** DPA request email sent to hello@web3forms.com on 2026-06-19. Status: **pending response**. Web3Forms stores form submissions for 30 days (free plan) / 1 year (pro plan). Full lead payload (name, email, transcript) is transmitted on confirm-click.  
+
+**Risk level:** Low at pilot scale. Becomes a formal review point before onboarding first external client or ICO registration.  
+**Decision:** Accepted. Standard Anthropic DPA is sufficient safeguard at current scale. Web3Forms DPA to be confirmed and recorded here when received.
