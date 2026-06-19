@@ -391,6 +391,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-s" onclick="importFromSheets(&apos;li&apos;)">&#8659; Line Items</button>
         <button class="btn btn-s" onclick="importFromSheets(&apos;inv&apos;)">&#8659; Invoices</button>
         <button class="btn btn-s" onclick="importFromSheets(&apos;po&apos;)">&#8659; Purchase Orders</button>
+        <button class="btn btn-s" onclick="importFromSheets(&apos;co&apos;)">&#8659; Contacts</button>
         <button class="btn" style="background:var(--gold);color:white;font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;font-size:.7rem;padding:6px 14px;" onclick="importAllFromSheets()">&#8659; Import All</button>
       </div>
       <div id="sheets-import-status" style="font-size:.58rem;color:var(--m);min-height:16px;line-height:1.7;"></div>
@@ -936,6 +937,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <li>New: Quote integration — "→ Quote" button on Contacts list opens quote modal pre-populated; saving quote auto-sets contact to Converted; deleting quote reverts to Qualified</li>
           <li>New: GDPR basis tracking per contact — Art.6(1)(b) for lead/qualified, Art.6(1)(f) for converted/closed; contacts stale after 700 days flagged in UI</li>
           <li>Fix: Quote modal Cancel / backdrop / X button now safely clears in-progress convert state (cConvertId)</li>
+          <li>New: Contacts synced to Google Sheets — included in syncAll/pushAll/pullAll and Import Data → Sheets → Contacts; saveCon triggers real-time upsert (closes CON-GAP-003)</li>
+          <li>Fix: Contacts view aligned to design system (.tb/.tw/.tbl/.empty) and tab order resequenced to workflow order (Contacts → Quotes → PO → Invoices → Shipments)</li>
         </ul>
       </div>
 
@@ -2344,7 +2347,8 @@ var FIELD_MAPS = {
   po:  { num:'PO #', supId:'Supplier', invNum:'Linked Invoice', date:'Date', status:'Status', cur:'Currency', dep:'Deposit', notes:'Notes' },
   payments: { id:'Payment ID', invNum:'Invoice #', date:'Date', amount:'Amount', cur:'Currency', method:'Method', notes:'Notes' },
   sh:  { ref:'Shipment Ref', blNum:'BL Number', vessel:'Vessel', carrier:'Carrier', originPort:'Origin Port', destPort:'Dest Port', etd:'ETD', eta:'ETA', status:'Status', containerType:'Container Type', containerNum:'Container Number', dg:'DG Onboard', docsStatus:'Docs Status', forwarder:'Forwarder Name', forwarderEmail:'Forwarder Email', linkedInvs:'Linked Invoices', notes:'Notes' },
-  qt:  { num:'Quote #', client:'Buyer', dt:'Date', status:'Status', currency:'Currency', calc_totalLanded:'Grand Total', markup:'Margin', notes:'Notes' }
+  qt:  { num:'Quote #', client:'Buyer', dt:'Date', status:'Status', currency:'Currency', calc_totalLanded:'Grand Total', markup:'Margin', notes:'Notes' },
+  co:  { id:'Contact ID', name:'Name', email:'Email', phone:'Phone', company:'Company', status:'Status', source:'Source', enquirySummary:'Enquiry Summary', notes:'Notes', createdAt:'Created At', lastContactedAt:'Last Contacted', gdprBasis:'GDPR Basis' }
 };
 function mapRec(entity, rec) {
   var map = FIELD_MAPS[entity];
@@ -2363,9 +2367,10 @@ async function syncAll() {
   if (!SS.url || !SS.url.startsWith('https://')) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
   setSyncStatus('loading');
   try {
-    var synEnts = ['sup','li','po','sh','qt','payments'];
+    var synEnts = ['sup','li','po','sh','qt','payments','co'];
     for (var si = 0; si < synEnts.length; si++) {
-      await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[synEnts[si]] || []).map(function(r){ return mapRec(synEnts[si], r); })});
+      var entKey = synEnts[si] === 'co' ? 'con' : synEnts[si];
+      await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[entKey] || []).map(function(r){ return mapRec(synEnts[si], r); })});
     }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
@@ -2486,15 +2491,16 @@ async function pullAll() {
   } catch(e) { failed.push('po'); console.warn('[Stackd] pullAll: po failed —', e.message); }
 
   // ── Simple entities (Sheets wins; local-only records preserved) ─
-  var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt'];
+  var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
   for (var ei = 0; ei < simpleEnts.length; ei++) {
     var eKey = simpleEnts[ei];
+    var dbKey = eKey === 'co' ? 'con' : eKey;
     try {
       var sd = await sGet(eKey);
       if (sd.status === 'ok' && sd.records && sd.records.length) {
         var sPulledIds = {};
         for (var si = 0; si < sd.records.length; si++) sPulledIds[sd.records[si].id] = true;
-        DB[eKey] = sd.records.concat(DB[eKey].filter(function(r){ return !sPulledIds[r.id]; }));
+        DB[dbKey] = sd.records.concat(DB[dbKey].filter(function(r){ return !sPulledIds[r.id]; }));
       }
     } catch(e) { failed.push(eKey); console.warn('[Stackd] pullAll: ' + eKey + ' failed —', e.message); }
   }
@@ -2539,9 +2545,10 @@ function buildInvLines() {
 async function pushAll() {
   setSyncStatus('loading');
   try {
-    var ents = ['sup','li','po','sh','qt','payments'];
+    var ents = ['sup','li','po','sh','qt','payments','co'];
     for (var pi = 0; pi < ents.length; pi++) {
-      await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[ents[pi]] || []).map(function(r){ return mapRec(ents[pi], r); })});
+      var entKey = ents[pi] === 'co' ? 'con' : ents[pi];
+      await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[entKey] || []).map(function(r){ return mapRec(ents[pi], r); })});
     }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
@@ -4787,7 +4794,7 @@ async function importFromSheets(entity) {
     return;
   }
   var status = G('sheets-import-status');
-  var entityNames = { sup:'Suppliers', li:'Line Items', inv:'Invoices', po:'Purchase Orders' };
+  var entityNames = { sup:'Suppliers', li:'Line Items', inv:'Invoices', po:'Purchase Orders', co:'Contacts' };
   var name = entityNames[entity] || entity;
   status.textContent = 'Reading ' + name + ' from Google Sheets master file...';
   status.style.color = 'var(--gold)';
@@ -4839,7 +4846,7 @@ async function importAllFromSheets() {
   var status = G('sheets-import-status');
   status.textContent = 'Importing all entities from master file...';
   status.style.color = 'var(--gold)';
-  var entities = ['sup', 'li', 'inv', 'po'];
+  var entities = ['sup', 'li', 'inv', 'po', 'co'];
   var results = [];
   for (var i = 0; i < entities.length; i++) {
     await importFromSheets(entities[i]);
@@ -5002,6 +5009,38 @@ function processImportRecords(entity, records, callback) {
       } else { DB.po.push(rec); added++; }
     });
     sv(K.p, DB.po); rPO(); rDash();
+  }
+
+  else if (entity === 'co') {
+    records.forEach(function(r) {
+      var email = String(r['Email']||r['email']||'').trim().toLowerCase();
+      var name  = String(r['Name']||r['name']||'').trim();
+      if (!name && !email) { skipped++; return; }
+      var existing = email ? DB.con.find(function(c){ return (c.email||'').toLowerCase()===email; })
+                           : DB.con.find(function(c){ return c.name===name; });
+      var validStatuses = ['lead','qualified','converted','closed'];
+      var status = validStatuses.indexOf(String(r['Status']||'').toLowerCase()) >= 0
+        ? String(r['Status']).toLowerCase() : 'lead';
+      var gdprBasis = (status === 'lead' || status === 'qualified') ? 'pre_contract' : 'legitimate_interests';
+      var rec = {
+        id: existing ? existing.id : uid(),
+        name: name || (existing ? existing.name : ''),
+        email: email || (existing ? existing.email : ''),
+        phone: String(r['Phone']||r['phone']||existing&&existing.phone||''),
+        company: String(r['Company']||r['company']||existing&&existing.company||''),
+        status: status,
+        source: String(r['Source']||r['source']||existing&&existing.source||'manual'),
+        enquirySummary: String(r['Enquiry Summary']||r['enquirySummary']||existing&&existing.enquirySummary||''),
+        notes: String(r['Notes']||r['notes']||existing&&existing.notes||''),
+        createdAt: existing ? existing.createdAt : (r['Created At']||now),
+        lastContactedAt: r['Last Contacted']||existing&&existing.lastContactedAt||now,
+        gdprBasis: gdprBasis,
+        enquiries: existing ? existing.enquiries : []
+      };
+      if (existing) { var i=DB.con.findIndex(function(c){return c.id===existing.id;}); DB.con[i]=rec; updated++; }
+      else { DB.con.push(rec); added++; }
+    });
+    sv(K.co, DB.con); rCon();
   }
 
   // Sync to Sheets
@@ -5429,7 +5468,7 @@ var AI_SYSTEM_PROMPT = [
   'Dedup: saving a new contact with an email that already exists prompts to merge the enquiry into the existing record, or create a separate record anyway. Edit-path email changes are not deduped.',
   'Quote integration: "→ Quote" button on any contact row opens the New Quote modal pre-populated with the contact\'s name (Client field) and email (Notes field). Saving that quote automatically sets the contact status to Converted. Deleting the quote reverts the contact to Qualified.',
   'Enquiry log: each enquiry note is appended to the contact\'s enquiries[] array with timestamp and source. The count is shown in the list view. Individual enquiry entries are not shown in the edit modal.',
-  'No Sheets sync for Contacts — localStorage only (st_co). Contacts are included in the Backup All JSON export/restore.'
+  'Contacts sync to Google Sheets (st_co → "Contacts" sheet tab). syncAll() and pushAll() include the co entity; pullAll() merges Contacts on pull (Sheets wins, local-only records preserved). saveCon() triggers syncEnt("co") for real-time upsert. Import Data → Sheets → Contacts button pulls from the Contacts sheet.'
 ].join('\n');
 
 var AI_COMPLIANCE_PROMPT = [
@@ -7007,6 +7046,7 @@ function saveCon() {
     DB.con.push(con);
   }
   sv(K.co, DB.con);
+  syncEnt('co', con).catch(function(){});
   closeM('ov-con');
   rCon();
   toast('Contact saved');
