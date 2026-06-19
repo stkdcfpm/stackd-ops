@@ -214,3 +214,27 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 **Risk level:** Low at pilot scale. Becomes a formal review point before onboarding first external client or ICO registration.  
 **Decision:** Accepted. Standard Anthropic DPA is sufficient safeguard at current scale. Web3Forms DPA to be confirmed and recorded here when received.
+
+---
+
+## Contacts
+
+### CON-GAP-001 — No automated purge of stale contacts
+**Area:** Contacts / GDPR
+**Detail:** Contacts not contacted in >700 days are flagged with a "Stale" badge in the UI. No automated deletion or purge mechanism exists — manual deletion only.
+
+### CON-GAP-002 — Soft email dedup only
+**Area:** Contacts / dedup
+**Detail:** Email deduplication is soft: the user can force-create a separate record for a duplicate email. Edit-path email changes are not checked for duplicates. No hard uniqueness enforcement on the email field.
+
+### CON-GAP-003 — Contacts not synced to Google Sheets
+**Area:** Contacts / Sheets sync
+**Detail:** The Contacts entity is localStorage-only. It is not included in the Google Sheets sync (pushAll/pullAll). Contacts are included in the Backup All JSON export/restore.
+
+### CON-GAP-004 — Deleting a contact leaves dangling sourceContactId on quotes
+**Area:** Contacts / data integrity
+**Detail:** Deleting a contact does not remove or null the `sourceContactId` reference on associated quotes. Runtime guards in `saveQte()` and `delQte()` use `if (convC && ...)` / `if (relC && ...)` — these no-op safely if the contact is not found.
+
+### CON-GAP-005 — Restoring v2 backup preserves live contacts
+**Area:** Contacts / import
+**Detail:** If a backup file does not contain a `con` key (e.g. a pre-v2.9.27 backup), `doImport()` preserves the current live DB.con rather than clearing it. The WARNING dialog text ("This will replace ALL current local data") is not updated to reflect this contact-specific exception.
