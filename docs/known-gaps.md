@@ -227,10 +227,6 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Area:** Contacts / dedup
 **Detail:** Email deduplication is soft: the user can force-create a separate record for a duplicate email. Edit-path email changes are not checked for duplicates. No hard uniqueness enforcement on the email field.
 
-### CON-GAP-003 — Contacts not synced to Google Sheets
-**Area:** Contacts / Sheets sync
-**Detail:** The Contacts entity is localStorage-only. It is not included in the Google Sheets sync (pushAll/pullAll). Contacts are included in the Backup All JSON export/restore.
-
 ### CON-GAP-004 — Deleting a contact leaves dangling sourceContactId on quotes
 **Area:** Contacts / data integrity
 **Detail:** Deleting a contact does not remove or null the `sourceContactId` reference on associated quotes. Runtime guards in `saveQte()` and `delQte()` use `if (convC && ...)` / `if (relC && ...)` — these no-op safely if the contact is not found.
