@@ -2,6 +2,7 @@
 
 | Version | Highlights |
 |---|---|
+| v2.9.27 | New: Contacts / Leads entity (`DB.con`, `K.co = 'st_co'`) — trade lead pipeline with name, email, phone, company, status (lead/qualified/converted/closed), source, GDPR basis (auto-derived), enquiries log, stale-flag (>700d). Email dedup (merge or force-new). Quote integration: "→ Quote" pre-populates modal, saving sets contact Converted, deleting reverts to Qualified. No Sheets sync. Tests: 213/213 pass. |
 | v2.9.26 | New: AI Compliance Review mode — mode pills (Ops/Compliance) in AI assistant; `AI_COMPLIANCE_PROMPT` covering HMRC VAT 700/21, CN treatment, GDPR, MTD gap; compliance chips; mode persisted. Design: Phase 1 CSS redesign — `border-radius`, `box-shadow`, semantic KPI left-border via `:has()`, hover refinements, modal slide-in. Fix: Buyer statement Total Outstanding sums open invoice balances only; statement dates strip ISO timestamp; credit amounts negative. Tests: 197/197 pass. |
 | v2.9.25 | Fix: QTE-GAP-001 — Convert to PO restricted to `Accepted` status only; button hidden on other statuses, updates live on status change; hard guard in `qteToPoConvert()`; "PO RAISED" badge in edit modal title. Tests: 197/197 pass. |
 | v2.9.24 | Fix: BACKUP-GAP-002 — `sv()` quota error upgraded from toast to blocking modal (`showQuotaModal()`) with one-click backup export; `onCoLogoUpload()` wrapped in try/catch with quota modal on failure. Silent save-failed condition eliminated. Docs: SDLC-GAP-003 logged — staging/preview environment gap; council verdict recorded. Tests: 193/193 pass. |
