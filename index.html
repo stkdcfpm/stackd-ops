@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.27</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.27</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -355,19 +355,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <!-- CONTACTS VIEW -->
 <div class="view" id="v-contacts">
-  <div class="v-hdr">
-    <h1>Contacts</h1>
-    <button onclick="openCon()">+ New Contact</button>
+  <div class="tb">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">CONTACTS</div>
+    <button class="btn btn-s" onclick="openCon()">+ New Contact</button>
   </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th><th>Email</th><th>Company</th>
-        <th>Status</th><th>Source</th><th>Enquiries</th><th>Actions</th>
-      </tr>
-    </thead>
+  <div class="tw"><table class="tbl" id="con-tbl" style="display:none;">
+    <thead><tr>
+      <th>Name</th><th>Company</th><th>Email</th>
+      <th>Status</th><th>Source</th><th>Last Contact</th><th>Enquiries</th><th></th>
+    </tr></thead>
     <tbody id="con-tbody"></tbody>
-  </table>
+  </table></div>
+  <div id="con-em" class="empty" style="display:none;"><div class="ei">&#128101;</div><p>No contacts yet. Click <strong>+ New Contact</strong> to get started.</p></div>
 </div>
 
 <!-- IMPORT DATA VIEW -->
@@ -6901,20 +6900,25 @@ function isConStale(c) {
 
 function rCon() {
   var rows = DB.con.map(function(c) {
-    var stale = isConStale(c) ? ' <span class="badge badge-warn">Stale</span>' : '';
+    var stale = isConStale(c) ? ' <span class="tag" style="background:#fff3cd;color:#856404;font-size:.42rem;">STALE</span>' : '';
+    var lastDate = c.lastContactedAt ? c.lastContactedAt.slice(0,10) : '—';
     return '<tr>' +
       '<td>' + san(c.name) + stale + '</td>' +
+      '<td>' + san(c.company||'—') + '</td>' +
       '<td>' + san(c.email) + '</td>' +
-      '<td>' + san(c.company||'') + '</td>' +
       '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
-      '<td>' + san(c.source||'') + '</td>' +
+      '<td>' + san(c.source||'—') + '</td>' +
+      '<td>' + lastDate + '</td>' +
       '<td>' + (c.enquiries||[]).length + '</td>' +
-      '<td><button onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
-           '<button onclick="delCon(\'' + c.id + '\')">Del</button> ' +
-           '<button onclick="openConvertToQuote(\'' + c.id + '\')">→ Quote</button></td>' +
+      '<td class="ab"><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
+           '<button class="btn btn-g" onclick="openConvertToQuote(\'' + c.id + '\')">&#8594; Quote</button> ' +
+           '<button class="btn" style="background:var(--cr);color:white;" onclick="delCon(\'' + c.id + '\')">Del</button></td>' +
     '</tr>';
   }).join('');
-  G('con-tbody').innerHTML = rows || '<tr><td colspan="7">No contacts yet.</td></tr>';
+  var hasCon = DB.con.length > 0;
+  if (G('con-tbl')) G('con-tbl').style.display = hasCon ? '' : 'none';
+  if (G('con-em')) G('con-em').style.display = hasCon ? 'none' : '';
+  G('con-tbody').innerHTML = rows;
 }
 
 function openCon() {
