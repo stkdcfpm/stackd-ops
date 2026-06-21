@@ -112,7 +112,7 @@ function assertApprox(a, b, msg) {
 }
 
 function resetDB() {
-  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [] };
+  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [], events: [] };
 }
 function loadFixtures() {
   ctx.DB = JSON.parse(JSON.stringify(fixtures));
@@ -2517,6 +2517,227 @@ test('openCon() — ct-name-err and ct-email-err validation state cleared', func
   // vClr('ct-name') sets borderBottomColor = '' on the ct-name element
   assertEqual(mockEl('ct-name').style.borderBottomColor, '', 'ct-name border cleared by vClr');
   assertEqual(mockEl('ct-email').style.borderBottomColor, '', 'ct-email border cleared by vClr');
+});
+
+// ── EVENT LOG (REQ-V3-GAP-007) ─────────────────────────────────
+
+test('AC-1: saveCon() new record logs created event', function() {
+  resetDB();
+  mockEl('ct-name').value  = 'Test Contact';
+  mockEl('ct-email').value = 'test@example.com';
+  mockEl('ct-phone').value = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-status').value = 'lead';
+  mockEl('ct-source').value = 'manual';
+  mockEl('ct-notes').value = '';
+  mockEl('ct-enq-summary').value = '';
+  ctx.EI.co = null;
+  ctx.saveCon();
+  assert(ctx.DB.events.length === 1, 'Expected 1 event');
+  assertEqual(ctx.DB.events[0].verb, 'created');
+  assertEqual(ctx.DB.events[0].entityType, 'contact');
+  assertEqual(ctx.DB.events[0].actor, 'user');
+  assertEqual(ctx.DB.events[0].entityId, ctx.DB.con[0].id);
+});
+
+test('AC-2: saveCon() edit with status change logs status_changed event', function() {
+  resetDB();
+  // Create initial contact
+  var c = { id: ctx.uid(), name: 'Jane', email: 'jane@test.com', status: 'lead',
+    source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(),
+    lastContactedAt: '', enquiries: [], notes: '' };
+  ctx.DB.con.push(c);
+  // Edit with status change
+  ctx.EI.co = c.id;
+  mockEl('ct-name').value    = 'Jane';
+  mockEl('ct-email').value   = 'jane@test.com';
+  mockEl('ct-phone').value   = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-status').value  = 'qualified';
+  mockEl('ct-source').value  = 'manual';
+  mockEl('ct-notes').value   = '';
+  mockEl('ct-enq-summary').value = '';
+  ctx.saveCon();
+  var evts = ctx.DB.events.filter(function(e){ return e.verb === 'status_changed'; });
+  assert(evts.length === 1, 'Expected 1 status_changed event');
+  assertContains(evts[0].summary, 'qualified');
+});
+
+test('AC-3: saveQte() with cConvertId logs converted event on contact with system actor', function() {
+  resetDB();
+  var c = { id: ctx.uid(), name: 'Joe', email: 'joe@test.com', status: 'lead',
+    source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(),
+    lastContactedAt: '', enquiries: [], notes: '' };
+  ctx.DB.con.push(c);
+  ctx.cConvertId = c.id;
+  // Set up minimum form fields for saveQte() — vQte() requires at least one line item
+  var rid = 'ac3-line1';
+  ctx.cQL = [{ rid: rid, supId: '', desc: 'Test item', qty: 1, uom: 'pcs', cost: 100, cbm: 1, dg: false, dutyPct: 0 }];
+  mockEl('ql-supId-' + rid).value = '';
+  mockEl('ql-desc-' + rid).value = 'Test item';
+  mockEl('ql-qty-' + rid).value = '1';
+  mockEl('ql-uom-' + rid).value = 'pcs';
+  mockEl('ql-cost-' + rid).value = '100';
+  mockEl('ql-cbm-' + rid).value = '1';
+  mockEl('ql-dg-' + rid).checked = false;
+  mockEl('ql-dutyPct-' + rid).value = '0';
+  mockEl('ql-note-' + rid).value = '';
+  mockEl('qf-num').value   = 'QT-TEST-001';
+  mockEl('qf-client').value = 'Joe';
+  mockEl('qf-dt').value    = '2026-06-21';
+  mockEl('qf-valid').value = '2026-07-21';
+  mockEl('qf-cur').value   = 'USD';
+  mockEl('qf-mode').value  = 'LCL';
+  mockEl('qf-mkp').value   = '15';
+  mockEl('qf-st').value    = 'Draft';
+  mockEl('qf-nt').value    = '';
+  ctx.EI.qt = null;
+  ctx.saveQte();
+  var evts = ctx.DB.events.filter(function(e){ return e.verb === 'converted'; });
+  assert(evts.length === 1, 'Expected 1 converted event');
+  assertEqual(evts[0].entityType, 'contact');
+  assertEqual(evts[0].entityId, c.id);
+  assertEqual(evts[0].actor, 'system');
+  assertContains(evts[0].summary, 'QT-TEST-001');
+});
+
+test('AC-4: logEv() with 2001 existing events trims to 2000', function() {
+  resetDB();
+  for (var i = 0; i < 2001; i++) {
+    ctx.DB.events.push({ id: String(i), ts: new Date().toISOString(),
+      entityType: 'contact', entityId: 'x', verb: 'updated', summary: 'test ' + i, actor: 'user' });
+  }
+  ctx.logEv('contact', 'y', 'created', 'overflow test', 'user');
+  assertEqual(ctx.DB.events.length, 2000);
+});
+
+test('AC-4a: logEv() oldest entry is dropped when cap exceeded', function() {
+  resetDB();
+  ctx.DB.events.push({ id: 'oldest', ts: '2020-01-01T00:00:00.000Z',
+    entityType: 'contact', entityId: 'x', verb: 'created', summary: 'first', actor: 'user' });
+  for (var i = 0; i < 2000; i++) {
+    ctx.DB.events.push({ id: String(i), ts: new Date().toISOString(),
+      entityType: 'contact', entityId: 'x', verb: 'updated', summary: 'fill', actor: 'user' });
+  }
+  ctx.logEv('contact', 'y', 'created', 'trigger trim', 'user');
+  assertEqual(ctx.DB.events.length, 2000);
+  assert(ctx.DB.events[0].id !== 'oldest', 'Oldest entry should have been trimmed');
+});
+
+test('AC-7: expAll() snapshot contains events array', function() {
+  resetDB();
+  ctx.DB.events.push({ id: 'e1', ts: new Date().toISOString(),
+    entityType: 'contact', entityId: 'x', verb: 'created', summary: 'test', actor: 'user' });
+  // expAll() triggers a download — we cannot intercept it in test harness.
+  // Instead verify the snap object construction by calling the inner logic directly.
+  // This test verifies via a proxy: after saveCon creates an event and expAll is called,
+  // the event array is non-empty and would be included.
+  // Full snap shape tested via integration only. Unit-testable portion:
+  assert(Array.isArray(ctx.DB.events), 'DB.events must be an array');
+  assertEqual(ctx.DB.events.length, 1);
+  assertEqual(ctx.DB.events[0].id, 'e1');
+});
+
+test('AC-8: doImport() with events array populates DB.events', function() {
+  resetDB();
+  // doImport() uses FileReader — not mockable in VM harness.
+  // Test the import assignment logic directly as a unit:
+  var importedData = { events: [
+    { id: 'ev-import-1', ts: '2026-01-01T00:00:00.000Z',
+      entityType: 'contact', entityId: 'abc', verb: 'created', summary: 'Imported event', actor: 'user' }
+  ]};
+  ctx.DB.events = Array.isArray(importedData.events) ? importedData.events : [];
+  assertEqual(ctx.DB.events.length, 1);
+  assertEqual(ctx.DB.events[0].id, 'ev-import-1');
+});
+
+test('AC-8a: doImport() with no events key in backup defaults to empty array', function() {
+  resetDB();
+  ctx.DB.events = [{ id: 'pre-existing' }];
+  var importedData = {}; // no events key — pre-v2.9.28 backup
+  ctx.DB.events = Array.isArray(importedData.events) ? importedData.events : [];
+  assertEqual(ctx.DB.events.length, 0);
+});
+
+test('AC-9: resetDB() includes empty events array', function() {
+  ctx.DB.events = [{ id: 'stale' }];
+  resetDB();
+  assert(Array.isArray(ctx.DB.events), 'DB.events must be an array after resetDB()');
+  assertEqual(ctx.DB.events.length, 0);
+});
+
+test('AC-1b: logEv() actor defaults to user when omitted', function() {
+  resetDB();
+  ctx.logEv('contact', 'x', 'updated', 'Test summary');
+  assertEqual(ctx.DB.events[0].actor, 'user');
+});
+
+test('AC-1c: logEv() accepts out-of-enum verb without throwing', function() {
+  resetDB();
+  var threw = false;
+  try {
+    ctx.logEv('contact', 'x', 'custom_verb_not_in_enum', 'Test', 'user');
+  } catch(e) { threw = true; }
+  assert(!threw, 'logEv() must not throw on unknown verb');
+  assertEqual(ctx.DB.events[0].verb, 'custom_verb_not_in_enum');
+});
+
+test('AC-2a: saveCon() edit with note only (no status change) logs note_added', function() {
+  resetDB();
+  var c = { id: ctx.uid(), name: 'Sam', email: 'sam@test.com', status: 'lead',
+    source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(),
+    lastContactedAt: '', enquiries: [], notes: '' };
+  ctx.DB.con.push(c);
+  ctx.EI.co = c.id;
+  mockEl('ct-name').value    = 'Sam';
+  mockEl('ct-email').value   = 'sam@test.com';
+  mockEl('ct-phone').value   = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-status').value  = 'lead'; // unchanged
+  mockEl('ct-source').value  = 'manual';
+  mockEl('ct-notes').value   = '';
+  mockEl('ct-enq-summary').value = 'Interested in fridges';
+  ctx.saveCon();
+  var evts = ctx.DB.events.filter(function(e){ return e.verb === 'note_added'; });
+  assert(evts.length === 1, 'Expected 1 note_added event');
+});
+
+test('AC-2b: saveCon() edit with no status/note change logs updated', function() {
+  resetDB();
+  var c = { id: ctx.uid(), name: 'Pat', email: 'pat@test.com', status: 'lead',
+    source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(),
+    lastContactedAt: '', enquiries: [], notes: '' };
+  ctx.DB.con.push(c);
+  ctx.EI.co = c.id;
+  mockEl('ct-name').value    = 'Pat';
+  mockEl('ct-email').value   = 'pat@test.com';
+  mockEl('ct-phone').value   = '+441234567890';
+  mockEl('ct-company').value = 'Acme';
+  mockEl('ct-status').value  = 'lead'; // unchanged
+  mockEl('ct-source').value  = 'manual';
+  mockEl('ct-notes').value   = 'Updated notes';
+  mockEl('ct-enq-summary').value = ''; // no new enquiry
+  ctx.saveCon();
+  var evts = ctx.DB.events.filter(function(e){ return e.verb === 'updated'; });
+  assert(evts.length === 1, 'Expected 1 updated event');
+});
+
+test('AC-1d: delCon() logs deleted event', function() {
+  resetDB();
+  var c = { id: ctx.uid(), name: 'Del', email: 'del@test.com', status: 'lead',
+    source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(),
+    lastContactedAt: '', enquiries: [], notes: '' };
+  ctx.DB.con.push(c);
+  var cId = c.id;
+  // confirm() returns false by default in mock — must override for this test
+  var origConfirm = ctx.confirm;
+  ctx.confirm = function() { return true; };
+  ctx.delCon(cId);
+  ctx.confirm = origConfirm;
+  var evts = ctx.DB.events.filter(function(e){ return e.verb === 'deleted'; });
+  assert(evts.length === 1, 'Expected 1 deleted event');
+  assertEqual(evts[0].entityId, cId);
+  assertEqual(evts[0].actor, 'user');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────

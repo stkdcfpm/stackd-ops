@@ -9,9 +9,9 @@
 
 | Field | Value |
 |-------|-------|
-| Last updated | 17 June 2026 |
-| Current version | v2.9.26 |
-| Test count | 197 / 197 passing |
+| Last updated | 21 June 2026 |
+| Current version | v2.9.28 |
+| Test count | 227 / 227 passing |
 | Build branch | main |
 | Deployment | stkdcfpm.github.io/stackd-ops |
 | Website | getstackdops.com (Vercel — deploy pending) |
@@ -92,8 +92,9 @@ docs/version-history.md — Full version changelog
 **State layer:**
 ```javascript
 const K = { s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm',
-            sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai' }
-let DB = { sup, li, inv, po, payments, sh, qt }
+            sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai',
+            co:'st_co', ev:'st_ev' }
+let DB = { sup, li, inv, po, payments, sh, qt, con, events }
 let EI = { s, l, i, p, sh, qt, cn }
 let cIL = [], cPL = [], cQL = [], cCNL = []
 var QR = { fxGBPUSD, fxGBPRMB, fxGBPBBD, lclPerCBM, fcl20GP, fcl40HQ,
@@ -103,6 +104,17 @@ var _aiMode = 'ops' | 'compliance'  // persisted to stackd_ai_mode
 
 **Hard architectural rule (FM-1 mitigation):**
 No new features on localStorage stack after v2.9.x. v3.0.0 Supabase migration begins in parallel — never after. This decision is locked.
+
+**FM-1 exception (agreed 2026-06-21) — product owner approved:**
+The intent of FM-1 is to prevent storage-layer complexity that would complicate the v3.0.0 Supabase migration — not to block operational improvements with clear migration paths. The following are explicitly approved for v2.9.x:
+
+1. **UI/AI layer features with no new localStorage entities** — AI assistant enhancements that parse model responses and pre-fill existing modals for user review (with no automatic record creation). No new `K` key, no new `DB` entity required.
+
+2. **New fields on existing entities** — Adding fields to an existing `DB` entity (e.g. `supplierId`, `role` on `DB.con`) is permitted where the fields do not require a new sync mapping and the entity already exists in `K` and `saveAll()`. These fields are trivially migratable to Supabase as new columns on existing tables.
+
+3. **New internal-only `K` key and `DB` entity with no Sheets sync** — A new entity that is local-only (no `FIELD_MAPS` entry, no `syncEnt` call, no Apps Script tab) is permitted where the entity is operationally self-contained and does not create external data transmission obligations. Specifically approved: `K.ev = 'st_ev'` / `DB.events` (global event log, v2.9.28).
+
+Any feature requiring a **new Sheets sync mapping** (`FIELD_MAPS` entry, new Apps Script sheet tab, new `syncEnt` entity key) remains under the original FM-1 freeze and requires a separate council decision.
 
 **Key field name note:**
 Invoice number stored as `num` not `invNum` in current records. Dashboard and calc functions use `x.num||x.invNum` for backward compatibility. v3.0.0 should standardise on `num`.
@@ -123,6 +135,7 @@ Invoice number stored as `num` not `invNum` in current records. Dashboard and ca
 | SEC-GAP-004 | Security | Invoice locking is client-side UX only — not tamper-proof | v3.0.0 |
 | SEC-GAP-011 | Data integrity | `pullAll()` overwrites local records unconditionally — Sheets wins | Backlog |
 | SDLC-GAP-003 | Staging | No same-origin PR preview environment | Post-pilot |
+| EVT-GAP-001 | Event log | No warning when 2,000-event cap is hit — oldest silently dropped | Backlog |
 
 ---
 
@@ -130,6 +143,8 @@ Invoice number stored as `num` not `invNum` in current records. Dashboard and ca
 
 | Version | Key changes |
 |---------|------------|
+| v2.9.28 | Global event log (`DB.events`, `K.ev = 'st_ev'`). `logEv()` helper with 2,000-event FIFO cap. Emission: contact created/status_changed/note_added/updated/deleted/converted. Activity accordion in Contact and Supplier modals. Privacy & Data card in Settings. EVT-GAP-001 logged. 227 tests. |
+| v2.9.27 | Contacts/Leads entity (`DB.con`). Email dedup, quote integration, GDPR basis, stale flag, Sheets sync. 213 tests. |
 | v2.9.26 | AI Compliance Review mode (HMRC VAT 700/21, GDPR, MTD prompts). Phase 1 CSS redesign (border-radius, box-shadow, KPI semantic left-borders, hover refinements). Buyer statement fixes (Total Outstanding, ISO dates, credits negative). 197 tests. |
 | v2.9.25 | QTE-GAP-001 fix — Convert to PO restricted to Accepted status. Hard guard in qteToPoConvert(). |
 | v2.9.24 | BACKUP-GAP-002 — quota error upgraded to blocking modal with one-click export. |

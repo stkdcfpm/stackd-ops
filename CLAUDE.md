@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.27**  
-**Test count: 213/213 PASS** (`node tests/run.js`)
+**Current version: v2.9.28**  
+**Test count: 227/227 PASS** (`node tests/run.js`)
 
 ---
 
@@ -22,15 +22,15 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
-| Branch for new work | `claude/jolly-curie-jrwdpr` |
+| Branch for new work | `claude/amazing-galileo-4hhygo` |
 
 ---
 
 ## State layer
 
 ```js
-const K = { s, l, i, p, pm, sh, qt, ss, as, au, ai }  // localStorage keys
-let DB = { sup, li, inv, po, payments, sh, qt }         // all entity arrays
+const K = { s, l, i, p, pm, sh, qt, ss, as, au, ai, co, ev }  // localStorage keys
+let DB = { sup, li, inv, po, payments, sh, qt, con, events }   // all entity arrays
 let EI = { s, l, i, cn, p, sh, qt, co }                // currently-editing ID (null = new)
 let cIL = [], cPL = [], cQL = [], cCNL = []             // live line-item arrays for modals
 const QR_DEFAULTS = { fxGBPUSD, fxGBPRMB, fxGBPBBD, lclPerCBM, fcl20GP,
@@ -55,6 +55,7 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }             // active rates (editabl
 | sh | st_sh | Shipments |
 | qt | st_qt | Quotes (v2.9.4) |
 | co | st_co | Contacts (v2.9.27) |
+| events | st_ev | Activity event log (v2.9.28) |
 
 ---
 

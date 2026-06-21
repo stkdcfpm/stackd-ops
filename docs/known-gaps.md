@@ -234,3 +234,25 @@ Items deferred from initial build. Review after pilot period before wider rollou
 ### CON-GAP-005 — Restoring v2 backup preserves live contacts
 **Area:** Contacts / import
 **Detail:** If a backup file does not contain a `con` key (e.g. a pre-v2.9.27 backup), `doImport()` preserves the current live DB.con rather than clearing it. The WARNING dialog text ("This will replace ALL current local data") is not updated to reflect this contact-specific exception.
+
+---
+
+## Event Log
+
+### EVT-GAP-001 — No user-visible warning when 2,000-event cap is hit
+**Area:** Event log / UX
+**Logged:** v2.9.28
+**Detail:** When `DB.events` reaches 2,000 entries and a new event is logged via `logEv()`, the oldest entries are silently dropped (FIFO trim). No toast, modal, or indicator is shown to the user. Oldest events are lost without warning. At ~200 bytes/event, the cap is reached after sustained high-frequency activity. Expected impact: low in pilot phase.
+
+---
+
+## AI Assistant
+
+### AI-GAP-001 — No agentic order flow actions
+**Area:** AI Assistant — `sendAIMsg()`, `AI_SYSTEM_PROMPT`
+**Logged:** v2.9.27 (audit 2026-06-21)
+**Detail:** The AI assistant is a conversational Q&A tool only. It answers questions about the portal but has no ability to take actions — it cannot draft a PO, create an invoice, pre-fill a shipment, or trigger any workflow step. All order flow operations require manual navigation and data entry by the operator.
+**Potential scope (narrow — v2.9.x):** A new `action` response type in `sendAIMsg()` — AI returns a structured JSON payload alongside its text reply; the portal intercepts it and pre-fills the relevant modal for user review and confirmation before save. No record is created without explicit user action.
+**Potential scope (broad — v3.0.x):** Agentic multi-step flow — AI reads context (quote, contact, rates), proposes a sequence of operations (create PO → notify forwarder → log shipment), operator approves each step. Requires significant architectural change beyond current single-file, no-server design.
+**Risk level:** Narrow scope is low risk and stays within current architecture. Broad scope intersects with SEC-GAP-003 (API key in browser) and would require server-side proxy (v3.0.0).
+**Decision:** Unscoped. Requires requirements gate before any build work begins. Formal requirement raised 2026-06-21.
