@@ -6,35 +6,36 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ## Quote Engine
 
-### QTE-GAP-001 — No quote status workflow enforcement
+### QTE-GAP-001 — No quote status workflow enforcement *(Fixed v2.9.25)*
 **Area:** Quotes → status field / Convert to PO button  
-**Logged:** v2.9.4  
-**Detail:** The quote status field (`Draft → Sent → Accepted → Declined / Expired`) is a free select with no transition guards. The Convert to PO button is available on any status (only blocked if a PO is already linked). No validation prevents advancing to a later status without prerequisite data being present (e.g. no check that all lines have CBM before a freight-stage status could be set).  
-**Options for post-pilot:**
-- Restrict Convert to PO to `Accepted` status only
-- Add a `Freight Confirmed` status that requires CBM > 0 on all lines before it can be set
-- Add a `Locked` read-only state that prevents further edits once a PO is raised
-- Full FSM (finite state machine) with allowed transition map  
-**Decision:** No enforcement needed at pilot stage. Revisit after real-world quote flow is understood.
+**Logged:** v2.9.4; **Fixed:** v2.9.25  
+**Detail:** The quote status field (`Draft → Sent → Accepted → Declined / Expired`) was a free select with no transition guards. The Convert to PO button was available on any status (only blocked if a PO was already linked).  
+**Fixed in v2.9.25:**
+- Convert to PO button hidden unless `status === 'Accepted'`; updates live when status dropdown changes (`updQtePoBtn()` called on `onchange`)
+- `qteToPoConvert()` hard-guards against non-Accepted status (defensive — button is the primary control)
+- "PO RAISED" badge shown in edit modal title once `linkedPOId` is set
+**Remaining open items (deferred):**
+- `Freight Confirmed` status requiring CBM > 0 on all lines — deferred until real-world freight workflow is established
+- Full read-only lock after PO raised (status/notes still editable) — deferred post-pilot
 
 ---
 
 ## Security — Accepted Architecture Risks
 
-### SEC-GAP-001 — Apps Script sync token and spreadsheet IDs in source control
+### SEC-GAP-001 — Apps Script sync token and spreadsheet IDs in source control *(FIXED)*
 **Area:** `apps-script/Code.gs`  
 **Logged:** v2.9.12 (security gate review)  
-**Detail:** `SPREADSHEET_ID`, `TOKEN`, `REQUIREMENTS_TRACKER_ID`, and `PROJECT_TRACKER_ID` are hardcoded in `Code.gs`, which is version-controlled. The sync token (`fpm-stackd-2026`) is a simple shared-secret guard, not a cryptographic credential. The spreadsheet IDs are Google Workspace GUIDs. Anyone with access to the private repo and the Apps Script deployment URL could call any sync action.  
-**Risk level:** Medium for a private repo with controlled collaborator access. Would become HIGH if the repo is ever made public.  
-**Mitigation path:** Move constants to Apps Script Script Properties (Project Settings → Script Properties). Remove hardcoded values from source.  
-**Decision:** Accepted at current scale (private repo, single operator). Migrate to Script Properties before any public repo change or additional collaborators.
+**Code fix:** v2.9.15 — hardcoded values removed from `Code.gs` and `STACKD_CONTEXT.md`. Source now reads all four values from `PropertiesService.getScriptProperties()`.  
+**Manual step:** Complete — Script Properties set (`SPREADSHEET_ID`, `TOKEN`, `REQUIREMENTS_TRACKER_ID`, `PROJECT_TRACKER_ID`), token rotated, Apps Script redeployed. Test Connection confirmed ✓ (2026-06-06).  
+**Detail:** `SPREADSHEET_ID`, `TOKEN`, `REQUIREMENTS_TRACKER_ID`, and `PROJECT_TRACKER_ID` were hardcoded in `Code.gs`, which is version-controlled. The sync token is a simple shared-secret guard. The spreadsheet IDs are Google Workspace GUIDs. Anyone with access to the private repo and the Apps Script deployment URL could call any sync action.  
+**Decision:** Fully resolved.
 
 ### SEC-GAP-002 — Sheets sync transmits PII externally without formal DPA
 **Area:** `syncEnt`, `delEnt`, `syncAll`, `pushAll` — Cloudflare Worker → Google Apps Script  
 **Logged:** v2.9.12 (security gate review)  
 **Detail:** When Sheets sync is configured and enabled, supplier contact data (name, email, phone), buyer name/address, forwarder email, and invoice/payment records are transmitted to a Cloudflare Worker and on to Google Sheets. Under GDPR this requires a Data Processing Agreement with Google (covered by Google Workspace ToS for commercial accounts) and Cloudflare (covered by Cloudflare ToS). No in-product privacy notice is shown at data entry. The sync is opt-in — if `SS.url` is not configured, no data is transmitted.  
 **Risk level:** Low while FPM operates as a sole-operator internal tool with no external client data in the system. Becomes a formal compliance obligation before onboarding first external client.  
-**Decision:** Accepted. Document DPA status before ICO registration. Add brief disclosure note in Settings → Google Sheets card in a future version.
+**Decision:** Accepted. Document DPA status before ICO registration. **In-product disclosure note added to Settings → Google Sheets card (v2.9.18).** Becomes a formal compliance obligation before onboarding first external client.
 
 ### SEC-GAP-003 — Anthropic API key stored in browser localStorage
 **Area:** Settings → AI Assistant card; `AI.key` in `localStorage`  
@@ -49,6 +50,37 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Detail:** Invoice locking prevents accidental edits via the UI but can be bypassed by direct localStorage modification, browser DevTools, or JSON import. The lock re-engages on page reload. This is the correct design for a no-server app and is consistent with HMRC guidance that electronic audit trails supplement rather than replace paper records. It must not be presented to auditors as a cryptographic or tamper-proof control.  
 **Decision:** By design. Document in operator guide.
 
+### SEC-GAP-005 — Forwarder webhook transmits shipment data without in-product notice
+**Area:** Settings → Integrations → Power Automate Webhook URL; `sendFwdRequest()`  
+**Logged:** v2.9.14 (audit)  
+**Detail:** When a forwarder webhook URL is configured, `sendFwdRequest()` POSTs shipment data (origin/destination ports, ETD, cargo description, forwarder contact details) to an external endpoint. No in-product notice is shown at configuration time. The webhook is opt-in — if `SS.fwdWebhook` is not set, no data is transmitted. Forwarder contact data (name, email) is PII.  
+**Risk level:** Low at current scale. Becomes a formal compliance obligation before onboarding external clients.  
+**Decision:** Accepted. **In-product disclosure note added to Settings → Integrations card (v2.9.18).** Becomes a formal compliance obligation before onboarding external clients.
+
+### SEC-GAP-006 — `stackd_co_*` localStorage keys outside the `K` registry
+**Area:** Company branding — `stackd_co_name`, `stackd_co_addr`, `stackd_co_accent`, `stackd_co_footer`, `stackd_co_vat`, `stackd_co_logo`, `stackd_co_powered`  
+**Logged:** v2.9.14 (audit)  
+**Detail:** Company branding settings are stored directly under `stackd_co_*` keys without registration in the `K` constant. This means they are invisible to `saveAll()`, the snapshot export (`expAll`), and the import handler (`doImport`). A full data export/import will silently omit branding settings. The `ldArr` safety wrapper also does not apply.  
+**Risk level:** Low — branding is cosmetic and easily re-entered. Medium if logo (base64 blob) is large and causes silent localStorage quota pressure.  
+**Decision:** Partially fixed v2.9.20 — `expAll()` now includes `branding: getCoBrand()` in the snapshot; `doImport()` calls `saveCoBrand(data.branding)` on restore. Keys remain outside `K` (formal registration deferred to a future settings consolidation). The `ldArr` safety wrapper gap remains open.
+
+### SEC-GAP-007 — `testConn()` sync token exposed in URL query string *(FIXED v2.9.14)*
+**Area:** Settings → Google Sheets card → Test Connection  
+**Logged:** v2.9.14 (audit); **Fixed:** v2.9.14  
+**Detail:** Prior to v2.9.14, `testConn()` appended `_token` as a URL query parameter (`?action=ping&_token=...`). Query string parameters appear in server access logs, browser history, and referrer headers. Fixed by moving to POST body: `fetch(url, { method:'POST', body: JSON.stringify({action:'ping', _token:tok}) })`.
+
+### SEC-GAP-008 — No Content Security Policy header *(FIXED v2.9.16)*
+**Area:** GitHub Pages deployment; `index.html`  
+**Logged:** v2.9.14 (audit); **Fixed:** v2.9.16  
+**Detail:** Prior to v2.9.16, the app shipped no `Content-Security-Policy` header or meta tag. Fixed by adding `<meta http-equiv="Content-Security-Policy">` to `<head>` with policy: `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'`. `'unsafe-inline'` for scripts/styles is required by the single-file architecture but `connect-src https:`, `object-src 'none'`, and `base-uri 'self'` provide meaningful defence-in-depth.
+
+### SEC-GAP-011 — `pullAll()` overwrites local records with no conflict resolution
+**Area:** `pullAll()` — sync pull merge logic  
+**Logged:** v2.9.23 (sync layer review); see also SYNC-GAP-001 (push-side equivalent)  
+**Detail:** When `pullAll()` fetches records from Sheets, the merge for any record that exists both locally and in Sheets is unconditional: Sheets wins. No `updAt` timestamp comparison is performed. If Operator A edits a record locally and has not yet pushed, and Operator B pushes their version in the interim, Operator A's next pull silently overwrites their local edits with no warning, no diff, and no audit entry. Records carry `updAt` fields but these are not consulted during pull merge. Note: the push-side equivalent (bulk_upsert clear-and-rewrite destroying records the operator doesn't hold locally) is documented separately as SYNC-GAP-001.  
+**Risk level:** Low if operators work on disjoint datasets. Medium if two operators edit the same record within the same session before either syncs — silent data loss with no indication a conflict occurred.  
+**Decision:** Accepted at 3-operator scale with process discipline (pull before editing, push after saving). Architectural fix — timestamp-based merge in `pullAll()` using `updAt` — deferred; requires `updAt` to be added to `FIELD_MAPS` so it survives a Sheets round-trip. Full resolution: server-side conflict resolution (Supabase backend, v3.0.0 roadmap).
+
 ---
 
 ## Library (Line Items)
@@ -61,3 +93,144 @@ Items deferred from initial build. Review after pilot period before wider rollou
 - Call `syncEnt('li', ...)` after each `invoiceRefs` mutation in `saveInv()` / `delInv()`
 - Add a reconcile pass in the sync pull to rebuild `invoiceRefs` from pulled invoice data  
 **Decision:** Deferred. The index is local-first; stale remote copy has no operational impact at current scale.
+
+---
+
+## Code Quality
+
+### CODE-GAP-001 — `pullAll()` undefined variable crash *(FIXED v2.9.14)*
+**Area:** `pullAll()` — entity merge block  
+**Logged:** v2.9.14 (audit); **Fixed:** v2.9.14  
+**Detail:** Prior to v2.9.14, the merge line `DB.inv = pulledInv.concat(localOnlyInv)` sat outside the per-entity `if` block and referenced variables (`pulledInv`, `localOnlyInv`) that do not exist in scope. The loop uses `pulled` and `localOnly`. This caused a ReferenceError crash on every `pullAll()` invocation. Fixed by moving the assignment inside the `if` block and using the correct variable names: `DB[ent] = pulled.concat(localOnly)`.
+
+---
+
+## Data Quality
+
+### DATA-GAP-001 — `repairCalcFields()` contains FPM-specific hardcoded invoice IDs *(FIXED v2.9.21)*
+**Area:** `repairCalcFields()` — dashboard KPI correction utility  
+**Logged:** v2.9.14 (DAMA DMBOK audit); **Fixed:** v2.9.21  
+**Detail:** `repairCalcFields()` previously contained hardcoded corrections for FPM invoice IDs (`INV10028`–`INV10032`) with hardcoded COGS values, running on every `initApp()`. Fixed by extracting the FPM-specific data into `runFPMMigration()` — a one-time migration guarded by a `st_fpm_repair_v1` localStorage flag. `repairCalcFields()` now contains only the generic cnAmount strip (operator-safe, no hardcoded IDs). `runDataRepair()` (Settings → ⚙ Repair invoice totals) updated to call the generic repair only. New operators start with the migration flag pre-satisfied and are never touched by FPM data.
+
+### DATA-GAP-002 — PII hardcoded in company settings defaults *(FIXED v2.9.14)*
+**Area:** `let AS = ld(K.as) || { ... }` — company branding defaults  
+**Logged:** v2.9.14 (audit); **Fixed:** v2.9.14  
+**Detail:** Prior to v2.9.14, `AS` defaults included FPM International's real company name, address, bank details, and contact information. This meant any operator who deployed Stackd Ops without configuring company settings would unknowingly use FPM data on their PDFs, and the data would be visible in source control. Fixed by replacing all defaults with empty strings.
+
+---
+
+## Sync
+
+### SYNC-GAP-001 — `Push All` / `Sync` is a destructive clear-and-rewrite for other operators' Sheets records
+**Area:** `syncAll()` / `pushAll()` → `handleBulkUpsert` in `apps-script/Code.gs`  
+**Logged:** v2.9.22 (sync layer review)  
+**Detail:** The `bulk_upsert` action in `Code.gs` clears all data rows from a sheet tab and rewrites it entirely from the calling operator's local data. If Operator A runs Push All or Sync while Operator B has records in Sheets that A doesn't have locally (because A hasn't pulled since B pushed), those records are silently deleted from Sheets. Individual record auto-saves (`syncEnt`, called on every save) use row-level upsert and are safe for concurrent use. Only the bulk operations (`syncAll`, `pushAll`) are destructive.  
+**Risk level:** Low if operators work on disjoint datasets (separate buyers/invoices). HIGH if operators share or cross-reference the same records.  
+**Process rule (enforced by discipline, not code):** Only one operator runs Push All at a time. Always pull before pushing. Individual save auto-sync is safe at all times.  
+**Decision:** Accepted at 3-operator scale with process discipline. Architectural fix (server-side merge) is out of scope for a localStorage-first app.
+
+---
+
+## SDLC & Process
+
+### SDLC-GAP-001 — Version identity inconsistency across the codebase
+**Area:** `<title>`, nav version badge, in-app changelog, `AI_SYSTEM_PROMPT`, `CLAUDE.md`, `STACKD_CONTEXT.md`  
+**Logged:** v2.9.14 (audit)  
+**Detail:** At the time of the v2.9.14 audit, `<title>` and the nav badge displayed v2.9.10; `AI_SYSTEM_PROMPT` declared v2.9.13; `CLAUDE.md` declared v2.9.13; `STACKD_CONTEXT.md` referenced v2.9.12 as current. The in-app changelog was frozen at v2.9.10. Version identity was fractured across at least 5 locations. Fixed in v2.9.14. The "On version delivery" checklist in `CLAUDE.md` must be followed on every release to prevent recurrence.  
+**Decision:** Resolved. Checklist-enforced going forward.
+
+---
+
+## Data Safety
+
+### BACKUP-GAP-001 — No backup/recovery mechanism audited or enforced *(Partially resolved v2.9.23)*
+**Area:** All data — `localStorage` is the sole persistence layer  
+**Logged:** v2.9.15 (LLM Council audit verdict 2026-06-04)  
+**Detail:** The app holds live invoices, POs, shipments, payments, quotes, and supplier records with no server-side persistence, no transaction log, and no automatic backup. `localStorage` is wiped by: browser "Clear site data", private/incognito browsing, device failure, browser profile corruption, or OS reinstall. The JSON export (Settings → Data → Export All) is the only recovery path. **The council rated this the highest-probability failure mode — above any security gap.**  
+**Resolved in v2.9.23:**
+- DR procedure documented and tested — see `docs/dr-procedure.md`
+- Export expanded to include QR rates, custom ports, custom payment terms, custom UOM, and migration flags (previously missing from backup)
+- Export snapshot version bumped to `_version: 2`
+**Remaining gap:** No automatic backup — export must be triggered manually by the operator. No periodic reminder prompt implemented.  
+**Decision:** DR procedure complete. Automatic backup / periodic reminder deferred to post-pilot. Full resolution: Supabase backend (v3.0.0) provides server-side persistence.
+
+### BACKUP-GAP-002 — localStorage quota cliff with no guard *(Fixed v2.9.24)*
+**Area:** All `localStorage` writes — `sv()`, `saveAll()`, `stackd_co_*` keys  
+**Logged:** v2.9.15 (LLM Council audit verdict 2026-06-04); **Fixed:** v2.9.24  
+**Detail:** Browser `localStorage` has a hard limit of approximately 5–10 MB (varies by browser). When the limit is reached, `localStorage.setItem()` throws a `QuotaExceededError` silently — no data is written, no user feedback is shown, and the app continues as if the save succeeded.  
+**Fixed in v2.9.24:**
+- `sv()` `QuotaExceededError` handler upgraded from a 9-second dismissible toast to `showQuotaModal()` — a blocking overlay modal with a one-click "Export Backup Now" button that immediately triggers `expAll()`. Cannot be silently missed.
+- `onCoLogoUpload()` `localStorage.setItem` wrapped in try/catch with `showQuotaModal()` on quota error — logo write was previously outside `sv()` and had no error handling at all.
+- `checkStorageQuota()` init-time 75%/90% toasts remain as early warnings.
+**Remaining open item:** `navigator.storage.estimate()` (more accurate than byte-counting) — deferred; current heuristic is sufficient for practical purposes.
+
+### SDLC-GAP-003 — No staging/preview environment for PR review
+**Area:** SDLC — branch preview, PR testing before merge  
+**Logged:** v2.9.24 (LLM Council verdict 2026-06-06)  
+**Detail:** There is no way to preview a PR branch as a running app before merging. GitHub Pages serves static HTML without executing JS (wrong MIME type). The obvious fix — Netlify PR preview deployments — is blocked by a structural constraint: `localStorage` is origin-scoped, so a preview on `*.netlify.app` presents an empty app to reviewers with no data. The council unanimously identified this as a show-stopper for Netlify-style previews.  
+**What is in place:** GitHub Actions CI (`qa.yml`) runs `node tests/run.js` on every PR — 193 tests, catches regressions automatically. This is the primary regression guard.  
+**Council recommendation (2026-06-06):** Same-origin preview via a GitHub Actions workflow that deploys each PR branch to `stkdcfpm.github.io/stackd-ops/preview/PR-N/` — solves both MIME type and origin isolation in one move. Defer Netlify until there is a concrete need for serverless functions.  
+**Decision:** CI covers regression detection. Same-origin gh-pages preview deferred to post-pilot. Netlify deferred indefinitely unless SEC-GAP-003 (API key in browser) is escalated to require a server-side proxy.
+
+### SDLC-GAP-002 — Gate evidence trail exists only in chat, not in persistent artefacts
+**Area:** Agent pipeline — `requirements-gate`, `spec-gate`, `build-gate`, `security-gate`  
+**Logged:** v2.9.14 (BABOK / agent architecture audit)  
+**Detail:** Gate agents produce structured reports in the Claude chat session. These reports are not persisted to Git, Notion, or any durable store. A gate PASS in session has no artefact that proves it ran. This means the audit trail only exists in Claude session history (ephemeral) and is not verifiable by a third party or auditor. The agent architecture doc notes "Every gate produces a logged evidence record" but this is aspirational — the Notion MCP integration is not yet wired.  
+**Options for post-pilot:**
+- Write gate output to a `docs/gate-evidence/` directory in Git as markdown files
+- Wire Notion MCP to post gate results to the Requirements Tracker
+- Add a mandatory "evidence tag" to every PR that references a gate run  
+**Decision:** Deferred. Implement before ICO registration or first external client onboarding.
+
+---
+
+## Process & Accounting
+
+### PROC-GAP-001 — Multi-currency KPI aggregation without FX conversion *(FIXED v2.9.15)*
+**Area:** Dashboard → KPI tiles (Invoice Revenue, Net Profit, Outstanding from Buyers, Net Cash Position)  
+**Logged:** v2.9.x (LLM Council audit verdict 2026-06-04); **Fixed:** v2.9.15  
+**Detail:** Prior to v2.9.15, dashboard KPI aggregations totalled amounts across USD, GBP, and BBD invoices as if they were the same currency — no FX conversion applied, no warning shown. An operator making margin or cash flow decisions from the dashboard was working from silently incorrect mixed-currency figures. The council rated this a business-correctness failure, not a display issue, and required an interim warning before any second operator was onboarded. Fixed in v2.9.15 by adding `toGBP()` helper (converts via stored `QR` FX rates) and applying it to all dashboard KPI aggregations. KPI tiles are now labelled "≈ GBP" to indicate converted values. Residual risk: KPI accuracy depends on QR FX rates being current; stale rates produce approximations rather than hard errors, which is acceptable for operational dashboards.  
+**Decision:** Resolved. Fixed before any second operator was onboarded, satisfying the council's pre-rollout condition.
+
+---
+
+## External Services — FPM Website (fpmsg.co.uk)
+
+### CHAT-GAP-001 — AI chat conversation history includes prospect PII in Anthropic API calls
+
+**Area:** fpmsg.co.uk — AI chat assistant (`index.html` chat IIFE) → Cloudflare Worker → Anthropic API  
+**Logged:** v1.0 AI chat release (2026-06-19); SPEC-001 §9  
+**Detail:** Once a prospect enters their name (turn N in `contact_capture` phase) and email (turn N+1), both values are present in `state.messages`. The full message history is sent to `/api/chat` on every subsequent turn, meaning name and email are transmitted to Anthropic's servers as part of the conversation context. SPEC-001 §9 documents this as architecturally incompatible with strict withholding: removing prior messages would break conversational coherence.
+
+**Mitigation in place:**  
+- Anthropic's standard Commercial Terms incorporate a Data Processing Addendum with Standard Contractual Clauses (Module 2) and UK GDPR Addendum — applicable automatically, no separate signing required.  
+- Anthropic does not train on API inputs or outputs under Commercial Terms.  
+- Default retention: inputs and outputs deleted within 30 days.  
+- Privacy notice at fpmsg.co.uk/privacy.html discloses the Anthropic data flow and retention period (published 2026-06-19).  
+
+**AC-DM-001.5 — Zero Data Retention (ZDR):** Assessed 2026-06-19. ZDR requires a minimum ~$100K/year annual commitment reviewed per-organisation — not appropriate at pilot scale. Standard DPA + SCCs + 30-day retention is the applicable safeguard. Gate closed; no further action required at current volume.  
+
+**AC-DM-001.6 — Web3Forms DPA:** DPA request email sent to hello@web3forms.com on 2026-06-19. Status: **pending response**. Web3Forms stores form submissions for 30 days (free plan) / 1 year (pro plan). Full lead payload (name, email, transcript) is transmitted on confirm-click.  
+
+**Risk level:** Low at pilot scale. Becomes a formal review point before onboarding first external client or ICO registration.  
+**Decision:** Accepted. Standard Anthropic DPA is sufficient safeguard at current scale. Web3Forms DPA to be confirmed and recorded here when received.
+
+---
+
+## Contacts
+
+### CON-GAP-001 — No automated purge of stale contacts
+**Area:** Contacts / GDPR
+**Detail:** Contacts not contacted in >700 days are flagged with a "Stale" badge in the UI. No automated deletion or purge mechanism exists — manual deletion only.
+
+### CON-GAP-002 — Soft email dedup only
+**Area:** Contacts / dedup
+**Detail:** Email deduplication is soft: the user can force-create a separate record for a duplicate email. Edit-path email changes are not checked for duplicates. No hard uniqueness enforcement on the email field.
+
+### CON-GAP-004 — Deleting a contact leaves dangling sourceContactId on quotes
+**Area:** Contacts / data integrity
+**Detail:** Deleting a contact does not remove or null the `sourceContactId` reference on associated quotes. Runtime guards in `saveQte()` and `delQte()` use `if (convC && ...)` / `if (relC && ...)` — these no-op safely if the contact is not found.
+
+### CON-GAP-005 — Restoring v2 backup preserves live contacts
+**Area:** Contacts / import
+**Detail:** If a backup file does not contain a `con` key (e.g. a pre-v2.9.27 backup), `doImport()` preserves the current live DB.con rather than clearing it. The WARNING dialog text ("This will replace ALL current local data") is not updated to reflect this contact-specific exception.

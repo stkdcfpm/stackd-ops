@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Stackd Ops v2.9.10</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
+<title>Stackd Ops v2.9.27</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -31,14 +33,15 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .banner button{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:white;border:none;padding:5px 11px;cursor:pointer;}
 .view{display:none;padding:22px;}.view.on{display:block;}
 .kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:11px;margin-bottom:18px;}
-.kpi{background:var(--card);border:1px solid var(--ln);padding:16px 18px 12px;}
+.kpi{background:var(--card);border:1px solid var(--ln);border-left:3px solid var(--ln);border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:16px 18px 12px;}
+.kpi:has(.kv.r){border-left-color:var(--cr);}.kpi:has(.kv.g){border-left-color:var(--gn);}.kpi:has(.kv.b){border-left-color:var(--bl);}.kpi:has(.kv.gold){border-left-color:var(--gold);}
 .kl{font-size:.48rem;letter-spacing:.16em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
-.kv{font-family:'Bebas Neue',sans-serif;font-size:1.75rem;letter-spacing:.04em;line-height:1;color:var(--ink);}
+.kv{font-family:'Bebas Neue',sans-serif;font-size:1.75rem;letter-spacing:.04em;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums;}
 .kv.gold{color:var(--gold);}.kv.g{color:var(--gn);}.kv.r{color:var(--cr);}.kv.b{color:var(--bl);}
 .ks{font-size:.5rem;color:var(--m);margin-top:3px;}
 .r2{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:18px;}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px;}
-.card{background:var(--card);border:1px solid var(--ln);padding:18px;}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:18px;}
 .ct{font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
 .ct::after{content:'';flex:1;height:1px;background:var(--ln);}
 .bc{display:flex;flex-direction:column;gap:7px;}
@@ -49,22 +52,26 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .bf.cr{background:var(--cr);}.bf.go{background:var(--gold);}.bf.gn{background:var(--gn);}.bf.bl{background:var(--bl);}
 .bv{font-size:.52rem;color:var(--m);width:64px;text-align:right;flex-shrink:0;}
 .pl{display:flex;flex-direction:column;gap:4px;}
-.pi{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--ln);cursor:pointer;transition:background .15s;font-size:.58rem;}
-.pi:hover{background:var(--crf);}
+.pi{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--ln);border-radius:4px;cursor:pointer;transition:background .2s;font-size:.58rem;}
+.pi:hover{background:rgba(184,40,58,.04);}
 .pref{color:var(--cr);width:90px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pbuy{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pdst{color:var(--m);width:75px;flex-shrink:0;font-size:.54rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tag{font-size:.48rem;letter-spacing:.07em;text-transform:uppercase;padding:2px 5px;border-radius:2px;flex-shrink:0;}
+.tag{font-size:.48rem;letter-spacing:.07em;text-transform:uppercase;padding:2px 6px;border-radius:4px;flex-shrink:0;}
 .s-draft{background:#f5f5f5;color:#666;}.s-sent{background:var(--blf);color:var(--bl);}
 .s-partially-paid,.s-deposit-paid{background:#fff8e6;color:#7a5200;}
 .s-paid,.s-settled,.s-confirmed{background:var(--gnf);color:var(--gn);font-weight:600;}
 .s-cancelled{background:var(--crf);color:var(--cr);}.s-pro-forma{background:#f5f0ff;color:#6b21a8;}
+.s-lead{background:#e8f4ff;color:#1d4ed8;}
+.s-qualified{background:#f0fdf4;color:#15803d;}
+.s-converted{background:var(--gnf);color:var(--gn);font-weight:600;}
+.s-closed{background:#f5f5f5;color:#666;}
 .pamt{color:var(--gold);width:64px;text-align:right;flex-shrink:0;}
 .pbal{color:var(--bl);width:64px;text-align:right;flex-shrink:0;font-size:.52rem;}
 .tb{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-.sb{font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);background:white;padding:6px 10px;outline:none;flex:1;min-width:150px;max-width:220px;}
+.sb{font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);border-radius:4px;background:white;padding:6px 10px;outline:none;flex:1;min-width:150px;max-width:220px;transition:border-color .2s;}
 .sb:focus{border-color:var(--cr);}
-.btn{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;padding:6px 13px;cursor:pointer;border:1px solid var(--cr);transition:all .2s;white-space:nowrap;}
+.btn{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;padding:6px 13px;cursor:pointer;border:1px solid var(--cr);border-radius:4px;transition:all .2s;white-space:nowrap;}
 .btn-s{background:var(--cr);color:white;}.btn-s:hover{background:var(--cr2);}
 .btn-o{background:white;color:var(--cr);}.btn-o:hover{background:var(--crf);}
 .btn-g{background:transparent;border-color:var(--ln);color:var(--m);}.btn-g:hover{border-color:var(--cr);color:var(--cr);}
@@ -72,17 +79,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .tw{overflow-x:auto;}
 .tbl{width:100%;border-collapse:collapse;font-size:.58rem;}
 .tbl th{font-size:.48rem;letter-spacing:.11em;text-transform:uppercase;color:var(--m);padding:7px 8px;text-align:left;border-bottom:2px solid var(--cr);background:white;white-space:nowrap;}
-.tbl td{padding:8px 8px;border-bottom:1px solid var(--ln);background:white;vertical-align:middle;}
-.tbl tr:hover td{background:var(--crf);}
+.tbl td{padding:8px 8px;border-bottom:1px solid rgba(0,0,0,.07);background:white;vertical-align:middle;font-variant-numeric:tabular-nums;}
+.tbl tr:hover td{background:rgba(184,40,58,.04);}
 .num{text-align:right;font-variant-numeric:tabular-nums;}.pos{color:var(--gn);}.neg{color:var(--cr);}
 .pill{display:inline-block;padding:2px 5px;border-radius:2px;font-size:.5rem;}
 .phi{background:var(--gnf);color:var(--gn);}.pmi{background:#fdf6ec;color:#7a5200;}.plo{background:var(--crf);color:var(--cr);}
-.ab{background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--m);font-size:.66rem;transition:color .15s;}
+.ab{background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--m);font-size:.66rem;transition:color .2s,opacity .15s;opacity:.45;}
 .ab:hover{color:var(--cr);}
+.tbl tr:hover .ab,.pi:hover .ab{opacity:1;}
 .ov{position:fixed;inset:0;background:rgba(15,12,13,.65);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:26px 14px;overflow-y:auto;}
 .ov.on{display:flex;}
-.modal{background:white;width:100%;max-width:840px;border-top:3px solid var(--cr);animation:sd .2s ease;}
-@keyframes sd{from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:translateY(0);}}
+.modal{background:white;width:100%;max-width:840px;border-top:3px solid var(--cr);border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,.12);animation:sd .18s ease;}
+@keyframes sd{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 .mh{padding:14px 22px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--ln);}
 .mh h2{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.08em;color:var(--cr);margin-right:auto;}
 .mx{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--m);}.mx:hover{color:var(--cr);}
@@ -118,7 +126,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .dc{padding:0 14px 0 0;}.dl{font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:#444;margin-bottom:2px;}
 .dv{font-family:'Bebas Neue',sans-serif;font-size:.95rem;color:#666;}
 .dv.by{color:#fca5a5;}.dv.ba{color:#fde68a;}.dv.su{color:#93c5fd;}.dv.gp{color:#86efac;}
-.pmodal{background:white;width:100%;max-width:740px;border-top:3px solid var(--cr);animation:sd .2s ease;}
+.pmodal{background:white;width:100%;max-width:740px;border-top:3px solid var(--cr);border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,.12);animation:sd .18s ease;}
 .idoc,.pdoc{font-family:'DM Mono',monospace;font-size:.68rem;color:#111;background:white;padding:30px 38px;max-width:700px;}
 .ihdr,.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #111;}
 .iwm{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.18em;line-height:1;}
@@ -155,7 +163,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .iorg{display:flex;gap:18px;font-size:.58rem;margin-top:9px;padding-top:9px;border-top:1px solid #eee;}
 .ioitem{display:flex;flex-direction:column;gap:1px;}
 .iolab{font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);}
-.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:white;font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.1em;padding:9px 15px;opacity:0;transform:translateY(5px);transition:all .25s;pointer-events:none;z-index:999;border-left:3px solid var(--cr);}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:white;font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.1em;padding:9px 15px;opacity:0;transform:translateY(5px);transition:all .25s;pointer-events:none;z-index:999;border-left:3px solid var(--cr);border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.18);}
 .toast.on{opacity:1;transform:translateY(0);}
 .spin{display:inline-block;width:9px;height:9px;border:2px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:3px;}
 @keyframes sp{to{transform:rotate(360deg);}}
@@ -205,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.10</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.27</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -345,6 +353,22 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- CONTACTS VIEW -->
+<div class="view" id="v-contacts">
+  <div class="tb">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">CONTACTS</div>
+    <button class="btn btn-s" onclick="openCon()">+ New Contact</button>
+  </div>
+  <div class="tw"><table class="tbl" id="con-tbl" style="display:none;">
+    <thead><tr>
+      <th>Name</th><th>Company</th><th>Email</th>
+      <th>Status</th><th>Source</th><th>Last Contact</th><th>Enquiries</th><th></th>
+    </tr></thead>
+    <tbody id="con-tbody"></tbody>
+  </table></div>
+  <div id="con-em" class="empty" style="display:none;"><div class="ei">&#128101;</div><p>No contacts yet. Click <strong>+ New Contact</strong> to get started.</p></div>
+</div>
+
 <!-- IMPORT DATA VIEW -->
 <div class="view" id="v-import">
   <div style="max-width:700px;display:flex;flex-direction:column;gap:14px;">
@@ -367,6 +391,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-s" onclick="importFromSheets(&apos;li&apos;)">&#8659; Line Items</button>
         <button class="btn btn-s" onclick="importFromSheets(&apos;inv&apos;)">&#8659; Invoices</button>
         <button class="btn btn-s" onclick="importFromSheets(&apos;po&apos;)">&#8659; Purchase Orders</button>
+        <button class="btn btn-s" onclick="importFromSheets(&apos;co&apos;)">&#8659; Contacts</button>
         <button class="btn" style="background:var(--gold);color:white;font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;font-size:.7rem;padding:6px 14px;" onclick="importAllFromSheets()">&#8659; Import All</button>
       </div>
       <div id="sheets-import-status" style="font-size:.58rem;color:var(--m);min-height:16px;line-height:1.7;"></div>
@@ -507,6 +532,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" onclick="pushAll()">&#8593; Push All</button>
       </div>
       <p id="conn-st" style="font-size:.56rem;color:var(--m);"></p>
+      <div style="margin-top:8px;font-size:13px;font-family:monospace;"><span id="sync-status-display" style="color:#8A8277;">Checking...</span></div>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When sync is enabled, supplier, invoice, PO, shipment, and payment data (including contact names and financial records) is transmitted to Google Sheets via your configured endpoint. This data is processed under your Google Workspace Data Processing Agreement. Sync is opt-in — no data is transmitted if no URL is configured.</p>
     </div>
     <div class="card">
       <div class="ct">Sync Options</div>
@@ -528,12 +555,13 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     </div>
     <div class="card" id="cfg-rates">
       <div class="ct">Rates &amp; FX
-        <button class="btn btn-g" style="margin-left:auto;font-size:.48rem;padding:2px 9px;" onclick="saveRates()">Save Rates</button>
+        <button class="btn btn-o" id="qr-live-btn" style="margin-left:auto;font-size:.48rem;padding:2px 9px;" onclick="fetchLiveRates()">&#8635; Live Rates</button>
+        <button class="btn btn-g" style="font-size:.48rem;padding:2px 9px;margin-left:6px;" onclick="saveRates()">Save Rates</button>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:.56rem;">
-        <div class="fld"><label>GBP → USD FX</label><input type="number" id="qr-fxGBPUSD" step="0.01" min="0"></div>
-        <div class="fld"><label>GBP → RMB FX</label><input type="number" id="qr-fxGBPRMB" step="0.01" min="0"></div>
-        <div class="fld"><label>GBP → BBD FX</label><input type="number" id="qr-fxGBPBBD" step="0.01" min="0"></div>
+        <div class="fld"><label>GBP → USD FX</label><input type="number" id="qr-fxGBPUSD" step="0.0001" min="0"></div>
+        <div class="fld"><label>GBP → RMB FX</label><input type="number" id="qr-fxGBPRMB" step="0.0001" min="0"></div>
+        <div class="fld"><label>GBP → BBD FX</label><input type="number" id="qr-fxGBPBBD" step="0.0001" min="0"></div>
         <div class="fld"><label>LCL Rate ($/CBM)</label><input type="number" id="qr-lclPerCBM" step="1" min="0"></div>
         <div class="fld"><label>FCL 20GP ($)</label><input type="number" id="qr-fcl20GP" step="10" min="0"></div>
         <div class="fld"><label>FCL 40HQ ($)</label><input type="number" id="qr-fcl40HQ" step="10" min="0"></div>
@@ -543,7 +571,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld"><label>Insurance Rate (%)</label><input type="number" id="qr-insRate" step="0.01" min="0"></div>
         <div class="fld"><label>FPM Admin ($)</label><input type="number" id="qr-fpmAdmin" step="5" min="0"></div>
       </div>
-      <p style="font-size:.5rem;color:var(--m);margin-top:8px;">Rates used by the Quote Engine. Changes apply to new calculations immediately after save.</p>
+      <div style="margin-top:10px;font-size:.5rem;font-family:'DM Mono',monospace;"><span id="qr-fx-status" style="color:#8A8277;">No live rates fetched — using saved values</span></div>
+      <p style="font-size:.5rem;color:var(--m);margin-top:4px;">↻ Live Rates fetches current GBP→USD/CNY/BBD from the fawazahmed0 currency API (jsDelivr CDN, free, no key). Other rates set manually. Changes apply immediately after save.</p>
     </div>
     <div class="card">
       <div class="ct">Reference Data
@@ -582,6 +611,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <input type="text" id="cfg-fwd-webhook" placeholder="https://prod.example.com/triggers/..." autocomplete="off">
       </div>
       <button class="btn btn-s" onclick="saveFwdWebhook()">Save Webhook</button>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When a webhook URL is configured, shipment data (origin/destination ports, ETD, cargo description, forwarder contact name and email) is posted to that endpoint on each Forwarder Update Request. Only configure a URL you control or trust. Webhook is opt-in — no data is transmitted if no URL is configured.</p>
     </div>
     <div class="card">
       <div class="ct">Accounting Export — Field Mapping Reference</div>
@@ -897,9 +927,202 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.10</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.27</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Contacts / Leads entity — store trade leads with name, email, phone, company, status (lead → qualified → converted → closed), source, enquiries log, and notes</li>
+          <li>New: Email-based dedup — on duplicate email prompt to merge enquiry into existing contact or create a separate record</li>
+          <li>New: Quote integration — "→ Quote" button on Contacts list opens quote modal pre-populated; saving quote auto-sets contact to Converted; deleting quote reverts to Qualified</li>
+          <li>New: GDPR basis tracking per contact — Art.6(1)(b) for lead/qualified, Art.6(1)(f) for converted/closed; contacts stale after 700 days flagged in UI</li>
+          <li>Fix: Quote modal Cancel / backdrop / X button now safely clears in-progress convert state (cConvertId)</li>
+          <li>New: Contacts synced to Google Sheets — included in syncAll/pushAll/pullAll and Import Data → Sheets → Contacts; saveCon triggers real-time upsert (closes CON-GAP-003)</li>
+          <li>Fix: Contacts view aligned to design system (.tb/.tw/.tbl/.empty) and tab order resequenced to workflow order (Contacts → Quotes → PO → Invoices → Shipments)</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.26</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: AI Compliance Review mode — mode toggle pills (Ops / Compliance) in AI assistant panel; dedicated <code>AI_COMPLIANCE_PROMPT</code> covering HMRC VAT 700/21, invoice locking, CN treatment, verified calc_ values, GDPR obligations, and MTD gap; compliance-specific quick-action chips; mode persisted to localStorage</li>
+          <li>Design: Phase 1 visual redesign (CSS-only) — <code>border-radius: 6px</code> on cards/modals, <code>box-shadow</code> depth layer, semantic left-border colour on KPI cards via <code>:has()</code>, refined table row hover, action button fade-in, modal slide-in animation, consistent <code>border-radius: 4px</code> on inputs/buttons/tags/toasts</li>
+          <li>Fix: Buyer statement Total Outstanding — now sums per-invoice balance for non-Paid/non-Cancelled records only (was incorrect gross calculation)</li>
+          <li>Fix: Statement dates show <code>YYYY-MM-DD</code> (ISO timestamp stripped); credit amounts displayed as negative on statement and PDF</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.25</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: QTE-GAP-001 — Convert to PO now restricted to <code>Accepted</code> status only. Button hidden on Draft/Sent/Declined/Expired; appears automatically when status is set to Accepted. Hard guard added in <code>qteToPoConvert()</code>. "PO RAISED" badge shown in edit modal title once a PO is linked.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.24</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: BACKUP-GAP-002 — <code>sv()</code> quota error upgraded from dismissible toast to blocking modal with one-click backup export. Logo upload now wrapped in try/catch; quota modal fires if logo write fails. Silent data-loss on storage-full condition eliminated.</li>
+          <li>Docs: SDLC-GAP-003 logged — staging/preview environment gap; council verdict documented.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.23</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: BACKUP-GAP-001 — JSON backup now includes QR rates, custom ports, custom payment terms, custom UOM, and migration flags (all were silently excluded before). Snapshot version bumped to v2.</li>
+          <li>Docs: DR procedure written and tested — <code>docs/dr-procedure.md</code> covers backup schedule, restore steps, recovery scenarios, and known limitations.</li>
+          <li>Docs: SEC-GAP-001 fully closed — Script Properties set, token rotated, Apps Script redeployed (2026-06-06).</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.22</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <code>pullAll()</code> double-fetch eliminated — was making 5 redundant API calls per pull (each entity fetched twice). Now one fetch per entity. Pull is faster and no longer wastes Apps Script quota.</li>
+          <li>Fix: <code>delEnt()</code> now respects the auto-sync toggle — deletes no longer propagate to Sheets when auto-sync is off (was inconsistent with <code>syncEnt</code>).</li>
+          <li>Fix: <code>pullAll()</code> now updates the "Last synced" timestamp after a successful pull (previously only <code>syncAll</code> set it).</li>
+          <li>Docs: SYNC-GAP-001 documented — Push All / Sync is a clear-and-rewrite operation; process rule added for multi-operator use.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.21</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: DATA-GAP-001 — FPM-specific hardcoded invoice corrections moved to a one-time migration (<code>runFPMMigration()</code>, flag <code>st_fpm_repair_v1</code>). <code>repairCalcFields()</code> is now generic and operator-safe. Settings → Repair invoice totals updated accordingly.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.20</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Company branding (name, address, logo, VAT, colours) now included in JSON backup and restored on import — was silently excluded (SEC-GAP-006 partial)</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.19</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Favicon added — red S icon eliminates 404 console error on every load</li>
+          <li>Fix: <code>repairCalcFields()</code> now strips stray <code>cnAmount</code> from non-CN invoice records on every init — clears INV10031 data integrity warning</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.18</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Compliance: GDPR disclosure note added to Settings → Google Sheets card — states what data is transmitted externally when sync is enabled (SEC-GAP-002)</li>
+          <li>Compliance: GDPR disclosure note added to Settings → Integrations card — states what shipment data is posted when a forwarder webhook URL is configured (SEC-GAP-005)</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.17</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Live FX rate source switched to fawazahmed0/currency-api (jsDelivr CDN) — frankfurter.app returned a CORS-blocked 301 redirect; new source is free, no-key, CORS-enabled</li>
+          <li>Fix: AI assistant system prompt updated with live FX rates feature description — assistant was unaware of ↻ Live Rates and gave stale v2.9.14-era responses</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.16</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Security: Content Security Policy meta tag added — restricts <code>connect-src https:</code>, <code>object-src 'none'</code>, <code>base-uri 'self'</code>; defence-in-depth against XSS exfiltration (SEC-GAP-008)</li>
+          <li>New: <code>checkStorageQuota()</code> — runs on app init; warns via toast at 75% and 90% of the 5 MB localStorage limit; prompts export before data loss (BACKUP-GAP-002)</li>
+          <li>Docs: BACKUP-GAP-001 and BACKUP-GAP-002 added to known-gaps register</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.15</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Dashboard KPI multi-currency aggregation — revenue, profit, outstanding, PO balance, deposits now converted to GBP equiv. via QR FX rates before summing; KPI tiles show ≈ GBP label</li>
+          <li>New: <code>toGBP(amount, cur)</code> helper — converts USD/RMB/CNY/BBD to GBP using stored QR rates; used by all dashboard financial aggregations and charts</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.14</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <code>pullAll()</code> crash — undefined variable scope in entity merge block; now correctly uses <code>pulled</code>/<code>localOnly</code> inside the loop</li>
+          <li>Security: XSS gaps patched — <code>san()</code> applied to dashboard/supplier/accounts charts, CN PDF bank field, payment table rows</li>
+          <li>Security: PII removed from company settings defaults (name, address, bank details no longer hardcoded)</li>
+          <li>Security: <code>testConn()</code> sync token moved from URL query string to POST body</li>
+          <li>Fix: <code>syncAll()</code> URL guard strengthened — requires https:// prefix before any sync attempt</li>
+          <li>New: Sync status timestamp — <code>st_last_sync</code> stored on successful sync; <code>renderSyncStatus()</code> shows relative time in Settings (green/amber/orange by age)</li>
+          <li>Optimisation: Prompt caching enabled on AI assistant — static base prompt marked <code>cache_control: ephemeral</code>; reduces input tokens ~90% on repeat queries</li>
+          <li>Dev: Section index added to script block (38 sections, line numbers); CLAUDE.md restructured to ≤6 KB operational core</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.13</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: AI compliance review mode — <code>toggleAIMode()</code> button in AI assistant panel; separate <code>AI_COMPLIANCE_PROMPT</code> focused on trade compliance</li>
+          <li>Security: XSS <code>san()</code> coverage on PDF blob builders (<code>prevInvDoc</code>/<code>prevPODoc</code>), <code>AS.bank</code>, colour CSS injection guard</li>
+          <li>Security: HTTPS enforcement on <code>saveCfgUrl</code>/<code>saveFwdWebhook</code> — rejects non-https URLs at input</li>
+          <li>Security: Cloudflare Worker deployment-ID path validation; <code>.catch()</code> chained on all <code>syncEnt</code>/<code>delEnt</code> calls</li>
+          <li>Fix: <code>vCN()</code> validation rewritten using <code>vErr</code>/<code>vOk</code>/<code>vClr</code> helpers; <code>linkedInv</code> lookup cleaned up</li>
+          <li>Fix: INV10031 grand total corrected to $7,042.19 (was $7,248.24 — landing fee double-counted)</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.12</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Invoice status locking — Sent/Partially Paid/Paid/Cancelled become immutable; read-only view replaces edit modal; backward transitions blocked</li>
+          <li>New: Unlock Invoice — Settings → Advanced; requires typing CONFIRM and a written reason; action permanently logged to audit trail</li>
+          <li>New: Buyer Statement — per-buyer PDF statement with all invoices, payments, and balance; accessible from Invoices tab</li>
+          <li>Fix: CN balance deduction — <code>saveCN</code> updates <code>calc_balanceDue</code> on linked invoice; balance always live from <code>cInv</code></li>
+          <li>New: Sheets sync rewrite — <code>FIELD_MAPS</code>, <code>mapRec</code>, <code>syncEnt</code>/<code>delEnt</code>/<code>syncAll</code>/<code>pushAll</code>; Cloudflare Worker CORS proxy; Apps Script bulk upsert/delete with audit log</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.11</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Dashboard KPI accuracy — <code>calc_</code> fields used as source of truth; credit notes excluded from revenue, profit, and invoice count KPIs</li>
+          <li>Fix: <code>repairCalcFields</code> — COGS corrections for INV10028 and INV10031</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.10</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: EN/ZH Language Toggle — EN/ZH buttons in nav bar; nav tabs, invoice/quote labels translate to Simplified Chinese; Settings → Language &amp; Localisation card; AI assistant replies in Mandarin when ZH active</li>
@@ -1355,12 +1578,49 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- CONTACT MODAL -->
+<div id="ov-con" class="ov">
+  <div class="card modal-card">
+    <h2 id="con-title">Contact</h2>
+    <label>Name*</label>
+    <input id="ct-name" type="text" placeholder="Full name">
+    <span id="ct-name-err" class="verr"></span>
+    <label>Email*</label>
+    <input id="ct-email" type="email" placeholder="email@example.com">
+    <span id="ct-email-err" class="verr"></span>
+    <label>Phone</label>
+    <input id="ct-phone" type="tel" placeholder="+44...">
+    <label>Company</label>
+    <input id="ct-company" type="text" placeholder="Company name">
+    <label>Status</label>
+    <select id="ct-status">
+      <option value="lead">Lead</option>
+      <option value="qualified">Qualified</option>
+      <option value="converted">Converted</option>
+      <option value="closed">Closed</option>
+    </select>
+    <label>Source</label>
+    <select id="ct-source">
+      <option value="manual">Manual</option>
+      <option value="chat">Chat</option>
+    </select>
+    <label>New enquiry note</label>
+    <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
+    <label>Internal notes</label>
+    <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
+    <div class="btn-row">
+      <button onclick="saveCon()">Save</button>
+      <button class="btn-sec" onclick="closeM('ov-con')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- QUOTE MODAL -->
-<div class="ov" id="ov-qt" onclick="if(event.target===this)closeM('ov-qt')">
+<div class="ov" id="ov-qt" onclick="if(event.target===this)closeQteDlg()">
   <div class="modal" style="max-width:960px;width:100%;max-height:90vh;display:flex;flex-direction:column;">
     <div class="mh" style="flex-shrink:0;">
       <div id="qt-title">New Quote</div>
-      <button class="mx" onclick="closeM('ov-qt')">&#215;</button>
+      <button class="mx" onclick="closeQteDlg()">&#215;</button>
     </div>
     <div class="mb" style="overflow-y:auto;flex:1;">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px;">
@@ -1382,12 +1642,13 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           </select>
         </div>
         <div class="fld"><label>Status</label>
-          <select id="qf-st">
+          <select id="qf-st" onchange="updQtePoBtn()">
             <option value="Draft">Draft</option><option value="Sent">Sent</option>
             <option value="Accepted">Accepted</option><option value="Declined">Declined</option><option value="Expired">Expired</option>
           </select>
         </div>
       </div>
+      <div id="qt-rates-warn" style="margin-bottom:8px;"></div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:.08em;color:var(--cr);margin-bottom:6px;">LINE ITEMS</div>
       <div id="qt-lines" style="overflow-x:auto;margin-bottom:8px;"></div>
       <button class="btn btn-g" style="font-size:.5rem;padding:3px 10px;margin-bottom:14px;" onclick="addQteLine()">+ Add Line</button>
@@ -1406,7 +1667,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
       <div id="qt-verr" style="font-size:.54rem;color:var(--cr);margin-bottom:8px;min-height:16px;"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-        <button class="btn btn-g" onclick="closeM('ov-qt')">Cancel</button>
+        <button class="btn btn-g" onclick="closeQteDlg()">Cancel</button>
         <button class="btn btn-g" id="qt-prev-btn" onclick="prevQteId()" style="display:none;">&#128438; Preview</button>
         <button class="btn btn-g" id="qt-po-btn" onclick="qteToPoConvert()" style="display:none;border-color:var(--gold);color:var(--gold);">Convert to PO</button>
         <button class="btn btn-s" onclick="saveQte()">Save Quote</button>
@@ -1451,8 +1712,51 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 <datalist id="dl-freight"></datalist>
 
 <script>
+// ── SECTION INDEX ──────────────────────────────────────────────
+// To jump to a section: grep for the anchor string, e.g. "── STATE ──"
+// Section                        Line
+// STATE                          1455
+// INVOICE STATUS LOCKING         1478
+// UTILS                          1489
+// LANGUAGE                       1509
+// COMPANY BRANDING               1528
+// REFERENCE DATA                 1591
+// REFERENCE DATA ACCESSORS       1827
+// SHEETS SYNC                    1987
+// VIEWS                          2261
+// INVOICE CALCULATION            2276
+// DASHBOARD                      2345
+// SUPPLIERS                      2653
+// LINE ITEMS                     2701
+// INVOICE MODAL                  2813
+// INVOICES TABLE                 3214
+// BUYER STATEMENT                3275
+// PO MODAL & TABLE               3461
+// PRINT PREVIEWS                 3548
+// PDF BRANDING HELPERS           3573
+// VALIDATION                     3857
+// VALIDATION HELPERS             3869
+// BULK IMPORT                    4202
+// GOOGLE SHEETS DIRECT IMPORT    4447
+// CREDIT NOTES                   4743
+// SETTINGS                       4943
+// ACCOUNTING EXPORT              5524
+// SHIPMENTS                      5767
+// LOAD CALCULATOR                5903
+// FORWARDER UPDATE REQUEST       5995
+// ONBOARDING                     6090
+// TAB-AWARE AI                   6131
+// QUOTE ENGINE                   6165
+// PRINT                          6629
+// PAYMENT METHODS                6756
+// PAYMENT FUNCTIONS              6759
+// TOOLTIPS                       6934
+// INIT                           7003
+// AUTH                           7099
+// ───────────────────────────────────────────────────────────────
+
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co'};
 
 var _storageOK = (function() {
   try { localStorage.setItem('_stk_t','1'); localStorage.removeItem('_stk_t'); return true; }
@@ -1465,11 +1769,12 @@ function ld(k) {
 }
 function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 
-let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt) };
+let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
-let AS = ld(K.as) || { name:'Stackd', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'Brighton, UK', email:'cachafpm@gmail.com', phone:'+44 7930 438631', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
-let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null };
+let AS = ld(K.as) || { name:'', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'', email:'', phone:'', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
+let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null, co:null };
 let cIL = [], cPL = [], cQL = [], cCNL = [];
+var cConvertId = null;
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
@@ -1494,13 +1799,13 @@ function sv(k, d) {
   try { localStorage.setItem(k, JSON.stringify(d)); }
   catch(e) {
     if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014) {
-      toast('⚠ Storage full! Export a backup now from Settings → Data. Last save was not written.', 9000);
+      showQuotaModal();
     } else {
       toast('⚠ Save error: ' + e.message, 5000);
     }
   }
 }
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); };
 
 const QR_DEFAULTS = { fxGBPUSD:1.27, fxGBPRMB:9.20, fxGBPBBD:2.54, lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, originCharges:250, destCharges:350, dgSurcharge:150, insRate:0.005, fpmAdmin:75 };
 var QR = (function(){ var saved = ld('st_qr'); return saved ? Object.assign({}, QR_DEFAULTS, saved) : Object.assign({}, QR_DEFAULTS); })();
@@ -1568,6 +1873,21 @@ function toast(m, d) {
   t.textContent = m;
   t.classList.add('on');
   setTimeout(function(){ t.classList.remove('on'); }, d);
+}
+
+function showQuotaModal() {
+  if (G('quota-modal')) return;
+  var overlay = document.createElement('div');
+  overlay.id = 'quota-modal';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = '<div style="background:#fff;border-radius:8px;padding:28px 32px;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);">'
+    + '<div style="color:#c0392b;font-weight:700;font-size:1.05rem;margin-bottom:10px;">&#9888; Storage Full — Save Failed</div>'
+    + '<p style="margin:0 0 18px;font-size:.85rem;color:#333;line-height:1.6;"><strong>The last save was not written.</strong> Your browser storage is full. Export a backup immediately, then free space by removing the company logo or old data.</p>'
+    + '<div style="display:flex;gap:10px;">'
+    + '<button class="btn btn-p" style="flex:1;" onclick="expAll();document.getElementById(\'quota-modal\').remove();">&#8595; Export Backup Now</button>'
+    + '<button class="btn btn-s" onclick="document.getElementById(\'quota-modal\').remove();">Dismiss</button>'
+    + '</div></div>';
+  document.body.appendChild(overlay);
 }
 
 function audit(act, ent, id, d) {
@@ -2015,7 +2335,7 @@ async function syncEnt(entity, rec) {
   catch(e) { setSyncStatus('err'); }
 }
 async function delEnt(entity, keyVal) {
-  if (!SS.url) return;
+  if (!SS.url || !SS.auto) return;
   try { await sPost({action:'delete', entity:entity, keyVal:keyVal}); }
   catch(e) { toast('Sync delete failed — Sheets may be out of date'); }
 }
@@ -2027,7 +2347,8 @@ var FIELD_MAPS = {
   po:  { num:'PO #', supId:'Supplier', invNum:'Linked Invoice', date:'Date', status:'Status', cur:'Currency', dep:'Deposit', notes:'Notes' },
   payments: { id:'Payment ID', invNum:'Invoice #', date:'Date', amount:'Amount', cur:'Currency', method:'Method', notes:'Notes' },
   sh:  { ref:'Shipment Ref', blNum:'BL Number', vessel:'Vessel', carrier:'Carrier', originPort:'Origin Port', destPort:'Dest Port', etd:'ETD', eta:'ETA', status:'Status', containerType:'Container Type', containerNum:'Container Number', dg:'DG Onboard', docsStatus:'Docs Status', forwarder:'Forwarder Name', forwarderEmail:'Forwarder Email', linkedInvs:'Linked Invoices', notes:'Notes' },
-  qt:  { num:'Quote #', client:'Buyer', dt:'Date', status:'Status', currency:'Currency', calc_totalLanded:'Grand Total', markup:'Margin', notes:'Notes' }
+  qt:  { num:'Quote #', client:'Buyer', dt:'Date', status:'Status', currency:'Currency', calc_totalLanded:'Grand Total', markup:'Margin', notes:'Notes' },
+  co:  { id:'Contact ID', name:'Name', email:'Email', phone:'Phone', company:'Company', status:'Status', source:'Source', enquirySummary:'Enquiry Summary', notes:'Notes', createdAt:'Created At', lastContactedAt:'Last Contacted', gdprBasis:'GDPR Basis' }
 };
 function mapRec(entity, rec) {
   var map = FIELD_MAPS[entity];
@@ -2043,12 +2364,13 @@ function mapRec(entity, rec) {
   return out;
 }
 async function syncAll() {
-  if (!SS.url) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
+  if (!SS.url || !SS.url.startsWith('https://')) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
   setSyncStatus('loading');
   try {
-    var synEnts = ['sup','li','po','sh','qt','payments'];
+    var synEnts = ['sup','li','po','sh','qt','payments','co'];
     for (var si = 0; si < synEnts.length; si++) {
-      await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[synEnts[si]] || []).map(function(r){ return mapRec(synEnts[si], r); })});
+      var entKey = synEnts[si] === 'co' ? 'con' : synEnts[si];
+      await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[entKey] || []).map(function(r){ return mapRec(synEnts[si], r); })});
     }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
@@ -2057,8 +2379,38 @@ async function syncAll() {
     await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
     if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
+    localStorage.setItem('st_last_sync', new Date().toISOString());
+    renderSyncStatus();
   } catch(e) { setSyncStatus('err'); toast('Sync failed: ' + e.message); }
 }
+function renderSyncStatus() {
+  var el = document.getElementById('sync-status-display');
+  if (!el) return;
+  var ts = localStorage.getItem('st_last_sync');
+  if (!ts) { el.textContent = 'Never synced'; el.style.color = '#8A8277'; return; }
+  var d = new Date(ts);
+  var mins = Math.floor((Date.now() - d.getTime()) / 60000);
+  var label = mins < 1 ? 'Just now' : mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.floor(mins/60) + 'h ago' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  el.textContent = '✓ Last synced ' + label;
+  el.style.color = mins < 30 ? '#375623' : mins < 120 ? '#7F6000' : '#833C00';
+}
+function checkStorageQuota() {
+  try {
+    var used = 0;
+    for (var k in localStorage) {
+      if (!Object.prototype.hasOwnProperty.call(localStorage, k)) continue;
+      used += (k.length + (localStorage.getItem(k) || '').length) * 2;
+    }
+    var pct = used / (5 * 1024 * 1024) * 100; // 5 MB conservative browser limit
+    var usedKB = Math.round(used / 1024);
+    if (pct >= 90) {
+      toast('⚠ Storage critical: ' + usedKB + ' KB used (~' + Math.round(pct) + '% of limit). Export your data now — Settings → Data → Export All.', 8000);
+    } else if (pct >= 75) {
+      toast('Storage ' + usedKB + ' KB used (~' + Math.round(pct) + '% of limit). Export a backup soon — Settings → Data → Export All.', 5000);
+    }
+  } catch(e) {}
+}
+
 function isEmptyLI(v, fieldType) {
   // fieldType: 'inv' — valid element has typeof el.up !== 'undefined'
   //            'po'  — valid element has typeof el.cost !== 'undefined'
@@ -2082,94 +2434,86 @@ function isEmptyLI(v, fieldType) {
 async function pullAll() {
   if (!SS.url) { toast('No URL configured'); return; }
   setSyncStatus('loading');
+  var failed = [];
+
+  // ── Invoices (with line-item + calc field preservation) ────────
   try {
-    var entities = ['sup','li','inv','po','sh','qt'];
-    for (var ei = 0; ei < entities.length; ei++) {
-      var ent = entities[ei];
-      var d = await sGet(ent);
-      if (d.status === 'ok' && d.records && d.records.length) {
-        var pulled = d.records;
-        var pulledIds = {};
-        for (var pi = 0; pi < pulled.length; pi++) pulledIds[pulled[pi].id] = true;
-        var localOnly = DB[ent].filter(function(r){ return !pulledIds[r.id]; });
-        // For invoices and POs: preserve local lineItems/pos if pulled record has empty arrays
-        // This prevents a Sheets sync from wiping line items added locally
-        if (ent === 'inv' || ent === 'po') {
-          for (var pi = 0; pi < pulled.length; pi++) {
-            var localRec = DB[ent].find(function(r){ return r.id === pulled[pi].id; });
-            if (localRec) {
-              if (ent === 'inv') {
-                if (isEmptyLI(pulled[pi].lineItems, 'inv') && !isEmptyLI(localRec.lineItems, 'inv')) {
-                  pulled[pi].lineItems = localRec.lineItems;
-                }
-                if (isEmptyLI(pulled[pi].pos, 'pos') && !isEmptyLI(localRec.pos, 'pos')) {
-                  pulled[pi].pos = localRec.pos;
-                }
-                // Also preserve calc fields if local has them and pulled doesn't
-                var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt',
-                  'calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
-                calcFields.forEach(function(f) {
-                  var pulledVal = +pulled[pi][f] || 0;
-                  var localVal  = +localRec[f]  || 0;
-                  if (pulledVal === 0 && localVal > 0) {
-                    pulled[pi][f] = localRec[f];
-                  }
-                });
-              }
-              if (ent === 'po') {
-                if (isEmptyLI(pulled[pi].lineItems, 'po') && !isEmptyLI(localRec.lineItems, 'po')) {
-                  pulled[pi].lineItems = localRec.lineItems;
-                }
-              }
-            }
-          }
+    var dInv = await sGet('inv');
+    if (dInv.status === 'ok' && dInv.records && dInv.records.length) {
+      var invPulled = dInv.records;
+      var invPulledIds = {};
+      for (var ii = 0; ii < invPulled.length; ii++) invPulledIds[invPulled[ii].id] = true;
+      var invLocalOnly = DB.inv.filter(function(r){ return !invPulledIds[r.id]; });
+      var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt',
+                        'calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
+      for (var ii = 0; ii < invPulled.length; ii++) {
+        var invLocal = DB.inv.find(function(r){ return r.id === invPulled[ii].id; });
+        if (invLocal) {
+          if (isEmptyLI(invPulled[ii].lineItems, 'inv') && !isEmptyLI(invLocal.lineItems, 'inv'))
+            invPulled[ii].lineItems = invLocal.lineItems;
+          if (isEmptyLI(invPulled[ii].pos, 'pos') && !isEmptyLI(invLocal.pos, 'pos'))
+            invPulled[ii].pos = invLocal.pos;
+          calcFields.forEach(function(f) {
+            if ((+invPulled[ii][f] || 0) === 0 && (+invLocal[f] || 0) > 0)
+              invPulled[ii][f] = invLocal[f];
+          });
         }
       }
-      DB.inv = pulledInv.concat(localOnlyInv);
+      DB.inv = invPulled.concat(invLocalOnly);
     }
+  } catch(e) { failed.push('inv'); console.warn('[Stackd] pullAll: inv failed —', e.message); }
 
-    // ── Credit notes (cn tab — merge back into DB.inv) ────────────
+  // ── Credit notes (merged back into DB.inv) ─────────────────────
+  try {
     var dCn = await sGet('cn');
     if (dCn.status === 'ok' && dCn.records && dCn.records.length) {
-      var pulledCn = dCn.records;
-      var pulledCnIds = {};
-      for (var ci = 0; ci < pulledCn.length; ci++) pulledCnIds[pulledCn[ci].id] = true;
-      DB.inv = DB.inv.filter(function(r){ return !pulledCnIds[r.id]; }).concat(pulledCn);
+      var cnPulledIds = {};
+      for (var ci = 0; ci < dCn.records.length; ci++) cnPulledIds[dCn.records[ci].id] = true;
+      DB.inv = DB.inv.filter(function(r){ return !cnPulledIds[r.id]; }).concat(dCn.records);
     }
+  } catch(e) { failed.push('cn'); console.warn('[Stackd] pullAll: cn failed —', e.message); }
 
-    // ── Purchase orders (with line item preservation) ─────────────
+  // ── Purchase orders (with line-item preservation) ──────────────
+  try {
     var dPo = await sGet('po');
     if (dPo.status === 'ok' && dPo.records && dPo.records.length) {
-      var pulledPo = dPo.records;
-      var pulledPoIds = {};
-      for (var pi = 0; pi < pulledPo.length; pi++) pulledPoIds[pulledPo[pi].id] = true;
-      var localOnlyPo = DB.po.filter(function(r){ return !pulledPoIds[r.id]; });
-      for (var pi = 0; pi < pulledPo.length; pi++) {
-        var localPo = DB.po.find(function(r){ return r.id === pulledPo[pi].id; });
-        if (localPo && isEmptyLI(pulledPo[pi].lineItems, 'po') && !isEmptyLI(localPo.lineItems, 'po')) pulledPo[pi].lineItems = localPo.lineItems;
+      var poPulled = dPo.records;
+      var poPulledIds = {};
+      for (var pi = 0; pi < poPulled.length; pi++) poPulledIds[poPulled[pi].id] = true;
+      var poLocalOnly = DB.po.filter(function(r){ return !poPulledIds[r.id]; });
+      for (var pi = 0; pi < poPulled.length; pi++) {
+        var poLocal = DB.po.find(function(r){ return r.id === poPulled[pi].id; });
+        if (poLocal && isEmptyLI(poPulled[pi].lineItems, 'po') && !isEmptyLI(poLocal.lineItems, 'po'))
+          poPulled[pi].lineItems = poLocal.lineItems;
       }
-      DB.po = pulledPo.concat(localOnlyPo);
+      DB.po = poPulled.concat(poLocalOnly);
     }
+  } catch(e) { failed.push('po'); console.warn('[Stackd] pullAll: po failed —', e.message); }
 
-    // ── Simple entities (replace from Sheets, preserve local-only) ─
-    var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt'];
-    for (var ei = 0; ei < simpleEnts.length; ei++) {
-      var sentKey = simpleEnts[ei];
-      var sd = await sGet(sentKey);
+  // ── Simple entities (Sheets wins; local-only records preserved) ─
+  var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+  for (var ei = 0; ei < simpleEnts.length; ei++) {
+    var eKey = simpleEnts[ei];
+    var dbKey = eKey === 'co' ? 'con' : eKey;
+    try {
+      var sd = await sGet(eKey);
       if (sd.status === 'ok' && sd.records && sd.records.length) {
-        var spulled = sd.records;
-        var spulledIds = {};
-        for (var si = 0; si < spulled.length; si++) spulledIds[spulled[si].id] = true;
-        DB[sentKey] = spulled.concat(DB[sentKey].filter(function(r){ return !spulledIds[r.id]; }));
+        var sPulledIds = {};
+        for (var si = 0; si < sd.records.length; si++) sPulledIds[sd.records[si].id] = true;
+        DB[dbKey] = sd.records.concat(DB[dbKey].filter(function(r){ return !sPulledIds[r.id]; }));
       }
-    }
+    } catch(e) { failed.push(eKey); console.warn('[Stackd] pullAll: ' + eKey + ' failed —', e.message); }
+  }
 
-    saveAll(); renderAll(); setSyncStatus('ok'); toast('Pulled from Sheets');
-    setTimeout(function(){ setSyncStatus('idle'); }, 3000);
-  } catch(e) {
+  saveAll(); renderAll();
+  if (failed.length) {
     setSyncStatus('err');
-    toast('Pull failed: ' + e.message);
-    console.error('pullAll error:', e);
+    toast('Pull partial — ' + failed.join(', ') + ' failed. Check Apps Script deployment.', 6000);
+  } else {
+    setSyncStatus('ok'); toast('Pulled from Sheets');
+    localStorage.setItem('st_last_sync', new Date().toISOString());
+    renderSyncStatus();
+    setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   }
 }
 function buildInvLines() {
@@ -2201,9 +2545,10 @@ function buildInvLines() {
 async function pushAll() {
   setSyncStatus('loading');
   try {
-    var ents = ['sup','li','po','sh','qt','payments'];
+    var ents = ['sup','li','po','sh','qt','payments','co'];
     for (var pi = 0; pi < ents.length; pi++) {
-      await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[ents[pi]] || []).map(function(r){ return mapRec(ents[pi], r); })});
+      var entKey = ents[pi] === 'co' ? 'con' : ents[pi];
+      await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[entKey] || []).map(function(r){ return mapRec(ents[pi], r); })});
     }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
@@ -2221,7 +2566,7 @@ async function testConn() {
   G('conn-st').textContent = 'Testing...';
   try {
     var tok = (G('cfg-token') ? G('cfg-token').value.trim() : '') || SS.token || '';
-    var d = JSON.parse(await (await fetch(url + '?action=ping&_token=' + encodeURIComponent(tok))).text());
+    var d = JSON.parse(await (await fetch(url, { method:'POST', redirect:'follow', body:JSON.stringify({action:'ping', _token:tok}) })).text());
     G('conn-st').textContent = d.status === 'ok' ? '\u2713 Connected' : '\u2715 ' + (d.message || 'Error');
     G('conn-st').style.color = d.status === 'ok' ? 'var(--gn)' : 'var(--cr)';
   } catch(e) { G('conn-st').textContent = '\u2715 ' + e.message; G('conn-st').style.color = 'var(--cr)'; }
@@ -2253,10 +2598,10 @@ function showV(v, tab) {
   else { var t = document.querySelector('[data-v="' + v + '"]'); if(t) t.classList.add('on'); }
   window.currentTab = v;
   updateAIChips(v);
-  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, sh:rShp, qt:rQte, import:function(){}, cfg:rCfg };
+  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, sh:rShp, qt:rQte, contacts:rCon, import:function(){}, cfg:rCfg };
   if (fns[v]) fns[v]();
 }
-function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); rQte(); }
+function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); rQte(); rCon(); }
 function closeM(id) { G(id).classList.remove('on'); }
 
 // ── INVOICE CALCULATION ────────────────────────────────────────
@@ -2329,6 +2674,17 @@ function cInv(inv) {
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────────
+// Convert any supported currency amount to GBP using stored QR rates.
+function toGBP(amount, cur) {
+  var n = +amount || 0;
+  cur = (cur || 'USD').toUpperCase();
+  if (cur === 'GBP') return n;
+  if (cur === 'USD') return n / (QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD);
+  if (cur === 'RMB' || cur === 'CNY') return n / (QR.fxGBPRMB || QR_DEFAULTS.fxGBPRMB);
+  if (cur === 'BBD') return n / (QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD);
+  return n;
+}
+
 // Returns invoice financials preferring stored calc_ fields; falls back to live cInv() only when absent.
 // Credit note records are returned via cInv() directly — calc_ fields do not apply to CNs.
 function iCalc(inv) {
@@ -2355,37 +2711,37 @@ function rDash() {
     if (!i.type && isCN(i.num)) return false;
     return true;
   });
-  var tR   = ai.reduce(function(s,i){ return s + iCalc(i).grand; }, 0);
-  var tNP  = ai.reduce(function(s,i){ return s + iCalc(i).np;    }, 0);
+  var tR   = ai.reduce(function(s,i){ return s + toGBP(iCalc(i).grand, i.cur||'USD'); }, 0);
+  var tNP  = ai.reduce(function(s,i){ return s + toGBP(iCalc(i).np, i.cur||'USD');   }, 0);
   var tOut = ai.reduce(function(s,i){
     if (i.status==='Paid'||i.status==='Cancelled') return s;
-    return s + Math.max(0, iCalc(i).bal);
+    return s + toGBP(Math.max(0, iCalc(i).bal), i.cur||'USD');
   }, 0);
   var tPO = DB.po.filter(function(p){ return p.status!=='Cancelled' && p.status!=='Settled'; })
     .reduce(function(s,p){
       var t = (p.lineItems||[]).reduce(function(a,l){ return a + (+l.qty||0)*(+l.cost||0); }, 0);
-      return s + t - (+p.dep||0);
+      return s + toGBP(t - (+p.dep||0), p.cur||'USD');
     }, 0);
   var mg = ai.map(function(i){ return iCalc(i).mgn; }).filter(function(m){ return m !== null && !isNaN(m); });
   var aM = mg.length ? mg.reduce(function(a,b){ return a+b; }, 0) / mg.length : 0;
 
   // Net cash: total buyer deposits received minus total supplier deposits paid minus goodwill credits issued
-  var tBuyerDep = ai.reduce(function(s,i){ return s + (+i.dep||0); }, 0);
+  var tBuyerDep = ai.reduce(function(s,i){ return s + toGBP(+i.dep||0, i.cur||'USD'); }, 0);
   var tSupDep = DB.po.filter(function(p){ return p.status!=='Cancelled'; })
-    .reduce(function(s,p){ return s + (+p.dep||0); }, 0);
+    .reduce(function(s,p){ return s + toGBP(+p.dep||0, p.cur||'USD'); }, 0);
   var tGoodwillCredits = DB.inv.filter(function(i){ return i.type==='goodwill_credit' && i.status!=='Cancelled'; })
-    .reduce(function(s,i){ return s + Math.abs(+i.cnAmount||0); }, 0);
+    .reduce(function(s,i){ return s + toGBP(Math.abs(+i.cnAmount||0), i.cur||'USD'); }, 0);
   var netCash = tBuyerDep - tSupDep - tGoodwillCredits;
 
   var inTransit = DB.sh.filter(function(s){ return s.status === 'In Transit'; }).length;
 
   G('kpis').innerHTML =
-    '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR) + '</div><div class="ks">' + ai.length + ' active &middot; mixed cur.</div></div>' +
-    '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP) + '</div><div class="ks">After all costs &middot; mixed cur.</div></div>' +
+    '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR,'GBP') + '</div><div class="ks">' + ai.length + ' active &middot; &asymp;&thinsp;GBP</div></div>' +
+    '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP,'GBP') + '</div><div class="ks">After all costs &middot; &asymp;&thinsp;GBP</div></div>' +
     '<div class="kpi"><div class="kl">Avg Margin</div><div class="kv ' + (aM>=20?'g':aM>=10?'gold':'r') + '">' + fp(aM) + '</div><div class="ks">' + mg.length + ' invoices</div></div>' +
-    '<div class="kpi"><div class="kl">Outstanding from Buyers</div><div class="kv b">' + fmt(tOut) + '</div><div class="ks">Balance due &middot; mixed cur.</div></div>' +
-    '<div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">' + fmt(tPO) + '</div><div class="ks">To suppliers &middot; mixed cur.</div></div>' +
-    '<div class="kpi"><div class="kl">Net Cash Position</div><div class="kv ' + (netCash>=0?'g':'r') + '">' + fmt(netCash) + '</div><div class="ks">Buyer deps - supplier deps</div></div>' +
+    '<div class="kpi"><div class="kl">Outstanding from Buyers</div><div class="kv b">' + fmt(tOut,'GBP') + '</div><div class="ks">Balance due &middot; &asymp;&thinsp;GBP</div></div>' +
+    '<div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">' + fmt(tPO,'GBP') + '</div><div class="ks">To suppliers &middot; &asymp;&thinsp;GBP</div></div>' +
+    '<div class="kpi"><div class="kl">Net Cash Position</div><div class="kv ' + (netCash>=0?'g':'r') + '">' + fmt(netCash,'GBP') + '</div><div class="ks">Buyer deps - supplier deps</div></div>' +
     '<div class="kpi"><div class="kl">In Transit</div><div class="kv gold">' + inTransit + '</div><div class="ks">' + DB.sh.length + ' total shipments</div></div>';
 
   var pl = G('pipeline');
@@ -2406,19 +2762,19 @@ function rDash() {
     }).join('');
   }
 
-  var mxN = Math.max.apply(null, ai.map(function(i){ return Math.abs(iCalc(i).np); }).concat([1]));
+  var mxN = Math.max.apply(null, ai.map(function(i){ return Math.abs(toGBP(iCalc(i).np, i.cur||'USD')); }).concat([1]));
   G('np-chart').innerHTML = ai.length ? ai.slice(-7).map(function(i){
-    var np = iCalc(i).np;
-    return '<div class="br"><div class="bl2">' + (i.num||i.buyer||'-') + '</div>' +
+    var np = toGBP(iCalc(i).np, i.cur||'USD');
+    return '<div class="br"><div class="bl2">' + san(i.num||i.buyer||'-') + '</div>' +
       '<div class="bt"><div class="bf ' + (np>=0?'go':'cr') + '" style="width:' + (Math.abs(np)/mxN*100) + '%"></div></div>' +
-      '<div class="bv">' + fmt(np, i.cur||'USD') + '</div></div>';
+      '<div class="bv">' + fmt(np, 'GBP') + '</div></div>';
   }).join('') : '<p style="font-size:.56rem;color:var(--m)">No data</p>';
 
   var dm = {};
-  ai.forEach(function(i){ var d = i.dst||'Unknown'; dm[d] = (dm[d]||0) + iCalc(i).grand; });
+  ai.forEach(function(i){ var d = i.dst||'Unknown'; dm[d] = (dm[d]||0) + toGBP(iCalc(i).grand, i.cur||'USD'); });
   var mxD = Math.max.apply(null, Object.values(dm).concat([1]));
   G('dest-chart').innerHTML = Object.entries(dm).sort(function(a,b){return b[1]-a[1];}).slice(0,5).map(function(e){
-    return '<div class="br"><div class="bl2">' + san(e[0]) + '</div><div class="bt"><div class="bf cr" style="width:' + (e[1]/mxD*100) + '%"></div></div><div class="bv">' + fmt(e[1]) + '</div></div>';
+    return '<div class="br"><div class="bl2">' + san(e[0]) + '</div><div class="bt"><div class="bf cr" style="width:' + (e[1]/mxD*100) + '%"></div></div><div class="bv">' + fmt(e[1],'GBP') + '</div></div>';
   }).join('') || '<p style="font-size:.56rem;color:var(--m)">No data</p>';
 
   var bd = {'Under 10%':0, '10-20%':0, '20-30%':0, 'Over 30%':0};
@@ -2432,7 +2788,7 @@ function rDash() {
   var mxP = Math.max.apply(null, apo.map(function(p){ return (p.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0); }).concat([1]));
   G('po-chart').innerHTML = apo.length ? apo.slice(-6).map(function(p){
     var t = (p.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0);
-    return '<div class="br"><div class="bl2">' + (p.num||gsn(p.supId)||'-') + '</div><div class="bt"><div class="bf bl" style="width:' + (t/mxP*100) + '%"></div></div><div class="bv">' + fmt(t-(+p.dep||0),p.cur||'USD') + '</div></div>';
+    return '<div class="br"><div class="bl2">' + san(p.num||gsn(p.supId)||'-') + '</div><div class="bt"><div class="bf bl" style="width:' + (t/mxP*100) + '%"></div></div><div class="bv">' + fmt(t-(+p.dep||0),p.cur||'USD') + '</div></div>';
   }).join('') : '<p style="font-size:.56rem;color:var(--m)">No active POs</p>';
 
   // Shipment Pipeline mini-list
@@ -2462,7 +2818,7 @@ function rDash() {
       shpMap.innerHTML = Object.keys(statusCounts).length
         ? Object.entries(statusCounts).map(function(e){
             return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--ln);">' +
-              '<span class="tag ' + shpStatusClass(e[0]) + '">' + e[0] + '</span>' +
+              '<span class="tag ' + shpStatusClass(e[0]) + '">' + san(e[0]) + '</span>' +
               '<span style="font-size:.56rem;color:var(--ink);font-weight:600;">' + e[1] + '</span></div>';
           }).join('')
         : '<p style="font-size:.56rem;color:var(--m);">No shipments</p>';
@@ -2588,7 +2944,7 @@ function renderAccts() {
     var settled = s.pos.filter(function(p){return p.status==='Settled';}).length;
 
     return '<tr>' +
-      '<td style="font-weight:500;color:var(--cr);">' + s.name + '</td>' +
+      '<td style="font-weight:500;color:var(--cr);">' + san(s.name) + '</td>' +
       '<td class="num">' + s.pos.length + '</td>' +
       '<td class="num">' + fmt(totalCOGS) + '</td>' +
       '<td class="num" style="color:var(--bl);">' + fmt(totalDep) + '</td>' +
@@ -2642,10 +2998,10 @@ function rSup() {
   var f = DB.sup.filter(function(s){ return !q || (s.name||'').toLowerCase().includes(q) || (s.country||'').toLowerCase().includes(q); });
   G('sup-em').style.display = f.length ? 'none' : 'block';
   G('sup-tb').innerHTML = f.map(function(s){
-    return '<tr><td style="font-weight:500;color:var(--cr)">' + (s.name||'-') + '</td><td>' + (s.country||'-') + '</td><td>' + (s.ct||'-') + '</td><td>' + (s.email||'-') + '</td><td>' + (s.phone||'-') + '</td><td>' + (s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (s.notes||'') + '</td>' +
+    return '<tr><td style="font-weight:500;color:var(--cr)">' + san(s.name||'-') + '</td><td>' + san(s.country||'-') + '</td><td>' + san(s.ct||'-') + '</td><td>' + san(s.email||'-') + '</td><td>' + san(s.phone||'-') + '</td><td>' + san(s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(s.notes||'') + '</td>' +
       '<td><button class="ab" onclick="editSup(\'' + s.id + '\')">&#9998;</button><button class="ab" onclick="delSup(\'' + s.id + '\')">&#10005;</button></td></tr>';
   }).join('');
-  var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');
+  var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
   ['lf-sup','pf-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
   G('li-sf').innerHTML = '<option value="">All suppliers</option>' + opts;
 }
@@ -4438,7 +4794,7 @@ async function importFromSheets(entity) {
     return;
   }
   var status = G('sheets-import-status');
-  var entityNames = { sup:'Suppliers', li:'Line Items', inv:'Invoices', po:'Purchase Orders' };
+  var entityNames = { sup:'Suppliers', li:'Line Items', inv:'Invoices', po:'Purchase Orders', co:'Contacts' };
   var name = entityNames[entity] || entity;
   status.textContent = 'Reading ' + name + ' from Google Sheets master file...';
   status.style.color = 'var(--gold)';
@@ -4490,7 +4846,7 @@ async function importAllFromSheets() {
   var status = G('sheets-import-status');
   status.textContent = 'Importing all entities from master file...';
   status.style.color = 'var(--gold)';
-  var entities = ['sup', 'li', 'inv', 'po'];
+  var entities = ['sup', 'li', 'inv', 'po', 'co'];
   var results = [];
   for (var i = 0; i < entities.length; i++) {
     await importFromSheets(entities[i]);
@@ -4655,6 +5011,38 @@ function processImportRecords(entity, records, callback) {
     sv(K.p, DB.po); rPO(); rDash();
   }
 
+  else if (entity === 'co') {
+    records.forEach(function(r) {
+      var email = String(r['Email']||r['email']||'').trim().toLowerCase();
+      var name  = String(r['Name']||r['name']||'').trim();
+      if (!name && !email) { skipped++; return; }
+      var existing = email ? DB.con.find(function(c){ return (c.email||'').toLowerCase()===email; })
+                           : DB.con.find(function(c){ return c.name===name; });
+      var validStatuses = ['lead','qualified','converted','closed'];
+      var status = validStatuses.indexOf(String(r['Status']||'').toLowerCase()) >= 0
+        ? String(r['Status']).toLowerCase() : 'lead';
+      var gdprBasis = (status === 'lead' || status === 'qualified') ? 'pre_contract' : 'legitimate_interests';
+      var rec = {
+        id: existing ? existing.id : uid(),
+        name: name || (existing ? existing.name : ''),
+        email: email || (existing ? existing.email : ''),
+        phone: String(r['Phone']||r['phone']||existing&&existing.phone||''),
+        company: String(r['Company']||r['company']||existing&&existing.company||''),
+        status: status,
+        source: String(r['Source']||r['source']||existing&&existing.source||'manual'),
+        enquirySummary: String(r['Enquiry Summary']||r['enquirySummary']||existing&&existing.enquirySummary||''),
+        notes: String(r['Notes']||r['notes']||existing&&existing.notes||''),
+        createdAt: existing ? existing.createdAt : (r['Created At']||now),
+        lastContactedAt: r['Last Contacted']||existing&&existing.lastContactedAt||now,
+        gdprBasis: gdprBasis,
+        enquiries: existing ? existing.enquiries : []
+      };
+      if (existing) { var i=DB.con.findIndex(function(c){return c.id===existing.id;}); DB.con[i]=rec; updated++; }
+      else { DB.con.push(rec); added++; }
+    });
+    sv(K.co, DB.con); rCon();
+  }
+
   // Sync to Sheets
   if (SS.url && SS.auto) syncAll().catch(function(){});
 
@@ -4678,54 +5066,18 @@ async function runDataRepair() {
   status.textContent = 'Repairing...';
   status.style.color = 'var(--gold)';
 
-  var known = {
-    'INV10028': { calc_grandTotal:'31055.80', calc_cogs:'25226.00', calc_liTotal:'30755.80',
-                  calc_taxAmt:'0', calc_grossProfit:'5829.80', calc_netProfit:'5829.80',
-                  calc_margin:'18.8', calc_balanceDue:'0', lf:1098, ins:0 },
-    'INV10029': { calc_grandTotal:'957.08', calc_cogs:'894.47', calc_liTotal:'894.47',
-                  calc_taxAmt:'62.61', calc_grossProfit:'0', calc_netProfit:'0',
-                  calc_margin:'0', calc_balanceDue:'0', dep:957.08, lf:0, ins:0, taxRate:0.07 },
-    'INV10030': { calc_grandTotal:'14180', calc_cogs:'9527.82', calc_liTotal:'13730',
-                  calc_taxAmt:'0', calc_grossProfit:'4652.18', calc_netProfit:'4652.18',
-                  calc_margin:'32.8', calc_balanceDue:'10180', lf:450, ins:0 },
-    'INV10031': { calc_grandTotal:'7248.24', calc_cogs:'6370.00', calc_liTotal:'7048.24',
-                  calc_taxAmt:'0', calc_grossProfit:'878.24', calc_netProfit:'878.24',
-                  calc_margin:'12.1', calc_balanceDue:'7048.24', lf:0, ins:0 },
-    'INV10032': { calc_grandTotal:'6071.00', calc_cogs:'6071.00', calc_liTotal:'6071.00',
-                  calc_taxAmt:'0', calc_grossProfit:'0', calc_netProfit:'0',
-                  calc_margin:'0', calc_balanceDue:'6071.00', lf:0, ins:0 }
-  };
+  var countBefore = DB.inv.filter(function(inv) {
+    var isCnRecord = inv.type === 'credit_note' || inv.type === 'goodwill_credit' || (!inv.type && isCN(inv.num));
+    return !isCnRecord && inv.cnAmount !== undefined;
+  }).length;
 
-  var repaired = [];
-  DB.inv.forEach(function(inv) {
-    var k = known[inv.num];
-    if (k) {
-      Object.keys(k).forEach(function(f) { inv[f] = k[f]; });
-      inv.chargesIncluded = true;
-      inv.updAt = new Date().toISOString();
-      repaired.push(inv);
-    }
-  });
-
-  sv(K.i, DB.inv);
+  repairCalcFields();
   rInv(); rDash();
 
-  // Push repaired invoices to Sheets
-  if (SS.url && repaired.length) {
-    try {
-      for (var i = 0; i < repaired.length; i++) {
-        await syncEnt('inv', repaired[i]);
-      }
-      status.textContent = '✓ ' + repaired.length + ' invoices repaired and pushed to Sheets';
-      status.style.color = '#4ade80';
-    } catch(e) {
-      status.textContent = '✓ Repaired locally — Sheets push failed: ' + e.message;
-      status.style.color = 'var(--gold)';
-    }
-  } else {
-    status.textContent = '✓ ' + repaired.length + ' invoices repaired locally';
-    status.style.color = '#4ade80';
-  }
+  status.textContent = countBefore > 0
+    ? '✓ ' + countBefore + ' record(s) cleaned (stray cnAmount removed)'
+    : '✓ No issues found — data looks clean';
+  status.style.color = '#4ade80';
 }
 
 
@@ -4883,7 +5235,7 @@ function prevCNDoc(inv) {
   var cur=inv.cur||'USD';
   var creditAmt=+inv.cnAmount||0; // stored negative; display as negative e.g. -$450
   var linked=DB.inv.find(function(i){return i.id===inv.linkedInvId||i.num===inv.linkedInvNum;});
-  var bank=AS.bank?AS.bank.replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
+  var bank=AS.bank?san(AS.bank).replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
   var isGW=inv.type==='goodwill_credit';
   var badgeLabel=isGW?'GOODWILL CREDIT':'CREDIT NOTE';
   var docTitle=isGW?'Goodwill Credit':'Credit Note';
@@ -4932,7 +5284,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.13).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.27).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -4967,12 +5319,13 @@ var AI_SYSTEM_PROMPT = [
   'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX. Override rates per quote if needed.',
   'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
   'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
-  'Convert to PO: when a quote is Accepted, click Convert to PO to create a linked PO. The Quote ID is stored on the PO for traceability.',
+  'Convert to PO: only available when quote status is Accepted. Set the status dropdown to Accepted — the Convert to PO button appears automatically. Clicking it creates a linked PO; the quote modal title then shows a "PO RAISED" badge and the button is hidden. The PO carries the Quote ID for traceability.',
   'Feasibility Check: shown automatically in the quote modal when lines are present. Flags: DG cargo (red/critical — IMDG compliance required), container mismatch (amber — CBM vs selected freight mode), Caribbean electrical goods advisory (amber — voltage/cert check). Cleared automatically when lines are removed.',
   'Print preview: click 👁 on any quote row to open a formatted quote document in a new tab.',
   '',
   '## Rates & FX (Settings)',
   'Settings → Rates & FX. Configure: GBP/USD rate, GBP/RMB rate, GBP/BBD rate, LCL rate per CBM, FCL 20GP rate, FCL 40HQ rate, Origin charges, Destination charges, DG surcharge per line, Insurance rate (% of CIF), FPM admin fee. These defaults populate new quotes but can be overridden per quote.',
+  'Live FX rates: click ↻ Live Rates to fetch current GBP→USD/CNY/BBD rates from a free CDN-backed source (no API key). A freshness label shows when rates were last fetched (green = <8h, amber = 8–24h, red = >24h). A warning appears inside the quote modal when rates are older than 24h. Clicking Save Rates manually clears the timestamp and marks rates as manually set.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
@@ -5107,7 +5460,15 @@ var AI_SYSTEM_PROMPT = [
   'Google Sheets card: Apps Script URL, Secret Token.',
   'Integrations card: Forwarder webhook URL for Power Automate / Make.',
   'Data: Export CSV, Backup All JSON, Restore from JSON, ⚙ Repair invoice totals, Clear local data.',
-  'AI Assistant: Claude API Key (stored locally in browser only).'
+  'AI Assistant: Claude API Key (stored locally in browser only).',
+  '',
+  '## Contacts',
+  'Contacts tab → + New Contact. Stores trade leads and contacts with: Name (required), Email (required — dedup key, case-insensitive), Phone, Company, Status (lead / qualified / converted / closed), Source (manual / chat), Enquiry log (append-only), Internal notes.',
+  'GDPR basis is auto-derived from status on every save (not user-editable): lead/qualified → Art.6(1)(b) pre-contractual; converted/closed → Art.6(1)(f) legitimate interests. Contacts stale for >700 days are flagged with a Stale badge.',
+  'Dedup: saving a new contact with an email that already exists prompts to merge the enquiry into the existing record, or create a separate record anyway. Edit-path email changes are not deduped.',
+  'Quote integration: "→ Quote" button on any contact row opens the New Quote modal pre-populated with the contact\'s name (Client field) and email (Notes field). Saving that quote automatically sets the contact status to Converted. Deleting the quote reverts the contact to Qualified.',
+  'Enquiry log: each enquiry note is appended to the contact\'s enquiries[] array with timestamp and source. The count is shown in the list view. Individual enquiry entries are not shown in the edit modal.',
+  'Contacts sync to Google Sheets (st_co → "Contacts" sheet tab). syncAll() and pushAll() include the co entity; pullAll() merges Contacts on pull (Sheets wins, local-only records preserved). saveCon() triggers syncEnt("co") for real-time upsert. Import Data → Sheets → Contacts button pulls from the Contacts sheet.'
 ].join('\n');
 
 var AI_COMPLIANCE_PROMPT = [
@@ -5143,7 +5504,7 @@ var AI_COMPLIANCE_PROMPT = [
   'INV10028: calc_grandTotal=25226, calc_balanceDue=0 (Paid)',
   'INV10029: calc_grandTotal=10283, calc_balanceDue=0 (Paid)',
   'INV10030: calc_grandTotal=10180, calc_balanceDue=9730 (CN10030 $450 applied)',
-  'INV10031: calc_grandTotal=7042.19, calc_balanceDue=6842.19 (CN10031 $200 applied; lf=$200 charge)',
+  'INV10031: calc_grandTotal=7248.24, calc_balanceDue=7048.24 (lf now in line items; no separate lf charge)',
   '',
   '## Tax treatment',
   'China → Caribbean / West Africa: 0% zero-rated export. Correct.',
@@ -5265,6 +5626,7 @@ async function sendAIMsg() {
         'content-type': 'application/json',
         'x-api-key': AI.key,
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'prompt-caching-2024-07-31',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
@@ -5277,7 +5639,11 @@ async function sendAIMsg() {
           var ctx = 'The user is currently on the ' + (tabNames[tab]||tab) + ' tab of Stackd Ops.\n\n';
           var langPrefix = _lang === 'zh' ? '请用中文回答所有问题。使用正式的商业用语和国际贸易术语。\n\n' : '';
           var basePrompt = _aiMode === 'compliance' ? AI_COMPLIANCE_PROMPT : AI_SYSTEM_PROMPT;
-          return langPrefix + ctx + basePrompt;
+          var baseText = Array.isArray(basePrompt) ? basePrompt.join('\n') : String(basePrompt);
+          return [
+            { type: 'text', text: baseText, cache_control: { type: 'ephemeral' } },
+            { type: 'text', text: langPrefix + ctx }
+          ];
         })(),
         messages: _aiHistory
       })
@@ -5373,7 +5739,16 @@ function onCoLogoUpload(input) {
   if (file.size > 102400) { toast('Logo exceeds 100KB — compress before uploading for best results'); }
   var reader = new FileReader();
   reader.onload = function(e) {
-    localStorage.setItem('stackd_co_logo', e.target.result);
+    try {
+      localStorage.setItem('stackd_co_logo', e.target.result);
+    } catch(err) {
+      if (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED' || err.code === 22 || err.code === 1014) {
+        showQuotaModal();
+      } else {
+        toast('⚠ Logo save failed: ' + err.message, 5000);
+      }
+      return;
+    }
     var prev = G('co-logo-preview');
     if (prev) prev.innerHTML = '<img src="' + e.target.result + '" style="max-height:50px;max-width:160px;object-fit:contain;">';
     updCoPreview();
@@ -5689,7 +6064,7 @@ function storageHealth() {
 
 function expAll() {
   var snap = {
-    _version: 1,
+    _version: 2,
     _exported: new Date().toISOString(),
     _app: 'Stackd Ops',
     sup: DB.sup,
@@ -5699,8 +6074,15 @@ function expAll() {
     payments: DB.payments,
     sh: DB.sh,
     qt: DB.qt,
+    con: DB.con,
     settings: SS,
-    company: AS
+    company: AS,
+    branding: getCoBrand(),
+    qr: ld('st_qr'),
+    customPorts: ldArr('stackd_custom_ports'),
+    customPaymentTerms: ld('rd_pt_cust'),
+    customUOM: ld('rd_uom_cust'),
+    fpmRepairDone: localStorage.getItem('st_fpm_repair_v1') || null
   };
   var a = document.createElement('a');
   a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(snap, null, 2));
@@ -5733,12 +6115,21 @@ function doImport(e) {
       'Suppliers: '  + counts[0] + '  |  Line Items: ' + counts[1] + '\n' +
       'Invoices: '   + counts[2] + '  |  POs: ' + counts[3] + '\n' +
       'Payments: '   + counts[4] + '  |  Shipments: ' + counts[5] + '\n' +
-      'Quotes: '     + counts[6] + '\n\n' +
+      'Quotes: '     + counts[6] + '  |  Contacts: ' + (Array.isArray(data.con) ? data.con.length : 0) + '\n\n' +
       'WARNING: This will replace ALL current local data.';
     if (!confirm(msg)) { G('imp-file').value = ''; return; }
     entities.forEach(function(k) { DB[k] = Array.isArray(data[k]) ? data[k] : []; });
+    if (data.con !== undefined) {
+      DB.con = Array.isArray(data.con) ? data.con : [];
+    }
     if (data.settings) { SS = data.settings; sv(K.ss, SS); }
     if (data.company)  { AS = data.company;  sv(K.as, AS); }
+    if (data.branding) { saveCoBrand(data.branding); }
+    if (data.qr) { sv('st_qr', data.qr); QR = Object.assign({}, QR_DEFAULTS, data.qr); }
+    if (data.customPorts && data.customPorts.length) { sv('stackd_custom_ports', data.customPorts); }
+    if (data.customPaymentTerms && data.customPaymentTerms.length) { sv('rd_pt_cust', data.customPaymentTerms); }
+    if (data.customUOM && data.customUOM.length) { sv('rd_uom_cust', data.customUOM); }
+    if (data.fpmRepairDone) { localStorage.setItem('st_fpm_repair_v1', data.fpmRepairDone); }
     saveAll();
     renderAll();
     rCfg();
@@ -6214,6 +6605,13 @@ function rQte() {
   }).join('');
 }
 
+function updQtePoBtn() {
+  var st = G('qf-st') ? G('qf-st').value : '';
+  var q = EI.qt ? DB.qt.find(function(x){ return x.id === EI.qt; }) : null;
+  var poBtn = G('qt-po-btn');
+  if (poBtn) poBtn.style.display = (st === 'Accepted' && !(q && q.linkedPOId)) ? '' : 'none';
+}
+
 function openQte() {
   EI.qt = null; cQL = [];
   G('qt-title').textContent = 'New Quote';
@@ -6230,6 +6628,7 @@ function openQte() {
   G('qt-prev-btn').style.display = 'none';
   G('qt-po-btn').style.display = 'none';
   rQLT();
+  renderQteRatesWarn();
   G('ov-qt').classList.add('on');
 }
 
@@ -6238,7 +6637,7 @@ function editQte(id) {
   if (!q) return;
   EI.qt = id;
   cQL = (q.lines || []).map(function(l){ return Object.assign({}, l); });
-  G('qt-title').textContent = 'Edit Quote';
+  G('qt-title').innerHTML = 'Edit Quote' + (q.linkedPOId ? ' <span style="background:var(--gold);color:#333;font-size:.48rem;padding:2px 8px;border-radius:2px;font-weight:700;letter-spacing:.05em;vertical-align:middle;">PO RAISED</span>' : '');
   G('qf-num').value = q.num || '';
   G('qf-client').value = q.client || '';
   G('qf-dt').value = q.dt || '';
@@ -6250,9 +6649,10 @@ function editQte(id) {
   G('qf-nt').value = q.notes || '';
   G('qt-verr').textContent = '';
   G('qt-prev-btn').style.display = '';
-  G('qt-po-btn').style.display = q.linkedPOId ? 'none' : '';
+  updQtePoBtn();
   rQLT();
   calcQte();
+  renderQteRatesWarn();
   G('ov-qt').classList.add('on');
 }
 
@@ -6482,6 +6882,7 @@ function saveQte() {
     notes: G('qf-nt').value.trim(),
     lines: lines,
     linkedPOId: existQ ? (existQ.linkedPOId||'') : '',
+    sourceContactId:  cConvertId || (existQ ? (existQ.sourceContactId||'') : ''),
     calc_totalLanded: +fn(totalLanded,2),
     calc_sellUSD: +fn(sellUSD,2),
     calc_sellGBP: +fn(sellGBP,2)
@@ -6493,6 +6894,15 @@ function saveQte() {
     DB.qt.push(qt);
   }
   sv(K.qt, DB.qt);
+  if (cConvertId) {
+    var convC = DB.con.find(function(x){ return x.id === cConvertId; });
+    if (convC && convC.status !== 'converted') {
+      convC.status = 'converted';
+      convC.lastContactedAt = new Date().toISOString();
+      sv(K.co, DB.con);
+    }
+    cConvertId = null;
+  }
   closeM('ov-qt');
   rQte();
   toast('Quote ' + qt.num + ' saved');
@@ -6500,11 +6910,167 @@ function saveQte() {
 
 function delQte(id) {
   if (!confirm('Delete this quote?')) return;
-  DB.qt = DB.qt.filter(function(q){ return q.id !== id; });
+  var q = DB.qt.find(function(x){ return x.id === id; });
+  DB.qt = DB.qt.filter(function(x){ return x.id !== id; });
   sv(K.qt, DB.qt);
+  if (q && q.sourceContactId) {
+    var relC = DB.con.find(function(x){ return x.id === q.sourceContactId; });
+    if (relC && relC.status === 'converted') {
+      relC.status = 'qualified';
+      sv(K.co, DB.con);
+    }
+  }
   rQte();
   toast('Quote deleted');
 }
+
+// ── CONTACTS ───────────────────────────────────────────────────
+
+function closeQteDlg() {
+  cConvertId = null;
+  closeM('ov-qt');
+}
+
+function isConStale(c) {
+  var ref = c.lastContactedAt || c.createdAt;
+  if (!ref) return false;
+  return (Date.now() - new Date(ref).getTime()) / 86400000 > 700;
+}
+
+function rCon() {
+  var rows = DB.con.map(function(c) {
+    var stale = isConStale(c) ? ' <span class="tag" style="background:#fff3cd;color:#856404;font-size:.42rem;">STALE</span>' : '';
+    var lastDate = c.lastContactedAt ? c.lastContactedAt.slice(0,10) : '—';
+    return '<tr>' +
+      '<td>' + san(c.name) + stale + '</td>' +
+      '<td>' + san(c.company||'—') + '</td>' +
+      '<td>' + san(c.email) + '</td>' +
+      '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
+      '<td>' + san(c.source||'—') + '</td>' +
+      '<td>' + lastDate + '</td>' +
+      '<td>' + (c.enquiries||[]).length + '</td>' +
+      '<td class="ab"><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
+           '<button class="btn btn-g" onclick="openConvertToQuote(\'' + c.id + '\')">&#8594; Quote</button> ' +
+           '<button class="btn" style="background:var(--cr);color:white;" onclick="delCon(\'' + c.id + '\')">Del</button></td>' +
+    '</tr>';
+  }).join('');
+  var hasCon = DB.con.length > 0;
+  if (G('con-tbl')) G('con-tbl').style.display = hasCon ? '' : 'none';
+  if (G('con-em')) G('con-em').style.display = hasCon ? 'none' : '';
+  G('con-tbody').innerHTML = rows;
+}
+
+function openCon() {
+  EI.co = null;
+  G('con-title').textContent = 'New Contact';
+  ['ct-name','ct-email','ct-phone','ct-company','ct-notes','ct-enq-summary'].forEach(function(id){ G(id).value = ''; });
+  G('ct-status').value = 'lead';
+  G('ct-source').value = 'manual';
+  vClr('ct-name');
+  vClr('ct-email');
+  G('ov-con').classList.add('on');
+}
+
+function editCon(id) {
+  var c = DB.con.find(function(x){ return x.id === id; });
+  if (!c) return;
+  EI.co = id;
+  G('con-title').textContent = 'Edit Contact';
+  G('ct-name').value = c.name || '';
+  G('ct-email').value = c.email || '';
+  G('ct-phone').value = c.phone || '';
+  G('ct-company').value = c.company || '';
+  G('ct-status').value = c.status || 'lead';
+  G('ct-source').value = c.source || 'manual';
+  G('ct-notes').value = c.notes || '';
+  G('ct-enq-summary').value = '';
+  vClr('ct-name');
+  vClr('ct-email');
+  G('ov-con').classList.add('on');
+}
+
+function saveCon() {
+  var name   = G('ct-name').value.trim();
+  var email  = G('ct-email').value.trim();
+  var status = G('ct-status').value;
+  if (!name)  { vErr('ct-name',  'Name is required');  return; }
+  if (!email) { vErr('ct-email', 'Email is required'); return; }
+  vOk('ct-name'); vOk('ct-email');
+
+  var enqSummary = G('ct-enq-summary').value.trim();
+
+  if (!EI.co) {
+    var dup = DB.con.find(function(c){
+      return c.email.toLowerCase() === email.toLowerCase();
+    });
+    if (dup) {
+      var doMerge = confirm('A contact with this email already exists (' + dup.name + '). Merge this enquiry into the existing record?');
+      if (doMerge) {
+        dup.enquiries = dup.enquiries || [];
+        if (enqSummary) dup.enquiries.push({ id: uid(), ts: new Date().toISOString(), summary: enqSummary, source: 'manual' });
+        dup.lastContactedAt = new Date().toISOString();
+        sv(K.co, DB.con);
+        closeM('ov-con');
+        rCon();
+        toast('Enquiry merged into existing contact');
+        return;
+      }
+      if (!confirm('Create a separate contact record for this email address anyway?')) return;
+    }
+  }
+
+  var gdprBasis = (['lead','qualified'].indexOf(status) >= 0) ? 'pre_contract' : 'legitimate_interests';
+  var existC = EI.co ? DB.con.find(function(x){ return x.id === EI.co; }) : null;
+  var enqs = existC ? ((existC.enquiries || []).slice()) : [];
+  if (enqSummary) enqs.push({ id: uid(), ts: new Date().toISOString(), summary: enqSummary, source: 'manual' });
+
+  var con = {
+    id:              EI.co || uid(),
+    name:            name,
+    email:           email,
+    phone:           G('ct-phone').value.trim(),
+    company:         G('ct-company').value.trim(),
+    status:          status,
+    source:          G('ct-source').value,
+    gdprBasis:       gdprBasis,
+    createdAt:       existC ? (existC.createdAt || new Date().toISOString()) : new Date().toISOString(),
+    lastContactedAt: enqSummary ? new Date().toISOString() : (existC ? (existC.lastContactedAt || '') : ''),
+    enquiries:       enqs,
+    notes:           G('ct-notes').value.trim()
+  };
+
+  if (EI.co) {
+    var idx = DB.con.findIndex(function(x){ return x.id === EI.co; });
+    if (idx >= 0) DB.con[idx] = con; else DB.con.push(con);
+  } else {
+    DB.con.push(con);
+  }
+  sv(K.co, DB.con);
+  syncEnt('co', con).catch(function(){});
+  closeM('ov-con');
+  rCon();
+  toast('Contact saved');
+}
+
+function delCon(id) {
+  if (!confirm('Delete this contact? This cannot be undone.')) return;
+  DB.con = DB.con.filter(function(c){ return c.id !== id; });
+  sv(K.co, DB.con);
+  rCon();
+  toast('Contact deleted');
+}
+
+function openConvertToQuote(contactId) {
+  cConvertId = contactId;
+  openQte();
+  var c = DB.con.find(function(x){ return x.id === contactId; });
+  if (c) {
+    G('qf-client').value = c.name;
+    G('qf-nt').value = 'Contact: ' + c.email;
+  }
+}
+
+// ── QUOTES (continued) ─────────────────────────────────────────
 
 function qteToPoConvert() {
   var id = EI.qt;
@@ -6512,6 +7078,7 @@ function qteToPoConvert() {
   var q = DB.qt.find(function(x){ return x.id===id; });
   if (!q) return;
   if (q.linkedPOId) { toast('This quote already has a linked PO'); return; }
+  if (q.status !== 'Accepted') { toast('Set quote status to Accepted before converting to PO'); return; }
   var firstSup = (q.lines||[]).find(function(l){ return l.supId; });
   var poNum = 'PO-' + q.num;
   var po = {
@@ -6594,6 +7161,7 @@ function qteFillRates() {
   numFields.forEach(function(f){ var el=G('qr-'+f); if(el) el.value = QR[f] !== undefined ? QR[f] : QR_DEFAULTS[f]; });
   var insEl = G('qr-insRate');
   if (insEl) insEl.value = fn((QR.insRate||QR_DEFAULTS.insRate)*100, 2);
+  renderFxStatus();
 }
 
 function ratesFromForm() {
@@ -6607,7 +7175,55 @@ function ratesFromForm() {
 function saveRates() {
   Object.assign(QR, QR_DEFAULTS, ratesFromForm());
   sv('st_qr', QR);
+  localStorage.removeItem('st_qr_ts');
+  renderFxStatus();
   toast('Rates saved');
+}
+
+async function fetchLiveRates() {
+  var btn = G('qr-live-btn');
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  try {
+    var resp = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/gbp.json');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    var r = data.gbp || {};
+    if (r.usd) QR.fxGBPUSD = Math.round(r.usd * 10000) / 10000;
+    if (r.cny) QR.fxGBPRMB = Math.round(r.cny * 10000) / 10000;
+    if (r.bbd) QR.fxGBPBBD = Math.round(r.bbd * 10000) / 10000;
+    sv('st_qr', QR);
+    localStorage.setItem('st_qr_ts', new Date().toISOString());
+    qteFillRates();
+    toast('FX rates updated · ' + (data.date || new Date().toLocaleDateString('en-GB')));
+  } catch(e) {
+    toast('Rate fetch failed: ' + e.message);
+  } finally {
+    if (btn) { btn.textContent = '↻ Live Rates'; btn.disabled = false; }
+  }
+}
+
+function renderFxStatus() {
+  var el = G('qr-fx-status');
+  if (!el) return;
+  var ts = localStorage.getItem('st_qr_ts');
+  if (!ts) { el.textContent = 'No live rates fetched — values set manually'; el.style.color = '#8A8277'; return; }
+  var mins = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+  var label = mins < 1 ? 'just now' : mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.floor(mins / 60) + 'h ago' : Math.floor(mins / 1440) + 'd ago';
+  el.textContent = '↻ Live rates · fetched ' + label;
+  el.style.color = mins < 480 ? '#375623' : mins < 1440 ? '#7F6000' : '#833C00';
+}
+
+function renderQteRatesWarn() {
+  var el = G('qt-rates-warn');
+  if (!el) return;
+  var ts = localStorage.getItem('st_qr_ts');
+  var ageMs = ts ? Date.now() - new Date(ts).getTime() : Infinity;
+  if (ageMs < 86400000) { el.innerHTML = ''; return; }
+  var ageH = isFinite(ageMs) ? Math.floor(ageMs / 3600000) : null;
+  var msg = ageH !== null
+    ? 'FX rates were last refreshed ' + ageH + 'h ago. Update in Settings → Rates & FX before finalising this quote.'
+    : 'FX rates have never been refreshed from live data. Update in Settings → Rates & FX.';
+  el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;">⚠ ' + msg + '</div>';
 }
 
 // ── PRINT ─────────────────────────────────────────────────────
@@ -6848,11 +7464,11 @@ function renderPaymentsTab(invId) {
       '</tr></thead><tbody>';
     payments.forEach(function(pm) {
       html += '<tr>' +
-        '<td style="white-space:nowrap;">' + (pm.date||'-') + '</td>' +
+        '<td style="white-space:nowrap;">' + san(pm.date||'-') + '</td>' +
         '<td class="num" style="color:var(--gn);font-weight:600;">' + fmt(pm.amount,cur) + '</td>' +
-        '<td>' + (pm.method||'-') + '</td>' +
-        '<td style="font-size:.54rem;color:var(--m);">' + (pm.reference||'-') + '</td>' +
-        '<td style="font-size:.54rem;color:var(--m);">' + (pm.notes||'-') + '</td>' +
+        '<td>' + san(pm.method||'-') + '</td>' +
+        '<td style="font-size:.54rem;color:var(--m);">' + san(pm.reference||'-') + '</td>' +
+        '<td style="font-size:.54rem;color:var(--m);">' + san(pm.notes||'-') + '</td>' +
         '<td><button class="btn btn-g" style="font-size:.5rem;padding:2px 7px;" onclick="deletePayment(\'' + pm.id + '\')">\u00d7</button></td>' +
         '</tr>';
     });
@@ -6999,11 +7615,10 @@ function wireTips() {
   });
 }
 
-// Live FPM data patch — restores pre-calculated totals for the three live FPM invoices
-// (INV10029, INV10030, INV10031) if a Sheets pull wiped their calc_ fields. Runs on every
-// boot but only mutates records that exist in DB. Safe to keep; cost is negligible.
-function repairCalcFields() {
-  // Repair known invoice totals if calc_grandTotal got wiped
+// One-time migration for FPM operator data — runs once, guarded by localStorage flag.
+// Safe for other operators: their invoice numbers won't match the known set.
+function runFPMMigration() {
+  if (localStorage.getItem('st_fpm_repair_v1')) return;
   var known = {
     'INV10028': { calc_grandTotal:'31055.80', calc_cogs:'25226.00', calc_liTotal:'30755.80',
                   calc_taxAmt:'0', calc_grossProfit:'5829.80', calc_netProfit:'5829.80',
@@ -7025,10 +7640,22 @@ function repairCalcFields() {
   DB.inv.forEach(function(inv) {
     var k = known[inv.num];
     if (k) {
-      // Always repair all calc fields
       Object.keys(k).forEach(function(f) { inv[f] = k[f]; });
-      // Also fix dep field if specified
-      if (k.dep !== undefined) inv.dep = k.dep;
+      changed = true;
+    }
+  });
+  if (changed) sv(K.i, DB.inv);
+  localStorage.setItem('st_fpm_repair_v1', '1');
+}
+
+// Generic data repair — strips stray cnAmount from non-CN invoice records.
+// Operator-safe: no hardcoded invoice IDs.
+function repairCalcFields() {
+  var changed = false;
+  DB.inv.forEach(function(inv) {
+    var isCnRecord = inv.type === 'credit_note' || inv.type === 'goodwill_credit' || (!inv.type && isCN(inv.num));
+    if (!isCnRecord && inv.cnAmount !== undefined) {
+      delete inv.cnAmount;
       changed = true;
     }
   });
@@ -7056,6 +7683,7 @@ function initApp() {
     wireTips();
     wireBlurValidation();
     populateRefDataLists();
+    runFPMMigration();
     repairCalcFields();
     if (SS.url) {
       G('banner').style.display='none';
@@ -7069,6 +7697,8 @@ function initApp() {
     window.currentTab = 'dash';
     updateAIChips('dash');
     initLang();
+    renderSyncStatus();
+    checkStorageQuota();
   } catch(e) {
     console.error('initApp failed:', e);
     toast('Failed to initialise — check console (F12) for details', 5000);

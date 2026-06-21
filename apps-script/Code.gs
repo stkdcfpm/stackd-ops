@@ -1,10 +1,16 @@
 // Stackd Ops — Google Apps Script webhook
 // Deploy as Web App: Execute as Me, Access: Anyone with the link
 // Paste deployment URL into Stackd Ops → Settings → Google Sheets
+//
+// Before deploying: set the four Script Properties below in
+// Apps Script → Project Settings → Script Properties.
+// Never put real values for these in source control.
 
-var SPREADSHEET_ID = '15nefFkvuPzRl3hN4TOimEvPXpF__NMSYrOFBa0qoqSQ';
-var TOKEN          = 'fpm-stackd-2026';
-
+var _props = PropertiesService.getScriptProperties();
+var SPREADSHEET_ID          = _props.getProperty('SPREADSHEET_ID');
+var TOKEN                   = _props.getProperty('TOKEN');
+var REQUIREMENTS_TRACKER_ID = _props.getProperty('REQUIREMENTS_TRACKER_ID');
+var PROJECT_TRACKER_ID      = _props.getProperty('PROJECT_TRACKER_ID');
 var SHEET_NAMES = {
   sup:       'Suppliers',
   li:        'Line Items',
@@ -14,7 +20,8 @@ var SHEET_NAMES = {
   qt:        'Quotes',
   payments:  'Payments',
   cn:        'Credit Notes',
-  inv_lines: 'inv_lines'
+  inv_lines: 'inv_lines',
+  co:        'Contacts'
 };
 
 // Expected column headers per entity (display names, matching portal FIELD_MAPS)
@@ -26,7 +33,8 @@ var HEADERS = {
   po:       ['PO #','Supplier','Linked Invoice','Date','Status','Currency','Deposit','Notes'],
   payments: ['Payment ID','Invoice #','Date','Amount','Currency','Method','Notes'],
   sh:       ['Shipment Ref','BL Number','Vessel','Carrier','Origin Port','Dest Port','ETD','ETA','Status','Container Type','Container Number','DG Onboard','Docs Status','Forwarder Name','Forwarder Email','Linked Invoices','Notes'],
-  qt:       ['Quote #','Buyer','Date','Status','Currency','Grand Total','Margin','Notes']
+  qt:       ['Quote #','Buyer','Date','Status','Currency','Grand Total','Margin','Notes'],
+  co:       ['Contact ID','Name','Email','Phone','Company','Status','Source','Enquiry Summary','Notes','Created At','Last Contacted','GDPR Basis']
 };
 
 // Business key per entity — used for deduplication and row lookup
@@ -38,11 +46,11 @@ var BIZ_KEYS = {
   po:       'PO #',
   payments: 'Payment ID',
   sh:       'Shipment Ref',
-  qt:       'Quote #'
+  qt:       'Quote #',
+  co:       'Contact ID'
 };
 
-var REQUIREMENTS_TRACKER_ID = '1q05sSoCMmiqaNNixDWVk2_aJPwEqx37vDbOPNh2gqGw';
-var PROJECT_TRACKER_ID      = '1gC6d7ClOFpaocK_lNI685x5yMK5_UHiMgriFlF_UrLg';
+// REQUIREMENTS_TRACKER_ID and PROJECT_TRACKER_ID are loaded from Script Properties above.
 
 function doPost(e) {
   try {

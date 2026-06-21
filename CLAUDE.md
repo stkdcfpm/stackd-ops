@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.13**  
-**Test count: 169/169 PASS** (`node tests/run.js`)
+**Current version: v2.9.27**  
+**Test count: 213/213 PASS** (`node tests/run.js`)
 
 ---
 
@@ -18,7 +18,11 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | Persistence | `localStorage` only — no server, no API |
 | Tests | `tests/run.js` — Node.js VM sandbox, run with `node tests/run.js` |
 | Known gaps log | `docs/known-gaps.md` |
-| Branch for new work | `claude/code-structure-review-093lq` |
+| Version history | `docs/version-history.md` |
+| DR procedure | `docs/dr-procedure.md` |
+| Agent architecture | `docs/agent-architecture.md` |
+| Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
+| Branch for new work | `claude/jolly-curie-jrwdpr` |
 
 ---
 
@@ -27,7 +31,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 ```js
 const K = { s, l, i, p, pm, sh, qt, ss, as, au, ai }  // localStorage keys
 let DB = { sup, li, inv, po, payments, sh, qt }         // all entity arrays
-let EI = { s, l, i, cn, p, sh, qt }                    // currently-editing ID (null = new)
+let EI = { s, l, i, cn, p, sh, qt, co }                // currently-editing ID (null = new)
 let cIL = [], cPL = [], cQL = [], cCNL = []             // live line-item arrays for modals
 const QR_DEFAULTS = { fxGBPUSD, fxGBPRMB, fxGBPBBD, lclPerCBM, fcl20GP,
                       fcl40HQ, originCharges, destCharges, dgSurcharge,
@@ -50,6 +54,7 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }             // active rates (editabl
 | payments | st_pm | Payment ledger entries |
 | sh | st_sh | Shipments |
 | qt | st_qt | Quotes (v2.9.4) |
+| co | st_co | Contacts (v2.9.27) |
 
 ---
 
@@ -73,7 +78,7 @@ Versioning triggers (on `saveQte()`): cost, dutyPct, or markup changed from last
 
 - **Validation helpers:** `vErr(id, msg)` / `vOk(id)` / `vClr(id)` / `vFormOk(modalId)`
 - **XSS:** Always wrap user-supplied strings in `san()` before inserting into `innerHTML`.
-- **Async save functions** are called fire-and-forget from `onclick`. `syncEnt`/`delEnt` have internal try/catch — chain `.catch(function(){})` on all calls for consistency (see lines ~2292, ~4455, ~4483).
+- **Async save functions** are called fire-and-forget from `onclick`. `syncEnt`/`delEnt` have internal try/catch — chain `.catch(function(){})` on all calls for consistency.
 
 Reference data helpers:
 - `getAllPorts()` — merges `RD_PORTS` + `getCustomPorts()` (from `stackd_custom_ports`)
@@ -93,50 +98,38 @@ View routing: `showV(v, tab)` dispatches to render functions via the `fns` map. 
 
 ---
 
-## Version history
+## On version delivery
 
-| Version | Highlights |
-|---|---|
-| v2.9.13 | AI compliance review mode (AI_COMPLIANCE_PROMPT, toggleAIMode()); Security gate fixes: XSS san() coverage on PDF blob builders (prevInvDoc/prevPODoc), AS.bank, colour CSS injection guard; HTTPS enforcement on saveCfgUrl/saveFwdWebhook; Cloudflare Worker deployment-ID path validation; .catch() on all syncEnt/delEnt calls; vCN() rewritten to use vErr/vOk/vClr helpers; linkedInv lookup cleanup. Data fix: INV10031 grand total corrected to $7,042.19 (was $7,248.24 — lf double-counted). Tests: +21 new tests for canTransitionStatus, saveCN CN-Applied mutation, mapRec/FIELD_MAPS, unlockInv. 169/169 pass. Known gaps: SEC-GAP-001–004 documented. |
-| v2.9.12 | Invoice status locking (LOCKED_STATUSES, canTransitionStatus, read-only view, unlockInv with CONFIRM+reason+audit); Buyer Statement (per-buyer PDF, renderStatement, openStatement, prevStmtPdf); CN balance deduction (saveCN updates calc_balanceDue, iCalc.bal always live from cInv); Sheets sync rewrite (FIELD_MAPS, mapRec, syncEnt/delEnt/syncAll/pushAll, Cloudflare Worker CORS proxy, Code.gs handleBulkUpsert/handleUpsert/handleDelete/BIZ_KEYS/logAudit); STACKD_CONTEXT.md added |
-| v2.9.11 | Dashboard KPI fixes: calc_ fields as source of truth (iCalc prefers calc_grandTotal), CN exclusion from revenue/profit/count KPIs, repairCalcFields INV10028/INV10031 COGS corrections |
-| v2.9.10 | EN/ZH Language Toggle (nav toggle, setLang(), data-en/data-zh, Settings card, AI Mandarin mode); Invoice/CN Modal Separation (dedicated ov-cn modal, saveCN(), two-section v-inv, CN table); Company Branding on PDFs (Settings card, logo upload, buildPdfHeader/Footer, FPM International pre-populate) |
-| v2.9.9 | Line item dims (L/W/H, CBM/unit, DG flag); Load Calculator (multi-invoice CBM, container rec, DG flag, export); Forwarder Update Request (per-shipment pre-filled message, clipboard, webhook, Integrations settings); Quote Feasibility Check (DG warning, container rec, Caribbean electrical advisory) |
-| v2.9.8 | Credit note system fixes: PDF routing (BUG 1), negative amount display (BUG 2), balance deduction + legacy type fallback (BUG 3); Goodwill Credit feature; Sheets Line Items tab on Push All |
-| v2.9.7 | REQ-SYN-001: Sheets sync guard (`isEmptyLI` hoisted); REQ-LIB-001: invoice→library refs index (`invoiceRefs`), library picker usage indicators; Blob URL PDF previews |
-| v2.9.6 | Brand lockup — Rajdhani 700 wordmark, JetBrains Mono tagline, D in #C8312E, HR rule; drops SVG container mark |
-| v2.9.5 | Accounting export — generic CSV/JSON + Xero/QuickBooks/FreeAgent mappers, data quality check, export modal |
-| v2.9.4 | Quote engine, rate engine, per-line price versioning, Settings Rates card |
-| v2.9.3 | Incoterms + Payment Terms fields, custom ports, 5 new UN/LOCODE ports |
-| v2.9.2 | Reference data audit |
-| v2.9.1 | Price history on line items and invoices |
-| v2.8.1 | Shipment CRUD, DG flag, linked invoices |
-| v2.8.0 | Payments ledger, balance tracking |
+At the end of each version delivery, update:
+
+- **This file** — bump Current version, update Test count, update branch name if changed, tick off sprint items
+- **`docs/version-history.md`** — prepend new version row
+- **`docs/known-gaps.md`** — add new gap entries as they are identified
+- **`AI_SYSTEM_PROMPT` in `index.html`** — **mandatory on every version, no exceptions.** Review against every change shipped. If any new entity, field, feature, workflow, setting, or known quirk was added or changed, update the prompt. Ask: "If the user asked the AI about this feature, would the answer be accurate?" A version is not complete until the prompt reflects current portal behaviour.
+- **In-app changelog** — prepend a new version block with bullet-point summary of changes
+- **Raise a PR** — push the branch and raise a PR so the user can test functionality in the portal before merging
 
 ---
 
-## Known gaps
+## Known gaps (summary)
 
 See `docs/known-gaps.md` for full entries.
 
 | ID | Area | Summary |
 |---|---|---|
-| QTE-GAP-001 | Quote status | No workflow enforcement — Convert to PO available on any status; no transition guards |
-| LIB-GAP-001 | Library sync | `syncEnt('li')` not called when `invoiceRefs` mutates — remote Sheets copy will lag until next explicit lib save |
-| SEC-GAP-001 | Code.gs secrets | Spreadsheet IDs and sync token hardcoded in source — migrate to Script Properties before public repo or new collaborators |
-| SEC-GAP-002 | Sheets sync GDPR | PII transmitted externally; opt-in only; accepted until first external client. Add DPA documentation. |
-| SEC-GAP-003 | API key in browser | Anthropic key in localStorage — inherent no-server constraint; XSS hygiene is primary mitigation |
-| SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof; can be bypassed via DevTools/import |
-
----
-
-## On version delivery
-
-At the end of each version delivery, update:
-
-- **This file** — bump Current version, update Test count, add row to Version history, add any new Known gaps, tick off sprint items
-- **`docs/known-gaps.md`** — add new gap entries as they are identified
-- **`AI_SYSTEM_PROMPT` in `index.html`** — review the constant against every change shipped in the version. If any new entity, field, feature, workflow, setting, or known quirk was added or changed, update the prompt to reflect it. The prompt must always accurately describe the current state of the portal. A version is not complete until the prompt is current.
+| QTE-GAP-001 | Quote status | Convert to PO restricted to Accepted status — Fixed v2.9.25 |
+| LIB-GAP-001 | Library sync | `syncEnt('li')` not called when `invoiceRefs` mutates |
+| SEC-GAP-001 | Code.gs secrets | Spreadsheet IDs and sync token hardcoded in source |
+| SEC-GAP-002 | Sheets sync GDPR | PII transmitted externally; opt-in; accepted until first external client |
+| SEC-GAP-003 | API key in browser | Anthropic key in localStorage — inherent no-server constraint |
+| SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof |
+| SEC-GAP-011 | Sync / data integrity | `pullAll()` overwrites local records unconditionally — Sheets wins, no timestamp-based conflict resolution |
+| PROC-GAP-001 | Dashboard / accounting | Multi-currency KPI aggregation without FX conversion — Fixed v2.9.15 via `toGBP()` |
+| SDLC-GAP-003 | Staging / preview | No same-origin PR preview environment — Netlify blocked by localStorage origin isolation; gh-pages path preview deferred post-pilot |
+| CON-GAP-001 | Contacts / GDPR | No automated purge of stale contacts — manual deletion only; UI flags >700d |
+| CON-GAP-002 | Contacts / dedup | Email dedup is soft (force-new allowed); no enforcement of true uniqueness; edit-path email changes not deduped |
+| CON-GAP-004 | Contacts / data integrity | Deleting a contact leaves dangling sourceContactId on associated quotes; runtime guards no-op safely |
+| CON-GAP-005 | Contacts / import | Restoring a v2 backup (no con key) preserves live contacts rather than clearing them; WARNING dialog text is not updated to reflect this |
 
 ---
 
@@ -146,109 +139,10 @@ At the end of each version delivery, update:
 |---|---|---|
 | 8 | Quote line price versioning | ✓ done (v2.9.4) |
 | 9 | Xero export | ✓ done (v2.9.5) |
-
----
-
----
-
-# Agent Architecture & Delivery Framework
-
-## Overview
-
-This project uses a Claude Code subagent system to enforce quality gates across the delivery pipeline. Agents are independent reviewers — they do not write code or make decisions. They verify exit criteria and log evidence.
-
-**Agent files live in:** `.claude/agents/`
-**Scope:** Project-level (scoped to stackd-ops only)
-**Audit trail:** Notion (via MCP when connected)
-
----
-
-## Delivery pipeline
-
-Every feature or change must pass through these stages in order:
-
-```
-Requirement → Spec → Build → Security → QA → Release
-```
-
-No stage is skipped. No gate is bypassed. A CRITICAL issue from any gate is a hard block.
-
----
-
-## Active agents (Phase 1 — build first)
-
-| Agent | Role | Tools | Status |
-|---|---|---|---|
-| `requirements-gate` | Verifies requirements are complete, unambiguous, testable. Flags GDPR implications. | Read only | Build |
-| `spec-gate` | Reviews technical spec against requirement. Checks data model, API contracts, GDPR data flows. | Read only | Build |
-| `build-gate` | Code review against spec. Flags deviations as defects. Severity: CRITICAL / MAJOR / MINOR. | Read, Grep | Build |
-| `security-gate` | GDPR PII handling, OWASP, auth, secrets, CVEs. Hard block on release if critical issues found. | Read, Grep | Build |
-| `schema-migration-reviewer` | Reviews any future DB/storage migration scripts. Flags destructive ops and missing rollbacks. | Read only | Build |
-
----
-
-## Planned agents (Phase 2 — when Phase 1 is stable)
-
-| Agent | Role |
-|---|---|
-| `requirements-analyst` | Breaks feature requests into functional + non-functional requirements |
-| `data-modeller` | Conceptual → logical → physical data modelling, ERDs |
-| `spec-writer` | Turns rough feature ideas into full technical specs |
-| `qa-gate` | Verifies tests exist and pass for every acceptance criterion |
-| `release-planner` | Reads commits since last tag, produces structured release notes |
-| `release-gate` | Final independent check before any release. Produces release evidence document. |
-
----
-
-## Gate exit criteria
-
-| Stage | Gate agent | Exit criteria | Evidence output |
-|---|---|---|---|
-| Requirement | `requirements-gate` | Complete, unambiguous, testable. GDPR implications flagged. | Signed-off requirement → Notion |
-| Specification | `spec-gate` | Data model, API contracts, edge cases, GDPR data flows defined. | Spec approval / gaps listed → Notion |
-| Build | `build-gate` | Code matches spec. No unresolved CRITICALs. | Code review report → Git PR |
-| Security | `security-gate` | GDPR PII verified. OWASP passed. No critical CVEs. | Security clearance report → Notion |
-| QA | `qa-gate` | All acceptance criteria tested and passing. Coverage threshold met. | Test evidence report → Notion |
-| Release | `release-gate` | All prior gates passed and logged. Release evidence document produced. | Release artefact → Notion + Git tag |
-
----
-
-## Stackd-ops specific agent behaviour
-
-- **`build-gate`** must reference `index.html` as the single source file. Flag any suggestion to split into multiple files as out of scope unless a sprint item explicitly covers architecture change.
-- **`security-gate`** must check: `san()` usage on all user-supplied strings in `innerHTML`, no PII written to `localStorage` beyond operational necessity, no secrets or API keys in source.
-- **`schema-migration-reviewer`** applies to `localStorage` key changes — treat any rename, removal, or restructure of `K` keys as a migration requiring backward-compatibility check and `ldArr` safety verification.
-- **`requirements-gate`** — for FPM domain: flag any requirement that touches freight rate calculation, duty, or quote versioning for extra scrutiny. These are high-risk calculation chains.
-
----
-
-## Agent operating rules
-
-1. **Agents are read-only by default.** Only grant Write or Bash access where explicitly justified.
-2. **Every gate produces a logged evidence record.** An outcome in chat only is not an audit trail.
-3. **CRITICAL = hard block.** Nothing proceeds until resolved and gate re-run.
-4. **Agents do not write code.** If an agent starts writing implementation, the system prompt is wrong.
-5. **Do not build Phase 3 agents speculatively.** Build when a specific recurring pain justifies it.
-
----
-
-## Git convention
-
-Use conventional commits tied to requirement IDs:
-
-```
-feat(REQ-042): implement consent capture flow
-fix(REQ-037): correct duty calculation for DG freight
-test(REQ-042): add acceptance tests for consent flow
-```
-
-This binds every commit to a traceable requirement for audit purposes.
-
----
-
-## GDPR surface (stackd-ops specific)
-
-- Supplier contact data stored in `localStorage` — minimise fields, no sensitive categories
-- Quote and invoice data may contain commercially sensitive pricing — treat as confidential
-- No user authentication currently — access control is environmental (GitHub Pages, private repo)
-- Any future feature touching PII must be flagged at `requirements-gate` before spec work begins
+| 10 | Sync URL guard + status timestamp | ✓ done (v2.9.14) |
+| 11 | Security fixes (XSS, pullAll crash, testConn token, PII) | ✓ done (v2.9.14) |
+| 12 | Prompt caching (Layer 4) + section index (Layer 3A) + CLAUDE.md restructure (Layer 1) | ✓ done (v2.9.14) |
+| 13 | AI Compliance Review mode + AI_COMPLIANCE_PROMPT | ✓ done (v2.9.26) |
+| 14 | Phase 1 visual redesign — depth, radius, refined interactions | ✓ done (v2.9.26) |
+| 15 | Buyer statement fixes — Total Outstanding, ISO dates, credits negative | ✓ done (v2.9.26) |
+| 16 | Contacts/Leads entity — pipeline, GDPR basis, quote integration, dedup | ✓ done (v2.9.27) |
