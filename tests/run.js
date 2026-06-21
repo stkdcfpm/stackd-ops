@@ -3041,6 +3041,128 @@ test('rDash KPI exclusion: demo shipment not counted in in-transit (AC-4)', func
   assertEqual(inTransit, 0, 'demo shipment excluded from in-transit count');
 });
 
+// ── REQ-MTD-001: VAT Return ──────────────────────────────────────────────────
+
+test('_vatPrevQuarter: returns Q4 of prior year when called in Q1 (Jan-Mar)', function() {
+  var nowStub = { getFullYear: function(){ return 2026; }, getMonth: function(){ return 0; } };
+  var pq = ctx._vatPrevQuarter(nowStub);
+  assertEqual(pq.from, '2025-10-01', 'from = Q4 2025 start');
+  assertEqual(pq.to,   '2025-12-31', 'to = Q4 2025 end');
+});
+
+test('_vatPrevQuarter: 1 April (first day of Q2) returns Q1 of same year (AC-8)', function() {
+  var nowStub = { getFullYear: function(){ return 2026; }, getMonth: function(){ return 3; } };
+  var pq = ctx._vatPrevQuarter(nowStub);
+  assertEqual(pq.from, '2026-01-01', 'from = Q1 2026 start');
+  assertEqual(pq.to,   '2026-03-31', 'to = Q1 2026 end');
+});
+
+test('openVATReturn: export buttons disabled on open (AC-7)', function() {
+  var origShowM = ctx.showM;
+  ctx.showM = function() {};
+  ctx.openVATReturn();
+  ctx.showM = origShowM;
+  assert(mockEl('vat-export-summary').disabled === true, 'summary export disabled on open');
+  assert(mockEl('vat-export-txn').disabled === true, 'txn export disabled on open');
+});
+
+test('calcVATReturn: mixed zero-rated and GBP-taxed invoice — Box1 > 0 (AC-1)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.DB.inv.push({ id: 'i10', num: 'INV010', date: '2026-02-01', status: 'Sent',
+    type: 'invoice', cur: 'USD', buyer: 'Acme', dst: 'Barbados',
+    calc_grandTotal: 1000, calc_taxAmt: 0, calc_liTotal: 1000 });
+  ctx.DB.inv.push({ id: 'i11', num: 'INV011', date: '2026-02-10', status: 'Sent',
+    type: 'invoice', cur: 'GBP', buyer: 'UK Buyer Ltd', dst: 'United Kingdom',
+    calc_grandTotal: 1200, calc_taxAmt: 200, calc_liTotal: 1000 });
+  var r = ctx.calcVATReturn('2026-01-01', '2026-03-31');
+  assert(r.box1 > 0, 'Box 1 > 0 (tax-bearing invoice contributes)');
+  assert(r.box6 > 0, 'Box 6 > 0');
+  assertEqual(r.rows.length, 2, '2 transaction rows');
+});
+
+test('calcVATReturn: zero-rated invoice — Box1=0 Box6=grand GBP (AC-2)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.DB.inv.push({ id: 'i1', num: 'INV001', date: '2026-01-15', status: 'Sent',
+    type: 'invoice', cur: 'USD', buyer: 'Acme', dst: 'Barbados',
+    calc_grandTotal: 1000, calc_taxAmt: 0, calc_liTotal: 1000 });
+  var r = ctx.calcVATReturn('2026-01-01', '2026-03-31');
+  assertEqual(r.box1, 0, 'Box 1 = 0 for zero-rated');
+  assert(r.box6 > 0, 'Box 6 > 0');
+  assertEqual(r.rows.length, 1, '1 transaction row');
+});
+
+test('calcVATReturn: cancelled invoice excluded (AC-9)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.DB.inv.push({ id: 'i2', num: 'INV002', date: '2026-01-20', status: 'Cancelled',
+    type: 'invoice', cur: 'USD', buyer: 'Acme', dst: 'UK',
+    calc_grandTotal: 2000, calc_taxAmt: 333.33, calc_liTotal: 2000 });
+  var r = ctx.calcVATReturn('2026-01-01', '2026-03-31');
+  assertEqual(r.box1, 0, 'Box 1 = 0 (cancelled excluded)');
+  assertEqual(r.box6, 0, 'Box 6 = 0 (cancelled excluded)');
+  assertEqual(r.rows.length, 0, 'no transaction rows');
+});
+
+test('calcVATReturn: goodwill credit excluded (AC-10)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.DB.inv.push({ id: 'i3', num: 'GWC001', date: '2026-02-01', status: 'CN Issued',
+    type: 'goodwill_credit', cur: 'USD', buyer: 'Acme', dst: 'UK', cnAmount: 500 });
+  var r = ctx.calcVATReturn('2026-01-01', '2026-03-31');
+  assertEqual(r.box1, 0, 'Box 1 = 0 (goodwill excluded)');
+  assertEqual(r.box6, 0, 'Box 6 = 0 (goodwill excluded)');
+  assertEqual(r.rows.length, 0, 'no rows for goodwill credit');
+});
+
+test('calcVATReturn: no invoices in range — all boxes zero (AC-4)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.DB.inv.push({ id: 'i4', num: 'INV003', date: '2025-06-01', status: 'Paid',
+    type: 'invoice', cur: 'USD', buyer: 'Acme', dst: 'UK',
+    calc_grandTotal: 1200, calc_taxAmt: 0, calc_liTotal: 1200 });
+  var r = ctx.calcVATReturn('2026-01-01', '2026-03-31');
+  assertEqual(r.box1, 0, 'Box 1 = 0'); assertEqual(r.box6, 0, 'Box 6 = 0');
+  assertEqual(r.rows.length, 0, 'no rows');
+});
+
+test('calcVATReturn: invoice after To date excluded', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.DB.inv.push({ id: 'i5', num: 'INV004', date: '2026-04-01', status: 'Sent',
+    type: 'invoice', cur: 'USD', buyer: 'Acme', dst: 'UK',
+    calc_grandTotal: 1000, calc_taxAmt: 0, calc_liTotal: 1000 });
+  var r = ctx.calcVATReturn('2026-01-01', '2026-03-31');
+  assertEqual(r.rows.length, 0, 'invoice after To date excluded');
+});
+
+test('calcVATReturn: credit note reduces Box 6, has negative row values (AC-3)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.DB.inv.push({ id: 'i6', num: 'INV005', date: '2026-02-01', status: 'Paid',
+    type: 'invoice', cur: 'USD', buyer: 'Acme', dst: 'UK',
+    calc_grandTotal: 1000, calc_taxAmt: 0, calc_liTotal: 1000 });
+  ctx.DB.inv.push({ id: 'i7', num: 'CN10001', date: '2026-02-15', status: 'CN Applied',
+    type: 'credit_note', cur: 'USD', buyer: 'Acme', dst: 'UK', cnAmount: 200 });
+  var r = ctx.calcVATReturn('2026-01-01', '2026-03-31');
+  assertEqual(r.rows.length, 2, '2 transaction rows');
+  var cnRow = r.rows.filter(function(row){ return row.type === 'credit_note'; })[0];
+  assert(cnRow.grossOrig < 0, 'credit note gross is negative');
+  assert(cnRow.netOrig < 0, 'credit note net is negative');
+});
+
+test('calcVATReturn: box3 = box1 + box2, box5 = box3 - box4, zeros correct', function() {
+  resetDB();
+  ctx.DB.events = [];
+  var r = ctx.calcVATReturn('2026-01-01', '2026-03-31');
+  assertEqual(r.box3, r.box1 + r.box2, 'box3 = box1 + box2');
+  assertEqual(r.box5, r.box3 - r.box4, 'box5 = box3 - box4');
+  assertEqual(r.box2, 0, 'box2 = 0'); assertEqual(r.box4, 0, 'box4 = 0');
+  assertEqual(r.box7, 0, 'box7 = 0'); assertEqual(r.box8, 0, 'box8 = 0');
+  assertEqual(r.box9, 0, 'box9 = 0');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {

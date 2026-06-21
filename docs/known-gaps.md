@@ -4,6 +4,22 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ---
 
+## MTD / VAT Return
+
+### MTD-GAP-001 — Input VAT not tracked; Boxes 4 and 7 always £0.00 *(Open)*
+**Area:** MTD VAT Return — purchase-side VAT  
+**Logged:** v2.9.32  
+**Detail:** `DB.po` records purchase costs in supplier currency but no UK VAT invoices are captured. Input VAT reclaim (Box 4) and total purchases (Box 7) cannot be derived from current data. Both boxes are hardcoded £0.00 in `calcVATReturn()`. Operator must enter these figures manually in their MTD bridging tool before submission.  
+**Resolution:** Capture purchase VAT invoices in a future version (v3.x). Until then, operator responsibility acknowledged.
+
+### MTD-GAP-002 — FX rates at export time, not invoice date *(Open)*
+**Area:** MTD VAT Return — currency conversion  
+**Logged:** v2.9.32  
+**Detail:** `toGBP()` uses live-configured QR rates at export time, not the rate prevailing on each invoice date. Historic rate variance between invoice date and export date is the operator's responsibility. HMRC does not mandate a specific FX rate method for bridging software VAT returns; operator must apply judgment.  
+**Resolution:** Store per-invoice exchange rates at save time (v3.x). Until then, operator responsibility acknowledged (MTD-GAP-002).
+
+---
+
 ## Quote Engine
 
 ### QTE-GAP-001 — No quote status workflow enforcement *(Fixed v2.9.25)*
