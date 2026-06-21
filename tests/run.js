@@ -2921,6 +2921,126 @@ test('handleAIAction: create_contact pre-fills contact modal fields', function()
   assertEqual(mockEl('ct-status').value, 'lead', 'status pre-filled');
 });
 
+// ── REQ-DEMO-001: Demo mode ──────────────────────────────────────────────────
+
+test('loadDemoData: seeds 6 entity records + 1 payment + 2 events', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  assertEqual(ctx.DB.sup.length, 1, 'supplier seeded');
+  assertEqual(ctx.DB.con.length, 1, 'contact seeded');
+  assertEqual(ctx.DB.qt.length, 1, 'quote seeded');
+  assertEqual(ctx.DB.po.length, 1, 'po seeded');
+  assertEqual(ctx.DB.inv.length, 1, 'invoice seeded');
+  assertEqual(ctx.DB.sh.length, 1, 'shipment seeded');
+  assertEqual(ctx.DB.payments.length, 1, 'payment seeded');
+  assertEqual(ctx.DB.events.length, 2, '2 events seeded');
+  assert(ctx.DB.sh[0]._demo === true, 'shipment has _demo flag');
+  assert(ctx.DB.con[0]._demo === true, 'contact has _demo flag');
+});
+
+test('loadDemoData: idempotent — second call does not duplicate (AC-2)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  ctx.loadDemoData();
+  assertEqual(ctx.DB.sup.length, 1, 'no duplicate supplier');
+  assertEqual(ctx.DB.sh.length, 1, 'no duplicate shipment');
+});
+
+test('loadDemoData: all seeded records have _demo:true', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var allDemoArrays = [ctx.DB.sup, ctx.DB.con, ctx.DB.qt, ctx.DB.po, ctx.DB.inv, ctx.DB.sh, ctx.DB.payments];
+  allDemoArrays.forEach(function(arr){
+    arr.forEach(function(r){ assert(r._demo === true, 'record has _demo:true'); });
+  });
+  ctx.DB.events.forEach(function(e){ assert(e._demo === true, 'event has _demo:true'); });
+});
+
+test('loadDemoData: demo shipment is In Transit CNQAO→DEHAM (AC-8)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var sh = ctx.DB.sh[0];
+  assertEqual(sh.status, 'In Transit', 'status In Transit');
+  assertEqual(sh.originPort, 'CNQAO', 'origin port CNQAO');
+  assertEqual(sh.destPort, 'DEHAM', 'dest port DEHAM');
+  assertEqual(sh.vessel, 'MSC Altair', 'vessel MSC Altair');
+});
+
+test('loadDemoData: demo contact has 2 events (AC-9)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var conId = ctx.DB.con[0].id;
+  var events = ctx.DB.events.filter(function(e){ return e.entityId === conId; });
+  assertEqual(events.length, 2, '2 events for demo contact');
+  var verbs = events.map(function(e){ return e.verb; }).sort();
+  assert(verbs.indexOf('created') >= 0, 'created event present');
+  assert(verbs.indexOf('converted') >= 0, 'converted event present');
+});
+
+// Note: `confirm` is routed through ctx.confirm in the VM sandbox (same pattern as existing tests).
+// Tests set ctx.confirm = function(){ return true/false; } before calling, then reset after.
+test('clearDemoData: removes all _demo records (AC-6)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  ctx.DB.con.push({ id: 'real-con', name: 'Real Person', email: 'r@r.com', _demo: false });
+  ctx.confirm = function(){ return true; };
+  ctx.clearDemoData();
+  ctx.confirm = function(){ return false; };
+  assertEqual(ctx.DB.sup.length, 0, 'demo supplier removed');
+  assertEqual(ctx.DB.sh.length, 0, 'demo shipment removed');
+  assertEqual(ctx.DB.payments.length, 0, 'demo payment removed');
+  assertEqual(ctx.DB.events.length, 0, 'demo events removed');
+  assertEqual(ctx.DB.con.length, 1, 'real contact preserved');
+  assertEqual(ctx.DB.con[0].id, 'real-con', 'real contact id correct');
+});
+
+test('clearDemoData: confirm cancel leaves records intact (AC-7)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  ctx.confirm = function(){ return false; };
+  ctx.clearDemoData();
+  assertEqual(ctx.DB.sh.length, 1, 'shipment intact');
+  assertEqual(ctx.DB.events.length, 2, 'events intact');
+});
+
+test('rDash KPI exclusion: demo invoice not counted in revenue (AC-4)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var ai = ctx.DB.inv.filter(function(i){
+    if (i._demo) return false;
+    if (i.status === 'Cancelled') return false;
+    if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
+    return true;
+  });
+  assertEqual(ai.length, 0, 'demo invoice excluded from ai array');
+});
+
+test('rDash KPI exclusion: demo PO not counted in PO balance (AC-4)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var tPO = ctx.DB.po.filter(function(p){ return !p._demo && p.status !== 'Cancelled' && p.status !== 'Settled'; });
+  assertEqual(tPO.length, 0, 'demo PO excluded from tPO');
+  var tSupDep = ctx.DB.po.filter(function(p){ return !p._demo && p.status !== 'Cancelled'; });
+  assertEqual(tSupDep.length, 0, 'demo PO excluded from tSupDep');
+});
+
+test('rDash KPI exclusion: demo shipment not counted in in-transit (AC-4)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var inTransit = ctx.DB.sh.filter(function(s){ return !s._demo && s.status === 'In Transit'; }).length;
+  assertEqual(inTransit, 0, 'demo shipment excluded from in-transit count');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
