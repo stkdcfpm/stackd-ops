@@ -4,6 +4,22 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ---
 
+## MTD / VAT Return
+
+### MTD-GAP-001 — Input VAT not tracked; Boxes 4 and 7 always £0.00 *(Open)*
+**Area:** MTD VAT Return — purchase-side VAT  
+**Logged:** v2.9.32  
+**Detail:** `DB.po` records purchase costs in supplier currency but no UK VAT invoices are captured. Input VAT reclaim (Box 4) and total purchases (Box 7) cannot be derived from current data. Both boxes are hardcoded £0.00 in `calcVATReturn()`. Operator must enter these figures manually in their MTD bridging tool before submission.  
+**Resolution:** Capture purchase VAT invoices in a future version (v3.x). Until then, operator responsibility acknowledged.
+
+### MTD-GAP-002 — FX rates at export time, not invoice date *(Open)*
+**Area:** MTD VAT Return — currency conversion  
+**Logged:** v2.9.32  
+**Detail:** `toGBP()` uses live-configured QR rates at export time, not the rate prevailing on each invoice date. Historic rate variance between invoice date and export date is the operator's responsibility. HMRC does not mandate a specific FX rate method for bridging software VAT returns; operator must apply judgment.  
+**Resolution:** Store per-invoice exchange rates at save time (v3.x). Until then, operator responsibility acknowledged (MTD-GAP-002).
+
+---
+
 ## Quote Engine
 
 ### QTE-GAP-001 — No quote status workflow enforcement *(Fixed v2.9.25)*
@@ -234,3 +250,25 @@ Items deferred from initial build. Review after pilot period before wider rollou
 ### CON-GAP-005 — Restoring v2 backup preserves live contacts
 **Area:** Contacts / import
 **Detail:** If a backup file does not contain a `con` key (e.g. a pre-v2.9.27 backup), `doImport()` preserves the current live DB.con rather than clearing it. The WARNING dialog text ("This will replace ALL current local data") is not updated to reflect this contact-specific exception.
+
+---
+
+## Event Log
+
+### EVT-GAP-001 — No user-visible warning when 2,000-event cap is hit
+**Area:** Event log / UX
+**Logged:** v2.9.28
+**Detail:** When `DB.events` reaches 2,000 entries and a new event is logged via `logEv()`, the oldest entries are silently dropped (FIFO trim). No toast, modal, or indicator is shown to the user. Oldest events are lost without warning. At ~200 bytes/event, the cap is reached after sustained high-frequency activity. Expected impact: low in pilot phase.
+
+---
+
+## AI Assistant
+
+### AI-GAP-001 — No agentic order flow actions *(Narrow scope resolved v2.9.30)*
+**Area:** AI Assistant — `sendAIMsg()`, `AI_SYSTEM_PROMPT`
+**Logged:** v2.9.27 (audit 2026-06-21)
+**Resolved (narrow scope):** v2.9.30
+**Detail:** The AI assistant was a conversational Q&A tool only with no ability to pre-fill portal modals.
+**Delivered in v2.9.30 (narrow scope — REQ-AI-GAP-001):** `parseAIAction()` detects and strips `@@ACTION...@@END` blocks from AI replies. `handleAIAction()` pre-fills PO, Quote, Shipment, and Contact modals from the AI-suggested payload. A "Review in [Form]" button appears below the reply. No record is created without explicit operator Save. `AI_SYSTEM_PROMPT` updated with action block instructions. 7 unit tests added (242/242 pass).
+**Remaining open (broad scope — v3.0.x):** Agentic multi-step flow — AI reads context (quote, contact, rates), proposes a sequence of operations (create PO → notify forwarder → log shipment), operator approves each step. Requires significant architectural change beyond current single-file, no-server design. Intersects with SEC-GAP-003 (API key in browser) and would require server-side proxy.
+**Decision (broad scope):** Deferred to v3.0.x. Requires requirements gate before any build work begins.
