@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.30</title>
+<title>Stackd Ops v2.9.31</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.30</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.31</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -556,6 +556,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div class="card">
       <div class="ct">Privacy &amp; Data</div>
       <p style="font-size:.48rem;color:var(--m);margin-bottom:6px;">&#9432; <strong>Activity event log</strong> — Stackd Ops records operational events (contact created, status changes, quote conversions) in a local activity log (<code>st_ev</code>). Event records contain entity IDs and action descriptions only — no personal names. The log is capped at 2,000 entries (FIFO); oldest entries are dropped automatically. This data is local-only, included in your JSON backup, and never transmitted externally. Legal basis: Art.6(1)(f) legitimate interests in operating the trade portal.</p>
+    </div>
+    <div class="card">
+      <div class="ct">Demo Mode</div>
+      <p style="font-size:.48rem;color:var(--m);margin-bottom:10px;">Load a complete end-to-end demo scenario — supplier, contact, quote, PO, invoice, payment, and in-transit shipment — to showcase Stackd to prospects. Demo records are excluded from financial KPIs.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-s" style="font-size:.52rem;" onclick="loadDemoData()">Load Demo Data</button>
+        <button class="btn btn-g" style="font-size:.52rem;" onclick="clearDemoData()">Clear Demo Data</button>
+      </div>
     </div>
     <div class="card" id="cfg-rates">
       <div class="ct">Rates &amp; FX
@@ -948,9 +956,25 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.30</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.31</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: End-to-end Demo Mode — one-click demo data seed across all entities (supplier, contact, quote, PO, invoice, payment, shipment, events)</li>
+          <li>New: loadDemoData() seeds a complete trade scenario with D-prefix records (_demo:true); idempotent</li>
+          <li>New: clearDemoData() removes all demo records from all entity arrays with confirmation</li>
+          <li>New: [DEMO] badge on demo records in all 6 entity list tables (supplier, contact, quote, PO, invoice, shipment)</li>
+          <li>New: Dashboard KPIs exclude demo records from revenue, PO balance, net cash, and in-transit count</li>
+          <li>New: Yellow notice banner on dashboard when demo data is active, with inline Clear button</li>
+          <li>New: Demo Mode card in Settings with Load and Clear buttons</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.30</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: AI action block parsing — AI assistant can now embed structured @@ACTION blocks in replies</li>
@@ -2802,8 +2826,52 @@ function iCalc(inv) {
     bal: c.bal
   };
 }
+function _demoDate(offsetDays) {
+  var d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+function loadDemoData() {
+  var allArrays = [DB.sup, DB.con, DB.qt, DB.po, DB.inv, DB.sh, DB.payments, DB.events];
+  var hasDemo = allArrays.some(function(arr){ return arr.some(function(r){ return r._demo === true; }); });
+  if (hasDemo) { toast('Demo data already loaded'); return; }
+  var supId = 'demo-sup-001';
+  var conId = 'demo-con-001';
+  var qtId  = 'demo-qt-001';
+  var poId  = 'demo-po-001';
+  var invId = 'demo-inv-001';
+  var shId  = 'demo-sh-001';
+  var pmId  = 'demo-pm-001';
+  DB.sup.push({ id: supId, name: 'Romerry International', country: 'China', cur: 'CNY', ct: 'Li Wei', email: 'sales@romerry-qd.example', phone: '', notes: '', _demo: true });
+  DB.con.push({ id: conId, name: 'Thomas Bergmann', email: 'thomas.bergmann@apex-coldchain.example', phone: '+49 30 0000 0000', company: 'Apex Cold Chain GmbH', status: 'converted', source: 'chat', gdprBasis: 'legitimate_interests', createdAt: _demoDate(-30), lastContactedAt: _demoDate(-14), enquiries: [], notes: 'Demo contact — Apex Cold Chain Berlin buyer', _demo: true });
+  DB.qt.push({ id: qtId, num: 'DQ-0001', client: 'Apex Cold Chain GmbH', dt: _demoDate(-28), validUntil: _demoDate(7), status: 'Converted', freightMode: 'FCL 40HQ', markup: 18, currency: 'USD', notes: 'Demo quote — vertical display freezers', sourceContactId: conId, linkedPOId: poId, _demo: true, lines: [{ rid: 'demo-ql-001', lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', uom: 'pcs', qty: 20, cost: 1450, dutyPct: 3.5, hsCode: '8418.50', priceHistory: [{ v: 1, ts: new Date(Date.now() - 28*86400000).toISOString(), cost: 1450, dutyPct: 3.5, markup: 18, landed: 1634.25, sellPrice: 1928.42, note: 'Initial quote' }] }] });
+  DB.po.push({ id: poId, num: 'DPO-0001', supId: supId, cur: 'CNY', status: 'Confirmed', date: _demoDate(-28), del: '45 days from PO date', dep: 28000, oth: 0, notes: 'Demo PO — Romerry refrigeration units', lineItems: [{ rid: 'demo-pl-001', lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', uom: 'pcs', qty: 20, cost: 9875 }], _demo: true });
+  DB.inv.push({ id: invId, num: 'DINV-0001', buyer: 'Apex Cold Chain GmbH', dst: 'Hamburg, Germany', status: 'Partially Paid', type: 'invoice', cur: 'USD', date: _demoDate(-21), dep: 15600, lineItems: [{ lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', qty: 20, price: 1928.42, cost: 1450, uom: 'pcs', hs: '8418.50', duty: 3.5 }], notes: 'Demo invoice', _demo: true });
+  DB.payments.push({ id: pmId, invId: invId, invNum: 'DINV-0001', date: _demoDate(-21), amount: 15600, method: 'Bank Transfer', reference: 'DEMO-DEP-001', notes: 'Demo deposit payment', type: 'buyer_payment', creAt: new Date(Date.now() - 21*86400000).toISOString(), _demo: true });
+  DB.sh.push({ id: shId, ref: 'DSHP-0001', blNum: 'MSCD0001234', vessel: 'MSC Altair', carrier: 'MSC', originPort: 'CNQAO', destPort: 'DEHAM', etd: _demoDate(-14), eta: _demoDate(28), containerType: '40HQ', containerNum: 'MSCU1234567', dg: false, docsStatus: 'Complete', status: 'In Transit', linkedInvs: ['DINV-0001'], forwarder: 'Kuehne+Nagel', forwarderEmail: 'ops@kn-demo.example', notes: 'Demo shipment — Apex Cold Chain refrigeration units', _demo: true });
+  DB.events.push({ id: uid(), ts: new Date(Date.now() - 30*86400000).toISOString(), entityType: 'contact', entityId: conId, verb: 'created', summary: 'Contact created', actor: 'system', _demo: true });
+  DB.events.push({ id: uid(), ts: new Date(Date.now() - 14*86400000).toISOString(), entityType: 'contact', entityId: conId, verb: 'converted', summary: 'Quote DQ-0001 created — contact converted', actor: 'system', _demo: true });
+  saveAll();
+  renderAll();
+  toast('Demo data loaded — 6 entity records + 1 payment + 2 events seeded');
+}
+function clearDemoData() {
+  if (!confirm('Clear all demo data? This cannot be undone.')) return;
+  DB.sup      = DB.sup.filter(function(r){ return !r._demo; });
+  DB.con      = DB.con.filter(function(r){ return !r._demo; });
+  DB.qt       = DB.qt.filter(function(r){ return !r._demo; });
+  DB.po       = DB.po.filter(function(r){ return !r._demo; });
+  DB.inv      = DB.inv.filter(function(r){ return !r._demo; });
+  DB.sh       = DB.sh.filter(function(r){ return !r._demo; });
+  DB.payments = DB.payments.filter(function(r){ return !r._demo; });
+  DB.events   = DB.events.filter(function(r){ return !r._demo; });
+  saveAll();
+  renderAll();
+  toast('Demo data cleared');
+}
 function rDash() {
   var ai = DB.inv.filter(function(i){
+    if (i._demo) return false;
     if (i.status === 'Cancelled') return false;
     if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
     if (!i.type && isCN(i.num)) return false;
@@ -2815,7 +2883,7 @@ function rDash() {
     if (i.status==='Paid'||i.status==='Cancelled') return s;
     return s + toGBP(Math.max(0, iCalc(i).bal), i.cur||'USD');
   }, 0);
-  var tPO = DB.po.filter(function(p){ return p.status!=='Cancelled' && p.status!=='Settled'; })
+  var tPO = DB.po.filter(function(p){ return !p._demo && p.status!=='Cancelled' && p.status!=='Settled'; })
     .reduce(function(s,p){
       var t = (p.lineItems||[]).reduce(function(a,l){ return a + (+l.qty||0)*(+l.cost||0); }, 0);
       return s + toGBP(t - (+p.dep||0), p.cur||'USD');
@@ -2825,15 +2893,19 @@ function rDash() {
 
   // Net cash: total buyer deposits received minus total supplier deposits paid minus goodwill credits issued
   var tBuyerDep = ai.reduce(function(s,i){ return s + toGBP(+i.dep||0, i.cur||'USD'); }, 0);
-  var tSupDep = DB.po.filter(function(p){ return p.status!=='Cancelled'; })
+  var tSupDep = DB.po.filter(function(p){ return !p._demo && p.status!=='Cancelled'; })
     .reduce(function(s,p){ return s + toGBP(+p.dep||0, p.cur||'USD'); }, 0);
-  var tGoodwillCredits = DB.inv.filter(function(i){ return i.type==='goodwill_credit' && i.status!=='Cancelled'; })
+  var tGoodwillCredits = DB.inv.filter(function(i){ return !i._demo && i.type==='goodwill_credit' && i.status!=='Cancelled'; })
     .reduce(function(s,i){ return s + toGBP(Math.abs(+i.cnAmount||0), i.cur||'USD'); }, 0);
   var netCash = tBuyerDep - tSupDep - tGoodwillCredits;
 
-  var inTransit = DB.sh.filter(function(s){ return s.status === 'In Transit'; }).length;
+  var inTransit = DB.sh.filter(function(s){ return !s._demo && s.status === 'In Transit'; }).length;
 
-  G('kpis').innerHTML =
+  var hasDemo = DB.inv.some(function(i){ return i._demo; }) || DB.sh.some(function(s){ return s._demo; }) || DB.po.some(function(p){ return p._demo; });
+  var demoBanner = hasDemo
+    ? '<div style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:8px 12px;font-size:.52rem;border-radius:3px;margin-bottom:10px;">&#9888; Demo data active — financial KPIs exclude demo records. <button onclick="clearDemoData()" style="margin-left:8px;font-size:.48rem;padding:1px 6px;cursor:pointer;border:1px solid #92400e;background:transparent;color:#92400e;border-radius:2px;">Clear Demo Data</button></div>'
+    : '';
+  G('kpis').innerHTML = demoBanner +
     '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR,'GBP') + '</div><div class="ks">' + ai.length + ' active &middot; &asymp;&thinsp;GBP</div></div>' +
     '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP,'GBP') + '</div><div class="ks">After all costs &middot; &asymp;&thinsp;GBP</div></div>' +
     '<div class="kpi"><div class="kl">Avg Margin</div><div class="kv ' + (aM>=20?'g':aM>=10?'gold':'r') + '">' + fp(aM) + '</div><div class="ks">' + mg.length + ' invoices</div></div>' +
@@ -2850,7 +2922,7 @@ function rDash() {
       var c = iCalc(inv);
       var sc = (inv.status||'draft').toLowerCase().replace(/ /g, '-');
       return '<div class="pi" onclick="editInv(\'' + inv.id + '\')">' +
-        '<span class="pref">' + (san(inv.num)||'-') + '</span>' +
+        '<span class="pref">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</span>' +
         '<span class="pbuy">' + (san(inv.buyer)||'-') + '</span>' +
         '<span class="pdst">' + san(inv.dst||'') + '</span>' +
         '<span class="tag s-' + sc + '">' + (inv.status||'Draft') + '</span>' +
@@ -3096,7 +3168,7 @@ function rSup() {
   var f = DB.sup.filter(function(s){ return !q || (s.name||'').toLowerCase().includes(q) || (s.country||'').toLowerCase().includes(q); });
   G('sup-em').style.display = f.length ? 'none' : 'block';
   G('sup-tb').innerHTML = f.map(function(s){
-    return '<tr><td style="font-weight:500;color:var(--cr)">' + san(s.name||'-') + '</td><td>' + san(s.country||'-') + '</td><td>' + san(s.ct||'-') + '</td><td>' + san(s.email||'-') + '</td><td>' + san(s.phone||'-') + '</td><td>' + san(s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(s.notes||'') + '</td>' +
+    return '<tr><td style="font-weight:500;color:var(--cr)">' + san(s.name||'-') + (s._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td><td>' + san(s.country||'-') + '</td><td>' + san(s.ct||'-') + '</td><td>' + san(s.email||'-') + '</td><td>' + san(s.phone||'-') + '</td><td>' + san(s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(s.notes||'') + '</td>' +
       '<td><button class="ab" onclick="editSup(\'' + s.id + '\')">&#9998;</button><button class="ab" onclick="delSup(\'' + s.id + '\')">&#10005;</button></td></tr>';
   }).join('');
   var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
@@ -3724,7 +3796,7 @@ function rInv() {
     var sc=(inv.status||'draft').toLowerCase().replace(/ /g,'-');
     var balDue = c.bal;
     return '<tr>' +
-      '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + '</td>' +
+      '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td><td>' + (san(inv.dst)||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (inv.date||'-') + '</td>' +
       '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
@@ -4021,7 +4093,7 @@ function rPO() {
     var dep=+po.dep||0, bal=liT+(+po.oth||0)-dep, cur=po.cur||'USD';
     var sc=(po.status||'draft').toLowerCase().replace(/ /g,'-');
     return '<tr>' +
-      '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + san(po.num||'-') + '</td>' +
+      '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + san(po.num||'-') + (po._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(gsn(po.supId)) + '</td>' +
       '<td style="color:var(--m);font-size:.54rem;">' + san(po.invNum||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (po.date||'-') + '</td>' +
@@ -5439,7 +5511,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.30).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.31).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -5634,7 +5706,15 @@ var AI_SYSTEM_PROMPT = [
   'Supplier→Contact link: each contact record has a supplierId (string or null) and role (supplier_contact or empty). A contact may be linked to at most one supplier at a time. When editing a supplier, a "Contacts" sub-panel appears showing all linked contacts with an Unlink button each. "+ Link Contact" opens a prompt-based picker showing contacts not yet linked to another supplier. "+ New Contact" opens the Contact modal with the Supplier dropdown pre-filled. Contacts already linked to a different supplier are excluded from the picker. The Contacts list table shows a Supplier column with the linked supplier name (or — if none). Deleting a supplier nulls supplierId on all previously linked contacts before the async delete. supplierId and role are not synced to Google Sheets (omitted by mapRec()).',
   'Retention cap: 2,000 events maximum (FIFO). When the cap is exceeded, the oldest entries are silently dropped. No user-visible warning is shown (EVT-GAP-001).',
   'The event log is included in JSON backups (Settings → Data → Backup All JSON) and restored on import. It is not counted in the restore confirm dialog (operational metadata, not user records).',
-  'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, or Contact and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.'
+  'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, or Contact and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.',
+  '',
+  '## Demo Mode',
+  'Settings → Demo Mode card → Load Demo Data: seeds a complete end-to-end trade scenario across all entities — 1 supplier (Romerry International), 1 contact (Thomas Bergmann / Apex Cold Chain GmbH), 1 quote (DQ-0001), 1 PO (DPO-0001), 1 invoice (DINV-0001), 1 payment, 1 shipment (DSHP-0001, In Transit CNQAO→DEHAM), and 2 activity events. All demo records carry _demo:true.',
+  'Demo records are excluded from all financial KPIs on the Dashboard (revenue, net profit, outstanding, PO balance, net cash, in-transit count). A yellow banner appears above KPIs when demo data is active.',
+  'All six entity list tables (Suppliers, Contacts, Quotes, POs, Invoices, Shipments) show a purple [DEMO] badge on demo records.',
+  'D-prefix reference numbers (DQ-, DPO-, DINV-, DSHP-) are reserved for demo records — do not create real records with these prefixes.',
+  'Clear Demo Data button (Settings or the banner) removes all _demo:true records from all entity arrays. Requires confirmation.',
+  'loadDemoData() is idempotent — if any _demo:true record already exists, it will not seed duplicate records.'
 ].join('\n');
 
 var AI_COMPLIANCE_PROMPT = [
@@ -6421,7 +6501,7 @@ function rShp() {
     var sc = shpStatusClass(s.status);
     var dgPill = s.dg ? '<span style="background:#c00;color:white;font-size:.4rem;padding:1px 4px;border-radius:2px;margin-left:3px;">DG</span>' : '';
     return '<tr>' +
-      '<td style="font-weight:500;color:var(--cr);">' + san(s.ref||'-') + dgPill + '</td>' +
+      '<td style="font-weight:500;color:var(--cr);">' + san(s.ref||'-') + dgPill + (s._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(s.blNum||'-') + '</td>' +
       '<td>' + san(s.vessel||'-') + '</td>' +
       '<td>' + san(s.carrier||'-') + '</td>' +
@@ -6829,7 +6909,7 @@ function rQte() {
     var c = cQte(q);
     var stCls = { 'Accepted':'s-confirmed', 'Declined':'s-draft', 'Sent':'s-sent', 'Expired':'s-draft' }[q.status] || 's-draft';
     return '<tr>'
-      + '<td style="font-weight:600;color:var(--cr);">' + san(q.num) + '</td>'
+      + '<td style="font-weight:600;color:var(--cr);">' + san(q.num) + (q._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>'
       + '<td>' + san(q.client||'') + '</td>'
       + '<td>' + san(q.dt||'') + '</td>'
       + '<td style="color:var(--m);">' + san(q.validUntil||'') + '</td>'
@@ -7186,7 +7266,7 @@ function rCon() {
     var stale = isConStale(c) ? ' <span class="tag" style="background:#fff3cd;color:#856404;font-size:.42rem;">STALE</span>' : '';
     var lastDate = c.lastContactedAt ? c.lastContactedAt.slice(0,10) : '—';
     return '<tr>' +
-      '<td>' + san(c.name) + stale + '</td>' +
+      '<td>' + san(c.name) + stale + (c._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(c.company||'—') + '</td>' +
       '<td>' + san(c.email) + '</td>' +
       '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +

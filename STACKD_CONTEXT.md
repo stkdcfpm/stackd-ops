@@ -227,7 +227,7 @@ Supabase backend, multi-tenancy, MFA, RBAC, server-side API proxy, referral mech
 
 | # | Item | Owner | Status |
 |---|------|-------|--------|
-| S3-1 | Demo shipment mode — simulated live tracking without BL | Claude Code | To Do |
+| S3-1 | Demo shipment mode — end-to-end demo data seed across all entities | Claude Code | ✓ Done (v2.9.31) |
 | S3-2 | MTD-compatible VAT export | Claude Code | To Do |
 | S3-3 | ICO registration | You | Backlog |
 | S3-4 | Deploy getstackdops.com to Vercel | You | Pending |
