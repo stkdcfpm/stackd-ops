@@ -10,8 +10,8 @@
 | Field | Value |
 |-------|-------|
 | Last updated | 21 June 2026 |
-| Current version | v2.9.28 |
-| Test count | 227 / 227 passing |
+| Current version | v2.9.32 |
+| Test count | 263 / 263 passing |
 | Build branch | main |
 | Deployment | stkdcfpm.github.io/stackd-ops |
 | Website | getstackdops.com (Vercel — deploy pending) |

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.31</title>
+<title>Stackd Ops v2.9.32</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.31</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.32</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -286,6 +286,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <button class="btn btn-s" data-en="+ New Invoice" data-zh="+ 新建发票" onclick="openInv()">+ New Invoice</button>
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
     <button class="btn btn-g" onclick="openAcctExport('inv')">&#8595; Accounting Export</button>
+    <button class="btn btn-g" onclick="openVATReturn()">&#128196; VAT Return</button>
     <button class="btn btn-g" onclick="openStatement()" title="Buyer Statement">&#128196; Statement</button>
   </div>
   <div class="tw" style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Invoice #</th><th>Buyer</th><th>Dest.</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">COGS</th><th class="num">Gross Profit</th><th class="num">Net Profit</th><th class="num">Margin</th><th class="num">Tax%</th><th class="num">Dep. Rec.</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="inv-tb"></tbody></table></div>
@@ -685,6 +686,39 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- VAT RETURN MODAL -->
+<div class="ov" id="ov-vat" onclick="if(event.target===this)closeM('ov-vat')">
+  <div class="modal" style="max-width:600px;">
+    <div class="mh">
+      <h2>VAT Return</h2>
+      <span style="font-family:'DM Mono',monospace;font-size:.5rem;color:var(--m);margin-left:8px;">Making Tax Digital &mdash; VAT 100</span>
+      <button class="mx" onclick="closeM('ov-vat')">&#215;</button>
+    </div>
+    <div class="mb">
+      <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;">
+        <div>
+          <label class="lbl">From</label>
+          <input type="date" id="vat-from" class="inp" style="width:150px;">
+        </div>
+        <div>
+          <label class="lbl">To</label>
+          <input type="date" id="vat-to" class="inp" style="width:150px;">
+        </div>
+        <button class="btn btn-s" onclick="runVATCalc()">Calculate</button>
+      </div>
+      <div id="vat-boxes" style="margin-bottom:14px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button id="vat-export-summary" class="btn btn-s" style="font-size:.52rem;" onclick="exportVATSummary()" disabled>&#8659; Export VAT Return CSV</button>
+        <button id="vat-export-txn"     class="btn btn-g" style="font-size:.52rem;" onclick="exportVATTransactions()" disabled>&#8659; Export Transactions CSV</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);line-height:1.6;">Export the VAT Return CSV and import into your MTD bridging software (e.g. ANNA Money, Sage, BTC Software) for HMRC submission. Boxes 2, 4, 7, 8, 9 are &pound;0.00 &mdash; input VAT tracking is not yet supported (MTD-GAP-001).</p>
+    </div>
+    <div class="mf">
+      <button class="btn btn-g" onclick="closeM('ov-vat')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ACCOUNTING EXPORT MODAL -->
 <div class="ov" id="ov-acct-exp" onclick="if(event.target===this)closeM('ov-acct-exp')">
   <div class="modal" style="max-width:520px;">
@@ -956,9 +990,23 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.31</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.32</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: MTD-compatible VAT Return (REQ-MTD-001) — HMRC Making Tax Digital VAT 100 calculator on Invoices tab</li>
+          <li>New: calcVATReturn(from, to) computes all 9 statutory VAT boxes from invoice data; credit notes reduce Box 1 and Box 6; goodwill credits excluded</li>
+          <li>New: Export VAT Return CSV (9-box summary for MTD bridging import) and Export Transactions CSV (digital records listing)</li>
+          <li>New: Default date range = previous calendar quarter; export buttons disabled until Calculate is run</li>
+          <li>Known gaps: MTD-GAP-001 (Boxes 4, 7 always £0 — input VAT not tracked); MTD-GAP-002 (QR rates at export time, not historic)</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.31</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: End-to-end Demo Mode — one-click demo data seed across all entities (supplier, contact, quote, PO, invoice, payment, shipment, events)</li>
@@ -3780,6 +3828,146 @@ function autoPos(inv) {
   toast(cnt+' PO'+(cnt!==1?'s':'')+' auto-generated');
 }
 
+// ── VAT RETURN (MTD) ───────────────────────────────────────────
+function _vatPrevQuarter(now) {
+  if (!now) now = new Date();
+  var y = now.getFullYear();
+  var q = Math.floor(now.getMonth() / 3);
+  if (q === 0) { q = 4; y -= 1; }
+  var starts = [null, '01-01', '04-01', '07-01', '10-01'];
+  var ends   = [null, '03-31', '06-30', '09-30', '12-31'];
+  return { from: y + '-' + starts[q], to: y + '-' + ends[q] };
+}
+function calcVATReturn(from, to) {
+  var box1 = 0, box6 = 0;
+  var rows = [];
+  DB.inv.forEach(function(inv) {
+    if (inv.date < from || inv.date > to) return;
+    if (inv.status === 'Cancelled') return;
+    if (inv.type === 'goodwill_credit') return;
+    var c = iCalc(inv);
+    var cur = inv.cur || 'USD';
+    var grossGBP = toGBP(c.grand, cur);
+    var taxGBP   = toGBP(c.tax,   cur);
+    var netGBP   = grossGBP - taxGBP;
+    var sign = (inv.type === 'credit_note') ? -1 : 1;
+    box1 += sign * taxGBP;
+    box6 += sign * netGBP;
+    rows.push({
+      num:       inv.num   || '-',
+      date:      inv.date  || '-',
+      buyer:     inv.buyer || '-',
+      dst:       inv.dst   || '-',
+      type:      inv.type  || 'invoice',
+      status:    inv.status || '-',
+      cur:       cur,
+      grossOrig: sign * c.grand,
+      netOrig:   sign * (c.grand - c.tax),
+      taxOrig:   sign * c.tax,
+      netGBP:    sign * netGBP,
+      taxGBP:    sign * taxGBP
+    });
+  });
+  rows.sort(function(a, b) {
+    if (a.date < b.date) return -1;
+    if (a.date > b.date) return  1;
+    if (a.num  < b.num)  return -1;
+    if (a.num  > b.num)  return  1;
+    return 0;
+  });
+  box1 = Math.round(box1 * 100) / 100;
+  box6 = Math.round(box6 * 100) / 100;
+  var box3 = Math.round(box1 * 100) / 100;
+  var box5 = Math.round(box3 * 100) / 100;
+  return { box1: box1, box2: 0, box3: box3, box4: 0, box5: box5,
+           box6: box6, box7: 0, box8: 0, box9: 0, rows: rows };
+}
+function openVATReturn() {
+  var pq = _vatPrevQuarter();
+  G('vat-from').value = pq.from;
+  G('vat-to').value   = pq.to;
+  G('vat-export-summary').disabled = true;
+  G('vat-export-txn').disabled     = true;
+  G('vat-boxes').innerHTML = '';
+  showM('ov-vat');
+}
+function runVATCalc() {
+  var from = G('vat-from').value;
+  var to   = G('vat-to').value;
+  if (!from || !to) { toast('Enter From and To dates'); return; }
+  if (from > to) { toast('From date must be before To date'); return; }
+  var r = calcVATReturn(from, to);
+  window._vatResult = { from: from, to: to, result: r };
+  var labels = [
+    'VAT due on sales and other outputs',
+    'VAT due on acquisitions from EC (post-Brexit £0)',
+    'Total VAT due (Box 1 + Box 2)',
+    'VAT reclaimed on purchases',
+    'Net VAT payable to HMRC (Box 3 − Box 4)',
+    'Total value of sales excluding VAT',
+    'Total value of purchases excluding VAT',
+    'Total value of goods supplied to EC (post-Brexit £0)',
+    'Total value of goods acquired from EC (post-Brexit £0)'
+  ];
+  var vals = [r.box1, r.box2, r.box3, r.box4, r.box5, r.box6, r.box7, r.box8, r.box9];
+  G('vat-boxes').innerHTML =
+    '<table style="width:100%;border-collapse:collapse;font-size:.56rem;">' +
+    '<thead><tr style="border-bottom:1px solid var(--bd);">' +
+    '<th style="text-align:left;padding:4px 6px;color:var(--m);">Box</th>' +
+    '<th style="text-align:left;padding:4px 6px;color:var(--m);">Description</th>' +
+    '<th style="text-align:right;padding:4px 6px;color:var(--m);">GBP</th>' +
+    '</tr></thead><tbody>' +
+    labels.map(function(lbl, i) {
+      var v = vals[i];
+      return '<tr style="border-bottom:1px solid var(--bd);">' +
+        '<td style="padding:5px 6px;font-weight:600;">Box ' + (i + 1) + '</td>' +
+        '<td style="padding:5px 6px;color:var(--m);">' + lbl + '</td>' +
+        '<td style="padding:5px 6px;text-align:right;font-weight:500;">' + fmt(v, 'GBP') + '</td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table>';
+  G('vat-export-summary').disabled = false;
+  G('vat-export-txn').disabled     = false;
+}
+function exportVATSummary() {
+  if (!window._vatResult) return;
+  var r = window._vatResult;
+  var res = r.result;
+  var rows = [
+    ['Box', 'Description', 'GBP'],
+    ['Box 1', 'VAT due on sales and other outputs',                    res.box1.toFixed(2)],
+    ['Box 2', 'VAT due on acquisitions from EC (post-Brexit £0)', res.box2.toFixed(2)],
+    ['Box 3', 'Total VAT due (Box 1 + Box 2)',                         res.box3.toFixed(2)],
+    ['Box 4', 'VAT reclaimed on purchases',                            res.box4.toFixed(2)],
+    ['Box 5', 'Net VAT payable to HMRC (Box 3 - Box 4)',               res.box5.toFixed(2)],
+    ['Box 6', 'Total value of sales excluding VAT',                    res.box6.toFixed(2)],
+    ['Box 7', 'Total value of purchases excluding VAT',                res.box7.toFixed(2)],
+    ['Box 8', 'Total value of goods supplied to EC (post-Brexit £0)', res.box8.toFixed(2)],
+    ['Box 9', 'Total value of goods acquired from EC (post-Brexit £0)', res.box9.toFixed(2)]
+  ];
+  var csv = rows.map(function(row) {
+    return row.map(function(c){ return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+  dlText('VAT-Return-' + r.from + '-to-' + r.to + '.csv', csv, 'text/csv');
+}
+function exportVATTransactions() {
+  if (!window._vatResult) return;
+  var r = window._vatResult;
+  var header = ['Invoice #','Date','Buyer','Destination','Type','Status','Currency',
+                'Gross (orig cur)','Net (orig cur)','Tax (orig cur)','Net GBP','Tax GBP'];
+  var dataRows = r.result.rows.map(function(row) {
+    return [
+      row.num, row.date, row.buyer, row.dst, row.type, row.status, row.cur,
+      row.grossOrig.toFixed(2), row.netOrig.toFixed(2), row.taxOrig.toFixed(2),
+      row.netGBP.toFixed(2), row.taxGBP.toFixed(2)
+    ];
+  });
+  var csv = [header].concat(dataRows).map(function(row) {
+    return row.map(function(c){ return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+  dlText('VAT-Transactions-' + r.from + '-to-' + r.to + '.csv', csv, 'text/csv');
+}
+
 // ── INVOICES TABLE ─────────────────────────────────────────────
 function rInv() {
   var q=(G('inv-q')&&G('inv-q').value||'').toLowerCase(), sf=G('inv-sf')&&G('inv-sf').value||'';
@@ -5511,7 +5699,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.31).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.32).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -5707,6 +5895,12 @@ var AI_SYSTEM_PROMPT = [
   'Retention cap: 2,000 events maximum (FIFO). When the cap is exceeded, the oldest entries are silently dropped. No user-visible warning is shown (EVT-GAP-001).',
   'The event log is included in JSON backups (Settings → Data → Backup All JSON) and restored on import. It is not counted in the restore confirm dialog (operational metadata, not user records).',
   'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, or Contact and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.',
+  '',
+  '## VAT Return (MTD)',
+  'Invoices tab → VAT Return button. Opens a Making Tax Digital (VAT 100) calculator. Select From and To dates (defaults to previous calendar quarter). Click Calculate to see all 9 HMRC VAT boxes computed from invoices in the period.',
+  'Box 1: output VAT on sales (sum of iCalc(inv).tax for non-cancelled, non-goodwill-credit invoices in period; credit notes reduce it). Box 6: total net sales value (grand − tax, GBP). Boxes 2, 4, 7, 8, 9 are always £0 — post-Brexit EC boxes and input VAT not tracked (MTD-GAP-001).',
+  'Export VAT Return CSV: 9-box summary in HMRC-labelled rows — import into MTD bridging software (ANNA Money, Sage, BTC Software) for HMRC submission. Export Transactions CSV: one row per included invoice/credit note with Gross, Net, Tax in original currency and GBP. Credit note rows carry negative values. Goodwill credits are excluded from both CSVs.',
+  'Both export buttons are disabled until Calculate has been run. All GBP values use configured QR rates at export time (MTD-GAP-002 — not historic rates).',
   '',
   '## Demo Mode',
   'Settings → Demo Mode card → Load Demo Data: seeds a complete end-to-end trade scenario across all entities — 1 supplier (Romerry International), 1 contact (Thomas Bergmann / Apex Cold Chain GmbH), 1 quote (DQ-0001), 1 PO (DPO-0001), 1 invoice (DINV-0001), 1 payment, 1 shipment (DSHP-0001, In Transit CNQAO→DEHAM), and 2 activity events. All demo records carry _demo:true.',

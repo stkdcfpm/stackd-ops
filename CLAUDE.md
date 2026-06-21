@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.31**  
-**Test count: 252/252 PASS** (`node tests/run.js`)
+**Current version: v2.9.32**  
+**Test count: 263/263 PASS** (`node tests/run.js`)
 
 ---
 
@@ -131,6 +131,8 @@ See `docs/known-gaps.md` for full entries.
 | CON-GAP-002 | Contacts / dedup | Email dedup is soft (force-new allowed); no enforcement of true uniqueness; edit-path email changes not deduped |
 | CON-GAP-004 | Contacts / data integrity | Deleting a contact leaves dangling sourceContactId on associated quotes; runtime guards no-op safely |
 | CON-GAP-005 | Contacts / import | Restoring a v2 backup (no con key) preserves live contacts rather than clearing them; WARNING dialog text is not updated to reflect this |
+| MTD-GAP-001 | MTD / input VAT | Boxes 4 and 7 are always £0.00 — no purchase VAT invoices captured; input VAT reclaim not supported in v2.9.32 |
+| MTD-GAP-002 | MTD / FX rates | `toGBP()` uses configured QR rates at export time, not the rate on each invoice date — historic rate variance is operator's responsibility |
 
 ---
 
