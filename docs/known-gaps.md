@@ -248,11 +248,11 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ## AI Assistant
 
-### AI-GAP-001 — No agentic order flow actions
+### AI-GAP-001 — No agentic order flow actions *(Narrow scope resolved v2.9.30)*
 **Area:** AI Assistant — `sendAIMsg()`, `AI_SYSTEM_PROMPT`
 **Logged:** v2.9.27 (audit 2026-06-21)
-**Detail:** The AI assistant is a conversational Q&A tool only. It answers questions about the portal but has no ability to take actions — it cannot draft a PO, create an invoice, pre-fill a shipment, or trigger any workflow step. All order flow operations require manual navigation and data entry by the operator.
-**Potential scope (narrow — v2.9.x):** A new `action` response type in `sendAIMsg()` — AI returns a structured JSON payload alongside its text reply; the portal intercepts it and pre-fills the relevant modal for user review and confirmation before save. No record is created without explicit user action.
-**Potential scope (broad — v3.0.x):** Agentic multi-step flow — AI reads context (quote, contact, rates), proposes a sequence of operations (create PO → notify forwarder → log shipment), operator approves each step. Requires significant architectural change beyond current single-file, no-server design.
-**Risk level:** Narrow scope is low risk and stays within current architecture. Broad scope intersects with SEC-GAP-003 (API key in browser) and would require server-side proxy (v3.0.0).
-**Decision:** Unscoped. Requires requirements gate before any build work begins. Formal requirement raised 2026-06-21.
+**Resolved (narrow scope):** v2.9.30
+**Detail:** The AI assistant was a conversational Q&A tool only with no ability to pre-fill portal modals.
+**Delivered in v2.9.30 (narrow scope — REQ-AI-GAP-001):** `parseAIAction()` detects and strips `@@ACTION...@@END` blocks from AI replies. `handleAIAction()` pre-fills PO, Quote, Shipment, and Contact modals from the AI-suggested payload. A "Review in [Form]" button appears below the reply. No record is created without explicit operator Save. `AI_SYSTEM_PROMPT` updated with action block instructions. 7 unit tests added (242/242 pass).
+**Remaining open (broad scope — v3.0.x):** Agentic multi-step flow — AI reads context (quote, contact, rates), proposes a sequence of operations (create PO → notify forwarder → log shipment), operator approves each step. Requires significant architectural change beyond current single-file, no-server design. Intersects with SEC-GAP-003 (API key in browser) and would require server-side proxy.
+**Decision (broad scope):** Deferred to v3.0.x. Requires requirements gate before any build work begins.
