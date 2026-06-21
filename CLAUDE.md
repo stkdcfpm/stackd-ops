@@ -21,6 +21,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | Version history | `docs/version-history.md` |
 | DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
+| Product roadmap | `docs/product-roadmap.md` — v3.0 strategy, 12-month plan, open questions |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
 | Branch for new work | `claude/jolly-curie-jrwdpr` |
 
@@ -130,6 +131,13 @@ See `docs/known-gaps.md` for full entries.
 | CON-GAP-002 | Contacts / dedup | Email dedup is soft (force-new allowed); no enforcement of true uniqueness; edit-path email changes not deduped |
 | CON-GAP-004 | Contacts / data integrity | Deleting a contact leaves dangling sourceContactId on associated quotes; runtime guards no-op safely |
 | CON-GAP-005 | Contacts / import | Restoring a v2 backup (no con key) preserves live contacts rather than clearing them; WARNING dialog text is not updated to reflect this |
+| V3-GAP-001 | PMF / strategy | No second-operator validation — interview programme required before v3.0 code starts |
+| V3-GAP-002 | Migration / data integrity | localStorage→Postgres migration not scripted or validated; first-class v3.0 deliverable required |
+| V3-GAP-003 | Architecture | `org_id` schema and Supabase Auth not yet designed; highest-risk irreversible decision |
+| V3-GAP-004 | SDLC / testing | 213-test suite is localStorage-coupled; becomes dead weight post-migration; test strategy needed |
+| V3-GAP-005 | Commercial | No commercial baseline audit; price anchor missing |
+| V3-GAP-006 | CRM | Supplier → Contact linkage not implemented; deferred to v3.x |
+| V3-GAP-007 | Data management | No event log / audit trail per entity; deferred to v3.x |
 
 ---
 

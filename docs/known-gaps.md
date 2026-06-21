@@ -234,3 +234,67 @@ Items deferred from initial build. Review after pilot period before wider rollou
 ### CON-GAP-005 — Restoring v2 backup preserves live contacts
 **Area:** Contacts / import
 **Detail:** If a backup file does not contain a `con` key (e.g. a pre-v2.9.27 backup), `doImport()` preserves the current live DB.con rather than clearing it. The WARNING dialog text ("This will replace ALL current local data") is not updated to reflect this contact-specific exception.
+
+---
+
+## v3.0 Migration — Strategic Gaps
+
+*Logged 2026-06-21 from LLM Council verdict. See `docs/councils/2026-06-21-saas-trajectory.md` for full deliberation.*
+
+### V3-GAP-001 — No PMF signal from a second operator
+**Area:** Commercial / product strategy  
+**Logged:** 2026-06-21 (LLM Council)  
+**Detail:** The product has been validated by one operator (FPM). Every architectural and scope decision for v3.0 is currently based on one user's workflow. A second non-FPM operator has not yet confirmed the core thesis — that small importers lose margin because they don't know their true landed cost until the invoice arrives.  
+**Risk level:** HIGH. If the thesis does not generalise, twelve months of v3.0 architecture work delivers the wrong product.  
+**Resolution:** Customer interview programme (5 non-FPM importers; gate: ≥2/5 describe the problem unprompted). Complete before any v3.0 code is written.  
+**Owner:** Founder  
+**Status:** Open — not started
+
+### V3-GAP-002 — localStorage data migration to Postgres is not a scripted, validated artefact
+**Area:** Architecture / data integrity  
+**Logged:** 2026-06-21 (LLM Council — all 5 peer reviewers flagged independently)  
+**Detail:** FPM has live operational data in localStorage with no schema enforcement, no referential integrity, dangling foreign keys (CON-GAP-004), and known data quality issues (resolved via `runFPMMigration()`). Lifting this into Postgres without a validated migration script risks silent data loss or corruption of the only live reference dataset. The existing export/import JSON pipeline (`expAll`/`doImport`) is the seed but is not sufficient — it lacks schema validation, referential integrity checks, or rollback capability.  
+**Risk level:** HIGH. A botched migration loses the only reference customer before a second is onboarded.  
+**Resolution:** Write a dedicated migration tool: (1) export FPM localStorage snapshot, (2) validate against Postgres schema with FK checks, (3) dry-run report of errors before any write, (4) rollback path if validation fails. Treat as a first-class v3.0 deliverable, not a one-time script.  
+**Owner:** CTO/Founder  
+**Status:** Open — not started
+
+### V3-GAP-003 — Auth provider not decided; schema `org_id` not designed
+**Area:** Architecture  
+**Logged:** 2026-06-21 (LLM Council)  
+**Detail:** The Requirements Tracker (REQ-010) records the architecture decision as Next.js + Supabase. Supabase Auth is therefore the default. However, no schema has been designed with `org_id` on every table, and RLS policies have not been specified. This is the highest-risk irreversible architectural decision — getting `org_id` wrong means rewriting every join in the system.  
+**Resolution:** (1) Confirm Supabase Auth as the chosen provider (REQ-010 decision). (2) Design the full Postgres schema with `org_id` (UUID) as a non-nullable FK on every entity table before writing a single line of Next.js/API code. (3) Specify RLS policy for each table. Artefact: `docs/schema-v3.md`.  
+**Owner:** CTO/Founder  
+**Status:** Open — schema design not started
+
+### V3-GAP-004 — Existing 213-test suite is localStorage-coupled and becomes dead weight post-migration
+**Area:** SDLC / testing  
+**Logged:** 2026-06-21 (LLM Council — peer review round)  
+**Detail:** All 213 tests in `tests/run.js` run against a Node VM sandbox that mocks `localStorage`, `document.getElementById`, and browser DOM. The moment business logic moves to a Next.js + Supabase backend, the entire harness tests the wrong layer. There is no API test suite, no integration test framework, and no plan for maintaining test coverage during migration. This is an unbudgeted workload that will materialially slow the v3.0 programme if not planned for.  
+**Resolution:** Before the first v3.0 endpoint is built, define the testing strategy: (1) keep `tests/run.js` for any business logic that remains client-side, (2) add an API integration test suite (e.g. pytest + httpx for Next.js API routes, or Vitest for client components), (3) migration test: run both the v2.9 and v3.0 stacks against the same FPM dataset and diff the outputs. Artefact: `docs/test-strategy-v3.md`.  
+**Owner:** CTO/Founder  
+**Status:** Open — test strategy not defined
+
+### V3-GAP-005 — No commercial baseline audit (price anchor missing)
+**Area:** Commercial / pricing  
+**Logged:** 2026-06-21 (LLM Council — peer review round)  
+**Detail:** No analysis exists of what FPM currently pays (in time, money, or tool subscriptions) for the fragmented tools Stackd replaces. Without this number, there is no price anchor, no proof of willingness to pay, and no basis for a pricing model. The council identified this as the missing first artefact — before PRDs, before schema, before interviews.  
+**Resolution:** Document: (1) tools FPM used before Stackd (spreadsheets, Freightos/similar, any TMS or CRM), (2) estimated cost per month, (3) estimated time saved per week. This becomes the basis for pricing conversations with design partners. Artefact: one-page commercial baseline doc.  
+**Owner:** Founder  
+**Status:** Open — not started
+
+### V3-GAP-006 — Supplier → Contact linkage not implemented
+**Area:** CRM / data model  
+**Logged:** 2026-06-21 (council session follow-up)  
+**Detail:** Contacts (DB.con) and Suppliers (DB.sup) are independent entities with no programmatic link. A supplier has a `ct` (contact name) field but no FK to a Contact record. This means there is no traceability from a supplier relationship through to named contacts, quote history, or communication log. For trade operators managing multi-contact supplier relationships, this is a data integrity and CRM usability gap.  
+**Resolution:** v3.0 or v3.1 sprint item. Add `contactIds[]` to supplier records; add `supplierId` to contact records. UI: supplier card shows linked contacts; contact record shows supplier affiliation.  
+**Owner:** TBD (new session sprint)  
+**Status:** Open — deferred to v3.x sprint planning
+
+### V3-GAP-007 — No event log / audit trail per entity
+**Area:** Data management policy / compliance  
+**Logged:** 2026-06-21 (council session follow-up)  
+**Detail:** No timestamped event log exists for any entity. There is no record of when an invoice was created, edited, or status-changed; when a payment was recorded; when a quote was converted to a PO. The only partial audit trail is the invoice unlock reason field and `updAt` timestamps on some records. This is insufficient for a data management policy and will be a compliance requirement before onboarding external clients.  
+**Resolution:** v3.0 or v3.1 sprint item. Design an append-only `events[]` array per record (or a separate `st_ev` store in v2.x) capturing: entity type, entity ID, action (created/edited/status-changed/deleted), timestamp, and actor. In v3.0 Postgres, this becomes an `audit_log` table.  
+**Owner:** TBD (new session sprint)  
+**Status:** Open — deferred to v3.x sprint planning
