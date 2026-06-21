@@ -112,7 +112,7 @@ function assertApprox(a, b, msg) {
 }
 
 function resetDB() {
-  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [] };
+  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [] };
 }
 function loadFixtures() {
   ctx.DB = JSON.parse(JSON.stringify(fixtures));
@@ -806,6 +806,44 @@ test('version sellPrice equals landed * (1 + markup/100)', () => {
   const expected = +(v.landed * 1.25).toFixed(2);
   assertEqual(v.sellPrice, expected, 'sellPrice = landed * (1 + 0.25)');
   assert(v.landed > 0, 'landed is positive');
+});
+
+// ── qteToPoConvert ─────────────────────────────────────────────
+console.log('\nqteToPoConvert');
+
+test('qteToPoConvert blocked when status is Draft', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt1', num:'QTE-0001', status:'Draft', currency:'USD', lines:[], linkedPOId:null }];
+  ctx.EI.qt = 'qt1';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 0, 'no PO created for Draft quote');
+  assert(ctx.DB.qt[0].linkedPOId === null, 'linkedPOId unchanged');
+});
+
+test('qteToPoConvert blocked when status is Sent', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt2', num:'QTE-0002', status:'Sent', currency:'USD', lines:[], linkedPOId:null }];
+  ctx.EI.qt = 'qt2';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 0, 'no PO created for Sent quote');
+});
+
+test('qteToPoConvert creates PO when status is Accepted', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt3', num:'QTE-0003', status:'Accepted', currency:'USD', lines:[{ rid:'r1', supId:'s1', desc:'Goods', qty:5, cost:200, uom:'pcs' }], linkedPOId:null }];
+  ctx.EI.qt = 'qt3';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 1, 'PO created for Accepted quote');
+  assertEqual(ctx.DB.qt[0].linkedPOId, ctx.DB.po[0].id, 'linkedPOId set on quote');
+  assertEqual(ctx.DB.po[0].quoteNum, 'QTE-0003', 'PO carries quote reference');
+});
+
+test('qteToPoConvert blocked when quote already has linkedPOId', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt4', num:'QTE-0004', status:'Accepted', currency:'USD', lines:[], linkedPOId:'existing-po-id' }];
+  ctx.EI.qt = 'qt4';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 0, 'no duplicate PO when already linked');
 });
 
 // ── Accounting Export ──────────────────────────────────────────
@@ -1875,7 +1913,7 @@ test('rDash — Revenue excludes credit note grand totals', function() {
     return true;
   });
   var tR = ai.reduce(function(s,i){ return s + ctx.iCalc(i).grand; }, 0);
-  assertEqual(Math.round(tR), 59512, 'Revenue = $59,512.12 (CN excluded; INV10031 corrected to $7,248.24; INV10032 added)');
+  assertEqual(Math.round(tR), 59512, 'Revenue = $59,512 (CN excluded; INV10031 corrected to $7,248.24; INV10032 added)');
   assertEqual(ai.length, 5, '5 invoices in active count');
 });
 
@@ -1896,7 +1934,7 @@ test('rDash — Net Profit excludes credit note contributions', function() {
     return true;
   });
   var tNP = ai.reduce(function(s,i){ return s + ctx.iCalc(i).np; }, 0);
-  assertEqual(Math.round(tNP), 11360, 'NP = $11,360.22 (CN excluded; INV10031 corrected to $878.24 NP; INV10032 added)');
+  assertEqual(Math.round(tNP), 11360, 'NP = $11,360 (CN excluded; INV10031 corrected to $878.24 NP; INV10032 added)');
 });
 
 test('rDash — Outstanding correctly reflects payments and applied CNs', function() {
@@ -1925,7 +1963,7 @@ test('rDash — Outstanding correctly reflects payments and applied CNs', functi
   // ou4: 7248.24 - 0 = 7248.24  [INV10031 corrected; lf now in line items]
   // ou5: 6071.00 - 0 = 6071.00  [INV10032]
   // total = 10180 + 7248.24 + 6071 = 23499.24
-  assertEqual(Math.round(tOut), 23499, 'Outstanding = $23,499.24 (live bal: payment on INV10030; INV10031 corrected; INV10032 added)');
+  assertEqual(Math.round(tOut), 23499, 'Outstanding = $23,499 (live bal: payment on ou3; INV10031 corrected; INV10032 added)');
 });
 
 // ── GATE TESTS ─────────────────────────────────────────────────
@@ -2017,6 +2055,468 @@ test('unlockInv — rejects wrong CONFIRM text', function() {
   mockEl('adv-unlock-confirm').value = 'confirm';
   ctx.unlockInv();
   assertEqual(ctx._unlockedInvIds['ul2'], undefined, '_unlockedInvIds NOT set when CONFIRM not typed exactly');
+});
+
+// ── SYNC GUARD & TIMESTAMP TESTS ──────────────────────────────
+test('syncAll() — guard fires when SS.url is empty', function() {
+  var loadingCalled = false;
+  var origSS = Object.assign({}, ctx.SS);
+  ctx.SS.url = '';
+  var origSet = ctx.setSyncStatus;
+  ctx.setSyncStatus = function(s) { if (s === 'loading') loadingCalled = true; };
+  ctx.syncAll();
+  ctx.setSyncStatus = origSet;
+  ctx.SS = Object.assign(ctx.SS, origSS);
+  assert(!loadingCalled, 'setSyncStatus(loading) should NOT be called when SS.url is empty');
+});
+
+test('syncAll() — guard fires when SS.url lacks https:// prefix', function() {
+  var loadingCalled = false;
+  var origUrl = ctx.SS.url;
+  ctx.SS.url = 'http://insecure.example.com/exec';
+  var origSet = ctx.setSyncStatus;
+  ctx.setSyncStatus = function(s) { if (s === 'loading') loadingCalled = true; };
+  ctx.syncAll();
+  ctx.setSyncStatus = origSet;
+  ctx.SS.url = origUrl;
+  assert(!loadingCalled, 'setSyncStatus(loading) should NOT be called when SS.url is not https://');
+});
+
+test('renderSyncStatus() — shows "Never synced" when st_last_sync absent', function() {
+  delete mockStorage['st_last_sync'];
+  mockEl('sync-status-display').textContent = '';
+  ctx.renderSyncStatus();
+  assertEqual(mockEl('sync-status-display').textContent, 'Never synced', 'should display Never synced');
+});
+
+test('renderSyncStatus() — shows green colour for recent timestamp', function() {
+  mockStorage['st_last_sync'] = new Date(Date.now() - 5 * 60000).toISOString(); // 5 min ago
+  mockEl('sync-status-display').style.color = '';
+  ctx.renderSyncStatus();
+  assertEqual(mockEl('sync-status-display').style.color, '#375623', 'should be green for sync < 30m ago');
+  delete mockStorage['st_last_sync'];
+});
+
+test('renderSyncStatus() — shows amber for sync between 30m and 2h ago', function() {
+  mockStorage['st_last_sync'] = new Date(Date.now() - 60 * 60000).toISOString(); // 60 min ago
+  mockEl('sync-status-display').style.color = '';
+  ctx.renderSyncStatus();
+  assertEqual(mockEl('sync-status-display').style.color, '#7F6000', 'should be amber for sync 30m–2h ago');
+  delete mockStorage['st_last_sync'];
+});
+
+// ── FX RATES TESTS ─────────────────────────────────────────────
+test('renderFxStatus() — shows "no live rates" when st_qr_ts absent', function() {
+  delete mockStorage['st_qr_ts'];
+  mockEl('qr-fx-status').textContent = '';
+  mockEl('qr-fx-status').style.color = '';
+  ctx.renderFxStatus();
+  const txt = mockEl('qr-fx-status').textContent;
+  assert(txt.includes('manually') || txt.includes('No live'), 'should indicate no live fetch: got "' + txt + '"');
+  assertEqual(mockEl('qr-fx-status').style.color, '#8A8277', 'should be grey');
+});
+
+test('renderFxStatus() — shows green for rates fetched < 8h ago', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 2 * 3600000).toISOString(); // 2h ago
+  mockEl('qr-fx-status').style.color = '';
+  ctx.renderFxStatus();
+  assertEqual(mockEl('qr-fx-status').style.color, '#375623', 'should be green for rates < 8h old');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('renderFxStatus() — shows amber for rates fetched 8–24h ago', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 10 * 3600000).toISOString(); // 10h ago
+  mockEl('qr-fx-status').style.color = '';
+  ctx.renderFxStatus();
+  assertEqual(mockEl('qr-fx-status').style.color, '#7F6000', 'should be amber for rates 8–24h old');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('renderFxStatus() — shows red for rates older than 24h', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 30 * 3600000).toISOString(); // 30h ago
+  mockEl('qr-fx-status').style.color = '';
+  ctx.renderFxStatus();
+  assertEqual(mockEl('qr-fx-status').style.color, '#833C00', 'should be red for rates > 24h old');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('renderQteRatesWarn() — no warning when rates are fresh', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 3600000).toISOString(); // 1h ago
+  mockEl('qt-rates-warn').innerHTML = 'old';
+  ctx.renderQteRatesWarn();
+  assertEqual(mockEl('qt-rates-warn').innerHTML, '', 'should clear warning when rates < 24h old');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('renderQteRatesWarn() — shows warning when no live rates ever fetched', function() {
+  delete mockStorage['st_qr_ts'];
+  mockEl('qt-rates-warn').innerHTML = '';
+  ctx.renderQteRatesWarn();
+  assert(mockEl('qt-rates-warn').innerHTML.includes('never'), 'should show "never" warning when no timestamp');
+});
+
+test('renderQteRatesWarn() — shows warning when rates are stale (>24h)', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 30 * 3600000).toISOString(); // 30h ago
+  mockEl('qt-rates-warn').innerHTML = '';
+  ctx.renderQteRatesWarn();
+  assert(mockEl('qt-rates-warn').innerHTML.includes('30h'), 'should show age in hours');
+  delete mockStorage['st_qr_ts'];
+});
+
+test('saveRates() — clears st_qr_ts on manual save', function() {
+  mockStorage['st_qr_ts'] = new Date().toISOString();
+  ctx.saveRates();
+  assert(!mockStorage['st_qr_ts'], 'st_qr_ts should be removed after manual saveRates');
+});
+
+// ── toGBP / MULTI-CURRENCY KPI ─────────────────────────────────
+
+test('toGBP — GBP passthrough', function() {
+  var r = ctx.toGBP(100, 'GBP');
+  assertEqual(r, 100, 'GBP amount unchanged');
+});
+
+test('toGBP — USD conversion uses QR.fxGBPUSD', function() {
+  ctx.QR.fxGBPUSD = 1.25;
+  var r = ctx.toGBP(125, 'USD');
+  assertEqual(r, 100, '125 USD → 100 GBP at 1.25 rate');
+});
+
+test('toGBP — RMB conversion uses QR.fxGBPRMB', function() {
+  ctx.QR.fxGBPRMB = 9.0;
+  var r = ctx.toGBP(900, 'RMB');
+  assertEqual(r, 100, '900 RMB → 100 GBP at 9.0 rate');
+});
+
+test('toGBP — CNY alias matches RMB', function() {
+  ctx.QR.fxGBPRMB = 9.0;
+  var r = ctx.toGBP(900, 'CNY');
+  assertEqual(r, 100, '900 CNY → 100 GBP at 9.0 rate');
+});
+
+test('toGBP — BBD conversion uses QR.fxGBPBBD', function() {
+  ctx.QR.fxGBPBBD = 2.5;
+  var r = ctx.toGBP(250, 'BBD');
+  assertEqual(r, 100, '250 BBD → 100 GBP at 2.5 rate');
+});
+
+test('toGBP — unknown currency passes through unchanged', function() {
+  var r = ctx.toGBP(100, 'EUR');
+  assertEqual(r, 100, 'Unknown currency passes through');
+});
+
+test('toGBP — defaults to USD when currency omitted', function() {
+  ctx.QR.fxGBPUSD = 1.25;
+  var r = ctx.toGBP(125);
+  assertEqual(r, 100, 'Omitted currency defaults to USD');
+});
+
+test('rDash — KPI tiles render GBP symbol when invoices have mixed currencies', function() {
+  resetDB();
+  ctx.QR.fxGBPUSD = 1.25;
+  ctx.DB.inv = [
+    { id:'mc1', cur:'GBP', status:'Draft', lineItems:[], taxRate:0, dep:0,
+      calc_grandTotal:'1000', calc_netProfit:'100', calc_cogs:'900', calc_margin:'10', calc_balanceDue:'1000' },
+    { id:'mc2', cur:'USD', status:'Draft', lineItems:[], taxRate:0, dep:0,
+      calc_grandTotal:'125',  calc_netProfit:'25',  calc_cogs:'100', calc_margin:'20', calc_balanceDue:'125'  }
+  ];
+  ctx.rDash();
+  var kpis = mockElements['kpis'] ? mockElements['kpis'].innerHTML : '';
+  assert(kpis.includes('£'), 'KPI tiles should display GBP (£) symbol');
+  // Revenue: £1000 GBP + £100 GBP (125 USD / 1.25) = £1100
+  assert(kpis.includes('1,100'), 'Revenue ≈ £1,100 GBP after conversion');
+});
+
+// ── STORAGE QUOTA GUARD ────────────────────────────────────────
+
+test('checkStorageQuota() — runs without error when localStorage is empty', function() {
+  Object.keys(mockStorage).forEach(function(k){ delete mockStorage[k]; });
+  ctx.checkStorageQuota(); // must not throw
+  assert(true, 'no error on empty storage');
+});
+
+test('checkStorageQuota() — runs without error when localStorage has data', function() {
+  mockStorage['st_i'] = JSON.stringify([{ id: 'i1', status: 'Draft' }]);
+  ctx.checkStorageQuota(); // must not throw
+  assert(true, 'no error with data in storage');
+});
+
+test('checkStorageQuota() — no toast when usage is below 75%', function() {
+  Object.keys(mockStorage).forEach(function(k){ delete mockStorage[k]; });
+  mockStorage['st_i'] = 'small';
+  if (mockElements['toast']) mockElements['toast'].textContent = '';
+  ctx.checkStorageQuota();
+  var t = mockElements['toast'] ? mockElements['toast'].textContent : '';
+  assert(!t || t === '', 'no toast for low storage usage');
+});
+
+// ── CONTACTS ───────────────────────────────────────────────────
+
+test('saveCon() — creates new contact with correct fields and gdprBasis', function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  mockEl('ct-name').value = 'Alice Buyer';
+  mockEl('ct-email').value = 'alice@example.com';
+  mockEl('ct-phone').value = '+441234567890';
+  mockEl('ct-company').value = 'Acme Ltd';
+  mockEl('ct-status').value = 'lead';
+  mockEl('ct-source').value = 'manual';
+  mockEl('ct-notes').value = 'Test note';
+  mockEl('ct-enq-summary').value = '';
+  mockEl('ov-con').classList = { add() {}, remove() {}, contains: () => true };
+  ctx.EI.co = null;
+  ctx.saveCon();
+  assertEqual(ctx.DB.con.length, 1, 'contact created');
+  var c = ctx.DB.con[0];
+  assertEqual(c.name, 'Alice Buyer', 'name');
+  assertEqual(c.email, 'alice@example.com', 'email');
+  assertEqual(c.status, 'lead', 'status');
+  assertEqual(c.gdprBasis, 'pre_contract', 'gdprBasis for lead');
+  assert(c.id, 'id assigned');
+});
+
+test('gdprBasis = pre_contract for status lead', function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  mockEl('ct-name').value = 'Bob';
+  mockEl('ct-email').value = 'bob@test.com';
+  mockEl('ct-phone').value = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-status').value = 'qualified';
+  mockEl('ct-source').value = 'manual';
+  mockEl('ct-notes').value = '';
+  mockEl('ct-enq-summary').value = '';
+  mockEl('ov-con').classList = { add() {}, remove() {}, contains: () => true };
+  ctx.EI.co = null;
+  ctx.saveCon();
+  assertEqual(ctx.DB.con[0].gdprBasis, 'pre_contract', 'qualified → pre_contract');
+});
+
+test('gdprBasis = legitimate_interests for status converted', function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  mockEl('ct-name').value = 'Carol';
+  mockEl('ct-email').value = 'carol@test.com';
+  mockEl('ct-phone').value = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-status').value = 'converted';
+  mockEl('ct-source').value = 'manual';
+  mockEl('ct-notes').value = '';
+  mockEl('ct-enq-summary').value = '';
+  mockEl('ov-con').classList = { add() {}, remove() {}, contains: () => true };
+  ctx.EI.co = null;
+  ctx.saveCon();
+  assertEqual(ctx.DB.con[0].gdprBasis, 'legitimate_interests', 'converted → legitimate_interests');
+});
+
+test('saveCon() — dedup merge (confirm OK): enquiry appended, no duplicate', function() {
+  resetDB();
+  ctx.DB.con = [{ id: 'c1', name: 'Existing', email: 'dup@test.com', enquiries: [], status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(), lastContactedAt: '', notes: '', phone: '', company: '' }];
+  var n = 0; ctx.confirm = function(){ return [true][n++] !== undefined ? [true][n-1] : false; };
+  mockEl('ct-name').value = 'New Person';
+  mockEl('ct-email').value = 'DUP@TEST.COM';
+  mockEl('ct-phone').value = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-status').value = 'lead';
+  mockEl('ct-source').value = 'manual';
+  mockEl('ct-notes').value = '';
+  mockEl('ct-enq-summary').value = 'Interested in freight';
+  mockEl('ov-con').classList = { add() {}, remove() {}, contains: () => true };
+  ctx.EI.co = null;
+  ctx.saveCon();
+  assertEqual(ctx.DB.con.length, 1, 'no new record created');
+  assertEqual(ctx.DB.con[0].enquiries.length, 1, 'enquiry appended');
+  assertEqual(ctx.DB.con[0].enquiries[0].summary, 'Interested in freight', 'enquiry summary');
+});
+
+test('saveCon() — dedup cancel both confirms: no DB change', function() {
+  resetDB();
+  ctx.DB.con = [{ id: 'c1', name: 'Existing', email: 'dup@test.com', enquiries: [], status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(), lastContactedAt: '', notes: '', phone: '', company: '' }];
+  var n = 0; ctx.confirm = function(){ return [false, false][n++]; };
+  mockEl('ct-name').value = 'New Person';
+  mockEl('ct-email').value = 'dup@test.com';
+  mockEl('ct-phone').value = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-status').value = 'lead';
+  mockEl('ct-source').value = 'manual';
+  mockEl('ct-notes').value = '';
+  mockEl('ct-enq-summary').value = '';
+  mockEl('ov-con').classList = { add() {}, remove() {}, contains: () => true };
+  ctx.EI.co = null;
+  ctx.saveCon();
+  assertEqual(ctx.DB.con.length, 1, 'no change to DB');
+});
+
+test('openConvertToQuote() — sets cConvertId, EI.qt === null, prefills client/notes', function() {
+  resetDB();
+  ctx.DB.con = [{ id: 'c99', name: 'Lead Person', email: 'lead@example.com', status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(), lastContactedAt: '', notes: '', phone: '', company: '', enquiries: [] }];
+  ctx.EI.qt = 'some-old-id';
+  ctx.cConvertId = null;
+  ctx.openConvertToQuote('c99');
+  assertEqual(ctx.cConvertId, 'c99', 'cConvertId set');
+  assertEqual(ctx.EI.qt, null, 'EI.qt cleared by openQte');
+  assertEqual(mockEl('qf-client').value, 'Lead Person', 'client prefilled');
+  assertEqual(mockEl('qf-nt').value, 'Contact: lead@example.com', 'notes prefilled');
+});
+
+test('saveQte() with cConvertId — sourceContactId populated, contact set to converted, cConvertId nulled', function() {
+  resetDB();
+  ctx.DB.con = [{ id: 'cA', name: 'Test Lead', email: 't@t.com', status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(), lastContactedAt: '', notes: '', phone: '', company: '', enquiries: [] }];
+  ctx.cConvertId = 'cA';
+  ctx.EI.qt = null;
+  var rid = 'cA-line1';
+  ctx.cQL = [{ rid: rid, supId: '', desc: 'Test item', qty: 1, uom: 'pcs', cost: 100, cbm: 1, dg: false, dutyPct: 0 }];
+  mockEl('ql-supId-' + rid).value = '';
+  mockEl('ql-desc-' + rid).value = 'Test item';
+  mockEl('ql-qty-' + rid).value = '1';
+  mockEl('ql-uom-' + rid).value = 'pcs';
+  mockEl('ql-cost-' + rid).value = '100';
+  mockEl('ql-cbm-' + rid).value = '1';
+  mockEl('ql-dg-' + rid).checked = false;
+  mockEl('ql-dutyPct-' + rid).value = '0';
+  mockEl('ql-note-' + rid).value = '';
+  mockEl('qf-num').value = '';
+  mockEl('qf-client').value = 'Test Lead';
+  mockEl('qf-dt').value = '2026-01-01';
+  mockEl('qf-valid').value = '2026-01-31';
+  mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '15';
+  mockEl('qf-cur').value = 'USD';
+  mockEl('qf-st').value = 'Draft';
+  mockEl('qf-nt').value = '';
+  mockEl('qt-verr').innerHTML = '';
+  ctx.saveQte();
+  assert(ctx.DB.qt.length >= 1, 'quote saved');
+  var q = ctx.DB.qt[ctx.DB.qt.length - 1];
+  assertEqual(q.sourceContactId, 'cA', 'sourceContactId populated');
+  assertEqual(ctx.DB.con[0].status, 'converted', 'contact status → converted');
+  assertEqual(ctx.cConvertId, null, 'cConvertId nulled');
+});
+
+test('closeQteDlg() — cConvertId nulled, closeM called', function() {
+  ctx.cConvertId = 'someId';
+  var closed = false;
+  var orig = ctx.closeM;
+  ctx.closeM = function(id){ if (id === 'ov-qt') closed = true; };
+  ctx.closeQteDlg();
+  assertEqual(ctx.cConvertId, null, 'cConvertId nulled');
+  assert(closed, 'closeM(ov-qt) called');
+  ctx.closeM = orig;
+});
+
+test('delQte() with sourceContactId — contact reverts to qualified, rQte called', function() {
+  resetDB();
+  ctx.DB.con = [{ id: 'cB', name: 'Lead', email: 'b@b.com', status: 'converted', source: 'manual', gdprBasis: 'legitimate_interests', createdAt: new Date().toISOString(), lastContactedAt: '', notes: '', phone: '', company: '', enquiries: [] }];
+  ctx.DB.qt = [{ id: 'q1', num: 'QTE-001', sourceContactId: 'cB', status: 'Draft', lines: [], client: '', dt: '', validUntil: '', freightMode: 'LCL', markup: 15, currency: 'USD', notes: '', linkedPOId: '' }];
+  ctx.confirm = function(){ return true; };
+  var rQteCalled = false;
+  var orig = ctx.rQte;
+  ctx.rQte = function(){ rQteCalled = true; };
+  ctx.delQte('q1');
+  assertEqual(ctx.DB.qt.length, 0, 'quote deleted');
+  assertEqual(ctx.DB.con[0].status, 'qualified', 'contact reverted to qualified');
+  assert(rQteCalled, 'rQte called after sv');
+  ctx.rQte = orig;
+});
+
+test('isConStale() — returns true for contact older than 700 days', function() {
+  var old = new Date(Date.now() - 701 * 86400000).toISOString();
+  var c = { createdAt: old, lastContactedAt: '' };
+  assert(ctx.isConStale(c), 'stale contact detected');
+});
+
+test('isConStale() — returns false for recent contact', function() {
+  var c = { createdAt: new Date().toISOString(), lastContactedAt: '' };
+  assert(!ctx.isConStale(c), 'fresh contact not stale');
+});
+
+test('delCon() — removes contact from DB.con, sv called', function() {
+  resetDB();
+  ctx.DB.con = [{ id: 'd1', name: 'Delete Me', email: 'd@d.com', status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(), lastContactedAt: '', notes: '', phone: '', company: '', enquiries: [] }];
+  var svCalled = false;
+  ctx.confirm = function(){ return true; };
+  var origSv = ctx.sv;
+  ctx.sv = function(k, v){ if (k === ctx.K.co) svCalled = true; origSv(k, v); };
+  ctx.rCon = function(){};
+  ctx.delCon('d1');
+  assertEqual(ctx.DB.con.length, 0, 'contact removed');
+  assert(svCalled, 'sv(K.co) called');
+  ctx.sv = origSv;
+});
+
+test('doImport() — data.con array: DB.con set correctly', function() {
+  resetDB();
+  var conData = [{ id: 'c1', name: 'Imported', email: 'i@i.com', status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(), lastContactedAt: '', notes: '', phone: '', company: '', enquiries: [] }];
+  var backup = {
+    _app: 'Stackd Ops', _version: 2, _exported: new Date().toISOString(),
+    sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: conData
+  };
+  var jsonStr = JSON.stringify(backup);
+  ctx.confirm = function(){ return true; };
+  // simulate FileReader callback
+  var fakeEvent = { target: { result: jsonStr } };
+  ctx.doImport._readerCallback ? ctx.doImport._readerCallback(fakeEvent) : null;
+  // Call doImport indirectly by invoking reader.onload
+  var fileReaderCb = null;
+  var origFR = ctx.FileReader;
+  ctx.FileReader = function(){ this.onload = null; this.readAsText = function(){ fileReaderCb = this.onload; }; };
+  var fakeE = { target: { files: [{ name: 'test.json' }] } };
+  ctx.doImport(fakeE);
+  if (fileReaderCb) fileReaderCb({ target: { result: jsonStr } });
+  ctx.FileReader = origFR;
+  assertEqual(ctx.DB.con.length, 1, 'DB.con populated from import');
+  assertEqual(ctx.DB.con[0].name, 'Imported', 'contact name correct');
+});
+
+test('doImport() — data.con absent: DB.con preserved', function() {
+  resetDB();
+  ctx.DB.con = [{ id: 'pre1', name: 'Pre-existing', email: 'pre@pre.com', status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(), lastContactedAt: '', notes: '', phone: '', company: '', enquiries: [] }];
+  var backup = {
+    _app: 'Stackd Ops', _version: 2, _exported: new Date().toISOString(),
+    sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: []
+    // no con key
+  };
+  var jsonStr = JSON.stringify(backup);
+  ctx.confirm = function(){ return true; };
+  var fileReaderCb = null;
+  var origFR = ctx.FileReader;
+  ctx.FileReader = function(){ this.onload = null; this.readAsText = function(){ fileReaderCb = this.onload; }; };
+  var fakeE = { target: { files: [{ name: 'test.json' }] } };
+  ctx.doImport(fakeE);
+  if (fileReaderCb) fileReaderCb({ target: { result: jsonStr } });
+  ctx.FileReader = origFR;
+  assertEqual(ctx.DB.con.length, 1, 'DB.con preserved when con absent from backup');
+});
+
+test('doImport() — data.con non-array: DB.con reset to []', function() {
+  resetDB();
+  ctx.DB.con = [{ id: 'pre1', name: 'Pre-existing', email: 'pre@pre.com', status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: new Date().toISOString(), lastContactedAt: '', notes: '', phone: '', company: '', enquiries: [] }];
+  var backup = {
+    _app: 'Stackd Ops', _version: 2, _exported: new Date().toISOString(),
+    sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: 'invalid'
+  };
+  var jsonStr = JSON.stringify(backup);
+  ctx.confirm = function(){ return true; };
+  var fileReaderCb = null;
+  var origFR = ctx.FileReader;
+  ctx.FileReader = function(){ this.onload = null; this.readAsText = function(){ fileReaderCb = this.onload; }; };
+  var fakeE = { target: { files: [{ name: 'test.json' }] } };
+  ctx.doImport(fakeE);
+  if (fileReaderCb) fileReaderCb({ target: { result: jsonStr } });
+  ctx.FileReader = origFR;
+  assertEqual(ctx.DB.con.length, 0, 'DB.con reset to [] when non-array');
+});
+
+test('openCon() — ct-name-err and ct-email-err validation state cleared', function() {
+  resetDB();
+  // Set some stale validation state (vClr resets borderBottomColor on the field element)
+  mockEl('ct-name').style.borderBottomColor = 'red';
+  mockEl('ct-email').style.borderBottomColor = 'red';
+  mockEl('ov-con').classList = { add() {}, remove() {}, contains: () => false };
+  ctx.openCon();
+  // vClr('ct-name') sets borderBottomColor = '' on the ct-name element
+  assertEqual(mockEl('ct-name').style.borderBottomColor, '', 'ct-name border cleared by vClr');
+  assertEqual(mockEl('ct-email').style.borderBottomColor, '', 'ct-email border cleared by vClr');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────

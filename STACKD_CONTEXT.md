@@ -9,9 +9,9 @@
 
 | Field | Value |
 |-------|-------|
-| Last updated | 16 May 2026 |
-| Current version | v2.9.12 |
-| Test count | 157 / 157 passing |
+| Last updated | 17 June 2026 |
+| Current version | v2.9.26 |
+| Test count | 197 / 197 passing |
 | Build branch | main |
 | Deployment | stkdcfpm.github.io/stackd-ops |
 | Website | getstackdops.com (Vercel — deploy pending) |
@@ -41,8 +41,8 @@
 |-----|-------|-------|
 | Invoice Revenue | $53,441 | 4 invoices |
 | Net Profit | $11,360 | Corrected PVC-34 COGS |
-| Avg Margin | 15.9% | Simple average — change to weighted (21.3%) in backlog |
-| Outstanding from Buyers | $17,428 | INV10030 $9,730 + INV10031 $7,248 after CN deductions |
+| Avg Margin | 15.9% | Weighted avg margin enabled v2.9.12 |
+| Outstanding from Buyers | $16,778.24 | INV10030 $9,730 + INV10031 $7,048.24 after CN deductions |
 | PO Balance Due | $0 | No POs entered yet |
 | Net Cash Position | $36,013 | Buyer deposits only |
 | In Transit | 0 | SHP-001 Delivered, SHP-002 Booked |
@@ -61,16 +61,17 @@
 | Quotes | 0 | Engine built v2.9.4, no quotes entered yet |
 
 **Important invoice notes:**
-- INV10028: PVC-34 unit cost $19.44 (Jan 2026 order). calc_cogs $25,226
-- INV10030: balance due $9,730 after CN10030 ($450 freight credit)
-- INV10031: balance due $7,048 after CN10031 ($200 freight credit). Status: Sent
+- INV10028: PVC-34 unit cost $19.44 (Jan 2026 order). calc_cogs $25,226. calc_balanceDue $0 (Paid)
+- INV10029: calc_balanceDue $0 (Paid)
+- INV10030: calc_balanceDue $9,730 after CN10030 ($450 freight credit). Status: Partially Paid
+- INV10031: calc_balanceDue $7,048.24 after CN10031 ($200 freight credit). grand total corrected to $7,042.19 (landing fee double-count fixed v2.9.13). Status: Sent
 - INV10032: pro-forma — pending freight figure from shipping agent. Not yet in portal
 - SHP-001 BL: MEDUWA872896. Vessel: MSC Mara. Carrier: MSC
 
 **Google Sheets sync:**
 - Auto-sync: ON (re-enabled 13 May 2026 after data stabilisation)
 - Apps Script URL: in Stackd Settings → Google Sheets
-- Sync token: fpm-stackd-2026
+- Sync token: [stored in Apps Script → Script Properties as TOKEN — rotate before any new repo access]
 - Tracker write bridge: live on main — actions update_requirements_tracker and update_project_tracker
 
 ---
@@ -80,22 +81,24 @@
 **Current stack (v2.9.x — localStorage):**
 ```
 index.html          — entire application: HTML + CSS + JS in one file
-tests/run.js        — Node.js test runner, 157 tests
+tests/run.js        — Node.js test runner, 197 tests
 apps-script/Code.gs — Google Apps Script webhook handler
 CLAUDE.md           — Claude Code session context (technical)
 STACKD_CONTEXT.md   — Cross-tool master context (this file)
 docs/known-gaps.md  — Known gaps log
+docs/version-history.md — Full version changelog
 ```
 
 **State layer:**
 ```javascript
 const K = { s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm',
-            sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au' }
+            sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai' }
 let DB = { sup, li, inv, po, payments, sh, qt }
 let EI = { s, l, i, p, sh, qt, cn }
 let cIL = [], cPL = [], cQL = [], cCNL = []
 var QR = { fxGBPUSD, fxGBPRMB, fxGBPBBD, lclPerCBM, fcl20GP, fcl40HQ,
            originCharges, destCharges, dgSurcharge, insRate, fpmAdmin }
+var _aiMode = 'ops' | 'compliance'  // persisted to stackd_ai_mode
 ```
 
 **Hard architectural rule (FM-1 mitigation):**
@@ -110,10 +113,16 @@ Invoice number stored as `num` not `invNum` in current records. Dashboard and ca
 
 | ID | Area | Summary | Target |
 |----|------|---------|--------|
-| QTE-GAP-001 | Quote status | No workflow enforcement — Convert to PO available on any status | Backlog |
-| TRIAL-001 | Trial conversion | No demo shipment mode — wedge feature not delivered without active BL | v2.9.13 CRITICAL |
-| PRICE-001 | Price versioning | Static catalogue — no price history per SKU | v2.9.14 |
+| QTE-GAP-001 | Quote status | Convert to PO restricted to Accepted status | ✓ Fixed v2.9.25 |
+| TRIAL-001 | Trial conversion | No demo shipment mode — wedge feature not delivered without active BL | CRITICAL — next sprint |
 | MTD-001 | Tax compliance | No MTD-compatible export — affects VAT-registered customers | v2.9.x CRITICAL |
+| LIB-GAP-001 | Library sync | `syncEnt('li')` not called when `invoiceRefs` mutates | Backlog |
+| SEC-GAP-001 | Security | Code.gs secrets hardcoded in source | ✓ Fixed v2.9.23 (Script Properties) |
+| SEC-GAP-002 | GDPR | Sheets sync transmits PII externally | Accepted until first external client |
+| SEC-GAP-003 | Security | Anthropic API key in localStorage | Inherent no-server constraint |
+| SEC-GAP-004 | Security | Invoice locking is client-side UX only — not tamper-proof | v3.0.0 |
+| SEC-GAP-011 | Data integrity | `pullAll()` overwrites local records unconditionally — Sheets wins | Backlog |
+| SDLC-GAP-003 | Staging | No same-origin PR preview environment | Post-pilot |
 
 ---
 
@@ -121,34 +130,53 @@ Invoice number stored as `num` not `invNum` in current records. Dashboard and ca
 
 | Version | Key changes |
 |---------|------------|
-| v2.9.12 | Weighted avg margin (weighted, not simple). Invoice status locking (Sent/Partially Paid/Paid/Cancelled immutable). Buyer statement view + PDF. CN Applied auto-updates linked invoice calc_balanceDue. Sheets: CN tab, Quotes tab, inv.num field fix. Apps Script update_shipment. STACKD_CONTEXT.md added. |
+| v2.9.26 | AI Compliance Review mode (HMRC VAT 700/21, GDPR, MTD prompts). Phase 1 CSS redesign (border-radius, box-shadow, KPI semantic left-borders, hover refinements). Buyer statement fixes (Total Outstanding, ISO dates, credits negative). 197 tests. |
+| v2.9.25 | QTE-GAP-001 fix — Convert to PO restricted to Accepted status. Hard guard in qteToPoConvert(). |
+| v2.9.24 | BACKUP-GAP-002 — quota error upgraded to blocking modal with one-click export. |
+| v2.9.23 | BACKUP-GAP-001 — JSON backup includes QR rates, custom data, migration flags. DR procedure documented. SEC-GAP-001 closed (Script Properties). |
+| v2.9.22 | pullAll() double-fetch eliminated. delEnt respects auto-sync toggle. Sync timestamp stored. |
+| v2.9.21 | DATA-GAP-001 — FPM-specific calc corrections extracted to one-time runFPMMigration(). |
+| v2.9.20 | expAll() snapshot includes company branding. |
+| v2.9.19 | Favicon inline SVG. repairCalcFields strips stray cnAmount from non-CN invoices. |
+| v2.9.18 | GDPR disclosure notes in Settings → Google Sheets and Integrations cards. |
+| v2.9.17 | Live FX rate source switched to fawazahmed0/currency-api (CORS-enabled, no key). |
+| v2.9.16 | CSP meta tag. checkStorageQuota() on init — warns at 75%/90% of 5 MB limit. |
+| v2.9.15 | toGBP() — multi-currency KPI aggregation with FX conversion for dashboard. |
+| v2.9.14 | Sync URL guard (https:// required). Sync status timestamp. Prompt caching (cache_control: ephemeral). Section index. CLAUDE.md restructure. |
+| v2.9.13 | Compliance AI mode first build. XSS san() on PDF builders. vCN() validation rewrite. INV10031 grand total corrected. |
+| v2.9.12 | Weighted avg margin. Invoice status locking. Buyer statement + PDF. CN Applied auto-updates calc_balanceDue. Sheets: CN/Quotes tabs. Apps Script update_shipment. STACKD_CONTEXT.md added. |
 | v2.9.11 | Dashboard reads calc_ fields as source of truth. CN exclusion from KPIs. repairCalcFields corrected PVC COGS. 157 tests. |
-| v2.9.10 | EN/ZH language toggle. Invoice/CN modal separation. Company branding on PDFs (FPM International Ltd). |
-| v2.9.9 | Line item dimensions + CBM. Load calculator. Forwarder update request + webhook. Quote feasibility check. |
-| v2.9.8 | Credit note PDF fix. CN balance deduction. Goodwill credit. |
-| v2.9.7 | Sheets sync guard. Invoice→library refs index. PDF Blob URL fix. |
+| v2.9.10 | EN/ZH language toggle. Invoice/CN modal separation. Company branding on PDFs. |
+| v2.9.9 | Line item dimensions + CBM. Load calculator. Forwarder webhook. Quote feasibility check. |
 | v2.9.5 | Accounting export — Xero/QuickBooks/FreeAgent mappers. |
 | v2.9.4 | Quote engine. Rate engine. Per-line price versioning. |
-| v2.8.1 | Shipments tab. GitHub Actions CI/CD. seedINV10029Payments removed. |
+| v2.8.1 | Shipments tab. GitHub Actions CI/CD. |
 
 ---
 
 ## Build queue
 
-**Immediate (Sprint 1 — 12-26 May 2026):**
+**Sprint 1 (12-26 May 2026) — COMPLETE:**
 
 | Version | Focus | Status |
 |---------|-------|--------|
-| v2.9.12 | Sheets template — CN tab, Quotes tab, invoice num field, all entity sync | Done |
-| v2.9.12 | Weighted average margin in rDash() | Done |
-| v2.9.12 | Apps Script update_shipment handler for Make.com Flow 2 | Done |
+| v2.9.12 | Sheets template — CN tab, Quotes tab, invoice num field, all entity sync | ✓ Done |
+| v2.9.12 | Weighted average margin in rDash() | ✓ Done |
+| v2.9.12 | Apps Script update_shipment handler for Make.com Flow 2 | ✓ Done |
 
-**Sprint 2 (27 May — 9 Jun 2026):**
+**Sprint 2 (27 May — 9 Jun 2026) — COMPLETE:**
 
-| Version | Focus | FM |
-|---------|-------|-----|
-| v2.9.13 | Demo shipment mode — simulated live tracking, no BL required | FM-4 CRITICAL |
-| v2.9.14 | Price versioning — per-SKU history array, invoice override recording | FM-3 |
+| Version | Focus | Status | FM |
+|---------|-------|--------|-----|
+| v2.9.13–v2.9.25 | Security fixes, FX conversion, backup/DR, compliance AI mode, Phase 1 redesign, QTE-GAP-001 | ✓ Done (v2.9.26) | various |
+| Demo shipment mode | Simulated live tracking, no BL required | NOT DONE — highest priority next | FM-4 CRITICAL |
+
+**Current sprint (June 2026):**
+
+| Item | FM | Priority |
+|------|----|---------|
+| Demo shipment mode — simulated tracking without BL | FM-4 | CRITICAL — trial conversion blocker |
+| MTD-compatible VAT export | FM-5 | CRITICAL — do not defer to v3.x |
 
 **Backlog (v2.9.x):**
 
@@ -171,7 +199,7 @@ Supabase backend, multi-tenancy, MFA, RBAC, server-side API proxy, referral mech
 | ID | Risk | Status | Action |
 |----|------|--------|--------|
 | R-001 | localStorage GDPR exposure | ACTIVE | v3.0.0 resolves — hard deadline Q1 2027 |
-| R-003 | Trial conversion 11% — too low | ACTIVE | v2.9.13 demo shipment mode — Sprint 2 |
+| R-003 | Trial conversion 11% — too low | ACTIVE | Demo shipment mode — current sprint |
 | R-004 | MTD compliance gap | ACTIVE | Add MTD bridge to v2.9.x — do not defer |
 | R-007 | Supplier intelligence empty database | ACTIVE | Manual seeding starts now — 200 data points target |
 | R-002 | Alibaba/platform competition | MONITOR | Monthly competitive scan |
@@ -180,23 +208,18 @@ Supabase backend, multi-tenancy, MFA, RBAC, server-side API proxy, referral mech
 
 ---
 
-## Current sprint — Sprint 1 (12-26 May 2026)
-
-Theme: Stabilise and ship before China trip
+## Current sprint — June 2026
 
 | # | Item | Owner | Status |
 |---|------|-------|--------|
-| S1-1 | v2.9.12 — Sheets template + weighted margin | Claude Code | To Do |
-| S1-2 | Make.com Flow A — daily standup digest | You | To Do |
-| S1-3 | Make.com Flow B — overdue alert | You | To Do |
-| S1-4 | Make.com Flow C — regulatory reminder | You | To Do |
-| S1-5 | Deploy getstackdops.com to Vercel | You | To Do |
-| S1-6 | China trip — freight forwarder pilot agreement | You | In Progress |
-| S1-7 | China trip — 3-5 agent conversations | You | In Progress |
+| S3-1 | Demo shipment mode — simulated live tracking without BL | Claude Code | To Do |
+| S3-2 | MTD-compatible VAT export | Claude Code | To Do |
+| S3-3 | ICO registration | You | Backlog |
+| S3-4 | Deploy getstackdops.com to Vercel | You | Pending |
 
 ---
 
-## China trip — 20-30 May 2026
+## China trip — 20-30 May 2026 (COMPLETED)
 
 **Flights:** CZ304/CZ303 LHR ↔ Guangzhou (premium economy)
 
@@ -237,7 +260,7 @@ Theme: Stabilise and ship before China trip
 | FM-1 | Architecture debt | Hard cap at v2.9.x. v3.0.0 in parallel |
 | FM-2 | Market corridor concentration | Multi-corridor GTM from day one |
 | FM-3 | Supplier intelligence never seeded | Manual data entry after every transaction |
-| FM-4 | Trial conversion 11% | v2.9.13 demo shipment mode — Sprint 2 |
+| FM-4 | Trial conversion 11% | Demo shipment mode — current sprint |
 | FM-5 | Regulatory blindness | Monthly scan. MTD on v2.9.x not v3.x |
 | FM-6 | Agent channel generates awareness not conversion | Fix FM-4 first. Then scale channel |
 
@@ -280,8 +303,8 @@ Enterprise base: £1,200/month + £25/user beyond 10 + integration fees.
 
 | Tracker | Sheet ID |
 |---------|----------|
-| Requirements Tracker | 1q05sSoCMmiqaNNixDWVk2_aJPwEqx37vDbOPNh2gqGw |
-| Project Tracker | 1gC6d7ClOFpaocK_lNI685x5yMK5_UHiMgriFlF_UrLg |
+| Requirements Tracker | [stored in Apps Script → Script Properties as REQUIREMENTS_TRACKER_ID] |
+| Project Tracker | [stored in Apps Script → Script Properties as PROJECT_TRACKER_ID] |
 
 Apps Script write bridge live: actions `update_requirements_tracker` and `update_project_tracker`.
 
@@ -321,4 +344,4 @@ Apps Script write bridge live: actions `update_requirements_tracker` and `update
 ---
 
 *STACKD · Source · Supply · Ship · FPM International Ltd · getstackdops.com*
-*Living document — last updated 16 May 2026*
+*Living document — last updated 17 June 2026*
