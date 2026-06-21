@@ -2855,6 +2855,72 @@ test('AC-8: clearing Supplier dropdown before save sets supplierId null and role
   assertEqual(ctx.DB.con[0].role, '', 'role empty when dropdown cleared');
 });
 
+// ── REQ-AI-GAP-001: AI action block parsing ──────────────────────────────
+
+test('parseAIAction: strips block and returns action from valid response', function() {
+  var text = 'Sure, here is the PO.\n@@ACTION\n{"action":"create_po","payload":{"cur":"USD","notes":"Test"}}\n@@END\nPlease review.';
+  var result = ctx.parseAIAction(text);
+  assert(result.action !== null, 'action parsed');
+  assertEqual(result.action.action, 'create_po', 'action key correct');
+  assert(result.clean.indexOf('@@ACTION') === -1, 'block stripped from clean');
+  assert(result.clean.indexOf('@@END') === -1, '@@END stripped');
+  assert(result.clean.indexOf('Sure, here is the PO') >= 0, 'surrounding text preserved');
+});
+
+test('parseAIAction: returns null action when no block present', function() {
+  var text = 'Here is some info about POs.';
+  var result = ctx.parseAIAction(text);
+  assertEqual(result.action, null, 'no action');
+  assertEqual(result.clean, text, 'text unchanged');
+});
+
+test('parseAIAction: returns null action and strips block on malformed JSON (AC-8)', function() {
+  var text = 'OK.\n@@ACTION\nnot-valid-json\n@@END\nDone.';
+  var result = ctx.parseAIAction(text);
+  assertEqual(result.action, null, 'action null on bad JSON');
+  assert(result.clean.indexOf('@@ACTION') === -1, 'block stripped');
+  assert(result.clean.indexOf('not-valid-json') === -1, 'bad JSON not in clean text');
+});
+
+test('parseAIAction: returns null action when JSON missing action key', function() {
+  var text = '@@ACTION\n{"payload":{"cur":"USD"}}\n@@END';
+  var result = ctx.parseAIAction(text);
+  assertEqual(result.action, null, 'null when action key absent');
+});
+
+test('handleAIAction: create_po pre-fills cPL and fields', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
+  ctx.EI.p = null;
+  ctx.cPL = [];
+  var action = { action: 'create_po', payload: { supId: 'S1', cur: 'CNY', notes: 'Rush order', lineItems: [{ desc: 'Widget A', qty: 100, cost: 5.5, uom: 'pcs' }] } };
+  ctx.handleAIAction(action);
+  assertEqual(mockEl('pf-cur').value, 'CNY', 'currency pre-filled');
+  assertEqual(mockEl('pf-nt').value, 'Rush order', 'notes pre-filled');
+  assertEqual(ctx.cPL.length, 1, 'line item added to cPL');
+  assertEqual(ctx.cPL[0].desc, 'Widget A', 'line item desc correct');
+  assertEqual(ctx.cPL[0].qty, 100, 'line item qty correct');
+});
+
+test('handleAIAction: unknown action shows toast, no modal (AC-9)', function() {
+  resetDB();
+  var toasted = '';
+  var origToast = ctx.toast;
+  ctx.toast = function(m){ toasted = m; };
+  ctx.handleAIAction({ action: 'delete_everything', payload: {} });
+  ctx.toast = origToast;
+  assert(toasted.indexOf('Unsupported') >= 0, 'unsupported toast shown');
+});
+
+test('handleAIAction: create_contact pre-fills contact modal fields', function() {
+  resetDB();
+  var action = { action: 'create_contact', payload: { name: 'Jane Smith', email: 'jane@example.com', phone: '+44 7700 000000', company: 'Acme', status: 'lead', source: 'chat' } };
+  ctx.handleAIAction(action);
+  assertEqual(mockEl('ct-name').value, 'Jane Smith', 'name pre-filled');
+  assertEqual(mockEl('ct-email').value, 'jane@example.com', 'email pre-filled');
+  assertEqual(mockEl('ct-status').value, 'lead', 'status pre-filled');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
