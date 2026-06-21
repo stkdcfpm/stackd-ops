@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.28</title>
+<title>Stackd Ops v2.9.29</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.27</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.29</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -362,7 +362,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   <div class="tw"><table class="tbl" id="con-tbl" style="display:none;">
     <thead><tr>
       <th>Name</th><th>Company</th><th>Email</th>
-      <th>Status</th><th>Source</th><th>Last Contact</th><th>Enquiries</th><th></th>
+      <th>Status</th><th>Source</th><th>Supplier</th><th>Last Contact</th><th>Enquiries</th><th></th>
     </tr></thead>
     <tbody id="con-tbody"></tbody>
   </table></div>
@@ -734,6 +734,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div id="sup-activity-list">No activity recorded.</div>
   </div>
 </div>
+    <div id="sup-con-panel" style="grid-column:1/-1;margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;display:none;">
+      <div style="font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);margin-bottom:8px;">Contacts</div>
+      <div id="sup-con-list" style="font-size:.5rem;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-s" style="font-size:.48rem;" onclick="openSupConPicker()">+ Link Contact</button>
+        <button class="btn btn-g" style="font-size:.48rem;" onclick="openCon(EI.s)">+ New Contact</button>
+      </div>
+    </div>
   </div>
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
     <button class="btn btn-g" onclick="closeM('ov-sup')">Cancel</button>
@@ -940,9 +948,22 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.28</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.29</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Supplier→Contact sub-panel in Supplier edit modal — linked contacts list, Unlink button, Link Contact picker, New Contact shortcut</li>
+          <li>New: supplierId and role fields on contact records — persisted on save, nulled on supplier delete</li>
+          <li>New: Supplier column in Contacts list table showing linked supplier name</li>
+          <li>New: Supplier dropdown in Contact modal — pre-fills when opening New Contact from supplier panel</li>
+          <li>Fix: delSup() nulls supplierId on all linked contacts before async delete</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.28</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: DB.events — local-only activity log, no Sheets sync</li>
@@ -1631,6 +1652,10 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <select id="ct-source">
       <option value="manual">Manual</option>
       <option value="chat">Chat</option>
+    </select>
+    <label>Supplier</label>
+    <select id="ct-sup">
+      <option value="">None</option>
     </select>
     <label>New enquiry note</label>
     <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
@@ -3062,6 +3087,52 @@ function rSup() {
   var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
   ['lf-sup','pf-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
   G('li-sf').innerHTML = '<option value="">All suppliers</option>' + opts;
+  populateConSupDrop();
+}
+function populateConSupDrop() {
+  var el = G('ct-sup'); if (!el) return;
+  var cur = el.value;
+  el.innerHTML = '<option value="">None</option>' +
+    DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
+  el.value = cur;
+}
+function renderSupContacts() {
+  var el = G('sup-con-list'); if (!el) return;
+  var linked = DB.con.filter(function(c){ return c.supplierId === EI.s; });
+  if (!linked.length) { el.innerHTML = '<span style="color:var(--m);">No contacts linked.</span>'; return; }
+  el.innerHTML = '<table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead><tbody>' +
+    linked.map(function(c){
+      return '<tr><td>' + san(c.name) + '</td><td>' + san(c.email) + '</td>' +
+        '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
+        '<td><button class="ab" onclick="unlinkSupCon(\'' + c.id + '\')">Unlink</button></td></tr>';
+    }).join('') + '</tbody></table>';
+}
+function unlinkSupCon(contactId) {
+  var c = DB.con.find(function(x){ return x.id === contactId; }); if (!c) return;
+  c.supplierId = null;
+  c.role = '';
+  sv(K.co, DB.con);
+  renderSupContacts();
+  rCon();
+  toast('Contact unlinked');
+}
+function openSupConPicker() {
+  var eligible = DB.con.filter(function(c){
+    return !c.supplierId || c.supplierId === EI.s;
+  });
+  if (!eligible.length) { toast('No eligible contacts to link.'); return; }
+  var list = eligible.map(function(c, i){ return (i+1) + '. ' + c.name + ' <' + c.email + '>'; }).join('\n');
+  var input = prompt('Link a contact to this supplier.\nEnter the number:\n\n' + list);
+  if (!input) return;
+  var idx = parseInt(input, 10) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= eligible.length) { toast('Invalid selection.'); return; }
+  var c = eligible[idx];
+  c.supplierId = EI.s;
+  c.role = 'supplier_contact';
+  sv(K.co, DB.con);
+  renderSupContacts();
+  rCon();
+  toast('Contact linked');
 }
 function openSup() {
   EI.s = null; G('sup-mt').textContent = 'New Supplier';
@@ -3070,6 +3141,7 @@ function openSup() {
   G('sf-cur').value = 'USD'; populateDialCodes();
   var ab = G('sup-activity-body'); if (ab) ab.style.display = 'none';
   var al = G('sup-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
+  var panel = G('sup-con-panel'); if (panel) panel.style.display = 'none';
   G('ov-sup').classList.add('on'); setTimeout(function(){ G('sf-n').focus(); }, 50);
 }
 function editSup(id) {
@@ -3080,6 +3152,8 @@ function editSup(id) {
   G('sf-cur').value=s.cur||'USD';
   var ab = G('sup-activity-body'); if (ab) ab.style.display = 'none';
   var al = G('sup-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
+  var panel = G('sup-con-panel'); if (panel) panel.style.display = '';
+  renderSupContacts();
   G('ov-sup').classList.add('on');
 }
 async function saveSup() {
@@ -3101,6 +3175,8 @@ async function delSup(id) {
   if (warns.length) msg += '\n\nWarning: ' + warns.join('\n') + '\n\nThe POs and invoices will remain but will show a missing supplier reference.';
   if (!confirm(msg)) return;
   DB.sup = DB.sup.filter(function(s){ return s.id!==id; });
+  DB.con.forEach(function(c){ if (c.supplierId === id) { c.supplierId = null; c.role = ''; } });
+  sv(K.co, DB.con);
   sv(K.s,DB.sup); rSup(); toast('Deleted'); await delEnt('sup',id).catch(function(){});
 }
 
@@ -5348,7 +5424,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.28).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.29).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -5527,7 +5603,7 @@ var AI_SYSTEM_PROMPT = [
   'AI Assistant: Claude API Key (stored locally in browser only).',
   '',
   '## Contacts',
-  'Contacts tab → + New Contact. Stores trade leads and contacts with: Name (required), Email (required — dedup key, case-insensitive), Phone, Company, Status (lead / qualified / converted / closed), Source (manual / chat), Enquiry log (append-only), Internal notes.',
+  'Contacts tab → + New Contact. Stores trade leads and contacts with: Name (required), Email (required — dedup key, case-insensitive), Phone, Company, Status (lead / qualified / converted / closed), Source (manual / chat), Supplier (optional — links the contact to one supplier), Enquiry log (append-only), Internal notes.',
   'GDPR basis is auto-derived from status on every save (not user-editable): lead/qualified → Art.6(1)(b) pre-contractual; converted/closed → Art.6(1)(f) legitimate interests. Contacts stale for >700 days are flagged with a Stale badge.',
   'Dedup: saving a new contact with an email that already exists prompts to merge the enquiry into the existing record, or create a separate record anyway. Edit-path email changes are not deduped.',
   'Quote integration: "→ Quote" button on any contact row opens the New Quote modal pre-populated with the contact\'s name (Client field) and email (Notes field). Saving that quote automatically sets the contact status to Converted. Deleting the quote reverts the contact to Qualified.',
@@ -5539,7 +5615,8 @@ var AI_SYSTEM_PROMPT = [
   'Each event record contains: id (unique), ts (ISO 8601 timestamp), entityType (e.g. contact), entityId (ID of the affected entity), verb (created/updated/status_changed/note_added/deleted/converted), summary (plain operational text — no personal names), actor (user or system).',
   'Events are written by logEv() whenever a contact is created, edited, has its status changed, has a note added, is deleted, or is converted via quote creation. Supplier events are scaffolded for a future version.',
   'To view contact activity: open or edit a Contact → click the "Activity" header to expand the accordion. Shows the most recent 50 events for that contact, newest first, in YYYY-MM-DD format.',
-  'Supplier modal also has an Activity accordion but always shows "No activity recorded." in v2.9.28 — supplier events will be added in v2.9.29.',
+  'Supplier modal also has an Activity accordion but always shows "No activity recorded." — supplier events are not yet emitted.',
+  'Supplier→Contact link: each contact record has a supplierId (string or null) and role (supplier_contact or empty). A contact may be linked to at most one supplier at a time. When editing a supplier, a "Contacts" sub-panel appears showing all linked contacts with an Unlink button each. "+ Link Contact" opens a prompt-based picker showing contacts not yet linked to another supplier. "+ New Contact" opens the Contact modal with the Supplier dropdown pre-filled. Contacts already linked to a different supplier are excluded from the picker. The Contacts list table shows a Supplier column with the linked supplier name (or — if none). Deleting a supplier nulls supplierId on all previously linked contacts before the async delete. supplierId and role are not synced to Google Sheets (omitted by mapRec()).',
   'Retention cap: 2,000 events maximum (FIFO). When the cap is exceeded, the oldest entries are silently dropped. No user-visible warning is shown (EVT-GAP-001).',
   'The event log is included in JSON backups (Settings → Data → Backup All JSON) and restored on import. It is not counted in the restore confirm dialog (operational metadata, not user records).'
 ].join('\n');
@@ -7023,6 +7100,7 @@ function rCon() {
       '<td>' + san(c.email) + '</td>' +
       '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
       '<td>' + san(c.source||'—') + '</td>' +
+      '<td>' + (c.supplierId ? san(gsn(c.supplierId)) : '—') + '</td>' +
       '<td>' + lastDate + '</td>' +
       '<td>' + (c.enquiries||[]).length + '</td>' +
       '<td class="ab"><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
@@ -7036,12 +7114,14 @@ function rCon() {
   G('con-tbody').innerHTML = rows;
 }
 
-function openCon() {
+function openCon(prefillSupplierId) {
   EI.co = null;
   G('con-title').textContent = 'New Contact';
   ['ct-name','ct-email','ct-phone','ct-company','ct-notes','ct-enq-summary'].forEach(function(id){ G(id).value = ''; });
   G('ct-status').value = 'lead';
   G('ct-source').value = 'manual';
+  populateConSupDrop();
+  G('ct-sup').value = prefillSupplierId || '';
   vClr('ct-name');
   vClr('ct-email');
   var ab = G('con-activity-body'); if (ab) ab.style.display = 'none';
@@ -7062,6 +7142,8 @@ function editCon(id) {
   G('ct-source').value = c.source || 'manual';
   G('ct-notes').value = c.notes || '';
   G('ct-enq-summary').value = '';
+  populateConSupDrop();
+  G('ct-sup').value = c.supplierId || '';
   vClr('ct-name');
   vClr('ct-email');
   var ab = G('con-activity-body'); if (ab) ab.style.display = 'none';
@@ -7142,7 +7224,9 @@ function saveCon() {
     createdAt:       existC ? (existC.createdAt || new Date().toISOString()) : new Date().toISOString(),
     lastContactedAt: enqSummary ? new Date().toISOString() : (existC ? (existC.lastContactedAt || '') : ''),
     enquiries:       enqs,
-    notes:           G('ct-notes').value.trim()
+    notes:           G('ct-notes').value.trim(),
+    supplierId:      G('ct-sup').value || null,
+    role:            G('ct-sup').value ? 'supplier_contact' : ''
   };
 
   var prevStatus = existC ? existC.status : null;

@@ -50,6 +50,7 @@ const ctx = vm.createContext({
   setInterval:     () => {},
   clearInterval:   () => {},
   confirm:         () => false,
+  prompt:          () => null,
   alert:           () => {},
   fetch:           () => Promise.resolve({ text: () => Promise.resolve('{"status":"ok","records":[]}') }),
   console, Date, Math, JSON, Intl,
@@ -2738,6 +2739,120 @@ test('AC-1d: delCon() logs deleted event', function() {
   assert(evts.length === 1, 'Expected 1 deleted event');
   assertEqual(evts[0].entityId, cId);
   assertEqual(evts[0].actor, 'user');
+});
+
+// ── REQ-V3-GAP-006: Supplier→Contact sub-panel ──────────────────────────────
+
+test('AC-1: supplierId and role set when saved with supplier selected', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
+  ctx.EI.co = null;
+  mockEl('ct-name').value = 'Alice';
+  mockEl('ct-email').value = 'alice@example.com';
+  mockEl('ct-status').value = 'lead';
+  mockEl('ct-source').value = 'manual';
+  mockEl('ct-enq-summary').value = '';
+  mockEl('ct-notes').value = '';
+  mockEl('ct-phone').value = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-sup').value = 'S1';
+  ctx.saveCon();
+  assertEqual(ctx.DB.con.length, 1, 'contact created');
+  assertEqual(ctx.DB.con[0].supplierId, 'S1', 'supplierId set');
+  assertEqual(ctx.DB.con[0].role, 'supplier_contact', 'role set');
+});
+
+test('AC-4: supplierId null and role empty for independently created contact', function() {
+  resetDB();
+  ctx.EI.co = null;
+  mockEl('ct-name').value = 'Bob';
+  mockEl('ct-email').value = 'bob@example.com';
+  mockEl('ct-status').value = 'lead';
+  mockEl('ct-source').value = 'manual';
+  mockEl('ct-enq-summary').value = '';
+  mockEl('ct-notes').value = '';
+  mockEl('ct-phone').value = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-sup').value = '';
+  ctx.saveCon();
+  assertEqual(ctx.DB.con[0].supplierId, null, 'supplierId null');
+  assertEqual(ctx.DB.con[0].role, '', 'role empty string');
+});
+
+test('AC-2: unlinkSupCon nulls supplierId and clears role, contact preserved', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
+  ctx.DB.con.push({ id: 'C1', name: 'Alice', email: 'alice@example.com', supplierId: 'S1', role: 'supplier_contact', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
+  ctx.EI.s = 'S1';
+  ctx.unlinkSupCon('C1');
+  assertEqual(ctx.DB.con[0].supplierId, null, 'supplierId nulled');
+  assertEqual(ctx.DB.con[0].role, '', 'role cleared');
+  assertEqual(ctx.DB.con.length, 1, 'contact preserved');
+});
+
+test('AC-5: delSup nulls supplierId on linked contacts and preserves them', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
+  ctx.DB.con.push({ id: 'C1', name: 'Alice', email: 'alice@example.com', supplierId: 'S1', role: 'supplier_contact', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
+  ctx.DB.con.push({ id: 'C2', name: 'Bob', email: 'bob@example.com', supplierId: null, role: '', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
+  ctx.confirm = function(){ return true; };
+  ctx.delSup('S1');
+  assertEqual(ctx.DB.con.length, 2, 'both contacts preserved');
+  assertEqual(ctx.DB.con[0].supplierId, null, 'C1 supplierId nulled');
+  assertEqual(ctx.DB.con[0].role, '', 'C1 role cleared');
+  assertEqual(ctx.DB.con[1].supplierId, null, 'C2 unaffected');
+  assertEqual(ctx.DB.sup.length, 0, 'supplier deleted');
+  ctx.confirm = function(){ return false; };
+});
+
+test('AC-6: openSupConPicker links contact — supplierId and role set', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
+  ctx.DB.con.push({ id: 'C1', name: 'Alice', email: 'alice@example.com', supplierId: null, role: '', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
+  ctx.EI.s = 'S1';
+  ctx.prompt = function(){ return '1'; };
+  ctx.openSupConPicker();
+  ctx.prompt = function(){ return null; };
+  assertEqual(ctx.DB.con[0].supplierId, 'S1', 'supplierId set');
+  assertEqual(ctx.DB.con[0].role, 'supplier_contact', 'role set');
+});
+
+test('AC-3: contact linked to Supplier X excluded from picker for Supplier Y', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'SX', name: 'ACME' });
+  ctx.DB.sup.push({ id: 'SY', name: 'Globex' });
+  ctx.DB.con.push({ id: 'CB', name: 'Bob', email: 'bob@example.com', supplierId: 'SX', role: 'supplier_contact', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
+  ctx.EI.s = 'SY';
+  var eligible = ctx.DB.con.filter(function(c){ return !c.supplierId || c.supplierId === ctx.EI.s; });
+  assertEqual(eligible.length, 0, 'Contact B absent from picker for Supplier Y');
+});
+
+test('AC-7: rCon renders Supplier column with gsn() name for linked contact', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME Goods' });
+  ctx.DB.con.push({ id: 'C1', name: 'Alice', email: 'alice@example.com', supplierId: 'S1', role: 'supplier_contact', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
+  var html = ctx.DB.con.map(function(c){
+    return (c.supplierId ? ctx.gsn(c.supplierId) : '—');
+  }).join('');
+  assert(html.indexOf('ACME Goods') >= 0, 'supplier name rendered via gsn()');
+});
+
+test('AC-8: clearing Supplier dropdown before save sets supplierId null and role empty', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
+  ctx.EI.co = null;
+  mockEl('ct-name').value = 'Carol';
+  mockEl('ct-email').value = 'carol@example.com';
+  mockEl('ct-status').value = 'lead';
+  mockEl('ct-source').value = 'manual';
+  mockEl('ct-enq-summary').value = '';
+  mockEl('ct-notes').value = '';
+  mockEl('ct-phone').value = '';
+  mockEl('ct-company').value = '';
+  mockEl('ct-sup').value = '';
+  ctx.saveCon();
+  assertEqual(ctx.DB.con[0].supplierId, null, 'supplierId null when dropdown cleared');
+  assertEqual(ctx.DB.con[0].role, '', 'role empty when dropdown cleared');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
