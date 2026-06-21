@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.27</title>
+<title>Stackd Ops v2.9.32</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.27</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.32</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -286,6 +286,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <button class="btn btn-s" data-en="+ New Invoice" data-zh="+ 新建发票" onclick="openInv()">+ New Invoice</button>
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
     <button class="btn btn-g" onclick="openAcctExport('inv')">&#8595; Accounting Export</button>
+    <button class="btn btn-g" onclick="openVATReturn()">&#128196; VAT Return</button>
     <button class="btn btn-g" onclick="openStatement()" title="Buyer Statement">&#128196; Statement</button>
   </div>
   <div class="tw" style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Invoice #</th><th>Buyer</th><th>Dest.</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">COGS</th><th class="num">Gross Profit</th><th class="num">Net Profit</th><th class="num">Margin</th><th class="num">Tax%</th><th class="num">Dep. Rec.</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="inv-tb"></tbody></table></div>
@@ -362,7 +363,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   <div class="tw"><table class="tbl" id="con-tbl" style="display:none;">
     <thead><tr>
       <th>Name</th><th>Company</th><th>Email</th>
-      <th>Status</th><th>Source</th><th>Last Contact</th><th>Enquiries</th><th></th>
+      <th>Status</th><th>Source</th><th>Supplier</th><th>Last Contact</th><th>Enquiries</th><th></th>
     </tr></thead>
     <tbody id="con-tbody"></tbody>
   </table></div>
@@ -553,6 +554,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
       <div id="repair-status" style="font-size:.56rem;color:var(--m);margin-top:6px;min-height:14px;"></div>
     </div>
+    <div class="card">
+      <div class="ct">Privacy &amp; Data</div>
+      <p style="font-size:.48rem;color:var(--m);margin-bottom:6px;">&#9432; <strong>Activity event log</strong> — Stackd Ops records operational events (contact created, status changes, quote conversions) in a local activity log (<code>st_ev</code>). Event records contain entity IDs and action descriptions only — no personal names. The log is capped at 2,000 entries (FIFO); oldest entries are dropped automatically. This data is local-only, included in your JSON backup, and never transmitted externally. Legal basis: Art.6(1)(f) legitimate interests in operating the trade portal.</p>
+    </div>
+    <div class="card">
+      <div class="ct">Demo Mode</div>
+      <p style="font-size:.48rem;color:var(--m);margin-bottom:10px;">Load a complete end-to-end demo scenario — supplier, contact, quote, PO, invoice, payment, and in-transit shipment — to showcase Stackd to prospects. Demo records are excluded from financial KPIs.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-s" style="font-size:.52rem;" onclick="loadDemoData()">Load Demo Data</button>
+        <button class="btn btn-g" style="font-size:.52rem;" onclick="clearDemoData()">Clear Demo Data</button>
+      </div>
+    </div>
     <div class="card" id="cfg-rates">
       <div class="ct">Rates &amp; FX
         <button class="btn btn-o" id="qr-live-btn" style="margin-left:auto;font-size:.48rem;padding:2px 9px;" onclick="fetchLiveRates()">&#8635; Live Rates</button>
@@ -673,6 +686,39 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- VAT RETURN MODAL -->
+<div class="ov" id="ov-vat" onclick="if(event.target===this)closeM('ov-vat')">
+  <div class="modal" style="max-width:600px;">
+    <div class="mh">
+      <h2>VAT Return</h2>
+      <span style="font-family:'DM Mono',monospace;font-size:.5rem;color:var(--m);margin-left:8px;">Making Tax Digital &mdash; VAT 100</span>
+      <button class="mx" onclick="closeM('ov-vat')">&#215;</button>
+    </div>
+    <div class="mb">
+      <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;">
+        <div>
+          <label class="lbl">From</label>
+          <input type="date" id="vat-from" class="inp" style="width:150px;">
+        </div>
+        <div>
+          <label class="lbl">To</label>
+          <input type="date" id="vat-to" class="inp" style="width:150px;">
+        </div>
+        <button class="btn btn-s" onclick="runVATCalc()">Calculate</button>
+      </div>
+      <div id="vat-boxes" style="margin-bottom:14px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button id="vat-export-summary" class="btn btn-s" style="font-size:.52rem;" onclick="exportVATSummary()" disabled>&#8659; Export VAT Return CSV</button>
+        <button id="vat-export-txn"     class="btn btn-g" style="font-size:.52rem;" onclick="exportVATTransactions()" disabled>&#8659; Export Transactions CSV</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);line-height:1.6;">Export the VAT Return CSV and import into your MTD bridging software (e.g. ANNA Money, Sage, BTC Software) for HMRC submission. Boxes 2, 4, 7, 8, 9 are &pound;0.00 &mdash; input VAT tracking is not yet supported (MTD-GAP-001).</p>
+    </div>
+    <div class="mf">
+      <button class="btn btn-g" onclick="closeM('ov-vat')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ACCOUNTING EXPORT MODAL -->
 <div class="ov" id="ov-acct-exp" onclick="if(event.target===this)closeM('ov-acct-exp')">
   <div class="modal" style="max-width:520px;">
@@ -721,6 +767,23 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <input type="text" id="sf-p" placeholder="number" style="flex:1;">
       </div></div>
     <div class="fld" style="grid-column:1/-1"><label>Notes</label><textarea id="sf-nt" placeholder="Certs, lead times, MOQs, red flags..."></textarea></div>
+    <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;grid-column:1/-1;">
+  <div onclick="toggleAcc('sup-activity-body');renderSupActivity()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);">
+    Activity
+    <span style="font-size:.7rem;">&#9660;</span>
+  </div>
+  <div id="sup-activity-body" style="display:none;margin-top:8px;font-size:.5rem;font-family:'DM Mono',monospace;max-height:200px;overflow-y:auto;">
+    <div id="sup-activity-list">No activity recorded.</div>
+  </div>
+</div>
+    <div id="sup-con-panel" style="grid-column:1/-1;margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;display:none;">
+      <div style="font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);margin-bottom:8px;">Contacts</div>
+      <div id="sup-con-list" style="font-size:.5rem;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-s" style="font-size:.48rem;" onclick="openSupConPicker()">+ Link Contact</button>
+        <button class="btn btn-g" style="font-size:.48rem;" onclick="openCon(EI.s)">+ New Contact</button>
+      </div>
+    </div>
   </div>
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
     <button class="btn btn-g" onclick="closeM('ov-sup')">Cancel</button>
@@ -927,9 +990,82 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.27</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.32</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: MTD-compatible VAT Return (REQ-MTD-001) — HMRC Making Tax Digital VAT 100 calculator on Invoices tab</li>
+          <li>New: calcVATReturn(from, to) computes all 9 statutory VAT boxes from invoice data; credit notes reduce Box 1 and Box 6; goodwill credits excluded</li>
+          <li>New: Export VAT Return CSV (9-box summary for MTD bridging import) and Export Transactions CSV (digital records listing)</li>
+          <li>New: Default date range = previous calendar quarter; export buttons disabled until Calculate is run</li>
+          <li>Known gaps: MTD-GAP-001 (Boxes 4, 7 always £0 — input VAT not tracked); MTD-GAP-002 (QR rates at export time, not historic)</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.31</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: End-to-end Demo Mode — one-click demo data seed across all entities (supplier, contact, quote, PO, invoice, payment, shipment, events)</li>
+          <li>New: loadDemoData() seeds a complete trade scenario with D-prefix records (_demo:true); idempotent</li>
+          <li>New: clearDemoData() removes all demo records from all entity arrays with confirmation</li>
+          <li>New: [DEMO] badge on demo records in all 6 entity list tables (supplier, contact, quote, PO, invoice, shipment)</li>
+          <li>New: Dashboard KPIs exclude demo records from revenue, PO balance, net cash, and in-transit count</li>
+          <li>New: Yellow notice banner on dashboard when demo data is active, with inline Clear button</li>
+          <li>New: Demo Mode card in Settings with Load and Clear buttons</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.30</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: AI action block parsing — AI assistant can now embed structured @@ACTION blocks in replies</li>
+          <li>New: parseAIAction() strips @@ACTION...@@END blocks from displayed text and extracts payload</li>
+          <li>New: handleAIAction() pre-fills PO, Quote, Shipment, and Contact modals from AI-suggested payloads</li>
+          <li>New: "Review in [Form]" button appears below AI reply when an action block is detected</li>
+          <li>New: AI_SYSTEM_PROMPT updated with action block instructions for create_po, create_quote, create_shipment, create_contact</li>
+          <li>AI history stores cleaned text (block stripped) — action sentinels never re-sent to API</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.29</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Supplier→Contact sub-panel in Supplier edit modal — linked contacts list, Unlink button, Link Contact picker, New Contact shortcut</li>
+          <li>New: supplierId and role fields on contact records — persisted on save, nulled on supplier delete</li>
+          <li>New: Supplier column in Contacts list table showing linked supplier name</li>
+          <li>New: Supplier dropdown in Contact modal — pre-fills when opening New Contact from supplier panel</li>
+          <li>Fix: delSup() nulls supplierId on all linked contacts before async delete</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.28</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: DB.events — local-only activity log, no Sheets sync</li>
+          <li>New: logEv() helper — pushes timestamped events, 2,000-event FIFO cap</li>
+          <li>New: Activity accordion in Contact modal — shows contact history, newest first, max 50 entries</li>
+          <li>New: Activity accordion in Supplier modal — scaffolding for v2.9.29 supplier events</li>
+          <li>Emission: contact created / status changed / note added / updated / deleted / converted (via quote)</li>
+          <li>Compliance: GDPR disclosure note added for event log in Settings</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.27</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Contacts / Leads entity — store trade leads with name, email, phone, company, status (lead → qualified → converted → closed), source, enquiries log, and notes</li>
@@ -1604,10 +1740,23 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <option value="manual">Manual</option>
       <option value="chat">Chat</option>
     </select>
+    <label>Supplier</label>
+    <select id="ct-sup">
+      <option value="">None</option>
+    </select>
     <label>New enquiry note</label>
     <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
     <label>Internal notes</label>
     <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
+    <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;">
+  <div onclick="toggleAcc('con-activity-body');renderConActivity()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);">
+    Activity
+    <span style="font-size:.7rem;">&#9660;</span>
+  </div>
+  <div id="con-activity-body" style="display:none;margin-top:8px;font-size:.5rem;font-family:'DM Mono',monospace;max-height:200px;overflow-y:auto;">
+    <div id="con-activity-list">No activity recorded.</div>
+  </div>
+</div>
     <div class="btn-row">
       <button onclick="saveCon()">Save</button>
       <button class="btn-sec" onclick="closeM('ov-con')">Cancel</button>
@@ -1756,7 +1905,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 // ───────────────────────────────────────────────────────────────
 
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev'};
 
 var _storageOK = (function() {
   try { localStorage.setItem('_stk_t','1'); localStorage.removeItem('_stk_t'); return true; }
@@ -1769,7 +1918,7 @@ function ld(k) {
 }
 function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 
-let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co) };
+let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'', email:'', phone:'', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
 let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null, co:null };
@@ -1805,7 +1954,28 @@ function sv(k, d) {
     }
   }
 }
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); };
+function logEv(entityType, entityId, verb, summary, actor) {
+  var ev = {
+    id:         uid(),
+    ts:         new Date().toISOString(),
+    entityType: entityType,
+    entityId:   entityId,
+    verb:       verb,
+    summary:    summary,
+    actor:      actor !== undefined ? actor : 'user'
+  };
+  DB.events.push(ev);
+  if (DB.events.length > 2000) {
+    DB.events = DB.events.slice(DB.events.length - 2000);
+  }
+  sv(K.ev, DB.events);
+}
+function toggleAcc(bodyId) {
+  var el = G(bodyId);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
 
 const QR_DEFAULTS = { fxGBPUSD:1.27, fxGBPRMB:9.20, fxGBPBBD:2.54, lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, originCharges:250, destCharges:350, dgSurcharge:150, insRate:0.005, fpmAdmin:75 };
 var QR = (function(){ var saved = ld('st_qr'); return saved ? Object.assign({}, QR_DEFAULTS, saved) : Object.assign({}, QR_DEFAULTS); })();
@@ -2704,8 +2874,52 @@ function iCalc(inv) {
     bal: c.bal
   };
 }
+function _demoDate(offsetDays) {
+  var d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+function loadDemoData() {
+  var allArrays = [DB.sup, DB.con, DB.qt, DB.po, DB.inv, DB.sh, DB.payments, DB.events];
+  var hasDemo = allArrays.some(function(arr){ return arr.some(function(r){ return r._demo === true; }); });
+  if (hasDemo) { toast('Demo data already loaded'); return; }
+  var supId = 'demo-sup-001';
+  var conId = 'demo-con-001';
+  var qtId  = 'demo-qt-001';
+  var poId  = 'demo-po-001';
+  var invId = 'demo-inv-001';
+  var shId  = 'demo-sh-001';
+  var pmId  = 'demo-pm-001';
+  DB.sup.push({ id: supId, name: 'Romerry International', country: 'China', cur: 'CNY', ct: 'Li Wei', email: 'sales@romerry-qd.example', phone: '', notes: '', _demo: true });
+  DB.con.push({ id: conId, name: 'Thomas Bergmann', email: 'thomas.bergmann@apex-coldchain.example', phone: '+49 30 0000 0000', company: 'Apex Cold Chain GmbH', status: 'converted', source: 'chat', gdprBasis: 'legitimate_interests', createdAt: _demoDate(-30), lastContactedAt: _demoDate(-14), enquiries: [], notes: 'Demo contact — Apex Cold Chain Berlin buyer', _demo: true });
+  DB.qt.push({ id: qtId, num: 'DQ-0001', client: 'Apex Cold Chain GmbH', dt: _demoDate(-28), validUntil: _demoDate(7), status: 'Converted', freightMode: 'FCL 40HQ', markup: 18, currency: 'USD', notes: 'Demo quote — vertical display freezers', sourceContactId: conId, linkedPOId: poId, _demo: true, lines: [{ rid: 'demo-ql-001', lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', uom: 'pcs', qty: 20, cost: 1450, dutyPct: 3.5, hsCode: '8418.50', priceHistory: [{ v: 1, ts: new Date(Date.now() - 28*86400000).toISOString(), cost: 1450, dutyPct: 3.5, markup: 18, landed: 1634.25, sellPrice: 1928.42, note: 'Initial quote' }] }] });
+  DB.po.push({ id: poId, num: 'DPO-0001', supId: supId, cur: 'CNY', status: 'Confirmed', date: _demoDate(-28), del: '45 days from PO date', dep: 28000, oth: 0, notes: 'Demo PO — Romerry refrigeration units', lineItems: [{ rid: 'demo-pl-001', lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', uom: 'pcs', qty: 20, cost: 9875 }], _demo: true });
+  DB.inv.push({ id: invId, num: 'DINV-0001', buyer: 'Apex Cold Chain GmbH', dst: 'Hamburg, Germany', status: 'Partially Paid', type: 'invoice', cur: 'USD', date: _demoDate(-21), dep: 15600, lineItems: [{ lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', qty: 20, price: 1928.42, cost: 1450, uom: 'pcs', hs: '8418.50', duty: 3.5 }], notes: 'Demo invoice', _demo: true });
+  DB.payments.push({ id: pmId, invId: invId, invNum: 'DINV-0001', date: _demoDate(-21), amount: 15600, method: 'Bank Transfer', reference: 'DEMO-DEP-001', notes: 'Demo deposit payment', type: 'buyer_payment', creAt: new Date(Date.now() - 21*86400000).toISOString(), _demo: true });
+  DB.sh.push({ id: shId, ref: 'DSHP-0001', blNum: 'MSCD0001234', vessel: 'MSC Altair', carrier: 'MSC', originPort: 'CNQAO', destPort: 'DEHAM', etd: _demoDate(-14), eta: _demoDate(28), containerType: '40HQ', containerNum: 'MSCU1234567', dg: false, docsStatus: 'Complete', status: 'In Transit', linkedInvs: ['DINV-0001'], forwarder: 'Kuehne+Nagel', forwarderEmail: 'ops@kn-demo.example', notes: 'Demo shipment — Apex Cold Chain refrigeration units', _demo: true });
+  DB.events.push({ id: uid(), ts: new Date(Date.now() - 30*86400000).toISOString(), entityType: 'contact', entityId: conId, verb: 'created', summary: 'Contact created', actor: 'system', _demo: true });
+  DB.events.push({ id: uid(), ts: new Date(Date.now() - 14*86400000).toISOString(), entityType: 'contact', entityId: conId, verb: 'converted', summary: 'Quote DQ-0001 created — contact converted', actor: 'system', _demo: true });
+  saveAll();
+  renderAll();
+  toast('Demo data loaded — 6 entity records + 1 payment + 2 events seeded');
+}
+function clearDemoData() {
+  if (!confirm('Clear all demo data? This cannot be undone.')) return;
+  DB.sup      = DB.sup.filter(function(r){ return !r._demo; });
+  DB.con      = DB.con.filter(function(r){ return !r._demo; });
+  DB.qt       = DB.qt.filter(function(r){ return !r._demo; });
+  DB.po       = DB.po.filter(function(r){ return !r._demo; });
+  DB.inv      = DB.inv.filter(function(r){ return !r._demo; });
+  DB.sh       = DB.sh.filter(function(r){ return !r._demo; });
+  DB.payments = DB.payments.filter(function(r){ return !r._demo; });
+  DB.events   = DB.events.filter(function(r){ return !r._demo; });
+  saveAll();
+  renderAll();
+  toast('Demo data cleared');
+}
 function rDash() {
   var ai = DB.inv.filter(function(i){
+    if (i._demo) return false;
     if (i.status === 'Cancelled') return false;
     if (i.type === 'credit_note' || i.type === 'goodwill_credit') return false;
     if (!i.type && isCN(i.num)) return false;
@@ -2717,7 +2931,7 @@ function rDash() {
     if (i.status==='Paid'||i.status==='Cancelled') return s;
     return s + toGBP(Math.max(0, iCalc(i).bal), i.cur||'USD');
   }, 0);
-  var tPO = DB.po.filter(function(p){ return p.status!=='Cancelled' && p.status!=='Settled'; })
+  var tPO = DB.po.filter(function(p){ return !p._demo && p.status!=='Cancelled' && p.status!=='Settled'; })
     .reduce(function(s,p){
       var t = (p.lineItems||[]).reduce(function(a,l){ return a + (+l.qty||0)*(+l.cost||0); }, 0);
       return s + toGBP(t - (+p.dep||0), p.cur||'USD');
@@ -2727,15 +2941,19 @@ function rDash() {
 
   // Net cash: total buyer deposits received minus total supplier deposits paid minus goodwill credits issued
   var tBuyerDep = ai.reduce(function(s,i){ return s + toGBP(+i.dep||0, i.cur||'USD'); }, 0);
-  var tSupDep = DB.po.filter(function(p){ return p.status!=='Cancelled'; })
+  var tSupDep = DB.po.filter(function(p){ return !p._demo && p.status!=='Cancelled'; })
     .reduce(function(s,p){ return s + toGBP(+p.dep||0, p.cur||'USD'); }, 0);
-  var tGoodwillCredits = DB.inv.filter(function(i){ return i.type==='goodwill_credit' && i.status!=='Cancelled'; })
+  var tGoodwillCredits = DB.inv.filter(function(i){ return !i._demo && i.type==='goodwill_credit' && i.status!=='Cancelled'; })
     .reduce(function(s,i){ return s + toGBP(Math.abs(+i.cnAmount||0), i.cur||'USD'); }, 0);
   var netCash = tBuyerDep - tSupDep - tGoodwillCredits;
 
-  var inTransit = DB.sh.filter(function(s){ return s.status === 'In Transit'; }).length;
+  var inTransit = DB.sh.filter(function(s){ return !s._demo && s.status === 'In Transit'; }).length;
 
-  G('kpis').innerHTML =
+  var hasDemo = DB.inv.some(function(i){ return i._demo; }) || DB.sh.some(function(s){ return s._demo; }) || DB.po.some(function(p){ return p._demo; });
+  var demoBanner = hasDemo
+    ? '<div style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:8px 12px;font-size:.52rem;border-radius:3px;margin-bottom:10px;">&#9888; Demo data active — financial KPIs exclude demo records. <button onclick="clearDemoData()" style="margin-left:8px;font-size:.48rem;padding:1px 6px;cursor:pointer;border:1px solid #92400e;background:transparent;color:#92400e;border-radius:2px;">Clear Demo Data</button></div>'
+    : '';
+  G('kpis').innerHTML = demoBanner +
     '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR,'GBP') + '</div><div class="ks">' + ai.length + ' active &middot; &asymp;&thinsp;GBP</div></div>' +
     '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP,'GBP') + '</div><div class="ks">After all costs &middot; &asymp;&thinsp;GBP</div></div>' +
     '<div class="kpi"><div class="kl">Avg Margin</div><div class="kv ' + (aM>=20?'g':aM>=10?'gold':'r') + '">' + fp(aM) + '</div><div class="ks">' + mg.length + ' invoices</div></div>' +
@@ -2752,7 +2970,7 @@ function rDash() {
       var c = iCalc(inv);
       var sc = (inv.status||'draft').toLowerCase().replace(/ /g, '-');
       return '<div class="pi" onclick="editInv(\'' + inv.id + '\')">' +
-        '<span class="pref">' + (san(inv.num)||'-') + '</span>' +
+        '<span class="pref">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</span>' +
         '<span class="pbuy">' + (san(inv.buyer)||'-') + '</span>' +
         '<span class="pdst">' + san(inv.dst||'') + '</span>' +
         '<span class="tag s-' + sc + '">' + (inv.status||'Draft') + '</span>' +
@@ -2998,25 +3216,80 @@ function rSup() {
   var f = DB.sup.filter(function(s){ return !q || (s.name||'').toLowerCase().includes(q) || (s.country||'').toLowerCase().includes(q); });
   G('sup-em').style.display = f.length ? 'none' : 'block';
   G('sup-tb').innerHTML = f.map(function(s){
-    return '<tr><td style="font-weight:500;color:var(--cr)">' + san(s.name||'-') + '</td><td>' + san(s.country||'-') + '</td><td>' + san(s.ct||'-') + '</td><td>' + san(s.email||'-') + '</td><td>' + san(s.phone||'-') + '</td><td>' + san(s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(s.notes||'') + '</td>' +
+    return '<tr><td style="font-weight:500;color:var(--cr)">' + san(s.name||'-') + (s._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td><td>' + san(s.country||'-') + '</td><td>' + san(s.ct||'-') + '</td><td>' + san(s.email||'-') + '</td><td>' + san(s.phone||'-') + '</td><td>' + san(s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(s.notes||'') + '</td>' +
       '<td><button class="ab" onclick="editSup(\'' + s.id + '\')">&#9998;</button><button class="ab" onclick="delSup(\'' + s.id + '\')">&#10005;</button></td></tr>';
   }).join('');
   var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
   ['lf-sup','pf-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
   G('li-sf').innerHTML = '<option value="">All suppliers</option>' + opts;
+  populateConSupDrop();
+}
+function populateConSupDrop() {
+  var el = G('ct-sup'); if (!el) return;
+  var cur = el.value;
+  el.innerHTML = '<option value="">None</option>' +
+    DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
+  el.value = cur;
+}
+function renderSupContacts() {
+  var el = G('sup-con-list'); if (!el) return;
+  var linked = DB.con.filter(function(c){ return c.supplierId === EI.s; });
+  if (!linked.length) { el.innerHTML = '<span style="color:var(--m);">No contacts linked.</span>'; return; }
+  el.innerHTML = '<table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead><tbody>' +
+    linked.map(function(c){
+      return '<tr><td>' + san(c.name) + '</td><td>' + san(c.email) + '</td>' +
+        '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
+        '<td><button class="ab" onclick="unlinkSupCon(\'' + c.id + '\')">Unlink</button></td></tr>';
+    }).join('') + '</tbody></table>';
+}
+function unlinkSupCon(contactId) {
+  var c = DB.con.find(function(x){ return x.id === contactId; }); if (!c) return;
+  c.supplierId = null;
+  c.role = '';
+  sv(K.co, DB.con);
+  renderSupContacts();
+  rCon();
+  toast('Contact unlinked');
+}
+function openSupConPicker() {
+  var eligible = DB.con.filter(function(c){
+    return !c.supplierId || c.supplierId === EI.s;
+  });
+  if (!eligible.length) { toast('No eligible contacts to link.'); return; }
+  var list = eligible.map(function(c, i){ return (i+1) + '. ' + c.name + ' <' + c.email + '>'; }).join('\n');
+  var input = prompt('Link a contact to this supplier.\nEnter the number:\n\n' + list);
+  if (!input) return;
+  var idx = parseInt(input, 10) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= eligible.length) { toast('Invalid selection.'); return; }
+  var c = eligible[idx];
+  c.supplierId = EI.s;
+  c.role = 'supplier_contact';
+  sv(K.co, DB.con);
+  renderSupContacts();
+  rCon();
+  toast('Contact linked');
 }
 function openSup() {
   EI.s = null; G('sup-mt').textContent = 'New Supplier';
   ['sf-n','sf-c','sf-ct','sf-e','sf-p','sf-nt'].forEach(function(f){ var e=G(f); if(e) e.value=''; });
   vClrAll(['sf-n','sf-e']);
-  G('sf-cur').value = 'USD'; populateDialCodes(); G('ov-sup').classList.add('on'); setTimeout(function(){ G('sf-n').focus(); }, 50);
+  G('sf-cur').value = 'USD'; populateDialCodes();
+  var ab = G('sup-activity-body'); if (ab) ab.style.display = 'none';
+  var al = G('sup-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
+  var panel = G('sup-con-panel'); if (panel) panel.style.display = 'none';
+  G('ov-sup').classList.add('on'); setTimeout(function(){ G('sf-n').focus(); }, 50);
 }
 function editSup(id) {
   var s = DB.sup.find(function(x){ return x.id===id; }); if(!s) return;
   EI.s = id; G('sup-mt').textContent = 'Edit Supplier';
   G('sf-n').value=s.name||''; G('sf-c').value=s.country||''; G('sf-ct').value=s.ct||'';
   G('sf-e').value=s.email||''; setSupPhone(s.phone||''); G('sf-nt').value=s.notes||'';
-  G('sf-cur').value=s.cur||'USD'; G('ov-sup').classList.add('on');
+  G('sf-cur').value=s.cur||'USD';
+  var ab = G('sup-activity-body'); if (ab) ab.style.display = 'none';
+  var al = G('sup-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
+  var panel = G('sup-con-panel'); if (panel) panel.style.display = '';
+  renderSupContacts();
+  G('ov-sup').classList.add('on');
 }
 async function saveSup() {
   if (!vSup()) return;
@@ -3037,6 +3310,8 @@ async function delSup(id) {
   if (warns.length) msg += '\n\nWarning: ' + warns.join('\n') + '\n\nThe POs and invoices will remain but will show a missing supplier reference.';
   if (!confirm(msg)) return;
   DB.sup = DB.sup.filter(function(s){ return s.id!==id; });
+  DB.con.forEach(function(c){ if (c.supplierId === id) { c.supplierId = null; c.role = ''; } });
+  sv(K.co, DB.con);
   sv(K.s,DB.sup); rSup(); toast('Deleted'); await delEnt('sup',id).catch(function(){});
 }
 
@@ -3553,6 +3828,146 @@ function autoPos(inv) {
   toast(cnt+' PO'+(cnt!==1?'s':'')+' auto-generated');
 }
 
+// ── VAT RETURN (MTD) ───────────────────────────────────────────
+function _vatPrevQuarter(now) {
+  if (!now) now = new Date();
+  var y = now.getFullYear();
+  var q = Math.floor(now.getMonth() / 3);
+  if (q === 0) { q = 4; y -= 1; }
+  var starts = [null, '01-01', '04-01', '07-01', '10-01'];
+  var ends   = [null, '03-31', '06-30', '09-30', '12-31'];
+  return { from: y + '-' + starts[q], to: y + '-' + ends[q] };
+}
+function calcVATReturn(from, to) {
+  var box1 = 0, box6 = 0;
+  var rows = [];
+  DB.inv.forEach(function(inv) {
+    if (inv.date < from || inv.date > to) return;
+    if (inv.status === 'Cancelled') return;
+    if (inv.type === 'goodwill_credit') return;
+    var c = iCalc(inv);
+    var cur = inv.cur || 'USD';
+    var grossGBP = toGBP(c.grand, cur);
+    var taxGBP   = toGBP(c.tax,   cur);
+    var netGBP   = grossGBP - taxGBP;
+    var sign = (inv.type === 'credit_note') ? -1 : 1;
+    box1 += sign * taxGBP;
+    box6 += sign * netGBP;
+    rows.push({
+      num:       inv.num   || '-',
+      date:      inv.date  || '-',
+      buyer:     inv.buyer || '-',
+      dst:       inv.dst   || '-',
+      type:      inv.type  || 'invoice',
+      status:    inv.status || '-',
+      cur:       cur,
+      grossOrig: sign * c.grand,
+      netOrig:   sign * (c.grand - c.tax),
+      taxOrig:   sign * c.tax,
+      netGBP:    sign * netGBP,
+      taxGBP:    sign * taxGBP
+    });
+  });
+  rows.sort(function(a, b) {
+    if (a.date < b.date) return -1;
+    if (a.date > b.date) return  1;
+    if (a.num  < b.num)  return -1;
+    if (a.num  > b.num)  return  1;
+    return 0;
+  });
+  box1 = Math.round(box1 * 100) / 100;
+  box6 = Math.round(box6 * 100) / 100;
+  var box3 = Math.round(box1 * 100) / 100;
+  var box5 = Math.round(box3 * 100) / 100;
+  return { box1: box1, box2: 0, box3: box3, box4: 0, box5: box5,
+           box6: box6, box7: 0, box8: 0, box9: 0, rows: rows };
+}
+function openVATReturn() {
+  var pq = _vatPrevQuarter();
+  G('vat-from').value = pq.from;
+  G('vat-to').value   = pq.to;
+  G('vat-export-summary').disabled = true;
+  G('vat-export-txn').disabled     = true;
+  G('vat-boxes').innerHTML = '';
+  showM('ov-vat');
+}
+function runVATCalc() {
+  var from = G('vat-from').value;
+  var to   = G('vat-to').value;
+  if (!from || !to) { toast('Enter From and To dates'); return; }
+  if (from > to) { toast('From date must be before To date'); return; }
+  var r = calcVATReturn(from, to);
+  window._vatResult = { from: from, to: to, result: r };
+  var labels = [
+    'VAT due on sales and other outputs',
+    'VAT due on acquisitions from EC (post-Brexit £0)',
+    'Total VAT due (Box 1 + Box 2)',
+    'VAT reclaimed on purchases',
+    'Net VAT payable to HMRC (Box 3 − Box 4)',
+    'Total value of sales excluding VAT',
+    'Total value of purchases excluding VAT',
+    'Total value of goods supplied to EC (post-Brexit £0)',
+    'Total value of goods acquired from EC (post-Brexit £0)'
+  ];
+  var vals = [r.box1, r.box2, r.box3, r.box4, r.box5, r.box6, r.box7, r.box8, r.box9];
+  G('vat-boxes').innerHTML =
+    '<table style="width:100%;border-collapse:collapse;font-size:.56rem;">' +
+    '<thead><tr style="border-bottom:1px solid var(--bd);">' +
+    '<th style="text-align:left;padding:4px 6px;color:var(--m);">Box</th>' +
+    '<th style="text-align:left;padding:4px 6px;color:var(--m);">Description</th>' +
+    '<th style="text-align:right;padding:4px 6px;color:var(--m);">GBP</th>' +
+    '</tr></thead><tbody>' +
+    labels.map(function(lbl, i) {
+      var v = vals[i];
+      return '<tr style="border-bottom:1px solid var(--bd);">' +
+        '<td style="padding:5px 6px;font-weight:600;">Box ' + (i + 1) + '</td>' +
+        '<td style="padding:5px 6px;color:var(--m);">' + lbl + '</td>' +
+        '<td style="padding:5px 6px;text-align:right;font-weight:500;">' + fmt(v, 'GBP') + '</td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table>';
+  G('vat-export-summary').disabled = false;
+  G('vat-export-txn').disabled     = false;
+}
+function exportVATSummary() {
+  if (!window._vatResult) return;
+  var r = window._vatResult;
+  var res = r.result;
+  var rows = [
+    ['Box', 'Description', 'GBP'],
+    ['Box 1', 'VAT due on sales and other outputs',                    res.box1.toFixed(2)],
+    ['Box 2', 'VAT due on acquisitions from EC (post-Brexit £0)', res.box2.toFixed(2)],
+    ['Box 3', 'Total VAT due (Box 1 + Box 2)',                         res.box3.toFixed(2)],
+    ['Box 4', 'VAT reclaimed on purchases',                            res.box4.toFixed(2)],
+    ['Box 5', 'Net VAT payable to HMRC (Box 3 - Box 4)',               res.box5.toFixed(2)],
+    ['Box 6', 'Total value of sales excluding VAT',                    res.box6.toFixed(2)],
+    ['Box 7', 'Total value of purchases excluding VAT',                res.box7.toFixed(2)],
+    ['Box 8', 'Total value of goods supplied to EC (post-Brexit £0)', res.box8.toFixed(2)],
+    ['Box 9', 'Total value of goods acquired from EC (post-Brexit £0)', res.box9.toFixed(2)]
+  ];
+  var csv = rows.map(function(row) {
+    return row.map(function(c){ return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+  dlText('VAT-Return-' + r.from + '-to-' + r.to + '.csv', csv, 'text/csv');
+}
+function exportVATTransactions() {
+  if (!window._vatResult) return;
+  var r = window._vatResult;
+  var header = ['Invoice #','Date','Buyer','Destination','Type','Status','Currency',
+                'Gross (orig cur)','Net (orig cur)','Tax (orig cur)','Net GBP','Tax GBP'];
+  var dataRows = r.result.rows.map(function(row) {
+    return [
+      row.num, row.date, row.buyer, row.dst, row.type, row.status, row.cur,
+      row.grossOrig.toFixed(2), row.netOrig.toFixed(2), row.taxOrig.toFixed(2),
+      row.netGBP.toFixed(2), row.taxGBP.toFixed(2)
+    ];
+  });
+  var csv = [header].concat(dataRows).map(function(row) {
+    return row.map(function(c){ return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+  dlText('VAT-Transactions-' + r.from + '-to-' + r.to + '.csv', csv, 'text/csv');
+}
+
 // ── INVOICES TABLE ─────────────────────────────────────────────
 function rInv() {
   var q=(G('inv-q')&&G('inv-q').value||'').toLowerCase(), sf=G('inv-sf')&&G('inv-sf').value||'';
@@ -3569,7 +3984,7 @@ function rInv() {
     var sc=(inv.status||'draft').toLowerCase().replace(/ /g,'-');
     var balDue = c.bal;
     return '<tr>' +
-      '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + '</td>' +
+      '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td><td>' + (san(inv.dst)||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (inv.date||'-') + '</td>' +
       '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
@@ -3866,7 +4281,7 @@ function rPO() {
     var dep=+po.dep||0, bal=liT+(+po.oth||0)-dep, cur=po.cur||'USD';
     var sc=(po.status||'draft').toLowerCase().replace(/ /g,'-');
     return '<tr>' +
-      '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + san(po.num||'-') + '</td>' +
+      '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + san(po.num||'-') + (po._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(gsn(po.supId)) + '</td>' +
       '<td style="color:var(--m);font-size:.54rem;">' + san(po.invNum||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (po.date||'-') + '</td>' +
@@ -5284,7 +5699,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.27).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.32).',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -5463,12 +5878,37 @@ var AI_SYSTEM_PROMPT = [
   'AI Assistant: Claude API Key (stored locally in browser only).',
   '',
   '## Contacts',
-  'Contacts tab → + New Contact. Stores trade leads and contacts with: Name (required), Email (required — dedup key, case-insensitive), Phone, Company, Status (lead / qualified / converted / closed), Source (manual / chat), Enquiry log (append-only), Internal notes.',
+  'Contacts tab → + New Contact. Stores trade leads and contacts with: Name (required), Email (required — dedup key, case-insensitive), Phone, Company, Status (lead / qualified / converted / closed), Source (manual / chat), Supplier (optional — links the contact to one supplier), Enquiry log (append-only), Internal notes.',
   'GDPR basis is auto-derived from status on every save (not user-editable): lead/qualified → Art.6(1)(b) pre-contractual; converted/closed → Art.6(1)(f) legitimate interests. Contacts stale for >700 days are flagged with a Stale badge.',
   'Dedup: saving a new contact with an email that already exists prompts to merge the enquiry into the existing record, or create a separate record anyway. Edit-path email changes are not deduped.',
   'Quote integration: "→ Quote" button on any contact row opens the New Quote modal pre-populated with the contact\'s name (Client field) and email (Notes field). Saving that quote automatically sets the contact status to Converted. Deleting the quote reverts the contact to Qualified.',
   'Enquiry log: each enquiry note is appended to the contact\'s enquiries[] array with timestamp and source. The count is shown in the list view. Individual enquiry entries are not shown in the edit modal.',
-  'Contacts sync to Google Sheets (st_co → "Contacts" sheet tab). syncAll() and pushAll() include the co entity; pullAll() merges Contacts on pull (Sheets wins, local-only records preserved). saveCon() triggers syncEnt("co") for real-time upsert. Import Data → Sheets → Contacts button pulls from the Contacts sheet.'
+  'Contacts sync to Google Sheets (st_co → "Contacts" sheet tab). syncAll() and pushAll() include the co entity; pullAll() merges Contacts on pull (Sheets wins, local-only records preserved). saveCon() triggers syncEnt("co") for real-time upsert. Import Data → Sheets → Contacts button pulls from the Contacts sheet.',
+  '',
+  '## Activity Event Log (DB.events)',
+  'DB.events is a local-only array of operational event records stored in localStorage key st_ev. It is NOT synced to Google Sheets and is never transmitted externally.',
+  'Each event record contains: id (unique), ts (ISO 8601 timestamp), entityType (e.g. contact), entityId (ID of the affected entity), verb (created/updated/status_changed/note_added/deleted/converted), summary (plain operational text — no personal names), actor (user or system).',
+  'Events are written by logEv() whenever a contact is created, edited, has its status changed, has a note added, is deleted, or is converted via quote creation. Supplier events are scaffolded for a future version.',
+  'To view contact activity: open or edit a Contact → click the "Activity" header to expand the accordion. Shows the most recent 50 events for that contact, newest first, in YYYY-MM-DD format.',
+  'Supplier modal also has an Activity accordion but always shows "No activity recorded." — supplier events are not yet emitted.',
+  'Supplier→Contact link: each contact record has a supplierId (string or null) and role (supplier_contact or empty). A contact may be linked to at most one supplier at a time. When editing a supplier, a "Contacts" sub-panel appears showing all linked contacts with an Unlink button each. "+ Link Contact" opens a prompt-based picker showing contacts not yet linked to another supplier. "+ New Contact" opens the Contact modal with the Supplier dropdown pre-filled. Contacts already linked to a different supplier are excluded from the picker. The Contacts list table shows a Supplier column with the linked supplier name (or — if none). Deleting a supplier nulls supplierId on all previously linked contacts before the async delete. supplierId and role are not synced to Google Sheets (omitted by mapRec()).',
+  'Retention cap: 2,000 events maximum (FIFO). When the cap is exceeded, the oldest entries are silently dropped. No user-visible warning is shown (EVT-GAP-001).',
+  'The event log is included in JSON backups (Settings → Data → Backup All JSON) and restored on import. It is not counted in the restore confirm dialog (operational metadata, not user records).',
+  'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, or Contact and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.',
+  '',
+  '## VAT Return (MTD)',
+  'Invoices tab → VAT Return button. Opens a Making Tax Digital (VAT 100) calculator. Select From and To dates (defaults to previous calendar quarter). Click Calculate to see all 9 HMRC VAT boxes computed from invoices in the period.',
+  'Box 1: output VAT on sales (sum of iCalc(inv).tax for non-cancelled, non-goodwill-credit invoices in period; credit notes reduce it). Box 6: total net sales value (grand − tax, GBP). Boxes 2, 4, 7, 8, 9 are always £0 — post-Brexit EC boxes and input VAT not tracked (MTD-GAP-001).',
+  'Export VAT Return CSV: 9-box summary in HMRC-labelled rows — import into MTD bridging software (ANNA Money, Sage, BTC Software) for HMRC submission. Export Transactions CSV: one row per included invoice/credit note with Gross, Net, Tax in original currency and GBP. Credit note rows carry negative values. Goodwill credits are excluded from both CSVs.',
+  'Both export buttons are disabled until Calculate has been run. All GBP values use configured QR rates at export time (MTD-GAP-002 — not historic rates).',
+  '',
+  '## Demo Mode',
+  'Settings → Demo Mode card → Load Demo Data: seeds a complete end-to-end trade scenario across all entities — 1 supplier (Romerry International), 1 contact (Thomas Bergmann / Apex Cold Chain GmbH), 1 quote (DQ-0001), 1 PO (DPO-0001), 1 invoice (DINV-0001), 1 payment, 1 shipment (DSHP-0001, In Transit CNQAO→DEHAM), and 2 activity events. All demo records carry _demo:true.',
+  'Demo records are excluded from all financial KPIs on the Dashboard (revenue, net profit, outstanding, PO balance, net cash, in-transit count). A yellow banner appears above KPIs when demo data is active.',
+  'All six entity list tables (Suppliers, Contacts, Quotes, POs, Invoices, Shipments) show a purple [DEMO] badge on demo records.',
+  'D-prefix reference numbers (DQ-, DPO-, DINV-, DSHP-) are reserved for demo records — do not create real records with these prefixes.',
+  'Clear Demo Data button (Settings or the banner) removes all _demo:true records from all entity arrays. Requires confirmation.',
+  'loadDemoData() is idempotent — if any _demo:true record already exists, it will not seed duplicate records.'
 ].join('\n');
 
 var AI_COMPLIANCE_PROMPT = [
@@ -5600,6 +6040,69 @@ function _aiMsgEl(role) {
   return el;
 }
 
+function parseAIAction(text) {
+  var start = text.indexOf('@@ACTION');
+  var end = text.indexOf('@@END');
+  if (start === -1 || end === -1 || end <= start) return { clean: text, action: null };
+  var jsonStr = text.slice(start + 8, end).trim();
+  var clean = (text.slice(0, start) + text.slice(end + 5)).replace(/\n{3,}/g, '\n\n').trim();
+  try {
+    var parsed = JSON.parse(jsonStr);
+    if (parsed && parsed.action && parsed.payload) {
+      return { clean: clean, action: parsed };
+    }
+    return { clean: clean, action: null };
+  } catch(e) {
+    return { clean: clean, action: null };
+  }
+}
+
+function handleAIAction(action) {
+  var p = action.payload || {};
+  if (action.action === 'create_po') {
+    openPO();
+    if (p.supId)  G('pf-sup').value = p.supId;
+    if (p.cur)    G('pf-cur').value = p.cur;
+    if (p.notes)  G('pf-nt').value  = p.notes;
+    if (Array.isArray(p.lineItems)) {
+      cPL = p.lineItems.map(function(li){
+        return { rid: uid(), lid: '', desc: li.desc||'', sku: li.sku||'', uom: li.uom||'', qty: +li.qty||1, cost: +li.cost||0 };
+      });
+      rPLT(); calcPO();
+    }
+  } else if (action.action === 'create_quote') {
+    openQte();
+    if (p.client)       G('qf-client').value = p.client;
+    if (p.freightMode)  G('qf-mode').value   = p.freightMode;
+    if (p.currency)     G('qf-cur').value    = p.currency;
+    if (p.notes)        G('qf-nt').value     = p.notes;
+    if (Array.isArray(p.lineItems)) {
+      cQL = p.lineItems.map(function(li){
+        return { rid: uid(), lid: '', desc: li.desc||'', sku: li.sku||'', uom: li.uom||'pcs', qty: +li.qty||1, cost: +li.cost||0, dutyPct: +li.dutyPct||0, hsCode: li.hsCode||'' };
+      });
+      rQLT(); calcQte();
+    }
+  } else if (action.action === 'create_shipment') {
+    openShp();
+    if (p.ref)         G('shf-ref').value = p.ref;
+    if (p.originPort)  G('shf-op').value  = p.originPort;
+    if (p.destPort)    G('shf-dp').value  = p.destPort;
+    if (p.etd)         G('shf-etd').value = p.etd;
+    if (p.eta)         G('shf-eta').value = p.eta;
+    if (p.notes)       G('shf-nt').value  = p.notes;
+  } else if (action.action === 'create_contact') {
+    openCon();
+    if (p.name)    G('ct-name').value    = p.name;
+    if (p.email)   G('ct-email').value   = p.email;
+    if (p.phone)   G('ct-phone').value   = p.phone;
+    if (p.company) G('ct-company').value = p.company;
+    if (p.status)  G('ct-status').value  = p.status;
+    if (p.source)  G('ct-source').value  = p.source;
+  } else {
+    toast('Unsupported action type');
+  }
+}
+
 async function sendAIMsg() {
   var input = G('ai-input');
   var msg = (input ? input.value.trim() : '');
@@ -5675,7 +6178,19 @@ async function sendAIMsg() {
         } catch(e) {}
       }
     }
-    _aiHistory.push({ role: 'assistant', content: fullText });
+    var parsed = parseAIAction(fullText);
+    replyEl.textContent = parsed.clean;
+    if (parsed.action) {
+      var actionLabels = { create_po: 'PO', create_quote: 'Quote', create_shipment: 'Shipment', create_contact: 'Contact' };
+      var label = actionLabels[parsed.action.action] || parsed.action.action;
+      var btn = document.createElement('button');
+      btn.className = 'btn btn-s';
+      btn.style.cssText = 'font-size:.5rem;margin-top:8px;display:block;';
+      btn.textContent = '▶ Review in ' + label + ' form';
+      (function(a){ btn.onclick = function(){ handleAIAction(a); }; })(parsed.action);
+      replyEl.appendChild(btn);
+    }
+    _aiHistory.push({ role: 'assistant', content: parsed.clean });
   } catch(e) {
     replyEl.textContent = 'Error: ' + e.message;
     replyEl.style.color = '#f87171';
@@ -6075,6 +6590,7 @@ function expAll() {
     sh: DB.sh,
     qt: DB.qt,
     con: DB.con,
+    events: DB.events,
     settings: SS,
     company: AS,
     branding: getCoBrand(),
@@ -6122,6 +6638,7 @@ function doImport(e) {
     if (data.con !== undefined) {
       DB.con = Array.isArray(data.con) ? data.con : [];
     }
+    DB.events = Array.isArray(data.events) ? data.events : [];
     if (data.settings) { SS = data.settings; sv(K.ss, SS); }
     if (data.company)  { AS = data.company;  sv(K.as, AS); }
     if (data.branding) { saveCoBrand(data.branding); }
@@ -6133,7 +6650,7 @@ function doImport(e) {
     saveAll();
     renderAll();
     rCfg();
-    toast('Restored: ' + DB.inv.length + ' invoices, ' + DB.sup.length + ' suppliers', 4000);
+    toast('Restored: ' + DB.inv.length + ' invoices, ' + DB.sup.length + ' suppliers, ' + DB.events.length + ' events', 4000);
     G('imp-file').value = '';
   };
   reader.readAsText(file);
@@ -6178,7 +6695,7 @@ function rShp() {
     var sc = shpStatusClass(s.status);
     var dgPill = s.dg ? '<span style="background:#c00;color:white;font-size:.4rem;padding:1px 4px;border-radius:2px;margin-left:3px;">DG</span>' : '';
     return '<tr>' +
-      '<td style="font-weight:500;color:var(--cr);">' + san(s.ref||'-') + dgPill + '</td>' +
+      '<td style="font-weight:500;color:var(--cr);">' + san(s.ref||'-') + dgPill + (s._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(s.blNum||'-') + '</td>' +
       '<td>' + san(s.vessel||'-') + '</td>' +
       '<td>' + san(s.carrier||'-') + '</td>' +
@@ -6586,7 +7103,7 @@ function rQte() {
     var c = cQte(q);
     var stCls = { 'Accepted':'s-confirmed', 'Declined':'s-draft', 'Sent':'s-sent', 'Expired':'s-draft' }[q.status] || 's-draft';
     return '<tr>'
-      + '<td style="font-weight:600;color:var(--cr);">' + san(q.num) + '</td>'
+      + '<td style="font-weight:600;color:var(--cr);">' + san(q.num) + (q._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>'
       + '<td>' + san(q.client||'') + '</td>'
       + '<td>' + san(q.dt||'') + '</td>'
       + '<td style="color:var(--m);">' + san(q.validUntil||'') + '</td>'
@@ -6901,6 +7418,7 @@ function saveQte() {
       convC.lastContactedAt = new Date().toISOString();
       sv(K.co, DB.con);
     }
+    logEv('contact', cConvertId, 'converted', 'Quote ' + qt.num + ' created — contact converted', 'system');
     cConvertId = null;
   }
   closeM('ov-qt');
@@ -6942,11 +7460,12 @@ function rCon() {
     var stale = isConStale(c) ? ' <span class="tag" style="background:#fff3cd;color:#856404;font-size:.42rem;">STALE</span>' : '';
     var lastDate = c.lastContactedAt ? c.lastContactedAt.slice(0,10) : '—';
     return '<tr>' +
-      '<td>' + san(c.name) + stale + '</td>' +
+      '<td>' + san(c.name) + stale + (c._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(c.company||'—') + '</td>' +
       '<td>' + san(c.email) + '</td>' +
       '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
       '<td>' + san(c.source||'—') + '</td>' +
+      '<td>' + (c.supplierId ? san(gsn(c.supplierId)) : '—') + '</td>' +
       '<td>' + lastDate + '</td>' +
       '<td>' + (c.enquiries||[]).length + '</td>' +
       '<td class="ab"><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
@@ -6960,14 +7479,18 @@ function rCon() {
   G('con-tbody').innerHTML = rows;
 }
 
-function openCon() {
+function openCon(prefillSupplierId) {
   EI.co = null;
   G('con-title').textContent = 'New Contact';
   ['ct-name','ct-email','ct-phone','ct-company','ct-notes','ct-enq-summary'].forEach(function(id){ G(id).value = ''; });
   G('ct-status').value = 'lead';
   G('ct-source').value = 'manual';
+  populateConSupDrop();
+  G('ct-sup').value = prefillSupplierId || '';
   vClr('ct-name');
   vClr('ct-email');
+  var ab = G('con-activity-body'); if (ab) ab.style.display = 'none';
+  var al = G('con-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
   G('ov-con').classList.add('on');
 }
 
@@ -6984,11 +7507,41 @@ function editCon(id) {
   G('ct-source').value = c.source || 'manual';
   G('ct-notes').value = c.notes || '';
   G('ct-enq-summary').value = '';
+  populateConSupDrop();
+  G('ct-sup').value = c.supplierId || '';
   vClr('ct-name');
   vClr('ct-email');
+  var ab = G('con-activity-body'); if (ab) ab.style.display = 'none';
+  var al = G('con-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
   G('ov-con').classList.add('on');
 }
 
+function renderConActivity() {
+  var el = G('con-activity-list');
+  if (!el) return;
+  var filtered = (DB.events || []).filter(function(e){ return e.entityId === EI.co; });
+  filtered.sort(function(a, b){ return b.ts > a.ts ? 1 : b.ts < a.ts ? -1 : 0; });
+  var rows = filtered.slice(0, 50);
+  if (!rows.length) { el.innerHTML = 'No activity recorded.'; return; }
+  el.innerHTML = rows.map(function(e){
+    return '<div style="padding:3px 0;border-bottom:1px solid var(--ln);">' +
+      san(e.ts.slice(0,10)) + ' <b>' + san(e.verb) + '</b> — ' + san(e.summary) +
+    '</div>';
+  }).join('');
+}
+function renderSupActivity() {
+  var el = G('sup-activity-list');
+  if (!el) return;
+  var filtered = (DB.events || []).filter(function(e){ return e.entityId === EI.s; });
+  filtered.sort(function(a, b){ return b.ts > a.ts ? 1 : b.ts < a.ts ? -1 : 0; });
+  var rows = filtered.slice(0, 50);
+  if (!rows.length) { el.innerHTML = 'No activity recorded.'; return; }
+  el.innerHTML = rows.map(function(e){
+    return '<div style="padding:3px 0;border-bottom:1px solid var(--ln);">' +
+      san(e.ts.slice(0,10)) + ' <b>' + san(e.verb) + '</b> — ' + san(e.summary) +
+    '</div>';
+  }).join('');
+}
 function saveCon() {
   var name   = G('ct-name').value.trim();
   var email  = G('ct-email').value.trim();
@@ -7036,14 +7589,26 @@ function saveCon() {
     createdAt:       existC ? (existC.createdAt || new Date().toISOString()) : new Date().toISOString(),
     lastContactedAt: enqSummary ? new Date().toISOString() : (existC ? (existC.lastContactedAt || '') : ''),
     enquiries:       enqs,
-    notes:           G('ct-notes').value.trim()
+    notes:           G('ct-notes').value.trim(),
+    supplierId:      G('ct-sup').value || null,
+    role:            G('ct-sup').value ? 'supplier_contact' : ''
   };
+
+  var prevStatus = existC ? existC.status : null;
 
   if (EI.co) {
     var idx = DB.con.findIndex(function(x){ return x.id === EI.co; });
     if (idx >= 0) DB.con[idx] = con; else DB.con.push(con);
+    if (prevStatus !== null && prevStatus !== con.status) {
+      logEv('contact', con.id, 'status_changed', 'Status changed to ' + con.status, 'user');
+    } else if (enqSummary) {
+      logEv('contact', con.id, 'note_added', 'Enquiry note added', 'user');
+    } else {
+      logEv('contact', con.id, 'updated', 'Contact details updated', 'user');
+    }
   } else {
     DB.con.push(con);
+    logEv('contact', con.id, 'created', 'Contact created', 'user');
   }
   sv(K.co, DB.con);
   syncEnt('co', con).catch(function(){});
@@ -7056,6 +7621,7 @@ function delCon(id) {
   if (!confirm('Delete this contact? This cannot be undone.')) return;
   DB.con = DB.con.filter(function(c){ return c.id !== id; });
   sv(K.co, DB.con);
+  logEv('contact', id, 'deleted', 'Contact deleted', 'user');
   rCon();
   toast('Contact deleted');
 }
