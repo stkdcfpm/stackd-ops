@@ -3358,6 +3358,212 @@ test('P&L COGS warning: zero-cogs invoice with no library lines detected', funct
   assertEqual(zeroCogs[0].num, 'INV001', 'correct invoice flagged');
 });
 
+// ── REQ-RPT-001 G-05: Entity event log ──────────────────────────
+
+test('saveInv creates invoice_created event', function() {
+  resetDB();
+  ctx.EI.i = null;
+  ctx.DB.events = [];
+  mockEl('if-n').value    = 'INV10901';
+  mockEl('if-b').value    = 'Test Buyer';
+  mockEl('if-dst').value  = 'UK';
+  mockEl('if-dt').value   = '2026-01-01';
+  mockEl('inv-sm').value  = 'Draft';
+  mockEl('if-cur').value  = 'USD';
+  mockEl('if-tx').value   = '0';
+  mockEl('if-lf').value   = '0';
+  mockEl('if-ins').value  = '0';
+  mockEl('if-oth').value  = '0';
+  mockEl('if-dep').value  = '0';
+  mockEl('if-inco').value = 'FOB';
+  mockEl('if-pt').value   = 'Net 30';
+  mockEl('if-pol').value  = '';
+  mockEl('if-pod').value  = '';
+  mockEl('if-coo').value  = '';
+  mockEl('if-ft').value   = '';
+  mockEl('if-notes').value= '';
+  mockEl('if-terms').value= '';
+  mockEl('if-chi').checked= false;
+  mockEl('if-ba').value   = '';
+  mockEl('if-st').value   = '';
+  mockEl('if-cid').value  = '';
+  mockEl('if-ex').value   = '';
+  mockEl('if-sd').value   = '';
+  mockEl('if-wt').value   = '';
+  mockEl('if-cbm').value  = '';
+  mockEl('if-pk').value   = '';
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Widget', uom:'EA', qty:1, up:100, unitCost:60, lineType:'product' }];
+  ctx.saveInv();
+  var evts = ctx.DB.events.filter(function(e){ return e.entityType==='invoice'&&e.verb==='created'; });
+  assertEqual(evts.length, 1, 'invoice created event emitted');
+});
+
+test('savePO creates po_created event', function() {
+  resetDB();
+  ctx.EI.p = null;
+  ctx.DB.events = [];
+  ctx.DB.sup.push({ id:'S1', name:'ACME', cur:'USD' });
+  mockEl('pf-n').value     = 'PO-T01';
+  mockEl('pf-sup').value   = 'S1';
+  mockEl('pf-dt').value    = '2026-01-01';
+  mockEl('pf-cur').value   = 'USD';
+  mockEl('po-sm').value    = 'Draft';
+  mockEl('pf-del').value   = '';
+  mockEl('pf-dep').value   = '0';
+  mockEl('pf-fpm').value   = '0';
+  mockEl('pf-oth').value   = '0';
+  mockEl('pf-pt').value    = '';
+  mockEl('pf-nt').value    = '';
+  mockEl('pf-rec').checked = false;
+  mockEl('pf-inv').value   = '';
+  ctx.cPL = [];
+  ctx.savePO();
+  var evts = ctx.DB.events.filter(function(e){ return e.entityType==='po'&&e.verb==='created'; });
+  assertEqual(evts.length, 1, 'PO created event emitted');
+});
+
+test('saveSup creates supplier_created event', function() {
+  resetDB();
+  ctx.EI.s = null;
+  ctx.DB.events = [];
+  mockEl('sf-n').value  = 'Test Supplier';
+  mockEl('sf-c').value  = 'China';
+  mockEl('sf-cur').value= 'CNY';
+  mockEl('sf-ct').value = '';
+  mockEl('sf-e').value  = '';
+  mockEl('sf-nt').value = '';
+  ctx.saveSup();
+  var evts = ctx.DB.events.filter(function(e){ return e.entityType==='supplier'&&e.verb==='created'; });
+  assertEqual(evts.length, 1, 'supplier created event emitted');
+});
+
+test('savePayment creates payment_created event', function() {
+  resetDB();
+  ctx.DB.events = [];
+  var pmt = { id:'pm1', invId:'i1', invNum:'INV001', date:'2026-03-01', amount:1500, method:'Bank Transfer', reference:'REF-01' };
+  ctx.savePayment(pmt);
+  var evts = ctx.DB.events.filter(function(e){ return e.entityType==='payment'&&e.verb==='created'; });
+  assertEqual(evts.length, 1, 'payment created event emitted');
+});
+
+test('deletePayment creates payment_deleted event', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.confirm = function(){ return true; };
+  var pmt = { id:'pm-del', invId:'i1', invNum:'INV001', date:'2026-03-01', amount:500, method:'Bank Transfer', reference:'REF-02' };
+  ctx.DB.payments.push(pmt);
+  ctx.deletePayment('pm-del');
+  var evts = ctx.DB.events.filter(function(e){ return e.entityType==='payment'&&e.verb==='deleted'; });
+  assertEqual(evts.length, 1, 'payment deleted event emitted');
+});
+
+test('saveInv emits status_changed event when status changes', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i-sc', num:'INV10902', buyer:'A', date:'2026-01-01', status:'Draft', type:'invoice', cur:'USD',
+    calc_grandTotal:'1000', calc_cogs:'600', calc_netProfit:'400', calc_margin:'40', dep:'0', lineItems:[] });
+  ctx.DB.events = [];
+  ctx.EI.i = 'i-sc';
+  mockEl('if-n').value='INV10902'; mockEl('if-b').value='A'; mockEl('if-dst').value='UK';
+  mockEl('if-dt').value='2026-01-01'; mockEl('inv-sm').value='Sent'; mockEl('if-cur').value='USD';
+  mockEl('if-tx').value='0'; mockEl('if-lf').value='0'; mockEl('if-ins').value='0';
+  mockEl('if-oth').value='0'; mockEl('if-dep').value='0'; mockEl('if-inco').value='FOB';
+  mockEl('if-pt').value='Net 30'; mockEl('if-pol').value=''; mockEl('if-pod').value='';
+  mockEl('if-coo').value=''; mockEl('if-ft').value=''; mockEl('if-notes').value='';
+  mockEl('if-terms').value=''; mockEl('if-chi').checked=false;
+  mockEl('if-ba').value=''; mockEl('if-st').value=''; mockEl('if-cid').value='';
+  mockEl('if-ex').value=''; mockEl('if-sd').value=''; mockEl('if-wt').value='';
+  mockEl('if-cbm').value=''; mockEl('if-pk').value='';
+  ctx.cIL = [];
+  ctx.saveInv();
+  var evts = ctx.DB.events.filter(function(e){ return e.entityType==='invoice'&&e.verb==='status_changed'; });
+  assertEqual(evts.length, 1, 'status_changed event emitted');
+  assert(evts[0].summary.indexOf('Draft')>=0 && evts[0].summary.indexOf('Sent')>=0, 'summary contains old and new status');
+});
+
+// ── REQ-RPT-001 G-06: Invoice edit delta ──────────────────────────
+
+test('invoice editHistory captures changed field on unlock+save', function() {
+  resetDB();
+  var inv = { id:'i-ed1', num:'INV10903', buyer:'Apex', date:'2026-01-01', status:'Sent', type:'invoice', cur:'USD',
+    calc_grandTotal:'10000', calc_cogs:'6000', calc_netProfit:'4000', calc_margin:'40', dep:'0',
+    lineItems:[], editHistory:[] };
+  ctx.DB.inv.push(inv);
+  ctx._invEditSnapshot = { invId:'i-ed1', reason:'Freight correction', status:'Sent', buyer:'Apex',
+    calc_grandTotal:'10000', dep:'0', taxRate:'0', lf:'0', liCount:0, liTotal:0 };
+  ctx.EI.i = 'i-ed1';
+  mockEl('if-n').value='INV10903'; mockEl('if-b').value='Apex'; mockEl('if-dst').value='UK';
+  mockEl('if-dt').value='2026-01-01'; mockEl('inv-sm').value='Sent'; mockEl('if-cur').value='USD';
+  mockEl('if-tx').value='0'; mockEl('if-lf').value='500'; mockEl('if-ins').value='0';
+  mockEl('if-oth').value='0'; mockEl('if-dep').value='0'; mockEl('if-inco').value='FOB';
+  mockEl('if-pt').value='Net 30'; mockEl('if-pol').value=''; mockEl('if-pod').value='';
+  mockEl('if-coo').value=''; mockEl('if-ft').value=''; mockEl('if-notes').value='';
+  mockEl('if-terms').value=''; mockEl('if-chi').checked=false;
+  mockEl('if-ba').value=''; mockEl('if-st').value=''; mockEl('if-cid').value='';
+  mockEl('if-ex').value=''; mockEl('if-sd').value=''; mockEl('if-wt').value='';
+  mockEl('if-cbm').value=''; mockEl('if-pk').value='';
+  ctx.cIL = [];
+  ctx.saveInv();
+  var saved = ctx.DB.inv.find(function(i){ return i.id==='i-ed1'; });
+  assert(saved && saved.editHistory && saved.editHistory.length >= 1, 'editHistory entry created');
+  var entry = saved.editHistory[0];
+  assertEqual(entry.reason, 'Freight correction', 'reason recorded');
+  assertEqual(entry.actor, 'operator', 'actor is operator');
+  var lfChange = entry.changes.find(function(c){ return c.field==='lf'; });
+  assert(lfChange, 'lf field change captured');
+  assertEqual(lfChange.from, '0', 'from value correct');
+  assertEqual(lfChange.to, '500', 'to value correct');
+});
+
+test('invoice editHistory records empty changes array when no tracked fields changed', function() {
+  resetDB();
+  var inv = { id:'i-ed2', num:'INV10904', buyer:'Apex', date:'2026-01-01', status:'Sent', type:'invoice', cur:'USD',
+    calc_grandTotal:'5000', calc_cogs:'3000', calc_netProfit:'2000', calc_margin:'40', dep:'0',
+    lineItems:[], editHistory:[] };
+  ctx.DB.inv.push(inv);
+  ctx._invEditSnapshot = { invId:'i-ed2', reason:'Review', status:'Sent', buyer:'Apex',
+    calc_grandTotal:'5000', dep:'0', taxRate:'0', lf:'0', liCount:0, liTotal:0 };
+  ctx.EI.i = 'i-ed2';
+  mockEl('if-n').value='INV10904'; mockEl('if-b').value='Apex'; mockEl('if-dst').value='UK';
+  mockEl('if-dt').value='2026-01-01'; mockEl('inv-sm').value='Sent'; mockEl('if-cur').value='USD';
+  mockEl('if-tx').value='0'; mockEl('if-lf').value='0'; mockEl('if-ins').value='0';
+  mockEl('if-oth').value='0'; mockEl('if-dep').value='0'; mockEl('if-inco').value='FOB';
+  mockEl('if-pt').value='Net 30'; mockEl('if-pol').value=''; mockEl('if-pod').value='';
+  mockEl('if-coo').value=''; mockEl('if-ft').value=''; mockEl('if-notes').value='';
+  mockEl('if-terms').value=''; mockEl('if-chi').checked=false;
+  mockEl('if-ba').value=''; mockEl('if-st').value=''; mockEl('if-cid').value='';
+  mockEl('if-ex').value=''; mockEl('if-sd').value=''; mockEl('if-wt').value='';
+  mockEl('if-cbm').value=''; mockEl('if-pk').value='';
+  ctx.cIL = [];
+  ctx.saveInv();
+  var saved = ctx.DB.inv.find(function(i){ return i.id==='i-ed2'; });
+  assert(saved.editHistory.length >= 1, 'history entry created even with no changes');
+  assertEqual(saved.editHistory[0].changes.length, 0, 'changes array empty');
+});
+
+test('_invEditSnapshot null after save clears state', function() {
+  resetDB();
+  var inv = { id:'i-ed3', num:'INV10905', buyer:'B', date:'2026-01-01', status:'Sent', type:'invoice', cur:'USD',
+    calc_grandTotal:'1000', calc_cogs:'500', calc_netProfit:'500', calc_margin:'50', dep:'0',
+    lineItems:[], editHistory:[] };
+  ctx.DB.inv.push(inv);
+  ctx._invEditSnapshot = { invId:'i-ed3', reason:'Test', status:'Sent', buyer:'B',
+    calc_grandTotal:'1000', dep:'0', taxRate:'0', lf:'0', liCount:0, liTotal:0 };
+  ctx.EI.i = 'i-ed3';
+  mockEl('if-n').value='INV10905'; mockEl('if-b').value='B'; mockEl('if-dst').value='UK';
+  mockEl('if-dt').value='2026-01-01'; mockEl('inv-sm').value='Sent'; mockEl('if-cur').value='USD';
+  mockEl('if-tx').value='0'; mockEl('if-lf').value='0'; mockEl('if-ins').value='0';
+  mockEl('if-oth').value='0'; mockEl('if-dep').value='0'; mockEl('if-inco').value='FOB';
+  mockEl('if-pt').value='Net 30'; mockEl('if-pol').value=''; mockEl('if-pod').value='';
+  mockEl('if-coo').value=''; mockEl('if-ft').value=''; mockEl('if-notes').value='';
+  mockEl('if-terms').value=''; mockEl('if-chi').checked=false;
+  mockEl('if-ba').value=''; mockEl('if-st').value=''; mockEl('if-cid').value='';
+  mockEl('if-ex').value=''; mockEl('if-sd').value=''; mockEl('if-wt').value='';
+  mockEl('if-cbm').value=''; mockEl('if-pk').value='';
+  ctx.cIL = [];
+  ctx.saveInv();
+  assertEqual(ctx._invEditSnapshot, null, 'snapshot cleared after save');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
