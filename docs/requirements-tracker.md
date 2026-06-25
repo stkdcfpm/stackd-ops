@@ -1,6 +1,6 @@
 # Requirements Tracker — Stackd Ops
 
-Last updated: 2026-06-25 (v2.9.33)
+Last updated: 2026-06-25 (v2.9.33 — specs gated)
 
 ---
 
@@ -24,13 +24,13 @@ Last updated: 2026-06-25 (v2.9.33)
 | REQ-V3-GAP-006 (ev) | Event log emissions on delCon / link / unlink | Event log + Contacts | v2.9.28 | Deferred — dependent on REQ-V3-GAP-006 shipping first; target v2.9.29+ |
 | S3-1 | Demo shipment mode | Trial conversion | pre-sprint | ✓ shipped v2.9.31 |
 | S3-2 | MTD-compatible VAT export | Compliance | pre-sprint | ✓ shipped v2.9.32 |
-| REQ-RPT-001 G-01 | AI date filter (get_invoices, get_payments) | AI / Reporting | v2.9.33 | Awaiting requirements-gate — target v2.9.34 |
-| REQ-RPT-001 G-02 | Aging Report (0–30/31–60/61–90/90+ days, DSO) | Financial Control | v2.9.33 | Awaiting requirements-gate — target v2.9.35 |
-| REQ-RPT-001 G-03 | P&L by dimension (buyer, period) | Financial Control | v2.9.33 | Awaiting requirements-gate — target v2.9.35 |
-| REQ-RPT-001 G-04 | Quick-add COGS warning in invoice modal | Data Quality | v2.9.33 | Awaiting requirements-gate — target v2.9.34 |
-| REQ-RPT-001 G-05 | Full entity event log (Invoice, PO, Payment, Supplier) | Audit | v2.9.33 | Awaiting requirements-gate — target v2.9.36 |
-| REQ-RPT-001 G-06 | Invoice edit delta logging (old → new values) | Audit | v2.9.33 | Awaiting requirements-gate — target v2.9.36 |
-| REQ-RPT-001 G-07 | Input VAT on POs + MTD Boxes 4 & 7 | Compliance | v2.9.33 | Awaiting council decision — target v2.9.37 |
+| REQ-RPT-001 G-01 | AI date filter (get_invoices, get_payments) | AI / Reporting | v2.9.33 | Req gate PASS — Spec gate PASS (SPEC-RPT-001-G01-G04-v1.md) — target v2.9.34 |
+| REQ-RPT-001 G-02 | Aging Report (0–30/31–60/61–90/90+ days, DSO) | Financial Control | v2.9.33 | Req gate PASS — Spec gate PASS (SPEC-RPT-001-G02-G03-v1.md) — target v2.9.35 |
+| REQ-RPT-001 G-03 | P&L by dimension (buyer, period) | Financial Control | v2.9.33 | Req gate PASS — Spec gate PASS (SPEC-RPT-001-G02-G03-v1.md) — target v2.9.35 |
+| REQ-RPT-001 G-04 | Quick-add COGS warning in invoice modal | Data Quality | v2.9.33 | Req gate PASS — Spec gate PASS (SPEC-RPT-001-G01-G04-v1.md) — target v2.9.34 |
+| REQ-RPT-001 G-05 | Full entity event log (Invoice, PO, Payment, Supplier) | Audit | v2.9.33 | Req gate PASS — Spec gate PASS (SPEC-RPT-001-G05-G06-v1.md) — target v2.9.36 |
+| REQ-RPT-001 G-06 | Invoice edit delta logging (old → new values) | Audit | v2.9.33 | Req gate PASS — Spec gate PASS (SPEC-RPT-001-G05-G06-v1.md) — target v2.9.36 |
+| REQ-RPT-001 G-07 | Input VAT on POs + MTD Boxes 4 & 7 | Compliance | v2.9.33 | Req gate CONDITIONAL PASS — council gate required before spec, target v2.9.37 |
 | REQ-RPT-001 G-08 | Intrastat report (UK → EU, 8-box CSV) | Compliance | v2.9.33 | Deferred v3.0.x — new schema required |
 | REQ-RPT-001 G-09 | Supplier performance tracking (on-time %, cost variance) | Operational | v2.9.33 | Deferred v3.0.x |
 | REQ-RPT-001 G-10 | HS code duty recalculation on existing invoices | Data Integrity | v2.9.33 | Deferred v3.0.x |
