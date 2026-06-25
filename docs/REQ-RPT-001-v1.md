@@ -1,6 +1,6 @@
 # REQ-RPT-001 v1 — Reporting & Analytics Suite
 
-**Status:** Draft — awaiting requirements-gate  
+**Status:** PASS (requirements-gate 2026-06-25) — conditions resolved in v1 update  
 **FM-1:** Partially applicable — see per-item notes below  
 **Version target:** v2.9.x (scoped items) / v3.0.x (deferred items)  
 **Logged:** 2026-06-25
@@ -68,10 +68,10 @@ This requirement documents **ten identified gaps** across reporting, audit, and 
 
 **Behaviour:**
 - New **Aging Report** panel on Invoices tab (behind a `[Aging]` toolbar button, similar to VAT Return).
-- Buckets: **Current** (not yet due), **0–30 days**, **31–60 days**, **61–90 days**, **90+ days**. Due date = `inv.date + payment terms days` (or `inv.date + 30` if payment terms not parseable).
+- Buckets: **Current** (not yet due), **0–30 days**, **31–60 days**, **61–90 days**, **90+ days**. Due date = `inv.date + payment terms days`. Payment terms parsing: extract the first integer from the stored string (e.g. "Net 30" → 30, "30 days EOM" → 30). If no integer is found (e.g. "COD", "Immediate"), default to 30 days. v1 scope is explicitly limited to this simple integer-extraction rule; EOM and COD terms are treated as 30-day default with no special calendar logic.
 - Shows: buyer, invoice number, invoice date, due date, outstanding balance, bucket.
 - Summary row: total outstanding per bucket.
-- **DSO KPI** (Days Sales Outstanding): weighted average age of outstanding invoices.
+- **DSO KPI** (Days Sales Outstanding): sum of (days outstanding × balance due) for all included invoices, divided by total outstanding balance. "Days outstanding" = today − invoice date (not due date). If total outstanding balance is zero, DSO = 0.
 - Export as CSV.
 - Only Sent / Partially Paid invoices included (Draft, Pro-forma, Paid, Cancelled excluded).
 
@@ -79,10 +79,10 @@ This requirement documents **ten identified gaps** across reporting, audit, and 
 
 | # | Given | When | Then |
 |---|---|---|---|
-| AC-1 | Invoice Sent 45 days ago, unpaid | Aging Report opened | Appears in 31–60 bucket |
+| AC-1 | Invoice Sent 65 days ago, unpaid, Net 30 payment terms (daysOverdue = 35) | Aging Report opened | Appears in 31–60 bucket |
 | AC-2 | Invoice Partially Paid, balance > 0, 95 days old | Aging Report opened | Appears in 90+ bucket with remaining balance |
 | AC-3 | Invoice status = Paid | Aging Report opened | Not shown |
-| AC-4 | All invoices current | Report shown | All in Current bucket, DSO = weighted avg days |
+| AC-4 | All invoices current | Report shown | All in Current bucket; DSO = sum(days × balance) / sum(balance) across all included invoices |
 | AC-5 | Export CSV clicked | — | CSV downloaded with all rows and bucket column |
 
 ---
@@ -98,7 +98,7 @@ This requirement documents **ten identified gaps** across reporting, audit, and 
 **Behaviour:**
 - New **P&L Report** panel (behind a `[P&L]` toolbar button on Dashboard or Invoices tab).
 - Dimensions: **By Buyer** and **By Period** (monthly or quarterly toggle).
-- Columns per row: Revenue, COGS, Gross Profit, Net Profit, Margin %.
+- Columns per row: Revenue, COGS, Gross Profit, Net Profit, Margin %. Definitions: Revenue = `iCalc(inv).grand`; COGS = `calc_cogs` as stored on `DB.inv` (consistent with Dashboard KPIs — not recomputed from line items); Gross Profit = Revenue − COGS; Net Profit = `iCalc(inv).np` (i.e. grand − tax − COGS, consistent with the portal's existing net profit formula); Margin % = Net Profit ÷ Revenue × 100. No operating expense or overhead deduction — the portal has no such entity.
 - Totals row.
 - Warning banner if any included invoices have zero COGS (quick-add lines) — counts and flags them; does not suppress those invoices from totals.
 - Date range filter (from/to, defaults to current calendar year).
@@ -188,7 +188,9 @@ This requirement documents **ten identified gaps** across reporting, audit, and 
 - When a locked invoice is saved after unlock, compare key fields against the pre-edit snapshot captured at unlock time.
 - Fields to diff: `status`, `buyer`, `calc_grandTotal`, `dep`, `taxRate`, `lf`, `lineItems` (count + total value).
 - Append a `editHistory[]` array to the invoice record. Each entry: `{ ts, reason, actor, changes: [{field, from, to}] }`.
+- `actor` is always the fixed string `'operator'` — there is no multi-user authentication in the portal. No personal data (name, email) is stored in this field. GDPR basis: not required — `actor` is a role label, not a personal identifier.
 - The existing unlock reason (already captured) becomes the `reason` field on the edit history entry.
+- `editHistory` is excluded from Xero, QuickBooks, FreeAgent, and generic CSV/JSON accounting export mappers — it is an internal audit field only. It is included in the full JSON backup (`expAll`) so audit history is preserved across restore.
 - No UI display required in v1 — data is captured; future version surfaces it. The audit entry in `DB.events` should reference the delta count (e.g. `"3 fields changed — see invoice editHistory"`).
 
 **Acceptance criteria:**
