@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.34</title>
+<title>Stackd Ops v2.9.35</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.34</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.35</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -287,6 +287,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
     <button class="btn btn-g" onclick="openAcctExport('inv')">&#8595; Accounting Export</button>
     <button class="btn btn-g" onclick="openVATReturn()">&#128196; VAT Return</button>
+    <button class="btn btn-g" onclick="openAgingReport()" style="font-size:.52rem;">Aging</button>
+    <button class="btn btn-g" onclick="openPLReport()" style="font-size:.52rem;">P&amp;L</button>
     <button class="btn btn-g" onclick="openStatement()" title="Buyer Statement">&#128196; Statement</button>
   </div>
   <div class="tw" style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Invoice #</th><th>Buyer</th><th>Dest.</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">COGS</th><th class="num">Gross Profit</th><th class="num">Net Profit</th><th class="num">Margin</th><th class="num">Tax%</th><th class="num">Dep. Rec.</th><th class="num">Balance Due</th><th></th></tr></thead><tbody id="inv-tb"></tbody></table></div>
@@ -719,6 +721,55 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- AGING REPORT MODAL -->
+<div class="ov" id="ov-aging" onclick="if(event.target===this)closeM('ov-aging')">
+  <div class="modal" style="max-width:780px;">
+    <div class="mh"><h2>Aging Report</h2><button class="mx" onclick="closeM('ov-aging')">&#215;</button></div>
+    <div class="mb" style="max-height:540px;overflow-y:auto;">
+      <div id="aging-kpi" style="margin-bottom:16px;"></div>
+      <table id="aging-tbl" style="width:100%;font-size:.58rem;border-collapse:collapse;"></table>
+      <div id="aging-summary" style="margin-top:12px;font-size:.6rem;font-weight:600;"></div>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="btn btn-s" onclick="exportAgingCSV()" style="font-size:.52rem;">&#8659; Export CSV</button>
+        <button class="btn btn-g" onclick="closeM('ov-aging')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P&L REPORT MODAL -->
+<div class="ov" id="ov-pl" onclick="if(event.target===this)closeM('ov-pl')">
+  <div class="modal" style="max-width:820px;">
+    <div class="mh"><h2>P&amp;L Report</h2><button class="mx" onclick="closeM('ov-pl')">&#215;</button></div>
+    <div class="mb" style="max-height:540px;overflow-y:auto;">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+        <div>
+          <label style="font-size:.52rem;color:var(--m);">Dimension</label><br>
+          <select id="pl-dim" onchange="renderPLReport()" style="font-size:.58rem;">
+            <option value="buyer">By Buyer</option>
+            <option value="month">By Month</option>
+            <option value="quarter">By Quarter</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.52rem;color:var(--m);">From</label><br>
+          <input type="date" id="pl-from" onchange="renderPLReport()" style="font-size:.58rem;">
+        </div>
+        <div>
+          <label style="font-size:.52rem;color:var(--m);">To</label><br>
+          <input type="date" id="pl-to" onchange="renderPLReport()" style="font-size:.58rem;">
+        </div>
+      </div>
+      <div id="pl-warn" style="display:none;background:#FEF3C7;border:1px solid #D97706;border-radius:4px;padding:8px 12px;font-size:.56rem;color:#92400E;margin-bottom:12px;"></div>
+      <table id="pl-tbl" style="width:100%;font-size:.58rem;border-collapse:collapse;"></table>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="btn btn-s" onclick="exportPLCSV()" style="font-size:.52rem;">&#8659; Export CSV</button>
+        <button class="btn btn-g" onclick="closeM('ov-pl')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ACCOUNTING EXPORT MODAL -->
 <div class="ov" id="ov-acct-exp" onclick="if(event.target===this)closeM('ov-acct-exp')">
   <div class="modal" style="max-width:520px;">
@@ -993,9 +1044,21 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.34</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.35</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Aging Report (Invoices → [Aging]) — outstanding invoices in buckets (Current / 0–30 / 31–60 / 61–90 / 90+ days overdue) with DSO KPI and CSV export</li>
+          <li>New: P&amp;L Report (Invoices → [P&amp;L]) — Revenue, COGS, Gross Profit, Net Profit, Margin % by Buyer / Month / Quarter with date range filter and CSV export</li>
+          <li>New: COGS warning on P&amp;L — amber notice when invoices have no COGS data</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.34</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: AI date filtering — get_invoices and get_payments now accept date_from / date_to (ISO 8601) to answer period-scoped questions such as "revenue in Q1 2026"</li>
@@ -4070,6 +4133,263 @@ function rInv() {
   if(cnEm) cnEm.style.display=fc.length?'none':'block';
 }
 
+// ── AGING REPORT (G-02) ─────────────────────────────────────────
+function parsePtDays(pt) {
+  var m = (pt||'').match(/\d+/);
+  return m ? parseInt(m[0], 10) : 30;
+}
+
+function openAgingReport() {
+  renderAgingReport();
+  openM('ov-aging');
+}
+
+function renderAgingReport() {
+  var today = new Date();
+  today.setHours(0,0,0,0);
+
+  var invs = DB.inv.filter(function(inv) {
+    return (inv.status === 'Sent' || inv.status === 'Partially Paid') &&
+           inv.type !== 'credit_note' && inv.type !== 'goodwill_credit' && !isCN(inv.num);
+  });
+
+  var rows = invs.map(function(inv) {
+    var c = iCalc(inv);
+    var invDate = new Date(inv.date);
+    invDate.setHours(0,0,0,0);
+    var ptDays = parsePtDays(inv.paymentTerms || inv.pt || '');
+    var dueDate = new Date(invDate.getTime() + ptDays * 86400000);
+    var daysOld = Math.floor((today - invDate) / 86400000);
+    var daysOverdue = Math.floor((today - dueDate) / 86400000);
+    var bucket;
+    if (daysOverdue <= 0)       bucket = 'Current';
+    else if (daysOverdue <= 30) bucket = '0–30';
+    else if (daysOverdue <= 60) bucket = '31–60';
+    else if (daysOverdue <= 90) bucket = '61–90';
+    else                        bucket = '90+';
+    return { inv: inv, bal: c.bal, daysOld: daysOld, daysOverdue: daysOverdue, dueDate: dueDate, bucket: bucket };
+  }).filter(function(r){ return r.bal > 0; });
+
+  var totalBal = rows.reduce(function(s,r){ return s + r.bal; }, 0);
+  var dso = totalBal > 0
+    ? Math.round(rows.reduce(function(s,r){ return s + r.daysOld * r.bal; }, 0) / totalBal)
+    : 0;
+
+  var buckets = ['Current','0–30','31–60','61–90','90+'];
+  var bucketTotals = {};
+  buckets.forEach(function(b){ bucketTotals[b] = 0; });
+  rows.forEach(function(r){ bucketTotals[r.bucket] += r.bal; });
+
+  var kpiEl = G('aging-kpi');
+  if (kpiEl) kpiEl.innerHTML =
+    '<div style="display:flex;gap:24px;flex-wrap:wrap;">' +
+    '<div><div style="font-size:.44rem;color:var(--m);text-transform:uppercase;letter-spacing:.08em;">Total Outstanding</div><div style="font-size:.9rem;font-weight:700;color:var(--cr);">$' + totalBal.toFixed(2) + '</div></div>' +
+    '<div><div style="font-size:.44rem;color:var(--m);text-transform:uppercase;letter-spacing:.08em;">DSO</div><div style="font-size:.9rem;font-weight:700;">' + dso + ' days</div></div>' +
+    '<div><div style="font-size:.44rem;color:var(--m);text-transform:uppercase;letter-spacing:.08em;">Overdue invoices</div><div style="font-size:.9rem;font-weight:700;">' + rows.filter(function(r){ return r.bucket !== 'Current'; }).length + '</div></div>' +
+    '</div>';
+
+  var tbl = G('aging-tbl');
+  if (!tbl) return;
+  var html = '<thead><tr style="font-size:.5rem;text-transform:uppercase;letter-spacing:.07em;color:var(--m);">' +
+    '<th style="text-align:left;padding:4px 8px;">Invoice</th>' +
+    '<th style="text-align:left;padding:4px 8px;">Buyer</th>' +
+    '<th style="text-align:left;padding:4px 8px;">Invoice Date</th>' +
+    '<th style="text-align:left;padding:4px 8px;">Due Date</th>' +
+    '<th style="text-align:right;padding:4px 8px;">Balance Due</th>' +
+    '<th style="text-align:center;padding:4px 8px;">Bucket</th>' +
+    '</tr></thead><tbody>';
+
+  var bucketColour = { 'Current':'var(--gn)' };
+  bucketColour['0–30'] = '#D97706';
+  bucketColour['31–60'] = '#EA580C';
+  bucketColour['61–90'] = 'var(--cr)';
+  bucketColour['90+'] = 'var(--cr)';
+
+  rows.slice().sort(function(a,b){ return b.daysOverdue - a.daysOverdue; }).forEach(function(r) {
+    html += '<tr style="border-top:1px solid var(--border);">' +
+      '<td style="padding:5px 8px;color:var(--cr);font-weight:500;">' + san(r.inv.num) + '</td>' +
+      '<td style="padding:5px 8px;">' + san(r.inv.buyer) + '</td>' +
+      '<td style="padding:5px 8px;">' + (r.inv.date||'') + '</td>' +
+      '<td style="padding:5px 8px;">' + r.dueDate.toISOString().slice(0,10) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;font-weight:600;">$' + r.bal.toFixed(2) + '</td>' +
+      '<td style="padding:5px 8px;text-align:center;"><span style="background:' + (bucketColour[r.bucket]||'var(--m)') + ';color:white;border-radius:3px;padding:1px 7px;font-size:.46rem;">' + r.bucket + '</span></td>' +
+      '</tr>';
+  });
+  html += '</tbody>';
+  tbl.innerHTML = html;
+
+  var sumEl = G('aging-summary');
+  if (sumEl) {
+    var sumParts = buckets.map(function(b){ return b + ': $' + bucketTotals[b].toFixed(2); });
+    sumEl.textContent = 'Totals — ' + sumParts.join(' | ');
+  }
+}
+
+function exportAgingCSV() {
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var invs = DB.inv.filter(function(inv){
+    return (inv.status==='Sent'||inv.status==='Partially Paid') &&
+           inv.type!=='credit_note'&&inv.type!=='goodwill_credit'&&!isCN(inv.num);
+  });
+  var rows = [['Invoice','Buyer','Invoice Date','Due Date','Currency','Balance Due','Bucket','Days Overdue']];
+  invs.forEach(function(inv) {
+    var c = iCalc(inv);
+    if (c.bal <= 0) return;
+    var invDate = new Date(inv.date); invDate.setHours(0,0,0,0);
+    var ptDays = parsePtDays(inv.paymentTerms||inv.pt||'');
+    var dueDate = new Date(invDate.getTime() + ptDays*86400000);
+    var daysOverdue = Math.floor((today - dueDate)/86400000);
+    var bucket = daysOverdue<=0?'Current':daysOverdue<=30?'0–30':daysOverdue<=60?'31–60':daysOverdue<=90?'61–90':'90+';
+    rows.push([inv.num,inv.buyer||'',inv.date||'',dueDate.toISOString().slice(0,10),inv.cur||'USD',c.bal.toFixed(2),bucket,Math.max(0,daysOverdue)]);
+  });
+  var csv = rows.map(function(r){ return r.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'aging-report-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ── P&L REPORT (G-03) ───────────────────────────────────────────
+function openPLReport() {
+  var now = new Date();
+  var yr = now.getFullYear();
+  var fromEl = G('pl-from'); var toEl = G('pl-to');
+  if (fromEl && !fromEl.value) fromEl.value = yr + '-01-01';
+  if (toEl   && !toEl.value)   toEl.value   = yr + '-12-31';
+  renderPLReport();
+  openM('ov-pl');
+}
+
+function renderPLReport() {
+  var dim   = (G('pl-dim')  ? G('pl-dim').value  : 'buyer');
+  var dfrom = (G('pl-from') ? G('pl-from').value : '');
+  var dto   = (G('pl-to')   ? G('pl-to').value   : '');
+
+  var invs = DB.inv.filter(function(inv) {
+    if (inv.status === 'Cancelled') return false;
+    if (inv.type === 'credit_note' || inv.type === 'goodwill_credit' || isCN(inv.num)) return false;
+    if (dfrom && inv.date < dfrom) return false;
+    if (dto   && inv.date > dto)   return false;
+    return true;
+  });
+
+  var zeroCogs = invs.filter(function(inv){
+    return !(+inv.calc_cogs > 0) &&
+           !(inv.lineItems||[]).some(function(li){ return li.lid && DB.li.find(function(x){ return x.id===li.lid; }); });
+  });
+  var warnEl = G('pl-warn');
+  if (warnEl) {
+    if (zeroCogs.length > 0) {
+      warnEl.innerHTML = '⚠ ' + zeroCogs.length + ' invoice(s) have no COGS data — profit figures may be understated. Use Import from Library on those invoices to fix.';
+      warnEl.style.display = 'block';
+    } else {
+      warnEl.style.display = 'none';
+    }
+  }
+
+  function groupKey(inv) {
+    if (dim === 'buyer')   return inv.buyer || 'Unknown';
+    if (dim === 'month')   return (inv.date||'').slice(0,7);
+    if (dim === 'quarter') {
+      var d = inv.date||''; var yr = d.slice(0,4); var mo = parseInt(d.slice(5,7),10)||1;
+      return yr + ' Q' + Math.ceil(mo/3);
+    }
+    return inv.buyer || 'Unknown';
+  }
+
+  var groups = {};
+  invs.forEach(function(inv) {
+    var key = groupKey(inv);
+    var c   = iCalc(inv);
+    if (!groups[key]) groups[key] = { revenue:0, cogs:0, gp:0, np:0 };
+    var cogs = +inv.calc_cogs || 0;
+    groups[key].revenue += c.grand;
+    groups[key].cogs    += cogs;
+    groups[key].gp      += (c.grand - cogs);
+    groups[key].np      += c.np;
+  });
+
+  var keys = Object.keys(groups).sort();
+  var totals = { revenue:0, cogs:0, gp:0, np:0 };
+  keys.forEach(function(k){ ['revenue','cogs','gp','np'].forEach(function(f){ totals[f]+=groups[k][f]; }); });
+
+  var dimLabel = dim === 'buyer' ? 'Buyer' : dim === 'month' ? 'Month' : 'Quarter';
+  var hdr = '<thead><tr style="font-size:.5rem;text-transform:uppercase;letter-spacing:.07em;color:var(--m);">' +
+    '<th style="text-align:left;padding:4px 8px;">' + dimLabel + '</th>' +
+    '<th style="text-align:right;padding:4px 8px;">Revenue</th>' +
+    '<th style="text-align:right;padding:4px 8px;">COGS</th>' +
+    '<th style="text-align:right;padding:4px 8px;">Gross Profit</th>' +
+    '<th style="text-align:right;padding:4px 8px;">Net Profit</th>' +
+    '<th style="text-align:right;padding:4px 8px;">Margin %</th>' +
+    '</tr></thead>';
+
+  function fmtRow(label, d, bold) {
+    var mgn = d.revenue > 0 ? (d.np/d.revenue*100).toFixed(1)+'%' : '—';
+    var s = bold ? 'font-weight:700;border-top:2px solid var(--border);' : 'border-top:1px solid var(--border);';
+    return '<tr style="' + s + '">' +
+      '<td style="padding:5px 8px;">' + san(label) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;">$' + d.revenue.toFixed(2) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;">$' + d.cogs.toFixed(2) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;">$' + d.gp.toFixed(2) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;' + (d.np<0?'color:var(--cr);':'') + '">$' + d.np.toFixed(2) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;">' + mgn + '</td>' +
+      '</tr>';
+  }
+
+  var body = '<tbody>' + keys.map(function(k){ return fmtRow(k, groups[k], false); }).join('') +
+             fmtRow('TOTAL', totals, true) + '</tbody>';
+
+  var tbl = G('pl-tbl');
+  if (tbl) tbl.innerHTML = hdr + body;
+}
+
+function exportPLCSV() {
+  var dim   = G('pl-dim')  ? G('pl-dim').value  : 'buyer';
+  var dfrom = G('pl-from') ? G('pl-from').value : '';
+  var dto   = G('pl-to')   ? G('pl-to').value   : '';
+  var dimLabel = dim==='buyer'?'Buyer':dim==='month'?'Month':'Quarter';
+
+  function groupKey(inv) {
+    if (dim==='buyer')   return inv.buyer||'Unknown';
+    if (dim==='month')   return (inv.date||'').slice(0,7);
+    var d=inv.date||''; var yr=d.slice(0,4); var mo=parseInt(d.slice(5,7),10)||1;
+    return yr+' Q'+Math.ceil(mo/3);
+  }
+
+  var invs = DB.inv.filter(function(inv){
+    if (inv.status==='Cancelled') return false;
+    if (inv.type==='credit_note'||inv.type==='goodwill_credit'||isCN(inv.num)) return false;
+    if (dfrom && inv.date<dfrom) return false;
+    if (dto   && inv.date>dto)   return false;
+    return true;
+  });
+
+  var groups = {};
+  invs.forEach(function(inv){
+    var key=groupKey(inv); var c=iCalc(inv); var cogs=+inv.calc_cogs||0;
+    if (!groups[key]) groups[key]={revenue:0,cogs:0,gp:0,np:0};
+    groups[key].revenue+=c.grand; groups[key].cogs+=cogs;
+    groups[key].gp+=(c.grand-cogs); groups[key].np+=c.np;
+  });
+
+  var rows = [[dimLabel,'Revenue','COGS','Gross Profit','Net Profit','Margin %']];
+  var totals = {revenue:0,cogs:0,gp:0,np:0};
+  Object.keys(groups).sort().forEach(function(k){
+    var d=groups[k]; var mgn=d.revenue>0?(d.np/d.revenue*100).toFixed(1)+'%':'—';
+    rows.push([k,d.revenue.toFixed(2),d.cogs.toFixed(2),d.gp.toFixed(2),d.np.toFixed(2),mgn]);
+    totals.revenue+=d.revenue; totals.cogs+=d.cogs; totals.gp+=d.gp; totals.np+=d.np;
+  });
+  var totMgn=totals.revenue>0?(totals.np/totals.revenue*100).toFixed(1)+'%':'—';
+  rows.push(['TOTAL',totals.revenue.toFixed(2),totals.cogs.toFixed(2),totals.gp.toFixed(2),totals.np.toFixed(2),totMgn]);
+
+  var csv = rows.map(function(r){ return r.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'pl-report-' + dim + '-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
 // ── BUYER STATEMENT ─────────────────────────────────────────────
 function openStatement() {
   if (!G('ov-stmt')) {
@@ -5740,7 +6060,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.34).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.35).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -5953,7 +6273,10 @@ var AI_SYSTEM_PROMPT = [
   'loadDemoData() is idempotent — if any _demo:true record already exists, it will not seed duplicate records.',
   '',
   '## AI data tool date filtering (v2.9.34)',
-  'get_invoices and get_payments both accept optional date_from and date_to params (ISO 8601, e.g. "2026-01-01"). Use these to answer period-scoped questions like "revenue in Q1 2026" (date_from: "2026-01-01", date_to: "2026-03-31") or "payments received in May" (date_from: "2026-05-01", date_to: "2026-05-31"). Both params are optional and inclusive. String lexicographic comparison on YYYY-MM-DD format is exact and correct.'
+  'get_invoices and get_payments both accept optional date_from and date_to params (ISO 8601, e.g. "2026-01-01"). Use these to answer period-scoped questions like "revenue in Q1 2026" (date_from: "2026-01-01", date_to: "2026-03-31") or "payments received in May" (date_from: "2026-05-01", date_to: "2026-05-31"). Both params are optional and inclusive. String lexicographic comparison on YYYY-MM-DD format is exact and correct.',
+  '',
+  '## Reporting panels (v2.9.35)',
+  'Aging Report (Invoices tab → [Aging]) shows outstanding invoices in buckets (Current / 0–30 / 31–60 / 61–90 / 90+ days overdue) with DSO KPI and CSV export. P&L Report (Invoices tab → [P&L]) shows Revenue, COGS, Gross Profit, Net Profit, Margin % by Buyer / Month / Quarter with date range filter and CSV export.'
 ].join('\n');
 
 var AI_COMPLIANCE_PROMPT = [
