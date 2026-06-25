@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.32</title>
+<title>Stackd Ops v2.9.33</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.32</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.33</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -990,9 +990,23 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.32</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.33</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: AI live data tools — AI assistant can now query your actual portal data (invoices, payments, purchase orders, dashboard KPIs) via tool use</li>
+          <li>New: AI_TOOLS — four query tools: get_invoices (filter by buyer/status/number), get_payments (filter by buyer/invoice), get_kpis (dashboard totals), get_pos (filter by supplier/status)</li>
+          <li>New: _aiExecTool() — executes tool calls against live DB; uses iCalc() for accurate balance/profit figures including applied credit notes</li>
+          <li>Change: sendAIMsg() rewritten — non-streaming, tool-use dispatch loop (up to 5 iterations); shows "Querying your data…" indicator during tool calls</li>
+          <li>Intermediate tool turns discarded from conversation history — only final text response persisted; action blocks and compliance mode unaffected</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.32</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: MTD-compatible VAT Return (REQ-MTD-001) — HMRC Making Tax Digital VAT 100 calculator on Invoices tab</li>
@@ -5699,7 +5713,8 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.32).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.33).',
+  'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
   '## What Stackd Ops Does',
@@ -6103,6 +6118,135 @@ function handleAIAction(action) {
   }
 }
 
+// ── AI DATA TOOLS ───────────────────────────────────────────────
+var AI_TOOLS = [
+  {
+    name: 'get_invoices',
+    description: 'Query invoices from the portal. Filter by buyer name (partial, case-insensitive), status, or invoice number. Returns grand total, amount paid, balance due, and net profit per invoice.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        buyer:  { type: 'string', description: 'Buyer name — partial match, case-insensitive' },
+        status: { type: 'string', description: 'Invoice status: Draft, Pro-forma, Sent, Partially Paid, Paid, Cancelled' },
+        num:    { type: 'string', description: 'Invoice number — partial match' }
+      }
+    }
+  },
+  {
+    name: 'get_payments',
+    description: 'Query payment ledger entries. Filter by buyer name or invoice number. Returns payment date, amount, method, and reference.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        buyer:   { type: 'string', description: 'Buyer name — partial match, case-insensitive' },
+        inv_num: { type: 'string', description: 'Invoice number — partial match' }
+      }
+    }
+  },
+  {
+    name: 'get_kpis',
+    description: 'Get current dashboard KPI values: total invoice revenue, net profit, average margin, total outstanding balance, PO balance due, in-transit shipment count, and entity counts.',
+    input_schema: { type: 'object', properties: {} }
+  },
+  {
+    name: 'get_pos',
+    description: 'Query purchase orders. Filter by supplier name or status. Returns supplier, line total, deposit paid, and balance due per PO.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        supplier: { type: 'string', description: 'Supplier name — partial match, case-insensitive' },
+        status:   { type: 'string', description: 'PO status: Draft, Sent, Confirmed, In Production, Shipped, Completed' }
+      }
+    }
+  }
+];
+
+function _aiExecTool(name, inp) {
+  try {
+    if (name === 'get_invoices') {
+      var rows = DB.inv.filter(function(inv) {
+        if (inv.type === 'credit_note' || inv.type === 'goodwill_credit') return false;
+        if (isCN(inv.num)) return false;
+        if (inp.buyer  && (inv.buyer||'').toLowerCase().indexOf(inp.buyer.toLowerCase())   === -1) return false;
+        if (inp.status && (inv.status||'').toLowerCase() !== inp.status.toLowerCase())             return false;
+        if (inp.num    && (inv.num||'').toLowerCase().indexOf(inp.num.toLowerCase())        === -1) return false;
+        return true;
+      });
+      return JSON.stringify(rows.map(function(inv) {
+        var c = iCalc(inv);
+        return { num: inv.num, buyer: inv.buyer, date: inv.date, status: inv.status,
+                 currency: inv.cur||'USD', grandTotal: +c.grand.toFixed(2),
+                 paid: +c.dep.toFixed(2), balanceDue: +c.bal.toFixed(2),
+                 netProfit: +c.np.toFixed(2),
+                 margin: c.mgn !== null ? +c.mgn.toFixed(1) : null };
+      }));
+    }
+    if (name === 'get_payments') {
+      var pmts = DB.payments.filter(function(p) {
+        if (inp.buyer) {
+          var inv = DB.inv.find(function(i){ return i.id===p.invId||i.num===p.invNum; });
+          if (!inv || (inv.buyer||'').toLowerCase().indexOf(inp.buyer.toLowerCase()) === -1) return false;
+        }
+        if (inp.inv_num && (p.invNum||'').toLowerCase().indexOf(inp.inv_num.toLowerCase()) === -1) return false;
+        return true;
+      });
+      return JSON.stringify(pmts.map(function(p) {
+        return { invNum: p.invNum, date: p.date, amount: +p.amount, method: p.method, reference: p.reference };
+      }));
+    }
+    if (name === 'get_kpis') {
+      var activeInvs = DB.inv.filter(function(i){
+        return i.status !== 'Cancelled' && i.type !== 'credit_note' && i.type !== 'goodwill_credit' && !isCN(i.num);
+      });
+      var revenue = activeInvs.reduce(function(s,i){ return s + iCalc(i).grand; }, 0);
+      var np      = activeInvs.reduce(function(s,i){ return s + iCalc(i).np;    }, 0);
+      var outstanding = activeInvs.filter(function(i){
+        return i.status==='Partially Paid'||i.status==='Sent'||i.status==='Pro-forma';
+      }).reduce(function(s,i){ return s + iCalc(i).bal; }, 0);
+      var poBal = DB.po.filter(function(p){ return p.status!=='Completed'&&p.status!=='Cancelled'; })
+        .reduce(function(s,p){
+          var t = (p.lineItems||[]).reduce(function(a,l){ return a+(+l.qty||0)*(+l.cost||0); },0);
+          return s + Math.max(0, t + (+p.oth||0) - (+p.dep||0));
+        }, 0);
+      return JSON.stringify({
+        invoiceRevenue:      +revenue.toFixed(2),
+        netProfit:           +np.toFixed(2),
+        avgMargin:           revenue > 0 ? +(np/revenue*100).toFixed(1) : 0,
+        outstanding:         +outstanding.toFixed(2),
+        poBalanceDue:        +poBal.toFixed(2),
+        inTransitShipments:  DB.sh.filter(function(s){ return s.status==='In Transit'; }).length,
+        totalInvoices:       activeInvs.length,
+        totalSuppliers:      DB.sup.length,
+        totalShipments:      DB.sh.length,
+        totalPOs:            DB.po.length
+      });
+    }
+    if (name === 'get_pos') {
+      var pos = DB.po.filter(function(po) {
+        if (inp.supplier) {
+          var sup = DB.sup.find(function(s){ return s.id===po.supId; });
+          var sn  = sup ? sup.name : '';
+          if (sn.toLowerCase().indexOf(inp.supplier.toLowerCase()) === -1) return false;
+        }
+        if (inp.status && (po.status||'').toLowerCase() !== inp.status.toLowerCase()) return false;
+        return true;
+      });
+      return JSON.stringify(pos.map(function(po) {
+        var sup      = DB.sup.find(function(s){ return s.id===po.supId; });
+        var lineTotal = (po.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0);
+        var balance   = Math.max(0, lineTotal + (+po.oth||0) - (+po.dep||0));
+        return { num: po.num, supplier: sup ? sup.name : po.supId, date: po.date,
+                 status: po.status, currency: po.cur||'USD',
+                 lineTotal: +lineTotal.toFixed(2), depositPaid: +(+po.dep||0).toFixed(2),
+                 balanceDue: +balance.toFixed(2) };
+      }));
+    }
+    return JSON.stringify({ error: 'Unknown tool: ' + name });
+  } catch(e) {
+    return JSON.stringify({ error: e.message });
+  }
+}
+
 async function sendAIMsg() {
   var input = G('ai-input');
   var msg = (input ? input.value.trim() : '');
@@ -6123,62 +6267,73 @@ async function sendAIMsg() {
   replyEl.textContent = '…';
 
   try {
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': AI.key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'prompt-caching-2024-07-31',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        stream: true,
-        system: (function(){
-          var tabNames = {dash:'Dashboard',sup:'Suppliers',li:'Line Items',inv:'Invoices',po:'Purchase Orders',sh:'Shipments',import:'Import Data',cfg:'Settings'};
-          var tab = window.currentTab || 'dash';
-          var ctx = 'The user is currently on the ' + (tabNames[tab]||tab) + ' tab of Stackd Ops.\n\n';
-          var langPrefix = _lang === 'zh' ? '请用中文回答所有问题。使用正式的商业用语和国际贸易术语。\n\n' : '';
-          var basePrompt = _aiMode === 'compliance' ? AI_COMPLIANCE_PROMPT : AI_SYSTEM_PROMPT;
-          var baseText = Array.isArray(basePrompt) ? basePrompt.join('\n') : String(basePrompt);
-          return [
-            { type: 'text', text: baseText, cache_control: { type: 'ephemeral' } },
-            { type: 'text', text: langPrefix + ctx }
-          ];
-        })(),
-        messages: _aiHistory
-      })
-    });
-    if (!resp.ok) {
-      var errBody = await resp.json().catch(function(){ return {}; });
-      throw new Error((errBody.error && errBody.error.message) || 'API error ' + resp.status);
-    }
-    var reader = resp.body.getReader();
-    var decoder = new TextDecoder();
-    var fullText = '';
-    replyEl.textContent = '';
-    while (true) {
-      var chunk = await reader.read();
-      if (chunk.done) break;
-      var lines = decoder.decode(chunk.value, { stream: true }).split('\n');
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i].trim();
-        if (!line.startsWith('data: ')) continue;
-        var raw = line.slice(6);
-        if (raw === '[DONE]') continue;
-        try {
-          var evt = JSON.parse(raw);
-          if (evt.type === 'content_block_delta' && evt.delta && evt.delta.text) {
-            fullText += evt.delta.text;
-            replyEl.textContent = fullText;
-            G('ai-msgs').scrollTop = G('ai-msgs').scrollHeight;
+    var buildSystem = function() {
+      var tabNames = {dash:'Dashboard',sup:'Suppliers',li:'Line Items',inv:'Invoices',po:'Purchase Orders',sh:'Shipments',import:'Import Data',cfg:'Settings'};
+      var tab = window.currentTab || 'dash';
+      var ctx = 'The user is currently on the ' + (tabNames[tab]||tab) + ' tab of Stackd Ops.\n\n';
+      var langPrefix = _lang === 'zh' ? '请用中文回答所有问题。使用正式的商业用语和国际贸易术语。\n\n' : '';
+      var basePrompt = _aiMode === 'compliance' ? AI_COMPLIANCE_PROMPT : AI_SYSTEM_PROMPT;
+      var baseText = Array.isArray(basePrompt) ? basePrompt.join('\n') : String(basePrompt);
+      return [
+        { type: 'text', text: baseText, cache_control: { type: 'ephemeral' } },
+        { type: 'text', text: langPrefix + ctx }
+      ];
+    };
+
+    // Tool-use dispatch loop — up to 5 iterations (prevents infinite tool loops)
+    var loopHistory = _aiHistory.slice();
+    var finalText = null;
+    for (var _iter = 0; _iter < 5; _iter++) {
+      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': AI.key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-beta': 'prompt-caching-2024-07-31',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          system: buildSystem(),
+          tools: AI_TOOLS,
+          messages: loopHistory
+        })
+      });
+      if (!resp.ok) {
+        var errBody = await resp.json().catch(function(){ return {}; });
+        throw new Error((errBody.error && errBody.error.message) || 'API error ' + resp.status);
+      }
+      var data = await resp.json();
+
+      if (data.stop_reason === 'tool_use') {
+        replyEl.textContent = 'Querying your data…';
+        // Add assistant turn (with tool_use blocks) to loop history
+        loopHistory.push({ role: 'assistant', content: data.content });
+        // Execute every tool call and collect results
+        var toolResults = [];
+        for (var _ci = 0; _ci < data.content.length; _ci++) {
+          var _blk = data.content[_ci];
+          if (_blk.type === 'tool_use') {
+            toolResults.push({
+              type: 'tool_result',
+              tool_use_id: _blk.id,
+              content: _aiExecTool(_blk.name, _blk.input || {})
+            });
           }
-        } catch(e) {}
+        }
+        loopHistory.push({ role: 'user', content: toolResults });
+      } else {
+        // end_turn — extract text from content blocks
+        finalText = (data.content || []).filter(function(b){ return b.type==='text'; })
+                                         .map(function(b){ return b.text; }).join('');
+        break;
       }
     }
-    var parsed = parseAIAction(fullText);
+
+    if (!finalText) finalText = 'No response received.';
+    var parsed = parseAIAction(finalText);
     replyEl.textContent = parsed.clean;
     if (parsed.action) {
       var actionLabels = { create_po: 'PO', create_quote: 'Quote', create_shipment: 'Shipment', create_contact: 'Contact' };
@@ -6190,6 +6345,7 @@ async function sendAIMsg() {
       (function(a){ btn.onclick = function(){ handleAIAction(a); }; })(parsed.action);
       replyEl.appendChild(btn);
     }
+    // Persist only the clean text — intermediate tool turns are not stored in history
     _aiHistory.push({ role: 'assistant', content: parsed.clean });
   } catch(e) {
     replyEl.textContent = 'Error: ' + e.message;
