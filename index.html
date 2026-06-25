@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.35</title>
+<title>Stackd Ops v2.9.36</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.35</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.36</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1044,9 +1044,21 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.35</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.36</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Full entity event log (G-05) — Invoice, PO, Payment, Supplier lifecycle events now emitted to DB.events (created, status_changed, deleted, unlocked, edited)</li>
+          <li>New: Invoice edit delta logging (G-06) — unlocking and re-saving a locked invoice writes an editHistory[] entry capturing field-level changes (field, from, to), reason, timestamp, actor</li>
+          <li>Note: 2,000-event FIFO cap may fill faster on active portals with these new emission points</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.35</span>
+          <span style="font-size:.5rem;color:var(--m);"></span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Aging Report (Invoices → [Aging]) — outstanding invoices in buckets (Current / 0–30 / 31–60 / 61–90 / 90+ days overdue) with DSO KPI and CSV export</li>
@@ -2023,6 +2035,7 @@ var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
 var LOCKED_STATUSES = ['Sent', 'Partially Paid', 'Paid', 'Cancelled'];
 var STATUS_ORDER    = ['Draft', 'Pro-forma', 'Sent', 'Partially Paid', 'Paid', 'Cancelled'];
 var _unlockedInvIds = {}; // in-memory override set — cleared on page reload
+var _invEditSnapshot = null; // G-06: pre-edit snapshot captured at unlock, cleared on save or close
 
 function canTransitionStatus(from, to) {
   // Cancelled is a terminal state reachable from any status
@@ -2863,7 +2876,7 @@ function showV(v, tab) {
   if (fns[v]) fns[v]();
 }
 function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); rQte(); rCon(); }
-function closeM(id) { G(id).classList.remove('on'); }
+function closeM(id) { if (id === 'ov-inv') _invEditSnapshot = null; G(id).classList.remove('on'); }
 
 // ── INVOICE CALCULATION ────────────────────────────────────────
 function cInv(inv) {
@@ -3384,9 +3397,13 @@ function editSup(id) {
 }
 async function saveSup() {
   if (!vSup()) return;
+  var _supIsNew = !EI.s;
   var s = { id:EI.s||uid(), name:G('sf-n').value.trim(), country:G('sf-c').value.trim(), ct:G('sf-ct').value.trim(), email:G('sf-e').value.trim(), phone:getSupPhone(), cur:G('sf-cur').value, notes:G('sf-nt').value.trim() };
   if (EI.s) { var i=DB.sup.findIndex(function(x){return x.id===EI.s;}); if(i>-1) DB.sup[i]=s; } else DB.sup.push(s);
-  sv(K.s,DB.sup); closeM('ov-sup'); rSup(); audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s); toast('Supplier saved'); renderOnboarding(); await syncEnt('sup',s).catch(function(){});
+  sv(K.s,DB.sup); closeM('ov-sup'); rSup(); audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s);
+  if (_supIsNew) { logEv('supplier', s.id, 'created', 'Supplier ' + s.name + ' created', 'operator'); }
+  else           { logEv('supplier', s.id, 'updated', 'Supplier ' + s.name + ' updated', 'operator'); }
+  toast('Supplier saved'); renderOnboarding(); await syncEnt('sup',s).catch(function(){});
 }
 async function delSup(id) {
   var invCount = DB.inv.filter(function(i){ return i.dst && DB.po.some(function(p){ return p.supId===id; }); }).length;
@@ -3400,9 +3417,11 @@ async function delSup(id) {
   var msg = 'Delete this supplier?';
   if (warns.length) msg += '\n\nWarning: ' + warns.join('\n') + '\n\nThe POs and invoices will remain but will show a missing supplier reference.';
   if (!confirm(msg)) return;
+  var _delSup = DB.sup.find(function(s){ return s.id===id; });
   DB.sup = DB.sup.filter(function(s){ return s.id!==id; });
   DB.con.forEach(function(c){ if (c.supplierId === id) { c.supplierId = null; c.role = ''; } });
   sv(K.co, DB.con);
+  if (_delSup) logEv('supplier', _delSup.id, 'deleted', 'Supplier ' + _delSup.name + ' deleted', 'operator');
   sv(K.s,DB.sup); rSup(); toast('Deleted'); await delEnt('sup',id).catch(function(){});
 }
 
@@ -3816,6 +3835,8 @@ async function saveInv() {
       toast('⚠ Status cannot move backward: ' + (_existing.status||'Draft') + ' → ' + inv.status); return;
     }
   }
+  // Capture old status for G-05 status_changed event
+  var _invOldStatus = EI.i ? ((DB.inv.find(function(x){return x.id===EI.i;})||{}).status || null) : null;
   // Preserve calc_ fields and lineItems from existing record when no live line items
   if(EI.i){
     var idx=DB.inv.findIndex(function(x){return x.id===EI.i;});
@@ -3889,7 +3910,28 @@ async function saveInv() {
     if (refsChanged) sv(K.l, DB.li);
   }
 
+  // G-06: write edit delta before closeM() clears _invEditSnapshot
+  if (_invEditSnapshot && _invEditSnapshot.invId === inv.id) {
+    var _snap = _invEditSnapshot;
+    var _changes = [];
+    ['status','buyer','calc_grandTotal','dep','taxRate','lf'].forEach(function(f) {
+      var oldV = String(_snap[f] || '0');
+      var newV = String(inv[f]  || '0');
+      if (oldV !== newV) _changes.push({ field: f, from: oldV, to: newV });
+    });
+    var newLiCount = (inv.lineItems||[]).length;
+    var newLiTotal = (inv.lineItems||[]).reduce(function(s,li){ return s+(+li.qty||0)*(+li.up||0); }, 0);
+    if (newLiCount !== _snap.liCount) _changes.push({ field:'lineItems.count', from:String(_snap.liCount), to:String(newLiCount) });
+    if (Math.abs(newLiTotal - _snap.liTotal) > 0.001) _changes.push({ field:'lineItems.total', from:_snap.liTotal.toFixed(2), to:newLiTotal.toFixed(2) });
+    if (!inv.editHistory) inv.editHistory = [];
+    inv.editHistory.push({ ts: new Date().toISOString(), reason: _snap.reason, actor: 'operator', changes: _changes });
+    logEv('invoice', inv.id, 'edited', _changes.length + ' field(s) changed — see invoice editHistory' + (_changes.length > 0 ? ' (' + _changes.map(function(c){ return c.field; }).join(', ') + ')' : ''), 'operator');
+    _invEditSnapshot = null;
+  }
   sv(K.i,DB.inv); closeM('ov-inv'); rInv(); rDash();
+  // G-05: log invoice lifecycle events
+  if (!EI.i) { logEv('invoice', inv.id, 'created', 'Invoice ' + inv.num + ' created', 'operator'); }
+  else if (_invOldStatus !== null && _invOldStatus !== inv.status) { logEv('invoice', inv.id, 'status_changed', 'Status: ' + _invOldStatus + ' → ' + inv.status, 'operator'); }
   if (EI.i && _unlockedInvIds[EI.i]) delete _unlockedInvIds[EI.i]; // consume override after save
   audit(EI.i?'UPDATE':'CREATE','invoice',inv.id,inv); toast('Invoice saved'); renderOnboarding();
   await syncEnt('inv',inv).catch(function(){});
@@ -4573,6 +4615,7 @@ async function delInv(id) {
     cat.invoiceRefs = cat.invoiceRefs.filter(function(r){ return r.invId !== id; });
     if (cat.invoiceRefs.length !== before) libRefsChanged = true;
   });
+  if (_delRec) logEv('invoice', _delRec.id, 'deleted', 'Invoice ' + (_delRec.num||id) + ' deleted', 'operator');
   sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt(_isCnDel ? 'cn' : 'inv', _delRec ? _delRec.num : id).catch(function(){});
 }
 
@@ -4629,9 +4672,13 @@ async function savePO() {
   if (!vPO()) return;
   var invNumVal = G('pf-inv').value.trim();
   var linkedInv = DB.inv.find(function(i){ return i.num === invNumVal; });
+  var _poOldStatus = EI.p ? ((DB.po.find(function(x){return x.id===EI.p;})||{}).status || null) : null;
   var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:invNumVal,invId:linkedInv?linkedInv.id:'',date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,paymentTerms:G('pf-pt').value.trim(),lineItems:cPL,dep:+G('pf-dep').value||0,fpmFunded:+G('pf-fpm').value||0,fpmRecovered:G('pf-rec').checked,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
   if(EI.p){var i=DB.po.findIndex(function(x){return x.id===EI.p;});if(i>-1)DB.po[i]=po;}else DB.po.push(po);
-  sv(K.p,DB.po); closeM('ov-po'); rPO(); rDash(); audit(EI.p?'UPDATE':'CREATE','po',po.id,po); toast('PO saved'); await syncEnt('po',po).catch(function(){});
+  sv(K.p,DB.po); closeM('ov-po'); rPO(); rDash(); audit(EI.p?'UPDATE':'CREATE','po',po.id,po);
+  if (!EI.p) { logEv('po', po.id, 'created', 'PO ' + po.num + ' created', 'operator'); }
+  else if (_poOldStatus !== null && _poOldStatus !== po.status) { logEv('po', po.id, 'status_changed', 'Status: ' + _poOldStatus + ' → ' + po.status, 'operator'); }
+  toast('PO saved'); await syncEnt('po',po).catch(function(){});
 }
 function rPO() {
   var q=(G('po-q').value||'').toLowerCase(), sf=G('po-sf').value;
@@ -4659,8 +4706,11 @@ function rPO() {
 }
 async function delPO(id) {
   if(!confirm('Delete?')) return;
-  var _poNum = (DB.po.find(function(p){return p.id===id;})||{}).num||id;
-  DB.po=DB.po.filter(function(p){return p.id!==id;}); sv(K.p,DB.po); rPO(); rDash(); toast('Deleted'); await delEnt('po',_poNum).catch(function(){});
+  var _poRec = DB.po.find(function(p){return p.id===id;});
+  var _poNum = (_poRec||{}).num||id;
+  DB.po=DB.po.filter(function(p){return p.id!==id;});
+  if (_poRec) logEv('po', _poRec.id, 'deleted', 'PO ' + _poNum + ' deleted', 'operator');
+  sv(K.p,DB.po); rPO(); rDash(); toast('Deleted'); await delEnt('po',_poNum).catch(function(){});
 }
 
 // ── PRINT PREVIEWS ─────────────────────────────────────────────
@@ -6060,7 +6110,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.35).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.36).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -6276,7 +6326,10 @@ var AI_SYSTEM_PROMPT = [
   'get_invoices and get_payments both accept optional date_from and date_to params (ISO 8601, e.g. "2026-01-01"). Use these to answer period-scoped questions like "revenue in Q1 2026" (date_from: "2026-01-01", date_to: "2026-03-31") or "payments received in May" (date_from: "2026-05-01", date_to: "2026-05-31"). Both params are optional and inclusive. String lexicographic comparison on YYYY-MM-DD format is exact and correct.',
   '',
   '## Reporting panels (v2.9.35)',
-  'Aging Report (Invoices tab → [Aging]) shows outstanding invoices in buckets (Current / 0–30 / 31–60 / 61–90 / 90+ days overdue) with DSO KPI and CSV export. P&L Report (Invoices tab → [P&L]) shows Revenue, COGS, Gross Profit, Net Profit, Margin % by Buyer / Month / Quarter with date range filter and CSV export.'
+  'Aging Report (Invoices tab → [Aging]) shows outstanding invoices in buckets (Current / 0–30 / 31–60 / 61–90 / 90+ days overdue) with DSO KPI and CSV export. P&L Report (Invoices tab → [P&L]) shows Revenue, COGS, Gross Profit, Net Profit, Margin % by Buyer / Month / Quarter with date range filter and CSV export.',
+  '',
+  '## Entity event log + Invoice edit history (v2.9.36)',
+  'DB.events now receives lifecycle events for Invoice (created, status_changed, deleted, unlocked, edited), PO (created, status_changed, deleted), Payment (created, deleted), and Supplier (created, updated, deleted). When a locked invoice is unlocked and then saved, an editHistory[] entry is added to the invoice record capturing: timestamp, reason, actor (always "operator"), and a changes[] array of { field, from, to } for each tracked field that changed. editHistory is preserved in backup/restore. The 2,000-event FIFO cap on DB.events may fill faster on active portals.'
 ].join('\n');
 
 var AI_COMPLIANCE_PROMPT = [
@@ -7490,6 +7543,14 @@ function unlockInv() {
   if (LOCKED_STATUSES.indexOf(inv.status) === -1) { st.textContent = inv.num + ' is not locked (status: ' + inv.status + ').'; st.style.color = 'var(--m)'; return; }
   _unlockedInvIds[inv.id] = true;
   audit('UNLOCK', 'invoice', inv.id, { num: inv.num, status: inv.status, reason: reason });
+  logEv('invoice', inv.id, 'unlocked', 'Unlock reason: ' + reason, 'operator');
+  _invEditSnapshot = {
+    invId: inv.id, reason: reason, status: inv.status, buyer: inv.buyer,
+    calc_grandTotal: String(inv.calc_grandTotal || '0'), dep: String(inv.dep || '0'),
+    taxRate: String(inv.taxRate || '0'), lf: String(inv.lf || '0'),
+    liCount: (inv.lineItems || []).length,
+    liTotal: (inv.lineItems || []).reduce(function(s,li){ return s+(+li.qty||0)*(+li.up||0); }, 0)
+  };
   st.textContent = inv.num + ' unlocked for editing. This session only — lock re-engages on page reload.';
   st.style.color = 'var(--gn)';
   if (numEl) numEl.value = ''; if (reasonEl) reasonEl.value = ''; if (confirmEl) confirmEl.value = '';
@@ -8456,6 +8517,7 @@ function savePayment(payment) {
   else { DB.payments.push(payment); }
   sv(K.pm, DB.payments);
   audit('SAVE', 'payment', payment.id, payment);
+  logEv('payment', payment.id, 'created', 'Payment $' + (+payment.amount||0).toFixed(2) + ' received — ' + (payment.invNum||payment.invId||''), 'operator');
 
   // Update invoice dep field to match total paid
   var inv = DB.inv.find(function(i){ return i.id === payment.invId; });
@@ -8504,6 +8566,7 @@ function deletePayment(id) {
   var pm = DB.payments.find(function(p){ return p.id === id; });
   if (!pm) return;
   if (!confirm('Delete this payment record?')) return;
+  logEv('payment', pm.id, 'deleted', 'Payment deleted — ' + (pm.invNum||pm.invId||''), 'operator');
   DB.payments = DB.payments.filter(function(p){ return p.id !== id; });
   sv(K.pm, DB.payments);
   audit('DELETE', 'payment', id, pm);
