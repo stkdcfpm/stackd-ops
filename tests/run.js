@@ -3227,6 +3227,137 @@ test('_aiExecTool get_payments: date range inclusive both ends', function() {
   assertEqual(result.length, 2, 'both boundary dates inclusive for payments');
 });
 
+// ── REQ-RPT-001 G-02: Aging Report ──────────────────────────────
+
+test('aging bucket: invoice 65 days old with Net 30 terms in 31-60 bucket (daysOverdue=35)', function() {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var invDate = new Date(today.getTime() - 65*86400000);
+  var ptDays = ctx.parsePtDays('Net 30');
+  var dueDate = new Date(invDate.getTime() + ptDays*86400000);
+  var daysOverdue = Math.floor((today - dueDate)/86400000);
+  var bucket = daysOverdue<=0?'Current':daysOverdue<=30?'0–30':daysOverdue<=60?'31–60':daysOverdue<=90?'61–90':'90+';
+  assertEqual(bucket, '31–60', '65-day-old invoice with Net 30 -> daysOverdue 35 -> 31-60 bucket');
+});
+
+test('aging bucket: invoice 125 days old with Net 30 terms in 90+ bucket (daysOverdue=95)', function() {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var invDate = new Date(today.getTime() - 125*86400000);
+  var ptDays = ctx.parsePtDays('Net 30');
+  var dueDate = new Date(invDate.getTime() + ptDays*86400000);
+  var daysOverdue = Math.floor((today - dueDate)/86400000);
+  var bucket = daysOverdue<=0?'Current':daysOverdue<=30?'0–30':daysOverdue<=60?'31–60':daysOverdue<=90?'61–90':'90+';
+  assertEqual(bucket, '90+', '125-day-old invoice with Net 30 -> daysOverdue 95 -> 90+ bucket');
+});
+
+test('parsePtDays: payment terms defaults and extraction', function() {
+  assertEqual(ctx.parsePtDays('COD'), 30, 'COD defaults to 30');
+  assertEqual(ctx.parsePtDays(''), 30, 'empty defaults to 30');
+  assertEqual(ctx.parsePtDays('Net 45'), 45, 'Net 45 parses 45');
+  assertEqual(ctx.parsePtDays('30 days EOM'), 30, '30 days EOM parses 30');
+});
+
+test('aging DSO is 0 when no invoices with outstanding balance', function() {
+  var rows = [];
+  var totalBal = rows.reduce(function(s,r){ return s + r.bal; }, 0);
+  var dso = totalBal > 0
+    ? Math.round(rows.reduce(function(s,r){ return s + r.daysOld * r.bal; }, 0) / totalBal)
+    : 0;
+  assertEqual(dso, 0, 'DSO is 0 when no outstanding balance');
+});
+
+test('aging filter: Paid invoices excluded, Sent included', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'A', date:'2026-01-01', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'1000', calc_cogs:'600', calc_netProfit:'400', calc_margin:'40', dep:'1000' });
+  ctx.DB.inv.push({ id:'i2', num:'INV002', buyer:'A', date:'2026-01-05', status:'Sent', type:'invoice', cur:'USD', calc_grandTotal:'2000', calc_cogs:'1200', calc_netProfit:'800', calc_margin:'40', dep:'0' });
+  var filtered = ctx.DB.inv.filter(function(inv){
+    return (inv.status === 'Sent' || inv.status === 'Partially Paid') &&
+           inv.type !== 'credit_note' && inv.type !== 'goodwill_credit' && !ctx.isCN(inv.num);
+  });
+  assertEqual(filtered.length, 1, 'only Sent/Partially Paid included in aging');
+  assertEqual(filtered[0].num, 'INV002', 'Paid invoice excluded');
+});
+
+test('aging filter: Partially Paid invoice with outstanding balance included (REQ AC-2)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'A', date:'2026-01-05', status:'Partially Paid', type:'invoice', cur:'USD', calc_grandTotal:'2000', calc_cogs:'1200', calc_netProfit:'800', calc_margin:'40', dep:'800' });
+  var filtered = ctx.DB.inv.filter(function(inv){
+    return (inv.status === 'Sent' || inv.status === 'Partially Paid') &&
+           inv.type !== 'credit_note' && inv.type !== 'goodwill_credit' && !ctx.isCN(inv.num);
+  });
+  assertEqual(filtered.length, 1, 'Partially Paid invoice included in aging filter');
+  var c = ctx.iCalc(filtered[0]);
+  assert(c.bal > 0, 'outstanding balance > 0 for Partially Paid invoice');
+});
+
+// ── REQ-RPT-001 G-03: P&L Report ────────────────────────────────
+
+test('P&L grouping: revenue, cogs, np aggregated correctly by buyer', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'Apex', date:'2026-03-01', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'10000', calc_cogs:'6000', calc_netProfit:'4000', calc_margin:'40', dep:'10000' });
+  ctx.DB.inv.push({ id:'i2', num:'INV002', buyer:'Apex', date:'2026-04-01', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'5000', calc_cogs:'3000', calc_netProfit:'2000', calc_margin:'40', dep:'5000' });
+  ctx.DB.inv.push({ id:'i3', num:'INV003', buyer:'Romerry', date:'2026-04-15', status:'Sent', type:'invoice', cur:'USD', calc_grandTotal:'8000', calc_cogs:'5000', calc_netProfit:'3000', calc_margin:'37', dep:'0' });
+
+  var invs = ctx.DB.inv.filter(function(i){ return i.status!=='Cancelled'&&i.type!=='credit_note'&&!ctx.isCN(i.num); });
+  var groups = {};
+  invs.forEach(function(inv){
+    var key = inv.buyer||'Unknown';
+    var c = ctx.iCalc(inv);
+    var cogs = +inv.calc_cogs||0;
+    if (!groups[key]) groups[key]={revenue:0,cogs:0,gp:0,np:0};
+    groups[key].revenue += c.grand;
+    groups[key].cogs    += cogs;
+    groups[key].gp      += (c.grand - cogs);
+    groups[key].np      += c.np;
+  });
+  assertEqual(+groups['Apex'].revenue.toFixed(2), 15000, 'Apex revenue aggregated correctly');
+  assertEqual(+groups['Apex'].cogs.toFixed(2), 9000, 'Apex COGS aggregated correctly');
+  assertEqual(+groups['Apex'].gp.toFixed(2), 6000, 'Apex gross profit aggregated correctly');
+  assertEqual(+groups['Apex'].np.toFixed(2), 6000, 'Apex NP aggregated correctly');
+  assert(groups['Romerry'], 'Romerry group present');
+});
+
+test('P&L date range filter excludes out-of-range invoices', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'A', date:'2025-12-31', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'1000', calc_cogs:'600', calc_netProfit:'400', calc_margin:'40', dep:'1000' });
+  ctx.DB.inv.push({ id:'i2', num:'INV002', buyer:'A', date:'2026-03-15', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'2000', calc_cogs:'1200', calc_netProfit:'800', calc_margin:'40', dep:'2000' });
+  var dfrom='2026-01-01'; var dto='2026-12-31';
+  var filtered = ctx.DB.inv.filter(function(inv){
+    if (inv.status==='Cancelled') return false;
+    if (dfrom && inv.date<dfrom) return false;
+    if (dto   && inv.date>dto)   return false;
+    return true;
+  });
+  assertEqual(filtered.length, 1, 'only in-range invoice included');
+  assertEqual(filtered[0].num, 'INV002', 'correct invoice retained');
+});
+
+test('P&L filter: cancelled invoices excluded', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'A', date:'2026-01-01', status:'Cancelled', type:'invoice', cur:'USD', calc_grandTotal:'1000', calc_cogs:'600', calc_netProfit:'400', calc_margin:'40' });
+  ctx.DB.inv.push({ id:'i2', num:'INV002', buyer:'A', date:'2026-01-05', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'2000', calc_cogs:'1200', calc_netProfit:'800', calc_margin:'40', dep:'2000' });
+  var filtered = ctx.DB.inv.filter(function(i){ return i.status!=='Cancelled'&&i.type!=='credit_note'&&!ctx.isCN(i.num); });
+  assertEqual(filtered.length, 1, 'cancelled invoice excluded');
+});
+
+test('P&L COGS warning: zero-cogs invoice with no library lines detected', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'A', date:'2026-01-01', status:'Paid', type:'invoice', cur:'USD',
+    calc_grandTotal:'1000', calc_cogs:'0', calc_netProfit:'0', calc_margin:'0', dep:'1000',
+    lineItems:[{ desc:'Widget', qty:1, up:1000, lid:'' }] });
+  ctx.DB.inv.push({ id:'i2', num:'INV002', buyer:'A', date:'2026-01-05', status:'Paid', type:'invoice', cur:'USD',
+    calc_grandTotal:'2000', calc_cogs:'1200', calc_netProfit:'800', calc_margin:'40', dep:'2000',
+    lineItems:[{ desc:'Gadget', qty:1, up:2000, lid:'lib-1' }] });
+  ctx.DB.li.push({ id:'lib-1', name:'Gadget', price:2000 });
+
+  var invs = ctx.DB.inv.filter(function(inv){ return inv.status !== 'Cancelled'; });
+  var zeroCogs = invs.filter(function(inv){
+    return !(+inv.calc_cogs > 0) &&
+           !(inv.lineItems||[]).some(function(li){ return li.lid && ctx.DB.li.find(function(x){ return x.id===li.lid; }); });
+  });
+  assertEqual(zeroCogs.length, 1, 'one invoice flagged as zero-COGS');
+  assertEqual(zeroCogs[0].num, 'INV001', 'correct invoice flagged');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
