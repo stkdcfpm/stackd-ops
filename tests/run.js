@@ -3163,6 +3163,70 @@ test('calcVATReturn: box3 = box1 + box2, box5 = box3 - box4, zeros correct', fun
   assertEqual(r.box9, 0, 'box9 = 0');
 });
 
+// ── REQ-RPT-001 G-01: AI date filter ──────────────────────────
+
+test('_aiExecTool get_invoices: date_from filters correctly', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'A', date:'2026-01-15', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'1000', calc_cogs:'600', calc_netProfit:'400', calc_margin:'40' });
+  ctx.DB.inv.push({ id:'i2', num:'INV002', buyer:'B', date:'2026-03-20', status:'Sent', type:'invoice', cur:'USD', calc_grandTotal:'2000', calc_cogs:'1200', calc_netProfit:'800', calc_margin:'40' });
+  var result = JSON.parse(ctx._aiExecTool('get_invoices', { date_from: '2026-02-01' }));
+  assertEqual(result.length, 1, 'only invoices on/after date_from returned');
+  assertEqual(result[0].num, 'INV002', 'correct invoice returned');
+});
+
+test('_aiExecTool get_invoices: date_to filters correctly', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'A', date:'2026-01-15', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'1000', calc_cogs:'600', calc_netProfit:'400', calc_margin:'40' });
+  ctx.DB.inv.push({ id:'i2', num:'INV002', buyer:'B', date:'2026-03-20', status:'Sent', type:'invoice', cur:'USD', calc_grandTotal:'2000', calc_cogs:'1200', calc_netProfit:'800', calc_margin:'40' });
+  var result = JSON.parse(ctx._aiExecTool('get_invoices', { date_to: '2026-02-28' }));
+  assertEqual(result.length, 1, 'only invoices on/before date_to returned');
+  assertEqual(result[0].num, 'INV001', 'correct invoice returned');
+});
+
+test('_aiExecTool get_invoices: date range inclusive both ends', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'A', date:'2026-01-01', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'1000', calc_cogs:'600', calc_netProfit:'400', calc_margin:'40' });
+  ctx.DB.inv.push({ id:'i2', num:'INV002', buyer:'B', date:'2026-03-31', status:'Sent', type:'invoice', cur:'USD', calc_grandTotal:'2000', calc_cogs:'1200', calc_netProfit:'800', calc_margin:'40' });
+  ctx.DB.inv.push({ id:'i3', num:'INV003', buyer:'C', date:'2026-04-01', status:'Sent', type:'invoice', cur:'USD', calc_grandTotal:'500', calc_cogs:'300', calc_netProfit:'200', calc_margin:'40' });
+  var result = JSON.parse(ctx._aiExecTool('get_invoices', { date_from: '2026-01-01', date_to: '2026-03-31' }));
+  assertEqual(result.length, 2, 'both boundary dates inclusive');
+});
+
+test('_aiExecTool get_invoices: no date params returns all (regression)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id:'i1', num:'INV001', buyer:'A', date:'2026-01-15', status:'Paid', type:'invoice', cur:'USD', calc_grandTotal:'1000', calc_cogs:'600', calc_netProfit:'400', calc_margin:'40' });
+  ctx.DB.inv.push({ id:'i2', num:'INV002', buyer:'B', date:'2026-06-01', status:'Sent', type:'invoice', cur:'USD', calc_grandTotal:'2000', calc_cogs:'1200', calc_netProfit:'800', calc_margin:'40' });
+  var result = JSON.parse(ctx._aiExecTool('get_invoices', {}));
+  assertEqual(result.length, 2, 'all invoices returned when no date filter');
+});
+
+test('_aiExecTool get_payments: date_from filters correctly', function() {
+  resetDB();
+  ctx.DB.payments.push({ id:'p1', invNum:'INV001', invId:'i1', date:'2026-02-10', amount:500, method:'Bank Transfer', reference:'REF1' });
+  ctx.DB.payments.push({ id:'p2', invNum:'INV002', invId:'i2', date:'2026-04-15', amount:800, method:'Bank Transfer', reference:'REF2' });
+  var result = JSON.parse(ctx._aiExecTool('get_payments', { date_from: '2026-03-01' }));
+  assertEqual(result.length, 1, 'only payments on/after date_from returned');
+  assertEqual(result[0].invNum, 'INV002', 'correct payment returned');
+});
+
+test('_aiExecTool get_payments: date_to filters correctly', function() {
+  resetDB();
+  ctx.DB.payments.push({ id:'p1', invNum:'INV001', invId:'i1', date:'2026-02-10', amount:500, method:'Bank Transfer', reference:'REF1' });
+  ctx.DB.payments.push({ id:'p2', invNum:'INV002', invId:'i2', date:'2026-04-15', amount:800, method:'Bank Transfer', reference:'REF2' });
+  var result = JSON.parse(ctx._aiExecTool('get_payments', { date_to: '2026-03-31' }));
+  assertEqual(result.length, 1, 'only payments on/before date_to returned');
+  assertEqual(result[0].invNum, 'INV001', 'correct payment returned');
+});
+
+test('_aiExecTool get_payments: date range inclusive both ends', function() {
+  resetDB();
+  ctx.DB.payments.push({ id:'p1', invNum:'INV001', invId:'i1', date:'2026-01-01', amount:100, method:'Bank Transfer', reference:'A' });
+  ctx.DB.payments.push({ id:'p2', invNum:'INV002', invId:'i2', date:'2026-03-31', amount:200, method:'Bank Transfer', reference:'B' });
+  ctx.DB.payments.push({ id:'p3', invNum:'INV003', invId:'i3', date:'2026-04-01', amount:300, method:'Bank Transfer', reference:'C' });
+  var result = JSON.parse(ctx._aiExecTool('get_payments', { date_from: '2026-01-01', date_to: '2026-03-31' }));
+  assertEqual(result.length, 2, 'both boundary dates inclusive for payments');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
