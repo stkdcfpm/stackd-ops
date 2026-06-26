@@ -4117,7 +4117,7 @@ function openVATReturn() {
   G('vat-export-summary').disabled = true;
   G('vat-export-txn').disabled     = true;
   G('vat-boxes').innerHTML = '';
-  showM('ov-vat');
+  G('ov-vat').classList.add('on');
 }
 function runVATCalc() {
   var from = G('vat-from').value;
@@ -4265,7 +4265,7 @@ function parsePtDays(pt) {
 
 function openAgingReport() {
   renderAgingReport();
-  openM('ov-aging');
+  G('ov-aging').classList.add('on');
 }
 
 function renderAgingReport() {
@@ -4382,7 +4382,7 @@ function openPLReport() {
   if (fromEl && !fromEl.value) fromEl.value = yr + '-01-01';
   if (toEl   && !toEl.value)   toEl.value   = yr + '-12-31';
   renderPLReport();
-  openM('ov-pl');
+  G('ov-pl').classList.add('on');
 }
 
 function renderPLReport() {
