@@ -113,7 +113,7 @@ function assertApprox(a, b, msg) {
 }
 
 function resetDB() {
-  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [], events: [] };
+  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [], events: [], buy: [] };
 }
 function loadFixtures() {
   ctx.DB = JSON.parse(JSON.stringify(fixtures));
@@ -3562,6 +3562,124 @@ test('_invEditSnapshot null after save clears state', function() {
   ctx.cIL = [];
   ctx.saveInv();
   assertEqual(ctx._invEditSnapshot, null, 'snapshot cleared after save');
+});
+
+// ── BUYERS (T-BUY-01 … T-BUY-09) ─────────────────────────────
+console.log('\nBuyers entity');
+
+test('T-BUY-01 seedAdHocBuyer creates BUY-ADHOC when buy is empty', () => {
+  resetDB();
+  ctx.seedAdHocBuyer();
+  assert(ctx.DB.buy.length === 1, 'buy array should have 1 record');
+  assertEqual(ctx.DB.buy[0].id, 'BUY-ADHOC', 'id should be BUY-ADHOC');
+  assertEqual(ctx.DB.buy[0].name, 'Ad-Hoc', 'name should be Ad-Hoc');
+});
+
+test('T-BUY-02 seedAdHocBuyer is idempotent (no duplicate on second call)', () => {
+  resetDB();
+  ctx.seedAdHocBuyer();
+  ctx.seedAdHocBuyer();
+  assertEqual(ctx.DB.buy.length, 1, 'should still have exactly 1 record');
+});
+
+test('T-BUY-03 saveBuy creates a new buyer record', () => {
+  resetDB();
+  ctx.seedAdHocBuyer();
+  ctx.EI.bu = null;
+  mockEl('buy-name').value = 'Apex Trading Ltd';
+  mockEl('buy-cname').value = 'John Doe';
+  mockEl('buy-email').value = 'john@apex.com';
+  mockEl('buy-phone').value = '+1 246 555 0100';
+  mockEl('buy-addr').value = 'Bridgetown, Barbados';
+  mockEl('buy-cur').value = 'BBD';
+  mockEl('buy-pt').value = 'Net 30';
+  mockEl('buy-cl').value = '10000';
+  mockEl('buy-notes').value = 'Key account';
+  ctx.saveBuy();
+  var found = ctx.DB.buy.find(function(b){ return b.name === 'Apex Trading Ltd'; });
+  assert(found, 'buyer should be created');
+  assertEqual(found.currency, 'BBD', 'currency should be BBD');
+  assertEqual(found.creditLimit, 10000, 'credit limit should be 10000');
+});
+
+test('T-BUY-04 saveBuy blocks empty name', () => {
+  resetDB();
+  ctx.EI.bu = null;
+  mockEl('buy-name').value = '';
+  mockEl('buy-cname').value = ''; mockEl('buy-email').value = ''; mockEl('buy-phone').value = '';
+  mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'GBP'; mockEl('buy-pt').value = '';
+  mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
+  var before = ctx.DB.buy.length;
+  ctx.saveBuy();
+  assertEqual(ctx.DB.buy.length, before, 'no buyer should be added');
+});
+
+test('T-BUY-05 saveBuy blocks duplicate name (case-insensitive)', () => {
+  resetDB();
+  ctx.seedAdHocBuyer();
+  ctx.EI.bu = null;
+  mockEl('buy-name').value = 'APEX TRADING';
+  mockEl('buy-cname').value = ''; mockEl('buy-email').value = ''; mockEl('buy-phone').value = '';
+  mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'GBP'; mockEl('buy-pt').value = '';
+  mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
+  ctx.saveBuy();
+  var before = ctx.DB.buy.length;
+  ctx.EI.bu = null;
+  mockEl('buy-name').value = 'apex trading';
+  ctx.saveBuy();
+  assertEqual(ctx.DB.buy.length, before, 'duplicate should not be added');
+});
+
+test('T-BUY-06 saveBuy updates an existing buyer record', () => {
+  resetDB();
+  ctx.seedAdHocBuyer();
+  ctx.EI.bu = null;
+  mockEl('buy-name').value = 'Sunrise Imports';
+  mockEl('buy-cname').value = ''; mockEl('buy-email').value = ''; mockEl('buy-phone').value = '';
+  mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'USD'; mockEl('buy-pt').value = '';
+  mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
+  ctx.saveBuy();
+  var rec = ctx.DB.buy.find(function(b){ return b.name === 'Sunrise Imports'; });
+  ctx.EI.bu = rec.id;
+  mockEl('buy-name').value = 'Sunrise Imports Ltd';
+  mockEl('buy-cname').value = 'Alice'; mockEl('buy-email').value = 'alice@sunrise.com';
+  mockEl('buy-phone').value = ''; mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'USD';
+  mockEl('buy-pt').value = 'Net 60'; mockEl('buy-cl').value = '5000'; mockEl('buy-notes').value = '';
+  ctx.saveBuy();
+  var updated = ctx.DB.buy.find(function(b){ return b.id === rec.id; });
+  assertEqual(updated.name, 'Sunrise Imports Ltd', 'name should be updated');
+  assertEqual(updated.paymentTerms, 'Net 60', 'paymentTerms should be updated');
+});
+
+test('T-BUY-07 delBuy removes buyer and emits event', () => {
+  resetDB();
+  ctx.seedAdHocBuyer();
+  ctx.EI.bu = null;
+  mockEl('buy-name').value = 'Temp Buyer';
+  mockEl('buy-cname').value = ''; mockEl('buy-email').value = ''; mockEl('buy-phone').value = '';
+  mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'USD'; mockEl('buy-pt').value = '';
+  mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
+  ctx.saveBuy();
+  var rec = ctx.DB.buy.find(function(b){ return b.name === 'Temp Buyer'; });
+  var beforeEvts = ctx.DB.events.length;
+  ctx._confirmOverride = true;
+  ctx.delBuy(rec.id);
+  assert(!ctx.DB.buy.find(function(b){ return b.id === rec.id; }), 'buyer should be removed');
+  assert(ctx.DB.events.length > beforeEvts, 'delete event should be logged');
+});
+
+test('T-BUY-08 delBuy blocks deletion of BUY-ADHOC', () => {
+  resetDB();
+  ctx.seedAdHocBuyer();
+  ctx._confirmOverride = true;
+  ctx.delBuy('BUY-ADHOC');
+  assert(ctx.DB.buy.find(function(b){ return b.id === 'BUY-ADHOC'; }), 'BUY-ADHOC should still exist');
+});
+
+test('T-BUY-09 fromGBP converts GBP to USD using QR rate', () => {
+  var rate = ctx.QR.fxGBPUSD || ctx.QR_DEFAULTS.fxGBPUSD;
+  var result = ctx.fromGBP(100, 'USD');
+  assertEqual(result, 100 * rate, 'fromGBP(100, USD) should equal 100 * fxGBPUSD');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────

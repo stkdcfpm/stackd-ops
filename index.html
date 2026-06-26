@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.36</title>
+<title>Stackd Ops v2.9.37</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.36</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.37</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -370,6 +370,20 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <tbody id="con-tbody"></tbody>
   </table></div>
   <div id="con-em" class="empty" style="display:none;"><div class="ei">&#128101;</div><p>No contacts yet. Click <strong>+ New Contact</strong> to get started.</p></div>
+</div>
+
+<div class="view" id="v-buy">
+  <div class="tb">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">BUYERS</div>
+    <button class="btn btn-s" onclick="openBuy(null)">+ New Buyer</button>
+  </div>
+  <div class="tw"><table class="tbl" id="buy-tbl" style="display:none;">
+    <thead><tr>
+      <th>Company</th><th>Contact</th><th>Email</th><th>Currency</th><th>Payment Terms</th><th class="num">Credit Limit</th><th class="num">Outstanding (GBP)</th><th></th>
+    </tr></thead>
+    <tbody id="buy-tbody"></tbody>
+  </table></div>
+  <div id="buy-em" class="empty" style="display:none;"><div class="ei">&#128722;</div><p>No buyers yet. Click <strong>+ New Buyer</strong> to get started.</p></div>
 </div>
 
 <!-- IMPORT DATA VIEW -->
@@ -558,6 +572,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     </div>
     <div class="card">
       <div class="ct">Privacy &amp; Data</div>
+      <p style="font-size:.48rem;color:var(--m);margin-bottom:6px;">&#9432; <strong>Buyers data</strong> — Buyer records (company name, contact name, email, phone, address) are stored locally in your browser (key: <code>st_buy</code>). <strong>Legal basis:</strong> UK GDPR Art.&nbsp;6(1)(b) — contract performance (invoicing); Art.&nbsp;6(1)(c) — legal obligation (HMRC 6-year financial record retention, Companies Act 2006 s.388, VAT Notice 700/21 s.19). <strong>Retention:</strong> no automated expiry; retain for the business relationship duration and minimum 6 years thereafter. Buyer data is included in JSON backup exports — secure exported files. No external transmission in this version (Sheets sync deferred to v3.0).</p>
       <p style="font-size:.48rem;color:var(--m);margin-bottom:6px;">&#9432; <strong>Activity event log</strong> — Stackd Ops records operational events (contact created, status changes, quote conversions) in a local activity log (<code>st_ev</code>). Event records contain entity IDs and action descriptions only — no personal names. The log is capped at 2,000 entries (FIFO); oldest entries are dropped automatically. This data is local-only, included in your JSON backup, and never transmitted externally. Legal basis: Art.6(1)(f) legitimate interests in operating the trade portal.</p>
     </div>
     <div class="card">
@@ -892,7 +907,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <div class="fld"><label>Date</label><input type="date" id="if-dt"></div>
           <div class="fld"><label>Expiry / Due Date</label><input type="date" id="if-ex"></div>
           <div class="fld"><label>Customer ID</label><input type="text" id="if-cid"></div>
-          <div class="fld" style="grid-column:span 2"><label id="lbl-inv-buyer">Buyer / Company</label><input type="text" id="if-b"></div>
+          <div class="fld" style="grid-column:span 2"><label id="lbl-inv-buyer">Buyer / Company</label><select id="if-b" onchange="if(this.value==='__new__') quickAddBuyer()" style="font-family:'DM Mono',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px 0;background:transparent;width:100%;outline:none;cursor:pointer;"></select><span id="if-b-err" class="verr"></span></div>
           <div class="fld" style="grid-column:span 2"><label>Buyer Address</label><input type="text" id="if-ba"></div>
           <div class="fld" style="grid-column:span 2"><label>Ship To (if different)</label><input type="text" id="if-st"></div>
           <div class="fld"><label id="lbl-inv-dst">Destination</label><input type="text" id="if-dst" placeholder="Barbados" list="dl-countries" autocomplete="off"></div>
@@ -1044,9 +1059,25 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.36</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.37</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Buyers entity (REQ-BUY-001) — managed DB.buy array with Company, Contact, Email, Phone, Address, Currency, Payment Terms, Credit Limit, Notes</li>
+          <li>New: Buyers tab with list/add/edit/delete; Ad-Hoc buyer seeded automatically (id BUY-ADHOC) for legacy and unassigned invoices</li>
+          <li>New: Invoice Buyer field replaced with dropdown linked to Buyers; "＋ New Buyer…" quick-create from invoice form</li>
+          <li>New: Per-buyer financial summary panel (total invoiced in buyer currency, payments GBP, outstanding GBP, invoice count)</li>
+          <li>New: Buyer Statement button inside buyer modal — pre-filters statement to that buyer</li>
+          <li>New: fromGBP(gbp, cur) helper — inverse of toGBP() for buyer-currency display</li>
+          <li>New: GDPR disclosure for Buyers in Settings → Privacy &amp; Data</li>
+          <li>New: logEv() emitted on buyer create/update/delete</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.36</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Full entity event log (G-05) — Invoice, PO, Payment, Supplier lifecycle events now emitted to DB.events (created, status_changed, deleted, unlocked, edited)</li>
@@ -1867,6 +1898,43 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- BUYER MODAL -->
+<div id="ov-buy" class="ov" onclick="if(event.target===this)closeM('ov-buy')">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh"><h2 id="buy-modal-title">Buyer</h2><button class="mx" onclick="closeM('ov-buy')">&#215;</button></div>
+    <div class="mb">
+      <div class="fg fg2">
+        <div class="fld" style="grid-column:span 2">
+          <label>Company Name *</label>
+          <input id="buy-name" type="text" placeholder="Company name">
+          <span id="buy-name-err" class="verr"></span>
+        </div>
+        <div class="fld"><label>Contact Name</label><input id="buy-cname" type="text" placeholder="Contact person"></div>
+        <div class="fld"><label>Email</label><input id="buy-email" type="email" placeholder="email@example.com"></div>
+        <div class="fld"><label>Phone</label><input id="buy-phone" type="text" placeholder="+1..."></div>
+        <div class="fld"><label>Default Currency</label>
+          <select id="buy-cur">
+            <option value="GBP">GBP</option>
+            <option value="USD">USD</option>
+            <option value="RMB">RMB</option>
+            <option value="BBD">BBD</option>
+          </select>
+        </div>
+        <div class="fld"><label>Payment Terms</label><select id="buy-pt"></select></div>
+        <div class="fld"><label>Credit Limit</label><input id="buy-cl" type="number" min="0" placeholder="Optional"></div>
+        <div class="fld" style="grid-column:span 2"><label>Address</label><textarea id="buy-addr" rows="2" placeholder="Billing address..."></textarea></div>
+        <div class="fld" style="grid-column:span 2"><label>Notes</label><textarea id="buy-notes" rows="2" placeholder="Internal notes..."></textarea></div>
+      </div>
+      <div id="buy-summary" style="display:none;margin-top:14px;border-top:1px solid var(--ln);padding-top:12px;font-size:.56rem;"></div>
+      <div class="modal-actions" style="display:flex;gap:8px;margin-top:14px;">
+        <button onclick="saveBuy()">Save</button>
+        <button id="buy-del-btn" onclick="delBuy(EI.bu)" class="btn-danger" style="display:none;background:#fff;border:1px solid #c00;color:#c00;cursor:pointer;padding:5px 14px;font-size:.6rem;border-radius:3px;">Delete</button>
+        <button class="btn btn-g" onclick="closeM('ov-buy')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- QUOTE MODAL -->
 <div class="ov" id="ov-qt" onclick="if(event.target===this)closeQteDlg()">
   <div class="modal" style="max-width:960px;width:100%;max-height:90vh;display:flex;flex-direction:column;">
@@ -2008,7 +2076,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 // ───────────────────────────────────────────────────────────────
 
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev', bu:'st_buy'};
 
 var _storageOK = (function() {
   try { localStorage.setItem('_stk_t','1'); localStorage.removeItem('_stk_t'); return true; }
@@ -2021,10 +2089,10 @@ function ld(k) {
 }
 function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 
-let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev) };
+let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev), buy: ldArr(K.bu) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'', email:'', phone:'', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
-let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null, co:null };
+let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null, co:null, bu:null };
 let cIL = [], cPL = [], cQL = [], cCNL = [];
 var cConvertId = null;
 let AI = ld(K.ai) || { key: '' };
@@ -2058,7 +2126,7 @@ function sv(k, d) {
     }
   }
 }
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); sv(K.bu,DB.buy); };
 function logEv(entityType, entityId, verb, summary, actor) {
   var ev = {
     id:         uid(),
@@ -2872,10 +2940,10 @@ function showV(v, tab) {
   else { var t = document.querySelector('[data-v="' + v + '"]'); if(t) t.classList.add('on'); }
   window.currentTab = v;
   updateAIChips(v);
-  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, sh:rShp, qt:rQte, contacts:rCon, import:function(){}, cfg:rCfg };
+  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, sh:rShp, qt:rQte, contacts:rCon, buy:renderBuyers, import:function(){}, cfg:rCfg };
   if (fns[v]) fns[v]();
 }
-function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); rQte(); rCon(); }
+function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); rQte(); rCon(); renderBuyers(); }
 function closeM(id) { if (id === 'ov-inv') _invEditSnapshot = null; G(id).classList.remove('on'); }
 
 // ── INVOICE CALCULATION ────────────────────────────────────────
@@ -2956,6 +3024,16 @@ function toGBP(amount, cur) {
   if (cur === 'USD') return n / (QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD);
   if (cur === 'RMB' || cur === 'CNY') return n / (QR.fxGBPRMB || QR_DEFAULTS.fxGBPRMB);
   if (cur === 'BBD') return n / (QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD);
+  return n;
+}
+
+function fromGBP(gbp, cur) {
+  var n = +gbp || 0;
+  cur = (cur || 'GBP').toUpperCase();
+  if (cur === 'GBP') return n;
+  if (cur === 'USD') return n * (QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD);
+  if (cur === 'RMB' || cur === 'CNY') return n * (QR.fxGBPRMB || QR_DEFAULTS.fxGBPRMB);
+  if (cur === 'BBD') return n * (QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD);
   return n;
 }
 
@@ -3567,6 +3645,7 @@ function openInv() {
   ['if-linked','if-cn-reason','if-cn-amount'].forEach(function(f){var e=G(f);if(e)e.value='';});
   var gcb=G('if-cn-goodwill'); if(gcb) gcb.checked=false;
   ['fld-linked-inv','fld-cn-reason','fld-cn-amount','fld-cn-goodwill'].forEach(function(f){var e=G(f);if(e)e.style.display='none';});
+  populateBuyDropdown('if-b', 'BUY-ADHOC');
   rILT(); calcInv(); _updQaWarn(); G('ov-inv').classList.add('on'); setTimeout(function(){G('if-n').focus();},50);
 }
 function showInvReadOnly(inv) {
@@ -3614,7 +3693,10 @@ function editInv(id) {
   if (LOCKED_STATUSES.indexOf(inv.status) !== -1 && !_unlockedInvIds[id]) { showInvReadOnly(inv); return; }
   EI.i=id; cIL=JSON.parse(JSON.stringify(inv.lineItems||[]));
   G('inv-mt').textContent='Edit Invoice'; G('inv-sm').value=inv.status||'Draft';
-  G('if-n').value=inv.num||''; G('if-b').value=inv.buyer||''; G('if-ba').value=inv.buyerAddr||'';
+  G('if-n').value=inv.num||'';
+  var _buyMatch = inv.buyerId ? inv.buyerId : (DB.buy.find(function(b){ return b.name.toLowerCase()===(inv.buyer||'').toLowerCase(); })||{}).id || 'BUY-ADHOC';
+  populateBuyDropdown('if-b', _buyMatch);
+  G('if-ba').value=inv.buyerAddr||'';
   G('if-st').value=inv.shipTo||''; G('if-dst').value=inv.dst||''; G('if-cid').value=inv.custId||'';
   G('if-dt').value=inv.date||today(); G('if-ex').value=inv.expiry||''; G('if-sd').value=inv.shipDate||'';
   G('if-ft').value=inv.ft||''; G('if-wt').value=inv.wt||''; G('if-cbm').value=inv.cbm||'';
@@ -3809,7 +3891,7 @@ async function saveInv() {
   if (!vInv()) return;
   var tx=getTR();
   var inv={
-    id:EI.i||uid(), num:G('if-n').value.trim(), buyer:G('if-b').value.trim(),
+    id:EI.i||uid(), num:G('if-n').value.trim(), buyerId:G('if-b').value||'', buyer:(DB.buy.find(function(b){return b.id===G('if-b').value;})||{}).name||G('if-b').value.trim()||'',
     buyerAddr:G('if-ba').value.trim(), shipTo:G('if-st').value.trim(),
     dst:G('if-dst').value.trim(), custId:G('if-cid').value.trim(),
     date:G('if-dt').value, expiry:G('if-ex').value, shipDate:G('if-sd').value,
@@ -4432,8 +4514,157 @@ function exportPLCSV() {
   a.click();
 }
 
+// ── BUYERS ──────────────────────────────────────────────────────
+function seedAdHocBuyer() {
+  if (!DB.buy) DB.buy = [];
+  if (DB.buy.find(function(b){ return b.id === 'BUY-ADHOC'; })) return;
+  DB.buy.unshift({ id:'BUY-ADHOC', name:'Ad-Hoc', contactName:'', email:'', phone:'', address:'', currency:'GBP', paymentTerms:'', creditLimit:null, notes:'', createdAt:new Date().toISOString() });
+  sv(K.bu, DB.buy);
+}
+
+function populateBuyDropdown(selId, selectedId) {
+  var el = G(selId);
+  if (!el) return;
+  var sorted = DB.buy.slice().sort(function(a,b){ return a.name > b.name ? 1 : -1; });
+  el.innerHTML = '<option value="">-- Select Buyer --</option>'
+    + '<option value="__new__">＋ New Buyer…</option>'
+    + sorted.map(function(b){
+        return '<option value="' + san(b.id) + '"' + (b.id === selectedId ? ' selected' : '') + '>' + san(b.name) + '</option>';
+      }).join('');
+}
+
+function quickAddBuyer() {
+  var prevId = EI.i ? ((DB.inv.find(function(x){ return x.id === EI.i; }) || {}).buyerId || 'BUY-ADHOC') : 'BUY-ADHOC';
+  var qName = prompt('New buyer name:');
+  if (!qName || !qName.trim()) { populateBuyDropdown('if-b', prevId); return; }
+  qName = qName.trim();
+  var dup = DB.buy.find(function(b){ return b.name.toLowerCase() === qName.toLowerCase(); });
+  if (dup) { alert('A buyer with this name already exists.'); populateBuyDropdown('if-b', dup.id); return; }
+  var nb = { id:'BUY' + Date.now(), name:qName, contactName:'', email:'', phone:'', address:'', currency:'GBP', paymentTerms:'', creditLimit:null, notes:'', createdAt:new Date().toISOString() };
+  DB.buy.push(nb);
+  sv(K.bu, DB.buy);
+  logEv('buyer', nb.id, 'created', 'Buyer quick-created: ' + nb.name, 'operator');
+  populateBuyDropdown('if-b', nb.id);
+}
+
+function renderBuyers() {
+  if (!G('buy-tbody')) return;
+  var rows = DB.buy.map(function(b) {
+    var outGBP = DB.inv.filter(function(i){ return i.buyerId === b.id; })
+      .reduce(function(s,i){ return s + toGBP(iCalc(i).bal, i.currency||'USD'); }, 0);
+    return '<tr>'
+      + '<td><strong>' + san(b.name) + '</strong></td>'
+      + '<td>' + san(b.contactName||'') + '</td>'
+      + '<td>' + san(b.email||'') + '</td>'
+      + '<td>' + san(b.currency||'GBP') + '</td>'
+      + '<td>' + san(b.paymentTerms||'') + '</td>'
+      + '<td class="num">' + (b.creditLimit != null ? '£' + Number(b.creditLimit).toLocaleString() : '—') + '</td>'
+      + '<td class="num">£' + outGBP.toFixed(2) + '</td>'
+      + '<td><button class="btn btn-g" style="font-size:.46rem;padding:2px 7px;" onclick="openBuy(\'' + san(b.id) + '\')">Edit</button></td>'
+      + '</tr>';
+  });
+  G('buy-tbl').style.display = rows.length ? '' : 'none';
+  G('buy-em').style.display  = rows.length ? 'none' : '';
+  G('buy-tbody').innerHTML = rows.join('');
+}
+
+function openBuy(id) {
+  EI.bu = id;
+  var buyer = id ? DB.buy.find(function(b){ return b.id === id; }) : null;
+  G('buy-modal-title').textContent = id ? 'Edit Buyer' : 'New Buyer';
+  G('buy-name').value = buyer ? buyer.name : '';
+  G('buy-cname').value = buyer ? (buyer.contactName||'') : '';
+  G('buy-email').value = buyer ? (buyer.email||'') : '';
+  G('buy-phone').value = buyer ? (buyer.phone||'') : '';
+  G('buy-addr').value = buyer ? (buyer.address||'') : '';
+  G('buy-cur').value = buyer ? (buyer.currency||'GBP') : 'GBP';
+  G('buy-cl').value = buyer && buyer.creditLimit != null ? buyer.creditLimit : '';
+  G('buy-notes').value = buyer ? (buyer.notes||'') : '';
+  vClr('buy-name');
+  // Payment terms
+  var ptSel = G('buy-pt');
+  ptSel.innerHTML = '<option value="">Select payment terms...</option>'
+    + getPaymentTerms().map(function(t){
+        return '<option value="' + san(t) + '"' + (buyer && buyer.paymentTerms === t ? ' selected' : '') + '>' + san(t) + '</option>';
+      }).join('');
+  // Delete button
+  var delBtn = G('buy-del-btn');
+  if (id && id !== 'BUY-ADHOC') { delBtn.style.display = ''; }
+  else { delBtn.style.display = 'none'; }
+  // Summary panel
+  var summEl = G('buy-summary');
+  if (id && buyer) {
+    var buyInvs = DB.inv.filter(function(i){ return i.buyerId === id; });
+    var totalGBP = buyInvs.reduce(function(s,i){ return s + toGBP(iCalc(i).grand, i.currency||'USD'); }, 0);
+    var outstandGBP = buyInvs.reduce(function(s,i){ return s + toGBP(iCalc(i).bal, i.currency||'USD'); }, 0);
+    var outstandCur = fromGBP(outstandGBP, buyer.currency||'GBP');
+    var curSym = {GBP:'£',USD:'$',RMB:'¥',BBD:'$'}[buyer.currency||'GBP'] || '';
+    var recent5 = buyInvs.slice().sort(function(a,b){ return (b.date||'') > (a.date||'') ? 1 : -1; }).slice(0,5);
+    var lastDate = recent5.length ? recent5[0].date : null;
+    var stmtBtn = buyInvs.length ? '<button class="btn btn-g" style="font-size:.5rem;" onclick="openStatement(\'' + san(buyer.name) + '\')">&#128196; Buyer Statement</button>' : '';
+    summEl.innerHTML = '<div style="font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);margin-bottom:8px;">Summary</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.54rem;margin-bottom:10px;">'
+      + '<div><span style="color:var(--m);">Total invoiced</span><br><strong>£' + totalGBP.toFixed(2) + ' GBP</strong></div>'
+      + '<div><span style="color:var(--m);">Outstanding</span><br><strong>' + curSym + outstandCur.toFixed(2) + ' ' + (buyer.currency||'GBP') + '</strong></div>'
+      + '<div><span style="color:var(--m);">Last invoice</span><br>' + san(lastDate||'None') + '</div>'
+      + '</div>'
+      + (recent5.length ? '<table style="width:100%;font-size:.5rem;border-collapse:collapse;margin-bottom:10px;">'
+        + '<thead><tr><th style="text-align:left;padding:3px 4px;color:var(--m);">Invoice</th><th style="text-align:left;padding:3px 4px;color:var(--m);">Date</th><th style="text-align:left;padding:3px 4px;color:var(--m);">Status</th><th style="text-align:right;padding:3px 4px;color:var(--m);">Amount</th></tr></thead><tbody>'
+        + recent5.map(function(inv){ var c=iCalc(inv); return '<tr><td style="padding:3px 4px;">' + san(inv.num||'') + '</td><td style="padding:3px 4px;">' + san(inv.date||'') + '</td><td style="padding:3px 4px;">' + san(inv.status||'') + '</td><td style="padding:3px 4px;text-align:right;">' + fmt(c.grand, inv.currency||'USD') + '</td></tr>'; }).join('')
+        + '</tbody></table>' : '')
+      + stmtBtn;
+    summEl.style.display = '';
+  } else {
+    summEl.style.display = 'none';
+  }
+  G('ov-buy').classList.add('on');
+}
+
+function saveBuy() {
+  var name = G('buy-name').value.trim();
+  if (!name) { vErr('buy-name', 'Company name is required'); return; }
+  var dup = DB.buy.find(function(b){ return b.name.trim().toLowerCase() === name.toLowerCase() && b.id !== EI.bu; });
+  if (dup) { vErr('buy-name', 'A buyer with this name already exists'); return; }
+  vOk('buy-name');
+  if (EI.bu) {
+    var rec = DB.buy.find(function(b){ return b.id === EI.bu; });
+    if (rec) {
+      rec.name = name; rec.contactName = G('buy-cname').value.trim();
+      rec.email = G('buy-email').value.trim(); rec.phone = G('buy-phone').value.trim();
+      rec.address = G('buy-addr').value.trim(); rec.currency = G('buy-cur').value;
+      rec.paymentTerms = G('buy-pt').value; rec.notes = G('buy-notes').value.trim();
+      rec.creditLimit = G('buy-cl').value !== '' ? parseFloat(G('buy-cl').value) : null;
+      logEv('buyer', rec.id, 'updated', 'Buyer updated: ' + rec.name, 'operator');
+    }
+  } else {
+    var nb = { id:'BUY' + Date.now(), name:name, contactName:G('buy-cname').value.trim(),
+      email:G('buy-email').value.trim(), phone:G('buy-phone').value.trim(),
+      address:G('buy-addr').value.trim(), currency:G('buy-cur').value,
+      paymentTerms:G('buy-pt').value, creditLimit:G('buy-cl').value !== '' ? parseFloat(G('buy-cl').value) : null,
+      notes:G('buy-notes').value.trim(), createdAt:new Date().toISOString() };
+    DB.buy.push(nb);
+    logEv('buyer', nb.id, 'created', 'Buyer created: ' + nb.name, 'operator');
+  }
+  sv(K.bu, DB.buy);
+  closeM('ov-buy');
+  renderBuyers();
+}
+
+function delBuy(id) {
+  if (!id || id === 'BUY-ADHOC') return;
+  var linked = DB.inv.find(function(i){ return i.buyerId === id; });
+  if (linked) { alert('Cannot delete: this buyer has linked invoices. Reassign invoices first.'); return; }
+  if (!confirm('Delete buyer? This cannot be undone.')) return;
+  var rec = DB.buy.find(function(b){ return b.id === id; });
+  if (rec) logEv('buyer', rec.id, 'deleted', 'Buyer deleted: ' + rec.name, 'operator');
+  DB.buy = DB.buy.filter(function(b){ return b.id !== id; });
+  sv(K.bu, DB.buy);
+  closeM('ov-buy');
+  renderBuyers();
+}
+
 // ── BUYER STATEMENT ─────────────────────────────────────────────
-function openStatement() {
+function openStatement(preSelectName) {
   if (!G('ov-stmt')) {
     var el = document.createElement('div');
     el.id = 'ov-stmt'; el.className = 'ov';
@@ -4459,7 +4690,14 @@ function openStatement() {
     '<div id="stmt-body"></div>' +
     '</div></div>';
   G('ov-stmt').classList.add('on');
-  if (buyers.length === 1) { G('stmt-buyer').value = buyers[0]; renderStatement(buyers[0]); }
+  if (preSelectName) {
+    var sel = G('stmt-buyer');
+    var matchIdx = -1;
+    for (var oi = 0; oi < sel.options.length; oi++) {
+      if (sel.options[oi].value === preSelectName) { matchIdx = oi; break; }
+    }
+    if (matchIdx >= 0) { sel.selectedIndex = matchIdx; renderStatement(sel.options[matchIdx].value); }
+  } else if (buyers.length === 1) { G('stmt-buyer').value = buyers[0]; renderStatement(buyers[0]); }
 }
 
 function renderStatement(buyer) {
@@ -5195,7 +5433,7 @@ function wireBlurValidation() {
     'lf-c':    function(){ vBlurCurrency('lf-c','Unit cost'); },
     'lf-p':    function(){ vBlurCurrency('lf-p','Unit price'); },
     'if-n':    function(){ vBlurInvNum('if-n'); },
-    'if-b':    function(){ vBlurReq('if-b','Buyer name'); },
+    'if-b':    function(){ var v=G('if-b').value; if(!v||v==='__new__') vErr('if-b','Please select a buyer'); else vOk('if-b'); },
     'if-dt':   function(){ vBlurReq('if-dt','Invoice date'); },
     'if-dep':  function(){ vBlurCurrency('if-dep','Buyer deposit'); },
     'if-lf':   function(){ vBlurCurrency('if-lf','Local freight'); },
@@ -5264,7 +5502,7 @@ function vInv() {
   var hasDup = DB.inv.some(function(inv){ return inv.num===num && inv.id!==EI.i; });
   if (hasDup)                      return vErr('if-n', 'Invoice number ' + num + ' already exists');
   vOk('if-n');
-  if (!buyer)                      return vErr('if-b', 'Buyer name is required');
+  if (!buyer || buyer === '__new__') return vErr('if-b', 'Please select a buyer');
   vOk('if-b');
   if (!date)                       return vErr('if-dt', 'Invoice date is required');
   if (!RX.date.test(date) || isNaN(new Date(date).getTime())) return vErr('if-dt', 'Invoice date is not a valid date');
@@ -6110,7 +6348,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.36).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.37).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -6329,7 +6567,18 @@ var AI_SYSTEM_PROMPT = [
   'Aging Report (Invoices tab → [Aging]) shows outstanding invoices in buckets (Current / 0–30 / 31–60 / 61–90 / 90+ days overdue) with DSO KPI and CSV export. P&L Report (Invoices tab → [P&L]) shows Revenue, COGS, Gross Profit, Net Profit, Margin % by Buyer / Month / Quarter with date range filter and CSV export.',
   '',
   '## Entity event log + Invoice edit history (v2.9.36)',
-  'DB.events now receives lifecycle events for Invoice (created, status_changed, deleted, unlocked, edited), PO (created, status_changed, deleted), Payment (created, deleted), and Supplier (created, updated, deleted). When a locked invoice is unlocked and then saved, an editHistory[] entry is added to the invoice record capturing: timestamp, reason, actor (always "operator"), and a changes[] array of { field, from, to } for each tracked field that changed. editHistory is preserved in backup/restore. The 2,000-event FIFO cap on DB.events may fill faster on active portals.'
+  'DB.events now receives lifecycle events for Invoice (created, status_changed, deleted, unlocked, edited), PO (created, status_changed, deleted), Payment (created, deleted), and Supplier (created, updated, deleted). When a locked invoice is unlocked and then saved, an editHistory[] entry is added to the invoice record capturing: timestamp, reason, actor (always "operator"), and a changes[] array of { field, from, to } for each tracked field that changed. editHistory is preserved in backup/restore. The 2,000-event FIFO cap on DB.events may fill faster on active portals.',
+  '',
+  '## Buyers (v2.9.37)',
+  'Buyers tab → + New Buyer. Stores customer/buyer records for invoice assignment. Fields: Company Name (required, case-insensitive unique), Contact Name, Email, Phone, Address, Currency (default USD — used for per-buyer financial summary display), Payment Terms (controlled lookup), Credit Limit, Notes.',
+  'Seeded record: "Ad-Hoc" buyer (id BUY-ADHOC) is created automatically on first load and on every restore — it is the default assignment for invoices where no specific buyer is selected. The Ad-Hoc record cannot be deleted.',
+  'Invoice integration: the Buyer field on the invoice form is now a dropdown linked to DB.buy. Legacy invoices (created before v2.9.37) without a buyerId are matched to a named buyer by case-insensitive name lookup when editing, or default to Ad-Hoc if no match. Selecting "＋ New Buyer…" at the bottom of the dropdown opens a quick-create prompt (name only) without leaving the invoice form.',
+  'Per-buyer summary: inside the Buyer edit modal, a collapsible Summary panel shows: total invoiced (in buyer\'s own currency), total payments received (GBP), outstanding balance (GBP), invoice count. Amounts are converted using fromGBP(toGBP(amount, invCur), buyerCur) via configured QR rates.',
+  'Buyer Statement button: inside the Buyer modal → "View Buyer Statement" opens the statement modal pre-filtered to that buyer. Button is hidden if the buyer has no invoices.',
+  'GDPR basis: Art. 6(1)(b) contractual necessity (active buyer relationship) + Art. 6(1)(c) legal obligation (HMRC 6-year record keeping). No automated expiry. Buyer PII is included in JSON backups.',
+  'Event log: create/update/delete on buyers emits logEv() entries (entityType "buyer").',
+  'Backup/restore: DB.buy is included in all JSON snapshots. On restore, seedAdHocBuyer() is called after import to ensure the Ad-Hoc record is always present.',
+  'Sheets sync: FM-1 freeze — buyers are NOT synced to Google Sheets in v2.9.x.'
 ].join('\n');
 
 var AI_COMPLIANCE_PROMPT = [
@@ -6586,7 +6835,8 @@ function _aiExecTool(name, inp) {
       });
       return JSON.stringify(rows.map(function(inv) {
         var c = iCalc(inv);
-        return { num: inv.num, buyer: inv.buyer, date: inv.date, status: inv.status,
+        var _buyRec = DB.buy.find(function(b){ return b.id === inv.buyerId; });
+        return { num: inv.num, buyer: inv.buyer, buyerName: (_buyRec ? _buyRec.name : inv.buyer) || '', date: inv.date, status: inv.status,
                  currency: inv.cur||'USD', grandTotal: +c.grand.toFixed(2),
                  paid: +c.dep.toFixed(2), balanceDue: +c.bal.toFixed(2),
                  netProfit: +c.np.toFixed(2),
@@ -7161,6 +7411,7 @@ function expAll() {
     qt: DB.qt,
     con: DB.con,
     events: DB.events,
+    buy: DB.buy,
     settings: SS,
     company: AS,
     branding: getCoBrand(),
@@ -7217,6 +7468,8 @@ function doImport(e) {
     if (data.customPaymentTerms && data.customPaymentTerms.length) { sv('rd_pt_cust', data.customPaymentTerms); }
     if (data.customUOM && data.customUOM.length) { sv('rd_uom_cust', data.customUOM); }
     if (data.fpmRepairDone) { localStorage.setItem('st_fpm_repair_v1', data.fpmRepairDone); }
+    if (data.buy && Array.isArray(data.buy)) { DB.buy = data.buy; sv(K.bu, DB.buy); }
+    seedAdHocBuyer();
     saveAll();
     renderAll();
     rCfg();
@@ -8831,6 +9084,7 @@ function initApp() {
     populateRefDataLists();
     runFPMMigration();
     repairCalcFields();
+    seedAdHocBuyer();
     if (SS.url) {
       G('banner').style.display='none';
       G('cfg-url').value=SS.url;
