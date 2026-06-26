@@ -1921,15 +1921,15 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           </select>
         </div>
         <div class="fld"><label>Payment Terms</label><select id="buy-pt"></select></div>
-        <div class="fld"><label>Credit Limit</label><input id="buy-cl" type="number" min="0" placeholder="Optional"></div>
+        <div class="fld"><label>Credit Limit (£)</label><input id="buy-cl" type="number" min="0" placeholder="Optional"></div>
         <div class="fld" style="grid-column:span 2"><label>Address</label><textarea id="buy-addr" rows="2" placeholder="Billing address..."></textarea></div>
         <div class="fld" style="grid-column:span 2"><label>Notes</label><textarea id="buy-notes" rows="2" placeholder="Internal notes..."></textarea></div>
       </div>
       <div id="buy-summary" style="display:none;margin-top:14px;border-top:1px solid var(--ln);padding-top:12px;font-size:.56rem;"></div>
-      <div class="modal-actions" style="display:flex;gap:8px;margin-top:14px;">
-        <button onclick="saveBuy()">Save</button>
-        <button id="buy-del-btn" onclick="delBuy(EI.bu)" class="btn-danger" style="display:none;background:#fff;border:1px solid #c00;color:#c00;cursor:pointer;padding:5px 14px;font-size:.6rem;border-radius:3px;">Delete</button>
+      <div style="display:flex;gap:8px;margin-top:16px;align-items:center;justify-content:flex-end;border-top:1px solid var(--ln);padding-top:14px;">
+        <button id="buy-del-btn" onclick="delBuy(EI.bu)" class="btn btn-o" style="display:none;border-color:#c00;color:#c00;margin-right:auto;">Delete</button>
         <button class="btn btn-g" onclick="closeM('ov-buy')">Cancel</button>
+        <button class="btn btn-s" onclick="saveBuy()">Save Buyer</button>
       </div>
     </div>
   </div>
@@ -4672,9 +4672,11 @@ function openStatement(preSelectName) {
     document.body.appendChild(el);
   }
   var isCnRec = function(r){ return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
-  var buyers = [];
-  DB.inv.forEach(function(x){ if(!isCnRec(x) && x.buyer && buyers.indexOf(x.buyer)===-1) buyers.push(x.buyer); });
-  buyers.sort();
+  // Build buyer name list from both DB.buy records and legacy inv.buyer strings
+  var buyerNames = {};
+  DB.buy.forEach(function(b){ if(b.name) buyerNames[b.name] = true; });
+  DB.inv.forEach(function(x){ if(!isCnRec(x) && x.buyer) buyerNames[x.buyer] = true; });
+  var buyers = Object.keys(buyerNames).sort();
   var opts = buyers.map(function(b){ return '<option value="'+san(b)+'">'+san(b)+'</option>'; }).join('');
   G('ov-stmt').innerHTML =
     '<div class="modal" style="max-width:820px;">' +
