@@ -13,6 +13,7 @@ Last updated: 2026-06-25 (v2.9.33 — specs gated)
 | REQ-AI-GAP-001 | AI Order Flow Actions (narrow) | REQ-AI-GAP-001-v1.md | SPEC-AI-GAP-001-v1.md | v2.9.30 | PASS | PASS | ✓ shipped | #46 |
 | REQ-DEMO-001 | End-to-End Demo Mode | REQ-DEMO-001-v2.md | SPEC-DEMO-001-v1.md | v2.9.31 | PASS | PASS | ✓ shipped | — |
 | REQ-MTD-001 | MTD-Compatible VAT Export | REQ-MTD-001-v2.md | SPEC-MTD-001-v1.md | v2.9.32 | PASS | PASS | ✓ shipped | — |
+| REQ-BUY-001 | Buyers / Customers Entity | REQ-BUY-001-v1.md | SPEC-BUY-001-v4.md | v2.9.37 | PASS | PASS | ✓ shipped | — |
 
 ---
 
