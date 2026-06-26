@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.36**  
-**Test count: 289/289 PASS** (`node tests/run.js`)
+**Current version: v2.9.37**  
+**Test count: 298/298 PASS** (`node tests/run.js`)
 
 ---
 
@@ -133,6 +133,9 @@ See `docs/known-gaps.md` for full entries.
 | CON-GAP-005 | Contacts / import | Restoring a v2 backup (no con key) preserves live contacts rather than clearing them; WARNING dialog text is not updated to reflect this |
 | MTD-GAP-001 | MTD / input VAT | Boxes 4 and 7 are always £0.00 — no purchase VAT invoices captured; input VAT reclaim not supported in v2.9.32 |
 | MTD-GAP-002 | MTD / FX rates | `toGBP()` uses configured QR rates at export time, not the rate on each invoice date — historic rate variance is operator's responsibility |
+| BUY-GAP-001 | Buyers / sync | Buyers not synced to Google Sheets — FM-1 freeze; deferred to v3.x |
+| BUY-GAP-002 | Buyers / legacy | Legacy invoices without buyerId matched by name on edit; default BUY-ADHOC if no match |
+| BUY-GAP-003 | Buyers / credit | Credit limit is display-only; no enforcement on invoice save |
 
 ---
 

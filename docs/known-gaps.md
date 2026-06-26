@@ -20,6 +20,28 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ---
 
+## Buyers
+
+### BUY-GAP-001 — Buyers not synced to Google Sheets *(Open — deferred FM-1)*
+**Area:** Buyers → Sheets sync  
+**Logged:** v2.9.37  
+**Detail:** `DB.buy` is excluded from all Sheets sync operations (push/pull/sync). FM-1 freeze prohibits new sync mappings on v2.9.x.  
+**Resolution:** Add `buy` sync mapping in v3.x after FM-1 freeze is lifted.
+
+### BUY-GAP-002 — Legacy invoice buyer field text fallback *(Open)*
+**Area:** Buyers → Invoice backward compatibility  
+**Logged:** v2.9.37  
+**Detail:** Invoices created before v2.9.37 carry `inv.buyer` (free-text string) but no `inv.buyerId`. When editing such an invoice, a case-insensitive name match attempts to resolve to a buyer record; if no match, it defaults to BUY-ADHOC. If the operator has multiple buyers with similar names, the wrong record may be pre-selected.  
+**Resolution:** Operator should verify buyer assignment when editing legacy invoices. Full migration deferred to v3.x.
+
+### BUY-GAP-003 — Credit limit enforcement is display-only *(Open)*
+**Area:** Buyers → credit limit  
+**Logged:** v2.9.37  
+**Detail:** The credit limit field on a buyer record is stored and displayed in the buyer summary panel but is not enforced — no warning or block is raised when invoices exceed the limit.  
+**Resolution:** Add credit limit breach warning on invoice save in a future sprint.
+
+---
+
 ## Quote Engine
 
 ### QTE-GAP-001 — No quote status workflow enforcement *(Fixed v2.9.25)*
