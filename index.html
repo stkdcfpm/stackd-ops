@@ -699,6 +699,25 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div class="fld" style="margin-bottom:10px;"><label>Type CONFIRM to proceed</label><input type="text" id="adv-unlock-confirm" placeholder="CONFIRM" autocomplete="off" style="max-width:180px;"></div>
       <button class="btn btn-s" style="background:var(--gold);color:#000;border-color:var(--gold);" onclick="unlockInv()">Unlock Invoice</button>
       <div id="adv-unlock-status" style="font-size:.54rem;color:var(--m);margin-top:8px;min-height:16px;"></div>
+
+      <div style="border-top:1px solid var(--ln);margin-top:18px;padding-top:16px;">
+        <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">Merge Buyer Names</div>
+        <p style="font-size:.54rem;color:var(--m);margin-bottom:10px;line-height:1.7;">Reassigns all invoices from one buyer name to another — use to fix duplicates caused by inconsistent spelling (e.g. "Acme Ltd" vs "Acme Ltd."). Does not touch financial fields. No unlock required.</p>
+        <div class="fg fg2" style="margin-bottom:8px;">
+          <div class="fld">
+            <label>From (incorrect name)</label>
+            <select id="adv-merge-from" onchange="advMergePreview()"><option value="">— select buyer —</option></select>
+          </div>
+          <div class="fld">
+            <label>To (canonical buyer)</label>
+            <select id="adv-merge-to" onchange="advMergePreview()"><option value="">— select buyer —</option></select>
+          </div>
+        </div>
+        <div id="adv-merge-preview" style="font-size:.54rem;color:var(--m);margin-bottom:10px;min-height:16px;"></div>
+        <div class="fld" style="margin-bottom:10px;"><label>Type CONFIRM to proceed</label><input type="text" id="adv-merge-confirm" placeholder="CONFIRM" autocomplete="off" style="max-width:180px;"></div>
+        <button class="btn btn-s" style="background:var(--gold);color:#000;border-color:var(--gold);" onclick="advMergeBuyers()">Merge Buyer</button>
+        <div id="adv-merge-status" style="font-size:.54rem;color:var(--m);margin-top:8px;min-height:16px;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -7035,6 +7054,7 @@ function rCfg() {
   rCoBrand();
   qteFillRates();
   rRefData('countries');
+  advMergePopulate();
 }
 
 function rCoBrand() {
@@ -7810,6 +7830,61 @@ function unlockInv() {
   st.style.color = 'var(--gn)';
   if (numEl) numEl.value = ''; if (reasonEl) reasonEl.value = ''; if (confirmEl) confirmEl.value = '';
   toast('Invoice ' + inv.num + ' unlocked — edit via Invoices tab');
+}
+
+function advMergePopulate() {
+  var fromEl = G('adv-merge-from'); var toEl = G('adv-merge-to');
+  if (!fromEl || !toEl) return;
+  // Build list: named buyers + any legacy inv.buyer strings not in DB.buy
+  var names = {};
+  DB.buy.forEach(function(b){ if(b.name) names[b.name] = b.id; });
+  DB.inv.forEach(function(x){ if(x.buyer && !names[x.buyer]) names[x.buyer] = null; });
+  var sorted = Object.keys(names).sort();
+  var opts = '<option value="">— select buyer —</option>' + sorted.map(function(n){
+    return '<option value="' + san(n) + '">' + san(n) + '</option>';
+  }).join('');
+  fromEl.innerHTML = opts; toEl.innerHTML = opts;
+  G('adv-merge-preview').textContent = '';
+  G('adv-merge-status').textContent = '';
+}
+
+function advMergePreview() {
+  var from = (G('adv-merge-from')||{}).value || '';
+  var to   = (G('adv-merge-to')||{}).value   || '';
+  var el   = G('adv-merge-preview');
+  if (!from || !to) { el.textContent = ''; return; }
+  if (from === to)  { el.textContent = 'Source and target must be different.'; el.style.color = 'var(--cr)'; return; }
+  var affected = DB.inv.filter(function(i){ return i.buyer === from || i.buyerId === (DB.buy.find(function(b){ return b.name === from; })||{}).id; });
+  el.textContent = affected.length + ' invoice(s) will be reassigned from "' + from + '" → "' + to + '".';
+  el.style.color = affected.length ? 'var(--m)' : 'var(--cr)';
+}
+
+function advMergeBuyers() {
+  var fromName = (G('adv-merge-from')||{}).value || '';
+  var toName   = (G('adv-merge-to')||{}).value   || '';
+  var confirm  = (G('adv-merge-confirm')||{}).value || '';
+  var st = G('adv-merge-status');
+  if (!fromName) { st.textContent = 'Select a source buyer.'; st.style.color = 'var(--cr)'; return; }
+  if (!toName)   { st.textContent = 'Select a target buyer.'; st.style.color = 'var(--cr)'; return; }
+  if (fromName === toName) { st.textContent = 'Source and target must be different.'; st.style.color = 'var(--cr)'; return; }
+  if (confirm !== 'CONFIRM') { st.textContent = 'Type CONFIRM exactly to proceed.'; st.style.color = 'var(--cr)'; return; }
+  var fromBuy = DB.buy.find(function(b){ return b.name === fromName; });
+  var toBuy   = DB.buy.find(function(b){ return b.name === toName; });
+  if (!toBuy) { st.textContent = 'Target buyer not found in Buyers list — please create it first.'; st.style.color = 'var(--cr)'; return; }
+  var count = 0;
+  DB.inv.forEach(function(inv){
+    var match = inv.buyer === fromName || (fromBuy && inv.buyerId === fromBuy.id);
+    if (match) { inv.buyer = toBuy.name; inv.buyerId = toBuy.id; count++; }
+  });
+  if (count === 0) { st.textContent = 'No invoices found attributed to "' + fromName + '".'; st.style.color = 'var(--m)'; return; }
+  sv(K.i, DB.inv);
+  logEv('buyer', toBuy.id, 'updated', 'Bulk buyer merge: ' + count + ' invoice(s) reassigned from "' + fromName + '" to "' + toName + '"', 'operator');
+  st.textContent = count + ' invoice(s) reassigned to "' + toName + '" successfully.';
+  st.style.color = 'var(--gn)';
+  if (G('adv-merge-confirm')) G('adv-merge-confirm').value = '';
+  advMergePopulate();
+  renderAll();
+  toast(count + ' invoice(s) merged to "' + toName + '"');
 }
 
 // ── ONBOARDING ─────────────────────────────────────────────────
