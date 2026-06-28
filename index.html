@@ -1085,10 +1085,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Security: Logo attribute injection — <code>sanitizeLogo()</code> validates logo data URIs before <code>&lt;img src&gt;</code> interpolation in PDF headers and branding preview (SEC-GAP-015)</li>
           <li>Security: Sync token removed from backup exports — <code>expAll()</code> now exports <code>{ url, auto, pol }</code> only; bearer credential never in backup file (SEC-GAP-016)</li>
-          <li>Security: Sync token moved from POST body to <code>Authorization: Bearer</code> header in <code>sPost()</code>, <code>sGet()</code>, <code>testConn()</code> — harder to capture in proxy/CDN logs (SEC-GAP-007 v2)</li>
           <li>Hardening: <code>Content-Type: application/json</code> header added to all Sheets sync requests (was missing)</li>
-        </ul>
-        <div style="font-size:.5rem;color:var(--cr);margin-top:4px;font-weight:600;">&#9888; Apps Script update required: read token from <code>Authorization: Bearer</code> header, not <code>payload._token</code></div>
+          <li>Fix: Sync token reverted to POST body after hotfix — Google Apps Script <code>doPost()</code> cannot read HTTP headers (Apps Script limitation); token-in-body is the correct approach for this architecture (SEC-GAP-007)</li>
       </div>
 
       <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
@@ -2680,12 +2678,11 @@ function populateRefDataLists() {
 // ── SHEETS SYNC ────────────────────────────────────────────────
 async function sPost(payload) {
   if (!SS.url) throw new Error('No URL configured');
-  var hdrs = { 'Content-Type': 'application/json' };
-  if (SS.token) hdrs['Authorization'] = 'Bearer ' + SS.token;
+  if (SS.token) payload._token = SS.token;
   var r = await fetch(SS.url, {
     method: 'POST',
     redirect: 'follow',
-    headers: hdrs,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
   var text = await r.text();
@@ -2694,12 +2691,11 @@ async function sPost(payload) {
 }
 async function sGet(entity) {
   var payload = { action: 'pull_entity', entity: entity };
-  var hdrs = { 'Content-Type': 'application/json' };
-  if (SS.token) hdrs['Authorization'] = 'Bearer ' + SS.token;
+  if (SS.token) payload._token = SS.token;
   var r = await fetch(SS.url, {
     method: 'POST',
     redirect: 'follow',
-    headers: hdrs,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
   var text = await r.text();
@@ -2944,9 +2940,7 @@ async function testConn() {
   G('conn-st').textContent = 'Testing...';
   try {
     var tok = (G('cfg-token') ? G('cfg-token').value.trim() : '') || SS.token || '';
-    var pingHdrs = { 'Content-Type': 'application/json' };
-    if (tok) pingHdrs['Authorization'] = 'Bearer ' + tok;
-    var d = JSON.parse(await (await fetch(url, { method:'POST', redirect:'follow', headers:pingHdrs, body:JSON.stringify({action:'ping'}) })).text());
+    var d = JSON.parse(await (await fetch(url, { method:'POST', redirect:'follow', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'ping', _token:tok}) })).text());
     G('conn-st').textContent = d.status === 'ok' ? '\u2713 Connected' : '\u2715 ' + (d.message || 'Error');
     G('conn-st').style.color = d.status === 'ok' ? 'var(--gn)' : 'var(--cr)';
   } catch(e) { G('conn-st').textContent = '\u2715 ' + e.message; G('conn-st').style.color = 'var(--cr)'; }
