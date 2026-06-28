@@ -102,10 +102,15 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Risk level:** Low — branding is cosmetic and easily re-entered. Medium if logo (base64 blob) is large and causes silent localStorage quota pressure.  
 **Decision:** Partially fixed v2.9.20 — `expAll()` now includes `branding: getCoBrand()` in the snapshot; `doImport()` calls `saveCoBrand(data.branding)` on restore. Keys remain outside `K` (formal registration deferred to a future settings consolidation). The `ldArr` safety wrapper gap remains open.
 
-### SEC-GAP-007 — `testConn()` sync token exposed in URL query string *(FIXED v2.9.14)*
-**Area:** Settings → Google Sheets card → Test Connection  
-**Logged:** v2.9.14 (audit); **Fixed:** v2.9.14  
-**Detail:** Prior to v2.9.14, `testConn()` appended `_token` as a URL query parameter (`?action=ping&_token=...`). Query string parameters appear in server access logs, browser history, and referrer headers. Fixed by moving to POST body: `fetch(url, { method:'POST', body: JSON.stringify({action:'ping', _token:tok}) })`.
+### SEC-GAP-007 — Sync token transmitted in request body *(Partially fixed; Apps Script constraint)*
+**Area:** `sPost()`, `sGet()`, `testConn()` — all Sheets sync call sites  
+**Logged:** v2.9.14 (token in URL query string); v2.9.38 (token in POST body)  
+**History:**
+- v2.9.14: Fixed URL query string exposure — token moved to POST body (`{ _token: tok }`)
+- v2.9.38: Attempted to move token to `Authorization: Bearer` header to prevent it appearing in request body logs. Reverted in v2.9.38 hotfix — Google Apps Script's `doPost(e)` event object does not expose HTTP headers (no `e.headers` property); the token in the `Authorization` header was silently ignored, breaking all sync auth.
+**Current state:** Token transmitted in POST body as `_token`. `Content-Type: application/json` header added. POST body is less likely to appear in CDN access logs than URL query strings, making this an improvement over the v2.9.14 state.  
+**Full fix path:** A Cloudflare Worker proxy sitting in front of the Apps Script endpoint could receive the `Authorization: Bearer` header, extract the token, and inject it as `payload._token` before forwarding — keeping the credential out of the browser's outbound body. Deferred: requires Cloudflare Worker deployment.  
+**Decision:** Accepted as an Apps Script architectural constraint. Token-in-body is the correct approach for direct browser → Apps Script calls.
 
 ### SEC-GAP-008 — No Content Security Policy header *(FIXED v2.9.16)*
 **Area:** GitHub Pages deployment; `index.html`  
