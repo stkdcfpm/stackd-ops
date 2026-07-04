@@ -122,11 +122,13 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.39 (review board security audit, 2026-07-04)  
 **Detail:** GitHub Pages serves the **entire repository** at `app.getstackdops.com`, not just `index.html`. Until v2.9.39, this publicly exposed: (1) `Test-data/Stackd-Clean-2026-05-17.json` — a live business dataset containing real supplier contact names, personal emails, mobile numbers, buyer names/addresses, and invoice financials; (2) the supplier contacts table in `STACKD_CONTEXT.md` with personal emails and a phone number; (3) `docs/known-gaps.md` (this file — the security weakness register) and all other docs at guessable URLs.  
 **Remediation shipped (v2.9.39):** `Test-data/` deleted; STACKD_CONTEXT.md contacts table redacted to company-level only; real buyer name anonymised in the `index.html` import template example; `.gitignore` added blocking `Test-data/`, `Stackd-Backup-*.json`, `Stackd-Clean-*.json`.  
+**History purge completed (2026-07-04):** full `git filter-repo` rewrite of all branches — `Test-data/` removed from every commit; all supplier emails, phone numbers, contact names, and the real buyer identity scrubbed from every historical blob (verified zero matches across all refs). Force-pushed to `main` and all 14 feature branches.
+**GDPR assessment completed (2026-07-04):** breach documented per Art. 33(5); assessed NOT reportable to ICO (low risk — small number of B2B contacts, professional contact data only, no evidence of access, same-day remediation). Private breach record held by operator outside the repo.
 **Still outstanding:**
-1. **Git history purge** — the deleted files remain retrievable from git history until purged (`git filter-repo` + force push) and GitHub's cached views are cleared (contact GitHub Support to expire cached raw URLs). Operator action required.
-2. **UK GDPR breach assessment** — operator should assess whether the exposure is reportable to the ICO (personal data of supplier contacts was publicly accessible for an unknown period; likely low risk as B2B contact data, but the 72-hour assessment obligation applies from awareness).
+1. **GitHub Support cache purge** — old commits may remain cached in pull-request refs and raw-URL caches until GitHub Support expires them (operator: support.github.com → "remove cached views of sensitive data").
+2. **Stale clones** — any clone of this repo made before 2026-07-04 still contains the old history and should be deleted and re-cloned.
 3. **Deployment hardening** — docs and context files remain publicly served. Recommended: publish only the app via a `dist` branch, or accept and keep all committed content public-safe (current policy — see "Public repo policy" in CLAUDE.md).  
-**Risk level:** CRITICAL until history purge completes; MEDIUM thereafter (docs still public by policy).  
+**Risk level:** MEDIUM (docs still public by policy; GitHub cache purge pending).  
 **New process (mandatory):** Treat every file in this repo as **publicly readable**. Never commit live data exports, backups, personal contact details, credentials, or client-identifiable records. Live data lives in the portal's localStorage and in private backups stored outside the repo.
 
 ### SEC-GAP-011 — `pullAll()` overwrites local records with no conflict resolution
