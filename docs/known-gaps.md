@@ -117,6 +117,18 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.14 (audit); **Fixed:** v2.9.16  
 **Detail:** Prior to v2.9.16, the app shipped no `Content-Security-Policy` header or meta tag. Fixed by adding `<meta http-equiv="Content-Security-Policy">` to `<head>` with policy: `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'`. `'unsafe-inline'` for scripts/styles is required by the single-file architecture but `connect-src https:`, `object-src 'none'`, and `base-uri 'self'` provide meaningful defence-in-depth.
 
+### SEC-GAP-020 — Repository is publicly served via GitHub Pages; live PII was committed and exposed *(Remediated v2.9.39; history purge pending)*
+**Area:** GitHub Pages deployment — entire repository contents  
+**Logged:** v2.9.39 (review board security audit, 2026-07-04)  
+**Detail:** GitHub Pages serves the **entire repository** at `app.getstackdops.com`, not just `index.html`. Until v2.9.39, this publicly exposed: (1) `Test-data/Stackd-Clean-2026-05-17.json` — a live business dataset containing real supplier contact names, personal emails, mobile numbers, buyer names/addresses, and invoice financials; (2) the supplier contacts table in `STACKD_CONTEXT.md` with personal emails and a phone number; (3) `docs/known-gaps.md` (this file — the security weakness register) and all other docs at guessable URLs.  
+**Remediation shipped (v2.9.39):** `Test-data/` deleted; STACKD_CONTEXT.md contacts table redacted to company-level only; real buyer name anonymised in the `index.html` import template example; `.gitignore` added blocking `Test-data/`, `Stackd-Backup-*.json`, `Stackd-Clean-*.json`.  
+**Still outstanding:**
+1. **Git history purge** — the deleted files remain retrievable from git history until purged (`git filter-repo` + force push) and GitHub's cached views are cleared (contact GitHub Support to expire cached raw URLs). Operator action required.
+2. **UK GDPR breach assessment** — operator should assess whether the exposure is reportable to the ICO (personal data of supplier contacts was publicly accessible for an unknown period; likely low risk as B2B contact data, but the 72-hour assessment obligation applies from awareness).
+3. **Deployment hardening** — docs and context files remain publicly served. Recommended: publish only the app via a `dist` branch, or accept and keep all committed content public-safe (current policy — see "Public repo policy" in CLAUDE.md).  
+**Risk level:** CRITICAL until history purge completes; MEDIUM thereafter (docs still public by policy).  
+**New process (mandatory):** Treat every file in this repo as **publicly readable**. Never commit live data exports, backups, personal contact details, credentials, or client-identifiable records. Live data lives in the portal's localStorage and in private backups stored outside the repo.
+
 ### SEC-GAP-011 — `pullAll()` overwrites local records with no conflict resolution
 **Area:** `pullAll()` — sync pull merge logic  
 **Logged:** v2.9.23 (sync layer review); see also SYNC-GAP-001 (push-side equivalent)  

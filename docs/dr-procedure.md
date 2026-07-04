@@ -20,6 +20,9 @@ The **JSON backup** (Settings → Data → Export All) is the only recovery mech
 
 ## How to take a backup
 
+> **⚠️ NEVER store backup files in this repository.** The repo is publicly served via GitHub Pages at app.getstackdops.com — any committed backup exposes live supplier/buyer PII and financials to the public internet (see SEC-GAP-020). Store backups in a private location: local disk, personal Google Drive, or encrypted storage. A `.gitignore` guard blocks `Stackd-Backup-*.json` but do not rely on it alone.
+
+
 1. Open Stackd Ops
 2. Go to **Settings → Data**
 3. Click **↓ Backup All JSON**

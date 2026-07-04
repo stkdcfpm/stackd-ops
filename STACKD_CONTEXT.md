@@ -327,17 +327,19 @@ Apps Script write bridge live: actions `update_requirements_tracker` and `update
 
 ## Key contacts
 
-| Contact | Company | Role | Products | Notes |
-|---------|---------|------|----------|-------|
-| [REDACTED] | Shandong Jinbao | Sales | PVC Foam Board | [REDACTED-EMAIL]. Fire cert required each shipment |
-| [REDACTED] | Anhui HYY | Sales | Onion Mesh Bags | [REDACTED-EMAIL] |
-| [REDACTED] | Shanghai Bokni | Sales | Centrifugal Juicers | [REDACTED-EMAIL]. Verify 220V |
-| [REDACTED] | Zhengzhou Rongchang | Sales | Sugar Cane Juicer | [REDACTED-EMAIL]. 2nd: [REDACTED] |
-| [REDACTED] | Xingtai Xingcha | Sales | Pallet Jacks | [REDACTED-EMAIL] |
-| [REDACTED] | Fuzhou Bote | Sales | Freezers/Chillers/Cold Storage | [REDACTED-EMAIL]. 30% dep/70% BL. 45 day lead. CE cert |
-| [REDACTED] | Zhongshan Chuhui | Sales | Solar LED Floodlights | [REDACTED-EMAIL]. 2nd: [REDACTED] |
-| [REDACTED] | Changzhou Intelligent Weighing | Sales | Platform Scales | [REDACTED-EMAIL]. [REDACTED-PHONE] |
-| Amazon Business | Reolink | Purchase | Security Cameras | amazon.com/business. US tax in COGS. Zero margin |
+**PII REDACTED (2026-07-04).** Supplier contact names, emails, and phone numbers were removed from this file because this repository is publicly served via GitHub Pages (see SEC-GAP-020 in docs/known-gaps.md). Contact details live in the Stackd Ops portal (Suppliers entity) — the portal's localStorage is the canonical store. Operational notes retained below without personal identifiers:
+
+| Company | Products | Notes |
+|---------|----------|-------|
+| Shandong Jinbao | PVC Foam Board | Fire cert required each shipment |
+| Anhui HYY | Onion Mesh Bags | — |
+| Shanghai Bokni | Centrifugal Juicers | Verify 220V |
+| Zhengzhou Rongchang | Sugar Cane Juicer | — |
+| Xingtai Xingcha | Pallet Jacks | — |
+| Fuzhou Bote | Freezers/Chillers/Cold Storage | 30% dep/70% BL. 45 day lead. CE cert |
+| Zhongshan Chuhui | Solar LED Floodlights | — |
+| Changzhou Intelligent Weighing | Platform Scales | — |
+| Amazon Business (Reolink) | Security Cameras | amazon.com/business. US tax in COGS. Zero margin |
 
 ---
 

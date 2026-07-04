@@ -1,0 +1,5 @@
+# Live data exports must NEVER be committed — this repo is publicly served via GitHub Pages
+Test-data/
+Stackd-Backup-*.json
+Stackd-Clean-*.json
+*.backup.json
