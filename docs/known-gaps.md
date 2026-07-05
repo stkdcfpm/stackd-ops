@@ -4,6 +4,21 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ---
 
+## Dashboard
+
+### DASH-GAP-001 — Dashboard charts are hand-rolled bar divs, no interactivity (hover/tooltip/drill-down)
+**Area:** Dashboard — `renderDash()` chart rendering (`index.html` ~line 3207-3230)
+**Logged:** v2.9.39 (review board product/architecture pass, 2026-07-04)
+**Detail:** All four dashboard charts (Net Profit by Invoice, Revenue by Destination, Margin Distribution, PO Commitments) are `<div>` elements with inline `width:X%` styles built by string concatenation — no canvas, no SVG, no charting library, no hover states, no click-to-drill-down, no export. This is a deliberate consequence of the "no dependencies" architecture (see CLAUDE.md).
+**Constraint:** The CSP (`index.html:7`, fixed under SEC-GAP-008) restricts `script-src` to `'self' 'unsafe-inline'` — any CDN-hosted charting library (Chart.js from a CDN, etc.) is silently blocked. To add real interactivity without a CSP change, a library must be **vendored** (downloaded once, committed as a same-origin static `.js` file, loaded via `<script src="charts/lib.js">`).
+**Options evaluated:**
+- **Chart.js** (MIT, ~200KB vendored) — best fit: canvas-based, easy to theme to brand tokens, most widely known so future sessions/AI assistance is well-supported
+- **uPlot** (MIT, ~45KB vendored) — smallest footprint, best if dashboard grows into time-series (shipment timelines, monthly trends)
+- **ApexCharts** (MIT, ~500KB vendored) — most built-in interactivity (zoom/tooltip/export) but heaviest
+**Decision:** Backlogged, not started. Recommend Chart.js vendored as a static file if picked up — keeps CSP unchanged (same-origin), MIT-licensed (no attribution burden), and is the best-documented option for future AI-assisted maintenance. Any adoption should include: file committed under a `vendor/` or `charts/` folder, a note in CLAUDE.md's "no dependencies" line acknowledging the one exception, and a version pin (no auto-update — this repo has no build step to catch breaking changes).
+
+---
+
 ## MTD / VAT Return
 
 ### MTD-GAP-001 — Input VAT not tracked; Boxes 4 and 7 always £0.00 *(Open)*
