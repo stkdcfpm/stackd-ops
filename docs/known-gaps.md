@@ -362,3 +362,24 @@ Note: the saved-record preview path (`prevInvId()`, the table's PDF eye-icon but
 3. **Credit Notes** (`openNewCN()`, `vInv()` isCN branch) — Requires either a positive credit amount + linked invoice number (standard CN) or the goodwill checkbox. Shares the invoice modal but is a distinct validation path — needs its own `create_credit_note` action type, not reuse of `create_invoice`.
 
 **Decision:** Suppliers and Buyers shipped. Suggested next: Invoices (highest value, but the buyer-dropdown blocker still applies — same conclusion as before, now partially mitigated by `create_buyer` existing as a prerequisite step the AI could chain), then Line Items (same mitigation via `create_supplier`), then Credit Notes last.
+
+### AI-GAP-007 — Action block emission is non-deterministic; model sometimes describes manual steps instead of emitting `@@ACTION` *(Open)*
+**Area:** AI Assistant — `sendAIMsg()`, `AI_SYSTEM_PROMPT`, all six `handleAIAction()` action types
+**Logged:** v2.9.41 (2026-07-08), live user acceptance testing session
+**Detail:** In a single live test pass covering all six supported actions with clear, unambiguous, fully-detailed requests, **3 of 6 attempts failed** — the AI described manual UI steps ("go to the X tab, click + New X, fill in these fields...") instead of emitting the structured `@@ACTION` block, even though the system prompt explicitly instructs: "When the user clearly requests creation of a [type] and sufficient detail is present, embed an action block." Failures were not confined to the two newly-shipped actions (Supplier) — they also hit **Contact and Shipment**, both unchanged since v2.9.30. Successes (Buyer, Quote) used the exact same prompt phrasing and level of detail as the failures. This rules out a code/dispatch defect — `handleAIAction()`, the action-label map, and the modal pre-fill logic are all confirmed correct via the passing tests. The failure is in the model's inconsistent adherence to the instruction, not in the surrounding application code.
+**Test evidence (2026-07-08, one message per action, same session structure):**
+| Action | Request detail level | Result |
+|---|---|---|
+| Buyer | Full detail | ✅ Action block emitted, modal pre-filled correctly |
+| Supplier | Full detail | ❌ AI said "the tools available to me can only query existing data" — described manual steps |
+| Purchase Order | Missing supplier (test-case error, not a system fault) | Correctly asked a clarifying question — expected behavior, not a failure |
+| Quote | Full detail | ✅ Action block emitted, modal pre-filled correctly, including default markup |
+| Shipment | Full detail | ❌ AI said "I don't have a direct tool to create shipments programmatically" — described manual steps |
+| Contact | Full detail | ❌ AI described manual steps despite confirming a correct GDPR-basis summary in the same reply |
+**Root cause hypothesis:** No `temperature` parameter was set on the Anthropic API call (`sendAIMsg()`), meaning every request ran at the model's default sampling temperature — a setting prone to inconsistent adherence to "always do X when condition Y holds" instructions across repeated similar prompts. The AI's own wording in failures ("the tools available to me...") suggests it may be conflating the read-only `AI_TOOLS` array (`get_invoices`, `get_payments`, `get_kpis`, `get_pos` — real Anthropic tool-use) with the separate `@@ACTION` text-block mechanism used for writes — two different systems the model doesn't reliably distinguish.
+**Mitigation shipped (v2.9.41):** `temperature: 0.2` added to the Anthropic API call in `sendAIMsg()` (previously unset/default). Lower temperature makes an LLM substantially more likely to reliably follow a deterministic "always do X" instruction, at a small cost to conversational variety/warmth in phrasing. This is a mitigation, not a guaranteed fix — LLM instruction-following is inherently probabilistic and can never be made 100% reliable through prompting/sampling parameters alone.
+**Not done (further mitigation options, if 0.2 proves insufficient):**
+- Add a few-shot example pair directly in the system prompt showing a correct action-block emission for a clearly-detailed request, to reduce ambiguity between "action block" and "AI_TOOLS" framing
+- Rename/re-frame the `AI_TOOLS` array in the prompt more distinctly from action blocks (e.g. explicitly label one "read tools" and the other "write actions") to reduce the conflation seen in the Supplier/Shipment failure wording
+- Consider a lightweight client-side keyword/intent pre-check that nudges a retry if a clearly create-intent message produces no action block
+**Decision:** Temperature mitigation shipped as the first, lowest-effort intervention. Recommend re-running the same six-action test pass after this change to measure whether failure rate drops; if it persists near the same rate, pursue the few-shot/prompt-restructuring options above.

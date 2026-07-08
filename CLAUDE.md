@@ -5,7 +5,7 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.41**  
+**Current version: v2.9.42**  
 **Test count: 303/303 PASS** (`node tests/run.js`)
 
 ---
@@ -125,6 +125,7 @@ See `docs/known-gaps.md` for full entries.
 | SEC-GAP-002 | Sheets sync GDPR | PII transmitted externally; opt-in; accepted until first external client |
 | SEC-GAP-003 | API key in browser | Anthropic key in localStorage — inherent no-server constraint |
 | SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof |
+| AI-GAP-007 | AI assistant | Action block emission inconsistent (model sometimes describes manual steps instead) — temperature 0.2 mitigation shipped v2.9.42, not fully solved |
 | AI-GAP-006 | AI assistant | Supplier + Buyer creation shipped v2.9.41; Invoices, Line Items, Credit Notes still unsupported by handleAIAction() |
 | INV-GAP-001 | Invoice rendering | Pro-forma status rendered as plain Invoice document — Fixed v2.9.40 |
 | SEC-GAP-020 | Public Pages exposure | Live PII was publicly served — fully resolved 2026-07-05 (purge, history rewrite, GDPR assessment, GitHub PR/cache purge all complete) |
