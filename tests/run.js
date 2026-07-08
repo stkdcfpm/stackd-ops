@@ -1016,6 +1016,24 @@ test('prevInvDoc — all line item fields render in HTML output', function() {
   assertContains(html, '<tbody>',     'prevInvDoc: tbody present');
 });
 
+test('prevInvDoc — Pro-forma status renders PRO-FORMA INVOICE heading and title, not INVOICE', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevInvDoc({ num: 'INV10003', cur: 'USD', taxRate: 0, status: 'Pro-forma', lineItems: [] });
+  var html = getHtml();
+  assertContains(html, 'PRO-FORMA INVOICE', 'prevInvDoc: Pro-forma status shows PRO-FORMA INVOICE heading');
+  assertContains(html, '<title>Pro-forma Invoice INV10003</title>', 'prevInvDoc: Pro-forma status shows Pro-forma Invoice in document title');
+});
+
+test('prevInvDoc — non-Pro-forma status renders plain INVOICE heading, not PRO-FORMA', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevInvDoc({ num: 'INV10004', cur: 'USD', taxRate: 0, status: 'Sent', lineItems: [] });
+  var html = getHtml();
+  assertContains(html, '>INVOICE<', 'prevInvDoc: Sent status shows plain INVOICE heading');
+  assertNotContains(html, 'PRO-FORMA', 'prevInvDoc: Sent status must not show PRO-FORMA anywhere');
+});
+
 test('prevInvDoc — empty lineItems renders table with no rows', function() {
   var getHtml = makePreviewMock();
   resetDB();

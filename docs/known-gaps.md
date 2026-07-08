@@ -57,6 +57,18 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ---
 
+## Invoices
+
+### INV-GAP-001 — Pro-forma invoice preview rendered as a plain Invoice document *(Fixed v2.9.40)*
+**Area:** `prevInvDoc()` — invoice preview/PDF generation (`index.html`)
+**Logged & Fixed:** v2.9.40 (2026-07-06)
+**Detail:** Pro-forma is a `status` value on a standard invoice record (`STATUS_ORDER`), not a distinct record `type` like credit notes (`type: 'credit_note'`). `prevInvDoc()` hardcoded the document title (`'Invoice ' + invNum`) and the on-page heading (`INVOICE`) regardless of `inv.status`, so selecting "Pro-forma" status and previewing the document still rendered a plain Invoice with no Pro-forma indication anywhere. This is the same class of defect previously fixed for Credit Notes (see v-history: "Credit note PDF now opens correct CREDIT NOTE document — was incorrectly rendering as Invoice") — that fix routed CN records to a dedicated `prevCNDoc()` function via the `type` field, but no equivalent status-check existed for Pro-forma since it has no separate `type`.
+**Fix:** `prevInvDoc()` now checks `inv.status === 'Pro-forma'` and renders `"PRO-FORMA INVOICE"` as both the document `<title>` and the on-page heading when true; unaffected statuses render the plain `"INVOICE"` heading as before.
+**Regression tests added:** `tests/run.js` — Pro-forma status renders `PRO-FORMA INVOICE`; non-Pro-forma statuses do not.
+**Follow-up worth considering (not done):** Pro-forma invoices commonly carry different legal wording ("This is not a demand for payment") and sometimes different totals language ("Estimated Total" vs "Balance Due"). Not changed in this fix — scope was limited to the reported document-identity defect. Revisit if a customer-facing distinction beyond the heading is required.
+
+---
+
 ## Quote Engine
 
 ### QTE-GAP-001 — No quote status workflow enforcement *(Fixed v2.9.25)*
