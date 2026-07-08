@@ -1016,6 +1016,46 @@ test('prevInvDoc — all line item fields render in HTML output', function() {
   assertContains(html, '<tbody>',     'prevInvDoc: tbody present');
 });
 
+test('prevInv — live modal preview passes status through to PRO-FORMA INVOICE heading', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  mockEl('if-n').value = 'INV10005';
+  mockEl('inv-sm').value = 'Pro-forma';
+  mockEl('if-b').value = ''; mockEl('if-ba').value = ''; mockEl('if-st').value = '';
+  mockEl('if-dst').value = ''; mockEl('if-cid').value = ''; mockEl('if-dt').value = '';
+  mockEl('if-ex').value = ''; mockEl('if-sd').value = ''; mockEl('if-ft').value = '';
+  mockEl('if-wt').value = ''; mockEl('if-cbm').value = ''; mockEl('if-pk').value = '';
+  mockEl('if-pol').value = ''; mockEl('if-pod').value = ''; mockEl('if-coo').value = '';
+  mockEl('if-inco').value = ''; mockEl('if-cur').value = 'USD'; mockEl('if-lf').value = '0';
+  mockEl('if-ins').value = '0'; mockEl('if-leg').value = '0'; mockEl('if-isp').value = '0';
+  mockEl('if-oth').value = '0'; mockEl('if-dep').value = '0'; mockEl('if-pt').value = '';
+  mockEl('if-terms').value = ''; mockEl('if-tx').value = '0';
+  ctx.cIL = [];
+  ctx.prevInv();
+  var html = getHtml();
+  assertContains(html, 'PRO-FORMA INVOICE', 'prevInv: live modal preview with Pro-forma status shows PRO-FORMA INVOICE heading');
+  // Reset shared mock state so later tests aren't polluted
+  mockEl('inv-sm').value = '';
+});
+
+test('prevInvDoc — Pro-forma status renders PRO-FORMA INVOICE heading and title, not INVOICE', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevInvDoc({ num: 'INV10003', cur: 'USD', taxRate: 0, status: 'Pro-forma', lineItems: [] });
+  var html = getHtml();
+  assertContains(html, 'PRO-FORMA INVOICE', 'prevInvDoc: Pro-forma status shows PRO-FORMA INVOICE heading');
+  assertContains(html, '<title>Pro-forma Invoice INV10003</title>', 'prevInvDoc: Pro-forma status shows Pro-forma Invoice in document title');
+});
+
+test('prevInvDoc — non-Pro-forma status renders plain INVOICE heading, not PRO-FORMA', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevInvDoc({ num: 'INV10004', cur: 'USD', taxRate: 0, status: 'Sent', lineItems: [] });
+  var html = getHtml();
+  assertContains(html, '>INVOICE<', 'prevInvDoc: Sent status shows plain INVOICE heading');
+  assertNotContains(html, 'PRO-FORMA', 'prevInvDoc: Sent status must not show PRO-FORMA anywhere');
+});
+
 test('prevInvDoc — empty lineItems renders table with no rows', function() {
   var getHtml = makePreviewMock();
   resetDB();
