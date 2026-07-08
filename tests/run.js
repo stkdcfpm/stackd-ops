@@ -17,6 +17,7 @@ function mockEl(id) {
       classList: { add() {}, remove() {}, contains: () => false },
       options: { length: 0 },
       checked: false,
+      appendChild() {},
     };
   }
   return mockElements[id];
@@ -2959,6 +2960,33 @@ test('handleAIAction: create_contact pre-fills contact modal fields', function()
   assertEqual(mockEl('ct-name').value, 'Jane Smith', 'name pre-filled');
   assertEqual(mockEl('ct-email').value, 'jane@example.com', 'email pre-filled');
   assertEqual(mockEl('ct-status').value, 'lead', 'status pre-filled');
+});
+
+test('handleAIAction: create_supplier pre-fills supplier modal fields', function() {
+  resetDB();
+  var action = { action: 'create_supplier', payload: { name: 'Jinbao Plastics', country: 'China', currency: 'CNY', contactPerson: 'Wei Chen', email: 'wei@jinbao.example.cn', phone: '+86 138 0000 1234', notes: 'PVC foam supplier' } };
+  ctx.handleAIAction(action);
+  assertEqual(mockEl('sf-n').value, 'Jinbao Plastics', 'supplier name pre-filled');
+  assertEqual(mockEl('sf-c').value, 'China', 'supplier country pre-filled');
+  assertEqual(mockEl('sf-cur').value, 'CNY', 'supplier currency pre-filled');
+  assertEqual(mockEl('sf-ct').value, 'Wei Chen', 'supplier contact person pre-filled');
+  assertEqual(mockEl('sf-e').value, 'wei@jinbao.example.cn', 'supplier email pre-filled');
+  assertEqual(mockEl('sf-nt').value, 'PVC foam supplier', 'supplier notes pre-filled');
+  assertEqual(mockEl('sf-dial').value, '+86', 'supplier phone dial code matched');
+  assertEqual(mockEl('sf-p').value, '138 0000 1234', 'supplier phone number split correctly');
+});
+
+test('handleAIAction: create_buyer pre-fills buyer modal fields', function() {
+  resetDB();
+  var action = { action: 'create_buyer', payload: { name: 'Island Fresh Imports Ltd', contactName: 'Maria Holder', email: 'maria@islandfresh.example.bb', phone: '+1 246 000 1234', address: 'Harbour Road, Bridgetown, Barbados', currency: 'USD', paymentTerms: 'Net 30', creditLimit: 5000, notes: 'Repeat buyer, reliable payer' } };
+  ctx.handleAIAction(action);
+  assertEqual(mockEl('buy-name').value, 'Island Fresh Imports Ltd', 'buyer name pre-filled');
+  assertEqual(mockEl('buy-cname').value, 'Maria Holder', 'buyer contact name pre-filled');
+  assertEqual(mockEl('buy-email').value, 'maria@islandfresh.example.bb', 'buyer email pre-filled');
+  assertEqual(mockEl('buy-addr').value, 'Harbour Road, Bridgetown, Barbados', 'buyer address pre-filled');
+  assertEqual(mockEl('buy-cur').value, 'USD', 'buyer currency pre-filled');
+  assertEqual(mockEl('buy-cl').value, 5000, 'buyer credit limit pre-filled');
+  assertEqual(mockEl('buy-notes').value, 'Repeat buyer, reliable payer', 'buyer notes pre-filled');
 });
 
 // ── REQ-DEMO-001: Demo mode ──────────────────────────────────────────────────
