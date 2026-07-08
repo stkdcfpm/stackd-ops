@@ -125,7 +125,8 @@ See `docs/known-gaps.md` for full entries.
 | SEC-GAP-002 | Sheets sync GDPR | PII transmitted externally; opt-in; accepted until first external client |
 | SEC-GAP-003 | API key in browser | Anthropic key in localStorage — inherent no-server constraint |
 | SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof |
-| AI-GAP-007 | AI assistant | Action block emission inconsistent (model sometimes describes manual steps instead) — temperature 0.2 mitigation shipped v2.9.42, not fully solved |
+| AI-GAP-007 | AI assistant | Action block emission inconsistent — temperature 0.2 mitigation shipped v2.9.42, confirmed 3/3 on retest |
+| AI-GAP-008 | AI assistant | create_po requires internal supId with no name resolution — dead end when chaining create_supplier then create_po in one conversation |
 | AI-GAP-006 | AI assistant | Supplier + Buyer creation shipped v2.9.41; Invoices, Line Items, Credit Notes still unsupported by handleAIAction() |
 | INV-GAP-001 | Invoice rendering | Pro-forma status rendered as plain Invoice document — Fixed v2.9.40 |
 | SEC-GAP-020 | Public Pages exposure | Live PII was publicly served — fully resolved 2026-07-05 (purge, history rewrite, GDPR assessment, GitHub PR/cache purge all complete) |
