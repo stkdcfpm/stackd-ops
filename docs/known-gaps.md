@@ -132,19 +132,19 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.14 (audit); **Fixed:** v2.9.16  
 **Detail:** Prior to v2.9.16, the app shipped no `Content-Security-Policy` header or meta tag. Fixed by adding `<meta http-equiv="Content-Security-Policy">` to `<head>` with policy: `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'`. `'unsafe-inline'` for scripts/styles is required by the single-file architecture but `connect-src https:`, `object-src 'none'`, and `base-uri 'self'` provide meaningful defence-in-depth.
 
-### SEC-GAP-020 — Repository is publicly served via GitHub Pages; live PII was committed and exposed *(Remediated v2.9.39; history purge pending)*
+### SEC-GAP-020 — Repository is publicly served via GitHub Pages; live PII was committed and exposed *(Fully resolved 2026-07-05)*
 **Area:** GitHub Pages deployment — entire repository contents  
 **Logged:** v2.9.39 (review board security audit, 2026-07-04)  
 **Detail:** GitHub Pages serves the **entire repository** at `app.getstackdops.com`, not just `index.html`. Until v2.9.39, this publicly exposed: (1) `Test-data/Stackd-Clean-2026-05-17.json` — a live business dataset containing real supplier contact names, personal emails, mobile numbers, buyer names/addresses, and invoice financials; (2) the supplier contacts table in `STACKD_CONTEXT.md` with personal emails and a phone number; (3) `docs/known-gaps.md` (this file — the security weakness register) and all other docs at guessable URLs.  
 **Remediation shipped (v2.9.39):** `Test-data/` deleted; STACKD_CONTEXT.md contacts table redacted to company-level only; real buyer name anonymised in the `index.html` import template example; `.gitignore` added blocking `Test-data/`, `Stackd-Backup-*.json`, `Stackd-Clean-*.json`.  
 **History purge completed (2026-07-04):** full `git filter-repo` rewrite of all branches — `Test-data/` removed from every commit; all supplier emails, phone numbers, contact names, and the real buyer identity scrubbed from every historical blob (verified zero matches across all refs). Force-pushed to `main` and all 14 feature branches.
 **GDPR assessment completed (2026-07-04):** breach documented per Art. 33(5); assessed NOT reportable to ICO (low risk — small number of B2B contacts, professional contact data only, no evidence of access, same-day remediation). Private breach record held by operator outside the repo.
-**Still outstanding:**
-1. **GitHub Support cache purge** — old commits may remain cached in pull-request refs and raw-URL caches until GitHub Support expires them (operator: support.github.com → "remove cached views of sensitive data").
-2. **Stale clones** — any clone of this repo made before 2026-07-04 still contains the old history and should be deleted and re-cloned.
-3. **Deployment hardening** — docs and context files remain publicly served. Recommended: publish only the app via a `dist` branch, or accept and keep all committed content public-safe (current policy — see "Public repo policy" in CLAUDE.md).  
-**Risk level:** MEDIUM (docs still public by policy; GitHub cache purge pending).  
-**New process (mandatory):** Treat every file in this repo as **publicly readable**. Never commit live data exports, backups, personal contact details, credentials, or client-identifiable records. Live data lives in the portal's localStorage and in private backups stored outside the repo.
+**GitHub Support cache purge completed (2026-07-05):** GitHub identified the sensitive commit referenced in 33 pull requests (#21–#54, every PR merged after the original exposure on 17 May 2026, since each carried the commit in its base history). At operator's request, GitHub deleted all 33 PRs entirely (not just tracking references) to guarantee full removal, since a references-only deletion would not have covered data quoted in PR bodies/comments. GitHub confirmed cache cleared 2026-07-05 22:18 UTC.  
+**Outstanding (informational only, no further action required):**
+1. **Stale clones** — any clone of this repo made before 2026-07-04 still contains the old history; delete and re-clone if any exist.
+2. **Deployment hardening** — docs and context files remain publicly served by design (current policy — see "Public repo policy" in CLAUDE.md); acceptable now that no PII remains in any committed file.  
+**Risk level:** LOW — resolved. GitHub's standard caveat applies: any data that was ever exposed should be considered potentially compromised regardless of subsequent removal (this was assessed under the GDPR review above and found not reportable).  
+**Process going forward (mandatory):** Treat every file in this repo as **publicly readable**. Never commit live data exports, backups, personal contact details, credentials, or client-identifiable records. Live data lives in the portal's localStorage and in private backups stored outside the repo.
 
 ### SEC-GAP-011 — `pullAll()` overwrites local records with no conflict resolution
 **Area:** `pullAll()` — sync pull merge logic  
