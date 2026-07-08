@@ -1083,7 +1083,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
-          <li>Fix: Pro-forma invoice preview/PDF now correctly shows "PRO-FORMA INVOICE" heading and document title — previously always rendered as a plain "INVOICE" regardless of status, same class of bug as the earlier Credit Note rendering fix (INV-GAP-001)</li>
+          <li>Fix: Pro-forma invoice preview/PDF now correctly shows "PRO-FORMA INVOICE" heading and document title (INV-GAP-001). Root cause had two parts: the render function ignored status entirely, and separately the live in-modal preview button never passed status through from the form at all (form-rebuild path, distinct from the already-correct saved-record path)</li>
         </ul>
       </div>
 
@@ -5014,7 +5014,7 @@ function prevInv() {
     return;
   }
   var tx=getTR();
-  prevInvDoc({num:num,buyer:G('if-b').value,buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,incoterm:G('if-inco').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,paymentTerms:G('if-pt').value,terms:G('if-terms').value,lineItems:cIL.slice()});
+  prevInvDoc({num:num,status:G('inv-sm')?G('inv-sm').value:'',buyer:G('if-b').value,buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,incoterm:G('if-inco').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,paymentTerms:G('if-pt').value,terms:G('if-terms').value,lineItems:cIL.slice()});
 }
 function prevInvId(id) { var inv=DB.inv.find(function(x){return x.id===id;}); if(inv){ window._lastInv=inv; window._lastPO=null; if(inv.type==='credit_note'||inv.type==='goodwill_credit'||(!inv.type&&isCN(inv.num))) prevCNDoc(inv); else prevInvDoc(inv); } }
 function prevPO() {
