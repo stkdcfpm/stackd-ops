@@ -266,7 +266,7 @@ test('li.specs is HTML-escaped in rendered row', () => {
   ctx.rLI();
   assertNotContains(mockEl('li-tb').innerHTML, '<script>', 'li.specs XSS must be escaped');
 });
-test('rendered row has 12 <td> cells matching header', () => {
+test('rendered row has 13 <td> cells matching header', () => {
   ctx.DB.li = [{
     id:'l3', sku:'SKU-03', desc:'Widget', specs:'spec', hs:'1234',
     supId:'s1', cost:10, price:20, uom:'pcs', cur:'USD',
@@ -274,7 +274,7 @@ test('rendered row has 12 <td> cells matching header', () => {
   mockEl('li-q').value = ''; mockEl('li-sf').value = '';
   ctx.rLI();
   const tdCount = (mockEl('li-tb').innerHTML.match(/<td/g) || []).length;
-  assertEqual(tdCount, 12, 'Row must have 12 <td> cells: SKU, Desc, Specs, HS, Supplier, Cost, Price, UOM, Margin, Cur, Invoices, Actions');
+  assertEqual(tdCount, 13, 'Row must have 13 <td> cells: #, SKU, Desc, Specs, HS, Supplier, Cost, Price, UOM, Margin, Cur, Invoices, Actions');
 });
 
 // ── PO → Invoice linking ───────────────────────────────────────
@@ -3748,6 +3748,192 @@ test('T-BUY-09 fromGBP converts GBP to USD using QR rate', () => {
   var rate = ctx.QR.fxGBPUSD || ctx.QR_DEFAULTS.fxGBPUSD;
   var result = ctx.fromGBP(100, 'USD');
   assertEqual(result, 100 * rate, 'fromGBP(100, USD) should equal 100 * fxGBPUSD');
+});
+
+// ── Friendly reference numbers (SPEC-DATA-001) ──────────────────
+console.log('\nparseRefNum() / nextRefNum() / backfillRefNums() — SPEC-DATA-001');
+
+test('parseRefNum: valid PREFIX-0001 returns 1', () => {
+  assertEqual(ctx.parseRefNum('SUP-0001', 'SUP'), 1);
+});
+test('parseRefNum: malformed suffix PREFIX-01x returns null', () => {
+  assertEqual(ctx.parseRefNum('SUP-01x', 'SUP'), null);
+});
+test('parseRefNum: malformed suffix PREFIX-12abc returns null', () => {
+  assertEqual(ctx.parseRefNum('SUP-12abc', 'SUP'), null);
+});
+test('parseRefNum: wrong prefix returns null', () => {
+  assertEqual(ctx.parseRefNum('LI-0001', 'SUP'), null);
+});
+test('parseRefNum: empty/missing num returns null', () => {
+  assertEqual(ctx.parseRefNum('', 'SUP'), null);
+  assertEqual(ctx.parseRefNum(undefined, 'SUP'), null);
+});
+
+test('nextRefNum: empty array returns PREFIX-0001', () => {
+  assertEqual(ctx.nextRefNum([], 'SUP'), 'SUP-0001');
+});
+test('nextRefNum: gaps/out-of-order returns correct next value', () => {
+  var arr = [{ num:'SUP-0003' }, { num:'SUP-0001' }, { num:'SUP-0007' }];
+  assertEqual(ctx.nextRefNum(arr, 'SUP'), 'SUP-0008');
+});
+test('nextRefNum: malformed num does not affect computed next value', () => {
+  var arr = [{ num:'SUP-0002' }, { num:'SUP-abcx' }, { num:'garbage' }];
+  assertEqual(ctx.nextRefNum(arr, 'SUP'), 'SUP-0003');
+});
+
+test('backfillRefNums: assigns num to records with none', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'s1', name:'A' }, { id:'s2', name:'B' }];
+  ctx.backfillRefNums();
+  assert(ctx.DB.sup[0].num && ctx.DB.sup[1].num, 'both suppliers should have a num assigned');
+  assert(ctx.DB.sup[0].num !== ctx.DB.sup[1].num, 'nums must be distinct');
+});
+test('backfillRefNums: idempotent on second call', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'s1', name:'A' }];
+  ctx.backfillRefNums();
+  var first = ctx.DB.sup[0].num;
+  ctx.backfillRefNums();
+  assertEqual(ctx.DB.sup[0].num, first, 'num must not change on repeated backfill');
+});
+test('backfillRefNums: does not touch already-numbered records (valid or malformed)', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'s1', name:'A', num:'SUP-0099' }, { id:'s2', name:'B', num:'not-a-real-num' }];
+  ctx.backfillRefNums();
+  assertEqual(ctx.DB.sup[0].num, 'SUP-0099', 'valid existing num must be preserved');
+  assertEqual(ctx.DB.sup[1].num, 'not-a-real-num', 'malformed existing num must be left alone, not overwritten');
+});
+test('backfillRefNums: BUY-ADHOC receives a num without its id changing', () => {
+  resetDB();
+  ctx.seedAdHocBuyer();
+  ctx.backfillRefNums();
+  var adhoc = ctx.DB.buy.find(function(b){ return b.id === 'BUY-ADHOC'; });
+  assert(adhoc, 'BUY-ADHOC record must still exist');
+  assert(adhoc.num, 'BUY-ADHOC must have a num assigned');
+});
+test('backfillRefNums: mixed createdAt comparator sorts no-createdAt group before has-createdAt group', () => {
+  resetDB();
+  ctx.DB.con = [
+    { id:'c1', name:'HasDate-Later',  createdAt:'2026-02-01T00:00:00.000Z' },
+    { id:'c2', name:'NoDate-First' },
+    { id:'c3', name:'HasDate-Earlier', createdAt:'2026-01-01T00:00:00.000Z' },
+    { id:'c4', name:'NoDate-Second' },
+  ];
+  ctx.backfillRefNums();
+  var byId = {}; ctx.DB.con.forEach(function(c){ byId[c.id] = c.num; });
+  // no-createdAt records (c2, c4, stable original order) get the lowest numbers,
+  // then has-createdAt records in chronological order (c3 earlier, c1 later)
+  assertEqual(byId.c2, 'CON-0001');
+  assertEqual(byId.c4, 'CON-0002');
+  assertEqual(byId.c3, 'CON-0003');
+  assertEqual(byId.c1, 'CON-0004');
+});
+
+test('CRITICAL: restore-then-create does not collide (v5 bug regression)', () => {
+  resetDB();
+  // Numberless legacy suppliers, no createdAt, fixed array order (simulates a restored backup)
+  ctx.DB.sup = [
+    { id:'legacy1', name:'Legacy One' },
+    { id:'legacy2', name:'Legacy Two' },
+  ];
+  // A new record is created before the next reload — gets SUP-0001 via nextRefNum
+  var newNum = ctx.nextRefNum(ctx.DB.sup, 'SUP');
+  ctx.DB.sup.push({ id:'new1', name:'New Supplier', num: newNum });
+  assertEqual(newNum, 'SUP-0001', 'first new record should get SUP-0001');
+  // Next reload runs backfillRefNums over the whole array
+  ctx.backfillRefNums();
+  var nums = ctx.DB.sup.map(function(s){ return s.num; });
+  var unique = new Set(nums);
+  assertEqual(unique.size, nums.length, 'no duplicate num values across suppliers');
+  var legacy1 = ctx.DB.sup.find(function(s){ return s.id === 'legacy1'; });
+  assert(legacy1.num !== 'SUP-0001', 'legacy record must not collide with the already-assigned SUP-0001');
+  assertEqual(legacy1.num, 'SUP-0002', 'legacy records must start numbering from SUP-0002');
+});
+
+test('CRITICAL: pullAll num-stripping is healed by immediate backfillRefNums call', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'s1', name:'Original', num:'SUP-0005' }, { id:'s2', name:'Other', num:'SUP-0006' }];
+  // Simulate a sync pull replacing s1 with a num-less object sharing the same id
+  var pulledIdx = ctx.DB.sup.findIndex(function(s){ return s.id === 's1'; });
+  ctx.DB.sup[pulledIdx] = { id:'s1', name:'Original' }; // num stripped, as FIELD_MAPS excludes num
+  ctx.backfillRefNums();
+  var healed = ctx.DB.sup.find(function(s){ return s.id === 's1'; });
+  assert(healed.num, 'stripped record must receive a fresh num');
+  assert(healed.num !== 'SUP-0006', 'fresh num must not duplicate the untouched record');
+  assertEqual(ctx.DB.sup.find(function(s){ return s.id === 's2'; }).num, 'SUP-0006', 'other record must be undisturbed');
+});
+
+test('saveSup: new record gets num, edit does not change it', () => {
+  resetDB();
+  ctx.EI.s = null;
+  mockEl('sf-n').value = 'New Co'; mockEl('sf-c').value = ''; mockEl('sf-ct').value = '';
+  mockEl('sf-e').value = ''; mockEl('sf-cur').value = 'USD'; mockEl('sf-nt').value = '';
+  ctx.saveSup();
+  var rec = ctx.DB.sup.find(function(s){ return s.name === 'New Co'; });
+  assert(rec.num, 'new supplier should get a num');
+  var originalNum = rec.num;
+  ctx.EI.s = rec.id;
+  mockEl('sf-n').value = 'New Co Updated';
+  ctx.saveSup();
+  var updated = ctx.DB.sup.find(function(s){ return s.id === rec.id; });
+  assertEqual(updated.num, originalNum, 'num must not change on edit');
+});
+
+test('saveLi: new record gets num, edit does not change it', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'s1', name:'Sup' }];
+  ctx.EI.l = null;
+  mockEl('lf-s').value = 'SKU1'; mockEl('lf-d').value = 'Widget'; mockEl('lf-sp').value = '';
+  mockEl('lf-hs').value = ''; mockEl('lf-sup').value = 's1'; mockEl('lf-u').value = 'pcs';
+  mockEl('lf-c').value = '10'; mockEl('lf-p').value = '20'; mockEl('lf-cur').value = 'USD';
+  mockEl('lf-nt').value = ''; mockEl('lf-diml').value = ''; mockEl('lf-dimw').value = ''; mockEl('lf-dimh').value = '';
+  ctx.saveLI();
+  var rec = ctx.DB.li.find(function(l){ return l.sku === 'SKU1'; });
+  assert(rec.num, 'new line item should get a num');
+  var originalNum = rec.num;
+  ctx.EI.l = rec.id;
+  mockEl('lf-d').value = 'Widget Updated';
+  ctx.saveLI();
+  var updated = ctx.DB.li.find(function(l){ return l.id === rec.id; });
+  assertEqual(updated.num, originalNum, 'num must not change on edit');
+});
+
+test('saveBuy: new record gets num, edit does not change it', () => {
+  resetDB();
+  ctx.seedAdHocBuyer();
+  ctx.EI.bu = null;
+  mockEl('buy-name').value = 'Ref Buyer';
+  mockEl('buy-cname').value = ''; mockEl('buy-email').value = ''; mockEl('buy-phone').value = '';
+  mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'USD'; mockEl('buy-pt').value = '';
+  mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
+  ctx.saveBuy();
+  var rec = ctx.DB.buy.find(function(b){ return b.name === 'Ref Buyer'; });
+  assert(rec.num, 'new buyer should get a num');
+  var originalNum = rec.num;
+  ctx.EI.bu = rec.id;
+  mockEl('buy-name').value = 'Ref Buyer Ltd';
+  ctx.saveBuy();
+  var updated = ctx.DB.buy.find(function(b){ return b.id === rec.id; });
+  assertEqual(updated.num, originalNum, 'num must not change on edit');
+});
+
+test('saveCon: new record gets num, edit does not change it', () => {
+  resetDB();
+  ctx.EI.co = null;
+  mockEl('ct-name').value = 'Jane Doe'; mockEl('ct-email').value = 'jane@example.com';
+  mockEl('ct-status').value = 'lead'; mockEl('ct-source').value = 'manual';
+  mockEl('ct-phone').value = ''; mockEl('ct-company').value = ''; mockEl('ct-notes').value = '';
+  mockEl('ct-enq-summary').value = ''; mockEl('ct-sup').value = '';
+  ctx.saveCon();
+  var rec = ctx.DB.con.find(function(c){ return c.email === 'jane@example.com'; });
+  assert(rec.num, 'new contact should get a num');
+  var originalNum = rec.num;
+  ctx.EI.co = rec.id;
+  mockEl('ct-name').value = 'Jane Doe Updated';
+  ctx.saveCon();
+  var updated = ctx.DB.con.find(function(c){ return c.id === rec.id; });
+  assertEqual(updated.num, originalNum, 'num must not change on edit');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.42</title>
+<title>Stackd Ops v2.9.43</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.42</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.43</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -263,7 +263,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <input class="sb" type="text" placeholder="Search suppliers..." id="sup-q" oninput="rSup()">
     <button class="btn btn-s" data-en="+ New Supplier" data-zh="+ 新建供应商" onclick="openSup()">+ New Supplier</button>
   </div>
-  <div class="tw"><table class="tbl"><thead><tr><th>Name</th><th>Country</th><th>Contact</th><th>Email</th><th>Phone</th><th>Cur.</th><th>Notes</th><th></th></tr></thead><tbody id="sup-tb"></tbody></table></div>
+  <div class="tw"><table class="tbl"><thead><tr><th>#</th><th>Name</th><th>Country</th><th>Contact</th><th>Email</th><th>Phone</th><th>Cur.</th><th>Notes</th><th></th></tr></thead><tbody id="sup-tb"></tbody></table></div>
   <div id="sup-em" class="empty" style="display:none;"><div class="ei">&#127981;</div><p>No suppliers yet.</p></div>
 </div>
 
@@ -274,7 +274,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <button class="btn btn-s" data-en="+ New Line Item" data-zh="+ 新建商品" onclick="openLI()">+ New Line Item</button>
     <button class="btn btn-g" onclick="expPriceHistoryCSV()" title="Export price history for all line items">&#8595; Price History CSV</button>
   </div>
-  <div class="tw"><table class="tbl"><thead><tr><th>SKU</th><th>Description</th><th>Specs</th><th>HS Code</th><th>Supplier</th><th class="num">Unit Cost</th><th class="num">Unit Price</th><th>UOM</th><th class="num">Margin</th><th>Cur.</th><th></th></tr></thead><tbody id="li-tb"></tbody></table></div>
+  <div class="tw"><table class="tbl"><thead><tr><th>#</th><th>SKU</th><th>Description</th><th>Specs</th><th>HS Code</th><th>Supplier</th><th class="num">Unit Cost</th><th class="num">Unit Price</th><th>UOM</th><th class="num">Margin</th><th>Cur.</th><th></th></tr></thead><tbody id="li-tb"></tbody></table></div>
   <div id="li-em" class="empty" style="display:none;"><div class="ei">&#128230;</div><p>No line items yet.</p></div>
 </div>
 
@@ -364,7 +364,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
   <div class="tw"><table class="tbl" id="con-tbl" style="display:none;">
     <thead><tr>
-      <th>Name</th><th>Company</th><th>Email</th>
+      <th>#</th><th>Name</th><th>Company</th><th>Email</th>
       <th>Status</th><th>Source</th><th>Supplier</th><th>Last Contact</th><th>Enquiries</th><th></th>
     </tr></thead>
     <tbody id="con-tbody"></tbody>
@@ -379,7 +379,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
   <div class="tw"><table class="tbl" id="buy-tbl" style="display:none;">
     <thead><tr>
-      <th>Company</th><th>Contact</th><th>Email</th><th>Currency</th><th>Payment Terms</th><th class="num">Credit Limit</th><th class="num">Outstanding (GBP)</th><th></th>
+      <th>#</th><th>Company</th><th>Contact</th><th>Email</th><th>Currency</th><th>Payment Terms</th><th class="num">Credit Limit</th><th class="num">Outstanding (GBP)</th><th></th>
     </tr></thead>
     <tbody id="buy-tbody"></tbody>
   </table></div>
@@ -1078,9 +1078,20 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.42</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.43</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Friendly reference numbers (REQ/SPEC-DATA-001) — Suppliers, Line Items, Buyers, and Contacts each get a permanent, human-friendly <code>num</code> (SUP-0001, LI-0001, BUY-0001, CON-0001), assigned once at creation, shown as the first list-table column. <code>parseRefNum()</code>/<code>nextRefNum()</code>/<code>backfillRefNums()</code> added; backfill runs on load, on restore, and immediately after every Sheets sync pull (fixes a would-be duplicate-number bug found by schema-migration-reviewer where a sync pull silently strips <code>num</code> since it isn't part of the Sheets field mapping). Cross-device <code>num</code> divergence remains an open, accepted limitation (DATA-GAP-003) of the localStorage-only architecture.</li>
+          <li>New: Excel/Power Query data-quality reporting pipeline (REQ/SPEC-RPT-002) — a manual, backup-driven process (not new app code) for spotting exact-duplicate Suppliers/Line Items/Buyers/Contacts and, once <code>num</code> exists, cross-device identifier divergence. Documented in <code>docs/reporting-pipeline-runbook.md</code>.</li>
+          <li><code>AI_SYSTEM_PROMPT</code> updated with a Reference Numbers section. 19 new tests (backfill algorithm, malformed-input handling, two critical collision/stripping regression tests, per-entity save-path coverage). Tests: 322/322 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.42</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <code>temperature: 0.2</code> added to AI assistant API calls (AI-GAP-007) — live testing found the AI inconsistently emitted action blocks for create requests (3 of 6 tested actions described manual steps instead), likely due to unset/default sampling temperature; lower temperature improves reliability of "always do X" instruction-following</li>
@@ -2181,6 +2192,50 @@ function canTransitionStatus(from, to) {
 const G = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
 const today = () => new Date().toISOString().slice(0,10);
+
+// ── FRIENDLY REFERENCE NUMBERS (SPEC-DATA-001) ──────────────────
+function parseRefNum(numStr, prefix) {
+  var m = numStr && numStr.match(new RegExp('^' + prefix + '-(\\d{4,})$'));
+  return m ? parseInt(m[1], 10) : null;
+}
+function nextRefNum(entityArray, prefix) {
+  var max = 0;
+  entityArray.forEach(function(rec) {
+    var n = parseRefNum(rec.num, prefix);
+    if (n !== null && n > max) max = n;
+  });
+  return prefix + '-' + String(max + 1).padStart(4, '0');
+}
+function backfillRefNums() {
+  function assign(arr, prefix) {
+    var max = 0;
+    arr.forEach(function(rec) {
+      var n = parseRefNum(rec.num, prefix);
+      if (n !== null && n > max) max = n;
+    });
+    var toNumber = arr.filter(function(rec) { return !rec.num; });
+    toNumber.sort(function(a, b) {
+      var aHas = !!a.createdAt, bHas = !!b.createdAt;
+      if (aHas && bHas) return a.createdAt < b.createdAt ? -1 : (a.createdAt > b.createdAt ? 1 : 0);
+      if (aHas && !bHas) return 1;
+      if (!aHas && bHas) return -1;
+      return 0;
+    });
+    var changed = false;
+    toNumber.forEach(function(rec) {
+      max += 1;
+      rec.num = prefix + '-' + String(max).padStart(4, '0');
+      changed = true;
+    });
+    return changed;
+  }
+  var changed = false;
+  if (assign(DB.sup, 'SUP')) changed = true;
+  if (assign(DB.li,  'LI'))  changed = true;
+  if (assign(DB.buy, 'BUY')) changed = true;
+  if (assign(DB.con, 'CON')) changed = true;
+  if (changed) saveAll();
+}
 function sv(k, d) {
   if (!_storageOK) { toast('⚠ Storage unavailable — data will not persist', 5000); return; }
   try { localStorage.setItem(k, JSON.stringify(d)); }
@@ -2915,6 +2970,7 @@ async function pullAll() {
     } catch(e) { failed.push(eKey); console.warn('[Stackd] pullAll: ' + eKey + ' failed —', e.message); }
   }
 
+  backfillRefNums();
   saveAll(); renderAll();
   if (failed.length) {
     setSyncStatus('err');
@@ -3466,7 +3522,7 @@ function rSup() {
   var f = DB.sup.filter(function(s){ return !q || (s.name||'').toLowerCase().includes(q) || (s.country||'').toLowerCase().includes(q); });
   G('sup-em').style.display = f.length ? 'none' : 'block';
   G('sup-tb').innerHTML = f.map(function(s){
-    return '<tr><td style="font-weight:500;color:var(--cr)">' + san(s.name||'-') + (s._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td><td>' + san(s.country||'-') + '</td><td>' + san(s.ct||'-') + '</td><td>' + san(s.email||'-') + '</td><td>' + san(s.phone||'-') + '</td><td>' + san(s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(s.notes||'') + '</td>' +
+    return '<tr><td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(s.num||'-') + '</td><td style="font-weight:500;color:var(--cr)">' + san(s.name||'-') + (s._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td><td>' + san(s.country||'-') + '</td><td>' + san(s.ct||'-') + '</td><td>' + san(s.email||'-') + '</td><td>' + san(s.phone||'-') + '</td><td>' + san(s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(s.notes||'') + '</td>' +
       '<td><button class="ab" onclick="editSup(\'' + s.id + '\')">&#9998;</button><button class="ab" onclick="delSup(\'' + s.id + '\')">&#10005;</button></td></tr>';
   }).join('');
   var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
@@ -3531,7 +3587,7 @@ function openSup() {
 }
 function editSup(id) {
   var s = DB.sup.find(function(x){ return x.id===id; }); if(!s) return;
-  EI.s = id; G('sup-mt').textContent = 'Edit Supplier';
+  EI.s = id; G('sup-mt').textContent = 'Edit Supplier' + (s.num ? ' — ' + s.num : '');
   G('sf-n').value=s.name||''; G('sf-c').value=s.country||''; G('sf-ct').value=s.ct||'';
   G('sf-e').value=s.email||''; setSupPhone(s.phone||''); G('sf-nt').value=s.notes||'';
   G('sf-cur').value=s.cur||'USD';
@@ -3544,7 +3600,8 @@ function editSup(id) {
 async function saveSup() {
   if (!vSup()) return;
   var _supIsNew = !EI.s;
-  var s = { id:EI.s||uid(), name:G('sf-n').value.trim(), country:G('sf-c').value.trim(), ct:G('sf-ct').value.trim(), email:G('sf-e').value.trim(), phone:getSupPhone(), cur:G('sf-cur').value, notes:G('sf-nt').value.trim() };
+  var _existSup = EI.s ? DB.sup.find(function(x){ return x.id===EI.s; }) : null;
+  var s = { id:EI.s||uid(), num:_existSup?_existSup.num:nextRefNum(DB.sup,'SUP'), name:G('sf-n').value.trim(), country:G('sf-c').value.trim(), ct:G('sf-ct').value.trim(), email:G('sf-e').value.trim(), phone:getSupPhone(), cur:G('sf-cur').value, notes:G('sf-nt').value.trim() };
   if (EI.s) { var i=DB.sup.findIndex(function(x){return x.id===EI.s;}); if(i>-1) DB.sup[i]=s; } else DB.sup.push(s);
   sv(K.s,DB.sup); closeM('ov-sup'); rSup(); audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s);
   if (_supIsNew) { logEv('supplier', s.id, 'created', 'Supplier ' + s.name + ' created', 'operator'); }
@@ -3584,7 +3641,7 @@ function rLI() {
       ? '<span onclick="togglePH(\'' + li.id + '\')" style="cursor:pointer;font-size:.44rem;color:var(--bl);border:1px solid var(--bl);padding:1px 5px;border-radius:2px;white-space:nowrap;margin-left:4px;" title="Show price history">' + ph.length + ' pt' + (ph.length!==1?'s':'') + '</span>'
       : '';
     var phRow = ph.length
-      ? '<tr id="ph-' + li.id + '" style="display:none;"><td colspan="11" style="padding:0;background:var(--card);border-bottom:1px solid var(--ln);">' +
+      ? '<tr id="ph-' + li.id + '" style="display:none;"><td colspan="12" style="padding:0;background:var(--card);border-bottom:1px solid var(--ln);">' +
           '<div style="padding:8px 14px;">' +
           '<table style="width:100%;border-collapse:collapse;font-size:.52rem;">' +
           '<thead><tr style="color:var(--m);"><th style="padding:3px 8px;text-align:left;">Date</th><th style="padding:3px 8px;text-align:right;">Cost</th><th style="padding:3px 8px;text-align:right;">Price</th><th style="padding:3px 8px;text-align:left;">Invoice</th><th style="padding:3px 8px;text-align:left;">Notes</th></tr></thead><tbody>' +
@@ -3599,7 +3656,7 @@ function rLI() {
           }).join('') +
           '</tbody></table></div></td></tr>'
       : '';
-    return '<tr><td style="color:var(--m);font-size:.54rem;">' + (san(li.sku)||'-') + '</td><td style="font-weight:500;">' + (san(li.desc)||'-') + '</td><td style="color:var(--m);font-size:.56rem;">' + san(li.specs||'-') + '</td><td style="color:var(--m);font-size:.54rem;">' + san(li.hs||'-') + '</td><td>' + san(gsn(li.supId)) + '</td>' +
+    return '<tr><td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(li.num||'-') + '</td><td style="color:var(--m);font-size:.54rem;">' + (san(li.sku)||'-') + '</td><td style="font-weight:500;">' + (san(li.desc)||'-') + '</td><td style="color:var(--m);font-size:.56rem;">' + san(li.specs||'-') + '</td><td style="color:var(--m);font-size:.54rem;">' + san(li.hs||'-') + '</td><td>' + san(gsn(li.supId)) + '</td>' +
       '<td class="num">' + fmt(li.cost,li.cur||'USD') + '</td>' +
       '<td class="num">' + fmt(li.price,li.cur||'USD') + phBadge + '</td>' +
       '<td>' + (li.uom||'-') + '</td>' +
@@ -3636,7 +3693,7 @@ function openLI() {
 }
 function editLI(id) {
   var li=DB.li.find(function(x){return x.id===id;}); if(!li) return;
-  EI.l=id; G('li-mt').textContent='Edit Line Item';
+  EI.l=id; G('li-mt').textContent='Edit Line Item' + (li.num ? ' — ' + li.num : '');
   G('lf-s').value=li.sku||''; G('lf-d').value=li.desc||''; G('lf-sp').value=li.specs||''; G('lf-hs').value=li.hs||'';
   G('lf-u').value=li.uom||''; G('lf-nt').value=li.notes||'';
   G('lf-c').value=li.cost||''; G('lf-p').value=li.price||'';
@@ -3662,7 +3719,7 @@ async function saveLI() {
 
   var diml=+G('lf-diml').value||0, dimw=+G('lf-dimw').value||0, dimh=+G('lf-dimh').value||0;
   var dims=(diml&&dimw&&dimh)?{l:diml,w:dimw,h:dimh}:(existing&&existing.dims)||null;
-  var li={id:EI.l||uid(),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history,invoiceRefs:existing?(existing.invoiceRefs||[]):[],dims:dims,dg:!!(G('lf-dg')&&G('lf-dg').checked)};
+  var li={id:EI.l||uid(),num:existing?existing.num:nextRefNum(DB.li,'LI'),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history,invoiceRefs:existing?(existing.invoiceRefs||[]):[],dims:dims,dg:!!(G('lf-dg')&&G('lf-dg').checked)};
   if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
   sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li).catch(function(){});
 }
@@ -4608,7 +4665,7 @@ function quickAddBuyer() {
   qName = qName.trim();
   var dup = DB.buy.find(function(b){ return b.name.toLowerCase() === qName.toLowerCase(); });
   if (dup) { alert('A buyer with this name already exists.'); populateBuyDropdown('if-b', dup.id); return; }
-  var nb = { id:'BUY' + Date.now(), name:qName, contactName:'', email:'', phone:'', address:'', currency:'GBP', paymentTerms:'', creditLimit:null, notes:'', createdAt:new Date().toISOString() };
+  var nb = { id:'BUY' + Date.now(), num:nextRefNum(DB.buy,'BUY'), name:qName, contactName:'', email:'', phone:'', address:'', currency:'GBP', paymentTerms:'', creditLimit:null, notes:'', createdAt:new Date().toISOString() };
   DB.buy.push(nb);
   sv(K.bu, DB.buy);
   logEv('buyer', nb.id, 'created', 'Buyer quick-created: ' + nb.name, 'operator');
@@ -4621,6 +4678,7 @@ function renderBuyers() {
     var outGBP = DB.inv.filter(function(i){ return i.buyerId === b.id; })
       .reduce(function(s,i){ return s + toGBP(iCalc(i).bal, i.currency||'USD'); }, 0);
     return '<tr>'
+      + '<td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(b.num||'-') + '</td>'
       + '<td><strong>' + san(b.name) + '</strong></td>'
       + '<td>' + san(b.contactName||'') + '</td>'
       + '<td>' + san(b.email||'') + '</td>'
@@ -4639,7 +4697,7 @@ function renderBuyers() {
 function openBuy(id) {
   EI.bu = id;
   var buyer = id ? DB.buy.find(function(b){ return b.id === id; }) : null;
-  G('buy-modal-title').textContent = id ? 'Edit Buyer' : 'New Buyer';
+  G('buy-modal-title').textContent = id ? ('Edit Buyer' + (buyer && buyer.num ? ' — ' + buyer.num : '')) : 'New Buyer';
   G('buy-name').value = buyer ? buyer.name : '';
   G('buy-cname').value = buyer ? (buyer.contactName||'') : '';
   G('buy-email').value = buyer ? (buyer.email||'') : '';
@@ -4705,7 +4763,7 @@ function saveBuy() {
       logEv('buyer', rec.id, 'updated', 'Buyer updated: ' + rec.name, 'operator');
     }
   } else {
-    var nb = { id:'BUY' + Date.now(), name:name, contactName:G('buy-cname').value.trim(),
+    var nb = { id:'BUY' + Date.now(), num:nextRefNum(DB.buy,'BUY'), name:name, contactName:G('buy-cname').value.trim(),
       email:G('buy-email').value.trim(), phone:G('buy-phone').value.trim(),
       address:G('buy-addr').value.trim(), currency:G('buy-cur').value,
       paymentTerms:G('buy-pt').value, creditLimit:G('buy-cl').value !== '' ? parseFloat(G('buy-cl').value) : null,
@@ -6425,7 +6483,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.42).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.43).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -6445,11 +6503,14 @@ var AI_SYSTEM_PROMPT = [
   'Line items need a supplier. Quotes use suppliers and line items. Invoices use line items from the library. POs are auto-generated from invoices or converted from quotes.',
   'Skipping steps causes missing COGS data, broken P&L, and incomplete PO generation.',
   '',
+  '## Reference Numbers — num field (v2.9.43)',
+  'Suppliers, Line Items, Buyers, and Contacts each carry a human-friendly reference number in a `num` field, shown as the first column in each list table (e.g. SUP-0001, LI-0001, BUY-0001, CON-0001). Assigned automatically once, at creation time — never changes on edit. Existing records without a num are backfilled automatically on load, on restore, and after a Sheets sync pull. num is purely a display/reference convenience — it carries no PII, is never synced to Google Sheets, and internal linking between records still uses the underlying id field. Because Stackd Ops has no central server, num can diverge between two devices that have not synced with each other (DATA-GAP-003, open/unmitigated) — this is a known, accepted limitation of the localStorage-only architecture, not a bug to report.',
+  '',
   '## Suppliers',
-  'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes.',
+  'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes. Each supplier is auto-assigned a SUP-#### reference number on creation (see Reference Numbers above).',
   '',
   '## Line Items (Product Catalogue)',
-  'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox.',
+  'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox. Each line item is auto-assigned an LI-#### reference number on creation (see Reference Numbers above).',
   'Dimensions (L/W/H cm): optional per-unit dimensions. CBM/unit is calculated automatically (L×W×H÷1,000,000) and shown read-only. Stored as dims:{l,w,h} on the record. Used by Load Calculator. DG Item flag marks the product as Dangerous Goods — propagates into quote feasibility check and load calculator DG alerts.',
   'Invoice usage: each library item tracks which invoices it has been used on (invoiceRefs index). The list view shows "used on N invoice(s)" against each item. The Import from Library picker marks items already on the current invoice with a green tick.',
   'Rule: wrong unit cost or price corrupts profit calculations on every invoice using that product.',
@@ -6605,7 +6666,7 @@ var AI_SYSTEM_PROMPT = [
   'AI Assistant: Claude API Key (stored locally in browser only).',
   '',
   '## Contacts',
-  'Contacts tab → + New Contact. Stores trade leads and contacts with: Name (required), Email (required — dedup key, case-insensitive), Phone, Company, Status (lead / qualified / converted / closed), Source (manual / chat), Supplier (optional — links the contact to one supplier), Enquiry log (append-only), Internal notes.',
+  'Contacts tab → + New Contact. Stores trade leads and contacts with: Name (required), Email (required — dedup key, case-insensitive), Phone, Company, Status (lead / qualified / converted / closed), Source (manual / chat), Supplier (optional — links the contact to one supplier), Enquiry log (append-only), Internal notes. Each contact is auto-assigned a CON-#### reference number on creation (see Reference Numbers above).',
   'GDPR basis is auto-derived from status on every save (not user-editable): lead/qualified → Art.6(1)(b) pre-contractual; converted/closed → Art.6(1)(f) legitimate interests. Contacts stale for >700 days are flagged with a Stale badge.',
   'Dedup: saving a new contact with an email that already exists prompts to merge the enquiry into the existing record, or create a separate record anyway. Edit-path email changes are not deduped.',
   'Quote integration: "→ Quote" button on any contact row opens the New Quote modal pre-populated with the contact\'s name (Client field) and email (Notes field). Saving that quote automatically sets the contact status to Converted. Deleting the quote reverts the contact to Qualified.',
@@ -6647,7 +6708,7 @@ var AI_SYSTEM_PROMPT = [
   'DB.events now receives lifecycle events for Invoice (created, status_changed, deleted, unlocked, edited), PO (created, status_changed, deleted), Payment (created, deleted), and Supplier (created, updated, deleted). When a locked invoice is unlocked and then saved, an editHistory[] entry is added to the invoice record capturing: timestamp, reason, actor (always "operator"), and a changes[] array of { field, from, to } for each tracked field that changed. editHistory is preserved in backup/restore. The 2,000-event FIFO cap on DB.events may fill faster on active portals.',
   '',
   '## Buyers (v2.9.37)',
-  'Buyers tab → + New Buyer. Stores customer/buyer records for invoice assignment. Fields: Company Name (required, case-insensitive unique), Contact Name, Email, Phone, Address, Currency (default USD — used for per-buyer financial summary display), Payment Terms (controlled lookup), Credit Limit, Notes.',
+  'Buyers tab → + New Buyer. Stores customer/buyer records for invoice assignment. Fields: Company Name (required, case-insensitive unique), Contact Name, Email, Phone, Address, Currency (default USD — used for per-buyer financial summary display), Payment Terms (controlled lookup), Credit Limit, Notes. Each buyer is auto-assigned a BUY-#### reference number on creation, distinct from its internal id (see Reference Numbers above).',
   'Seeded record: "Ad-Hoc" buyer (id BUY-ADHOC) is created automatically on first load and on every restore — it is the default assignment for invoices where no specific buyer is selected. The Ad-Hoc record cannot be deleted.',
   'Invoice integration: the Buyer field on the invoice form is now a dropdown linked to DB.buy. Legacy invoices (created before v2.9.37) without a buyerId are matched to a named buyer by case-insensitive name lookup when editing, or default to Ad-Hoc if no match. Selecting "＋ New Buyer…" at the bottom of the dropdown opens a quick-create prompt (name only) without leaving the invoice form.',
   'Per-buyer summary: inside the Buyer edit modal, a collapsible Summary panel shows: total invoiced (in buyer\'s own currency), total payments received (GBP), outstanding balance (GBP), invoice count. Amounts are converted using fromGBP(toGBP(amount, invCur), buyerCur) via configured QR rates.',
@@ -7569,6 +7630,7 @@ function doImport(e) {
     if (data.fpmRepairDone) { localStorage.setItem('st_fpm_repair_v1', data.fpmRepairDone); }
     if (data.buy && Array.isArray(data.buy)) { DB.buy = data.buy; sv(K.bu, DB.buy); }
     seedAdHocBuyer();
+    backfillRefNums();
     saveAll();
     renderAll();
     rCfg();
@@ -8445,6 +8507,7 @@ function rCon() {
     var stale = isConStale(c) ? ' <span class="tag" style="background:#fff3cd;color:#856404;font-size:.42rem;">STALE</span>' : '';
     var lastDate = c.lastContactedAt ? c.lastContactedAt.slice(0,10) : '—';
     return '<tr>' +
+      '<td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(c.num||'-') + '</td>' +
       '<td>' + san(c.name) + stale + (c._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(c.company||'—') + '</td>' +
       '<td>' + san(c.email) + '</td>' +
@@ -8483,7 +8546,7 @@ function editCon(id) {
   var c = DB.con.find(function(x){ return x.id === id; });
   if (!c) return;
   EI.co = id;
-  G('con-title').textContent = 'Edit Contact';
+  G('con-title').textContent = 'Edit Contact' + (c.num ? ' — ' + c.num : '');
   G('ct-name').value = c.name || '';
   G('ct-email').value = c.email || '';
   G('ct-phone').value = c.phone || '';
@@ -8564,6 +8627,7 @@ function saveCon() {
 
   var con = {
     id:              EI.co || uid(),
+    num:             existC ? existC.num : nextRefNum(DB.con, 'CON'),
     name:            name,
     email:           email,
     phone:           G('ct-phone').value.trim(),
@@ -9239,6 +9303,7 @@ function initApp() {
     runFPMMigration();
     repairCalcFields();
     seedAdHocBuyer();
+    backfillRefNums();
     if (SS.url) {
       G('banner').style.display='none';
       G('cfg-url').value=SS.url;

@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.42**  
-**Test count: 303/303 PASS** (`node tests/run.js`)
+**Current version: v2.9.43**  
+**Test count: 322/322 PASS** (`node tests/run.js`)
 
 ---
 
@@ -142,6 +142,7 @@ See `docs/known-gaps.md` for full entries.
 | BUY-GAP-001 | Buyers / sync | Buyers not synced to Google Sheets — FM-1 freeze; deferred to v3.x |
 | BUY-GAP-002 | Buyers / legacy | Legacy invoices without buyerId matched by name on edit; default BUY-ADHOC if no match |
 | BUY-GAP-003 | Buyers / credit | Credit limit is display-only; no enforcement on invoice save |
+| DATA-GAP-003 | Reference numbers / cross-device | `num` (SUP-/LI-/BUY-/CON-####) can diverge between two devices that haven't synced; same-device `pullAll()` stripping is mitigated (v2.9.43); cross-device divergence remains open, accepted design trade-off |
 
 ---
 

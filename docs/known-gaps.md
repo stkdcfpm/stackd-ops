@@ -204,6 +204,12 @@ Note: the saved-record preview path (`prevInvId()`, the table's PDF eye-icon but
 **Logged:** v2.9.14 (audit); **Fixed:** v2.9.14  
 **Detail:** Prior to v2.9.14, `AS` defaults included FPM International's real company name, address, bank details, and contact information. This meant any operator who deployed Stackd Ops without configuring company settings would unknowingly use FPM data on their PDFs, and the data would be visible in source control. Fixed by replacing all defaults with empty strings.
 
+### DATA-GAP-003 — Friendly reference numbers (`num`) can diverge across devices/browsers — open, unmitigated
+**Area:** `nextRefNum()` / `backfillRefNums()` — Supplier/Line Item/Buyer/Contact `num` assignment (SPEC-DATA-001)  
+**Logged:** v2.9.43 (REQ-DATA-001 / SPEC-DATA-001-v6)  
+**Detail:** `num` is assigned locally from each device's own view of `DB`, with no central authority (Stackd Ops is localStorage-only, per FM-1). Two devices that have not synced with each other can independently assign the same `num` (e.g. `SUP-0012`) to two different real records. The same-device risk — `pullAll()` silently stripping a record's `num` on every sync pull because `num` is deliberately excluded from `FIELD_MAPS` — **is mitigated** as of this version: `backfillRefNums()` now runs immediately after every `pullAll()` completes and re-assigns any record that lost its `num`, before `saveAll()`/`renderAll()`. The cross-device divergence risk remains **open and unmitigated** — there is no reconciliation event when two independently-`num`-ed devices later sync. This is accepted as a permanent design trade-off of the localStorage-only architecture (not "for v1"), and is not considered mitigated by REQ-RPT-002's reporting pipeline — that pipeline can surface a duplicate `num` in an exported report for manual review, but does nothing to prevent or auto-resolve the divergence at assignment time.  
+**Related, deferred separately:** `initApp()`'s existing data-integrity check (index.html, "Data integrity check" IIFE) was not extended to actively scan for and warn on duplicate `num` values across `DB.sup`/`DB.li`/`DB.buy`/`DB.con` at load time — this was flagged as a recommended (non-blocking) enhancement by schema-migration-reviewer and is deferred, not implemented, in this version.
+
 ---
 
 ## Sync
