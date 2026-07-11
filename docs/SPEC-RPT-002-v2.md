@@ -46,7 +46,7 @@ For each entity sheet (each an Excel Table per §3 step 5), add a helper column 
 | Suppliers | `email` if present, else `name` | `=IF([@Email]<>"", COUNTIF(Suppliers[Email], [@Email]), COUNTIF(Suppliers[Name], [@Name]))` |
 | Contacts | `email` (always present per validation rules) | `=COUNTIF(Contacts[Email], [@Email])` |
 | Buyers | `email` if present, else `name` | Same pattern as Suppliers, referencing the `Buyers` table |
-| Line Items | `name`/`desc` (no email field exists on this entity) | `=COUNTIF(LineItems[Desc], [@Desc])` |
+| Line Items | `desc` (this entity has no `name` field — confirmed against `docs/data-model.md`; no email field either) | `=COUNTIF(LineItems[Desc], [@Desc])` |
 
 Conditional formatting rule: **Home → Conditional Formatting → New Rule → Use a formula** — `=[@MatchCount]>1`, fill highlight colour applied to the whole row via "Apply to" range set to the table.
 
@@ -62,7 +62,7 @@ Once `num` exists:
 
 1. Export a backup from **Device A**, import into the workbook (§3) as `Suppliers_A`, `Contacts_A`, etc.
 2. Export a backup from **Device B**, import as a second set of sheets (`Suppliers_B`, `Contacts_B`, etc.) — Power Query supports multiple named queries against different source files in the same workbook
-3. Add a comparison sheet with a formula joining the two sets on the match key (§4 — email or name) and displaying both `num` values side by side:
+3. Add a comparison sheet with a formula joining the two sets on the match key (§4 — email or name) and displaying both `num` values side by side. **Requires Excel 365 or Excel 2021+** (`XLOOKUP` is not available in Excel 2019 or earlier — if only an older version is available, `INDEX`/`MATCH` is an equivalent, older-compatible alternative):
    `=XLOOKUP([@Email], Suppliers_B[Email], Suppliers_B[num], "not found on device B")`
 4. A conditional formatting rule highlights any row where `Suppliers_A[num] <> Suppliers_B[num]` for a matched record — this is the divergence DATA-GAP-001 describes, now made visible
 
