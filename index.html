@@ -393,7 +393,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div class="fld"><label>Contact</label><select id="of-contact"></select></div>
       <div class="fld"><label>Stage</label><select id="of-stage"></select></div>
       <div class="fld"><label>Description</label><textarea id="of-desc" rows="2"></textarea></div>
-      <div class="fld"><label>Linked Quote</label><div id="of-quote-info" style="font-size:.6rem;color:var(--m);"></div></div>
+      <div class="fld"><label>Linked Quote</label><div id="of-quote-info" style="font-size:.6rem;color:var(--m);margin-bottom:4px;"></div><button class="btn btn-g" id="of-quote-btn" onclick="ordConvertToQuote(EI.ord)" style="display:none;">Create Quote</button></div>
       <div class="fld">
         <label>Actions</label>
         <div id="of-actions-list"></div>
@@ -2382,6 +2382,14 @@ function backfillOrderRequests() {
 }
 function saveOrd(ord) {
   var existing = ord.id ? DB.ord.find(function(o){ return o.id === ord.id; }) : null;
+  var contactExists = ord.contactId ? DB.con.some(function(c){ return c.id === ord.contactId; }) : false;
+  if (!contactExists) { vErr('of-contact', 'Please select a valid contact'); return false; }
+  vOk('of-contact');
+  if (existing && ord.stage !== existing.stage && !ordCanTransition(existing.stage, ord.stage)) {
+    vErr('of-stage', 'Cannot move from ' + existing.stage + ' to ' + ord.stage + ' directly — use Admin Override');
+    return false;
+  }
+  vOk('of-stage');
   if (existing) {
     Object.assign(existing, ord);
   } else {
@@ -2436,7 +2444,11 @@ function openOrd(id) {
   var ord = id ? DB.ord.find(function(o){ return o.id === id; }) : null;
   G('ord-title').textContent = id ? ('Edit Order Request' + (ord && ord.num ? ' — ' + ord.num : '')) : 'New Order Request';
   var contactSel = G('of-contact');
+  var linkedContact = ord && ord.contactId ? DB.con.find(function(x){ return x.id === ord.contactId; }) : null;
   contactSel.innerHTML = '<option value="">Select...</option>' + DB.con.map(function(c){ return '<option value="' + c.id + '">' + san(c.name) + '</option>'; }).join('');
+  if (ord && ord.contactId && !linkedContact) {
+    contactSel.innerHTML += '<option value="' + ord.contactId + '" disabled>— contact deleted —</option>';
+  }
   contactSel.value = ord ? (ord.contactId||'') : '';
   populateOrdStageDrop('of-stage', ord ? ord.stage : 'New');
   populateOrdStageDrop('of-override-stage', ord ? ord.stage : 'New');
@@ -2445,6 +2457,8 @@ function openOrd(id) {
   G('of-override-reason').value = '';
   var q = ord && ord.activeQuoteId ? DB.qt.find(function(x){ return x.id === ord.activeQuoteId; }) : null;
   G('of-quote-info').textContent = q ? (q.num + ' (' + q.status + ')') : 'No Quote linked yet';
+  var quoteBtn = G('of-quote-btn');
+  if (quoteBtn) quoteBtn.style.display = (ord && ord.id) ? '' : 'none';
   _ordFormActions = ord ? (ord.actions||[]).slice() : [];
   renderOrdActions(_ordFormActions);
   G('ov-ord').classList.add('on');
@@ -2475,24 +2489,18 @@ function ordToggleAction(i) {
   }
 }
 function saveOrdFromForm() {
-  var contactId = G('of-contact').value;
-  if (!contactId) { toast('Please select a contact', 4000); return; }
-  var newStage = G('of-stage').value;
   var existing = EI.ord ? DB.ord.find(function(o){ return o.id === EI.ord; }) : null;
-  if (existing && newStage !== existing.stage && !ordCanTransition(existing.stage, newStage)) {
-    toast('Cannot move from ' + existing.stage + ' to ' + newStage + ' directly — use Admin Override.', 5000);
-    return;
-  }
   var ord = {
     id: existing ? existing.id : undefined,
-    contactId: contactId,
-    stage: newStage,
+    contactId: G('of-contact').value,
+    stage: G('of-stage').value,
     description: G('of-desc').value.trim(),
     actions: _ordFormActions.length ? _ordFormActions : (existing ? existing.actions : []),
     activeQuoteId: existing ? existing.activeQuoteId : '',
     outcome: existing ? existing.outcome : { result:null, reason:'', closedAt:null }
   };
-  saveOrd(ord);
+  var saved = saveOrd(ord);
+  if (!saved) return;
   closeM('ov-ord');
   rOrd();
   toast('Order Request saved');
@@ -8747,7 +8755,7 @@ function saveQte() {
     if (convOrd) {
       convOrd.activeQuoteId = qt.id;
       if (ordCanTransition(convOrd.stage, 'Quoted')) convOrd.stage = 'Quoted';
-      sv(K.ord, DB.ord);
+      saveAll();
     }
     cConvertOrdId = null;
   }

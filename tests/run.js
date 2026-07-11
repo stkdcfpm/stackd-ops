@@ -4155,6 +4155,7 @@ test('backfillOrderRequests: Contacts with neither enquiries nor a Quote produce
 
 test('saveOrd: new record gets num via nextRefNum, edit does not change it', () => {
   resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test Contact' }];
   var rec = ctx.saveOrd({ contactId:'c1', stage:'New', description:'test' });
   assert(rec.num, 'new Order Request gets a num');
   var originalNum = rec.num;
@@ -4162,6 +4163,22 @@ test('saveOrd: new record gets num via nextRefNum, edit does not change it', () 
   var updated = ctx.DB.ord.find(function(o){ return o.id === rec.id; });
   assertEqual(updated.num, originalNum, 'num must not change on edit');
   assertEqual(updated.description, 'updated', 'edit applies other field changes');
+});
+
+test('saveOrd: rejects a contactId that does not resolve to an existing Contact', () => {
+  resetDB();
+  var result = ctx.saveOrd({ contactId:'does-not-exist', stage:'New', description:'test' });
+  assertEqual(result, false, 'save is rejected');
+  assertEqual(ctx.DB.ord.length, 0, 'no record persisted');
+});
+
+test('saveOrd: rejects a non-adjacent stage change via the normal (non-override) path', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test Contact' }];
+  var rec = ctx.saveOrd({ contactId:'c1', stage:'New', description:'test' });
+  var result = ctx.saveOrd({ id: rec.id, contactId:'c1', stage:'Fulfilled', description:'test' });
+  assertEqual(result, false, 'save is rejected for a skipped transition');
+  assertEqual(ctx.DB.ord.find(function(o){ return o.id === rec.id; }).stage, 'New', 'stage unchanged');
 });
 
 test('delOrd: does not cascade-delete or corrupt a linked Quote/PO/Invoice', () => {
