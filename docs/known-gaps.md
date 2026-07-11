@@ -88,6 +88,35 @@ Note: the saved-record preview path (`prevInvId()`, the table's PDF eye-icon but
 
 ---
 
+## Purchase Orders
+
+### PO-GAP-001 — `qteToPoConvert()` attributes every Quote line to the first line's supplier, mis-assigning multi-supplier Quotes *(Open)*
+**Area:** `qteToPoConvert()` — Quote → PO conversion (`index.html`)
+**Logged:** v2.9.43 (2026-07-11), found while reviewing a real multi-category procurement basket (seeds, salt fish, mulching film, irrigation, sunflower oil, plastic bags, fertiliser, fresh produce, equipment — sourced from at least three distinct countries/suppliers in one basket) against the Order Management release
+**Detail:** `qteToPoConvert()` creates exactly **one** PO from an entire Quote's `lines[]`, and assigns that PO's `supId` from whichever line happens to be first in the array with a non-empty `supId`:
+
+```js
+var firstSup = (q.lines||[]).find(function(l){ return l.supId; });
+var po = {
+  id: uid(), num: poNum, supId: firstSup ? firstSup.supId : '',
+  ...
+  lines: (q.lines||[]).map(function(l){
+    return { rid:uid(), liId:'', desc:l.desc, qty:l.qty||1, up:l.cost, uom:l.uom||'pcs', cur:q.currency||'USD' };
+  }),
+  quoteId: id, quoteNum: q.num
+};
+```
+
+Every line in `lines[]` is copied onto this single PO regardless of its own `supId` — the per-line `supId` is read once (to pick the PO's overall supplier) and then **discarded**; nothing in the mapped `lines` array retains or re-checks it. For a single-supplier Quote this is invisible and correct by coincidence. For a Quote whose lines span multiple suppliers — the normal case for a mixed-category procurement basket, not an edge case — every line **except those genuinely belonging to the first line's supplier** is silently attributed to the wrong supplier's PO. There is no error, no warning, and no split into separate POs per supplier.
+
+**Consequence:** the resulting PO understates or misstates what is actually owed to each real supplier, and (depending on downstream PO→Invoice/shipment linkage) risks an Invoice or shipment being raised against the wrong supplier relationship entirely. This directly affects the Order Management release, since a "one order request, many product categories, many countries of origin" basket is the intended real-world shape of an Order Request (per REQ-ORD-001/SPEC-ORD-001), not an unusual input.
+
+**Root cause:** `qteToPoConvert()` was written assuming (or only ever tested against) single-supplier Quotes. The data model already supports per-line suppliers (`q.lines[].supId`, used correctly everywhere else — quote calculation, feasibility checks) — the gap is isolated to this one conversion function not grouping by that field.
+
+**Decision:** Backlogged, to be fixed via REQ-PO-001 (see `docs/REQ-PO-001-v1.md`) rather than a quiet patch, since the fix changes `Quote.linkedPOId` from a scalar to a one-to-many relationship — a schema-shape change that should go through the same requirements-gate → spec-gate → schema-migration-reviewer cycle as any other `index.html` state-layer change, not be treated as a simple bug fix. Recommended to land alongside or immediately after SPEC-ORD-001, since Order Requests will make multi-supplier baskets a routine, not exceptional, input.
+
+---
+
 ## Security — Accepted Architecture Risks
 
 ### SEC-GAP-001 — Apps Script sync token and spreadsheet IDs in source control *(FIXED)*

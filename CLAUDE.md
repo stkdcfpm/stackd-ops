@@ -120,6 +120,7 @@ See `docs/known-gaps.md` for full entries.
 | ID | Area | Summary |
 |---|---|---|
 | QTE-GAP-001 | Quote status | Convert to PO restricted to Accepted status — Fixed v2.9.25 |
+| PO-GAP-001 | Quote→PO conversion | qteToPoConvert() attributes every line to the first line's supplier — multi-supplier Quotes mis-assigned; fix drafted as REQ-PO-001 |
 | LIB-GAP-001 | Library sync | `syncEnt('li')` not called when `invoiceRefs` mutates |
 | SEC-GAP-001 | Code.gs secrets | Spreadsheet IDs and sync token hardcoded in source |
 | SEC-GAP-002 | Sheets sync GDPR | PII transmitted externally; opt-in; accepted until first external client |
