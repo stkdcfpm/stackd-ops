@@ -90,7 +90,7 @@ Note: the saved-record preview path (`prevInvId()`, the table's PDF eye-icon but
 
 ## Purchase Orders
 
-### PO-GAP-001 — `qteToPoConvert()` attributes every Quote line to the first line's supplier, mis-assigning multi-supplier Quotes *(Open)*
+### PO-GAP-001 — `qteToPoConvert()` attributes every Quote line to the first line's supplier, mis-assigning multi-supplier Quotes *(Fixed v2.9.44)*
 **Area:** `qteToPoConvert()` — Quote → PO conversion (`index.html`)
 **Logged:** v2.9.43 (2026-07-11), found while reviewing a real multi-category procurement basket (seeds, salt fish, mulching film, irrigation, sunflower oil, plastic bags, fertiliser, fresh produce, equipment — sourced from at least three distinct countries/suppliers in one basket) against the Order Management release
 **Detail:** `qteToPoConvert()` creates exactly **one** PO from an entire Quote's `lines[]`, and assigns that PO's `supId` from whichever line happens to be first in the array with a non-empty `supId`:
@@ -113,7 +113,13 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 **Root cause:** `qteToPoConvert()` was written assuming (or only ever tested against) single-supplier Quotes. The data model already supports per-line suppliers (`q.lines[].supId`, used correctly everywhere else — quote calculation, feasibility checks) — the gap is isolated to this one conversion function not grouping by that field.
 
-**Decision:** Backlogged, to be fixed via REQ-PO-001 (see `docs/REQ-PO-001-v1.md`) rather than a quiet patch, since the fix changes `Quote.linkedPOId` from a scalar to a one-to-many relationship — a schema-shape change that should go through the same requirements-gate → spec-gate → schema-migration-reviewer cycle as any other `index.html` state-layer change, not be treated as a simple bug fix. Recommended to land alongside or immediately after SPEC-ORD-001, since Order Requests will make multi-supplier baskets a routine, not exceptional, input.
+**Fixed in v2.9.44** via REQ-PO-001/SPEC-PO-001 (full requirements-gate → spec-gate → schema-migration-reviewer → build-gate cycle, not a quiet patch, since the fix changed `Quote.linkedPOId` from a scalar to `linkedPOIds`, a one-to-many relationship). `qteToPoConvert()` now groups lines by `supId` and creates one PO per distinct supplier (including a separate PO for lines with no supplier assigned), with a collision-safe numbering scheme (`-1`/`-2` suffix, falling back to a letter suffix if that number is already taken) and a one-time idempotent migration (`migrateLinkedPOIds()`) for existing Quotes. See PO-GAP-002 below for the one residual risk this fix does not retroactively resolve.
+
+### PO-GAP-002 — Historical POs created before v2.9.44 may carry incorrect supplier attribution *(Open, accepted)*
+**Area:** `DB.po` records created by the pre-fix `qteToPoConvert()` (any PO created before v2.9.44)
+**Logged:** v2.9.44 (2026-07-11), per REQ-PO-001-v3 §7's required disclosure alongside the PO-GAP-001 fix
+**Detail:** PO-GAP-001's fix (above) only changes `qteToPoConvert()`'s behavior going forward. Any PO created before v2.9.44, from a Quote whose lines spanned more than one supplier, may have had non-first-supplier lines silently misattributed to the wrong supplier's PO — this is not retroactively corrected, and there is no automated way to identify which historical POs are affected (the original per-line `supId` was never recorded on the generated PO's line items, only the description/qty/cost).
+**Decision:** Accepted as a residual, historical risk — out of scope for REQ-PO-001, which fixed the conversion logic going forward only. If a specific supplier dispute or reconciliation issue arises referencing a pre-v2.9.44 PO, manually cross-reference the original Quote's line-level `supId` values (still intact on the Quote record) against the PO's supplier assignment.
 
 ---
 
@@ -336,6 +342,18 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 **Risk level:** Low at pilot scale. Becomes a formal review point before onboarding first external client or ICO registration.  
 **Decision:** Accepted. Standard Anthropic DPA is sufficient safeguard at current scale. Web3Forms DPA to be confirmed and recorded here when received.
+
+---
+
+## Order Requests
+
+### ORD-GAP-001 — Legacy-backfilled Order Requests are lower-fidelity; abandoned-Quote PO/Invoice not re-attributed *(Open, accepted)*
+**Area:** `backfillOrderRequests()`, `activeQuoteId` reassignment (`index.html`)
+**Logged:** v2.9.44 (2026-07-11), per SPEC-ORD-001-v3 §9
+**Detail:** Two accepted, documented limitations of the Order Requests feature:
+1. **Legacy-backfilled records are lower-fidelity.** Contacts with an enquiry history but no linked Quote are backfilled into one Order Request per Contact (not one per enquiry, since individual enquiries can't be reliably separated into distinct requests), marked `_backfilled: 'legacy-unstructured'`. These records have no original per-enquiry outcome/reason captured — a placeholder reason string is used where an outcome is inferred.
+2. **Abandoned Quotes aren't re-attributed.** If an operator creates a new Quote for an Order Request after abandoning a previous one (via "Create Quote" a second time), `activeQuoteId` reassigns to the new Quote. The abandoned Quote's own PO/Invoice (if it has one) is not automatically re-attributed or hidden — it remains independently visible in the Quotes/POs/Invoices tabs, it simply stops counting toward this Order Request's realised margin.
+**Decision:** Both accepted as documented limitations, not defects to fix. Neither is expected to cause data loss or incorrect financial calculation — only a lower level of historical detail (limitation 1) or a manual-tracing requirement if an abandoned Quote's PO/Invoice needs separate attention (limitation 2).
 
 ---
 
