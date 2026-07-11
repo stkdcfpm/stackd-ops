@@ -39,8 +39,12 @@ Line Item / Product Catalogue (DB.li / K.l = 'st_l')
   desc, specs, hs, uom, cost, price, cur, notes, priceHistory[], invoiceRefs[], dims, dg
 
 Buyer (DB.buy / K.bu = 'st_buy')
-  id                PK — uid(), EXCEPT the seeded 'BUY-ADHOC' sentinel record, whose id
-                       is the literal string 'BUY-ADHOC' (pre-existing special case,
+  id                PK — NOT uid() (corrected 2026-07-11, was wrongly stated as uid()
+                       in early drafts of SPEC-DATA-001). saveBuy()/quickAddBuyer()
+                       (index.html:4708, 4611) generate 'BUY' + Date.now() — a
+                       BUY-prefixed decimal timestamp, e.g. 'BUY1720608432891'.
+                       EXCEPT the seeded 'BUY-ADHOC' sentinel record, whose id is the
+                       literal string 'BUY-ADHOC' (pre-existing special case,
                        unchanged by SPEC-DATA-001)
   num               Business key — 'BUY-0001' (SPEC-DATA-001); BUY-ADHOC also receives
                        one (e.g. 'BUY-0001') without its id changing
@@ -154,5 +158,5 @@ All entities persist as JSON arrays under a single `localStorage` key per entity
 - Deleting a Contact leaves dangling `sourceContactId` on associated Quotes — runtime guards no-op safely (CON-GAP-004).
 - Contact `gdprBasis` is derived from `status` on every save, not user-editable.
 - Deleting a Supplier nulls `supplierId` on all linked Contacts before the delete completes.
-- `BUY-ADHOC` is a seeded sentinel Buyer record whose `id` is the literal string `'BUY-ADHOC'`, not a `uid()` output — a pre-existing special case, unaffected by the `num` business key introduced in SPEC-DATA-001.
+- **No Buyer record uses `uid()` for its `id`** (corrected 2026-07-11) — regular Buyers get `'BUY' + Date.now()` from `saveBuy()`/`quickAddBuyer()`; `BUY-ADHOC` is a seeded sentinel with the literal string `'BUY-ADHOC'` as its `id`. Buyers are the one entity in this data model whose internal PK is not a `uid()` output.
 - See SPEC-DATA-001 §6 for the primary-key strategy designed to make the eventual v3.0.0 Supabase migration a simple surrogate-key swap rather than a from-scratch identifier redesign.
