@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.43</title>
+<title>Stackd Ops v2.9.44</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.43</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.44</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -370,6 +370,52 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <tbody id="con-tbody"></tbody>
   </table></div>
   <div id="con-em" class="empty" style="display:none;"><div class="ei">&#128101;</div><p>No contacts yet. Click <strong>+ New Contact</strong> to get started.</p></div>
+</div>
+
+<div class="view" id="v-ord">
+  <div class="tb">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">ORDER REQUESTS</div>
+    <button class="btn btn-s" onclick="openOrd(null)">+ New Order Request</button>
+  </div>
+  <div class="tw"><table class="tbl" id="ord-tbl" style="display:none;">
+    <thead><tr>
+      <th>#</th><th>Contact</th><th>Stage</th><th>Description</th><th>Open Actions</th><th class="num">Realised Margin (GP)</th><th></th>
+    </tr></thead>
+    <tbody id="ord-tbody"></tbody>
+  </table></div>
+  <div id="ord-em" class="empty" style="display:none;"><div class="ei">&#128203;</div><p>No order requests yet. Click <strong>+ New Order Request</strong> to get started.</p></div>
+</div>
+
+<div class="ov" id="ov-ord" onclick="if(event.target===this)closeM('ov-ord')">
+  <div class="modal">
+    <div class="mh"><h2 id="ord-title">New Order Request</h2><button class="mx" onclick="closeM('ov-ord')">&#215;</button></div>
+    <div class="mb">
+      <div class="fld"><label>Contact</label><select id="of-contact"></select></div>
+      <div class="fld"><label>Stage</label><select id="of-stage"></select></div>
+      <div class="fld"><label>Description</label><textarea id="of-desc" rows="2"></textarea></div>
+      <div class="fld"><label>Linked Quote</label><div id="of-quote-info" style="font-size:.6rem;color:var(--m);margin-bottom:4px;"></div><button class="btn btn-g" id="of-quote-btn" onclick="ordConvertToQuote(EI.ord)" style="display:none;">Create Quote</button></div>
+      <div class="fld">
+        <label>Actions</label>
+        <div id="of-actions-list"></div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <input type="text" id="of-action-text" placeholder="Action..." style="flex:1;">
+          <input type="date" id="of-action-due">
+          <button class="btn btn-g" onclick="ordAddAction()">Add</button>
+        </div>
+      </div>
+      <div class="fld" style="border-top:1px solid var(--ln);padding-top:10px;">
+        <label>Admin Override (stage)</label>
+        <select id="of-override-stage"></select>
+        <input type="text" id="ord-override-confirm" placeholder="Type CONFIRM">
+        <input type="text" id="of-override-reason" placeholder="Reason (required)">
+        <button class="btn" style="background:var(--cr);color:white;" onclick="ordAdminOverrideFromForm()">Force Stage Change</button>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-g" onclick="closeM('ov-ord')">Cancel</button>
+      <button class="btn btn-s" onclick="saveOrdFromForm()">Save Order Request</button>
+    </div>
+  </div>
 </div>
 
 <div class="view" id="v-buy">
@@ -1078,9 +1124,20 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.43</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.44</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: PO-GAP-001 — <code>qteToPoConvert()</code> now creates one Purchase Order per distinct supplier on a Quote's lines, instead of a single PO misattributing every line except the first supplier's. <code>Quote.linkedPOId</code> (scalar) replaced by <code>linkedPOIds</code> (array), migrated automatically for existing Quotes. PO-number collision guard added against manually-typed PO numbers.</li>
+          <li>New: Order Management (REQ/SPEC-ORD-001) — a new Orders tab tracks order requests end-to-end: Contact enquiry → <code>New → Qualifying → Quoted → Converting → Processing → Fulfilled</code> (with Declined/Lost exits), a dated action/follow-up list per request, a "Create Quote" handoff that links the request to its Quote, and a live-computed realised margin once Fulfilled (summed across every supplier PO/Invoice the Quote resolves to). Existing Quotes/Contacts are backfilled into Order Requests automatically. Stage changes outside the normal flow require a CONFIRM+reason admin override, permanently logged.</li>
+          <li>New known gap: PO-GAP-002 (historical POs created before this fix may carry incorrect supplier attribution — no automated audit). <code>AI_SYSTEM_PROMPT</code> updated. 27 new tests. Tests: 349/349 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.43</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Friendly reference numbers (REQ/SPEC-DATA-001) — Suppliers, Line Items, Buyers, and Contacts each get a permanent, human-friendly <code>num</code> (SUP-0001, LI-0001, BUY-0001, CON-0001), assigned once at creation, shown as the first list-table column. <code>parseRefNum()</code>/<code>nextRefNum()</code>/<code>backfillRefNums()</code> added; backfill runs on load, on restore, and immediately after every Sheets sync pull (fixes a would-be duplicate-number bug found by schema-migration-reviewer where a sync pull silently strips <code>num</code> since it isn't part of the Sheets field mapping). Cross-device <code>num</code> divergence remains an open, accepted limitation (DATA-GAP-003) of the localStorage-only architecture.</li>
@@ -2153,7 +2210,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 // ───────────────────────────────────────────────────────────────
 
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev', bu:'st_buy'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev', bu:'st_buy', ord:'st_ord'};
 
 var _storageOK = (function() {
   try { localStorage.setItem('_stk_t','1'); localStorage.removeItem('_stk_t'); return true; }
@@ -2166,12 +2223,13 @@ function ld(k) {
 }
 function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 
-let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev), buy: ldArr(K.bu) };
+let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev), buy: ldArr(K.bu), ord: ldArr(K.ord) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'', email:'', phone:'', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
-let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null, co:null, bu:null };
+let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null, co:null, bu:null, ord:null };
 let cIL = [], cPL = [], cQL = [], cCNL = [];
 var cConvertId = null;
+var cConvertOrdId = null;
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
@@ -2234,7 +2292,237 @@ function backfillRefNums() {
   if (assign(DB.li,  'LI'))  changed = true;
   if (assign(DB.buy, 'BUY')) changed = true;
   if (assign(DB.con, 'CON')) changed = true;
+  if (assign(DB.ord, 'ORD')) changed = true;
   if (changed) saveAll();
+}
+function migrateLinkedPOIds() {
+  var changed = false;
+  DB.qt.forEach(function(q) {
+    if (q.linkedPOId && !q.linkedPOIds) {
+      q.linkedPOIds = [q.linkedPOId];
+      delete q.linkedPOId;
+      changed = true;
+    }
+  });
+  if (changed) saveAll();
+}
+
+// ── ORDER REQUESTS (SPEC-ORD-001) ───────────────────────────────
+var ORD_TRANSITIONS = {
+  'New':        ['Qualifying'],
+  'Qualifying': ['Quoted', 'Declined'],
+  'Quoted':     ['Converting', 'Lost'],
+  'Converting': ['Processing'],
+  'Processing': ['Fulfilled'],
+  'Fulfilled':  [],
+  'Declined':   [],
+  'Lost':       []
+};
+function ordCanTransition(fromStage, toStage) {
+  return !!(ORD_TRANSITIONS[fromStage] && ORD_TRANSITIONS[fromStage].indexOf(toStage) > -1);
+}
+function ordAdminOverride(ordId, newStage, reason) {
+  var confirmEl = G('ord-override-confirm');
+  if (!confirmEl || confirmEl.value !== 'CONFIRM') { toast('Type CONFIRM exactly to proceed.', 4000); return; }
+  if (!reason || !reason.trim()) { toast('A reason is required.', 4000); return; }
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  var oldStage = ord.stage;
+  ord.stage = newStage;
+  saveAll();
+  logEv('order', ord.id, 'stage_overridden', 'Stage force-changed from ' + oldStage + ' to ' + newStage + ' — reason: ' + reason.trim(), 'operator');
+  toast('Order Request stage overridden to ' + newStage);
+}
+function ordRealisedMargin(ord) {
+  if (!ord.activeQuoteId) return { gp: 0, np: 0 };
+  var q = DB.qt.find(function(x){ return x.id === ord.activeQuoteId; });
+  if (!q || !q.linkedPOIds || !q.linkedPOIds.length) return { gp: 0, np: 0 };
+  var totals = { gp: 0, np: 0 };
+  q.linkedPOIds.forEach(function(poId) {
+    var po = DB.po.find(function(x){ return x.id === poId; });
+    if (!po) return;
+    var inv = DB.inv.find(function(i){ return i.id === po.invId || i.num === po.invNum; });
+    if (!inv) return;
+    var c = iCalc(inv);
+    totals.gp += c.gp;
+    totals.np += c.np;
+  });
+  return totals;
+}
+function backfillOrderRequests() {
+  var changed = false;
+  DB.qt.forEach(function(q) {
+    if (!q.sourceContactId) return;
+    if (DB.ord.some(function(o){ return o.activeQuoteId === q.id; })) return;
+    var stage = 'Quoted';
+    if (q.status === 'Declined' || q.status === 'Expired') stage = 'Lost';
+    else if (q.linkedPOIds && q.linkedPOIds.length) {
+      var po = DB.po.find(function(p){ return p.id === q.linkedPOIds[0]; });
+      if (po) {
+        var inv = DB.inv.find(function(i){ return i.id === po.invId || i.num === po.invNum; });
+        stage = inv ? 'Fulfilled' : 'Processing';
+      }
+    }
+    DB.ord.push({
+      id: uid(), num: '', contactId: q.sourceContactId, stage: stage,
+      description: 'Backfilled from Quote ' + q.num, actions: [],
+      activeQuoteId: q.id,
+      outcome: stage === 'Lost' ? { result: 'lost', reason: 'Backfilled — original reason not captured', closedAt: q.dt || null } : { result: null, reason: '', closedAt: null },
+      createdAt: q.dt ? new Date(q.dt).toISOString() : new Date().toISOString()
+    });
+    changed = true;
+  });
+  DB.con.forEach(function(c) {
+    if (!c.enquiries || !c.enquiries.length) return;
+    var hasQuote = DB.qt.some(function(q){ return q.sourceContactId === c.id; });
+    if (hasQuote) return;
+    if (DB.ord.some(function(o){ return o.contactId === c.id && o._backfilled === 'legacy-unstructured'; })) return;
+    var stage = c.status === 'closed' ? 'Declined' : (c.status === 'converted' ? 'Quoted' : 'Qualifying');
+    if (c.status === 'converted') console.warn('[Stackd] backfillOrderRequests: contact ' + c.id + ' is converted but no matching Quote was found');
+    DB.ord.push({
+      id: uid(), num: '', contactId: c.id, stage: stage,
+      description: c.enquiries.map(function(e){ return (e.ts||'').slice(0,10) + ': ' + e.summary; }).join(' | '),
+      actions: [], activeQuoteId: '',
+      outcome: stage === 'Declined' ? { result: 'declined', reason: 'Backfilled — original reason not captured', closedAt: null } : { result: null, reason: '', closedAt: null },
+      createdAt: c.createdAt || new Date().toISOString(),
+      _backfilled: 'legacy-unstructured'
+    });
+    changed = true;
+  });
+  if (changed) backfillRefNums();
+}
+function saveOrd(ord) {
+  var existing = ord.id ? DB.ord.find(function(o){ return o.id === ord.id; }) : null;
+  var contactExists = ord.contactId ? DB.con.some(function(c){ return c.id === ord.contactId; }) : false;
+  if (!contactExists) { vErr('of-contact', 'Please select a valid contact'); return false; }
+  vOk('of-contact');
+  if (existing && ord.stage !== existing.stage && !ordCanTransition(existing.stage, ord.stage)) {
+    vErr('of-stage', 'Cannot move from ' + existing.stage + ' to ' + ord.stage + ' directly — use Admin Override');
+    return false;
+  }
+  vOk('of-stage');
+  if (existing) {
+    Object.assign(existing, ord);
+  } else {
+    ord.id = uid();
+    ord.num = nextRefNum(DB.ord, 'ORD');
+    ord.createdAt = new Date().toISOString();
+    if (!ord.actions) ord.actions = [];
+    if (!ord.outcome) ord.outcome = { result: null, reason: '', closedAt: null };
+    DB.ord.push(ord);
+  }
+  sv(K.ord, DB.ord);
+  return existing || ord;
+}
+function delOrd(id) {
+  DB.ord = DB.ord.filter(function(o){ return o.id !== id; });
+  sv(K.ord, DB.ord);
+}
+function ordConvertToQuote(ordId) {
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  cConvertOrdId = ordId;
+  openConvertToQuote(ord.contactId);
+}
+function rOrd() {
+  if (!G('ord-tbl')) return;
+  var rows = DB.ord.map(function(o) {
+    var c = o.contactId ? DB.con.find(function(x){ return x.id === o.contactId; }) : null;
+    var openActions = (o.actions||[]).filter(function(a){ return !a.done; }).length;
+    var margin = o.stage === 'Fulfilled' ? ordRealisedMargin(o).gp : 0;
+    return '<tr>'
+      + '<td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(o.num||'-') + '</td>'
+      + '<td>' + (c ? san(c.name) : '<span style="color:var(--m);">— contact deleted —</span>') + '</td>'
+      + '<td><span class="tag">' + san(o.stage) + '</span></td>'
+      + '<td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(o.description||'') + (o._backfilled ? ' <span style="font-size:.4rem;color:var(--m);">(legacy)</span>' : '') + '</td>'
+      + '<td>' + openActions + '</td>'
+      + '<td class="num">' + (o.stage === 'Fulfilled' ? fmt(margin,'USD') : '—') + '</td>'
+      + '<td><button class="btn btn-g" style="font-size:.46rem;padding:2px 7px;" onclick="openOrd(\'' + o.id + '\')">Edit</button></td>'
+      + '</tr>';
+  });
+  G('ord-tbl').style.display = rows.length ? '' : 'none';
+  G('ord-em').style.display  = rows.length ? 'none' : '';
+  G('ord-tbody').innerHTML = rows.join('');
+}
+function populateOrdStageDrop(selId, current) {
+  var el = G(selId); if (!el) return;
+  var stages = Object.keys(ORD_TRANSITIONS);
+  el.innerHTML = stages.map(function(s){ return '<option value="' + s + '">' + s + '</option>'; }).join('');
+  el.value = current || 'New';
+}
+function openOrd(id) {
+  EI.ord = id;
+  var ord = id ? DB.ord.find(function(o){ return o.id === id; }) : null;
+  G('ord-title').textContent = id ? ('Edit Order Request' + (ord && ord.num ? ' — ' + ord.num : '')) : 'New Order Request';
+  var contactSel = G('of-contact');
+  var linkedContact = ord && ord.contactId ? DB.con.find(function(x){ return x.id === ord.contactId; }) : null;
+  contactSel.innerHTML = '<option value="">Select...</option>' + DB.con.map(function(c){ return '<option value="' + c.id + '">' + san(c.name) + '</option>'; }).join('');
+  if (ord && ord.contactId && !linkedContact) {
+    contactSel.innerHTML += '<option value="' + ord.contactId + '" disabled>— contact deleted —</option>';
+  }
+  contactSel.value = ord ? (ord.contactId||'') : '';
+  populateOrdStageDrop('of-stage', ord ? ord.stage : 'New');
+  populateOrdStageDrop('of-override-stage', ord ? ord.stage : 'New');
+  G('of-desc').value = ord ? (ord.description||'') : '';
+  G('ord-override-confirm').value = '';
+  G('of-override-reason').value = '';
+  var q = ord && ord.activeQuoteId ? DB.qt.find(function(x){ return x.id === ord.activeQuoteId; }) : null;
+  G('of-quote-info').textContent = q ? (q.num + ' (' + q.status + ')') : 'No Quote linked yet';
+  var quoteBtn = G('of-quote-btn');
+  if (quoteBtn) quoteBtn.style.display = (ord && ord.id) ? '' : 'none';
+  _ordFormActions = ord ? (ord.actions||[]).slice() : [];
+  renderOrdActions(_ordFormActions);
+  G('ov-ord').classList.add('on');
+}
+function renderOrdActions(actions) {
+  var el = G('of-actions-list'); if (!el) return;
+  el.innerHTML = actions.map(function(a, i){
+    return '<div style="display:flex;gap:6px;align-items:center;font-size:.55rem;padding:2px 0;' + (a.done ? 'color:var(--m);text-decoration:line-through;' : (a.dueDate && a.dueDate < today() ? 'color:var(--cr);' : '')) + '">'
+      + '<input type="checkbox" ' + (a.done ? 'checked' : '') + ' onchange="ordToggleAction(' + i + ')">'
+      + '<span>' + san(a.text) + (a.dueDate ? ' (due ' + a.dueDate + ')' : '') + '</span>'
+      + '</div>';
+  }).join('') || '<div style="font-size:.55rem;color:var(--m);">No actions yet</div>';
+}
+var _ordFormActions = [];
+function ordAddAction() {
+  var text = G('of-action-text').value.trim();
+  if (!text) return;
+  _ordFormActions.push({ id: uid(), text: text, dueDate: G('of-action-due').value||'', done:false, createdAt:new Date().toISOString(), completedAt:null });
+  G('of-action-text').value = '';
+  G('of-action-due').value = '';
+  renderOrdActions(_ordFormActions);
+}
+function ordToggleAction(i) {
+  if (_ordFormActions[i]) {
+    _ordFormActions[i].done = !_ordFormActions[i].done;
+    _ordFormActions[i].completedAt = _ordFormActions[i].done ? new Date().toISOString() : null;
+    renderOrdActions(_ordFormActions);
+  }
+}
+function saveOrdFromForm() {
+  var existing = EI.ord ? DB.ord.find(function(o){ return o.id === EI.ord; }) : null;
+  var ord = {
+    id: existing ? existing.id : undefined,
+    contactId: G('of-contact').value,
+    stage: G('of-stage').value,
+    description: G('of-desc').value.trim(),
+    actions: _ordFormActions.length ? _ordFormActions : (existing ? existing.actions : []),
+    activeQuoteId: existing ? existing.activeQuoteId : '',
+    outcome: existing ? existing.outcome : { result:null, reason:'', closedAt:null }
+  };
+  var saved = saveOrd(ord);
+  if (!saved) return;
+  closeM('ov-ord');
+  rOrd();
+  toast('Order Request saved');
+}
+function ordAdminOverrideFromForm() {
+  if (!EI.ord) return;
+  var newStage = G('of-override-stage').value;
+  var reason = G('of-override-reason').value;
+  ordAdminOverride(EI.ord, newStage, reason);
+  closeM('ov-ord');
+  rOrd();
 }
 function sv(k, d) {
   if (!_storageOK) { toast('⚠ Storage unavailable — data will not persist', 5000); return; }
@@ -2247,7 +2535,7 @@ function sv(k, d) {
     }
   }
 }
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); sv(K.bu,DB.buy); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); sv(K.bu,DB.buy); sv(K.ord,DB.ord); };
 function logEv(entityType, entityId, verb, summary, actor) {
   var ev = {
     id:         uid(),
@@ -3064,10 +3352,10 @@ function showV(v, tab) {
   else { var t = document.querySelector('[data-v="' + v + '"]'); if(t) t.classList.add('on'); }
   window.currentTab = v;
   updateAIChips(v);
-  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, sh:rShp, qt:rQte, contacts:rCon, buy:renderBuyers, import:function(){}, cfg:rCfg };
+  var fns = { dash:rDash, sup:rSup, li:rLI, inv:rInv, po:rPO, sh:rShp, qt:rQte, contacts:rCon, ord:rOrd, buy:renderBuyers, import:function(){}, cfg:rCfg };
   if (fns[v]) fns[v]();
 }
-function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); rQte(); rCon(); renderBuyers(); }
+function renderAll() { rDash(); rSup(); rLI(); rInv(); rPO(); rShp(); rQte(); rCon(); renderBuyers(); rOrd(); }
 function closeM(id) { if (id === 'ov-inv') _invEditSnapshot = null; G(id).classList.remove('on'); }
 
 // ── INVOICE CALCULATION ────────────────────────────────────────
@@ -3198,7 +3486,7 @@ function loadDemoData() {
   var pmId  = 'demo-pm-001';
   DB.sup.push({ id: supId, name: 'Romerry International', country: 'China', cur: 'CNY', ct: 'Li Wei', email: 'sales@romerry-qd.example', phone: '', notes: '', _demo: true });
   DB.con.push({ id: conId, name: 'Thomas Bergmann', email: 'thomas.bergmann@apex-coldchain.example', phone: '+49 30 0000 0000', company: 'Apex Cold Chain GmbH', status: 'converted', source: 'chat', gdprBasis: 'legitimate_interests', createdAt: _demoDate(-30), lastContactedAt: _demoDate(-14), enquiries: [], notes: 'Demo contact — Apex Cold Chain Berlin buyer', _demo: true });
-  DB.qt.push({ id: qtId, num: 'DQ-0001', client: 'Apex Cold Chain GmbH', dt: _demoDate(-28), validUntil: _demoDate(7), status: 'Converted', freightMode: 'FCL 40HQ', markup: 18, currency: 'USD', notes: 'Demo quote — vertical display freezers', sourceContactId: conId, linkedPOId: poId, _demo: true, lines: [{ rid: 'demo-ql-001', lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', uom: 'pcs', qty: 20, cost: 1450, dutyPct: 3.5, hsCode: '8418.50', priceHistory: [{ v: 1, ts: new Date(Date.now() - 28*86400000).toISOString(), cost: 1450, dutyPct: 3.5, markup: 18, landed: 1634.25, sellPrice: 1928.42, note: 'Initial quote' }] }] });
+  DB.qt.push({ id: qtId, num: 'DQ-0001', client: 'Apex Cold Chain GmbH', dt: _demoDate(-28), validUntil: _demoDate(7), status: 'Converted', freightMode: 'FCL 40HQ', markup: 18, currency: 'USD', notes: 'Demo quote — vertical display freezers', sourceContactId: conId, linkedPOIds: [poId], _demo: true, lines: [{ rid: 'demo-ql-001', lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', uom: 'pcs', qty: 20, cost: 1450, dutyPct: 3.5, hsCode: '8418.50', priceHistory: [{ v: 1, ts: new Date(Date.now() - 28*86400000).toISOString(), cost: 1450, dutyPct: 3.5, markup: 18, landed: 1634.25, sellPrice: 1928.42, note: 'Initial quote' }] }] });
   DB.po.push({ id: poId, num: 'DPO-0001', supId: supId, cur: 'CNY', status: 'Confirmed', date: _demoDate(-28), del: '45 days from PO date', dep: 28000, oth: 0, notes: 'Demo PO — Romerry refrigeration units', lineItems: [{ rid: 'demo-pl-001', lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', uom: 'pcs', qty: 20, cost: 9875 }], _demo: true });
   DB.inv.push({ id: invId, num: 'DINV-0001', buyer: 'Apex Cold Chain GmbH', dst: 'Hamburg, Germany', status: 'Partially Paid', type: 'invoice', cur: 'USD', date: _demoDate(-21), dep: 15600, lineItems: [{ lid: '', desc: 'Vertical Display Freezer VF-75L', sku: 'VF-75L', qty: 20, price: 1928.42, cost: 1450, uom: 'pcs', hs: '8418.50', duty: 3.5 }], notes: 'Demo invoice', _demo: true });
   DB.payments.push({ id: pmId, invId: invId, invNum: 'DINV-0001', date: _demoDate(-21), amount: 15600, method: 'Bank Transfer', reference: 'DEMO-DEP-001', notes: 'Demo deposit payment', type: 'buyer_payment', creAt: new Date(Date.now() - 21*86400000).toISOString(), _demo: true });
@@ -6483,7 +6771,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.43).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.44).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -6522,13 +6810,21 @@ var AI_SYSTEM_PROMPT = [
   'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX. Override rates per quote if needed.',
   'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
   'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
-  'Convert to PO: only available when quote status is Accepted. Set the status dropdown to Accepted — the Convert to PO button appears automatically. Clicking it creates a linked PO; the quote modal title then shows a "PO RAISED" badge and the button is hidden. The PO carries the Quote ID for traceability.',
+  'Convert to PO: only available when quote status is Accepted. Set the status dropdown to Accepted — the Convert to PO button appears automatically. Clicking it creates one PO per distinct supplier on the quote\'s lines (v2.9.44 — fixes PO-GAP-001, which previously misattributed every line to the first supplier on a multi-supplier quote); the quote modal title then shows a "PO RAISED" badge and the button is hidden. Each PO carries the Quote ID for traceability; PO numbers get a -1/-2 suffix when a quote splits across multiple suppliers.',
   'Feasibility Check: shown automatically in the quote modal when lines are present. Flags: DG cargo (red/critical — IMDG compliance required), container mismatch (amber — CBM vs selected freight mode), Caribbean electrical goods advisory (amber — voltage/cert check). Cleared automatically when lines are removed.',
   'Print preview: click 👁 on any quote row to open a formatted quote document in a new tab.',
   '',
   '## Rates & FX (Settings)',
   'Settings → Rates & FX. Configure: GBP/USD rate, GBP/RMB rate, GBP/BBD rate, LCL rate per CBM, FCL 20GP rate, FCL 40HQ rate, Origin charges, Destination charges, DG surcharge per line, Insurance rate (% of CIF), FPM admin fee. These defaults populate new quotes but can be overridden per quote.',
   'Live FX rates: click ↻ Live Rates to fetch current GBP→USD/CNY/BBD rates from a free CDN-backed source (no API key). A freshness label shows when rates were last fetched (green = <8h, amber = 8–24h, red = >24h). A warning appears inside the quote modal when rates are older than 24h. Clicking Save Rates manually clears the timestamp and marks rates as manually set.',
+  '',
+  '## Order Requests (v2.9.44)',
+  'Orders tab → + New Order Request. Tracks a Contact\'s order request from first enquiry through to realised margin, as its own record — a Contact can have several concurrent Order Requests at different stages.',
+  'Stage flow (system-enforced, forward-only): New → Qualifying → Quoted → Converting → Processing → Fulfilled, with two side-exits: Qualifying → Declined, Quoted → Lost. Trying to set a stage that skips ahead is rejected — use the Admin Override (type CONFIRM + a reason, permanently logged) to force a non-sequential change.',
+  'Actions: each Order Request has a dated follow-up/action list (add text + due date, mark done). Open and overdue actions are what "monitor and track progress" refers to for this entity.',
+  '"Create Quote" button (inside an existing Order Request) links it to a new Quote — sets activeQuoteId and moves the stage to Quoted automatically on save. If a Quote is abandoned and a new one created for the same Order Request, the link reassigns to the new Quote and the old one no longer counts toward this Order Request\'s margin.',
+  'Realised margin: shown only once stage is Fulfilled. Computed live (not stored) by summing iCalc() gross/net profit across every PO the linked Quote resolved to (a multi-supplier quote can now produce several POs — v2.9.44) and their matched Invoices.',
+  'Existing Quotes (via sourceContactId) and Contacts (via their enquiry log, if no Quote exists) are backfilled into Order Requests automatically on load — backfilled-from-enquiry-only records are marked as lower-fidelity (no per-enquiry stage/action history existed before this feature).',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
@@ -7572,6 +7868,7 @@ function expAll() {
     con: DB.con,
     events: DB.events,
     buy: DB.buy,
+    ord: DB.ord,
     settings: { url: SS.url, auto: SS.auto, pol: SS.pol }, // token excluded — credential, not config
     company: AS,
     branding: getCoBrand(),
@@ -7612,7 +7909,8 @@ function doImport(e) {
       'Suppliers: '  + counts[0] + '  |  Line Items: ' + counts[1] + '\n' +
       'Invoices: '   + counts[2] + '  |  POs: ' + counts[3] + '\n' +
       'Payments: '   + counts[4] + '  |  Shipments: ' + counts[5] + '\n' +
-      'Quotes: '     + counts[6] + '  |  Contacts: ' + (Array.isArray(data.con) ? data.con.length : 0) + '\n\n' +
+      'Quotes: '     + counts[6] + '  |  Contacts: ' + (Array.isArray(data.con) ? data.con.length : 0) + '\n' +
+      'Order Requests: ' + (Array.isArray(data.ord) ? data.ord.length : 0) + '\n\n' +
       'WARNING: This will replace ALL current local data.';
     if (!confirm(msg)) { G('imp-file').value = ''; return; }
     entities.forEach(function(k) { DB[k] = Array.isArray(data[k]) ? data[k] : []; });
@@ -7629,8 +7927,11 @@ function doImport(e) {
     if (data.customUOM && data.customUOM.length) { sv('rd_uom_cust', data.customUOM); }
     if (data.fpmRepairDone) { localStorage.setItem('st_fpm_repair_v1', data.fpmRepairDone); }
     if (data.buy && Array.isArray(data.buy)) { DB.buy = data.buy; sv(K.bu, DB.buy); }
+    if (data.ord && Array.isArray(data.ord)) { DB.ord = data.ord; sv(K.ord, DB.ord); }
     seedAdHocBuyer();
     backfillRefNums();
+    migrateLinkedPOIds();
+    backfillOrderRequests();
     saveAll();
     renderAll();
     rCfg();
@@ -8159,7 +8460,7 @@ function rQte() {
       + '<td style="font-weight:600;">' + fmt(c.sellUSD,'USD') + '</td>'
       + '<td>£' + fn(c.sellGBP,0) + '</td>'
       + '<td><span class="tag ' + stCls + '">' + san(q.status||'Draft') + '</span></td>'
-      + '<td style="font-size:.5rem;color:var(--m);">' + (q.linkedPOId ? 'PO linked' : '') + '</td>'
+      + '<td style="font-size:.5rem;color:var(--m);">' + (q.linkedPOIds && q.linkedPOIds.length ? 'PO linked' : '') + '</td>'
       + '<td style="white-space:nowrap;">'
         + '<button onclick="editQte(\'' + q.id + '\')" class="btn btn-g" style="font-size:.46rem;padding:2px 7px;">Edit</button> '
         + '<button onclick="prevQte(\'' + q.id + '\')" class="btn btn-g" style="font-size:.46rem;padding:2px 7px;">&#128438;</button> '
@@ -8173,7 +8474,7 @@ function updQtePoBtn() {
   var st = G('qf-st') ? G('qf-st').value : '';
   var q = EI.qt ? DB.qt.find(function(x){ return x.id === EI.qt; }) : null;
   var poBtn = G('qt-po-btn');
-  if (poBtn) poBtn.style.display = (st === 'Accepted' && !(q && q.linkedPOId)) ? '' : 'none';
+  if (poBtn) poBtn.style.display = (st === 'Accepted' && !(q && q.linkedPOIds && q.linkedPOIds.length)) ? '' : 'none';
 }
 
 function openQte() {
@@ -8201,7 +8502,7 @@ function editQte(id) {
   if (!q) return;
   EI.qt = id;
   cQL = (q.lines || []).map(function(l){ return Object.assign({}, l); });
-  G('qt-title').innerHTML = 'Edit Quote' + (q.linkedPOId ? ' <span style="background:var(--gold);color:#333;font-size:.48rem;padding:2px 8px;border-radius:2px;font-weight:700;letter-spacing:.05em;vertical-align:middle;">PO RAISED</span>' : '');
+  G('qt-title').innerHTML = 'Edit Quote' + ((q.linkedPOIds && q.linkedPOIds.length) ? ' <span style="background:var(--gold);color:#333;font-size:.48rem;padding:2px 8px;border-radius:2px;font-weight:700;letter-spacing:.05em;vertical-align:middle;">PO RAISED</span>' : '');
   G('qf-num').value = q.num || '';
   G('qf-client').value = q.client || '';
   G('qf-dt').value = q.dt || '';
@@ -8445,7 +8746,7 @@ function saveQte() {
     status: G('qf-st').value,
     notes: G('qf-nt').value.trim(),
     lines: lines,
-    linkedPOId: existQ ? (existQ.linkedPOId||'') : '',
+    linkedPOIds: existQ ? (existQ.linkedPOIds||[]) : [],
     sourceContactId:  cConvertId || (existQ ? (existQ.sourceContactId||'') : ''),
     calc_totalLanded: +fn(totalLanded,2),
     calc_sellUSD: +fn(sellUSD,2),
@@ -8467,6 +8768,15 @@ function saveQte() {
     }
     logEv('contact', cConvertId, 'converted', 'Quote ' + qt.num + ' created — contact converted', 'system');
     cConvertId = null;
+  }
+  if (cConvertOrdId) {
+    var convOrd = DB.ord.find(function(x){ return x.id === cConvertOrdId; });
+    if (convOrd) {
+      convOrd.activeQuoteId = qt.id;
+      if (ordCanTransition(convOrd.stage, 'Quoted')) convOrd.stage = 'Quoted';
+      saveAll();
+    }
+    cConvertOrdId = null;
   }
   closeM('ov-qt');
   rQte();
@@ -8493,6 +8803,7 @@ function delQte(id) {
 
 function closeQteDlg() {
   cConvertId = null;
+  cConvertOrdId = null;
   closeM('ov-qt');
 }
 
@@ -8669,7 +8980,9 @@ function saveCon() {
 function delCon(id) {
   if (!confirm('Delete this contact? This cannot be undone.')) return;
   DB.con = DB.con.filter(function(c){ return c.id !== id; });
+  DB.ord.forEach(function(o){ if (o.contactId === id) o.contactId = null; });
   sv(K.co, DB.con);
+  sv(K.ord, DB.ord);
   logEv('contact', id, 'deleted', 'Contact deleted', 'user');
   rCon();
   toast('Contact deleted');
@@ -8692,29 +9005,52 @@ function qteToPoConvert() {
   if (!id) return;
   var q = DB.qt.find(function(x){ return x.id===id; });
   if (!q) return;
-  if (q.linkedPOId) { toast('This quote already has a linked PO'); return; }
+  if (q.linkedPOIds && q.linkedPOIds.length) { toast('This quote already has a linked PO'); return; }
   if (q.status !== 'Accepted') { toast('Set quote status to Accepted before converting to PO'); return; }
-  var firstSup = (q.lines||[]).find(function(l){ return l.supId; });
-  var poNum = 'PO-' + q.num;
-  var po = {
-    id: uid(), num: poNum, supId: firstSup ? firstSup.supId : '',
-    invNum: '', invId: '', dt: today(), del: '', currency: q.currency||'USD',
-    dep: 0, fpm: 0, rec: false, oth: 0, paymentTerms: '',
-    notes: 'Auto-converted from ' + q.num, status: 'Draft',
-    lines: (q.lines||[]).map(function(l){
-      return { rid:uid(), liId:'', desc:l.desc, qty:l.qty||1, up:l.cost, uom:l.uom||'pcs', cur:q.currency||'USD' };
-    }),
-    quoteId: id, quoteNum: q.num
-  };
-  DB.po.push(po);
+
+  var groups = {};
+  var order = [];
+  (q.lines||[]).forEach(function(l){
+    var key = l.supId || '';
+    if (!groups[key]) { groups[key] = []; order.push(key); }
+    groups[key].push(l);
+  });
+
+  var newPOIds = [];
+  var poNums = [];
+  order.forEach(function(supId, i){
+    var lines = groups[supId];
+    var poNum = 'PO-' + q.num + (order.length > 1 ? '-' + (i + 1) : '');
+    var suffix = '';
+    var attempt = 0;
+    while (DB.po.some(function(p){ return p.num === poNum + suffix; })) {
+      attempt++;
+      suffix = String.fromCharCode(97 + attempt - 1);
+    }
+    poNum = poNum + suffix;
+    var po = {
+      id: uid(), num: poNum, supId: supId,
+      invNum: '', invId: '', dt: today(), del: '', currency: q.currency||'USD',
+      dep: 0, fpm: 0, rec: false, oth: 0, paymentTerms: '',
+      notes: 'Auto-converted from ' + q.num, status: 'Draft',
+      lines: lines.map(function(l){
+        return { rid:uid(), liId:'', desc:l.desc, qty:l.qty||1, up:l.cost, uom:l.uom||'pcs', cur:q.currency||'USD' };
+      }),
+      quoteId: id, quoteNum: q.num
+    };
+    DB.po.push(po);
+    newPOIds.push(po.id);
+    poNums.push(poNum);
+  });
+
   sv(K.p, DB.po);
-  q.linkedPOId = po.id;
+  q.linkedPOIds = newPOIds;
   sv(K.qt, DB.qt);
   G('qt-po-btn').style.display = 'none';
   closeM('ov-qt');
   rQte();
   rPO();
-  toast('PO ' + poNum + ' created from ' + q.num);
+  toast('PO' + (poNums.length > 1 ? 's ' : ' ') + poNums.join(', ') + ' created from ' + q.num);
 }
 
 function prevQteId() { if (EI.qt) prevQte(EI.qt); }
@@ -9304,6 +9640,8 @@ function initApp() {
     repairCalcFields();
     seedAdHocBuyer();
     backfillRefNums();
+    migrateLinkedPOIds();
+    backfillOrderRequests();
     if (SS.url) {
       G('banner').style.display='none';
       G('cfg-url').value=SS.url;

@@ -114,7 +114,7 @@ function assertApprox(a, b, msg) {
 }
 
 function resetDB() {
-  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [], events: [], buy: [] };
+  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [], events: [], buy: [], ord: [] };
 }
 function loadFixtures() {
   ctx.DB = JSON.parse(JSON.stringify(fixtures));
@@ -815,16 +815,16 @@ console.log('\nqteToPoConvert');
 
 test('qteToPoConvert blocked when status is Draft', () => {
   resetDB();
-  ctx.DB.qt = [{ id:'qt1', num:'QTE-0001', status:'Draft', currency:'USD', lines:[], linkedPOId:null }];
+  ctx.DB.qt = [{ id:'qt1', num:'QTE-0001', status:'Draft', currency:'USD', lines:[] }];
   ctx.EI.qt = 'qt1';
   ctx.qteToPoConvert();
   assertEqual(ctx.DB.po.length, 0, 'no PO created for Draft quote');
-  assert(ctx.DB.qt[0].linkedPOId === null, 'linkedPOId unchanged');
+  assert(!ctx.DB.qt[0].linkedPOIds, 'linkedPOIds unchanged');
 });
 
 test('qteToPoConvert blocked when status is Sent', () => {
   resetDB();
-  ctx.DB.qt = [{ id:'qt2', num:'QTE-0002', status:'Sent', currency:'USD', lines:[], linkedPOId:null }];
+  ctx.DB.qt = [{ id:'qt2', num:'QTE-0002', status:'Sent', currency:'USD', lines:[] }];
   ctx.EI.qt = 'qt2';
   ctx.qteToPoConvert();
   assertEqual(ctx.DB.po.length, 0, 'no PO created for Sent quote');
@@ -832,20 +832,87 @@ test('qteToPoConvert blocked when status is Sent', () => {
 
 test('qteToPoConvert creates PO when status is Accepted', () => {
   resetDB();
-  ctx.DB.qt = [{ id:'qt3', num:'QTE-0003', status:'Accepted', currency:'USD', lines:[{ rid:'r1', supId:'s1', desc:'Goods', qty:5, cost:200, uom:'pcs' }], linkedPOId:null }];
+  ctx.DB.qt = [{ id:'qt3', num:'QTE-0003', status:'Accepted', currency:'USD', lines:[{ rid:'r1', supId:'s1', desc:'Goods', qty:5, cost:200, uom:'pcs' }] }];
   ctx.EI.qt = 'qt3';
   ctx.qteToPoConvert();
   assertEqual(ctx.DB.po.length, 1, 'PO created for Accepted quote');
-  assertEqual(ctx.DB.qt[0].linkedPOId, ctx.DB.po[0].id, 'linkedPOId set on quote');
+  assertEqual(ctx.DB.qt[0].linkedPOIds[0], ctx.DB.po[0].id, 'linkedPOIds[0] set on quote');
   assertEqual(ctx.DB.po[0].quoteNum, 'QTE-0003', 'PO carries quote reference');
 });
 
-test('qteToPoConvert blocked when quote already has linkedPOId', () => {
+test('qteToPoConvert blocked when quote already has linkedPOIds', () => {
   resetDB();
-  ctx.DB.qt = [{ id:'qt4', num:'QTE-0004', status:'Accepted', currency:'USD', lines:[], linkedPOId:'existing-po-id' }];
+  ctx.DB.qt = [{ id:'qt4', num:'QTE-0004', status:'Accepted', currency:'USD', lines:[], linkedPOIds:['existing-po-id'] }];
   ctx.EI.qt = 'qt4';
   ctx.qteToPoConvert();
   assertEqual(ctx.DB.po.length, 0, 'no duplicate PO when already linked');
+});
+
+test('qteToPoConvert splits multi-supplier Quote into one PO per supplier (PO-GAP-001 fix)', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt5', num:'QTE-0005', status:'Accepted', currency:'USD', lines:[
+    { rid:'r1', supId:'sA', desc:'Item A', qty:1, cost:10, uom:'pcs' },
+    { rid:'r2', supId:'sB', desc:'Item B', qty:1, cost:20, uom:'pcs' },
+    { rid:'r3', supId:'sA', desc:'Item A2', qty:1, cost:15, uom:'pcs' },
+  ] }];
+  ctx.EI.qt = 'qt5';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 2, 'one PO per distinct supplier');
+  assertEqual(ctx.DB.qt[0].linkedPOIds.length, 2, 'linkedPOIds has 2 entries');
+  var poA = ctx.DB.po.find(function(p){ return p.supId === 'sA'; });
+  var poB = ctx.DB.po.find(function(p){ return p.supId === 'sB'; });
+  assertEqual(poA.lines.length, 2, 'supplier A PO has both its lines');
+  assertEqual(poB.lines.length, 1, 'supplier B PO has only its line');
+  assertEqual(poA.num, 'PO-QTE-0005-1', 'first-appearance supplier gets -1 suffix');
+  assertEqual(poB.num, 'PO-QTE-0005-2', 'second supplier gets -2 suffix');
+});
+
+test('qteToPoConvert groups unassigned-supplier lines into their own PO', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt6', num:'QTE-0006', status:'Accepted', currency:'USD', lines:[
+    { rid:'r1', supId:'sA', desc:'Item A', qty:1, cost:10, uom:'pcs' },
+    { rid:'r2', supId:'', desc:'No supplier item', qty:1, cost:5, uom:'pcs' },
+  ] }];
+  ctx.EI.qt = 'qt6';
+  ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 2, 'unassigned-supplier line gets its own PO');
+  var poNone = ctx.DB.po.find(function(p){ return p.supId === ''; });
+  assert(poNone, 'a PO with empty supId exists');
+  assertEqual(poNone.lines.length, 1, 'unassigned PO has only the unassigned line');
+});
+
+test('qteToPoConvert avoids PO number collision with a pre-existing manually-typed PO', () => {
+  resetDB();
+  ctx.DB.po = [{ id:'manual1', num:'PO-QTE-0007-1', supId:'sX', lines:[] }];
+  ctx.DB.qt = [{ id:'qt7', num:'QTE-0007', status:'Accepted', currency:'USD', lines:[
+    { rid:'r1', supId:'sA', desc:'Item A', qty:1, cost:10, uom:'pcs' },
+    { rid:'r2', supId:'sB', desc:'Item B', qty:1, cost:20, uom:'pcs' },
+  ] }];
+  ctx.EI.qt = 'qt7';
+  ctx.qteToPoConvert();
+  var generated = ctx.DB.po.filter(function(p){ return p.quoteId === 'qt7'; });
+  assertEqual(generated.length, 2, 'two new POs created');
+  var nums = generated.map(function(p){ return p.num; });
+  assert(nums.indexOf('PO-QTE-0007-1a') > -1, 'collision resolved with letter suffix');
+  var uniqueNums = new Set(ctx.DB.po.map(function(p){ return p.num; }));
+  assertEqual(uniqueNums.size, ctx.DB.po.length, 'no duplicate PO numbers exist');
+});
+
+test('migrateLinkedPOIds converts legacy scalar to array, once, without data loss', () => {
+  resetDB();
+  ctx.DB.qt = [
+    { id:'qt8', num:'QTE-0008', linkedPOId:'po-legacy-1' },
+    { id:'qt9', num:'QTE-0009' },
+    { id:'qt10', num:'QTE-0010', linkedPOIds:['po-already-migrated'] },
+  ];
+  ctx.migrateLinkedPOIds();
+  assertEqual(ctx.DB.qt[0].linkedPOIds[0], 'po-legacy-1', 'legacy scalar migrated to array');
+  assert(!ctx.DB.qt[0].linkedPOId, 'old scalar field removed after migration');
+  assert(!ctx.DB.qt[1].linkedPOIds, 'quote with neither field is left untouched, not defaulted to []');
+  assertEqual(ctx.DB.qt[2].linkedPOIds[0], 'po-already-migrated', 'already-migrated quote untouched');
+  // idempotency — second call is a no-op
+  ctx.migrateLinkedPOIds();
+  assertEqual(ctx.DB.qt[0].linkedPOIds.length, 1, 'idempotent — no duplicate entries on second call');
 });
 
 // ── Accounting Export ──────────────────────────────────────────
@@ -3934,6 +4001,210 @@ test('saveCon: new record gets num, edit does not change it', () => {
   ctx.saveCon();
   var updated = ctx.DB.con.find(function(c){ return c.id === rec.id; });
   assertEqual(updated.num, originalNum, 'num must not change on edit');
+});
+
+// ── Order Requests (SPEC-ORD-001) ───────────────────────────────
+console.log('\nOrder Requests — SPEC-ORD-001');
+
+test('ordCanTransition: every listed pair is allowed', () => {
+  assert(ctx.ordCanTransition('New', 'Qualifying'));
+  assert(ctx.ordCanTransition('Qualifying', 'Quoted'));
+  assert(ctx.ordCanTransition('Qualifying', 'Declined'));
+  assert(ctx.ordCanTransition('Quoted', 'Converting'));
+  assert(ctx.ordCanTransition('Quoted', 'Lost'));
+  assert(ctx.ordCanTransition('Converting', 'Processing'));
+  assert(ctx.ordCanTransition('Processing', 'Fulfilled'));
+});
+test('ordCanTransition: unlisted pairs (backward, skip, terminal) are rejected', () => {
+  assert(!ctx.ordCanTransition('Qualifying', 'New'));
+  assert(!ctx.ordCanTransition('New', 'Quoted'));
+  assert(!ctx.ordCanTransition('Fulfilled', 'New'));
+  assert(!ctx.ordCanTransition('Declined', 'Qualifying'));
+  assert(!ctx.ordCanTransition('Lost', 'Quoted'));
+});
+
+test('ordAdminOverride: rejects without exact CONFIRM string', () => {
+  resetDB();
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'New', actions:[] }];
+  mockEl('ord-override-confirm').value = 'nope';
+  ctx.ordAdminOverride('o1', 'Fulfilled', 'testing');
+  assertEqual(ctx.DB.ord[0].stage, 'New', 'stage unchanged without exact CONFIRM');
+});
+test('ordAdminOverride: rejects without a reason', () => {
+  resetDB();
+  ctx.DB.ord = [{ id:'o2', num:'ORD-0002', contactId:'c1', stage:'New', actions:[] }];
+  mockEl('ord-override-confirm').value = 'CONFIRM';
+  ctx.ordAdminOverride('o2', 'Fulfilled', '');
+  assertEqual(ctx.DB.ord[0].stage, 'New', 'stage unchanged without a reason');
+});
+test('ordAdminOverride: persists stage change and logs event with reason', () => {
+  resetDB();
+  ctx.DB.ord = [{ id:'o3', num:'ORD-0003', contactId:'c1', stage:'New', actions:[] }];
+  mockEl('ord-override-confirm').value = 'CONFIRM';
+  var before = ctx.DB.events.length;
+  ctx.ordAdminOverride('o3', 'Fulfilled', 'manual correction');
+  assertEqual(ctx.DB.ord[0].stage, 'Fulfilled', 'stage force-changed');
+  assert(ctx.DB.events.length > before, 'override logged to event log');
+  var evt = ctx.DB.events[ctx.DB.events.length - 1];
+  assertContains(evt.summary, 'manual correction', 'reason text present in event log');
+});
+
+test('ordRealisedMargin: zero when no activeQuoteId', () => {
+  resetDB();
+  assertEqual(ctx.ordRealisedMargin({ activeQuoteId:'' }).gp, 0);
+});
+test('ordRealisedMargin: zero when linked Quote has no linkedPOIds', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'q1', linkedPOIds:[] }];
+  assertEqual(ctx.ordRealisedMargin({ activeQuoteId:'q1' }).gp, 0);
+});
+test('ordRealisedMargin: zero when PO has no matching Invoice', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'q1', linkedPOIds:['po1'] }];
+  ctx.DB.po = [{ id:'po1', invId:'', invNum:'' }];
+  assertEqual(ctx.ordRealisedMargin({ activeQuoteId:'q1' }).gp, 0);
+});
+test('ordRealisedMargin: sums iCalc gp/np across matched invoices', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'q1', linkedPOIds:['po1'] }];
+  ctx.DB.po = [{ id:'po1', invId:'inv1', invNum:'INV10001' }];
+  ctx.DB.inv = [{ id:'inv1', num:'INV10001', status:'Paid', cur:'USD', lineItems:[], calc_grandTotal:1000, calc_cogs:600, calc_grossProfit:400, calc_netProfit:350 }];
+  var m = ctx.ordRealisedMargin({ activeQuoteId:'q1' });
+  assertEqual(m.gp, 400, 'gp matches iCalc');
+  assertEqual(m.np, 350, 'np matches iCalc');
+});
+test('ordRealisedMargin: reassigned activeQuoteId excludes old Quote PO/Invoice', () => {
+  resetDB();
+  ctx.DB.qt = [
+    { id:'qOld', linkedPOIds:['poOld'] },
+    { id:'qNew', linkedPOIds:[] },
+  ];
+  ctx.DB.po = [{ id:'poOld', invId:'invOld', invNum:'INV10002' }];
+  ctx.DB.inv = [{ id:'invOld', num:'INV10002', status:'Paid', cur:'USD', lineItems:[], calc_grandTotal:500, calc_cogs:300, calc_grossProfit:200, calc_netProfit:180 }];
+  var m = ctx.ordRealisedMargin({ activeQuoteId:'qNew' });
+  assertEqual(m.gp, 0, 'reassigned order request does not see old Quote margin');
+});
+
+test('backfillOrderRequests Tier 1: creates one Order Request per sourceContactId Quote', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Contact One' }];
+  ctx.DB.qt = [{ id:'q1', num:'QTE-0001', sourceContactId:'c1', status:'Accepted', dt:'2026-01-01' }];
+  ctx.backfillOrderRequests();
+  assertEqual(ctx.DB.ord.length, 1, 'one Order Request created');
+  assertEqual(ctx.DB.ord[0].activeQuoteId, 'q1');
+  assertEqual(ctx.DB.ord[0].contactId, 'c1');
+});
+test('backfillOrderRequests Tier 1: stage inference — Lost/Processing/Fulfilled/Quoted', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1' }, { id:'c2' }, { id:'c3' }, { id:'c4' }];
+  ctx.DB.qt = [
+    { id:'qLost', num:'Q1', sourceContactId:'c1', status:'Declined' },
+    { id:'qQuoted', num:'Q2', sourceContactId:'c2', status:'Accepted' },
+    { id:'qProc', num:'Q3', sourceContactId:'c3', status:'Accepted', linkedPOIds:['poA'] },
+    { id:'qFulfilled', num:'Q4', sourceContactId:'c4', status:'Accepted', linkedPOIds:['poB'] },
+  ];
+  ctx.DB.po = [
+    { id:'poA', invId:'', invNum:'' },
+    { id:'poB', invId:'invB', invNum:'INV1' },
+  ];
+  ctx.DB.inv = [{ id:'invB', num:'INV1' }];
+  ctx.backfillOrderRequests();
+  var byQuote = {}; ctx.DB.ord.forEach(function(o){ byQuote[o.activeQuoteId] = o.stage; });
+  assertEqual(byQuote.qLost, 'Lost');
+  assertEqual(byQuote.qQuoted, 'Quoted');
+  assertEqual(byQuote.qProc, 'Processing');
+  assertEqual(byQuote.qFulfilled, 'Fulfilled');
+});
+test('backfillOrderRequests Tier 1: idempotent on second call', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1' }];
+  ctx.DB.qt = [{ id:'q1', num:'QTE-0001', sourceContactId:'c1', status:'Accepted' }];
+  ctx.backfillOrderRequests();
+  ctx.backfillOrderRequests();
+  assertEqual(ctx.DB.ord.length, 1, 'no duplicate on second call');
+});
+test('backfillOrderRequests Tier 2: creates one Order Request per Contact with enquiries and no Quote', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', status:'lead', enquiries:[{ id:'e1', ts:'2026-01-01T00:00:00.000Z', summary:'Interested in seeds' }] }];
+  ctx.backfillOrderRequests();
+  assertEqual(ctx.DB.ord.length, 1);
+  assertEqual(ctx.DB.ord[0]._backfilled, 'legacy-unstructured');
+  assertContains(ctx.DB.ord[0].description, 'Interested in seeds');
+});
+test('backfillOrderRequests Tier 2: skips Contacts already covered by Tier 1', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', enquiries:[{ id:'e1', ts:'2026-01-01', summary:'enquiry' }] }];
+  ctx.DB.qt = [{ id:'q1', num:'QTE-0001', sourceContactId:'c1', status:'Accepted' }];
+  ctx.backfillOrderRequests();
+  assertEqual(ctx.DB.ord.length, 1, 'only the Tier 1 record is created, not a second Tier 2 one');
+  assert(!ctx.DB.ord[0]._backfilled, 'the single record is the accurate Tier 1 one, not legacy-unstructured');
+});
+test('backfillOrderRequests Tier 2: idempotent on second call', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', enquiries:[{ id:'e1', ts:'2026-01-01', summary:'enquiry' }] }];
+  ctx.backfillOrderRequests();
+  ctx.backfillOrderRequests();
+  assertEqual(ctx.DB.ord.length, 1, 'no duplicate on second call');
+});
+test('backfillOrderRequests: Contacts with neither enquiries nor a Quote produce no record', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1' }];
+  ctx.backfillOrderRequests();
+  assertEqual(ctx.DB.ord.length, 0);
+});
+
+test('saveOrd: new record gets num via nextRefNum, edit does not change it', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test Contact' }];
+  var rec = ctx.saveOrd({ contactId:'c1', stage:'New', description:'test' });
+  assert(rec.num, 'new Order Request gets a num');
+  var originalNum = rec.num;
+  ctx.saveOrd({ id: rec.id, contactId:'c1', stage:'Qualifying', description:'updated' });
+  var updated = ctx.DB.ord.find(function(o){ return o.id === rec.id; });
+  assertEqual(updated.num, originalNum, 'num must not change on edit');
+  assertEqual(updated.description, 'updated', 'edit applies other field changes');
+});
+
+test('saveOrd: rejects a contactId that does not resolve to an existing Contact', () => {
+  resetDB();
+  var result = ctx.saveOrd({ contactId:'does-not-exist', stage:'New', description:'test' });
+  assertEqual(result, false, 'save is rejected');
+  assertEqual(ctx.DB.ord.length, 0, 'no record persisted');
+});
+
+test('saveOrd: rejects a non-adjacent stage change via the normal (non-override) path', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test Contact' }];
+  var rec = ctx.saveOrd({ contactId:'c1', stage:'New', description:'test' });
+  var result = ctx.saveOrd({ id: rec.id, contactId:'c1', stage:'Fulfilled', description:'test' });
+  assertEqual(result, false, 'save is rejected for a skipped transition');
+  assertEqual(ctx.DB.ord.find(function(o){ return o.id === rec.id; }).stage, 'New', 'stage unchanged');
+});
+
+test('delOrd: does not cascade-delete or corrupt a linked Quote/PO/Invoice', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'q1', num:'QTE-0001' }];
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'Quoted', activeQuoteId:'q1', actions:[] }];
+  ctx.delOrd('o1');
+  assertEqual(ctx.DB.ord.length, 0, 'Order Request removed');
+  assertEqual(ctx.DB.qt.length, 1, 'linked Quote untouched');
+});
+
+test('dangling contactId: rOrd() renders without throwing when Contact has been deleted', () => {
+  resetDB();
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:null, stage:'New', actions:[] }];
+  mockEl('ord-tbl'); mockEl('ord-em'); mockEl('ord-tbody');
+  ctx.rOrd();
+  assertContains(mockEl('ord-tbody').innerHTML, 'contact deleted', 'shows placeholder instead of throwing');
+});
+
+test('delCon: nulls contactId on linked Order Requests rather than leaving a dangling reference', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'To Delete' }];
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'New', actions:[] }];
+  ctx._confirmOverride = true;
+  ctx.delCon('c1');
+  assertEqual(ctx.DB.ord[0].contactId, null, 'contactId nulled, not left dangling');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────

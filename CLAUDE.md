@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.43**  
-**Test count: 322/322 PASS** (`node tests/run.js`)
+**Current version: v2.9.44**  
+**Test count: 349/349 PASS** (`node tests/run.js`)
 
 ---
 
@@ -57,6 +57,7 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }             // active rates (editabl
 | qt | st_qt | Quotes (v2.9.4) |
 | co | st_co | Contacts (v2.9.27) |
 | events | st_ev | Activity event log (v2.9.28) |
+| ord | st_ord | Order Requests (v2.9.44) |
 
 ---
 
@@ -120,6 +121,8 @@ See `docs/known-gaps.md` for full entries.
 | ID | Area | Summary |
 |---|---|---|
 | QTE-GAP-001 | Quote status | Convert to PO restricted to Accepted status — Fixed v2.9.25 |
+| PO-GAP-001 | Quote→PO conversion | qteToPoConvert() attributed every line to the first line's supplier — Fixed v2.9.44 (REQ/SPEC-PO-001, one PO per distinct supplier) |
+| PO-GAP-002 | Quote→PO conversion | POs created before v2.9.44 may carry incorrect supplier attribution — not retroactively corrected, no automated audit |
 | LIB-GAP-001 | Library sync | `syncEnt('li')` not called when `invoiceRefs` mutates |
 | SEC-GAP-001 | Code.gs secrets | Spreadsheet IDs and sync token hardcoded in source |
 | SEC-GAP-002 | Sheets sync GDPR | PII transmitted externally; opt-in; accepted until first external client |
@@ -127,6 +130,7 @@ See `docs/known-gaps.md` for full entries.
 | SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof |
 | AI-GAP-007 | AI assistant | Action block emission inconsistent — temperature 0.2 mitigation shipped v2.9.42, confirmed 3/3 on retest |
 | AI-GAP-008 | AI assistant | create_po requires internal supId with no name resolution — dead end when chaining create_supplier then create_po in one conversation |
+| AI-GAP-009 | AI assistant | AI_SYSTEM_PROMPT's PO status vocabulary doesn't match the live po-sm dropdown (Draft/Sent/Deposit Paid/Settled/Cancelled) — found via workflow-bpmn.md cross-check |
 | AI-GAP-006 | AI assistant | Supplier + Buyer creation shipped v2.9.41; Invoices, Line Items, Credit Notes still unsupported by handleAIAction() |
 | INV-GAP-001 | Invoice rendering | Pro-forma status rendered as plain Invoice document — Fixed v2.9.40 |
 | SEC-GAP-020 | Public Pages exposure | Live PII was publicly served — fully resolved 2026-07-05 (purge, history rewrite, GDPR assessment, GitHub PR/cache purge all complete) |
@@ -143,6 +147,7 @@ See `docs/known-gaps.md` for full entries.
 | BUY-GAP-002 | Buyers / legacy | Legacy invoices without buyerId matched by name on edit; default BUY-ADHOC if no match |
 | BUY-GAP-003 | Buyers / credit | Credit limit is display-only; no enforcement on invoice save |
 | DATA-GAP-003 | Reference numbers / cross-device | `num` (SUP-/LI-/BUY-/CON-####) can diverge between two devices that haven't synced; same-device `pullAll()` stripping is mitigated (v2.9.43); cross-device divergence remains open, accepted design trade-off |
+| ORD-GAP-001 | Order Requests | Legacy-backfilled records (from Contact enquiry logs, no linked Quote) are lower-fidelity; abandoned-Quote PO/Invoice not auto-re-attributed on activeQuoteId reassignment — both accepted limitations |
 
 ---
 

@@ -88,6 +88,41 @@ Note: the saved-record preview path (`prevInvId()`, the table's PDF eye-icon but
 
 ---
 
+## Purchase Orders
+
+### PO-GAP-001 — `qteToPoConvert()` attributes every Quote line to the first line's supplier, mis-assigning multi-supplier Quotes *(Fixed v2.9.44)*
+**Area:** `qteToPoConvert()` — Quote → PO conversion (`index.html`)
+**Logged:** v2.9.43 (2026-07-11), found while reviewing a real multi-category procurement basket (seeds, salt fish, mulching film, irrigation, sunflower oil, plastic bags, fertiliser, fresh produce, equipment — sourced from at least three distinct countries/suppliers in one basket) against the Order Management release
+**Detail:** `qteToPoConvert()` creates exactly **one** PO from an entire Quote's `lines[]`, and assigns that PO's `supId` from whichever line happens to be first in the array with a non-empty `supId`:
+
+```js
+var firstSup = (q.lines||[]).find(function(l){ return l.supId; });
+var po = {
+  id: uid(), num: poNum, supId: firstSup ? firstSup.supId : '',
+  ...
+  lines: (q.lines||[]).map(function(l){
+    return { rid:uid(), liId:'', desc:l.desc, qty:l.qty||1, up:l.cost, uom:l.uom||'pcs', cur:q.currency||'USD' };
+  }),
+  quoteId: id, quoteNum: q.num
+};
+```
+
+Every line in `lines[]` is copied onto this single PO regardless of its own `supId` — the per-line `supId` is read once (to pick the PO's overall supplier) and then **discarded**; nothing in the mapped `lines` array retains or re-checks it. For a single-supplier Quote this is invisible and correct by coincidence. For a Quote whose lines span multiple suppliers — the normal case for a mixed-category procurement basket, not an edge case — every line **except those genuinely belonging to the first line's supplier** is silently attributed to the wrong supplier's PO. There is no error, no warning, and no split into separate POs per supplier.
+
+**Consequence:** the resulting PO understates or misstates what is actually owed to each real supplier, and (depending on downstream PO→Invoice/shipment linkage) risks an Invoice or shipment being raised against the wrong supplier relationship entirely. This directly affects the Order Management release, since a "one order request, many product categories, many countries of origin" basket is the intended real-world shape of an Order Request (per REQ-ORD-001/SPEC-ORD-001), not an unusual input.
+
+**Root cause:** `qteToPoConvert()` was written assuming (or only ever tested against) single-supplier Quotes. The data model already supports per-line suppliers (`q.lines[].supId`, used correctly everywhere else — quote calculation, feasibility checks) — the gap is isolated to this one conversion function not grouping by that field.
+
+**Fixed in v2.9.44** via REQ-PO-001/SPEC-PO-001 (full requirements-gate → spec-gate → schema-migration-reviewer → build-gate cycle, not a quiet patch, since the fix changed `Quote.linkedPOId` from a scalar to `linkedPOIds`, a one-to-many relationship). `qteToPoConvert()` now groups lines by `supId` and creates one PO per distinct supplier (including a separate PO for lines with no supplier assigned), with a collision-safe numbering scheme (`-1`/`-2` suffix, falling back to a letter suffix if that number is already taken) and a one-time idempotent migration (`migrateLinkedPOIds()`) for existing Quotes. See PO-GAP-002 below for the one residual risk this fix does not retroactively resolve.
+
+### PO-GAP-002 — Historical POs created before v2.9.44 may carry incorrect supplier attribution *(Open, accepted)*
+**Area:** `DB.po` records created by the pre-fix `qteToPoConvert()` (any PO created before v2.9.44)
+**Logged:** v2.9.44 (2026-07-11), per REQ-PO-001-v3 §7's required disclosure alongside the PO-GAP-001 fix
+**Detail:** PO-GAP-001's fix (above) only changes `qteToPoConvert()`'s behavior going forward. Any PO created before v2.9.44, from a Quote whose lines spanned more than one supplier, may have had non-first-supplier lines silently misattributed to the wrong supplier's PO — this is not retroactively corrected, and there is no automated way to identify which historical POs are affected (the original per-line `supId` was never recorded on the generated PO's line items, only the description/qty/cost).
+**Decision:** Accepted as a residual, historical risk — out of scope for REQ-PO-001, which fixed the conversion logic going forward only. If a specific supplier dispute or reconciliation issue arises referencing a pre-v2.9.44 PO, manually cross-reference the original Quote's line-level `supId` values (still intact on the Quote record) against the PO's supplier assignment.
+
+---
+
 ## Security — Accepted Architecture Risks
 
 ### SEC-GAP-001 — Apps Script sync token and spreadsheet IDs in source control *(FIXED)*
@@ -310,6 +345,18 @@ Note: the saved-record preview path (`prevInvId()`, the table's PDF eye-icon but
 
 ---
 
+## Order Requests
+
+### ORD-GAP-001 — Legacy-backfilled Order Requests are lower-fidelity; abandoned-Quote PO/Invoice not re-attributed *(Open, accepted)*
+**Area:** `backfillOrderRequests()`, `activeQuoteId` reassignment (`index.html`)
+**Logged:** v2.9.44 (2026-07-11), per SPEC-ORD-001-v3 §9
+**Detail:** Two accepted, documented limitations of the Order Requests feature:
+1. **Legacy-backfilled records are lower-fidelity.** Contacts with an enquiry history but no linked Quote are backfilled into one Order Request per Contact (not one per enquiry, since individual enquiries can't be reliably separated into distinct requests), marked `_backfilled: 'legacy-unstructured'`. These records have no original per-enquiry outcome/reason captured — a placeholder reason string is used where an outcome is inferred.
+2. **Abandoned Quotes aren't re-attributed.** If an operator creates a new Quote for an Order Request after abandoning a previous one (via "Create Quote" a second time), `activeQuoteId` reassigns to the new Quote. The abandoned Quote's own PO/Invoice (if it has one) is not automatically re-attributed or hidden — it remains independently visible in the Quotes/POs/Invoices tabs, it simply stops counting toward this Order Request's realised margin.
+**Decision:** Both accepted as documented limitations, not defects to fix. Neither is expected to cause data loss or incorrect financial calculation — only a lower level of historical detail (limitation 1) or a manual-tracing requirement if an abandoned Quote's PO/Invoice needs separate attention (limitation 2).
+
+---
+
 ## Contacts
 
 ### CON-GAP-001 — No automated purge of stale contacts
@@ -410,3 +457,11 @@ Note: the saved-record preview path (`prevInvId()`, the table's PDF eye-icon but
 1. `create_po`'s payload contract exposes an internal database key (`supId`) as the field the AI must supply, instead of a human-usable identifier (name) that could be resolved server-side against `DB.sup` with fuzzy matching — the same kind of resolution already needed for Invoice's Buyer field (see AI-GAP-006 point 1) and Line Item's Supplier field (AI-GAP-006 point 2). This is the same underlying "closed-set dependency, no name-based resolution" problem identified there, now confirmed in a live test rather than only predicted from code review.
 2. There is no `get_suppliers` read tool in `AI_TOOLS` (only `get_invoices`, `get_payments`, `get_kpis`, `get_pos` exist) — so even if the AI wanted to look up whether "Shandong Jinbao New Materials" now exists in `DB.sup` after the user saved it, it has no mechanism to check. It can only ask the user to manually find and paste the ID.
 **Decision:** Backlogged. This is the same "closed-set dependency, no resolution path" problem flagged in AI-GAP-006 for Invoices and Line Items, now confirmed as a live, reproducible dead end for Purchase Orders too — despite `create_po` being one of the four original, previously-considered-solid actions. Recommended fix, in order of value: (1) add a `get_suppliers` (and likely `get_buyers`) read tool to `AI_TOOLS` so the AI can resolve a name to an ID itself mid-conversation; (2) change `create_po`'s payload to accept a supplier **name** and resolve it to `supId` inside `handleAIAction()` (case-insensitive match against `DB.sup`, same pattern as `isCN()`-style helpers elsewhere in the codebase), falling back to a clear "no matching supplier — would you like me to create one?" prompt if not found. Option (2) alone would have avoided this entire dead end. This affects `create_po` today and will affect any future `create_invoice`/`create_line_item` actions (AI-GAP-006) unless solved once, centrally.
+
+### AI-GAP-009 — `AI_SYSTEM_PROMPT`'s documented PO status vocabulary does not match the live `<select id="po-sm">` dropdown *(Open)*
+**Area:** `AI_SYSTEM_PROMPT` (`index.html:6553`) vs. the actual Purchase Order status field (`index.html:1796`)
+**Logged:** v2.9.43 (2026-07-11), discovered while building `docs/workflow-bpmn.md` — a full BPMN-style Mermaid workflow diagram covering every entity's real lifecycle, cross-checked against live code rather than existing documentation
+**Detail:** `AI_SYSTEM_PROMPT` tells the AI assistant: *"PO status: Draft → Sent → Confirmed → In Production → Shipped → Completed."* The real, live `<select id="po-sm">` dropdown (the only place PO status is actually set) offers exactly five options: **Draft, Sent, Deposit Paid, Settled, Cancelled** — three of the prompt's six stated values (`Confirmed`, `In Production`, `Shipped`, `Completed` — four, not three; none of these four exist in the dropdown) do not exist anywhere in the app, and two real statuses the dropdown does have (`Deposit Paid`, `Cancelled`) are entirely absent from the prompt's description.
+**Consequence:** if an operator asks the AI assistant something like "what does PO status X mean" or "what statuses can a PO have," the AI's answer — driven entirely by this hardcoded prompt text, not by any live schema introspection — would be confidently wrong. This is the same class of risk `CLAUDE.md`'s "On version delivery" checklist is designed to catch ("mandatory on every version, no exceptions... Ask: 'If the user asked the AI about this feature, would the answer be accurate?'"), but this specific line was never updated after PO status was authored or last changed, and no gate previously cross-checked the prompt text against the live `<select>` options.
+**Root cause:** `AI_SYSTEM_PROMPT` is free-text, hand-maintained prose describing app behavior — there is no automated or gate-level check that any given status-vocabulary claim in the prompt still matches its corresponding live `<select>`/enum in `index.html`. This is a general risk (any entity's status prompt text could drift the same way over time, not just PO), of which this is the first concretely confirmed instance.
+**Decision:** Backlogged. Recommended fix: correct the `AI_SYSTEM_PROMPT` line to read "PO status: Draft → Sent → Deposit Paid → Settled. Cancelled from any non-terminal status." As a broader mitigation, consider adding a lightweight test-suite check (or a build-gate checklist item) that spot-checks each entity's status-vocabulary claim in `AI_SYSTEM_PROMPT` against its actual `<select>` options at least once per version that touches that entity's status field, rather than relying solely on manual review discipline.
