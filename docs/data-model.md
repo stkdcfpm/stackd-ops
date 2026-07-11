@@ -151,7 +151,121 @@ All entities persist as JSON arrays under a single `localStorage` key per entity
 
 ---
 
-## 5. Notes
+## 5. Mermaid ERD (rendered diagram source)
+
+Generated 2026-07-11 from §2's logical model. Renders in GitHub, GitLab, Obsidian, and any Mermaid-compatible viewer. `PK` = internal primary key, `UK` = business/unique key (where one exists), `FK` = foreign key.
+
+```mermaid
+erDiagram
+    SUPPLIER {
+        string id PK "uid() output"
+        string num UK "SUP-0001 (SPEC-DATA-001)"
+        string name
+        string country
+        string cur
+        string email
+        string phone
+    }
+
+    LINE_ITEM {
+        string id PK "uid() output"
+        string num UK "LI-0001 (SPEC-DATA-001)"
+        string supId FK
+        string sku "free-text, not unique"
+        string desc
+        string hs
+        number cost
+        number price
+    }
+
+    BUYER {
+        string id PK "'BUY'+Date.now(), NOT uid() -- except BUY-ADHOC sentinel"
+        string num UK "BUY-0001 (SPEC-DATA-001)"
+        string name
+        string contactName
+        string email
+        string paymentTerms
+        number creditLimit
+    }
+
+    CONTACT {
+        string id PK "uid() output"
+        string num UK "CON-0001 (SPEC-DATA-001)"
+        string supplierId FK "optional"
+        string name
+        string email UK "soft-unique, case-insensitive"
+        string status
+        string gdprBasis "derived from status"
+    }
+
+    QUOTE {
+        string id PK "uid() output"
+        string num UK "QTE-0001 (nextQteNum, pre-existing)"
+        string sourceContactId FK "optional"
+        string linkedPOId FK "optional"
+    }
+
+    PURCHASE_ORDER {
+        string id PK "uid() output"
+        string num UK "user-typed, pre-existing"
+        string supId FK
+        string invId FK "optional, set on invoice-to-PO conversion"
+        string invNum "business-key mirror of invId"
+    }
+
+    INVOICE {
+        string id PK "uid() output"
+        string num UK "INV10001 (nextInvNum, pre-existing)"
+        string buyerId FK
+        string type "invoice / credit_note / goodwill_credit discriminator"
+        string linkedInvId FK "Credit Notes only -- id-based FK to Invoice"
+        string linkedInvNum "Credit Notes only -- business-key FK, REDUNDANT with linkedInvId"
+    }
+
+    SHIPMENT {
+        string id PK "uid() output"
+        string ref UK "user-typed, pre-existing"
+    }
+
+    PAYMENT {
+        string id PK "uid() output"
+    }
+
+    EVENT {
+        string id PK "uid() output"
+        string entityType "untyped"
+        string entityId "untyped FK to ANY entity -- no referential integrity"
+    }
+
+    SUPPLIER ||--o{ LINE_ITEM       : "supId"
+    SUPPLIER ||--o{ PURCHASE_ORDER  : "supId"
+    SUPPLIER |o--o{ CONTACT         : "supplierId (optional)"
+    SUPPLIER ||--o{ QUOTE           : "each quote line carries its own supId"
+
+    BUYER ||--o{ INVOICE : "buyerId"
+
+    CONTACT |o--o{ QUOTE : "sourceContactId (optional)"
+
+    QUOTE |o--o| PURCHASE_ORDER : "linkedPOId (optional)"
+
+    INVOICE |o--o| PURCHASE_ORDER : "invId/invNum (optional, invoice-to-PO conversion)"
+
+    INVOICE ||--o{ INVOICE : "linkedInvId + linkedInvNum -- Credit Note credits an Invoice (same table, type-discriminated)"
+
+    INVOICE }o--o{ SHIPMENT : "sh.linkedInvs[] -- business-key array FK, NOT id-based (mixed convention, see §3)"
+
+    EVENT }o--o{ SUPPLIER : "entityId (untyped, no referential integrity)"
+    EVENT }o--o{ LINE_ITEM : "entityId (untyped)"
+    EVENT }o--o{ BUYER : "entityId (untyped)"
+    EVENT }o--o{ CONTACT : "entityId (untyped)"
+```
+
+**Reading notes:**
+- `PAYMENT` has no drawn relationship — confirmed in §2, it carries no stored FK field; it's tied to an invoice only by application context (passed as a parameter at save time), not a persisted reference.
+- The `INVOICE ||--o{ INVOICE` self-relationship is real, not a diagram error — Credit Notes are stored in the same `DB.inv` array as ordinary Invoices, discriminated by `type`, and reference the invoice they credit via both an `id`-based and a `num`-based field simultaneously (§3's redundancy note).
+- `EVENT`'s relationships to other entities are drawn to four representative examples only (Supplier/Line Item/Buyer/Contact) — in reality `entityId` can reference *any* entity's `id`, untyped and unenforced, per §2.
+
+## 6. Notes
 
 - `sourceContactId` is set when a Quote is created via the "→ Quote" button on a Contact row.
 - Deleting a Quote with a `sourceContactId` reverts the linked Contact from `converted` back to `qualified` (if it was `converted`).
