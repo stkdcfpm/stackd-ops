@@ -2466,6 +2466,7 @@ function openOrd(id) {
   G('of-desc').value = ord ? (ord.description||'') : '';
   G('ord-override-confirm').value = '';
   G('of-override-reason').value = '';
+  vClrAll(['of-contact', 'of-stage']);
   var q = ord && ord.activeQuoteId ? DB.qt.find(function(x){ return x.id === ord.activeQuoteId; }) : null;
   G('of-quote-info').textContent = q ? (q.num + ' (' + q.status + ')') : 'No Quote linked yet';
   var quoteBtn = G('of-quote-btn');
