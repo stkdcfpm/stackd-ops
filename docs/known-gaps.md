@@ -16,6 +16,17 @@ Items deferred from initial build. Review after pilot period before wider rollou
 **Logged:** v2.9.46 (REQ/SPEC-CUR-001)
 **Detail:** Picks `cur = invRecs[0].cur||'USD'` (first invoice's native currency) and sums unconverted — same latent multi-currency bug as CUR-GAP-001, pre-existing, out of scope for CUR-001.
 
+## Sync / Data Integrity
+
+### SYNC-GAP-001 — pullAll() ingests Sheets records with no minimum-field validation, unlike every other write path
+**Area:** `pullAll()` (`index.html:3331-3416`) — the two-way "⟲ Sync" Pull path
+**Logged:** 2026-07-12 (found while investigating user-reported blank Supplier/Line Item/Shipment/Invoice records consuming `num` sequence numbers)
+**Detail:** Every other way a record enters `DB` validates a required field first: manual Save forms (`vSup()` requires `name` at `6066`, `vLI()` requires `desc` at `6079`, `vShp()` requires `ref` at `6168`, `vInv()` requires `num`/`buyer` at `6099`/`6104`), CSV import, and the one-way "Import from Sheets" button (`processImport()`/`processImportRecords()` explicitly `skip` rows with a blank name/desc/buyer at `6317`, `6335`, `6530`, `6545`, `6568`). `pullAll()` has no equivalent guard: the Invoices block (`3336-3361`) does `DB.inv = invPulled.concat(invLocalOnly)` and the `simpleEnts` block for Suppliers/Line Items/Payments/Shipments/Quotes/Contacts (`3390-3403`) does `DB[dbKey] = sd.records.concat(...)` — both accept whatever the connected Google Sheet returns, with no check that the incoming record has a name/desc/ref/buyer. `backfillRefNums()` runs immediately after (`3405`) and assigns a fresh `num` to any such blank record, permanently consuming a sequence number for a phantom entry.
+**Hypothesis, not yet confirmed:** stray/blank rows already present in the backing Google Sheet (e.g. leftover formatting, a partially-cleared row) are the most likely source, ingested on every subsequent Pull. Not yet proven — monitoring is in progress: if blank records reappear in Suppliers/Line Items/Shipments/Invoices immediately after the next Sync/Pull, that confirms `pullAll()` as the entry point.
+**Relationship to existing gaps:** sharper, more specific instance of the already-logged **SEC-GAP-011** ("`pullAll()` overwrites local records unconditionally — Sheets wins, no timestamp-based conflict resolution") — that gap is about conflict resolution; this one is about a complete absence of ingest validation on this one code path while every other path in the app has it.
+**Fix, if confirmed:** add the same blank-guard `processImportRecords()` already uses (skip a pulled record if its required identifying field is blank) to the three unguarded blocks in `pullAll()`. Not yet built — deferred pending confirmation.
+**Interim mitigation (no code change):** deleting the existing blank records via the normal delete buttons (`delSup`/`delLI`/`delShp`/`delInv`) is safe and does not disturb the `num` sequence — `nextRefNum()` always computes `max(existing) + 1` off the live array, so gaps left by deletion are permanent and harmless, never reused.
+
 ## Dashboard
 
 ### DASH-GAP-001 — Dashboard charts are hand-rolled bar divs, no interactivity (hover/tooltip/drill-down)
