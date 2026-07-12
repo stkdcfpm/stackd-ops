@@ -4218,6 +4218,156 @@ test('delCon: nulls contactId on linked Order Requests rather than leaving a dan
   assertEqual(ctx.DB.ord[0].contactId, null, 'contactId nulled, not left dangling');
 });
 
+// ── Order Request line items (SPEC-ORD-002) ─────────────────────
+console.log('\nOrder Request line items — SPEC-ORD-002');
+
+function _ordLineFixture(overrides) {
+  return Object.assign({
+    id: 'l1', category: 'Salt fish', itemSpec: 'Extra-large salted Pollock',
+    orderVolumeQty: 1, orderVolumeUnit: 'container', packingSpec: '', baseUom: '', baseQty: null,
+    qtyStatus: 'Unknown', sourceCountry: 'China', variantOption: '', lineUpdates: []
+  }, overrides || {});
+}
+
+test('ordLogLineUpdate: appends an entry every call; live field only changes when confirmedBy is truthy', () => {
+  resetDB();
+  var ord = { id:'o1', lines:[ _ordLineFixture() ] };
+  ctx.ordLogLineUpdate(ord, 'l1', 'packingSpec', '5kg boxes', 'ai', 'from chat', null);
+  var line = ord.lines[0];
+  assertEqual(line.lineUpdates.length, 1, 'entry appended');
+  assertEqual(line.packingSpec, '', 'live field unchanged for unconfirmed (AI) update');
+  ctx.ordLogLineUpdate(ord, 'l1', 'packingSpec', '2 per carton', 'operator', '', 'operator');
+  assertEqual(line.lineUpdates.length, 2, 'second entry appended');
+  assertEqual(line.packingSpec, '2 per carton', 'live field changes when confirmedBy is truthy');
+});
+
+test('ordConfirmLineUpdate: applies a specific pending entry and marks it confirmed; does not affect others', () => {
+  resetDB();
+  var ord = { id:'o1', lines:[ _ordLineFixture() ] };
+  ctx.ordLogLineUpdate(ord, 'l1', 'baseUom', 'kg', 'ai', '', null);
+  ctx.ordLogLineUpdate(ord, 'l1', 'sourceCountry', 'Vietnam', 'ai', '', null);
+  var line = ord.lines[0];
+  var firstEntryId = line.lineUpdates[0].id;
+  ctx.ordConfirmLineUpdate(ord, 'l1', firstEntryId);
+  assertEqual(line.baseUom, 'kg', 'confirmed entry applied to live field');
+  assertEqual(line.lineUpdates[0].confirmedBy, 'operator', 'entry marked confirmed');
+  assertEqual(line.sourceCountry, 'China', 'other pending entry untouched');
+  assert(!line.lineUpdates[1].confirmedBy, 'other pending entry still unconfirmed');
+});
+
+test('ordConfirmLineUpdate: no-op (returns false) if the entry is already confirmed', () => {
+  resetDB();
+  var ord = { id:'o1', lines:[ _ordLineFixture() ] };
+  ctx.ordLogLineUpdate(ord, 'l1', 'baseUom', 'kg', 'operator', '', 'operator');
+  var entryId = ord.lines[0].lineUpdates[0].id;
+  var result = ctx.ordConfirmLineUpdate(ord, 'l1', entryId);
+  assertEqual(result, false, 'already-confirmed entry is a no-op');
+});
+
+test('update_order_line AI action: proposes via ordLogLineUpdate with confirmedBy null; never auto-applies', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test' }];
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'New', actions:[], lines:[ _ordLineFixture() ] }];
+  ctx.handleAIAction({ action:'update_order_line', payload:{ ordId:'o1', lineId:'l1', field:'packingSpec', newValue:'5kg boxes', note:'supplier confirmed' } });
+  var line = ctx.DB.ord[0].lines[0];
+  assertEqual(line.packingSpec, '', 'live field unchanged immediately after the AI action fires');
+  assertEqual(line.lineUpdates.length, 1, 'proposal logged');
+  assertEqual(line.lineUpdates[0].source, 'ai', 'source recorded as ai');
+  assert(!line.lineUpdates[0].confirmedBy, 'unconfirmed');
+  ctx.ordConfirmLineUpdate(ctx.DB.ord[0], 'l1', line.lineUpdates[0].id);
+  assertEqual(line.packingSpec, '5kg boxes', 'applied only via a separate, explicit confirm call');
+});
+
+test('qtyStatus independence: setting baseQty does not auto-flip qtyStatus to Confirmed', () => {
+  resetDB();
+  var ord = { id:'o1', lines:[ _ordLineFixture() ] };
+  ctx.ordLogLineUpdate(ord, 'l1', 'baseQty', 500, 'operator', '', 'operator');
+  assertEqual(ord.lines[0].baseQty, 500);
+  assertEqual(ord.lines[0].qtyStatus, 'Unknown', 'qtyStatus must be set explicitly, not auto-derived');
+});
+
+test('Stage-transition warning: moving to Quoted with Unknown-status lines warns but still saves', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test' }];
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'Qualifying', actions:[], lines:[ _ordLineFixture({ qtyStatus:'Unknown' }) ] }];
+  var result = ctx.saveOrd({ id:'o1', contactId:'c1', stage:'Quoted', lines: ctx.DB.ord[0].lines });
+  assert(result, 'save succeeds despite the warning');
+  assertEqual(ctx.DB.ord[0].stage, 'Quoted', 'stage change applied');
+});
+
+test('Stage-transition warning: moving to Quoted with all lines resolved triggers no warning path issue', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test' }];
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'Qualifying', actions:[], lines:[ _ordLineFixture({ qtyStatus:'Confirmed' }) ] }];
+  var result = ctx.saveOrd({ id:'o1', contactId:'c1', stage:'Quoted', lines: ctx.DB.ord[0].lines });
+  assert(result, 'save succeeds');
+  assertEqual(ctx.DB.ord[0].stage, 'Quoted');
+});
+
+test('Stage-transition warning: does not fire for any other stage transition', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test' }];
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'New', actions:[], lines:[ _ordLineFixture({ qtyStatus:'Unknown' }) ] }];
+  var result = ctx.saveOrd({ id:'o1', contactId:'c1', stage:'Qualifying', lines: ctx.DB.ord[0].lines });
+  assert(result, 'New -> Qualifying unaffected by the Quoted-specific warning');
+});
+
+test('New-record edge case: creating directly at stage Quoted with Unknown lines still runs the warning path without error', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test' }];
+  var result = ctx.saveOrd({ contactId:'c1', stage:'Quoted', lines:[ _ordLineFixture({ qtyStatus:'Unknown' }) ] });
+  assert(result, 'new record created directly at Quoted succeeds (warning is non-blocking, and existing is null)');
+  assertEqual(ctx.DB.ord[0].stage, 'Quoted');
+});
+
+test('Defensive guard: ordLogLineUpdate/ordConfirmLineUpdate return false, do not throw, when ord.lines is absent', () => {
+  resetDB();
+  var ord = { id:'o1' }; // no lines key at all
+  var r1 = ctx.ordLogLineUpdate(ord, 'l1', 'baseUom', 'kg', 'operator', '', 'operator');
+  assertEqual(r1, false, 'ordLogLineUpdate returns false rather than throwing');
+  var r2 = ctx.ordConfirmLineUpdate(ord, 'l1', 'u1');
+  assertEqual(r2, false, 'ordConfirmLineUpdate returns false rather than throwing');
+});
+
+test('backfillOrderRequests: Tier 1 and Tier 2 backfilled records are created with lines: []', () => {
+  resetDB();
+  ctx.DB.con = [
+    { id:'c1', name:'Quoted Contact' },
+    { id:'c2', name:'Enquiry-only Contact', enquiries:[{ id:'e1', ts:'2026-01-01', summary:'enquiry' }] }
+  ];
+  ctx.DB.qt = [{ id:'q1', num:'QTE-0001', sourceContactId:'c1', status:'Accepted' }];
+  ctx.backfillOrderRequests();
+  ctx.DB.ord.forEach(function(o){
+    assert(Array.isArray(o.lines), 'every backfilled Order Request has a real lines array, not missing');
+    assertEqual(o.lines.length, 0, 'backfilled with an empty array');
+  });
+});
+
+test('Retention cap: lineUpdates[] retains only the most recent ORD_LINE_UPDATES_CAP entries', () => {
+  resetDB();
+  var ord = { id:'o1', lines:[ _ordLineFixture() ] };
+  for (var i = 0; i < 205; i++) {
+    ctx.ordLogLineUpdate(ord, 'l1', 'baseQty', i, 'operator', '', 'operator');
+  }
+  assertEqual(ord.lines[0].lineUpdates.length, 200, 'capped at 200 entries');
+  assertEqual(ord.lines[0].lineUpdates[0].newValue, 5, 'oldest 5 entries (values 0-4) evicted FIFO, value 5 is now the oldest remaining');
+  assertEqual(ord.lines[0].lineUpdates[199].newValue, 204, 'newest entry retained');
+});
+
+test('Resave-heals-missing-lines regression: existing.lines || [] on a lines-less DB.ord record resaved via the ordinary edit path', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test' }];
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'New', actions:[], description:'' }]; // no lines key
+  ctx.EI.ord = 'o1';
+  mockEl('of-contact').value = 'c1';
+  mockEl('of-stage').value = 'New';
+  mockEl('of-desc').value = 'updated description';
+  ctx._ordFormActions = [];
+  ctx.saveOrdFromForm();
+  assert(Array.isArray(ctx.DB.ord[0].lines), 'lines healed to a real array on ordinary resave');
+  assertEqual(ctx.DB.ord[0].lines.length, 0, 'healed to empty, not populated from nowhere');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {

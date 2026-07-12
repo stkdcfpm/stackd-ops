@@ -355,6 +355,12 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 2. **Abandoned Quotes aren't re-attributed.** If an operator creates a new Quote for an Order Request after abandoning a previous one (via "Create Quote" a second time), `activeQuoteId` reassigns to the new Quote. The abandoned Quote's own PO/Invoice (if it has one) is not automatically re-attributed or hidden — it remains independently visible in the Quotes/POs/Invoices tabs, it simply stops counting toward this Order Request's realised margin.
 **Decision:** Both accepted as documented limitations, not defects to fix. Neither is expected to cause data loss or incorrect financial calculation — only a lower level of historical detail (limitation 1) or a manual-tracing requirement if an abandoned Quote's PO/Invoice needs separate attention (limitation 2).
 
+### ORD-GAP-002 — `update_order_line` AI action has no corresponding read tool *(Open, accepted)*
+**Area:** `AI_TOOLS`, `handleAIAction()`'s `update_order_line` branch (`index.html`)
+**Logged:** v2.9.45, per SPEC-ORD-002-v5 §8
+**Detail:** The AI assistant can propose a line-item field update (`update_order_line`) but has no `get_order_lines`-style read tool to query an Order Request's current line state before proposing — the same read/write asymmetry already logged for other entities under AI-GAP-008's precedent (e.g. `create_po` needing a supplier name resolved with no `get_suppliers` tool). Without a read path, the AI can only act on line state the user has described to it in-conversation, not verify it against what's actually stored.
+**Decision:** Accepted, explicitly out of scope per REQ-ORD-002-v2 §3. Natural follow-up once real usage shows how often this gap is actually hit in practice — same recommended fix shape as AI-GAP-008 (add a scoped read tool).
+
 ---
 
 ## Contacts
