@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.45</title>
+<title>Stackd Ops v2.9.46</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.45</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.46</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -221,6 +221,16 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div class="view on" id="v-dash">
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+    <label style="font-size:.5rem;color:var(--m);" for="disp-cur-sel">Display currency</label>
+    <select id="disp-cur-sel" onchange="setDisplayCurrency(this.value)" style="font-size:.5rem;padding:2px 6px;">
+      <option value="GBP">GBP</option>
+      <option value="USD">USD</option>
+      <option value="RMB">RMB</option>
+      <option value="BBD">BBD</option>
+    </select>
+  </div>
+  <div id="dash-fx-warn"></div>
   <div class="kpis" id="kpis"></div>
   <div class="r2">
     <div class="card"><div class="ct">Invoice Pipeline</div><div class="pl" id="pipeline"></div></div>
@@ -428,6 +438,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">BUYERS</div>
     <button class="btn btn-s" onclick="openBuy(null)">+ New Buyer</button>
   </div>
+  <div id="buy-fx-warn"></div>
   <div class="tw"><table class="tbl" id="buy-tbl" style="display:none;">
     <thead><tr>
       <th>#</th><th>Company</th><th>Contact</th><th>Email</th><th>Currency</th><th>Payment Terms</th><th class="num">Credit Limit</th><th class="num">Outstanding (GBP)</th><th></th>
@@ -1129,9 +1140,22 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.45</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.46</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: global display-currency toggle (REQ/SPEC-CUR-001) — a currency selector (GBP/USD/RMB/BBD) on the Dashboard converts KPI figures, the Buyers list Outstanding column, and the Buyer Summary panel's "Total invoiced" figure into the selected currency, using the same configured FX rates. Buyer-native figures (Summary panel "Outstanding", recent-invoice amounts), the Buyer Statement report, the Aging Report, and the MTD/VAT export are unaffected — always shown in their own/statutory currency.</li>
+          <li>New: staleness warning banner next to converted figures when FX rates are >24h old and a non-GBP display currency is selected.</li>
+          <li>Fix: <code>renderBuyers()</code> and the Buyer Summary panel were reading a non-existent <code>currency</code> field on invoices (always silently defaulting to USD) instead of the real <code>cur</code> field — corrected everywhere this feature touches.</li>
+          <li>Fix: <code>saveRates()</code> would have silently reset the new display-currency preference back to GBP on every routine Rates & FX save — preference is now preserved across rate saves.</li>
+          <li>7 new tests. Tests: 372/372 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.45</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Order Request line items (REQ/SPEC-ORD-002) — each Order Request now has its own <code>lines[]</code>, separate from Quote lines, capturing what was actually asked for before pricing is possible: order volume (the stated ask, e.g. "1 container") kept distinct from base UOM/quantity (the costable unit, often unresolved at intake), a <code>qtyStatus</code> (Unknown/Estimated/Confirmed) set independently per line, and packing spec/source country/variant notes.</li>
@@ -2678,7 +2702,7 @@ function toggleAcc(bodyId) {
   el.style.display = el.style.display === 'none' ? '' : 'none';
 }
 
-const QR_DEFAULTS = { fxGBPUSD:1.27, fxGBPRMB:9.20, fxGBPBBD:2.54, lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, originCharges:250, destCharges:350, dgSurcharge:150, insRate:0.005, fpmAdmin:75 };
+const QR_DEFAULTS = { fxGBPUSD:1.27, fxGBPRMB:9.20, fxGBPBBD:2.54, lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, originCharges:250, destCharges:350, dgSurcharge:150, insRate:0.005, fpmAdmin:75, displayCurrency:'GBP' };
 var QR = (function(){ var saved = ld('st_qr'); return saved ? Object.assign({}, QR_DEFAULTS, saved) : Object.assign({}, QR_DEFAULTS); })();
 
 // ── LANGUAGE ──────────────────────────────────────────────────
@@ -3569,6 +3593,30 @@ function fromGBP(gbp, cur) {
   return n;
 }
 
+function toDisp(amount, cur) {
+  return fromGBP(toGBP(amount, cur), QR.displayCurrency || 'GBP');
+}
+
+function renderDispCurWarn(elId) {
+  var el = G(elId); if (!el) return;
+  if ((QR.displayCurrency||'GBP') === 'GBP') { el.innerHTML = ''; return; }
+  var ts = localStorage.getItem('st_qr_ts');
+  var ageMs = ts ? Date.now() - new Date(ts).getTime() : Infinity;
+  if (ageMs < 86400000) { el.innerHTML = ''; return; }
+  var ageH = isFinite(ageMs) ? Math.floor(ageMs/3600000) : null;
+  var msg = ageH !== null
+    ? 'FX rates were last refreshed ' + ageH + 'h ago — converted figures may be stale. Update in Settings → Rates & FX.'
+    : 'FX rates have never been refreshed from live data. Update in Settings → Rates & FX.';
+  el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;margin-bottom:8px;">&#9888; ' + msg + '</div>';
+}
+
+function setDisplayCurrency(cur) {
+  QR.displayCurrency = cur;
+  sv('st_qr', QR);
+  rDash();
+  renderBuyers();
+}
+
 // Returns invoice financials preferring stored calc_ fields; falls back to live cInv() only when absent.
 // Credit note records are returned via cInv() directly — calc_ fields do not apply to CNs.
 function iCalc(inv) {
@@ -3639,26 +3687,26 @@ function rDash() {
     if (!i.type && isCN(i.num)) return false;
     return true;
   });
-  var tR   = ai.reduce(function(s,i){ return s + toGBP(iCalc(i).grand, i.cur||'USD'); }, 0);
-  var tNP  = ai.reduce(function(s,i){ return s + toGBP(iCalc(i).np, i.cur||'USD');   }, 0);
+  var tR   = ai.reduce(function(s,i){ return s + toDisp(iCalc(i).grand, i.cur||'USD'); }, 0);
+  var tNP  = ai.reduce(function(s,i){ return s + toDisp(iCalc(i).np, i.cur||'USD');   }, 0);
   var tOut = ai.reduce(function(s,i){
     if (i.status==='Paid'||i.status==='Cancelled') return s;
-    return s + toGBP(Math.max(0, iCalc(i).bal), i.cur||'USD');
+    return s + toDisp(Math.max(0, iCalc(i).bal), i.cur||'USD');
   }, 0);
   var tPO = DB.po.filter(function(p){ return !p._demo && p.status!=='Cancelled' && p.status!=='Settled'; })
     .reduce(function(s,p){
       var t = (p.lineItems||[]).reduce(function(a,l){ return a + (+l.qty||0)*(+l.cost||0); }, 0);
-      return s + toGBP(t - (+p.dep||0), p.cur||'USD');
+      return s + toDisp(t - (+p.dep||0), p.cur||'USD');
     }, 0);
   var mg = ai.map(function(i){ return iCalc(i).mgn; }).filter(function(m){ return m !== null && !isNaN(m); });
   var aM = mg.length ? mg.reduce(function(a,b){ return a+b; }, 0) / mg.length : 0;
 
   // Net cash: total buyer deposits received minus total supplier deposits paid minus goodwill credits issued
-  var tBuyerDep = ai.reduce(function(s,i){ return s + toGBP(+i.dep||0, i.cur||'USD'); }, 0);
+  var tBuyerDep = ai.reduce(function(s,i){ return s + toDisp(+i.dep||0, i.cur||'USD'); }, 0);
   var tSupDep = DB.po.filter(function(p){ return !p._demo && p.status!=='Cancelled'; })
-    .reduce(function(s,p){ return s + toGBP(+p.dep||0, p.cur||'USD'); }, 0);
+    .reduce(function(s,p){ return s + toDisp(+p.dep||0, p.cur||'USD'); }, 0);
   var tGoodwillCredits = DB.inv.filter(function(i){ return !i._demo && i.type==='goodwill_credit' && i.status!=='Cancelled'; })
-    .reduce(function(s,i){ return s + toGBP(Math.abs(+i.cnAmount||0), i.cur||'USD'); }, 0);
+    .reduce(function(s,i){ return s + toDisp(Math.abs(+i.cnAmount||0), i.cur||'USD'); }, 0);
   var netCash = tBuyerDep - tSupDep - tGoodwillCredits;
 
   var inTransit = DB.sh.filter(function(s){ return !s._demo && s.status === 'In Transit'; }).length;
@@ -3667,13 +3715,16 @@ function rDash() {
   var demoBanner = hasDemo
     ? '<div style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:8px 12px;font-size:.52rem;border-radius:3px;margin-bottom:10px;">&#9888; Demo data active — financial KPIs exclude demo records. <button onclick="clearDemoData()" style="margin-left:8px;font-size:.48rem;padding:1px 6px;cursor:pointer;border:1px solid #92400e;background:transparent;color:#92400e;border-radius:2px;">Clear Demo Data</button></div>'
     : '';
+  var dispCur = QR.displayCurrency || 'GBP';
+  if (G('disp-cur-sel')) G('disp-cur-sel').value = dispCur;
+  renderDispCurWarn('dash-fx-warn');
   G('kpis').innerHTML = demoBanner +
-    '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR,'GBP') + '</div><div class="ks">' + ai.length + ' active &middot; &asymp;&thinsp;GBP</div></div>' +
-    '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP,'GBP') + '</div><div class="ks">After all costs &middot; &asymp;&thinsp;GBP</div></div>' +
+    '<div class="kpi"><div class="kl">Invoice Revenue</div><div class="kv">' + fmt(tR,dispCur) + '</div><div class="ks">' + ai.length + ' active &middot; &asymp;&thinsp;' + dispCur + '</div></div>' +
+    '<div class="kpi"><div class="kl">Net Profit</div><div class="kv ' + (tNP>=0?'g':'r') + '">' + fmt(tNP,dispCur) + '</div><div class="ks">After all costs &middot; &asymp;&thinsp;' + dispCur + '</div></div>' +
     '<div class="kpi"><div class="kl">Avg Margin</div><div class="kv ' + (aM>=20?'g':aM>=10?'gold':'r') + '">' + fp(aM) + '</div><div class="ks">' + mg.length + ' invoices</div></div>' +
-    '<div class="kpi"><div class="kl">Outstanding from Buyers</div><div class="kv b">' + fmt(tOut,'GBP') + '</div><div class="ks">Balance due &middot; &asymp;&thinsp;GBP</div></div>' +
-    '<div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">' + fmt(tPO,'GBP') + '</div><div class="ks">To suppliers &middot; &asymp;&thinsp;GBP</div></div>' +
-    '<div class="kpi"><div class="kl">Net Cash Position</div><div class="kv ' + (netCash>=0?'g':'r') + '">' + fmt(netCash,'GBP') + '</div><div class="ks">Buyer deps - supplier deps</div></div>' +
+    '<div class="kpi"><div class="kl">Outstanding from Buyers</div><div class="kv b">' + fmt(tOut,dispCur) + '</div><div class="ks">Balance due &middot; &asymp;&thinsp;' + dispCur + '</div></div>' +
+    '<div class="kpi"><div class="kl">PO Balance Due</div><div class="kv gold">' + fmt(tPO,dispCur) + '</div><div class="ks">To suppliers &middot; &asymp;&thinsp;' + dispCur + '</div></div>' +
+    '<div class="kpi"><div class="kl">Net Cash Position</div><div class="kv ' + (netCash>=0?'g':'r') + '">' + fmt(netCash,dispCur) + '</div><div class="ks">Buyer deps - supplier deps</div></div>' +
     '<div class="kpi"><div class="kl">In Transit</div><div class="kv gold">' + inTransit + '</div><div class="ks">' + DB.sh.length + ' total shipments</div></div>';
 
   var pl = G('pipeline');
@@ -3694,19 +3745,19 @@ function rDash() {
     }).join('');
   }
 
-  var mxN = Math.max.apply(null, ai.map(function(i){ return Math.abs(toGBP(iCalc(i).np, i.cur||'USD')); }).concat([1]));
+  var mxN = Math.max.apply(null, ai.map(function(i){ return Math.abs(toDisp(iCalc(i).np, i.cur||'USD')); }).concat([1]));
   G('np-chart').innerHTML = ai.length ? ai.slice(-7).map(function(i){
-    var np = toGBP(iCalc(i).np, i.cur||'USD');
+    var np = toDisp(iCalc(i).np, i.cur||'USD');
     return '<div class="br"><div class="bl2">' + san(i.num||i.buyer||'-') + '</div>' +
       '<div class="bt"><div class="bf ' + (np>=0?'go':'cr') + '" style="width:' + (Math.abs(np)/mxN*100) + '%"></div></div>' +
-      '<div class="bv">' + fmt(np, 'GBP') + '</div></div>';
+      '<div class="bv">' + fmt(np, dispCur) + '</div></div>';
   }).join('') : '<p style="font-size:.56rem;color:var(--m)">No data</p>';
 
   var dm = {};
-  ai.forEach(function(i){ var d = i.dst||'Unknown'; dm[d] = (dm[d]||0) + toGBP(iCalc(i).grand, i.cur||'USD'); });
+  ai.forEach(function(i){ var d = i.dst||'Unknown'; dm[d] = (dm[d]||0) + toDisp(iCalc(i).grand, i.cur||'USD'); });
   var mxD = Math.max.apply(null, Object.values(dm).concat([1]));
   G('dest-chart').innerHTML = Object.entries(dm).sort(function(a,b){return b[1]-a[1];}).slice(0,5).map(function(e){
-    return '<div class="br"><div class="bl2">' + san(e[0]) + '</div><div class="bt"><div class="bf cr" style="width:' + (e[1]/mxD*100) + '%"></div></div><div class="bv">' + fmt(e[1],'GBP') + '</div></div>';
+    return '<div class="br"><div class="bl2">' + san(e[0]) + '</div><div class="bt"><div class="bf cr" style="width:' + (e[1]/mxD*100) + '%"></div></div><div class="bv">' + fmt(e[1],dispCur) + '</div></div>';
   }).join('') || '<p style="font-size:.56rem;color:var(--m)">No data</p>';
 
   var bd = {'Under 10%':0, '10-20%':0, '20-30%':0, 'Over 30%':0};
@@ -5082,9 +5133,11 @@ function quickAddBuyer() {
 
 function renderBuyers() {
   if (!G('buy-tbody')) return;
+  renderDispCurWarn('buy-fx-warn');
+  var dispCur = QR.displayCurrency || 'GBP';
   var rows = DB.buy.map(function(b) {
-    var outGBP = DB.inv.filter(function(i){ return i.buyerId === b.id; })
-      .reduce(function(s,i){ return s + toGBP(iCalc(i).bal, i.currency||'USD'); }, 0);
+    var outDisp = DB.inv.filter(function(i){ return i.buyerId === b.id; })
+      .reduce(function(s,i){ return s + toDisp(iCalc(i).bal, i.cur||'USD'); }, 0);
     return '<tr>'
       + '<td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(b.num||'-') + '</td>'
       + '<td><strong>' + san(b.name) + '</strong></td>'
@@ -5093,7 +5146,7 @@ function renderBuyers() {
       + '<td>' + san(b.currency||'GBP') + '</td>'
       + '<td>' + san(b.paymentTerms||'') + '</td>'
       + '<td class="num">' + (b.creditLimit != null ? '£' + Number(b.creditLimit).toLocaleString() : '—') + '</td>'
-      + '<td class="num">£' + outGBP.toFixed(2) + '</td>'
+      + '<td class="num">' + fmt(outDisp, dispCur) + '</td>'
       + '<td><button class="btn btn-g" style="font-size:.46rem;padding:2px 7px;" onclick="openBuy(\'' + san(b.id) + '\')">Edit</button></td>'
       + '</tr>';
   });
@@ -5128,26 +5181,29 @@ function openBuy(id) {
   // Summary panel
   var summEl = G('buy-summary');
   if (id && buyer) {
+    var dispCur2 = QR.displayCurrency || 'GBP';
     var buyInvs = DB.inv.filter(function(i){ return i.buyerId === id; });
-    var totalGBP = buyInvs.reduce(function(s,i){ return s + toGBP(iCalc(i).grand, i.currency||'USD'); }, 0);
-    var outstandGBP = buyInvs.reduce(function(s,i){ return s + toGBP(iCalc(i).bal, i.currency||'USD'); }, 0);
+    var totalDisp = buyInvs.reduce(function(s,i){ return s + toDisp(iCalc(i).grand, i.cur||'USD'); }, 0);
+    var outstandGBP = buyInvs.reduce(function(s,i){ return s + toGBP(iCalc(i).bal, i.cur||'USD'); }, 0);
     var outstandCur = fromGBP(outstandGBP, buyer.currency||'GBP');
     var curSym = {GBP:'£',USD:'$',RMB:'¥',BBD:'$'}[buyer.currency||'GBP'] || '';
     var recent5 = buyInvs.slice().sort(function(a,b){ return (b.date||'') > (a.date||'') ? 1 : -1; }).slice(0,5);
     var lastDate = recent5.length ? recent5[0].date : null;
     var stmtBtn = buyInvs.length ? '<button class="btn btn-g" style="font-size:.5rem;" onclick="openStatement(\'' + san(buyer.name) + '\')">&#128196; Buyer Statement</button>' : '';
-    summEl.innerHTML = '<div style="font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);margin-bottom:8px;">Summary</div>'
+    summEl.innerHTML = '<div id="buy-summ-fx-warn"></div>'
+      + '<div style="font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);margin-bottom:8px;">Summary</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.54rem;margin-bottom:10px;">'
-      + '<div><span style="color:var(--m);">Total invoiced</span><br><strong>£' + totalGBP.toFixed(2) + ' GBP</strong></div>'
+      + '<div><span style="color:var(--m);">Total invoiced</span><br><strong>' + fmt(totalDisp, dispCur2) + ' ' + dispCur2 + '</strong></div>'
       + '<div><span style="color:var(--m);">Outstanding</span><br><strong>' + curSym + outstandCur.toFixed(2) + ' ' + (buyer.currency||'GBP') + '</strong></div>'
       + '<div><span style="color:var(--m);">Last invoice</span><br>' + san(lastDate||'None') + '</div>'
       + '</div>'
       + (recent5.length ? '<table style="width:100%;font-size:.5rem;border-collapse:collapse;margin-bottom:10px;">'
         + '<thead><tr><th style="text-align:left;padding:3px 4px;color:var(--m);">Invoice</th><th style="text-align:left;padding:3px 4px;color:var(--m);">Date</th><th style="text-align:left;padding:3px 4px;color:var(--m);">Status</th><th style="text-align:right;padding:3px 4px;color:var(--m);">Amount</th></tr></thead><tbody>'
-        + recent5.map(function(inv){ var c=iCalc(inv); return '<tr><td style="padding:3px 4px;">' + san(inv.num||'') + '</td><td style="padding:3px 4px;">' + san(inv.date||'') + '</td><td style="padding:3px 4px;">' + san(inv.status||'') + '</td><td style="padding:3px 4px;text-align:right;">' + fmt(c.grand, inv.currency||'USD') + '</td></tr>'; }).join('')
+        + recent5.map(function(inv){ var c=iCalc(inv); return '<tr><td style="padding:3px 4px;">' + san(inv.num||'') + '</td><td style="padding:3px 4px;">' + san(inv.date||'') + '</td><td style="padding:3px 4px;">' + san(inv.status||'') + '</td><td style="padding:3px 4px;text-align:right;">' + fmt(c.grand, inv.cur||'USD') + '</td></tr>'; }).join('')
         + '</tbody></table>' : '')
       + stmtBtn;
     summEl.style.display = '';
+    renderDispCurWarn('buy-summ-fx-warn');
   } else {
     summEl.style.display = 'none';
   }
@@ -6891,7 +6947,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.45).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.46).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -6937,6 +6993,7 @@ var AI_SYSTEM_PROMPT = [
   '## Rates & FX (Settings)',
   'Settings → Rates & FX. Configure: GBP/USD rate, GBP/RMB rate, GBP/BBD rate, LCL rate per CBM, FCL 20GP rate, FCL 40HQ rate, Origin charges, Destination charges, DG surcharge per line, Insurance rate (% of CIF), FPM admin fee. These defaults populate new quotes but can be overridden per quote.',
   'Live FX rates: click ↻ Live Rates to fetch current GBP→USD/CNY/BBD rates from a free CDN-backed source (no API key). A freshness label shows when rates were last fetched (green = <8h, amber = 8–24h, red = >24h). A warning appears inside the quote modal when rates are older than 24h. Clicking Save Rates manually clears the timestamp and marks rates as manually set.',
+  'Display currency (v2.9.46): a currency selector (GBP/USD/RMB/BBD) on the Dashboard lets the operator view aggregate financial figures converted into any currency, using the same configured FX rates. In scope: Dashboard KPIs, the Buyers list Outstanding column, and the Buyer edit modal Summary panel\'s "Total invoiced" figure. Out of scope, unaffected by the toggle: the Buyer Summary panel\'s "Outstanding" figure and recent-invoices amounts (always shown in that buyer\'s own currency), the Buyer Statement report, the Aging Report, and the MTD/VAT export (always GBP, a statutory figure). If FX rates are >24h stale and a non-GBP display currency is selected, a warning banner appears next to the converted figures. The preference persists across reloads and backup export/import (stored on the same QR rates object, not synced to Sheets).',
   '',
   '## Order Requests (v2.9.44)',
   'Orders tab → + New Order Request. Tracks a Contact\'s order request from first enquiry through to realised margin, as its own record — a Contact can have several concurrent Order Requests at different stages.',
@@ -9256,7 +9313,9 @@ function ratesFromForm() {
 }
 
 function saveRates() {
+  var keepDisplayCurrency = QR.displayCurrency;
   Object.assign(QR, QR_DEFAULTS, ratesFromForm());
+  QR.displayCurrency = keepDisplayCurrency;
   sv('st_qr', QR);
   localStorage.removeItem('st_qr_ts');
   renderFxStatus();

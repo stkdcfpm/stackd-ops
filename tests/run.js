@@ -4368,6 +4368,146 @@ test('Resave-heals-missing-lines regression: existing.lines || [] on a lines-les
   assertEqual(ctx.DB.ord[0].lines.length, 0, 'healed to empty, not populated from nowhere');
 });
 
+// ── DISPLAY CURRENCY (SPEC-CUR-001) ─────────────────────────────
+console.log('\ndisplayCurrency — global display-currency toggle');
+
+test('toDisp — composes toGBP/fromGBP via QR.displayCurrency', function() {
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS, { fxGBPUSD: 1.30, displayCurrency: 'USD' });
+  var r = ctx.toDisp(1000, 'GBP'); // 1000 GBP -> GBP(1000) -> USD(1300)
+  assertApprox(r, 1300, '1000 GBP displayed in USD at 1.30 rate');
+  ctx.QR = savedQR;
+});
+
+test('toDisp — GBP display currency is a passthrough of toGBP', function() {
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS, { fxGBPUSD: 1.30, displayCurrency: 'GBP' });
+  var r = ctx.toDisp(1300, 'USD');
+  assertApprox(r, 1000, '1300 USD -> 1000 GBP, display stays GBP');
+  ctx.QR = savedQR;
+});
+
+test('setDisplayCurrency — persists QR.displayCurrency to st_qr', function() {
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS);
+  ctx.setDisplayCurrency('RMB');
+  assertEqual(ctx.QR.displayCurrency, 'RMB', 'in-memory QR updated');
+  var persisted = JSON.parse(ctx.localStorage.getItem('st_qr'));
+  assertEqual(persisted.displayCurrency, 'RMB', 'persisted st_qr reflects the change');
+  ctx.QR = savedQR;
+});
+
+test('saveRates — does not reset displayCurrency to GBP on an unrelated rate save', function() {
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS, { displayCurrency: 'USD' });
+  ['fxGBPUSD','fxGBPRMB','fxGBPBBD','lclPerCBM','fcl20GP','fcl40HQ','originCharges','destCharges','dgSurcharge','fpmAdmin','insRate'].forEach(function(f){
+    mockEl('qr-' + f).value = String(ctx.QR[f]);
+  });
+  ctx.saveRates();
+  assertEqual(ctx.QR.displayCurrency, 'USD', 'in-memory displayCurrency survives a rates save');
+  var persisted = JSON.parse(ctx.localStorage.getItem('st_qr'));
+  assertEqual(persisted.displayCurrency, 'USD', 'persisted displayCurrency survives a rates save');
+  ctx.QR = savedQR;
+});
+
+test('AC-004 fixture — calcVATReturn box1/box6 unaffected by displayCurrency', function() {
+  resetDB();
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS, { fxGBPUSD: 1.30, fxGBPRMB: 9.10 });
+  ctx.DB.inv = [
+    { id:'va', num:'INV-A', cur:'GBP', status:'Sent', date:'2026-01-01', lineItems:[], taxRate:20, dep:0,
+      calc_grandTotal:'1000', calc_taxAmt:'200', calc_liTotal:'800', calc_netProfit:'0', calc_cogs:'0', calc_margin:'0', calc_balanceDue:'1000',
+      calc_grossProfit:'0' },
+    { id:'vb', num:'INV-B', cur:'USD', status:'Sent', date:'2026-01-01', lineItems:[], taxRate:20, dep:0,
+      calc_grandTotal:'1300', calc_taxAmt:'260', calc_liTotal:'1040', calc_netProfit:'0', calc_cogs:'0', calc_margin:'0', calc_balanceDue:'1300',
+      calc_grossProfit:'0' },
+    { id:'vc', num:'INV-C', cur:'RMB', status:'Sent', date:'2026-01-01', lineItems:[], taxRate:20, dep:0,
+      calc_grandTotal:'9100', calc_taxAmt:'1820', calc_liTotal:'7280', calc_netProfit:'0', calc_cogs:'0', calc_margin:'0', calc_balanceDue:'9100',
+      calc_grossProfit:'0' },
+  ];
+  ['GBP','USD','RMB'].forEach(function(disp){
+    ctx.QR.displayCurrency = disp;
+    var r = ctx.calcVATReturn('2026-01-01', '2026-01-31');
+    assertApprox(r.box1, 600.00, 'box1 (tax total) unaffected by displayCurrency=' + disp);
+    assertApprox(r.box6, 2400.00, 'box6 (net total) unaffected by displayCurrency=' + disp);
+  });
+  ctx.QR = savedQR;
+});
+
+test('AC-009 — renderBuyers reads i.cur (not dead i.currency field) for Outstanding', function() {
+  resetDB();
+  var savedQR = ctx.QR;
+  // displayCurrency stays GBP (default). If the dead `i.currency` field were still read
+  // instead of `i.cur`, the invoice would be wrongly treated as USD-native: 910/1.3=700 GBP.
+  // Reading the correct `i.cur:'RMB'` gives 910/9.10=100 GBP.
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS, { fxGBPRMB: 9.10, fxGBPUSD: 1.30 });
+  ctx.DB.buy = [{ id:'b1', num:'BUY-0001', name:'Test Buyer', currency:'GBP' }];
+  ctx.DB.inv = [
+    { id:'i1', buyerId:'b1', cur:'RMB', status:'Sent', lineItems:[], taxRate:0, dep:0,
+      calc_grandTotal:'910', calc_netProfit:'0', calc_cogs:'0', calc_margin:'0', calc_balanceDue:'910' },
+  ];
+  ctx.renderBuyers();
+  assertContains(mockEl('buy-tbody').innerHTML, '£100', 'RMB-native invoice (910 RMB = 100 GBP) converts correctly, not defaulted to USD (would show £700)');
+  ctx.QR = savedQR;
+});
+
+test('openBuy Summary — "Outstanding" stays buyer-native regardless of displayCurrency', function() {
+  resetDB();
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS, { fxGBPUSD: 1.30 });
+  ctx.DB.buy = [{ id:'b1', num:'BUY-0001', name:'Test Buyer', currency:'USD' }];
+  ctx.DB.inv = [
+    { id:'i1', buyerId:'b1', cur:'GBP', status:'Sent', lineItems:[], taxRate:0, dep:0,
+      calc_grandTotal:'1000', calc_netProfit:'0', calc_cogs:'0', calc_margin:'0', calc_balanceDue:'1000' },
+  ];
+  ctx.QR.displayCurrency = 'GBP';
+  ctx.openBuy('b1');
+  var outA = mockEl('buy-summary').innerHTML;
+  ctx.QR.displayCurrency = 'USD';
+  ctx.openBuy('b1');
+  var outB = mockEl('buy-summary').innerHTML;
+  assertEqual(outA.match(/Outstanding[\s\S]*?\$([\d.]+)/)[1], outB.match(/Outstanding[\s\S]*?\$([\d.]+)/)[1],
+    'Outstanding figure identical regardless of displayCurrency toggle');
+  ctx.QR = savedQR;
+});
+
+test('openBuy Summary — recent-invoices Amount column reads i.cur (not dead i.currency field)', function() {
+  resetDB();
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS);
+  ctx.DB.buy = [{ id:'b1', num:'BUY-0001', name:'Test Buyer', currency:'GBP' }];
+  ctx.DB.inv = [
+    { id:'i1', buyerId:'b1', num:'INV-0001', date:'2026-01-01', status:'Sent', cur:'RMB', lineItems:[], taxRate:0, dep:0,
+      calc_grandTotal:'910', calc_netProfit:'0', calc_cogs:'0', calc_margin:'0', calc_balanceDue:'910' },
+  ];
+  ctx.openBuy('b1');
+  assertContains(mockEl('buy-summary').innerHTML, 'RMB', 'recent-invoices Amount column renders in the invoice\'s real currency (RMB), not defaulted to USD');
+  ctx.QR = savedQR;
+});
+
+test('renderDispCurWarn — shows staleness banner only when displayCurrency is non-GBP and rates are >24h stale', function() {
+  var savedTs = ctx.localStorage.getItem('st_qr_ts');
+  var savedQR = ctx.QR;
+
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS, { displayCurrency: 'GBP' });
+  ctx.localStorage.setItem('st_qr_ts', new Date(Date.now() - 30*3600000).toISOString());
+  ctx.renderDispCurWarn('dash-fx-warn');
+  assertEqual(mockEl('dash-fx-warn').innerHTML, '', 'no banner when displayCurrency is GBP, regardless of staleness');
+
+  ctx.QR.displayCurrency = 'USD';
+  ctx.localStorage.setItem('st_qr_ts', new Date(Date.now() - 1*3600000).toISOString());
+  ctx.renderDispCurWarn('dash-fx-warn');
+  assertEqual(mockEl('dash-fx-warn').innerHTML, '', 'no banner when rates are <24h old, even if displayCurrency is non-GBP');
+
+  ctx.QR.displayCurrency = 'USD';
+  ctx.localStorage.setItem('st_qr_ts', new Date(Date.now() - 30*3600000).toISOString());
+  ctx.renderDispCurWarn('dash-fx-warn');
+  assertContains(mockEl('dash-fx-warn').innerHTML, 'refreshed', 'banner shown when displayCurrency is non-GBP and rates are >24h stale');
+
+  if (savedTs) ctx.localStorage.setItem('st_qr_ts', savedTs); else ctx.localStorage.removeItem('st_qr_ts');
+  ctx.QR = savedQR;
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {

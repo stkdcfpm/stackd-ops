@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.45**  
-**Test count: 363/363 PASS** (`node tests/run.js`)
+**Current version: v2.9.46**  
+**Test count: 372/372 PASS** (`node tests/run.js`)
 
 ---
 
@@ -149,6 +149,8 @@ See `docs/known-gaps.md` for full entries.
 | DATA-GAP-003 | Reference numbers / cross-device | `num` (SUP-/LI-/BUY-/CON-####) can diverge between two devices that haven't synced; same-device `pullAll()` stripping is mitigated (v2.9.43); cross-device divergence remains open, accepted design trade-off |
 | ORD-GAP-001 | Order Requests | Legacy-backfilled records (from Contact enquiry logs, no linked Quote) are lower-fidelity; abandoned-Quote PO/Invoice not auto-re-attributed on activeQuoteId reassignment — both accepted limitations |
 | ORD-GAP-002 | Order Requests / AI assistant | update_order_line AI action has no corresponding get_order_lines read tool — same read/write asymmetry as AI-GAP-008 |
+| CUR-GAP-001 | Display currency / Aging Report | Aging Report mixes currencies unconverted — pre-existing, out of scope for v2.9.46's currency toggle |
+| CUR-GAP-002 | Display currency / Buyer Statement | Buyer Statement (renderStatement()) mixes currencies unconverted — pre-existing, out of scope for v2.9.46's currency toggle |
 
 ---
 
