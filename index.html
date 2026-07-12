@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.44</title>
+<title>Stackd Ops v2.9.45</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.44</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.45</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -402,6 +402,11 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <input type="date" id="of-action-due">
           <button class="btn btn-g" onclick="ordAddAction()">Add</button>
         </div>
+      </div>
+      <div class="fld" style="border-top:1px solid var(--ln);padding-top:10px;">
+        <label>Line Items</label>
+        <div id="of-lines-list"></div>
+        <button class="btn btn-g" onclick="ordAddLine()" style="margin-top:6px;">+ Add Line</button>
       </div>
       <div class="fld" style="border-top:1px solid var(--ln);padding-top:10px;">
         <label>Admin Override (stage)</label>
@@ -1124,9 +1129,21 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.44</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.45</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Order Request line items (REQ/SPEC-ORD-002) — each Order Request now has its own <code>lines[]</code>, separate from Quote lines, capturing what was actually asked for before pricing is possible: order volume (the stated ask, e.g. "1 container") kept distinct from base UOM/quantity (the costable unit, often unresolved at intake), a <code>qtyStatus</code> (Unknown/Estimated/Confirmed) set independently per line, and packing spec/source country/variant notes.</li>
+          <li>New: field-level update log — every change to a line field is recorded (who/what said it — buyer, supplier, AI, or operator — when, old/new value, note), never silently overwritten. AI-proposed updates (<code>update_order_line</code> action) are always logged as pending and require an explicit operator confirm before the live field changes. 200-entry FIFO cap per line's update log, matching the existing event-log pattern.</li>
+          <li>New: non-blocking warning when moving an Order Request to Quoted with any line still <code>Unknown</code> — informs, does not block the save.</li>
+          <li>New known gap: ORD-GAP-002 (<code>update_order_line</code> has no matching AI read-tool). <code>AI_SYSTEM_PROMPT</code> updated. 13 new tests. Tests: 363/363 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;border-top:1px solid var(--ln);padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.44</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: PO-GAP-001 — <code>qteToPoConvert()</code> now creates one Purchase Order per distinct supplier on a Quote's lines, instead of a single PO misattributing every line except the first supplier's. <code>Quote.linkedPOId</code> (scalar) replaced by <code>linkedPOIds</code> (array), migrated automatically for existing Quotes. PO-number collision guard added against manually-typed PO numbers.</li>
@@ -2349,6 +2366,36 @@ function ordRealisedMargin(ord) {
   });
   return totals;
 }
+var ORD_LINE_UPDATES_CAP = 200;
+function ordLogLineUpdate(ord, lineId, field, newValue, source, note, confirmedBy) {
+  if (!ord.lines) return false;
+  var line = ord.lines.find(function(l){ return l.id === lineId; });
+  if (!line) return false;
+  if (!line.lineUpdates) line.lineUpdates = [];
+  var oldValue = line[field];
+  line.lineUpdates.push({
+    id: uid(), ts: new Date().toISOString(), source: source,
+    field: field, oldValue: oldValue, newValue: newValue, note: note || '',
+    confirmedBy: confirmedBy || null
+  });
+  if (line.lineUpdates.length > ORD_LINE_UPDATES_CAP) {
+    line.lineUpdates.splice(0, line.lineUpdates.length - ORD_LINE_UPDATES_CAP);
+  }
+  if (confirmedBy) line[field] = newValue;
+  sv(K.ord, DB.ord);
+  return true;
+}
+function ordConfirmLineUpdate(ord, lineId, updateId) {
+  if (!ord.lines) return false;
+  var line = ord.lines.find(function(l){ return l.id === lineId; });
+  if (!line || !line.lineUpdates) return false;
+  var entry = line.lineUpdates.find(function(u){ return u.id === updateId; });
+  if (!entry || entry.confirmedBy) return false;
+  entry.confirmedBy = 'operator';
+  line[entry.field] = entry.newValue;
+  sv(K.ord, DB.ord);
+  return true;
+}
 function backfillOrderRequests() {
   var changed = false;
   DB.qt.forEach(function(q) {
@@ -2365,7 +2412,7 @@ function backfillOrderRequests() {
     }
     DB.ord.push({
       id: uid(), num: '', contactId: q.sourceContactId, stage: stage,
-      description: 'Backfilled from Quote ' + q.num, actions: [],
+      description: 'Backfilled from Quote ' + q.num, actions: [], lines: [],
       activeQuoteId: q.id,
       outcome: stage === 'Lost' ? { result: 'lost', reason: 'Backfilled — original reason not captured', closedAt: q.dt || null } : { result: null, reason: '', closedAt: null },
       createdAt: q.dt ? new Date(q.dt).toISOString() : new Date().toISOString()
@@ -2382,7 +2429,7 @@ function backfillOrderRequests() {
     DB.ord.push({
       id: uid(), num: '', contactId: c.id, stage: stage,
       description: c.enquiries.map(function(e){ return (e.ts||'').slice(0,10) + ': ' + e.summary; }).join(' | '),
-      actions: [], activeQuoteId: '',
+      actions: [], lines: [], activeQuoteId: '',
       outcome: stage === 'Declined' ? { result: 'declined', reason: 'Backfilled — original reason not captured', closedAt: null } : { result: null, reason: '', closedAt: null },
       createdAt: c.createdAt || new Date().toISOString(),
       _backfilled: 'legacy-unstructured'
@@ -2401,6 +2448,13 @@ function saveOrd(ord) {
     return false;
   }
   vOk('of-stage');
+  var movingToQuoted = ord.stage === 'Quoted' && (!existing || existing.stage !== 'Quoted');
+  if (movingToQuoted) {
+    var unresolvedCount = (ord.lines || []).filter(function(l){ return l.qtyStatus === 'Unknown'; }).length;
+    if (unresolvedCount > 0) {
+      vWarn('of-stage', unresolvedCount + ' line(s) have unresolved quantity — quoting may be premature');
+    }
+  }
   if (existing) {
     Object.assign(existing, ord);
   } else {
@@ -2444,6 +2498,69 @@ function rOrd() {
   G('ord-em').style.display  = rows.length ? 'none' : '';
   G('ord-tbody').innerHTML = rows.join('');
 }
+function rOrdLines(ord) {
+  var el = G('of-lines-list'); if (!el) return;
+  if (!ord) { el.innerHTML = '<div style="font-size:.55rem;color:var(--m);">Save the Order Request first, then add line items.</div>'; return; }
+  var lines = ord.lines || [];
+  el.innerHTML = lines.map(function(l){
+    var pending = (l.lineUpdates||[]).filter(function(u){ return !u.confirmedBy; });
+    return '<div style="border:1px solid var(--ln);border-radius:4px;padding:6px;margin-bottom:6px;font-size:.55rem;">' +
+      '<div><strong>' + san(l.category||'-') + '</strong> — ' + san(l.itemSpec||'-') + '</div>' +
+      '<div>Order Volume: ' + san(String(l.orderVolumeQty||'')) + ' ' + san(l.orderVolumeUnit||'') + '</div>' +
+      '<div>Packing: <span onclick="ordEditLineField(\'' + l.id + '\',\'packingSpec\')" style="cursor:pointer;text-decoration:underline;">' + san(l.packingSpec || '(unset)') + '</span></div>' +
+      '<div>Base: <span onclick="ordEditLineField(\'' + l.id + '\',\'baseQty\')" style="cursor:pointer;text-decoration:underline;">' + san(l.baseQty != null ? String(l.baseQty) : '(unset)') + '</span> <span onclick="ordEditLineField(\'' + l.id + '\',\'baseUom\')" style="cursor:pointer;text-decoration:underline;">' + san(l.baseUom || '(unset)') + '</span></div>' +
+      '<div>Status: <select onchange="ordSetLineStatus(\'' + l.id + '\', this.value)">' + ['Unknown','Estimated','Confirmed'].map(function(s){ return '<option value="' + s + '"' + (l.qtyStatus === s ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></div>' +
+      (pending.length ? '<div style="color:var(--gold);">' + pending.length + ' pending update(s): ' + pending.map(function(u){
+        return san(u.field) + ' → ' + san(String(u.newValue)) + ' (' + san(u.source) + ') <button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="ordConfirmLineUpdateUI(\'' + l.id + '\',\'' + u.id + '\')">Confirm</button>';
+      }).join(' ') + '</div>' : '') +
+      '</div>';
+  }).join('') || '<div style="font-size:.55rem;color:var(--m);">No line items yet</div>';
+}
+function ordAddLine() {
+  if (!EI.ord) { toast('Save the Order Request first, then add line items.', 4000); return; }
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var category = prompt('Category (e.g. "Salt fish"):'); if (category === null) return;
+  var itemSpec = prompt('Item / spec:'); if (itemSpec === null) return;
+  var orderVolumeQty = prompt('Order volume qty (e.g. "1", "2-3"):') || '';
+  var orderVolumeUnit = prompt('Order volume unit (e.g. "container", "pallets"):') || '';
+  if (!ord.lines) ord.lines = [];
+  ord.lines.push({
+    id: uid(), category: category.trim(), itemSpec: itemSpec.trim(),
+    orderVolumeQty: orderVolumeQty.trim(), orderVolumeUnit: orderVolumeUnit.trim(),
+    packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown',
+    sourceCountry: '', variantOption: '', lineUpdates: []
+  });
+  sv(K.ord, DB.ord);
+  rOrdLines(ord);
+}
+function ordEditLineField(lineId, field) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+  var current = line[field];
+  var val = prompt('New value for ' + field + ':', current != null ? String(current) : '');
+  if (val === null) return;
+  if (field === 'baseQty') val = val === '' ? null : parseFloat(val);
+  ordLogLineUpdate(ord, lineId, field, val, 'operator', '', 'operator');
+  rOrdLines(ord);
+}
+function ordSetLineStatus(lineId, status) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  ordLogLineUpdate(ord, lineId, 'qtyStatus', status, 'operator', '', 'operator');
+  rOrdLines(ord);
+}
+function ordConfirmLineUpdateUI(lineId, updateId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  ordConfirmLineUpdate(ord, lineId, updateId);
+  rOrdLines(ord);
+}
 function populateOrdStageDrop(selId, current) {
   var el = G(selId); if (!el) return;
   var stages = Object.keys(ORD_TRANSITIONS);
@@ -2473,6 +2590,7 @@ function openOrd(id) {
   if (quoteBtn) quoteBtn.style.display = (ord && ord.id) ? '' : 'none';
   _ordFormActions = ord ? (ord.actions||[]).slice() : [];
   renderOrdActions(_ordFormActions);
+  rOrdLines(ord);
   G('ov-ord').classList.add('on');
 }
 function renderOrdActions(actions) {
@@ -2509,7 +2627,8 @@ function saveOrdFromForm() {
     description: G('of-desc').value.trim(),
     actions: _ordFormActions.length ? _ordFormActions : (existing ? existing.actions : []),
     activeQuoteId: existing ? existing.activeQuoteId : '',
-    outcome: existing ? existing.outcome : { result:null, reason:'', closedAt:null }
+    outcome: existing ? existing.outcome : { result:null, reason:'', closedAt:null },
+    lines: existing ? (existing.lines || []) : []
   };
   var saved = saveOrd(ord);
   if (!saved) return;
@@ -6772,7 +6891,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.44).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.45).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -6826,6 +6945,9 @@ var AI_SYSTEM_PROMPT = [
   '"Create Quote" button (inside an existing Order Request) links it to a new Quote — sets activeQuoteId and moves the stage to Quoted automatically on save. If a Quote is abandoned and a new one created for the same Order Request, the link reassigns to the new Quote and the old one no longer counts toward this Order Request\'s margin.',
   'Realised margin: shown only once stage is Fulfilled. Computed live (not stored) by summing iCalc() gross/net profit across every PO the linked Quote resolved to (a multi-supplier quote can now produce several POs — v2.9.44) and their matched Invoices.',
   'Existing Quotes (via sourceContactId) and Contacts (via their enquiry log, if no Quote exists) are backfilled into Order Requests automatically on load — backfilled-from-enquiry-only records are marked as lower-fidelity (no per-enquiry stage/action history existed before this feature).',
+  'Line items (v2.9.45): each Order Request has its own lines[], separate from Quote lines — captures what was actually asked for before pricing is possible. Fields per line: category, item/spec description, order volume qty+unit (the stated ask, e.g. "1 container" or "3 pallets" — NOT a costable quantity), packing spec (often unknown at intake), base UOM + base qty (the costable unit/quantity once packing is confirmed), qtyStatus (Unknown / Estimated / Confirmed — set independently, never auto-derived from whether base qty is filled in), source country, variant/option notes.',
+  'Every change to a line field is logged to that line\'s update history (who/what said it — buyer, supplier, AI, or operator — when, old value, new value, note), never silently overwritten. AI-proposed updates (via the update_order_line action) are always logged as pending and never change the live field until the operator clicks Confirm on that specific entry.',
+  'Moving an Order Request to Quoted while any line still has qtyStatus "Unknown" shows a warning (does not block the save) — quoting against unresolved quantities is allowed but flagged.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
@@ -6979,7 +7101,7 @@ var AI_SYSTEM_PROMPT = [
   'Supplier→Contact link: each contact record has a supplierId (string or null) and role (supplier_contact or empty). A contact may be linked to at most one supplier at a time. When editing a supplier, a "Contacts" sub-panel appears showing all linked contacts with an Unlink button each. "+ Link Contact" opens a prompt-based picker showing contacts not yet linked to another supplier. "+ New Contact" opens the Contact modal with the Supplier dropdown pre-filled. Contacts already linked to a different supplier are excluded from the picker. The Contacts list table shows a Supplier column with the linked supplier name (or — if none). Deleting a supplier nulls supplierId on all previously linked contacts before the async delete. supplierId and role are not synced to Google Sheets (omitted by mapRec()).',
   'Retention cap: 2,000 events maximum (FIFO). When the cap is exceeded, the oldest entries are silently dropped. No user-visible warning is shown (EVT-GAP-001).',
   'The event log is included in JSON backups (Settings → Data → Backup All JSON) and restored on import. It is not counted in the restore confirm dialog (operational metadata, not user records).',
-  'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, Contact, Supplier, or Buyer and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\ncreate_supplier → { name, country, currency, contactPerson, email, phone, notes }\ncreate_buyer → { name, contactName, email, phone, address, currency, paymentTerms, creditLimit, notes }\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.',
+  'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, Contact, Supplier, or Buyer and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\ncreate_supplier → { name, country, currency, contactPerson, email, phone, notes }\ncreate_buyer → { name, contactName, email, phone, address, currency, paymentTerms, creditLimit, notes }\nupdate_order_line → { ordId, lineId, field, newValue, note } — proposes an update to one field on one Order Request line item (e.g. field:"packingSpec"). This is ALWAYS a pending, unconfirmed proposal — it is logged to that line\'s update history for operator review and never changes the live field value itself. Only use this when the user is relaying a specific fact from a buyer/supplier conversation about a specific, already-existing line (you cannot create a line via an action block).\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.',
   '',
   '## VAT Return (MTD)',
   'Invoices tab → VAT Return button. Opens a Making Tax Digital (VAT 100) calculator. Select From and To dates (defaults to previous calendar quarter). Click Calculate to see all 9 HMRC VAT boxes computed from invoices in the period.',
@@ -7223,6 +7345,15 @@ function handleAIAction(action) {
     if (p.paymentTerms)  G('buy-pt').value    = p.paymentTerms;
     if (p.creditLimit != null) G('buy-cl').value = p.creditLimit;
     if (p.notes)         G('buy-notes').value = p.notes;
+  } else if (action.action === 'update_order_line') {
+    // payload: { ordId, lineId, field, newValue, note }
+    var ordForUpdate = DB.ord.find(function(o){ return o.id === p.ordId; });
+    if (ordForUpdate) {
+      // confirmedBy hardcoded to null — never read from the AI payload, so a malformed/
+      // adversarial action payload cannot set its own confirmedBy value (SPEC-ORD-002 §3)
+      ordLogLineUpdate(ordForUpdate, p.lineId, p.field, p.newValue, 'ai', p.note || '', null);
+      openOrd(ordForUpdate.id);
+    }
   } else {
     toast('Unsupported action type');
   }
@@ -7456,7 +7587,7 @@ async function sendAIMsg() {
     var parsed = parseAIAction(finalText);
     replyEl.textContent = parsed.clean;
     if (parsed.action) {
-      var actionLabels = { create_po: 'PO', create_quote: 'Quote', create_shipment: 'Shipment', create_contact: 'Contact', create_supplier: 'Supplier', create_buyer: 'Buyer' };
+      var actionLabels = { create_po: 'PO', create_quote: 'Quote', create_shipment: 'Shipment', create_contact: 'Contact', create_supplier: 'Supplier', create_buyer: 'Buyer', update_order_line: 'Order Line Update' };
       var label = actionLabels[parsed.action.action] || parsed.action.action;
       var btn = document.createElement('button');
       btn.className = 'btn btn-s';
