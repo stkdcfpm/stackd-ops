@@ -4198,6 +4198,17 @@ test('dangling contactId: rOrd() renders without throwing when Contact has been 
   assertContains(mockEl('ord-tbody').innerHTML, 'contact deleted', 'shows placeholder instead of throwing');
 });
 
+test('openOrd: clears stale validation styling left over from a previous save attempt', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Test Contact' }];
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'New', actions:[], activeQuoteId:'', description:'' }];
+  mockEl('of-contact').options = { length: 0 };
+  ctx.vErr('of-contact', 'Please select a valid contact');
+  assert(mockEl('of-contact').style.borderBottomColor, 'sanity check — vErr sets error styling');
+  ctx.openOrd('o1');
+  assertEqual(mockEl('of-contact').style.borderBottomColor, '', 'stale error styling cleared when opening a different Order Request');
+});
+
 test('delCon: nulls contactId on linked Order Requests rather than leaving a dangling reference', () => {
   resetDB();
   ctx.DB.con = [{ id:'c1', name:'To Delete' }];
