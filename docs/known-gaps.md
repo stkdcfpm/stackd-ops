@@ -4,6 +4,18 @@ Items deferred from initial build. Review after pilot period before wider rollou
 
 ---
 
+## Display Currency (v2.9.46)
+
+### CUR-GAP-001 — Aging Report mixes currencies unconverted
+**Area:** `renderAgingReport()` (`index.html` ~4799-4883)
+**Logged:** v2.9.46 (REQ/SPEC-CUR-001)
+**Detail:** Sums `c.bal` across invoices with no `toGBP`/`toDisp` conversion — a buyer with invoices in more than one currency gets a silently-mixed total. Pre-existing, not introduced by the currency toggle; out of scope for CUR-001. Adopting `QR.displayCurrency` here would require adding conversion logic, not just a toggle-swap.
+
+### CUR-GAP-002 — Buyer Statement report mixes currencies unconverted
+**Area:** `renderStatement()`/`openStatement()` (`index.html` ~5239 onward)
+**Logged:** v2.9.46 (REQ/SPEC-CUR-001)
+**Detail:** Picks `cur = invRecs[0].cur||'USD'` (first invoice's native currency) and sums unconverted — same latent multi-currency bug as CUR-GAP-001, pre-existing, out of scope for CUR-001.
+
 ## Dashboard
 
 ### DASH-GAP-001 — Dashboard charts are hand-rolled bar divs, no interactivity (hover/tooltip/drill-down)

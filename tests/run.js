@@ -4471,6 +4471,43 @@ test('openBuy Summary — "Outstanding" stays buyer-native regardless of display
   ctx.QR = savedQR;
 });
 
+test('openBuy Summary — recent-invoices Amount column reads i.cur (not dead i.currency field)', function() {
+  resetDB();
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS);
+  ctx.DB.buy = [{ id:'b1', num:'BUY-0001', name:'Test Buyer', currency:'GBP' }];
+  ctx.DB.inv = [
+    { id:'i1', buyerId:'b1', num:'INV-0001', date:'2026-01-01', status:'Sent', cur:'RMB', lineItems:[], taxRate:0, dep:0,
+      calc_grandTotal:'910', calc_netProfit:'0', calc_cogs:'0', calc_margin:'0', calc_balanceDue:'910' },
+  ];
+  ctx.openBuy('b1');
+  assertContains(mockEl('buy-summary').innerHTML, 'RMB', 'recent-invoices Amount column renders in the invoice\'s real currency (RMB), not defaulted to USD');
+  ctx.QR = savedQR;
+});
+
+test('renderDispCurWarn — shows staleness banner only when displayCurrency is non-GBP and rates are >24h stale', function() {
+  var savedTs = ctx.localStorage.getItem('st_qr_ts');
+  var savedQR = ctx.QR;
+
+  ctx.QR = Object.assign({}, ctx.QR_DEFAULTS, { displayCurrency: 'GBP' });
+  ctx.localStorage.setItem('st_qr_ts', new Date(Date.now() - 30*3600000).toISOString());
+  ctx.renderDispCurWarn('dash-fx-warn');
+  assertEqual(mockEl('dash-fx-warn').innerHTML, '', 'no banner when displayCurrency is GBP, regardless of staleness');
+
+  ctx.QR.displayCurrency = 'USD';
+  ctx.localStorage.setItem('st_qr_ts', new Date(Date.now() - 1*3600000).toISOString());
+  ctx.renderDispCurWarn('dash-fx-warn');
+  assertEqual(mockEl('dash-fx-warn').innerHTML, '', 'no banner when rates are <24h old, even if displayCurrency is non-GBP');
+
+  ctx.QR.displayCurrency = 'USD';
+  ctx.localStorage.setItem('st_qr_ts', new Date(Date.now() - 30*3600000).toISOString());
+  ctx.renderDispCurWarn('dash-fx-warn');
+  assertContains(mockEl('dash-fx-warn').innerHTML, 'refreshed', 'banner shown when displayCurrency is non-GBP and rates are >24h stale');
+
+  if (savedTs) ctx.localStorage.setItem('st_qr_ts', savedTs); else ctx.localStorage.removeItem('st_qr_ts');
+  ctx.QR = savedQR;
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 console.log('\n' + '─'.repeat(48));
 _results.forEach(r => {
