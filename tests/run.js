@@ -1529,6 +1529,173 @@ testAsync('pullAll integration — sup/payments/co still merge correctly by id (
   assertEqual(ctx.DB.payments[0].type, 'buyer_payment', 'untracked type survives');
 });
 
+// ── Order Request CSV import (SPEC-ORD-003) ────────────────────
+console.log('\nOrder Request CSV import (SPEC-ORD-003)');
+
+var ORD_HEADERS = ['Submission ID','Contact Name','Contact Email','Order Description','Category','Item/Spec','Order Volume Qty','Order Volume Unit','Packing Spec','Base UOM','Base Qty','Qty Status','Source Country','Variant/Option'];
+function ordCsv(rows) {
+  return ORD_HEADERS.join(',') + '\n' + rows.map(function(r) {
+    return ORD_HEADERS.map(function(h){ return '"' + String(r[h] != null ? r[h] : '').replace(/"/g,'') + '"'; }).join(',');
+  }).join('\n');
+}
+
+test('processImport ord — 3 rows same Submission ID + existing Contact email produce 1 Order Request with 3 lines', function() {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Thorpes Produce Inc', email:'buyer@thorpes.example', status:'qualified', enquiries:[] }];
+  var csv = ordCsv([
+    { 'Submission ID':'WEB-1', 'Contact Email':'buyer@thorpes.example', 'Category':'Fresh produce', 'Item/Spec':'Grapes' },
+    { 'Submission ID':'WEB-1', 'Contact Email':'buyer@thorpes.example', 'Category':'Fresh produce', 'Item/Spec':'Melons' },
+    { 'Submission ID':'WEB-1', 'Contact Email':'buyer@thorpes.example', 'Category':'Fresh produce', 'Item/Spec':'Berries' }
+  ]);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.con.length, 1, 'no new contact created — existing one matched');
+  assertEqual(ctx.DB.ord.length, 1, 'one Order Request created');
+  assertEqual(ctx.DB.ord[0].contactId, 'c1');
+  assertEqual(ctx.DB.ord[0].lines.length, 3);
+  assertContains(mockEl('imp-ord-result').textContent, '1 added, 0 updated');
+});
+
+test('processImport ord — unmatched Contact Email auto-creates a new lead Contact', function() {
+  resetDB();
+  var csv = ordCsv([{ 'Submission ID':'WEB-2', 'Contact Name':'New Buyer', 'Contact Email':'new@buyer.example', 'Category':'Seeds', 'Item/Spec':'Tomato' }]);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.con.length, 1);
+  assertEqual(ctx.DB.con[0].status, 'lead');
+  assertEqual(ctx.DB.con[0].source, 'webform');
+  assertEqual(ctx.DB.con[0].gdprBasis, 'pre_contract');
+  assertEqual(ctx.DB.ord[0].contactId, ctx.DB.con[0].id);
+});
+
+test('processImport ord — re-import with a 4th row updates existing Order Request to 4 lines, no duplicate record', function() {
+  resetDB();
+  var csv1 = ordCsv([
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Carrot' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Beetroot' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Thyme' }
+  ]);
+  ctx.processImport('ord', csv1);
+  assertContains(mockEl('imp-ord-result').textContent, '1 added, 0 updated');
+
+  var csv2 = ordCsv([
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Carrot' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Beetroot' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Thyme' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Cabbage' }
+  ]);
+  ctx.processImport('ord', csv2);
+  assertEqual(ctx.DB.ord.length, 1, 'still exactly one Order Request');
+  assertEqual(ctx.DB.ord[0].lines.length, 4);
+  assertContains(mockEl('imp-ord-result').textContent, '0 added, 1 updated', 'closes the v1 spec-gate counting bug — reintroducing it would report 1 added here');
+});
+
+test('processImport ord — re-import with no new content adds no duplicate lines', function() {
+  resetDB();
+  var csv = ordCsv([{ 'Submission ID':'WEB-4', 'Contact Email':'x@y.example', 'Category':'Seeds', 'Item/Spec':'Watermelon' }]);
+  ctx.processImport('ord', csv);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.ord.length, 1);
+  assertEqual(ctx.DB.ord[0].lines.length, 1, 'no duplicate line from re-importing identical content');
+});
+
+test('processImport ord — row with blank Category and Item/Spec is skipped, siblings still import', function() {
+  resetDB();
+  var csv = ordCsv([
+    { 'Submission ID':'WEB-5', 'Contact Email':'z@z.example', 'Category':'', 'Item/Spec':'' },
+    { 'Submission ID':'WEB-5', 'Contact Email':'z@z.example', 'Category':'Seeds', 'Item/Spec':'Honeydew' }
+  ]);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.ord[0].lines.length, 1, 'blank row skipped, valid sibling row still imported');
+});
+
+test('processImport ord — row with blank Contact Email skips the entire submission', function() {
+  resetDB();
+  var csv = ordCsv([{ 'Submission ID':'WEB-6', 'Contact Email':'', 'Category':'Seeds', 'Item/Spec':'Cantaloupe' }]);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.ord.length, 0);
+  assertEqual(ctx.DB.con.length, 0);
+});
+
+test('processImport ord — Qty Status values map correctly, unrecognised/blank default to Unknown', function() {
+  resetDB();
+  var csv = ordCsv([
+    { 'Submission ID':'WEB-7', 'Contact Email':'q@q.example', 'Category':'A', 'Item/Spec':'1', 'Qty Status':'confirmed' },
+    { 'Submission ID':'WEB-7', 'Contact Email':'q@q.example', 'Category':'B', 'Item/Spec':'2', 'Qty Status':'CONFIRMED' },
+    { 'Submission ID':'WEB-7', 'Contact Email':'q@q.example', 'Category':'C', 'Item/Spec':'3', 'Qty Status':'' },
+    { 'Submission ID':'WEB-7', 'Contact Email':'q@q.example', 'Category':'D', 'Item/Spec':'4', 'Qty Status':'garbage' }
+  ]);
+  ctx.processImport('ord', csv);
+  var lines = ctx.DB.ord[0].lines;
+  assertEqual(lines[0].qtyStatus, 'Confirmed');
+  assertEqual(lines[1].qtyStatus, 'Confirmed');
+  assertEqual(lines[2].qtyStatus, 'Unknown');
+  assertEqual(lines[3].qtyStatus, 'Unknown');
+});
+
+// ── Quote approval audit trail (SPEC-ORD-003) ───────────────────
+console.log('\nQuote approval audit trail (SPEC-ORD-003)');
+
+function setupQteForm(over) {
+  var f = Object.assign({ client:'Acme Buyer', dt:'2026-01-01', valid:'', cur:'USD', mode:'LCL', mkp:'15', st:'Draft', nt:'', approvedBy:'', approvedNote:'' }, over || {});
+  mockEl('qf-client').value = f.client;
+  mockEl('qf-dt').value = f.dt;
+  mockEl('qf-valid').value = f.valid;
+  mockEl('qf-cur').value = f.cur;
+  mockEl('qf-mode').value = f.mode;
+  mockEl('qf-mkp').value = f.mkp;
+  mockEl('qf-st').value = f.st;
+  mockEl('qf-nt').value = f.nt;
+  mockEl('qf-approved-by').value = f.approvedBy;
+  mockEl('qf-approved-note').value = f.approvedNote;
+  mockEl('qf-num').value = '';
+}
+
+test('vQte — blocks save when status is Accepted and Approved By is blank', function() {
+  resetDB();
+  ctx.EI.qt = null; ctx.cQL = [{ rid:'r1', supId:'', desc:'Widget', qty:1, uom:'pcs', cost:10, cbm:0, dg:false, dutyPct:0 }];
+  setupQteForm({ st:'Accepted', approvedBy:'' });
+  assert(ctx.vQte() === false, 'save blocked without Approved By');
+  assertContains(mockEl('qt-verr').textContent, 'Approved By is required');
+});
+
+test('saveQte — Accepted status with Approved By succeeds and sets approvedAt', function() {
+  resetDB();
+  ctx.EI.qt = null; ctx.cQL = [{ rid:'r1', supId:'', desc:'Widget', qty:1, uom:'pcs', cost:10, cbm:0, dg:false, dutyPct:0 }];
+  setupQteForm({ st:'Accepted', approvedBy:'Jane Ops', approvedNote:'Confirmed by phone' });
+  ctx.saveQte();
+  assertEqual(ctx.DB.qt.length, 1);
+  var q = ctx.DB.qt[0];
+  assertEqual(q.approvedBy, 'Jane Ops');
+  assertEqual(q.approvedReason, 'Confirmed by phone');
+  assert(q.approvedAt, 'approvedAt set on first transition into Accepted');
+});
+
+test('saveQte — re-saving an already-Accepted quote preserves the original approvedAt', function() {
+  resetDB();
+  ctx.EI.qt = null; ctx.cQL = [{ rid:'r1', supId:'', desc:'Widget', qty:1, uom:'pcs', cost:10, cbm:0, dg:false, dutyPct:0 }];
+  setupQteForm({ st:'Accepted', approvedBy:'Jane Ops' });
+  ctx.saveQte();
+  var firstApprovedAt = ctx.DB.qt[0].approvedAt;
+  var qid = ctx.DB.qt[0].id;
+
+  ctx.EI.qt = qid; ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  setupQteForm({ st:'Accepted', approvedBy:'Jane Ops', approvedNote:'Edited note' });
+  mockEl('qf-num').value = ctx.DB.qt[0].num;
+  ctx.saveQte();
+  assertEqual(ctx.DB.qt[0].approvedAt, firstApprovedAt, 'approvedAt unchanged on resave of an already-Accepted quote');
+  assertEqual(ctx.DB.qt[0].approvedReason, 'Edited note', 'other approval fields remain editable');
+});
+
+test('saveQte — a quote never set to Accepted has blank approval fields, no regression', function() {
+  resetDB();
+  ctx.EI.qt = null; ctx.cQL = [{ rid:'r1', supId:'', desc:'Widget', qty:1, uom:'pcs', cost:10, cbm:0, dg:false, dutyPct:0 }];
+  setupQteForm({ st:'Draft' });
+  ctx.saveQte();
+  var q = ctx.DB.qt[0];
+  assertEqual(q.approvedBy, '');
+  assertEqual(q.approvedReason, '');
+  assertEqual(q.approvedAt, '');
+});
+
 // ── invoiceRefs index (SPEC-LIB-001) ───────────────────────────
 console.log('\ninvoiceRefs — library item invoice index');
 

@@ -5,8 +5,8 @@ For full project context including business strategy, FPM data, and programme ro
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.47**  
-**Test count: 384/384 PASS** (`node tests/run.js`)
+**Current version: v2.9.48**  
+**Test count: 395/395 PASS** (`node tests/run.js`)
 
 ---
 
@@ -152,6 +152,7 @@ See `docs/known-gaps.md` for full entries.
 | CUR-GAP-001 | Display currency / Aging Report | Aging Report mixes currencies unconverted — pre-existing, out of scope for v2.9.46's currency toggle |
 | CUR-GAP-002 | Display currency / Buyer Statement | Buyer Statement (renderStatement()) mixes currencies unconverted — pre-existing, out of scope for v2.9.46's currency toggle |
 | SYNC-GAP-001 | Sync / data integrity | pullAll() merged Sheets rows keyed by display header, never translated back to internal field names — corrupted every pulled record and silently broke delete — Fixed v2.9.47 |
+| CON-GAP-006 | Contacts / reference numbers | CSV/webform-created Contacts never get a CON-#### num — inherited from a pre-existing processImportRecords() gap, not fixed in v2.9.48 (out of scope) |
 
 ---
 

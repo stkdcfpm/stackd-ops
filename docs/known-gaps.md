@@ -406,6 +406,11 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Area:** Contacts / import
 **Detail:** If a backup file does not contain a `con` key (e.g. a pre-v2.9.27 backup), `doImport()` preserves the current live DB.con rather than clearing it. The WARNING dialog text ("This will replace ALL current local data") is not updated to reflect this contact-specific exception.
 
+### CON-GAP-006 — CSV/webform-created Contacts never get a CON-#### reference number
+**Area:** Contacts / reference numbers
+**Logged:** v2.9.48 (found by schema-migration-reviewer while reviewing SPEC-ORD-003's new Order Request CSV import path)
+**Detail:** The inline Contact-creation object in `processImport()`'s new `ord` branch omits `num` (no `nextRefNum(DB.con,'CON')` call) — this exactly mirrors a pre-existing gap already present in `processImportRecords()`'s `co` branch (`index.html:6731-6761`, also omits `num`). Not a new gap, but now propagated to a second creation path. Not a crash risk — the only render site (`con-title`) guards with `c.num ? ... : ''`. Not fixed in v2.9.48 to keep that change's scope to the CSV-import wiring itself; logged here so it isn't silently re-inherited a third time by a future import path without being noticed.
+
 ---
 
 ## Event Log
