@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.46</title>
+<title>Stackd Ops v2.9.48</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.46</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.48</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -531,6 +531,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <input type="file" id="ul-po" accept=".csv" style="display:none" onchange="bulkUpload('po',this)">
       </div>
       <div id="imp-po-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
+    </div>
+
+    <!-- Step 5: Order Requests -->
+    <div class="card">
+      <div class="ct"><span style="background:var(--bl);color:white;font-family:'Bebas Neue',sans-serif;font-size:.9rem;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">5</span>Order Requests</div>
+      <p style="font-size:.6rem;color:var(--m);margin-bottom:12px;line-height:1.7;">Upload structured purchase requirements collected from a webform or similar intake source. Rows sharing a Submission ID become one Order Request with multiple lines. Contacts are matched by email or created automatically.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="dlTemplate('ord')">&#8595; Download Template</button>
+        <button class="btn btn-s" onclick="G('ul-ord').click()">&#8593; Upload Order Requests CSV</button>
+        <input type="file" id="ul-ord" accept=".csv" style="display:none" onchange="bulkUpload('ord',this)">
+      </div>
+      <div id="imp-ord-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
     </div>
 
     <!-- Import log -->
@@ -1140,9 +1152,33 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.46</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.48</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Order Request CSV import (REQ/SPEC-ORD-003) — Import Data tab gains a fifth step for uploading structured purchase requirements (e.g. from a webform). Rows sharing a Submission ID become one Order Request with multiple lines; Contacts are matched by email or auto-created (<code>status:'lead'</code>, <code>source:'webform'</code>). Re-importing an existing Submission ID only appends genuinely new lines — never overwrites lines already touched by an operator.</li>
+          <li>New: Quote approval audit trail — Approved By and Approval Note fields appear on the Quote form once Status is set to Accepted; Approved By is required at that point. <code>approvedAt</code> is captured only on the actual transition into Accepted, not on every re-save.</li>
+          <li>11 new tests. Tests: 395/395 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.47</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <code>pullAll()</code> field-mapping and identity loss (SYNC-GAP-001) — the two-way Sheets Pull never translated Sheet column headers (e.g. "Description", "SKU") back to the app's internal field names, so every pulled Supplier/Line Item/Shipment/Invoice/etc. record read as blank under its real field, and its delete button silently failed (comparing against a permanently-undefined <code>id</code>). New <code>unmapRec()</code> reverses <code>mapRec()</code>; new <code>mergePulledWithLocal()</code> generically preserves any field not tracked in <code>FIELD_MAPS</code> (e.g. <code>inv.type</code>, <code>li.priceHistory</code>/<code>invoiceRefs</code>, <code>co.enquiries</code>, <code>sup.ct</code>, <code>payments.invId</code>) instead of silently dropping it on a matched pull.</li>
+          <li>Fix: 5 of 9 synced entities (Line Items, Shipments, Invoices, Purchase Orders, Credit Notes — plus Quotes) have no <code>id</code> column in Google Sheets at all; <code>pullAll()</code> now matches these by business key (SKU, Shipment Ref, Invoice/PO/CN/Quote #) instead of a permanently-absent <code>id</code>, preserving the local record's real identity on a matched pull.</li>
+          <li>Fix: a Sheets pull containing two rows that accidentally share the same business key (e.g. a duplicate SKU) no longer causes both to collide onto the same local record's <code>id</code> — new <code>claimOnceMatcher()</code> ensures only the first legitimately claims it; the second gets its own fresh identity.</li>
+          <li>Removed now-dead <code>isEmptyLI()</code> (its only call sites were superseded by the generic merge above).</li>
+          <li>24 new tests. Tests: 384/384 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.46</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: global display-currency toggle (REQ/SPEC-CUR-001) — a currency selector (GBP/USD/RMB/BBD) on the Dashboard converts KPI figures, the Buyers list Outstanding column, and the Buyer Summary panel's "Total invoiced" figure into the selected currency, using the same configured FX rates. Buyer-native figures (Summary panel "Outstanding", recent-invoice amounts), the Buyer Statement report, the Aging Report, and the MTD/VAT export are unaffected — always shown in their own/statutory currency.</li>
@@ -2141,6 +2177,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
             <option value="Draft">Draft</option><option value="Sent">Sent</option>
             <option value="Accepted">Accepted</option><option value="Declined">Declined</option><option value="Expired">Expired</option>
           </select>
+        </div>
+        <div class="fld" id="qf-approved-by-wrap" style="display:none;">
+          <label>Approved By</label>
+          <input type="text" id="qf-approved-by">
+        </div>
+        <div class="fld" id="qf-approved-note-wrap" style="display:none;">
+          <label>Approval Note</label>
+          <input type="text" id="qf-approved-note">
         </div>
       </div>
       <div id="qt-rates-warn" style="margin-bottom:8px;"></div>
@@ -3260,6 +3304,41 @@ function mapRec(entity, rec) {
   });
   return out;
 }
+function unmapRec(entity, sheetRec) {
+  var map = FIELD_MAPS[entity];
+  if (!map || !sheetRec) return sheetRec;
+  var out = {};
+  Object.keys(map).forEach(function(internalKey) {
+    var headerKey = map[internalKey];
+    if (Object.prototype.hasOwnProperty.call(sheetRec, headerKey)) out[internalKey] = sheetRec[headerKey];
+  });
+  return out;
+}
+function findLocalMatchByBizKey(entity, localArr, pulledRec) {
+  if (entity === 'li') {
+    if (pulledRec.sku) return localArr.find(function(l){ return l.sku === pulledRec.sku; });
+    return localArr.find(function(l){ return pulledRec.desc && l.desc && l.desc.toLowerCase() === pulledRec.desc.toLowerCase() && l.supId === pulledRec.supId; });
+  }
+  if (entity === 'sh') return localArr.find(function(s){ return s.ref && s.ref === pulledRec.ref; });
+  return localArr.find(function(r){ return pulledRec.num && r.num === pulledRec.num; }); // inv, cn, po, qt
+}
+function mergePulledWithLocal(pulledMapped, localMatch, zeroClobberGuardFields) {
+  if (!localMatch) return pulledMapped; // genuinely new — only what the Sheet actually provided
+  var merged = Object.assign({}, localMatch, pulledMapped); // untracked fields (incl. id) survive from local; tracked fields take pulled values
+  merged.id = localMatch.id; // defensive — pulledMapped never contains `id` for these entities, but explicit beats implicit
+  (zeroClobberGuardFields || []).forEach(function(f) {
+    if ((+merged[f] || 0) === 0 && (+localMatch[f] || 0) > 0) merged[f] = localMatch[f];
+  });
+  return merged;
+}
+function claimOnceMatcher() {
+  var claimed = {};
+  return function(candidate) {
+    if (!candidate || claimed[candidate.id]) return null; // no match, or already claimed by an earlier pulled record in this same pull
+    claimed[candidate.id] = true;
+    return candidate;
+  };
+}
 async function syncAll() {
   if (!SS.url || !SS.url.startsWith('https://')) { toast('Add Apps Script URL in Settings'); showV('cfg', document.querySelectorAll('.tab')[5]); return; }
   setSyncStatus('loading');
@@ -3308,55 +3387,29 @@ function checkStorageQuota() {
   } catch(e) {}
 }
 
-function isEmptyLI(v, fieldType) {
-  // fieldType: 'inv' — valid element has typeof el.up !== 'undefined'
-  //            'po'  — valid element has typeof el.cost !== 'undefined'
-  //            'pos' — valid element is a non-empty string (length > 0); PO IDs are uid() outputs
-  //   any other fieldType falls through to 'inv' rule — intentional safe default
-  if (v === null || v === undefined) return true;
-  if (typeof v === 'string') {
-    try { v = JSON.parse(v); } catch(e) { return true; }
-    if (!Array.isArray(v)) return true;
-  }
-  if (!Array.isArray(v)) return true;
-  if (v.length === 0) return true;
-  if (fieldType === 'pos') {
-    return !v.some(function(el){ return typeof el === 'string' && el.length > 0; });
-  }
-  var field = fieldType === 'po' ? 'cost' : 'up';
-  return !v.some(function(el){
-    return el !== null && typeof el === 'object' && typeof el[field] !== 'undefined';
-  });
-}
 async function pullAll() {
   if (!SS.url) { toast('No URL configured'); return; }
   setSyncStatus('loading');
   var failed = [];
 
-  // ── Invoices (with line-item + calc field preservation) ────────
+  // ── Invoices (field-mapping reversed, business-key merge — SYNC-GAP-001) ─
   try {
     var dInv = await sGet('inv');
     if (dInv.status === 'ok' && dInv.records && dInv.records.length) {
-      var invPulled = dInv.records;
-      var invPulledIds = {};
-      for (var ii = 0; ii < invPulled.length; ii++) invPulledIds[invPulled[ii].id] = true;
-      var invLocalOnly = DB.inv.filter(function(r){ return !invPulledIds[r.id]; });
-      var calcFields = ['calc_grandTotal','calc_cogs','calc_liTotal','calc_taxAmt',
-                        'calc_grossProfit','calc_netProfit','calc_margin','calc_balanceDue'];
-      for (var ii = 0; ii < invPulled.length; ii++) {
-        var invLocal = DB.inv.find(function(r){ return r.id === invPulled[ii].id; });
-        if (invLocal) {
-          if (isEmptyLI(invPulled[ii].lineItems, 'inv') && !isEmptyLI(invLocal.lineItems, 'inv'))
-            invPulled[ii].lineItems = invLocal.lineItems;
-          if (isEmptyLI(invPulled[ii].pos, 'pos') && !isEmptyLI(invLocal.pos, 'pos'))
-            invPulled[ii].pos = invLocal.pos;
-          calcFields.forEach(function(f) {
-            if ((+invPulled[ii][f] || 0) === 0 && (+invLocal[f] || 0) > 0)
-              invPulled[ii][f] = invLocal[f];
-          });
-        }
-      }
-      DB.inv = invPulled.concat(invLocalOnly);
+      var invPulled = dInv.records.map(function(r){ return unmapRec('inv', r); });
+      var calcZeroGuard = ['calc_grandTotal','calc_cogs','calc_netProfit','calc_margin','calc_balanceDue'];
+      var invClaim = claimOnceMatcher();
+      var mergedInv = invPulled.map(function(p) {
+        var candidate = findLocalMatchByBizKey('inv', DB.inv, p);
+        var local = invClaim(candidate);
+        var m = mergePulledWithLocal(p, local, calcZeroGuard);
+        if (!local) m.id = uid();
+        return m;
+      });
+      var invMergedNums = {};
+      mergedInv.forEach(function(m){ if (m.num) invMergedNums[m.num] = true; });
+      var invLocalOnly = DB.inv.filter(function(r){ return !invMergedNums[r.num]; });
+      DB.inv = mergedInv.concat(invLocalOnly);
     }
   } catch(e) { failed.push('inv'); console.warn('[Stackd] pullAll: inv failed —', e.message); }
 
@@ -3364,40 +3417,72 @@ async function pullAll() {
   try {
     var dCn = await sGet('cn');
     if (dCn.status === 'ok' && dCn.records && dCn.records.length) {
-      var cnPulledIds = {};
-      for (var ci = 0; ci < dCn.records.length; ci++) cnPulledIds[dCn.records[ci].id] = true;
-      DB.inv = DB.inv.filter(function(r){ return !cnPulledIds[r.id]; }).concat(dCn.records);
+      var cnPulled = dCn.records.map(function(r){ return unmapRec('cn', r); });
+      var cnClaim = claimOnceMatcher();
+      var mergedCn = cnPulled.map(function(p) {
+        var candidate = DB.inv.find(function(r){ return p.num && r.num === p.num; });
+        var local = cnClaim(candidate);
+        var m = mergePulledWithLocal(p, local);
+        if (!local) m.id = uid();
+        return m;
+      });
+      var cnMergedNums = {};
+      mergedCn.forEach(function(m){ if (m.num) cnMergedNums[m.num] = true; });
+      DB.inv = DB.inv.filter(function(r){
+        var isCnType = r.type === 'credit_note' || r.type === 'goodwill_credit';
+        return !(isCnType && cnMergedNums[r.num]);
+      }).concat(mergedCn);
     }
   } catch(e) { failed.push('cn'); console.warn('[Stackd] pullAll: cn failed —', e.message); }
 
-  // ── Purchase orders (with line-item preservation) ──────────────
+  // ── Purchase orders (field-mapping reversed, business-key merge) ─
   try {
     var dPo = await sGet('po');
     if (dPo.status === 'ok' && dPo.records && dPo.records.length) {
-      var poPulled = dPo.records;
-      var poPulledIds = {};
-      for (var pi = 0; pi < poPulled.length; pi++) poPulledIds[poPulled[pi].id] = true;
-      var poLocalOnly = DB.po.filter(function(r){ return !poPulledIds[r.id]; });
-      for (var pi = 0; pi < poPulled.length; pi++) {
-        var poLocal = DB.po.find(function(r){ return r.id === poPulled[pi].id; });
-        if (poLocal && isEmptyLI(poPulled[pi].lineItems, 'po') && !isEmptyLI(poLocal.lineItems, 'po'))
-          poPulled[pi].lineItems = poLocal.lineItems;
-      }
-      DB.po = poPulled.concat(poLocalOnly);
+      var poPulled = dPo.records.map(function(r){ return unmapRec('po', r); });
+      var poClaim = claimOnceMatcher();
+      var mergedPo = poPulled.map(function(p) {
+        var candidate = findLocalMatchByBizKey('po', DB.po, p);
+        var local = poClaim(candidate);
+        var m = mergePulledWithLocal(p, local);
+        if (!local) m.id = uid();
+        return m;
+      });
+      var poMergedNums = {};
+      mergedPo.forEach(function(m){ if (m.num) poMergedNums[m.num] = true; });
+      var poLocalOnly = DB.po.filter(function(r){ return !poMergedNums[r.num]; });
+      DB.po = mergedPo.concat(poLocalOnly);
     }
   } catch(e) { failed.push('po'); console.warn('[Stackd] pullAll: po failed —', e.message); }
 
-  // ── Simple entities (Sheets wins; local-only records preserved) ─
+  // ── Simple entities (Sheets wins; local-only records preserved; untracked fields survive — SYNC-GAP-001) ─
   var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+  var idKeyedEnts = ['sup', 'payments', 'co'];
   for (var ei = 0; ei < simpleEnts.length; ei++) {
     var eKey = simpleEnts[ei];
     var dbKey = eKey === 'co' ? 'con' : eKey;
     try {
       var sd = await sGet(eKey);
       if (sd.status === 'ok' && sd.records && sd.records.length) {
-        var sPulledIds = {};
-        for (var si = 0; si < sd.records.length; si++) sPulledIds[sd.records[si].id] = true;
-        DB[dbKey] = sd.records.concat(DB[dbKey].filter(function(r){ return !sPulledIds[r.id]; }));
+        var pulled = sd.records.map(function(r){ return unmapRec(eKey, r); });
+        var localArr = DB[dbKey];
+        var claim = claimOnceMatcher();
+        var matchedLocalIds = {};
+        var merged = pulled.map(function(p) {
+          var candidate = idKeyedEnts.indexOf(eKey) > -1
+            ? localArr.find(function(r){ return r.id === p.id; })
+            : findLocalMatchByBizKey(eKey, localArr, p);
+          var local = claim(candidate);
+          var m = mergePulledWithLocal(p, local);
+          if (local) {
+            matchedLocalIds[local.id] = true;
+          } else if (idKeyedEnts.indexOf(eKey) === -1) {
+            m.id = uid(); // business-keyed, genuinely unmatched (no local record, or its match was already claimed this pull)
+          }
+          return m;
+        });
+        var localOnly = localArr.filter(function(r){ return !matchedLocalIds[r.id]; });
+        DB[dbKey] = merged.concat(localOnly);
       }
     } catch(e) { failed.push(eKey); console.warn('[Stackd] pullAll: ' + eKey + ' failed —', e.message); }
   }
@@ -6222,13 +6307,17 @@ var TEMPLATES = {
   po: {
     headers: ['PO #','Supplier Name','Linked Invoice #','Date (YYYY-MM-DD)','Required Delivery','Currency','COGS Total','Supplier Deposit','Other Charges','Status','Notes'],
     example: ['PO10029-1','Jinan Jinbao Equipment Co.','INV10029','2025-11-01','2025-12-15','USD','22338.00','6701.40','0','Deposit Paid','30% deposit paid. Balance due on inspection at port.']
+  },
+  ord: {
+    headers: ['Submission ID','Contact Name','Contact Email','Order Description','Category','Item/Spec','Order Volume Qty','Order Volume Unit','Packing Spec','Base UOM','Base Qty','Qty Status','Source Country','Variant/Option'],
+    example: ['WEB-0001','Thorpes Produce Inc','buyer@thorpes.example','Q3 restock','Fresh produce','Red seedless grapes','3','pallets','','','', 'Estimated','Chile','']
   }
 };
 
 function dlTemplate(entity) {
   var tpl = TEMPLATES[entity];
   if (!tpl) return;
-  var names = { sup:'suppliers', li:'line-items', inv:'invoices', po:'purchase-orders' };
+  var names = { sup:'suppliers', li:'line-items', inv:'invoices', po:'purchase-orders', ord:'order-requests' };
   var csv = tpl.headers.join(',') + '\n' + tpl.example.map(function(v){ return '"'+v+'"'; }).join(',');
   var a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -6439,6 +6528,81 @@ function processImport(entity, csvText) {
     sv(K.p,DB.po);
     var msg='POs: '+added+' added, '+updated+' updated, '+skipped+' skipped'+(errors.length?' | '+errors.join('; '):'');
     G('imp-po-result').textContent=msg; impLog(msg); rPO(); rDash();
+  }
+
+  else if (entity === 'ord') {
+    var bySubmission = {};
+    rows.forEach(function(r) {
+      var sid = String(r['Submission ID']||'').trim();
+      if (!sid) { skipped++; return; }
+      (bySubmission[sid] = bySubmission[sid] || []).push(r);
+    });
+
+    Object.keys(bySubmission).forEach(function(sid) {
+      var submissionRows = bySubmission[sid];
+      var first = submissionRows[0];
+      var email = String(first['Contact Email']||'').trim().toLowerCase();
+      var name  = String(first['Contact Name']||'').trim();
+      if (!email) { skipped += submissionRows.length; errors.push('Submission ' + sid + ': Contact Email is required, skipped'); return; }
+
+      // Contact match-or-create — adapted from processImportRecords()'s existing `co` branch
+      var contact = email ? DB.con.find(function(c){ return (c.email||'').toLowerCase()===email; })
+                           : DB.con.find(function(c){ return c.name===name; });
+      if (!contact) {
+        contact = { id: uid(), name: name || email, email: email, phone: '', company: '',
+          status: 'lead', source: 'webform', enquirySummary: '', notes: '',
+          createdAt: now, lastContactedAt: now, gdprBasis: 'pre_contract', enquiries: [] };
+        DB.con.push(contact);
+      }
+
+      var existingOrd = DB.ord.find(function(o){ return o.importBatchId === sid; }); // captured BEFORE saveOrd() — this is what added/updated branches on, not saveOrd()'s return value
+      var existingLines = existingOrd ? (existingOrd.lines || []) : [];
+      var newLines = [];
+      submissionRows.forEach(function(r) {
+        var category = String(r['Category']||'').trim();
+        var itemSpec = String(r['Item/Spec']||'').trim();
+        if (!category && !itemSpec) { skipped++; return; }
+        var alreadyPresent = existingLines.some(function(l){
+          return (l.category||'').toLowerCase()===category.toLowerCase() && (l.itemSpec||'').toLowerCase()===itemSpec.toLowerCase();
+        });
+        if (alreadyPresent) return; // don't duplicate or overwrite an existing line's operator progress
+        var qtyStatusRaw = String(r['Qty Status']||'').trim().toLowerCase();
+        var qtyStatus = ['unknown','estimated','confirmed'].indexOf(qtyStatusRaw) >= 0
+          ? qtyStatusRaw.charAt(0).toUpperCase() + qtyStatusRaw.slice(1) : 'Unknown';
+        newLines.push({
+          id: uid(), category: category, itemSpec: itemSpec,
+          orderVolumeQty: String(r['Order Volume Qty']||'').trim(),
+          orderVolumeUnit: String(r['Order Volume Unit']||'').trim(),
+          packingSpec: String(r['Packing Spec']||'').trim(),
+          baseUom: String(r['Base UOM']||'').trim(),
+          baseQty: r['Base Qty'] ? parseFloat(r['Base Qty']) : null,
+          qtyStatus: qtyStatus,
+          sourceCountry: String(r['Source Country']||'').trim(),
+          variantOption: String(r['Variant/Option']||'').trim(),
+          lineUpdates: []
+        });
+      });
+      if (newLines.length === 0 && existingOrd) { return; } // nothing new to add to an existing Order Request — not counted as added or updated
+      if (newLines.length === 0 && !existingOrd) { skipped++; return; } // no valid lines at all for a brand-new submission
+
+      var ordObj = {
+        id: existingOrd ? existingOrd.id : undefined,
+        contactId: contact.id,
+        stage: existingOrd ? existingOrd.stage : 'New',
+        description: String(first['Order Description']||'').trim() || (existingOrd ? existingOrd.description : ''),
+        importBatchId: sid,
+        lines: existingLines.concat(newLines),
+        actions: existingOrd ? existingOrd.actions : []
+      };
+      var saved = saveOrd(ordObj);
+      if (saved) {
+        if (existingOrd) { updated++; } else { added++; } // branch on existingOrd (captured pre-call), never on saveOrd()'s return value — both success paths return a truthy object
+      }
+    });
+
+    sv(K.co, DB.con); sv(K.ord, DB.ord); rCon(); rOrd(); rDash();
+    var msg = 'Order Requests: ' + added + ' added, ' + updated + ' updated, ' + skipped + ' skipped' + (errors.length ? ' | ' + errors.join('; ') : '');
+    G('imp-ord-result').textContent = msg; impLog(msg);
   }
 
   // Sync to Sheets
@@ -6947,7 +7111,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.46).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.48).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -6987,6 +7151,7 @@ var AI_SYSTEM_PROMPT = [
   'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
   'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
   'Convert to PO: only available when quote status is Accepted. Set the status dropdown to Accepted — the Convert to PO button appears automatically. Clicking it creates one PO per distinct supplier on the quote\'s lines (v2.9.44 — fixes PO-GAP-001, which previously misattributed every line to the first supplier on a multi-supplier quote); the quote modal title then shows a "PO RAISED" badge and the button is hidden. Each PO carries the Quote ID for traceability; PO numbers get a -1/-2 suffix when a quote splits across multiple suppliers.',
+  'Approval audit trail (v2.9.48): setting a quote\'s status to Accepted reveals two additional fields — Approved By (required) and Approval Note (optional). approvedAt is captured automatically the first time a quote transitions into Accepted; re-saving an already-Accepted quote never overwrites that original timestamp, only the by/note fields remain editable.',
   'Feasibility Check: shown automatically in the quote modal when lines are present. Flags: DG cargo (red/critical — IMDG compliance required), container mismatch (amber — CBM vs selected freight mode), Caribbean electrical goods advisory (amber — voltage/cert check). Cleared automatically when lines are removed.',
   'Print preview: click 👁 on any quote row to open a formatted quote document in a new tab.',
   '',
@@ -7005,6 +7170,7 @@ var AI_SYSTEM_PROMPT = [
   'Line items (v2.9.45): each Order Request has its own lines[], separate from Quote lines — captures what was actually asked for before pricing is possible. Fields per line: category, item/spec description, order volume qty+unit (the stated ask, e.g. "1 container" or "3 pallets" — NOT a costable quantity), packing spec (often unknown at intake), base UOM + base qty (the costable unit/quantity once packing is confirmed), qtyStatus (Unknown / Estimated / Confirmed — set independently, never auto-derived from whether base qty is filled in), source country, variant/option notes.',
   'Every change to a line field is logged to that line\'s update history (who/what said it — buyer, supplier, AI, or operator — when, old value, new value, note), never silently overwritten. AI-proposed updates (via the update_order_line action) are always logged as pending and never change the live field until the operator clicks Confirm on that specific entry.',
   'Moving an Order Request to Quoted while any line still has qtyStatus "Unknown" shows a warning (does not block the save) — quoting against unresolved quantities is allowed but flagged.',
+  'CSV import (v2.9.48): Import Data tab → Order Requests step. Rows sharing a Submission ID column become one Order Request with multiple lines. Contact is matched by email (case-insensitive) or auto-created as a lead-status Contact with source "webform". Re-importing an existing Submission ID only appends genuinely new lines (matched by category+item/spec) — never overwrites a line already touched by an operator.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
@@ -7147,7 +7313,7 @@ var AI_SYSTEM_PROMPT = [
   'Dedup: saving a new contact with an email that already exists prompts to merge the enquiry into the existing record, or create a separate record anyway. Edit-path email changes are not deduped.',
   'Quote integration: "→ Quote" button on any contact row opens the New Quote modal pre-populated with the contact\'s name (Client field) and email (Notes field). Saving that quote automatically sets the contact status to Converted. Deleting the quote reverts the contact to Qualified.',
   'Enquiry log: each enquiry note is appended to the contact\'s enquiries[] array with timestamp and source. The count is shown in the list view. Individual enquiry entries are not shown in the edit modal.',
-  'Contacts sync to Google Sheets (st_co → "Contacts" sheet tab). syncAll() and pushAll() include the co entity; pullAll() merges Contacts on pull (Sheets wins, local-only records preserved). saveCon() triggers syncEnt("co") for real-time upsert. Import Data → Sheets → Contacts button pulls from the Contacts sheet.',
+  'Contacts sync to Google Sheets (st_co → "Contacts" sheet tab). syncAll() and pushAll() include the co entity; pullAll() merges Contacts on pull (Sheets wins for tracked fields, local-only records preserved, untracked fields like enquiries[] survive verbatim on a matched pull — v2.9.47). saveCon() triggers syncEnt("co") for real-time upsert. Import Data → Sheets → Contacts button pulls from the Contacts sheet.',
   '',
   '## Activity Event Log (DB.events)',
   'DB.events is a local-only array of operational event records stored in localStorage key st_ev. It is NOT synced to Google Sheets and is never transmitted externally.',
@@ -8664,6 +8830,9 @@ function updQtePoBtn() {
   var q = EI.qt ? DB.qt.find(function(x){ return x.id === EI.qt; }) : null;
   var poBtn = G('qt-po-btn');
   if (poBtn) poBtn.style.display = (st === 'Accepted' && !(q && q.linkedPOIds && q.linkedPOIds.length)) ? '' : 'none';
+  var showApproval = st === 'Accepted';
+  if (G('qf-approved-by-wrap'))   G('qf-approved-by-wrap').style.display   = showApproval ? '' : 'none';
+  if (G('qf-approved-note-wrap')) G('qf-approved-note-wrap').style.display = showApproval ? '' : 'none';
 }
 
 function openQte() {
@@ -8678,9 +8847,12 @@ function openQte() {
   G('qf-mkp').value = '15';
   G('qf-st').value = 'Draft';
   G('qf-nt').value = '';
+  G('qf-approved-by').value = '';
+  G('qf-approved-note').value = '';
   G('qt-verr').textContent = '';
   G('qt-prev-btn').style.display = 'none';
   G('qt-po-btn').style.display = 'none';
+  updQtePoBtn();
   rQLT();
   renderQteRatesWarn();
   G('ov-qt').classList.add('on');
@@ -8701,6 +8873,8 @@ function editQte(id) {
   G('qf-mkp').value = q.markup !== undefined ? String(q.markup) : '15';
   G('qf-st').value = q.status || 'Draft';
   G('qf-nt').value = q.notes || '';
+  G('qf-approved-by').value = q.approvedBy || '';
+  G('qf-approved-note').value = q.approvedReason || '';
   G('qt-verr').textContent = '';
   G('qt-prev-btn').style.display = '';
   updQtePoBtn();
@@ -8882,6 +9056,8 @@ function vQte() {
   if (!G('qf-client').value.trim()) errs.push('Client name is required');
   if (!G('qf-dt').value)            errs.push('Quote date is required');
   if (!cQL.length)                  errs.push('Add at least one line item');
+  if (G('qf-st').value === 'Accepted' && !G('qf-approved-by').value.trim())
+    errs.push('Approved By is required when status is Accepted');
   if (errs.length) { G('qt-verr').textContent = errs.join(' · '); return false; }
   G('qt-verr').textContent = '';
   return true;
@@ -8923,6 +9099,8 @@ function saveQte() {
   var overhead = QR.originCharges + QR.destCharges + QR.fpmAdmin;
   var sellUSD = (totalLanded + overhead) * (1 + markup/100);
   var sellGBP = sellUSD / QR.fxGBPUSD;
+  var wasAccepted = existQ && existQ.status === 'Accepted';
+  var isAccepted  = G('qf-st').value === 'Accepted';
   var qt = {
     id: EI.qt || uid(),
     num: G('qf-num').value.trim() || nextQteNum(),
@@ -8939,7 +9117,12 @@ function saveQte() {
     sourceContactId:  cConvertId || (existQ ? (existQ.sourceContactId||'') : ''),
     calc_totalLanded: +fn(totalLanded,2),
     calc_sellUSD: +fn(sellUSD,2),
-    calc_sellGBP: +fn(sellGBP,2)
+    calc_sellGBP: +fn(sellGBP,2),
+    approvedBy: isAccepted ? G('qf-approved-by').value.trim() : (existQ ? existQ.approvedBy||'' : ''),
+    approvedReason: isAccepted ? G('qf-approved-note').value.trim() : (existQ ? existQ.approvedReason||'' : ''),
+    approvedAt: isAccepted
+      ? (wasAccepted ? (existQ.approvedAt||new Date().toISOString()) : new Date().toISOString())
+      : (existQ ? existQ.approvedAt||'' : '')
   };
   if (EI.qt) {
     var idx = DB.qt.findIndex(function(x){ return x.id===EI.qt; });

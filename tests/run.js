@@ -40,6 +40,20 @@ const mockLocal = {
 };
 const mockSession = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
 
+// Dispatching fetch mock for pullAll()/sGet() tests — keyed by payload.entity.
+// Set _mockPullResponses[entity] = {status:'ok', records:[...]} before calling pullAll() in a test,
+// then delete/reset it afterward. Any entity not present in the map falls back to the old static
+// default ({status:'ok', records:[]}), matching prior test behavior for every existing test.
+let _mockPullResponses = {};
+function mockFetch(url, opts) {
+  var body = {};
+  try { body = JSON.parse((opts && opts.body) || '{}'); } catch (e) {}
+  var resp = (body.action === 'pull_entity' && _mockPullResponses[body.entity])
+    ? _mockPullResponses[body.entity]
+    : { status: 'ok', records: [] };
+  return Promise.resolve({ text: () => Promise.resolve(JSON.stringify(resp)) });
+}
+
 // ── BUILD VM CONTEXT ───────────────────────────────────────────
 const ctx = vm.createContext({
   document:        mockDoc,
@@ -53,7 +67,7 @@ const ctx = vm.createContext({
   confirm:         () => false,
   prompt:          () => null,
   alert:           () => {},
-  fetch:           () => Promise.resolve({ text: () => Promise.resolve('{"status":"ok","records":[]}') }),
+  fetch:           mockFetch,
   console, Date, Math, JSON, Intl,
   Array, Object, String, Number, Boolean, RegExp, Error,
   parseInt, parseFloat, isNaN, isFinite, encodeURIComponent,
@@ -92,6 +106,24 @@ function test(name, fn) {
   } catch (e) {
     _fail++;
     _results.push({ ok: false, name, msg: e.message });
+  }
+}
+
+// Async tests (e.g. pullAll(), which awaits a mocked fetch) are queued here and
+// run sequentially at the very end, after every synchronous test above has executed.
+const _asyncTests = [];
+function testAsync(name, fn) { _asyncTests.push({ name, fn }); }
+async function _runAsyncTests() {
+  for (var i = 0; i < _asyncTests.length; i++) {
+    var t = _asyncTests[i];
+    try {
+      await t.fn();
+      _pass++;
+      _results.push({ ok: true, name: t.name });
+    } catch (e) {
+      _fail++;
+      _results.push({ ok: false, name: t.name, msg: e.message });
+    }
   }
 }
 
@@ -1205,50 +1237,463 @@ test('prevQteDoc — popup opens via Blob URL not document.write', function() {
   assertEqual(capturedUrl, 'blob:mock', 'prevQteDoc: window.open receives blob URL');
 });
 
-// ── isEmptyLI — Sheets sync guard (SPEC-SYN-001) ───────────────
-console.log('\nisEmptyLI — Sheets sync guard');
+// ── unmapRec / findLocalMatchByBizKey / mergePulledWithLocal / claimOnceMatcher (SPEC-SYNC-001) ───
+console.log('\npullAll field-mapping (SYNC-GAP-001 fix)');
 
-test('isEmptyLI — null returns true (inv)', function() {
-  assert(ctx.isEmptyLI(null, 'inv') === true, 'null → true');
+test('unmapRec — translates Sheet header keys back to internal field names (li)', function() {
+  var out = ctx.unmapRec('li', { 'SKU':'ABC', 'Description':'Widget', 'Unit Cost':10, 'Unit Price':12, 'Currency':'USD', 'HS Code':'', 'Supplier':'sup1', 'Notes':'' });
+  assertEqual(out.sku, 'ABC');
+  assertEqual(out.desc, 'Widget');
+  assertEqual(out.cost, 10);
+  assertEqual(out.price, 12);
+  assertEqual(out.cur, 'USD');
+  assertEqual(out.supId, 'sup1');
+  assert(!('SKU' in out), 'no header-named keys remain');
 });
-test('isEmptyLI — undefined returns true (inv)', function() {
-  assert(ctx.isEmptyLI(undefined, 'inv') === true, 'undefined → true');
+
+test('unmapRec — fully blank header-keyed record produces all-empty internal fields, no crash', function() {
+  var out = ctx.unmapRec('sup', { 'Supplier ID':'', 'Name':'', 'Country':'', 'Contact':'', 'Email':'', 'Phone':'', 'Currency':'', 'Payment Terms':'', 'Lead Time':'', 'DG Capable':'', 'Notes':'' });
+  assertEqual(out.id, '');
+  assertEqual(out.name, '');
+  assert(!('Supplier ID' in out), 'no stray header-named keys carried through');
 });
-test('isEmptyLI — empty string returns true (inv)', function() {
-  assert(ctx.isEmptyLI('', 'inv') === true, 'empty string → true');
+
+test('unmapRec — does not leak a stray operator-added Sheet column not in FIELD_MAPS', function() {
+  var out = ctx.unmapRec('li', { 'SKU':'ABC', 'Description':'Widget', 'Internal Notes':'secret column an operator added' });
+  assert(!('Internal Notes' in out), 'unmapped Sheet columns are dropped, not carried through');
 });
-test('isEmptyLI — "[]" string returns true (inv)', function() {
-  assert(ctx.isEmptyLI('[]', 'inv') === true, '"[]" string → true');
+
+test('findLocalMatchByBizKey — li matches by sku when present', function() {
+  var local = [{ id:'l1', sku:'ABC', desc:'Widget', supId:'s1' }];
+  var m = ctx.findLocalMatchByBizKey('li', local, { sku:'ABC' });
+  assertEqual(m.id, 'l1');
 });
-test('isEmptyLI — non-JSON string returns true (inv)', function() {
-  assert(ctx.isEmptyLI('not-json', 'inv') === true, 'non-JSON string → true');
+test('findLocalMatchByBizKey — li falls back to desc+supId when sku blank', function() {
+  var local = [{ id:'l1', sku:'', desc:'Widget', supId:'s1' }];
+  var m = ctx.findLocalMatchByBizKey('li', local, { sku:'', desc:'Widget', supId:'s1' });
+  assertEqual(m.id, 'l1');
 });
-test('isEmptyLI — number returns true (inv)', function() {
-  assert(ctx.isEmptyLI(42, 'inv') === true, 'number 42 → true');
+test('findLocalMatchByBizKey — blank pulled key never matches a blank local field', function() {
+  var local = [{ id:'l1', sku:'', desc:'', supId:'' }];
+  var m = ctx.findLocalMatchByBizKey('li', local, { sku:'', desc:'', supId:'' });
+  assert(!m, 'blank never matches blank');
 });
-test('isEmptyLI — boolean returns true (inv)', function() {
-  assert(ctx.isEmptyLI(true, 'inv') === true, 'boolean true → true');
+test('findLocalMatchByBizKey — sh matches by ref', function() {
+  var local = [{ id:'s1', ref:'SHP-001' }];
+  var m = ctx.findLocalMatchByBizKey('sh', local, { ref:'SHP-001' });
+  assertEqual(m.id, 's1');
 });
-test('isEmptyLI — plain object returns true (inv)', function() {
-  assert(ctx.isEmptyLI({}, 'inv') === true, 'plain object → true');
+test('findLocalMatchByBizKey — inv/po/cn/qt match by num', function() {
+  var local = [{ id:'i1', num:'INV-001' }];
+  var m = ctx.findLocalMatchByBizKey('inv', local, { num:'INV-001' });
+  assertEqual(m.id, 'i1');
 });
-test('isEmptyLI — empty array returns true (inv)', function() {
-  assert(ctx.isEmptyLI([], 'inv') === true, 'empty array → true');
+
+test('mergePulledWithLocal — no local match returns pulled record unmodified', function() {
+  var pulled = { num:'INV-999', buyer:'New Co' };
+  var merged = ctx.mergePulledWithLocal(pulled, null);
+  assertEqual(merged, pulled);
 });
-test('isEmptyLI — array with up field returns false (inv)', function() {
-  assert(ctx.isEmptyLI([{up:5}], 'inv') === false, '[{up:5}] → false for inv');
+test('mergePulledWithLocal — untracked local field survives (e.g. inv.type, li.priceHistory)', function() {
+  var local = { id:'i1', num:'INV-001', type:'credit_note', lineItems:[{a:1}] };
+  var pulled = { num:'INV-001', buyer:'Acme', status:'Paid' }; // unmapRec output never contains `type`/`lineItems` — not in FIELD_MAPS.inv
+  var merged = ctx.mergePulledWithLocal(pulled, local);
+  assertEqual(merged.type, 'credit_note', 'untracked field survives from local');
+  assertEqual(merged.lineItems.length, 1, 'untracked lineItems survives from local');
+  assertEqual(merged.buyer, 'Acme', 'tracked field takes pulled value');
+  assertEqual(merged.id, 'i1', 'local id preserved');
 });
-test('isEmptyLI — array with cost field returns false (po)', function() {
-  assert(ctx.isEmptyLI([{cost:10}], 'po') === false, '[{cost:10}] → false for po');
+test('mergePulledWithLocal — zero-clobber guard reverts a pulled-zero to local non-zero', function() {
+  var local = { id:'i1', num:'INV-001', calc_grandTotal: 500 };
+  var pulled = { num:'INV-001', calc_grandTotal: 0 };
+  var merged = ctx.mergePulledWithLocal(pulled, local, ['calc_grandTotal']);
+  assertEqual(merged.calc_grandTotal, 500, 'stale/zero pulled calc value does not clobber a real local total');
 });
-test('isEmptyLI — array with only desc field returns true for inv', function() {
-  assert(ctx.isEmptyLI([{desc:'x'}], 'inv') === true, '[{desc}] no up → true for inv');
+
+test('claimOnceMatcher — first candidate claimed, second identical candidate rejected', function() {
+  var claim = ctx.claimOnceMatcher();
+  var rec = { id:'l1' };
+  assertEqual(claim(rec), rec, 'first claim succeeds');
+  assert(!claim(rec), 'second claim of the same id is rejected');
 });
-test('isEmptyLI — non-empty string array returns false (pos)', function() {
-  assert(ctx.isEmptyLI(['po-abc123'], 'pos') === false, '["po-abc123"] → false for pos');
+test('claimOnceMatcher — null candidate always rejected', function() {
+  var claim = ctx.claimOnceMatcher();
+  assert(!claim(null), 'null candidate never matches');
 });
-test('isEmptyLI — array of empty strings returns true (pos)', function() {
-  assert(ctx.isEmptyLI([''], 'pos') === true, '[""] → true for pos');
+
+test('pullAll fix regression — two pulled li rows sharing the same sku get different ids after merge', function() {
+  var claim = ctx.claimOnceMatcher();
+  var local = [{ id:'l1', sku:'DUP', desc:'Widget', priceHistory:[{v:1}] }];
+  var p1 = { sku:'DUP', desc:'Widget v2' };
+  var p2 = { sku:'DUP', desc:'Widget v3' };
+
+  var claimed1 = claim(ctx.findLocalMatchByBizKey('li', local, p1));
+  var m1 = ctx.mergePulledWithLocal(p1, claimed1);
+  if (!claimed1) m1.id = ctx.uid();
+
+  var claimed2 = claim(ctx.findLocalMatchByBizKey('li', local, p2)); // same local candidate, already claimed by p1 — must be rejected
+  var m2 = ctx.mergePulledWithLocal(p2, claimed2);
+  if (!claimed2) m2.id = ctx.uid();
+
+  assertEqual(m1.id, 'l1', 'first pulled record legitimately claims the real local id');
+  assertEqual(m1.priceHistory.length, 1, 'first pulled record preserves untracked priceHistory');
+  assert(m2.id !== 'l1', 'second pulled record with the same sku must NOT collide with the same local id');
+  assert(m2.id, 'second pulled record still gets a valid fresh id');
+});
+
+testAsync('pullAll integration — li pull matching by sku preserves local id/priceHistory, adopts pulled desc/cost/price', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Old Widget', cost:5, price:6, cur:'USD', supId:'s1', priceHistory:[{v:1}], invoiceRefs:[{invId:'i1'}] }];
+  _mockPullResponses = { li: { status:'ok', records: [{ 'SKU':'ABC', 'Description':'New Widget', 'Unit Cost':10, 'Unit Price':12, 'Currency':'USD', 'HS Code':'', 'Supplier':'s1', 'Notes':'' }] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.li.length, 1, 'matched record replaces, not duplicates');
+  var li = ctx.DB.li[0];
+  assertEqual(li.id, 'l1', 'local id preserved');
+  assertEqual(li.desc, 'New Widget', 'pulled desc adopted');
+  assertEqual(li.cost, 10, 'pulled cost adopted');
+  assertEqual(li.priceHistory.length, 1, 'untracked priceHistory preserved');
+  assertEqual(li.invoiceRefs.length, 1, 'untracked invoiceRefs preserved');
+});
+
+testAsync('pullAll integration — inv pull matching by num preserves local id/lineItems/calc_* and type', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.inv = [{ id:'i1', num:'INV-001', buyer:'Old Buyer', type:'goodwill_credit', lineItems:[{a:1}], calc_grandTotal: 500 }];
+  _mockPullResponses = { inv: { status:'ok', records: [{ 'Invoice #':'INV-001', 'Buyer':'New Buyer', 'Grand Total': 0 }] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.inv.length, 1, 'matched record replaces, not duplicates');
+  var inv = ctx.DB.inv[0];
+  assertEqual(inv.id, 'i1', 'local id preserved');
+  assertEqual(inv.buyer, 'New Buyer', 'pulled buyer adopted');
+  assertEqual(inv.type, 'goodwill_credit', 'untracked type field survives — the exact bug spec-gate found in v2');
+  assertEqual(inv.lineItems.length, 1, 'untracked lineItems survives');
+  assertEqual(inv.calc_grandTotal, 500, 'zero-clobber guard keeps real local total over a stale pulled zero');
+});
+
+testAsync('pullAll integration — genuinely new pulled row (no local match) gets a fresh id', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.sh = [];
+  _mockPullResponses = { sh: { status:'ok', records: [{ 'Shipment Ref':'SHP-NEW', 'BL Number':'', 'Vessel':'', 'Carrier':'', 'Origin Port':'', 'Dest Port':'', 'ETD':'', 'ETA':'', 'Status':'', 'Container Type':'', 'Container Number':'', 'DG Onboard':'', 'Docs Status':'', 'Forwarder Name':'', 'Forwarder Email':'', 'Linked Invoices':'', 'Notes':'' }] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.sh.length, 1);
+  assert(ctx.DB.sh[0].id, 'a fresh id was assigned to the genuinely new record');
+  assertEqual(ctx.DB.sh[0].ref, 'SHP-NEW');
+});
+
+testAsync('pullAll integration — duplicate ref within one pull (sh): only the first claims the local id', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.sh = [{ id:'sh1', ref:'DUP-REF', vessel:'Old Vessel' }];
+  _mockPullResponses = { sh: { status:'ok', records: [
+    { 'Shipment Ref':'DUP-REF', 'Vessel':'Vessel A' },
+    { 'Shipment Ref':'DUP-REF', 'Vessel':'Vessel B' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.sh.length, 2, 'both pulled rows present, no silent drop');
+  var withLocalId = ctx.DB.sh.find(function(s){ return s.id === 'sh1'; });
+  var other = ctx.DB.sh.find(function(s){ return s.id !== 'sh1'; });
+  assert(withLocalId, 'exactly one record legitimately claims the real local id');
+  assert(other && other.id, 'the duplicate gets its own distinct fresh id, never colliding with sh1');
+});
+
+testAsync('pullAll integration — duplicate num within one pull (inv): only the first claims the local id', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.inv = [{ id:'i1', num:'DUP-NUM', buyer:'Old Buyer' }];
+  _mockPullResponses = { inv: { status:'ok', records: [
+    { 'Invoice #':'DUP-NUM', 'Buyer':'Buyer A' },
+    { 'Invoice #':'DUP-NUM', 'Buyer':'Buyer B' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.inv.length, 2, 'both pulled rows present, no silent drop');
+  var withLocalId = ctx.DB.inv.find(function(r){ return r.id === 'i1'; });
+  var other = ctx.DB.inv.find(function(r){ return r.id !== 'i1'; });
+  assert(withLocalId, 'exactly one record legitimately claims the real local id');
+  assert(other && other.id, 'the duplicate gets its own distinct fresh id, never colliding with i1');
+});
+
+testAsync('pullAll integration — duplicate num within one pull (po): only the first claims the local id', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.po = [{ id:'po1', num:'DUP-NUM', supId:'s1' }];
+  _mockPullResponses = { po: { status:'ok', records: [
+    { 'PO #':'DUP-NUM', 'Supplier':'s1', 'Status':'Draft A' },
+    { 'PO #':'DUP-NUM', 'Supplier':'s1', 'Status':'Draft B' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.po.length, 2, 'both pulled rows present, no silent drop');
+  var withLocalId = ctx.DB.po.find(function(r){ return r.id === 'po1'; });
+  var other = ctx.DB.po.find(function(r){ return r.id !== 'po1'; });
+  assert(withLocalId, 'exactly one record legitimately claims the real local id');
+  assert(other && other.id, 'the duplicate gets its own distinct fresh id, never colliding with po1');
+});
+
+testAsync('pullAll integration — duplicate num within one pull (cn): only the first claims the local id', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.inv = [{ id:'cn1', num:'DUP-CN', type:'credit_note', buyer:'Old Buyer' }];
+  _mockPullResponses = { cn: { status:'ok', records: [
+    { 'CN #':'DUP-CN', 'Buyer':'Buyer A', 'Type':'credit_note' },
+    { 'CN #':'DUP-CN', 'Buyer':'Buyer B', 'Type':'credit_note' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  var cnRecs = ctx.DB.inv.filter(function(r){ return r.num === 'DUP-CN'; });
+  assertEqual(cnRecs.length, 2, 'both pulled CN rows present, no silent drop');
+  var withLocalId = cnRecs.find(function(r){ return r.id === 'cn1'; });
+  var other = cnRecs.find(function(r){ return r.id !== 'cn1'; });
+  assert(withLocalId, 'exactly one record legitimately claims the real local id');
+  assert(other && other.id, 'the duplicate gets its own distinct fresh id, never colliding with cn1');
+});
+
+testAsync('pullAll integration — duplicate num within one pull (qt): only the first claims the local id', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.qt = [{ id:'q1', num:'DUP-QT', client:'Old Client' }];
+  _mockPullResponses = { qt: { status:'ok', records: [
+    { 'Quote #':'DUP-QT', 'Buyer':'Client A' },
+    { 'Quote #':'DUP-QT', 'Buyer':'Client B' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.qt.length, 2, 'both pulled rows present, no silent drop');
+  var withLocalId = ctx.DB.qt.find(function(r){ return r.id === 'q1'; });
+  var other = ctx.DB.qt.find(function(r){ return r.id !== 'q1'; });
+  assert(withLocalId, 'exactly one record legitimately claims the real local id');
+  assert(other && other.id, 'the duplicate gets its own distinct fresh id, never colliding with q1');
+});
+
+testAsync('pullAll integration — no-duplicate-keys pull behaves identically to prior (v4) verified behavior', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.li = [{ id:'l1', sku:'SOLO', desc:'Old', cost:1, price:2, supId:'s1' }];
+  _mockPullResponses = { li: { status:'ok', records: [{ 'SKU':'SOLO', 'Description':'New', 'Unit Cost':3, 'Unit Price':4, 'Supplier':'s1' }] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.li.length, 1, 'no duplicate keys means exactly one merged record, as before');
+  assertEqual(ctx.DB.li[0].id, 'l1');
+  assertEqual(ctx.DB.li[0].desc, 'New');
+});
+
+testAsync('pullAll integration — corrupted-backup shape (header-keyed blank stub) never spuriously matches a real local Supplier', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.sup = [{ id:'sup1', name:'Real Supplier', country:'China', email:'real@sup.example' }];
+  _mockPullResponses = { sup: { status:'ok', records: [
+    { 'Supplier ID':'sup1', 'Name':'Real Supplier (updated)', 'Country':'China', 'Contact':'', 'Email':'real@sup.example', 'Phone':'', 'Currency':'USD', 'Payment Terms':'', 'Lead Time':'', 'DG Capable':'', 'Notes':'' },
+    { 'Supplier ID':'', 'Name':'', 'Country':'', 'Contact':'', 'Email':'', 'Phone':'', 'Currency':'', 'Payment Terms':'', 'Lead Time':'', 'DG Capable':'', 'Notes':'' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.sup.length, 2, 'the legitimate match and the blank stub both present, no spurious merge');
+  var real = ctx.DB.sup.find(function(s){ return s.id === 'sup1'; });
+  assert(real, 'real supplier retains its original id');
+  assertEqual(real.name, 'Real Supplier (updated)');
+  var blank = ctx.DB.sup.find(function(s){ return s.id !== 'sup1'; });
+  assert(blank, 'blank stub gets its own distinct id, never colliding with sup1');
+  assertEqual(blank.name, '');
+});
+
+testAsync('pullAll integration — co pull matching by id preserves untracked enquiries array', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.con = [{ id:'c1', name:'Old Name', email:'c1@example.com', enquiries:[{summary:'first enquiry'}] }];
+  _mockPullResponses = { co: { status:'ok', records: [{ 'Contact ID':'c1', 'Name':'New Name', 'Email':'c1@example.com', 'Phone':'', 'Company':'', 'Status':'', 'Source':'', 'Enquiry Summary':'', 'Notes':'', 'Created At':'', 'Last Contacted':'', 'GDPR Basis':'' }] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.con.length, 1);
+  assertEqual(ctx.DB.con[0].id, 'c1');
+  assertEqual(ctx.DB.con[0].name, 'New Name', 'pulled name adopted');
+  assertEqual(ctx.DB.con[0].enquiries.length, 1, 'untracked enquiries array survives merge — closes the v3→v4 gap');
+});
+
+testAsync('pullAll integration — sup/payments/co still merge correctly by id (regression)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.payments = [{ id:'p1', invNum:'INV-001', date:'2026-01-01', amount:100, invId:'i1', type:'buyer_payment' }];
+  _mockPullResponses = { payments: { status:'ok', records: [{ 'Payment ID':'p1', 'Invoice #':'INV-001', 'Date':'2026-02-01', 'Amount':150, 'Currency':'USD', 'Method':'Bank Transfer', 'Notes':'' }] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.payments.length, 1);
+  assertEqual(ctx.DB.payments[0].id, 'p1');
+  assertEqual(ctx.DB.payments[0].amount, 150, 'pulled amount adopted');
+  assertEqual(ctx.DB.payments[0].invId, 'i1', 'untracked invId survives — closes the v3→v4 gap for payments');
+  assertEqual(ctx.DB.payments[0].type, 'buyer_payment', 'untracked type survives');
+});
+
+// ── Order Request CSV import (SPEC-ORD-003) ────────────────────
+console.log('\nOrder Request CSV import (SPEC-ORD-003)');
+
+var ORD_HEADERS = ['Submission ID','Contact Name','Contact Email','Order Description','Category','Item/Spec','Order Volume Qty','Order Volume Unit','Packing Spec','Base UOM','Base Qty','Qty Status','Source Country','Variant/Option'];
+function ordCsv(rows) {
+  return ORD_HEADERS.join(',') + '\n' + rows.map(function(r) {
+    return ORD_HEADERS.map(function(h){ return '"' + String(r[h] != null ? r[h] : '').replace(/"/g,'') + '"'; }).join(',');
+  }).join('\n');
+}
+
+test('processImport ord — 3 rows same Submission ID + existing Contact email produce 1 Order Request with 3 lines', function() {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Thorpes Produce Inc', email:'buyer@thorpes.example', status:'qualified', enquiries:[] }];
+  var csv = ordCsv([
+    { 'Submission ID':'WEB-1', 'Contact Email':'buyer@thorpes.example', 'Category':'Fresh produce', 'Item/Spec':'Grapes' },
+    { 'Submission ID':'WEB-1', 'Contact Email':'buyer@thorpes.example', 'Category':'Fresh produce', 'Item/Spec':'Melons' },
+    { 'Submission ID':'WEB-1', 'Contact Email':'buyer@thorpes.example', 'Category':'Fresh produce', 'Item/Spec':'Berries' }
+  ]);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.con.length, 1, 'no new contact created — existing one matched');
+  assertEqual(ctx.DB.ord.length, 1, 'one Order Request created');
+  assertEqual(ctx.DB.ord[0].contactId, 'c1');
+  assertEqual(ctx.DB.ord[0].lines.length, 3);
+  assertContains(mockEl('imp-ord-result').textContent, '1 added, 0 updated');
+});
+
+test('processImport ord — unmatched Contact Email auto-creates a new lead Contact', function() {
+  resetDB();
+  var csv = ordCsv([{ 'Submission ID':'WEB-2', 'Contact Name':'New Buyer', 'Contact Email':'new@buyer.example', 'Category':'Seeds', 'Item/Spec':'Tomato' }]);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.con.length, 1);
+  assertEqual(ctx.DB.con[0].status, 'lead');
+  assertEqual(ctx.DB.con[0].source, 'webform');
+  assertEqual(ctx.DB.con[0].gdprBasis, 'pre_contract');
+  assertEqual(ctx.DB.ord[0].contactId, ctx.DB.con[0].id);
+});
+
+test('processImport ord — re-import with a 4th row updates existing Order Request to 4 lines, no duplicate record', function() {
+  resetDB();
+  var csv1 = ordCsv([
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Carrot' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Beetroot' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Thyme' }
+  ]);
+  ctx.processImport('ord', csv1);
+  assertContains(mockEl('imp-ord-result').textContent, '1 added, 0 updated');
+
+  var csv2 = ordCsv([
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Carrot' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Beetroot' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Thyme' },
+    { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Cabbage' }
+  ]);
+  ctx.processImport('ord', csv2);
+  assertEqual(ctx.DB.ord.length, 1, 'still exactly one Order Request');
+  assertEqual(ctx.DB.ord[0].lines.length, 4);
+  assertContains(mockEl('imp-ord-result').textContent, '0 added, 1 updated', 'closes the v1 spec-gate counting bug — reintroducing it would report 1 added here');
+});
+
+test('processImport ord — re-import with no new content adds no duplicate lines', function() {
+  resetDB();
+  var csv = ordCsv([{ 'Submission ID':'WEB-4', 'Contact Email':'x@y.example', 'Category':'Seeds', 'Item/Spec':'Watermelon' }]);
+  ctx.processImport('ord', csv);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.ord.length, 1);
+  assertEqual(ctx.DB.ord[0].lines.length, 1, 'no duplicate line from re-importing identical content');
+});
+
+test('processImport ord — row with blank Category and Item/Spec is skipped, siblings still import', function() {
+  resetDB();
+  var csv = ordCsv([
+    { 'Submission ID':'WEB-5', 'Contact Email':'z@z.example', 'Category':'', 'Item/Spec':'' },
+    { 'Submission ID':'WEB-5', 'Contact Email':'z@z.example', 'Category':'Seeds', 'Item/Spec':'Honeydew' }
+  ]);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.ord[0].lines.length, 1, 'blank row skipped, valid sibling row still imported');
+});
+
+test('processImport ord — row with blank Contact Email skips the entire submission', function() {
+  resetDB();
+  var csv = ordCsv([{ 'Submission ID':'WEB-6', 'Contact Email':'', 'Category':'Seeds', 'Item/Spec':'Cantaloupe' }]);
+  ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.ord.length, 0);
+  assertEqual(ctx.DB.con.length, 0);
+});
+
+test('processImport ord — Qty Status values map correctly, unrecognised/blank default to Unknown', function() {
+  resetDB();
+  var csv = ordCsv([
+    { 'Submission ID':'WEB-7', 'Contact Email':'q@q.example', 'Category':'A', 'Item/Spec':'1', 'Qty Status':'confirmed' },
+    { 'Submission ID':'WEB-7', 'Contact Email':'q@q.example', 'Category':'B', 'Item/Spec':'2', 'Qty Status':'CONFIRMED' },
+    { 'Submission ID':'WEB-7', 'Contact Email':'q@q.example', 'Category':'C', 'Item/Spec':'3', 'Qty Status':'' },
+    { 'Submission ID':'WEB-7', 'Contact Email':'q@q.example', 'Category':'D', 'Item/Spec':'4', 'Qty Status':'garbage' }
+  ]);
+  ctx.processImport('ord', csv);
+  var lines = ctx.DB.ord[0].lines;
+  assertEqual(lines[0].qtyStatus, 'Confirmed');
+  assertEqual(lines[1].qtyStatus, 'Confirmed');
+  assertEqual(lines[2].qtyStatus, 'Unknown');
+  assertEqual(lines[3].qtyStatus, 'Unknown');
+});
+
+// ── Quote approval audit trail (SPEC-ORD-003) ───────────────────
+console.log('\nQuote approval audit trail (SPEC-ORD-003)');
+
+function setupQteForm(over) {
+  var f = Object.assign({ client:'Acme Buyer', dt:'2026-01-01', valid:'', cur:'USD', mode:'LCL', mkp:'15', st:'Draft', nt:'', approvedBy:'', approvedNote:'' }, over || {});
+  mockEl('qf-client').value = f.client;
+  mockEl('qf-dt').value = f.dt;
+  mockEl('qf-valid').value = f.valid;
+  mockEl('qf-cur').value = f.cur;
+  mockEl('qf-mode').value = f.mode;
+  mockEl('qf-mkp').value = f.mkp;
+  mockEl('qf-st').value = f.st;
+  mockEl('qf-nt').value = f.nt;
+  mockEl('qf-approved-by').value = f.approvedBy;
+  mockEl('qf-approved-note').value = f.approvedNote;
+  mockEl('qf-num').value = '';
+}
+
+test('vQte — blocks save when status is Accepted and Approved By is blank', function() {
+  resetDB();
+  ctx.EI.qt = null; ctx.cQL = [{ rid:'r1', supId:'', desc:'Widget', qty:1, uom:'pcs', cost:10, cbm:0, dg:false, dutyPct:0 }];
+  setupQteForm({ st:'Accepted', approvedBy:'' });
+  assert(ctx.vQte() === false, 'save blocked without Approved By');
+  assertContains(mockEl('qt-verr').textContent, 'Approved By is required');
+});
+
+test('saveQte — Accepted status with Approved By succeeds and sets approvedAt', function() {
+  resetDB();
+  ctx.EI.qt = null; ctx.cQL = [{ rid:'r1', supId:'', desc:'Widget', qty:1, uom:'pcs', cost:10, cbm:0, dg:false, dutyPct:0 }];
+  setupQteForm({ st:'Accepted', approvedBy:'Jane Ops', approvedNote:'Confirmed by phone' });
+  ctx.saveQte();
+  assertEqual(ctx.DB.qt.length, 1);
+  var q = ctx.DB.qt[0];
+  assertEqual(q.approvedBy, 'Jane Ops');
+  assertEqual(q.approvedReason, 'Confirmed by phone');
+  assert(q.approvedAt, 'approvedAt set on first transition into Accepted');
+});
+
+test('saveQte — re-saving an already-Accepted quote preserves the original approvedAt', function() {
+  resetDB();
+  ctx.EI.qt = null; ctx.cQL = [{ rid:'r1', supId:'', desc:'Widget', qty:1, uom:'pcs', cost:10, cbm:0, dg:false, dutyPct:0 }];
+  setupQteForm({ st:'Accepted', approvedBy:'Jane Ops' });
+  ctx.saveQte();
+  var firstApprovedAt = ctx.DB.qt[0].approvedAt;
+  var qid = ctx.DB.qt[0].id;
+
+  ctx.EI.qt = qid; ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  setupQteForm({ st:'Accepted', approvedBy:'Jane Ops', approvedNote:'Edited note' });
+  mockEl('qf-num').value = ctx.DB.qt[0].num;
+  ctx.saveQte();
+  assertEqual(ctx.DB.qt[0].approvedAt, firstApprovedAt, 'approvedAt unchanged on resave of an already-Accepted quote');
+  assertEqual(ctx.DB.qt[0].approvedReason, 'Edited note', 'other approval fields remain editable');
+});
+
+test('saveQte — a quote never set to Accepted has blank approval fields, no regression', function() {
+  resetDB();
+  ctx.EI.qt = null; ctx.cQL = [{ rid:'r1', supId:'', desc:'Widget', qty:1, uom:'pcs', cost:10, cbm:0, dg:false, dutyPct:0 }];
+  setupQteForm({ st:'Draft' });
+  ctx.saveQte();
+  var q = ctx.DB.qt[0];
+  assertEqual(q.approvedBy, '');
+  assertEqual(q.approvedReason, '');
+  assertEqual(q.approvedAt, '');
 });
 
 // ── invoiceRefs index (SPEC-LIB-001) ───────────────────────────
@@ -4509,11 +4954,13 @@ test('renderDispCurWarn — shows staleness banner only when displayCurrency is 
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
-console.log('\n' + '─'.repeat(48));
-_results.forEach(r => {
-  console.log(r.ok ? '  ✓  ' + r.name : '  ✗  ' + r.name);
-  if (!r.ok) console.log('       ' + r.msg.replace(/\n/g, '\n       '));
+_runAsyncTests().then(function() {
+  console.log('\n' + '─'.repeat(48));
+  _results.forEach(r => {
+    console.log(r.ok ? '  ✓  ' + r.name : '  ✗  ' + r.name);
+    if (!r.ok) console.log('       ' + r.msg.replace(/\n/g, '\n       '));
+  });
+  console.log('\n' + _pass + '/' + (_pass + _fail) + ' tests passed');
+  if (_fail > 0) { console.log('\nFAIL'); process.exit(1); }
+  else            { console.log('\nPASS'); process.exit(0); }
 });
-console.log('\n' + _pass + '/' + (_pass + _fail) + ' tests passed');
-if (_fail > 0) { console.log('\nFAIL'); process.exit(1); }
-else            { console.log('\nPASS'); process.exit(0); }
