@@ -15,6 +15,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | Concern | Detail |
 |---|---|
 | All code | `index.html` — HTML + `<style>` + `<script>` in one file |
+| Companion tools | `triage.html` — standalone "FPM Enquiry Triage — 10 Minute Screen", served at `app.getstackdops.com/triage.html`. Not linked from the main app nav. Exports a CSV matching `TEMPLATES.ord`'s exact header contract (`index.html:6312`) on a "Cleared for study" verdict, importable via the Import Data tab's Order Requests step. The two files are kept in sync manually — no build step connects them; if `TEMPLATES.ord.headers` changes, `triage.html`'s duplicated `ORD_HEADERS` literal must be updated by hand. |
 | Persistence | `localStorage` only — no server, no API |
 | **Public repo policy** | **GitHub Pages serves the ENTIRE repo at app.getstackdops.com. Every committed file is publicly readable. Never commit live data exports, backups, personal contact details, or credentials (SEC-GAP-020). `.gitignore` blocks `Test-data/` and `Stackd-*.json`.** |
 | Tests | `tests/run.js` — Node.js VM sandbox, run with `node tests/run.js` |

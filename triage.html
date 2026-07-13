@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FPM Enquiry Triage — 10 Minute Screen</title>
+<style>
+  :root{
+    --ink:#0f0c0d;
+    --card:#fff;
+    --paper:#0f0c0d;      /* was near-white text on dark — now dark text on light */
+    --rule:#e8e0de;
+    --mute:#8a7f82;
+    --signal:#B8283A;     /* kill — Stackd Ops --cr */
+    --hold:#C9963A;       /* conditional — Stackd Ops --gold */
+    --clear:#1a7a4a;      /* proceed — Stackd Ops --gn */
+    --line:#e8e0de;       /* Stackd Ops --ln */
+    --bg:#f8f5f3;         /* Stackd Ops --bg */
+    --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:28px 18px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:26px}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+  h1{
+    font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.02em;
+    margin:8px 0 6px;line-height:1.05;color:var(--ink);
+  }
+  .sub{color:var(--mute);font-size:14px;max-width:60ch;line-height:1.5;margin:0}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .meta input{
+    background:var(--card);border:1px solid var(--line);color:var(--ink);
+    padding:9px 11px;border-radius:3px;font-family:var(--mono);font-size:13px;flex:1;min-width:150px;
+  }
+  .meta input:focus{outline:2px solid var(--hold);outline-offset:1px}
+
+  section{margin-bottom:8px;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--card)}
+  .shead{
+    display:flex;align-items:baseline;gap:12px;padding:13px 16px;background:var(--bg);
+    border-bottom:1px solid var(--line);
+  }
+  .stage{font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.12em}
+  .stitle{font-weight:600;font-size:15px;flex:1;color:var(--ink)}
+  .gate{
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    padding:3px 7px;border-radius:2px;text-transform:uppercase;
+  }
+  .gate.hard{background:#fdf0f1;color:var(--signal);border:1px solid rgba(184,40,58,.35)}
+  .gate.soft{background:#fbf3e6;color:var(--hold);border:1px solid rgba(201,150,58,.35)}
+
+  .q{
+    display:flex;align-items:center;gap:14px;padding:12px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .q:last-child{border-bottom:none}
+  .qtext{flex:1;font-size:14px;line-height:1.4;color:var(--ink)}
+  .qtext small{display:block;color:var(--mute);font-size:12px;margin-top:3px;line-height:1.4}
+  .opts{display:flex;gap:5px;flex-shrink:0}
+  .opts button{
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+    background:transparent;border:1px solid var(--rule);color:var(--mute);
+    padding:6px 10px;border-radius:2px;cursor:pointer;transition:all .12s;
+  }
+  .opts button:hover{border-color:var(--ink);color:var(--ink)}
+  .opts button:focus-visible{outline:2px solid var(--hold);outline-offset:1px}
+  .opts button[data-v="y"].on{background:var(--clear);border-color:var(--clear);color:#fff}
+  .opts button[data-v="n"].on{background:var(--signal);border-color:var(--signal);color:#fff}
+  .opts button[data-v="u"].on{background:var(--hold);border-color:var(--hold);color:#fff}
+
+  /* signature: the verdict stamp */
+  .verdict{
+    margin-top:30px;border:1px solid var(--line);border-radius:4px;
+    background:var(--card);padding:26px 22px;
+  }
+  .stamp{
+    display:inline-block;border:3px double currentColor;border-radius:3px;
+    padding:12px 20px;transform:rotate(-2.5deg);
+    font-family:var(--mono);font-weight:600;letter-spacing:.18em;
+    font-size:clamp(16px,3vw,24px);text-transform:uppercase;
+    opacity:0;transition:opacity .3s ease, transform .3s ease;
+  }
+  .stamp.show{opacity:1;transform:rotate(-2.5deg) scale(1)}
+  .stamp.idle{color:var(--mute)}
+  .stamp.kill{color:var(--signal)}
+  .stamp.cond{color:var(--hold)}
+  .stamp.go{color:var(--clear)}
+  .vline{margin-top:16px;font-size:14px;line-height:1.55;max-width:66ch;color:var(--ink)}
+  .vline strong{font-weight:600}
+  .blockers{margin-top:16px;padding-left:0;list-style:none}
+  .blockers li{
+    font-family:var(--mono);font-size:12.5px;color:var(--ink);
+    padding:7px 0 7px 16px;border-left:2px solid var(--signal);margin-bottom:6px;line-height:1.45;
+  }
+  .blockers li.warn{border-left-color:var(--hold)}
+
+  .out{margin-top:26px}
+  .out h3{
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 8px;font-weight:500;
+  }
+  textarea{
+    width:100%;min-height:190px;background:var(--card);border:1px solid var(--line);
+    color:var(--ink);border-radius:3px;padding:14px;
+    font-family:var(--mono);font-size:12.5px;line-height:1.6;resize:vertical;
+  }
+  .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .btn{
+    font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    padding:10px 16px;border-radius:3px;cursor:pointer;border:1px solid var(--rule);
+    background:transparent;color:var(--ink);transition:all .12s;
+  }
+  .btn:hover{background:var(--bg);border-color:var(--ink)}
+  .btn.primary{background:var(--signal);color:#fff;border-color:var(--signal);font-weight:600}
+  .btn.primary:hover{background:#8B1A2F;border-color:#8B1A2F}
+  footer{margin-top:34px;color:var(--mute);font-size:12px;line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+  @media (max-width:620px){
+    .q{flex-direction:column;align-items:flex-start;gap:9px}
+    .opts{width:100%}
+    .opts button{flex:1}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">FPM International · Inbound Enquiry Control</div>
+  <h1>10-Minute Triage Screen</h1>
+  <p class="sub">Run every inbound buyer request through this before it eats an evening. Hard gates kill the enquiry regardless of how good the margin looks. Unknowns are not failures — they are questions you have not asked yet.</p>
+  <div class="meta">
+    <input id="mProduct" placeholder="Product line">
+    <input id="mBuyer" placeholder="Buyer / contact">
+    <input id="mEmail" type="email" placeholder="Contact email">
+    <input id="mDest" placeholder="Destination" value="Bridgetown, Barbados">
+  </div>
+</header>
+
+<div id="form"></div>
+
+<div class="verdict">
+  <div id="stamp" class="stamp idle show">Awaiting input</div>
+  <div class="vline" id="vtext">Answer the questions above. The screen resolves as soon as a hard gate fails or every gate clears.</div>
+  <ul class="blockers" id="blockers"></ul>
+</div>
+
+<div class="out">
+  <h3>Generated actions — paste into Notion, email or WhatsApp</h3>
+  <textarea id="output" readonly></textarea>
+  <div class="actions">
+    <button class="btn primary" id="copy">Copy actions</button>
+    <button class="btn" id="reset">Clear screen</button>
+    <button class="btn primary" id="exportOrd" style="display:none;">Download Order Request CSV</button>
+  </div>
+</div>
+
+<footer>
+  <strong>How to use it:</strong> answer fast and honestly. "Unknown" is the correct answer more often than you think — it just means the enquiry is not ready for a deep dive, it is ready for one email. Only enquiries that clear every hard gate earn a full viability study.<br>
+  Hard gates are drawn from real FPM failures: the Fuzhou Bote 220V/380V incident, the Jinan Jinbao fire certificate, the Barbados plant-quarantine PRA, the Spain citrus season, the Bridgetown cold-storage blocker.
+</footer>
+
+</div>
+
+<script>
+const SECTIONS = [
+  {
+    stage:"STAGE 01", title:"Is the buyer real?", gate:"hard",
+    qs:[
+      {id:"b1", t:"Has this buyer placed and paid for an order before?", h:"First-time enquirers who never buy are the single biggest time sink in intermediary trade.", hard:false},
+      {id:"b2", t:"Have they given a specific volume?", h:"A number, not 'a container' or 'a few pallets'. No number = no deal, just a conversation.", hard:true},
+      {id:"b3", t:"Have they given a target price or budget?", h:"Without this you cannot know if any supplier quote is winnable before you spend hours getting one.", hard:true},
+      {id:"b4", t:"Do they accept your payment terms (deposit before production)?", h:"If they expect credit, your cash exposure is the whole deal.", hard:false}
+    ]
+  },
+  {
+    stage:"STAGE 02", title:"Can it legally land at destination?", gate:"hard",
+    qs:[
+      {id:"r1", t:"Do you know exactly which import permit, licence or registration applies?", h:"Plant quarantine, food import, EPREL, type approval, controlled substance. Name it or you don't know it.", hard:true},
+      {id:"r2", t:"Is this a novel import class needing a Pest Risk Analysis or new approval?", h:"Answer NO if it's a routine class. YES here is a timeline killer, not a blocker — but it must be priced in.", hard:false, invert:true},
+      {id:"r3", t:"Are all certification claims verifiable against an issuing body's database?", h:"Organic, CE, IP67, RoHS, food safety, fire. A PDF is not a certificate. Cert number + lab + issue date or nothing.", hard:true},
+      {id:"r4", t:"Is the duty / tariff treatment known?", h:"CARIFORUM-EU EPA, CET, origin rules. An unknown duty can erase the entire margin.", hard:false},
+      {id:"r5", t:"Is dangerous goods / IMDG classification resolved?", h:"Batteries, refrigerants, aerosols, solar LED. Answer YES if resolved or clearly not applicable.", hard:false}
+    ]
+  },
+  {
+    stage:"STAGE 03", title:"Can it actually be supplied?", gate:"soft",
+    qs:[
+      {id:"s1", t:"Is the counterparty a producer, not a trading company?", h:"Traders add a margin and hide the factory. Sometimes acceptable — never unknowingly.", hard:false},
+      {id:"s2", t:"Is every hard spec locked in writing?", h:"Voltage and frequency. Refrigerant GWP. Dimensions. Grade. This is the Fuzhou Bote lesson — treat as automatic disqualifier.", hard:true},
+      {id:"s3", t:"Does supplier MOQ fit the buyer volume inside a 20ft FCL?", h:"If MOQ forces a 40HQ on a first order, your exposure doubles on an unproven relationship.", hard:false},
+      {id:"s4", t:"Does lead time plus transit meet the buyer's date?", h:"Production + inspection + sailing + customs. Not just the factory's number.", hard:false},
+      {id:"s5", t:"Is the destination-side handling capability confirmed?", h:"Cold storage, forklift, warehouse, power supply. The buyer's own capability is a real blocker.", hard:false}
+    ]
+  },
+  {
+    stage:"STAGE 04", title:"Does it make money?", gate:"hard",
+    qs:[
+      {id:"m1", t:"Can you estimate landed cost within ±15%?", h:"Ex-works + freight + insurance + duty + clearance + inland. If not, you cannot quote — you can only guess.", hard:true},
+      {id:"m2", t:"Does the margin clear your minimum at the buyer's target price?", h:"If the buyer's price and the supplier's price cannot both be true, stop now.", hard:true},
+      {id:"m3", t:"Is the deposit exposure tolerable if the buyer walks?", h:"You are the principal. If the buyer disappears after you've paid the factory, you own the container.", hard:false}
+    ]
+  }
+];
+
+const state = {};
+let currentVerdict = 'idle';
+let lastRisks = [];
+
+function render(){
+  const f = document.getElementById('form');
+  f.innerHTML = SECTIONS.map(s=>`
+    <section>
+      <div class="shead">
+        <span class="stage">${s.stage}</span>
+        <span class="stitle">${s.title}</span>
+        <span class="gate ${s.gate}">${s.gate==='hard'?'Hard gate':'Risk gate'}</span>
+      </div>
+      ${s.qs.map(q=>`
+        <div class="q">
+          <div class="qtext">${q.t}${q.hard?' <span style="color:var(--signal);font-family:var(--mono);font-size:11px">◆</span>':''}<small>${q.h}</small></div>
+          <div class="opts" data-q="${q.id}">
+            <button data-v="y">Yes</button>
+            <button data-v="u">Unknown</button>
+            <button data-v="n">No</button>
+          </div>
+        </div>`).join('')}
+    </section>`).join('');
+
+  f.querySelectorAll('.opts button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const id = b.parentElement.dataset.q;
+      const v = b.dataset.v;
+      state[id] = state[id]===v ? undefined : v;
+      b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      if(state[id]) b.classList.add('on');
+      evaluate();
+    });
+  });
+}
+
+function allQs(){ return SECTIONS.flatMap(s=>s.qs.map(q=>({...q, stage:s.title}))); }
+
+function evaluate(){
+  const qs = allQs();
+  const answered = qs.filter(q=>state[q.id]);
+  const stamp = document.getElementById('stamp');
+  const vtext = document.getElementById('vtext');
+  const bl = document.getElementById('blockers');
+
+  const fails = [], unknowns = [], risks = [];
+  qs.forEach(q=>{
+    const v = state[q.id];
+    if(!v) return;
+    const bad = q.invert ? v==='y' : v==='n';
+    if(q.hard && bad) fails.push(q);
+    else if(q.hard && v==='u') unknowns.push(q);
+    else if(bad || v==='u') risks.push(q);
+  });
+
+  stamp.className = 'stamp show';
+  bl.innerHTML = '';
+
+  if(answered.length===0){
+    stamp.classList.add('idle');
+    stamp.textContent = 'Awaiting input';
+    vtext.textContent = 'Answer the questions above. The screen resolves as soon as a hard gate fails or every gate clears.';
+    document.getElementById('output').value = '';
+    currentVerdict = 'idle';
+    updateExportButton();
+    return;
+  }
+
+  let verdict;
+  if(fails.length){
+    verdict = 'kill';
+    currentVerdict = 'kill';
+    stamp.classList.add('kill');
+    stamp.textContent = 'Do not proceed';
+    vtext.innerHTML = `<strong>${fails.length} hard gate${fails.length>1?'s':''} failed.</strong> This enquiry does not get a viability study. Reply to the buyer, state the blocker plainly, and close the loop. Reopen only if the blocker is removed — not if the buyer pushes.`;
+  } else if(unknowns.length){
+    verdict = 'ask';
+    currentVerdict = 'ask';
+    stamp.classList.add('cond');
+    stamp.textContent = 'Ask, don’t dig';
+    vtext.innerHTML = `<strong>${unknowns.length} hard gate${unknowns.length>1?'s are':' is'} unresolved.</strong> Do not start research. Send the questions below, time-box it, and let the answers decide whether this deserves an evening.`;
+  } else if(answered.length < qs.length){
+    verdict = 'part';
+    currentVerdict = 'part';
+    stamp.classList.add('cond');
+    stamp.textContent = 'Incomplete';
+    vtext.innerHTML = `<strong>${qs.length - answered.length} question${qs.length-answered.length>1?'s':''} left.</strong> No hard gate has failed yet. Finish the screen.`;
+  } else {
+    verdict = 'go';
+    currentVerdict = 'go';
+    lastRisks = risks;
+    stamp.classList.add('go');
+    stamp.textContent = 'Cleared for study';
+    vtext.innerHTML = `<strong>All hard gates clear.</strong> This one earns a full viability and due diligence study${risks.length?` — carrying ${risks.length} open risk${risks.length>1?'s':''} listed below.`:'.'}`;
+  }
+
+  [...fails.map(q=>({q,cls:''})), ...unknowns.map(q=>({q,cls:'warn'})), ...risks.map(q=>({q,cls:'warn'}))]
+    .forEach(({q,cls})=>{
+      const li = document.createElement('li');
+      li.className = cls;
+      li.textContent = `${q.stage.toUpperCase()} — ${q.t}`;
+      bl.appendChild(li);
+    });
+
+  buildOutput(verdict, fails, unknowns, risks);
+  updateExportButton();
+}
+
+function buildOutput(verdict, fails, unknowns, risks){
+  const p = document.getElementById('mProduct').value || '[product]';
+  const b = document.getElementById('mBuyer').value || '[buyer]';
+  const d = document.getElementById('mDest').value || '[destination]';
+  const date = new Date().toISOString().slice(0,10);
+  let o = `FPM ENQUIRY TRIAGE — ${date}\nProduct: ${p}\nBuyer: ${b}\nDestination: ${d}\n\n`;
+
+  if(verdict==='kill'){
+    o += `VERDICT: DO NOT PROCEED\n\nFailed hard gates:\n`;
+    fails.forEach(q=>o+=`  - ${q.t}\n`);
+    o += `\nACTION — reply to buyer and close:\n`;
+    o += `"Thanks for the enquiry. I've screened this and can't take it forward as it stands, because: ${fails.map(q=>q.t.replace(/\?$/,'').toLowerCase()).join('; ')}. If that changes, come back to me and I'll look again."\n`;
+    o += `\nTIME SPENT: 10 minutes. TIME SAVED: an evening.\n`;
+  } else if(verdict==='ask'){
+    o += `VERDICT: ASK, DON'T DIG — no research until these come back.\n\nSEND TO BUYER:\n`;
+    unknowns.concat(risks).filter(q=>q.id.startsWith('b')||q.id==='s5').forEach(q=>o+=`  - ${q.t}\n`);
+    o += `\nSEND TO SUPPLIER:\n`;
+    unknowns.concat(risks).filter(q=>q.id.startsWith('s')&&q.id!=='s5').forEach(q=>o+=`  - ${q.t}\n`);
+    o += `\nVERIFY YOURSELF (regulatory — do not take the counterparty's word):\n`;
+    unknowns.concat(risks).filter(q=>q.id.startsWith('r')||q.id.startsWith('m')).forEach(q=>o+=`  - ${q.t}\n`);
+    o += `\nSet a reply deadline. No reply in 5 working days = enquiry closed.\n`;
+  } else if(verdict==='part'){
+    o += `VERDICT: SCREEN INCOMPLETE — finish it before doing anything else.\n`;
+  } else {
+    o += `VERDICT: CLEARED FOR FULL VIABILITY STUDY\n\n`;
+    if(risks.length){
+      o += `Open risks to carry into the study:\n`;
+      risks.forEach(q=>o+=`  - ${q.t}\n`);
+      o += `\n`;
+    }
+    o += `Next actions:\n  - Issue bilingual RFQ / supplier qualification questionnaire\n  - Confirm import permit and certification numbers against issuing databases\n  - Build landed cost model (20ft FCL as introductory size)\n  - Confirm buyer volume and deposit in writing before any supplier commitment\n`;
+  }
+  document.getElementById('output').value = o;
+}
+
+document.getElementById('copy').addEventListener('click', async ()=>{
+  const btn = document.getElementById('copy');
+  const t = document.getElementById('output');
+  if(!t.value){ btn.textContent='Nothing to copy'; setTimeout(()=>btn.textContent='Copy actions',1400); return; }
+  try{
+    await navigator.clipboard.writeText(t.value);
+    btn.textContent='Copied';
+  }catch(e){
+    t.select(); document.execCommand('copy'); btn.textContent='Copied';
+  }
+  setTimeout(()=>btn.textContent='Copy actions',1400);
+});
+
+document.getElementById('reset').addEventListener('click', ()=>{
+  Object.keys(state).forEach(k=>delete state[k]);
+  document.querySelectorAll('.opts button').forEach(b=>b.classList.remove('on'));
+  evaluate();
+});
+
+['mProduct','mBuyer','mDest','mEmail'].forEach(id=>
+  document.getElementById(id).addEventListener('input', evaluate)
+);
+
+// ── Order Request CSV export (SPEC-ORD-004) ─────────────────────
+// ORD_HEADERS is a duplicated literal of TEMPLATES.ord.headers in stackd-ops/index.html —
+// the two files have no build step connecting them; keep in sync manually if that changes.
+const ORD_HEADERS = ['Submission ID','Contact Name','Contact Email','Order Description','Category','Item/Spec','Order Volume Qty','Order Volume Unit','Packing Spec','Base UOM','Base Qty','Qty Status','Source Country','Variant/Option'];
+
+function stripQuotes(v) { return String(v||'').replace(/"/g, ''); }
+
+function genSubmissionId() {
+  const d = new Date();
+  const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  const suffix = Math.random().toString(36).slice(2,6);
+  return 'TRI-' + ymd + '-' + suffix;
+}
+
+function buildOrdCsvRow(risks) {
+  const product = document.getElementById('mProduct').value.trim() || '[product]';
+  const buyer   = document.getElementById('mBuyer').value.trim() || '[buyer]';
+  const dest    = document.getElementById('mDest').value.trim() || '[destination]';
+  const email   = document.getElementById('mEmail').value.trim();
+
+  let desc = 'Destination: ' + dest + '. Cleared via 10-Minute Triage Screen.';
+  if (risks && risks.length) {
+    desc += ' Open risks: ' + risks.map(function(r){ return r.t; }).join('; ') + '.';
+  }
+
+  const row = {
+    'Submission ID': genSubmissionId(),
+    'Contact Name': buyer,
+    'Contact Email': email,
+    'Order Description': desc,
+    'Category': product,
+    'Item/Spec': product,
+    'Order Volume Qty': '', 'Order Volume Unit': '', 'Packing Spec': '',
+    'Base UOM': '', 'Base Qty': '', 'Qty Status': '',
+    'Source Country': '', 'Variant/Option': ''
+  };
+  return ORD_HEADERS.map(function(h){ return stripQuotes(row[h]); });
+}
+
+function downloadOrdCsv(risks) {
+  const dataRow = buildOrdCsvRow(risks);
+  const csv = ORD_HEADERS.join(',') + '\n' + dataRow.map(function(v){ return '"' + v + '"'; }).join(',');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'triage-order-request-' + dataRow[0] + '.csv';
+  a.click();
+}
+
+function updateExportButton() {
+  const btn = document.getElementById('exportOrd');
+  const email = document.getElementById('mEmail').value.trim();
+  if (currentVerdict !== 'go') { btn.style.display = 'none'; return; }
+  btn.style.display = '';
+  btn.disabled = !email;
+  btn.title = email ? '' : 'Enter a Contact Email above before exporting';
+}
+
+document.getElementById('exportOrd').addEventListener('click', function() {
+  downloadOrdCsv(lastRisks);
+});
+
+render();
+evaluate();
+</script>
+</body>
+</html>
