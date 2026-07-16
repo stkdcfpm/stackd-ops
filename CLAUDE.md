@@ -7,7 +7,7 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.51**  
+**Current version: v2.9.52**  
 **Test count: 422/422 PASS** (`node tests/run.js`)
 
 ---
