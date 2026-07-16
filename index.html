@@ -2566,6 +2566,15 @@ function rOrd() {
   G('ord-em').style.display  = rows.length ? 'none' : '';
   G('ord-tbody').innerHTML = rows.join('');
 }
+function ordLineGaps(line) {
+  var gaps = [];
+  if (!line.packingSpec) gaps.push({ field: 'packingSpec', label: 'Packing spec' });
+  if (!line.baseUom) gaps.push({ field: 'baseUom', label: 'Base UOM' });
+  if (line.baseQty === null || line.baseQty === undefined || line.baseQty === '') gaps.push({ field: 'baseQty', label: 'Base qty' });
+  if (!line.sourceCountry) gaps.push({ field: 'sourceCountry', label: 'Source country' });
+  if (line.qtyStatus === 'Unknown') gaps.push({ field: 'qtyStatus', label: 'Qty status (Unknown)' });
+  return gaps;
+}
 function rOrdLines(ord) {
   var el = G('of-lines-list'); if (!el) return;
   if (!ord) { el.innerHTML = '<div style="font-size:.55rem;color:var(--m);">Save the Order Request first, then add line items.</div>'; return; }
@@ -2581,8 +2590,78 @@ function rOrdLines(ord) {
       (pending.length ? '<div style="color:var(--gold);">' + pending.length + ' pending update(s): ' + pending.map(function(u){
         return san(u.field) + ' → ' + san(String(u.newValue)) + ' (' + san(u.source) + ') <button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="ordConfirmLineUpdateUI(\'' + l.id + '\',\'' + u.id + '\')">Confirm</button>';
       }).join(' ') + '</div>' : '') +
+      '<div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="ordCheckLineGaps(\'' + l.id + '\')">Check gaps</button></div>' +
+      '<div id="ord-gapchk-' + l.id + '" style="display:none;margin-top:4px;"></div>' +
       '</div>';
   }).join('') || '<div style="font-size:.55rem;color:var(--m);">No line items yet</div>';
+}
+function ordCheckLineGaps(lineId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+
+  var panel = G('ord-gapchk-' + lineId);
+  if (!panel) return;
+  panel.style.display = 'block';
+
+  var structuralGaps = ordLineGaps(line);
+  var structuralHtml = structuralGaps.length
+    ? '<div style="color:var(--gold);">Missing: ' + structuralGaps.map(function(g){ return san(g.label); }).join(', ') + '</div>'
+    : '<div style="color:var(--gn);">No structural gaps.</div>';
+  panel.innerHTML = structuralHtml + '<div style="color:var(--m);">Checking for ambiguities…</div>';
+
+  ordCheckLineGapsSemantic(line).then(function(result){
+    if (G('ord-gapchk-' + lineId) !== panel) return;
+    var semanticHtml;
+    if (result === null) {
+      semanticHtml = '<div style="color:var(--m);">AI ambiguity check unavailable.</div>';
+    } else if (!result.length) {
+      semanticHtml = '<div style="color:var(--gn);">No ambiguities flagged.</div>';
+    } else {
+      semanticHtml = '<div>' + result.map(function(item){
+        return '<div style="margin-top:2px;">⚠ ' + san(item.issue) + ' — <em>' + san(item.question) + '</em></div>';
+      }).join('') + '</div>';
+    }
+    panel.innerHTML = structuralHtml + semanticHtml;
+  });
+}
+var ORD_GAP_CHECK_PROMPT = 'You review a single trade order line for ambiguity or internal inconsistency (not for missing fields — that is handled separately). Given the line\'s fields as JSON, identify up to 3 issues where a value is present but vague, unclear, or does not reconcile with another field on the same line (e.g. a generic item description, a stated order volume that doesn\'t reconcile with the base unit/quantity, a category that doesn\'t match the described item). For each issue, phrase a specific, concrete question an operator could send to the buyer or supplier to resolve it. Respond with ONLY a JSON array (no prose, no markdown fences): [{"issue":"<short description>","question":"<specific question to send>"}]. Respond with an empty array [] if nothing is ambiguous.';
+async function ordCheckLineGapsSemantic(line) {
+  if (!AI.key) return null;
+  var payload = {
+    category: line.category, itemSpec: line.itemSpec,
+    orderVolumeQty: line.orderVolumeQty, orderVolumeUnit: line.orderVolumeUnit,
+    packingSpec: line.packingSpec, baseUom: line.baseUom, baseQty: line.baseQty,
+    sourceCountry: line.sourceCountry, variantOption: line.variantOption, qtyStatus: line.qtyStatus
+  };
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': AI.key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        temperature: 0.2,
+        system: ORD_GAP_CHECK_PROMPT,
+        messages: [{ role: 'user', content: JSON.stringify(payload) }]
+      })
+    });
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var parsed = JSON.parse(text.trim());
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter(function(x){ return x && typeof x.issue === 'string' && typeof x.question === 'string'; });
+  } catch (e) {
+    return null;
+  }
 }
 function ordAddLine() {
   if (!EI.ord) { toast('Save the Order Request first, then add line items.', 4000); return; }

@@ -45,7 +45,22 @@ const mockSession = { getItem: () => null, setItem: () => {}, removeItem: () => 
 // then delete/reset it afterward. Any entity not present in the map falls back to the old static
 // default ({status:'ok', records:[]}), matching prior test behavior for every existing test.
 let _mockPullResponses = {};
+// Mock for ordCheckLineGapsSemantic()'s direct Anthropic call (SPEC-ORD-005).
+// Set _mockAnthropic to one of: 'reject' (network error), {status:<non-200>},
+// or {status:200, text:<raw response body text>} before calling the function under test.
+let _mockAnthropic = null;
+let _lastAnthropicBody = null;
 function mockFetch(url, opts) {
+  if (typeof url === 'string' && url.indexOf('api.anthropic.com') >= 0) {
+    _lastAnthropicBody = JSON.parse((opts && opts.body) || '{}');
+    if (_mockAnthropic === 'reject') return Promise.reject(new Error('network error'));
+    var m = _mockAnthropic || { status: 200, text: '[]' };
+    return Promise.resolve({
+      ok: m.status === 200,
+      status: m.status,
+      json: () => Promise.resolve({ content: [{ type: 'text', text: m.text || '' }] }),
+    });
+  }
   var body = {};
   try { body = JSON.parse((opts && opts.body) || '{}'); } catch (e) {}
   var resp = (body.action === 'pull_entity' && _mockPullResponses[body.entity])
@@ -4868,6 +4883,112 @@ test('Resave-heals-missing-lines regression: existing.lines || [] on a lines-les
   ctx.saveOrdFromForm();
   assert(Array.isArray(ctx.DB.ord[0].lines), 'lines healed to a real array on ordinary resave');
   assertEqual(ctx.DB.ord[0].lines.length, 0, 'healed to empty, not populated from nowhere');
+});
+
+// ── Order Request line gap detection (SPEC-ORD-005) ─────────────
+console.log('\nOrder Request line gap detection (SPEC-ORD-005)');
+
+test('ordLineGaps: all 5 fields unset → all 5 gaps returned', () => {
+  var line = _ordLineFixture({ packingSpec:'', baseUom:'', baseQty:null, sourceCountry:'', qtyStatus:'Unknown' });
+  var gaps = ctx.ordLineGaps(line);
+  assertEqual(gaps.length, 5, 'all 5 gaps flagged');
+});
+
+test('ordLineGaps: fully populated, Confirmed → empty array', () => {
+  var line = _ordLineFixture({ packingSpec:'5kg boxes', baseUom:'kg', baseQty:500, sourceCountry:'China', qtyStatus:'Confirmed' });
+  var gaps = ctx.ordLineGaps(line);
+  assertEqual(gaps.length, 0, 'no gaps on a fully-populated line');
+});
+
+test('ordLineGaps: baseQty 0 is a valid quantity, not a gap', () => {
+  var line = _ordLineFixture({ packingSpec:'boxes', baseUom:'kg', baseQty:0, sourceCountry:'China', qtyStatus:'Confirmed' });
+  var gaps = ctx.ordLineGaps(line);
+  assert(!gaps.some(function(g){ return g.field === 'baseQty'; }), 'baseQty: 0 is not flagged as unset');
+});
+
+test('ordCheckLineGapsSemantic: no AI.key configured → resolves null, no fetch call', async () => {
+  ctx.AI = { key: '' };
+  ctx._lastAnthropicBody = null;
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result, null, 'resolves null with no key');
+  assertEqual(ctx._lastAnthropicBody, null, 'no fetch call made');
+});
+
+test('ordCheckLineGapsSemantic: network error → resolves null, no thrown exception', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = 'reject';
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result, null, 'resolves null on network error');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGapsSemantic: non-200 response → resolves null', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = { status: 500, text: '' };
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result, null, 'resolves null on non-200');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGapsSemantic: malformed (non-JSON-array) response text → resolves null', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = { status: 200, text: 'not valid json {' };
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result, null, 'resolves null on malformed response');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGapsSemantic: well-formed response → resolves parsed array', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = { status: 200, text: '[{"issue":"vague spec","question":"Can you clarify the item spec?"}]' };
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result.length, 1, 'one flagged item returned');
+  assertEqual(result[0].issue, 'vague spec');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGapsSemantic: payload sent to Anthropic contains only the 10 scoped fields — no PII', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = { status: 200, text: '[]' };
+  var line = _ordLineFixture({ id: 'l1' });
+  await ctx.ordCheckLineGapsSemantic(line);
+  var sentPayload = JSON.parse(ctx._lastAnthropicBody.messages[0].content);
+  var allowedFields = ['category','itemSpec','orderVolumeQty','orderVolumeUnit','packingSpec','baseUom','baseQty','sourceCountry','variantOption','qtyStatus'];
+  assertEqual(Object.keys(sentPayload).sort().join(','), allowedFields.slice().sort().join(','), 'payload contains exactly the scoped fields');
+  assert(!('contactId' in sentPayload), 'contactId never sent');
+  assert(!('id' in sentPayload), 'line id never sent');
+  assert(!('lineUpdates' in sentPayload), 'lineUpdates never sent');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGaps: triggering does not mutate DB.ord (no persistence)', async () => {
+  resetDB();
+  ctx.AI = { key: '' };
+  var ord = { id:'o1', num:'ORD-0001', contactId:null, stage:'New', actions:[], lines:[ _ordLineFixture() ] };
+  ctx.DB.ord = [ord];
+  ctx.EI.ord = 'o1';
+  var before = JSON.stringify(ctx.DB.ord);
+  ctx.ordCheckLineGaps('l1');
+  await Promise.resolve().then(function(){}).then(function(){});
+  assertEqual(JSON.stringify(ctx.DB.ord), before, 'DB.ord unchanged by a gap-check trigger');
+});
+
+test('ordCheckLineGaps: re-triggering reflects current field state, not stale prior output', async () => {
+  resetDB();
+  ctx.AI = { key: '' };
+  var line = _ordLineFixture({ packingSpec: '' });
+  var ord = { id:'o1', num:'ORD-0001', contactId:null, stage:'New', actions:[], lines:[ line ] };
+  ctx.DB.ord = [ord];
+  ctx.EI.ord = 'o1';
+  ctx.ordCheckLineGaps('l1');
+  await Promise.resolve().then(function(){}).then(function(){});
+  var firstPanel = mockEl('ord-gapchk-l1').innerHTML;
+  assert(firstPanel.indexOf('Packing spec') >= 0, 'first check flags missing packing spec');
+  line.packingSpec = '5kg boxes';
+  ctx.ordCheckLineGaps('l1');
+  await Promise.resolve().then(function(){}).then(function(){});
+  var secondPanel = mockEl('ord-gapchk-l1').innerHTML;
+  assert(secondPanel.indexOf('Packing spec') < 0, 'second check reflects the field now being set, not the stale first result');
 });
 
 // ── DISPLAY CURRENCY (SPEC-CUR-001) ─────────────────────────────
