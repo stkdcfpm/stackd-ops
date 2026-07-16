@@ -1703,6 +1703,90 @@ test('processImport ord — Qty Status values map correctly, unrecognised/blank 
   assertEqual(lines[3].qtyStatus, 'Unknown');
 });
 
+// ── Contacts CSV upload (SPEC-CON-002) ──────────────────────────
+console.log('\nContacts CSV upload (SPEC-CON-002)');
+
+test('processImport co: fresh contact row creates one new DB.con record with fields mapped', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Phone,Company,Status,Source,Enquiry Summary,Notes\nJane Buyer,jane@example.com,+1246,Island Fresh,qualified,manual,Interested in grapes,Follow up soon\n');
+  assertEqual(ctx.DB.con.length, 1);
+  var rec = ctx.DB.con[0];
+  assertEqual(rec.name, 'Jane Buyer');
+  assertEqual(rec.email, 'jane@example.com');
+  assertEqual(rec.phone, '+1246');
+  assertEqual(rec.company, 'Island Fresh');
+  assertEqual(rec.status, 'qualified');
+  assertEqual(rec.source, 'manual');
+  assertEqual(rec.enquirySummary, 'Interested in grapes');
+  assertEqual(rec.notes, 'Follow up soon');
+  assertEqual(rec.gdprBasis, 'pre_contract');
+});
+
+test('processImport co: re-uploading same email updates, not duplicates', () => {
+  resetDB();
+  var csv = 'Name,Email\nJane Buyer,jane@example.com\n';
+  ctx.processImport('co', csv);
+  ctx.processImport('co', csv);
+  assertEqual(ctx.DB.con.length, 1, 'no duplicate created on re-upload');
+});
+
+test('processImport co: email match takes priority over name match', () => {
+  resetDB();
+  ctx.DB.con = [
+    { id:'c1', name:'Jane Buyer', email:'old@example.com', phone:'', company:'', status:'lead', source:'manual', enquirySummary:'', notes:'', createdAt:'x', lastContactedAt:'x', gdprBasis:'pre_contract', enquiries:[] }
+  ];
+  ctx.processImport('co', 'Name,Email\nJane Buyer,new@example.com\n');
+  assertEqual(ctx.DB.con.length, 2, 'email not matching any existing contact creates a new record, even though name matches an existing one');
+});
+
+test('processImport co: row with no Name and no Email is skipped', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Notes\n,,just some notes\n');
+  assertEqual(ctx.DB.con.length, 0);
+});
+
+test('processImport co: invalid Status defaults to lead', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Status\nJane Buyer,jane@example.com,Prospect\n');
+  assertEqual(ctx.DB.con[0].status, 'lead');
+});
+
+test('processImport co: re-upload omitting Notes preserves existing notes value', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Notes\nJane Buyer,jane@example.com,Original note\n');
+  ctx.processImport('co', 'Name,Email\nJane Buyer,jane@example.com\n');
+  assertEqual(ctx.DB.con[0].notes, 'Original note', 'notes preserved when column omitted on re-upload');
+});
+
+test('TEMPLATES.co headers match exactly what the co import branch reads', () => {
+  var allowedKeys = ['Name','Email','Phone','Company','Status','Source','Enquiry Summary','Notes'];
+  assertEqual(ctx.TEMPLATES.co.headers.slice().sort().join(','), allowedKeys.slice().sort().join(','));
+});
+
+test('processImport co: imp-co-result message matches standard added/updated/skipped format', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email\nJane Buyer,jane@example.com\n');
+  assertEqual(mockEl('imp-co-result').textContent, 'Contacts: 1 added, 0 updated, 0 skipped');
+});
+
+test('processImport co branch calls rCon() to refresh the live view', () => {
+  resetDB();
+  var called = false;
+  var origRCon = ctx.rCon;
+  ctx.rCon = function(){ called = true; };
+  ctx.processImport('co', 'Name,Email\nTest Contact,test@example.com\n');
+  assert(called, 'rCon() invoked after a co import');
+  ctx.rCon = origRCon;
+});
+
+test('processImport co branch: Created At / Last Contacted columns populate on a new contact', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Created At,Last Contacted\nTest Contact,test2@example.com,2024-01-01,2024-06-01\n');
+  var rec = ctx.DB.con.find(function(c){ return c.email === 'test2@example.com'; });
+  assertEqual(rec.createdAt, '2024-01-01', 'createdAt populated from Created At column, not defaulted to now');
+  assertEqual(rec.lastContactedAt, '2024-06-01', 'lastContactedAt populated from Last Contacted column, not defaulted to now');
+});
+
 // ── Quote approval audit trail (SPEC-ORD-003) ───────────────────
 console.log('\nQuote approval audit trail (SPEC-ORD-003)');
 
