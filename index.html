@@ -545,6 +545,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div id="imp-ord-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
     </div>
 
+    <!-- Step 6: Contacts -->
+    <div class="card">
+      <div class="ct"><span style="background:var(--bl);color:white;font-family:'Bebas Neue',sans-serif;font-size:.9rem;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">6</span>Contacts</div>
+      <p style="font-size:.6rem;color:var(--m);margin-bottom:12px;line-height:1.7;">Upload a list of buyer/prospect contacts. Matched by email if present, else by exact name. Existing contacts are updated, not duplicated — columns left blank on a re-upload keep their previously-saved value.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="dlTemplate('co')">&#8595; Download Template</button>
+        <button class="btn btn-s" onclick="G('ul-co').click()">&#8593; Upload Contacts CSV</button>
+        <input type="file" id="ul-co" accept=".csv" style="display:none" onchange="bulkUpload('co',this)">
+      </div>
+      <div id="imp-co-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
+    </div>
+
     <!-- Import log -->
     <div class="card">
       <div class="ct">Import Log</div>
@@ -6415,13 +6427,17 @@ var TEMPLATES = {
   ord: {
     headers: ['Submission ID','Contact Name','Contact Email','Order Description','Category','Item/Spec','Order Volume Qty','Order Volume Unit','Packing Spec','Base UOM','Base Qty','Qty Status','Source Country','Variant/Option'],
     example: ['WEB-0001','Thorpes Produce Inc','buyer@thorpes.example','Q3 restock','Fresh produce','Red seedless grapes','3','pallets','','','', 'Estimated','Chile','']
+  },
+  co: {
+    headers: ['Name','Email','Phone','Company','Status','Source','Enquiry Summary','Notes'],
+    example: ['Jane Buyer','jane@example.com','+1 246 555 0100','Island Fresh Imports Ltd','lead','manual','Interested in Q3 restock of frozen produce','Follow up after site visit']
   }
 };
 
 function dlTemplate(entity) {
   var tpl = TEMPLATES[entity];
   if (!tpl) return;
-  var names = { sup:'suppliers', li:'line-items', inv:'invoices', po:'purchase-orders', ord:'order-requests' };
+  var names = { sup:'suppliers', li:'line-items', inv:'invoices', po:'purchase-orders', ord:'order-requests', co:'contacts' };
   var csv = tpl.headers.join(',') + '\n' + tpl.example.map(function(v){ return '"'+v+'"'; }).join(',');
   var a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -6632,6 +6648,40 @@ function processImport(entity, csvText) {
     sv(K.p,DB.po);
     var msg='POs: '+added+' added, '+updated+' updated, '+skipped+' skipped'+(errors.length?' | '+errors.join('; '):'');
     G('imp-po-result').textContent=msg; impLog(msg); rPO(); rDash();
+  }
+
+  else if (entity === 'co') {
+    rows.forEach(function(r) {
+      var email = String(r['Email']||r['email']||'').trim().toLowerCase();
+      var name  = String(r['Name']||r['name']||'').trim();
+      if (!name && !email) { skipped++; return; }
+      var existing = email ? DB.con.find(function(c){ return (c.email||'').toLowerCase()===email; })
+                           : DB.con.find(function(c){ return c.name===name; });
+      var validStatuses = ['lead','qualified','converted','closed'];
+      var status = validStatuses.indexOf(String(r['Status']||'').toLowerCase()) >= 0
+        ? String(r['Status']).toLowerCase() : 'lead';
+      var gdprBasis = (status === 'lead' || status === 'qualified') ? 'pre_contract' : 'legitimate_interests';
+      var rec = {
+        id: existing ? existing.id : uid(),
+        name: name || (existing ? existing.name : ''),
+        email: email || (existing ? existing.email : ''),
+        phone: String(r['Phone']||r['phone']||existing&&existing.phone||''),
+        company: String(r['Company']||r['company']||existing&&existing.company||''),
+        status: status,
+        source: String(r['Source']||r['source']||existing&&existing.source||'manual'),
+        enquirySummary: String(r['Enquiry Summary']||r['enquirySummary']||existing&&existing.enquirySummary||''),
+        notes: String(r['Notes']||r['notes']||existing&&existing.notes||''),
+        createdAt: existing ? existing.createdAt : (r['Created At']||now),
+        lastContactedAt: r['Last Contacted']||existing&&existing.lastContactedAt||now,
+        gdprBasis: gdprBasis,
+        enquiries: existing ? existing.enquiries : []
+      };
+      if (existing) { var i=DB.con.findIndex(function(c){return c.id===existing.id;}); DB.con[i]=rec; updated++; impLog('Updated contact: '+(name||email)); }
+      else { DB.con.push(rec); added++; }
+    });
+    sv(K.co, DB.con);
+    var msg = 'Contacts: '+added+' added, '+updated+' updated, '+skipped+' skipped';
+    G('imp-co-result').textContent = msg; impLog(msg); rCon();
   }
 
   else if (entity === 'ord') {
