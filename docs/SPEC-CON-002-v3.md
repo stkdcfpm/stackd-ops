@@ -1,8 +1,8 @@
-# SPEC-CON-002-v2: Contacts CSV upload button
+# SPEC-CON-002-v3: Contacts CSV upload button
 
 **Implements:** REQ-CON-002-v2 (requirements-gate PASS)
 
-**Supersedes:** SPEC-CON-002-v1 (spec-gate FAIL — the proposed `co` branch silently dropped the `r['Created At']`/`r['Last Contacted']` CSV-column fallbacks present in `processImportRecords()`'s `co` branch, contradicting the spec's own "field-for-field"/"verbatim" claim and REQ-CON-002b's literal wording; and AC-008's test-plan bullet asserted coverage without a concrete test line)
+**Supersedes:** SPEC-CON-002-v2 (spec-gate FAIL — the `createdAt`/`lastContactedAt` regression-test bullet was stated in prose only, with no concrete `test(...)` block, unlike every other AC bullet including the just-corrected AC-008)
 
 ## 1. `TEMPLATES.co` entry (`index.html:6398-6419`)
 
@@ -119,9 +119,19 @@ New suite `Contacts CSV upload (SPEC-CON-002)`, following the existing pattern f
   });
   ```
   This replaces v1's unstated "already covered structurally" claim with an actual test, restoring `ctx.rCon` to its prior stub afterward so later tests in the suite are unaffected.
-- A new test also confirms the `createdAt`/`lastContactedAt` fallback fix (regression coverage for the v1→v2 correction): a row supplying `Created At`/`Last Contacted` columns on a brand-new contact populates those exact values rather than defaulting to `now` for `createdAt` or blank for `lastContactedAt`.
+- **Regression test for the restored `createdAt`/`lastContactedAt` fallback (corrected in v3 — concrete assertion, not prose):**
+  ```js
+  test('processImport co branch: Created At / Last Contacted columns populate on a new contact', () => {
+    resetDB();
+    ctx.processImport('co', 'Name,Email,Created At,Last Contacted\nTest Contact,test2@example.com,2024-01-01,2024-06-01\n');
+    var rec = ctx.DB.con.find(function(c){ return c.email === 'test2@example.com'; });
+    assertEqual(rec.createdAt, '2024-01-01', 'createdAt populated from Created At column, not defaulted to now');
+    assertEqual(rec.lastContactedAt, '2024-06-01', 'lastContactedAt populated from Last Contacted column, not defaulted to now');
+  });
+  ```
 
 ## Changelog
 
+- v3: Replaced the `createdAt`/`lastContactedAt` regression-test bullet's prose-only description with a concrete `test(...)` block, matching the standard just applied to fix AC-008 (spec-gate v2 finding).
 - v2: Restored the `createdAt`/`lastContactedAt` CSV-column fallback reads (`r['Created At']`, `r['Last Contacted']`) that v1 silently dropped, contradicting its own "field-for-field" claim and REQ-CON-002b (spec-gate v1 finding). Added an explicit note in §1 clarifying that `TEMPLATES.co.headers`' omission of these two columns is a template-UX choice, not a signal to drop the corresponding reads. Replaced AC-008's unstated "already covered" claim with a concrete spy-based test following the `prevCNDoc`/`prevInvDoc` precedent (spec-gate v1 finding). Added a regression test for the restored `createdAt`/`lastContactedAt` fallbacks.
 - v1: Initial spec implementing REQ-CON-002-v2 (spec-gate FAIL — see above).
