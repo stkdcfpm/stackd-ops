@@ -1529,6 +1529,63 @@ testAsync('pullAll integration — sup/payments/co still merge correctly by id (
   assertEqual(ctx.DB.payments[0].type, 'buyer_payment', 'untracked type survives');
 });
 
+// ── Invoice quick-add COGS warning (SPEC-INV-001) ───────────────
+console.log('\nInvoice quick-add COGS warning (SPEC-INV-001)');
+
+test('_updQaWarn — no lid, unitCost 0 → counted', function() {
+  resetDB();
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:0 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'block');
+  assertEqual(mockEl('inv-qa-warn-count').textContent, 1);
+});
+
+test('_updQaWarn — no lid, unitCost > 0 → not counted (INV10032 regression case)', function() {
+  resetDB();
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'none');
+});
+
+test('_updQaWarn — lid resolves to a real DB.li record → not counted regardless of unitCost', function() {
+  resetDB();
+  ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Widget', cost:10, price:12 }];
+  ctx.cIL = [{ rid:'r1', lid:'l1', desc:'Widget', qty:1, up:12, unitCost:0 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'none');
+});
+
+test('_updQaWarn — dangling lid (no matching DB.li record), unitCost 0 → counted', function() {
+  resetDB();
+  ctx.DB.li = [];
+  ctx.cIL = [{ rid:'r1', lid:'stale-id-no-longer-exists', desc:'Widget', qty:1, up:12, unitCost:0 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'block');
+  assertEqual(mockEl('inv-qa-warn-count').textContent, 1);
+});
+
+test('_updQaWarn — dangling lid, unitCost > 0 → not counted', function() {
+  resetDB();
+  ctx.DB.li = [];
+  ctx.cIL = [{ rid:'r1', lid:'stale-id-no-longer-exists', desc:'Widget', qty:1, up:262, unitCost:262 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'none');
+});
+
+test('_updQaWarn — mixed invoice counts only the genuinely at-risk lines', function() {
+  resetDB();
+  ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Widget', cost:10, price:12 }];
+  ctx.cIL = [
+    { rid:'r1', lid:'l1', desc:'Widget', qty:1, up:12, unitCost:0 },              // resolved — safe
+    { rid:'r2', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 },     // no lid but cost present — safe
+    { rid:'r3', lid:'', desc:'Mystery Charge', qty:1, up:100, unitCost:0 },        // no lid, no cost — at risk
+    { rid:'r4', lid:'stale', desc:'Old Item', qty:1, up:50, unitCost:0 }           // dangling lid, no cost — at risk
+  ];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'block');
+  assertEqual(mockEl('inv-qa-warn-count').textContent, 2);
+});
+
 // ── Order Request CSV import (SPEC-ORD-003) ────────────────────
 console.log('\nOrder Request CSV import (SPEC-ORD-003)');
 
