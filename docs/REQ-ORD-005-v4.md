@@ -1,6 +1,6 @@
-# REQ-ORD-005-v3: Manual per-line gap detection for Order Request lines
+# REQ-ORD-005-v4: Manual per-line gap detection for Order Request lines
 
-**Supersedes:** REQ-ORD-005-v2 (requirements-gate FAIL — FM-1 Assessment cited invented "category-1"/"category-2" exception labels that don't exist in `STACKD_CONTEXT.md`'s actual numbered exception list, and an unsubstantiated comparison to `SPEC-ORD-002`)
+**Supersedes:** REQ-ORD-005-v3 (requirements-gate FAIL — FM-1 Assessment cited `STACKD_CONTEXT.md:110`, one line off from the actual quoted exception text at `:111`)
 
 ## Business Context
 
@@ -14,7 +14,7 @@ The user wants a manual, per-line "check gaps" action that:
 
 ## FM-1 Assessment
 
-No new `K`/`DB` entity. No new Sheets sync mapping (`FIELD_MAPS`) — gap-check output is ephemeral (computed and rendered on trigger, not persisted to `DB.ord`). Falls under FM-1 exception item 1, `STACKD_CONTEXT.md:110` ("UI/AI layer features with no new localStorage entities... No new `K` key, no new `DB` entity required") — same precedent cited in `docs/REQ-MTD-001-v2.md:167` ("Falls under FM-1 exception item 1"). No separate council decision required.
+No new `K`/`DB` entity. No new Sheets sync mapping (`FIELD_MAPS`) — gap-check output is ephemeral (computed and rendered on trigger, not persisted to `DB.ord`). Falls under FM-1 exception item 1, `STACKD_CONTEXT.md:111` ("UI/AI layer features with no new localStorage entities... No new `K` key, no new `DB` entity required") — same precedent cited in `docs/REQ-MTD-001-v2.md:167` ("Falls under FM-1 exception item 1"). No separate council decision required.
 
 ## GDPR Data Flow (new in v2 — resolves requirements-gate v1 finding)
 
@@ -53,6 +53,7 @@ The semantic gap-check (REQ-ORD-005c) sends line data to the Anthropic API, exte
 
 ## Changelog
 
-- v3: Fixed FM-1 Assessment citation — replaced invented "category-1"/"category-2" exception labels (not present anywhere in `STACKD_CONTEXT.md`) with the actual defined terminology ("exception item 1", `STACKD_CONTEXT.md:110`), matching the same wording used by the `REQ-MTD-001-v2.md:167` precedent it cites. Removed the unsubstantiated comparison to `SPEC-ORD-002`'s field-addition exception, since no enumerated FM-1 exception item covers field additions in the way that comparison implied (requirements-gate v2 finding).
+- v4: Corrected the `STACKD_CONTEXT.md` line-number citation from `:110` (the section header line) to `:111` (the actual numbered exception-item-1 text) — requirements-gate v3 finding.
+- v3: Fixed FM-1 Assessment citation — replaced invented "category-1"/"category-2" exception labels (not present anywhere in `STACKD_CONTEXT.md`) with the actual defined terminology ("exception item 1", `STACKD_CONTEXT.md:111`), matching the same wording used by the `REQ-MTD-001-v2.md:167` precedent it cites. Removed the unsubstantiated comparison to `SPEC-ORD-002`'s field-addition exception, since no enumerated FM-1 exception item covers field additions in the way that comparison implied (requirements-gate v2 finding).
 - v2: Added an explicit GDPR Data Flow section scoping the semantic-check payload to exclude all contact/PII fields (requirements-gate v1 finding). Specified that REQ-ORD-005c uses a new bespoke system prompt, not `AI_SYSTEM_PROMPT`/`AI_COMPLIANCE_PROMPT` (requirements-gate v1 finding). Added REQ-ORD-005g explicitly accepting repeated-trigger API cost as out of scope. Softened AC-003 to check mechanism correctness rather than a specific non-deterministic LLM output, with a note in REQ-ORD-005d explaining why. Added AC-008 to make the new payload-scoping requirement independently testable.
 - v1: Initial requirements draft (requirements-gate FAIL — see above).
