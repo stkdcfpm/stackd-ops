@@ -4819,6 +4819,99 @@ test('delCon: nulls contactId on linked Order Requests rather than leaving a dan
   assertEqual(ctx.DB.ord[0].contactId, null, 'contactId nulled, not left dangling');
 });
 
+// ── Contact id backfill (SPEC-CON-003) ──────────────────────────
+console.log('\nContact id backfill (SPEC-CON-003)');
+
+test('backfillConIds: record with id undefined is assigned a real id', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Nameless', status:'lead', source:'manual', gdprBasis:'pre_contract', createdAt:'', lastContactedAt:'', notes:'', phone:'', company:'', email:'', enquiries:[] }];
+  ctx.backfillConIds();
+  assert(!!ctx.DB.con[0].id, 'id assigned');
+  assertEqual(typeof ctx.DB.con[0].id, 'string');
+});
+
+test('backfillConIds: record with id "" is assigned a real id', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'', name:'Blank Id', status:'lead' }];
+  ctx.backfillConIds();
+  assert(!!ctx.DB.con[0].id, 'id assigned for empty-string id');
+});
+
+test('backfillConIds: record with a real existing id is left unchanged', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Has Id', status:'lead' }];
+  ctx.backfillConIds();
+  assertEqual(ctx.DB.con[0].id, 'c1', 'existing id untouched');
+});
+
+test('backfillConIds: two records missing id in one run each get distinct ids', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'A', status:'lead' }, { name:'B', status:'lead' }];
+  ctx.backfillConIds();
+  assert(!!ctx.DB.con[0].id && !!ctx.DB.con[1].id, 'both assigned');
+  assert(ctx.DB.con[0].id !== ctx.DB.con[1].id, 'distinct ids');
+});
+
+test('backfillConIds: no sv() call when nothing needed backfilling', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Has Id', status:'lead' }];
+  var svCalled = false;
+  var origSv = ctx.sv;
+  ctx.sv = function(k, v){ if (k === ctx.K.co) svCalled = true; origSv(k, v); };
+  ctx.backfillConIds();
+  assert(!svCalled, 'sv(K.co) not called when no record needed backfilling');
+  ctx.sv = origSv;
+});
+
+test('backfillConIds: sv() called when a record was backfilled', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Nameless', status:'lead' }];
+  var svCalled = false;
+  var origSv = ctx.sv;
+  ctx.sv = function(k, v){ if (k === ctx.K.co) svCalled = true; origSv(k, v); };
+  ctx.backfillConIds();
+  assert(svCalled, 'sv(K.co) called when a record was backfilled');
+  ctx.sv = origSv;
+});
+
+test('backfillConIds: after backfill, delCon() successfully removes the record (regression case)', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Was Broken', status:'lead' }];
+  ctx.backfillConIds();
+  var newId = ctx.DB.con[0].id;
+  ctx.confirm = function(){ return true; };
+  ctx.rCon = function(){};
+  ctx.delCon(newId);
+  assertEqual(ctx.DB.con.length, 0, 'record deletable after backfill');
+});
+
+test('backfillConIds: after backfill, editCon() successfully locates the record (regression case)', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Was Broken', status:'lead' }];
+  ctx.backfillConIds();
+  var newId = ctx.DB.con[0].id;
+  ctx.editCon(newId);
+  assertEqual(ctx.EI.co, newId, 'editCon locates and opens the backfilled record');
+});
+
+test('backfillConIds: DB.ord records are untouched (DB.con-only scope)', () => {
+  resetDB();
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'New', actions:[] }];
+  ctx.DB.con = [{ id:'c1', name:'Has Id', status:'lead' }];
+  var before = JSON.stringify(ctx.DB.ord);
+  ctx.backfillConIds();
+  assertEqual(JSON.stringify(ctx.DB.ord), before, 'DB.ord unchanged by backfillConIds');
+});
+
+test('backfillOrderRequests called standalone (no prior backfillConIds) never writes contactId: undefined (ordering-hazard regression)', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Nameless Enquirer', status:'lead', enquiries:[{ id:'e1', ts:'2026-01-01T00:00:00.000Z', summary:'Interested in widgets' }] }];
+  ctx.backfillOrderRequests();
+  assertEqual(ctx.DB.ord.length, 1, 'Order Request backfilled');
+  assert(!!ctx.DB.ord[0].contactId, 'contactId is a real backfilled id, never undefined/blank');
+  assertEqual(ctx.DB.ord[0].contactId, ctx.DB.con[0].id, 'contactId matches the now-backfilled contact id');
+});
+
 // ── Order Request line items (SPEC-ORD-002) ─────────────────────
 console.log('\nOrder Request line items — SPEC-ORD-002');
 
