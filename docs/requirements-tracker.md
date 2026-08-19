@@ -35,6 +35,8 @@ Last updated: 2026-06-25 (v2.9.33 — specs gated)
 | REQ-RPT-001 G-08 | Intrastat report (UK → EU, 8-box CSV) | Compliance | v2.9.33 | Deferred v3.0.x — new schema required |
 | REQ-RPT-001 G-09 | Supplier performance tracking (on-time %, cost variance) | Operational | v2.9.33 | Deferred v3.0.x |
 | REQ-RPT-001 G-10 | HS code duty recalculation on existing invoices | Data Integrity | v2.9.33 | Deferred v3.0.x |
+| REQ-QTE-001 (Part A) | Per-line quote margin override | Quote Engine | v2.9.51 | Drafted (`REQ-QTE-001-v1.md`) — awaiting req-gate |
+| REQ-QTE-001 (Part B) | RFQ supplier comparison & commit (landed-value ranking) | Quote Engine / Sourcing | v2.9.51 | Drafted (`REQ-QTE-001-v1.md`) — awaiting req-gate; larger scope, recommend gating after Part A |
 
 ---
 
