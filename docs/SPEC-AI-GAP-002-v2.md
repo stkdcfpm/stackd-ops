@@ -1,8 +1,10 @@
-# SPEC-AI-GAP-002-v1: AI-Assisted Invoice/Line Item/Credit Note Creation + Supplier/Buyer Read Tools
+# SPEC-AI-GAP-002-v2: AI-Assisted Invoice/Line Item/Credit Note Creation + Supplier/Buyer Read Tools
 
 **Implements:** REQ-AI-GAP-002-v2 (requirements-gate CONDITIONAL PASS on v1, resolved in v2).
 
-All line citations below independently re-verified against live `index.html` on `main` at spec-drafting time (line numbers drift release-to-release; the REQ's own citations were consulted but not assumed current).
+**Supersedes:** SPEC-AI-GAP-002-v1 (independent spec-gate PASS — no blocking defects; every citation and GDPR-critical claim independently re-verified correct. One advisory-only finding: §4's placement instruction for the new tool-use-guidance paragraph cited `index.html:7357`-area as the "per-line gap-check precedent paragraph" — the real location is `index.html:7456`. Fixed below, no functional change.)
+
+All line citations re-verified against live `index.html` on `main` at v2 drafting time (line numbers drift release-to-release; the REQ's own citations were consulted but not assumed current).
 
 ## 0. Design decisions this spec has to make that the REQ left open
 
@@ -154,7 +156,7 @@ create_credit_note → { linkedInvNum, goodwill, amount, reason, buyer, date, cu
 
 **PO status vocabulary** — `index.html:7478`, fixed per §2.
 
-**New tool-use guidance**, added near the existing per-line gap-check precedent paragraph (`index.html:7357`-area, exact placement a minor build-time choice): a short paragraph stating `get_suppliers`/`get_buyers` exist to resolve a name to an id before emitting `create_invoice`/`create_line_item`/`create_po` action blocks, and that these tools deliberately don't return contact/email/phone — if the user asks for a supplier's or buyer's contact details, the AI should say that information isn't available through these tools and point to the Suppliers/Buyers tab instead (directly reflecting the REQ's GDPR Assessment capability-boundary note, so the AI doesn't confidently invent an answer it has no data for).
+**New tool-use guidance**, added near the existing per-line gap-check precedent paragraph (`index.html:7456`, exact placement a minor build-time choice): a short paragraph stating `get_suppliers`/`get_buyers` exist to resolve a name to an id before emitting `create_invoice`/`create_line_item`/`create_po` action blocks, and that these tools deliberately don't return contact/email/phone — if the user asks for a supplier's or buyer's contact details, the AI should say that information isn't available through these tools and point to the Suppliers/Buyers tab instead (directly reflecting the REQ's GDPR Assessment capability-boundary note, so the AI doesn't confidently invent an answer it has no data for).
 
 ## GDPR Data Flow
 
@@ -178,3 +180,4 @@ New suite `AI Assistant — Invoice/Line Item/Credit Note actions + Supplier/Buy
 ## Changelog
 
 - v1: Initial spec implementing REQ-AI-GAP-002-v2.
+- v2: Independent spec-gate PASS on v1 — fixed one advisory citation error (per-line gap-check precedent paragraph is at `index.html:7456`, not `7357`). No functional/GDPR logic changed from v1.
