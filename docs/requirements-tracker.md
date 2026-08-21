@@ -14,6 +14,7 @@ Last updated: 2026-06-25 (v2.9.33 — specs gated)
 | REQ-DEMO-001 | End-to-End Demo Mode | REQ-DEMO-001-v2.md | SPEC-DEMO-001-v1.md | v2.9.31 | PASS | PASS | ✓ shipped | — |
 | REQ-MTD-001 | MTD-Compatible VAT Export | REQ-MTD-001-v2.md | SPEC-MTD-001-v1.md | v2.9.32 | PASS | PASS | ✓ shipped | — |
 | REQ-BUY-001 | Buyers / Customers Entity | REQ-BUY-001-v1.md | SPEC-BUY-001-v4.md | v2.9.37 | PASS | PASS | ✓ shipped | — |
+| REQ-QTE-001 (Part A) | Per-line quote margin override | REQ-QTE-001-v3.md | SPEC-QTE-001-v2.md | v2.9.52 | CONDITIONAL PASS (3 rounds — v1: 2 findings, independent v2: 5 findings incl. 2 real bugs, v3 resolved all) | CONDITIONAL PASS (1 independent round — no blocking calc-logic bugs, citation/test-plan cleanup only) | ✓ shipped | — |
 
 ---
 
@@ -35,6 +36,9 @@ Last updated: 2026-06-25 (v2.9.33 — specs gated)
 | REQ-RPT-001 G-08 | Intrastat report (UK → EU, 8-box CSV) | Compliance | v2.9.33 | Deferred v3.0.x — new schema required |
 | REQ-RPT-001 G-09 | Supplier performance tracking (on-time %, cost variance) | Operational | v2.9.33 | Deferred v3.0.x |
 | REQ-RPT-001 G-10 | HS code duty recalculation on existing invoices | Data Integrity | v2.9.33 | Deferred v3.0.x |
+| REQ-QTE-001 (Part B) | RFQ supplier comparison & commit (landed-value ranking) | Quote Engine / Sourcing | v2.9.52 | Req gate: v1 CONDITIONAL PASS (5 findings) → v2 CONDITIONAL PASS, independent round (staleness-warning logic bug, Contact-delete orphaning gap, wrong hand-off function named/scope understated, Part A×B interaction undefined, 1 citation error) → v3 resolves all, per `REQ-QTE-001-v3.md`. **Part A shipped v2.9.52** (see Active requirements above). Spec not yet started for Part B — deliberately deferred until Part A shipped, per the REQ's own staged-build recommendation; now unblocked. |
+| REQ-AI-GAP-002 | Invoice/Line Item/Credit Note AI creation + Supplier/Buyer read tools | AI Assistant | v2.9.52 | Req gate: v1 independent CONDITIONAL PASS (1 blocking — `create_line_item`'s stated minimum fields didn't match `vLI()`'s real validation, only Description+Supplier are actually required, not Cost/UOM too; 2 advisory) → v2 (`REQ-AI-GAP-002-v2.md`) resolves all. Closes `AI-GAP-006`/`AI-GAP-008`/`AI-GAP-009`. FM-1 category-1, no council decision needed. |
+| REQ-CON-004 | AI-assisted enquiry intake check | Contacts / AI Assistant | v2.9.52 | Req gate: v1 independent CONDITIONAL PASS (1 advisory but real — the `ORD_GAP_CHECK_PROMPT` precedent is safe by construction there, not automatically here, since the Contact form has PII fields directly adjacent to the enquiry field being read) → v2 (`REQ-CON-004-v2.md`) mandates the defensive payload-construction technique explicitly rather than asserting the precedent transfers for free. FM-1 category-1. |
 
 ---
 
