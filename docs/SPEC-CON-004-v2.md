@@ -114,7 +114,7 @@ This prevents a stale check result from a previously-open Contact bleeding into 
 
 ## 5. `AI_SYSTEM_PROMPT` update (mandatory per `CLAUDE.md`'s "update on every version" rule)
 
-New paragraph added to the `## Contacts` section (`index.html:7593` onward), immediately after the existing "Enquiry log:" paragraph (`index.html:7599`), mirroring the style/level of detail of the analogous "Per-line gap check" paragraph already documented for `REQ-ORD-005` (`index.html:7456`):
+New paragraph added to the `## Contacts` section (`index.html:7593` onward), immediately after the existing "Enquiry log:" paragraph (`index.html:7598`), mirroring the style/level of detail of the analogous "Per-line gap check" paragraph already documented for `REQ-ORD-005` (`index.html:7456`):
 
 ```
 'Enquiry intake check (v2.9.5x): a "Check enquiry" button next to the enquiry note field runs a single-shot, AI-assisted check (only if a Claude API key is configured) for vagueness or missing commercial detail in the enquiry text — e.g. no quantity mentioned, no destination market, too generic to source against — phrasing each issue as a specific question to send back to the prospect. Manual trigger only — never runs automatically on save or typing. Purely diagnostic: nothing is written to the contact record, no enquiries[] entry is created, and Save is never blocked regardless of whether the check ran, succeeded, or failed. The check\'s API payload is scoped to the enquiry text and company name only — never the contact\'s own name, email, or phone.',
@@ -147,4 +147,4 @@ New suite `AI-assisted enquiry intake check (SPEC-CON-004)`, using the existing 
 ## Changelog
 
 - v1: Initial spec implementing REQ-CON-004-v2.
-- v2: Independent spec-gate CONDITIONAL PASS on v1 resolved — added the mandatory `AI_SYSTEM_PROMPT` update (§5), fixed two citation errors for `ordCheckLineGaps()`'s button/output-div line numbers (2654/2655 → 2675/2676). No functional/GDPR logic changed from v1.
+- v2: Independent spec-gate CONDITIONAL PASS on v1 resolved — added the mandatory `AI_SYSTEM_PROMPT` update (§5), fixed two citation errors for `ordCheckLineGaps()`'s button/output-div line numbers (2654/2655 → 2675/2676). A confirmatory re-check caught one further off-by-one in §5's own new citation ("Enquiry log:" paragraph is at `index.html:7598`, not `7599`) — fixed in the same commit. No functional/GDPR logic changed from v1.
