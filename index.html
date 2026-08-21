@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.51</title>
+<title>Stackd Ops v2.9.52</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.51</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.52</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1164,9 +1164,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.51</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.52</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Per-line quote margin override (REQ/SPEC-QTE-001, Part A) — each Quote line can now carry its own margin %, overriding the quote-level default; leaving it blank inherits the quote-level margin exactly as before. Overhead (origin/destination charges + admin fee) is no longer marked up — it's added to the Grand Total at cost, matching how the DG surcharge is already treated. This is a deliberate behavior change: resaving any pre-existing quote recomputes its Grand Total by exactly the amount overhead was previously marked up by. Went through 3 requirements-gate rounds and 1 spec-gate round (each independent, each catching genuine issues — including a real bug in an initially-proposed FX-staleness check and a wrong function citation for a later phase's hand-off, both since corrected in the requirement itself; the spec-gate round found the calculation logic sound with only citation/test-plan cleanup needed). Part B (RFQ supplier comparison & commit) is specified at the requirements level only — not built in this version.</li>
+          <li>12 new tests. Tests: 434/434 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.51</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Contacts CSV upload (REQ/SPEC-CON-002) — Import Data tab gains a sixth step for uploading a list of buyer/prospect contacts directly, reusing the field-mapping/dedup logic that previously only ran via the Google Sheets pull path. Matched by email if present, else exact name; unrecognized Status values default to "lead"; columns omitted on a re-upload preserve the existing contact's previously-saved values rather than blanking them.</li>
@@ -7275,7 +7285,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.51).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.52).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8947,6 +8957,22 @@ function cQteLine(line, qr, freightMode, totalCBM) {
   return { freight: freight, dgAmt: dgAmt, ins: ins, duty: duty, landed: landed };
 }
 
+function qteEffectiveMargin(line, quoteMarkup) {
+  var lm = line.markup;
+  return (lm !== undefined && lm !== null && lm !== '') ? +lm : +quoteMarkup;
+}
+
+function qteSellTotals(lines, lineCalcs, quoteMarkup, qr) {
+  var sellUSD = lines.reduce(function(sum, l, i) {
+    var m = qteEffectiveMargin(l, quoteMarkup);
+    return sum + lineCalcs[i].landed * (1 + m / 100);
+  }, 0);
+  var overhead = qr.originCharges + qr.destCharges + qr.fpmAdmin;
+  sellUSD += overhead; // SPEC-QTE-001: overhead is never marked up, added at cost
+  var sellGBP = sellUSD / qr.fxGBPUSD;
+  return { sellUSD: sellUSD, sellGBP: sellGBP, overhead: overhead };
+}
+
 function cQte(qt) {
   var qr = QR;
   var mode = qt.freightMode || 'LCL';
@@ -8954,12 +8980,10 @@ function cQte(qt) {
   var totalCBM = lines.reduce(function(s,l){ return s + (+l.cbm||0); }, 0);
   var lineCalcs = lines.map(function(l){ return cQteLine(l, qr, mode, totalCBM); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
-  var overhead = qr.originCharges + qr.destCharges + qr.fpmAdmin;
-  var quotedTotal = totalLanded + overhead;
   var markup = +qt.markup || 0;
-  var sellUSD = quotedTotal * (1 + markup / 100);
-  var sellGBP = sellUSD / qr.fxGBPUSD;
-  return { totalLanded: totalLanded, overhead: overhead, quotedTotal: quotedTotal, sellUSD: sellUSD, sellGBP: sellGBP, lineCalcs: lineCalcs };
+  var totals = qteSellTotals(lines, lineCalcs, markup, qr);
+  var quotedTotal = totalLanded + totals.overhead;
+  return { totalLanded: totalLanded, overhead: totals.overhead, quotedTotal: quotedTotal, sellUSD: totals.sellUSD, sellGBP: totals.sellGBP, lineCalcs: lineCalcs };
 }
 
 function rQte() {
@@ -9055,6 +9079,11 @@ function qlFld(rid, f) {
   return el.type === 'checkbox' ? el.checked : el.value;
 }
 
+function qlEffectiveMarkupInput(rid) {
+  var raw = qlFld(rid, 'mkp');
+  return raw === '' ? undefined : +raw;
+}
+
 function addQteLine() {
   cQL.push({ rid: uid(), supId:'', desc:'', qty:1, uom:'pcs', cost:0, cbm:0, dg:false, dutyPct:0 });
   rQLT();
@@ -9074,13 +9103,17 @@ function rQLT() {
     return;
   }
   var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
+  var quoteMarkup = G('qf-mkp') ? +G('qf-mkp').value : 15;
   var totalCBM = cQL.reduce(function(s,l){ return s+(+l.cbm||0); }, 0);
-  el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:900px;">'
-    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th>Landed</th><th>Note</th><th></th></tr></thead>'
+  el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:980px;">'
+    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th>Margin %</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
     + '<tbody>'
     + cQL.map(function(l){
         var calcR = cQteLine(l, QR, mode, totalCBM);
+        var effM = qteEffectiveMargin(l, quoteMarkup);
+        var sellP = calcR.landed * (1 + effM / 100);
         var hCount = l.priceHistory ? l.priceHistory.length : 0;
+        var mkpVal = (l.markup !== undefined && l.markup !== null) ? l.markup : '';
         return '<tr>'
           + '<td><select id="ql-supId-' + l.rid + '" style="font-size:.5rem;width:110px;" onchange="calcQte()">'
             + '<option value="">— Supplier —</option>'
@@ -9093,7 +9126,9 @@ function rQLT() {
           + '<td><input type="number" id="ql-cbm-' + l.rid + '" value="' + (+l.cbm||0) + '" min="0" step="0.001" style="font-size:.5rem;width:50px;" oninput="calcQte()"></td>'
           + '<td style="text-align:center;"><input type="checkbox" id="ql-dg-' + l.rid + '"' + (l.dg?' checked':'') + ' onchange="calcQte()"></td>'
           + '<td><input type="number" id="ql-dutyPct-' + l.rid + '" value="' + (+l.dutyPct||0) + '" min="0" max="100" step="0.5" style="font-size:.5rem;width:46px;" oninput="calcQte()"></td>'
+          + '<td><input type="number" id="ql-mkp-' + l.rid + '" value="' + mkpVal + '" placeholder="' + quoteMarkup + '" min="0" max="500" step="0.5" style="font-size:.5rem;width:50px;" oninput="calcQte()" title="Blank = inherit quote-level ' + quoteMarkup + '%"></td>'
           + '<td style="font-weight:600;">$' + fn(calcR.landed,0) + '</td>'
+          + '<td style="font-weight:600;color:var(--cr);">$' + fn(sellP,0) + '</td>'
           + '<td><input type="text" id="ql-note-' + l.rid + '" placeholder="Version note…" style="font-size:.46rem;width:88px;border:none;border-bottom:1px solid var(--ln);outline:none;"></td>'
           + '<td style="white-space:nowrap;">'
             + '<button onclick="toggleQteLineHistory(\'' + l.rid + '\')" style="font-size:.44rem;background:transparent;border:1px solid var(--ln);color:var(--m);padding:1px 5px;cursor:pointer;margin-right:2px;" title="Price history">&#128336;' + (hCount ? '&nbsp;' + hCount : '') + '</button>'
@@ -9101,7 +9136,7 @@ function rQLT() {
           + '</td>'
           + '</tr>'
           + '<tr id="ql-hist-row-' + l.rid + '" style="display:none;">'
-          + '<td colspan="11" style="padding:4px 8px 8px;background:#fafafa;">'
+          + '<td colspan="13" style="padding:4px 8px 8px;background:#fafafa;">'
             + '<div id="ql-hist-' + l.rid + '"></div>'
           + '</td>'
           + '</tr>';
@@ -9155,20 +9190,19 @@ function calcQte() {
   var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
   var markup = G('qf-mkp') ? +G('qf-mkp').value : 15;
   var totalCBM = cQL.reduce(function(s,l){ return s+(+qlFld(l.rid,'cbm')||0); }, 0);
-  var totalLanded = cQL.reduce(function(s,l){
-    var line = { cost:+qlFld(l.rid,'cost')||0, cbm:+qlFld(l.rid,'cbm')||0, dg:qlFld(l.rid,'dg'), dutyPct:+qlFld(l.rid,'dutyPct')||0 };
-    return s + cQteLine(line, QR, mode, totalCBM).landed;
-  }, 0);
-  var overhead = QR.originCharges + QR.destCharges + QR.fpmAdmin;
-  var sellUSD = (totalLanded + overhead) * (1 + markup/100);
-  var sellGBP = sellUSD / QR.fxGBPUSD;
+  var lines = cQL.map(function(l){
+    return { cost:+qlFld(l.rid,'cost')||0, cbm:+qlFld(l.rid,'cbm')||0, dg:qlFld(l.rid,'dg'), dutyPct:+qlFld(l.rid,'dutyPct')||0, markup: qlEffectiveMarkupInput(l.rid) };
+  });
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM); });
+  var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
+  var totals = qteSellTotals(lines, lineCalcs, markup, QR);
   if (G('qt-orig'))     G('qt-orig').textContent     = '$' + fn(QR.originCharges,0);
   if (G('qt-dest'))     G('qt-dest').textContent     = '$' + fn(QR.destCharges,0);
   if (G('qt-adm'))      G('qt-adm').textContent      = '$' + fn(QR.fpmAdmin,0);
   if (G('qt-landed'))   G('qt-landed').textContent   = '$' + fn(totalLanded,0);
   if (G('qt-mkp-disp')) G('qt-mkp-disp').textContent = markup + '%';
-  if (G('qt-sell-usd')) G('qt-sell-usd').textContent = fmt(sellUSD,'USD');
-  if (G('qt-sell-gbp')) G('qt-sell-gbp').textContent = '£' + fn(sellGBP,0);
+  if (G('qt-sell-usd')) G('qt-sell-usd').textContent = fmt(totals.sellUSD,'USD');
+  if (G('qt-sell-gbp')) G('qt-sell-gbp').textContent = '£' + fn(totals.sellGBP,0);
   calcFeasibility();
 }
 
@@ -9241,7 +9275,8 @@ function saveQte() {
       cost: +qlFld(l.rid,'cost')||0,
       cbm: +qlFld(l.rid,'cbm')||0,
       dg: qlFld(l.rid,'dg'),
-      dutyPct: +qlFld(l.rid,'dutyPct')||0
+      dutyPct: +qlFld(l.rid,'dutyPct')||0,
+      markup: qlEffectiveMarkupInput(l.rid)
     };
   });
   var totalCBM = lines.reduce(function(s,l){ return s+(l.cbm||0); }, 0);
@@ -9254,16 +9289,17 @@ function saveQte() {
     var history = existLine && existLine.priceHistory ? existLine.priceHistory.slice() : [];
     var lastV = history.length ? history[history.length-1] : null;
     var calcR = lineCalcs[i];
-    var sellP = +(calcR.landed * (1 + markup/100)).toFixed(2);
-    var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== markup;
+    var effM = qteEffectiveMargin(l, markup);
+    var sellP = +(calcR.landed * (1 + effM/100)).toFixed(2);
+    var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== effM;
     if (changed) {
-      history.push({ v: lastV ? lastV.v+1 : 1, ts: new Date().toISOString(), cost: l.cost, dutyPct: l.dutyPct, markup: markup, landed: +fn(calcR.landed,2), sellPrice: sellP, note: qlFld(l.rid,'note') });
+      history.push({ v: lastV ? lastV.v+1 : 1, ts: new Date().toISOString(), cost: l.cost, dutyPct: l.dutyPct, markup: effM, landed: +fn(calcR.landed,2), sellPrice: sellP, note: qlFld(l.rid,'note') });
     }
     l.priceHistory = history;
   });
-  var overhead = QR.originCharges + QR.destCharges + QR.fpmAdmin;
-  var sellUSD = (totalLanded + overhead) * (1 + markup/100);
-  var sellGBP = sellUSD / QR.fxGBPUSD;
+  var totals = qteSellTotals(lines, lineCalcs, markup, QR);
+  var sellUSD = totals.sellUSD;
+  var sellGBP = totals.sellGBP;
   var wasAccepted = existQ && existQ.status === 'Accepted';
   var isAccepted  = G('qf-st').value === 'Accepted';
   var qt = {
