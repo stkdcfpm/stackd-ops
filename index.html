@@ -1181,7 +1181,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Supplier price intelligence (REQ/SPEC-SUP-001) — the Supplier modal now shows a Price History panel aggregating every recorded price point for that supplier across Line Items, Quotes, and Purchase Orders, newest first, each tagged by source and product. Prices older than a configurable threshold (Settings → Supplier Intelligence, default 12 months) are flagged with an amber staleness marker, reusing the existing FX-staleness-warning visual treatment. Also adds a cross-supplier product lookup (<code>getProductPriceHistory()</code>) for comparing what different suppliers have historically charged for similar items. Always shows <code>cost</code> (what the supplier charges), never this app's own landed-cost or sell-price figures, so cross-source and cross-supplier comparisons aren't distorted by freight/margin assumptions. No currency conversion in this version — each point displays in its own recorded currency. Purely additive: no new entity, no new Sheets sync mapping, nothing exported or synced.</li>
-          <li>9 new tests. Tests: 454/454 pass.</li>
+          <li>10 new tests. Tests: 454/454 pass.</li>
         </ul>
       </div>
 
