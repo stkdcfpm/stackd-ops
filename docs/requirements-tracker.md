@@ -37,6 +37,8 @@ Last updated: 2026-06-25 (v2.9.33 — specs gated)
 | REQ-RPT-001 G-09 | Supplier performance tracking (on-time %, cost variance) | Operational | v2.9.33 | Deferred v3.0.x |
 | REQ-RPT-001 G-10 | HS code duty recalculation on existing invoices | Data Integrity | v2.9.33 | Deferred v3.0.x |
 | REQ-QTE-001 (Part B) | RFQ supplier comparison & commit (landed-value ranking) | Quote Engine / Sourcing | v2.9.52 | Req gate: v1 CONDITIONAL PASS (5 findings) → v2 CONDITIONAL PASS, independent round (staleness-warning logic bug, Contact-delete orphaning gap, wrong hand-off function named/scope understated, Part A×B interaction undefined, 1 citation error) → v3 resolves all, per `REQ-QTE-001-v3.md`. **Part A shipped v2.9.52** (see Active requirements above). Spec not yet started for Part B — deliberately deferred until Part A shipped, per the REQ's own staged-build recommendation; now unblocked. |
+| REQ-AI-GAP-002 | Invoice/Line Item/Credit Note AI creation + Supplier/Buyer read tools | AI Assistant | v2.9.52 | Drafted (`REQ-AI-GAP-002-v1.md`), awaiting req-gate. Closes `AI-GAP-006`/`AI-GAP-008`; also fixes a live, previously-logged-but-unfixed `AI-GAP-009` vocabulary bug found in `get_pos`'s tool description while scoping this REQ. FM-1 category-1, no council decision needed. |
+| REQ-CON-004 | AI-assisted enquiry intake check | Contacts / AI Assistant | v2.9.52 | Drafted (`REQ-CON-004-v1.md`), awaiting req-gate. Extends the `REQ-ORD-005` semantic gap-check pattern one stage earlier, to raw enquiry text at Contact intake rather than after it's structured into Order Request lines. GDPR payload scoping directly reuses `ORD_GAP_CHECK_PROMPT`'s precedent, not a new decision. FM-1 category-1. |
 
 ---
 
