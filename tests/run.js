@@ -5886,6 +5886,260 @@ test('initCloudDataLayer() is fire-and-forget — calling it does not block or t
   assert(afterLineRan, 'code after the call runs immediately — fire-and-forget, never blocks the caller');
 });
 
+// ── AI Assistant — Invoice/Line Item/Credit Note actions + Supplier/Buyer read tools (SPEC-AI-GAP-002) ──
+
+test("_aiExecTool('get_suppliers') returns only id/num/name/country/currency — no email/phone/contact", function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', num: 'SUP-0001', name: 'Jinbao Plastics', country: 'China', ct: 'Wei Chen', email: 'wei@jinbao.example.cn', phone: '+86 138', cur: 'CNY', notes: 'x' });
+  var result = JSON.parse(ctx._aiExecTool('get_suppliers', { name: 'Jinbao' }));
+  assertEqual(result.length, 1, 'one match');
+  assertEqual(result[0].id, 'S1'); assertEqual(result[0].num, 'SUP-0001'); assertEqual(result[0].name, 'Jinbao Plastics');
+  assertEqual(result[0].country, 'China'); assertEqual(result[0].currency, 'CNY');
+  assertEqual(result[0].email, undefined, 'email absent'); assertEqual(result[0].phone, undefined, 'phone absent');
+  assertEqual(result[0].ct, undefined, 'ct absent'); assertEqual(result[0].contactName, undefined, 'contactName absent');
+});
+
+test("_aiExecTool('get_buyers') returns only id/num/name/currency — no contactName/email/phone/creditLimit", function() {
+  resetDB();
+  ctx.DB.buy.push({ id: 'B1', num: 'BUY-0001', name: 'Apex Trading', contactName: 'John Doe', email: 'john@apex.com', phone: '+1 246', currency: 'BBD', creditLimit: 5000, notes: 'x' });
+  var result = JSON.parse(ctx._aiExecTool('get_buyers', { name: 'Apex' }));
+  assertEqual(result.length, 1, 'one match');
+  assertEqual(result[0].id, 'B1'); assertEqual(result[0].num, 'BUY-0001'); assertEqual(result[0].name, 'Apex Trading'); assertEqual(result[0].currency, 'BBD');
+  assertEqual(result[0].contactName, undefined, 'contactName absent'); assertEqual(result[0].email, undefined, 'email absent');
+  assertEqual(result[0].phone, undefined, 'phone absent'); assertEqual(result[0].creditLimit, undefined, 'creditLimit absent');
+});
+
+test("get_pos tool description reflects the real PO status vocabulary (Deposit Paid/Settled), not the stale one (Confirmed/In Production/Shipped)", function() {
+  var poTool = ctx.AI_TOOLS.find(function(t){ return t.name === 'get_pos'; });
+  var desc = poTool.input_schema.properties.status.description;
+  assertContains(desc, 'Deposit Paid'); assertContains(desc, 'Settled');
+  assertNotContains(desc, 'Confirmed'); assertNotContains(desc, 'In Production'); assertNotContains(desc, 'Shipped');
+});
+
+test('handleAIAction: create_invoice with empty lineItems is rejected — cIL stays empty, if-n never freshly assigned, toast fires', function() {
+  resetDB();
+  ctx.cIL = [];
+  var priorIfN = mockEl('if-n').value;
+  var toasted = '';
+  var origToast = ctx.toast;
+  ctx.toast = function(m){ toasted = m; };
+  ctx.handleAIAction({ action: 'create_invoice', payload: { lineItems: [] } });
+  ctx.toast = origToast;
+  assertEqual(ctx.cIL.length, 0, 'cIL remains empty — openInv() never ran');
+  assertEqual(mockEl('if-n').value, priorIfN, 'if-n untouched — nextInvNum() never called since openInv() was never entered');
+  assert(toasted.length > 0, 'a toast fired');
+});
+
+test('handleAIAction: create_invoice maps cost/price to unitCost/up (not cost/price keys), pre-fills buyId, never honors a payload num', function() {
+  resetDB();
+  ctx.cIL = [];
+  ctx.EI.i = null;
+  var action = { action: 'create_invoice', payload: { buyId: 'B1', num: 'INV99999', lineItems: [{ desc: 'Widget', qty: 2, cost: 5, price: 8, uom: 'pcs' }] } };
+  ctx.handleAIAction(action);
+  assertEqual(mockEl('if-b').value, 'B1', 'buyId pre-filled');
+  assertEqual(ctx.cIL.length, 1, 'one line item added');
+  assertEqual(ctx.cIL[0].unitCost, 5, 'cost mapped to unitCost');
+  assertEqual(ctx.cIL[0].up, 8, 'price mapped to up (sell)');
+  assertEqual(ctx.cIL[0].cost, undefined, 'no stray cost key'); assertEqual(ctx.cIL[0].price, undefined, 'no stray price key');
+  assert(mockEl('if-n').value !== 'INV99999', 'a malformed payload.num is never honored — if-n stays whatever nextInvNum() produced');
+});
+
+test('handleAIAction: create_line_item accepts Description+Supplier only (Cost/UOM optional), pre-fills correctly', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
+  ctx.handleAIAction({ action: 'create_line_item', payload: { desc: 'Widget', supId: 'S1' } });
+  assertEqual(mockEl('lf-d').value, 'Widget', 'desc pre-filled');
+  assertEqual(mockEl('lf-sup').value, 'S1', 'supId pre-filled');
+});
+
+test('handleAIAction: create_line_item missing desc is rejected — openLI() never runs, lf-d left untouched', function() {
+  resetDB();
+  mockEl('lf-d').value = 'PRIOR VALUE';
+  ctx.handleAIAction({ action: 'create_line_item', payload: { supId: 'S1' } });
+  assertEqual(mockEl('lf-d').value, 'PRIOR VALUE', 'openLI() never ran to clear the field — the action was rejected before opening the modal');
+});
+
+test('handleAIAction: create_credit_note opens ov-cn (not ov-inv), pre-fills linked invoice, stays credit_note type', function() {
+  resetDB();
+  ctx.handleAIAction({ action: 'create_credit_note', payload: { linkedInvNum: 'INV10032', amount: 50, reason: 'Damaged goods', buyer: 'Acme Ltd' } });
+  assertEqual(mockEl('cnf-linked').value, 'INV10032', 'linked invoice number pre-filled');
+  assertEqual(mockEl('cnf-type').value, 'credit_note', 'type left as credit_note, not switched to goodwill');
+  assertEqual(mockEl('cnf-amount').value, 50, 'amount pre-filled');
+  assertEqual(mockEl('cnf-b').value, 'Acme Ltd', 'buyer plain name pre-filled');
+});
+
+test('handleAIAction: create_credit_note with goodwill:true switches type and hides the linked-invoice field (onCNTypeChg regression)', function() {
+  resetDB();
+  ctx.handleAIAction({ action: 'create_credit_note', payload: { goodwill: true, amount: 20, reason: 'Goodwill gesture' } });
+  assertEqual(mockEl('cnf-type').value, 'goodwill_credit', 'type switched to goodwill_credit');
+  assertEqual(mockEl('fld-cn-linked').style.display, 'none', 'linked-invoice field hidden by onCNTypeChg()');
+});
+
+test('handleAIAction: create_po regression — existing branch unaffected by this spec\'s changes', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
+  ctx.EI.p = null;
+  ctx.cPL = [];
+  ctx.handleAIAction({ action: 'create_po', payload: { supId: 'S1', cur: 'CNY', notes: 'Rush order', lineItems: [{ desc: 'Widget A', qty: 100, cost: 5.5, uom: 'pcs' }] } });
+  assertEqual(mockEl('pf-cur').value, 'CNY', 'currency pre-filled, unchanged behavior');
+  assertEqual(ctx.cPL.length, 1, 'line item added to cPL, unchanged behavior');
+});
+
+// ── AI-assisted enquiry intake check (SPEC-CON-004) ─────────────
+
+testAsync('conCheckEnquirySemantic — no AI.key configured resolves null, no fetch call', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = '';
+  _lastAnthropicBody = null;
+  var result = await ctx.conCheckEnquirySemantic('interested in fridges', '');
+  assertEqual(result, null, 'resolves null');
+  assertEqual(_lastAnthropicBody, null, 'no fetch call made');
+  ctx.AI.key = savedKey;
+});
+
+testAsync('conCheckEnquirySemantic — network error resolves null, no thrown exception', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = 'sk-ant-test';
+  _mockAnthropic = 'reject';
+  var result = await ctx.conCheckEnquirySemantic('interested in fridges', '');
+  assertEqual(result, null, 'resolves null on network error');
+  _mockAnthropic = null; ctx.AI.key = savedKey;
+});
+
+testAsync('conCheckEnquirySemantic — non-200 response resolves null', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = 'sk-ant-test';
+  _mockAnthropic = { status: 500, text: '' };
+  var result = await ctx.conCheckEnquirySemantic('interested in fridges', '');
+  assertEqual(result, null, 'resolves null on non-200');
+  _mockAnthropic = null; ctx.AI.key = savedKey;
+});
+
+testAsync('conCheckEnquirySemantic — malformed (non-JSON-array) response text resolves null', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = 'sk-ant-test';
+  _mockAnthropic = { status: 200, text: 'not json at all' };
+  var result = await ctx.conCheckEnquirySemantic('interested in fridges', '');
+  assertEqual(result, null, 'resolves null on malformed response');
+  _mockAnthropic = null; ctx.AI.key = savedKey;
+});
+
+testAsync('conCheckEnquirySemantic — well-formed response resolves the parsed array', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = 'sk-ant-test';
+  _mockAnthropic = { status: 200, text: '[{"issue":"No quantity mentioned","question":"How many units do you need?"}]' };
+  var result = await ctx.conCheckEnquirySemantic('interested in fridges', '');
+  assertEqual(result.length, 1, 'one issue parsed');
+  assertEqual(result[0].issue, 'No quantity mentioned');
+  _mockAnthropic = null; ctx.AI.key = savedKey;
+});
+
+testAsync('AC-004: conCheckEnquiry() payload contains only summary/company — never name/email/phone, even when all three are filled in on the form', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = 'sk-ant-test';
+  mockEl('ct-name').value = 'Jane Doe';
+  mockEl('ct-email').value = 'jane@example.com';
+  mockEl('ct-phone').value = '+44 7700 000000';
+  mockEl('ct-company').value = 'Acme Ltd';
+  mockEl('ct-enq-summary').value = 'interested in fridges';
+  mockEl('con-enqchk');
+  _mockAnthropic = { status: 200, text: '[]' };
+  ctx.conCheckEnquiry();
+  for (var tick = 0; tick < 20 && mockEl('con-enqchk').innerHTML.indexOf('Checking') >= 0; tick++) { await Promise.resolve(); }
+  var payload = JSON.parse(_lastAnthropicBody.messages[0].content);
+  assertEqual(payload.summary, 'interested in fridges', 'summary present');
+  assertEqual(payload.company, 'Acme Ltd', 'company present');
+  assertEqual(payload.name, undefined, 'name absent'); assertEqual(payload.email, undefined, 'email absent'); assertEqual(payload.phone, undefined, 'phone absent');
+  _mockAnthropic = null; ctx.AI.key = savedKey;
+});
+
+testAsync('conCheckEnquiry — vague summary (AC-001) renders each issue+question in #con-enqchk', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = 'sk-ant-test';
+  mockEl('ct-enq-summary').value = 'interested in fridges';
+  mockEl('ct-company').value = '';
+  mockEl('con-enqchk');
+  _mockAnthropic = { status: 200, text: '[{"issue":"No quantity mentioned","question":"How many units?"}]' };
+  ctx.conCheckEnquiry();
+  for (var tick = 0; tick < 20 && mockEl('con-enqchk').innerHTML.indexOf('Checking') >= 0; tick++) { await Promise.resolve(); }
+  assertContains(mockEl('con-enqchk').innerHTML, 'No quantity mentioned');
+  assertContains(mockEl('con-enqchk').innerHTML, 'How many units?');
+  _mockAnthropic = null; ctx.AI.key = savedKey;
+});
+
+testAsync('conCheckEnquiry — detailed summary (AC-002) renders "No ambiguities flagged."', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = 'sk-ant-test';
+  mockEl('ct-enq-summary').value = '500 units of chest freezers, destination Barbados, need FOB quote';
+  mockEl('con-enqchk');
+  _mockAnthropic = { status: 200, text: '[]' };
+  ctx.conCheckEnquiry();
+  for (var tick = 0; tick < 20 && mockEl('con-enqchk').innerHTML.indexOf('Checking') >= 0; tick++) { await Promise.resolve(); }
+  assertContains(mockEl('con-enqchk').innerHTML, 'No ambiguities flagged.');
+  _mockAnthropic = null; ctx.AI.key = savedKey;
+});
+
+testAsync('conCheckEnquiry — no AI.key (AC-003) renders "unavailable"; Save remains fully usable afterward', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = '';
+  mockEl('ct-enq-summary').value = 'interested in fridges';
+  mockEl('con-enqchk');
+  ctx.conCheckEnquiry();
+  for (var tick = 0; tick < 20 && mockEl('con-enqchk').innerHTML.indexOf('Checking') >= 0; tick++) { await Promise.resolve(); }
+  assertContains(mockEl('con-enqchk').innerHTML, 'unavailable');
+  resetDB();
+  mockEl('ct-name').value = 'Jane Doe'; mockEl('ct-email').value = 'jane@example.com'; mockEl('ct-status').value = 'lead'; mockEl('ct-source').value = 'manual';
+  mockEl('ct-enq-summary').value = ''; mockEl('ct-notes').value = ''; mockEl('ct-phone').value = ''; mockEl('ct-company').value = ''; mockEl('ct-sup').value = '';
+  ctx.EI.co = null;
+  ctx.saveCon(); // must not throw / must complete normally — the check never blocks Save
+  assertEqual(ctx.DB.con.length, 1, 'Save completed normally after an unavailable check');
+  ctx.AI.key = savedKey;
+});
+
+testAsync('conCheckEnquiry — triggering does not mutate DB.con (AC-005)', async function() {
+  resetDB();
+  ctx.DB.con.push({ id: 'C1', name: 'Alice', email: 'alice@example.com', enquiries: [], status: 'lead', source: 'manual', createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '', supplierId: null, role: '' });
+  var before = JSON.stringify(ctx.DB.con);
+  mockEl('ct-enq-summary').value = 'interested in fridges';
+  mockEl('con-enqchk');
+  ctx.AI.key = '';
+  ctx.conCheckEnquiry();
+  await Promise.resolve();
+  assertEqual(JSON.stringify(ctx.DB.con), before, 'DB.con unchanged by triggering the check');
+});
+
+testAsync('conCheckEnquiry — re-triggering after editing the summary reflects only the current text (AC-006)', async function() {
+  var savedKey = ctx.AI.key; ctx.AI.key = 'sk-ant-test';
+  mockEl('con-enqchk');
+  mockEl('ct-enq-summary').value = 'summary A';
+  _mockAnthropic = { status: 200, text: '[{"issue":"Issue A","question":"Question A?"}]' };
+  ctx.conCheckEnquiry();
+  for (var t1 = 0; t1 < 20 && mockEl('con-enqchk').innerHTML.indexOf('Checking') >= 0; t1++) { await Promise.resolve(); }
+  assertContains(mockEl('con-enqchk').innerHTML, 'Issue A');
+
+  mockEl('ct-enq-summary').value = 'summary B';
+  _mockAnthropic = { status: 200, text: '[{"issue":"Issue B","question":"Question B?"}]' };
+  ctx.conCheckEnquiry();
+  for (var t2 = 0; t2 < 20 && mockEl('con-enqchk').innerHTML.indexOf('Checking') >= 0; t2++) { await Promise.resolve(); }
+  assertContains(mockEl('con-enqchk').innerHTML, 'Issue B');
+  assertNotContains(mockEl('con-enqchk').innerHTML, 'Issue A');
+  var sentPayload = JSON.parse(_lastAnthropicBody.messages[0].content);
+  assertEqual(sentPayload.summary, 'summary B', 'second call sent summary B, not stale summary A');
+  _mockAnthropic = null; ctx.AI.key = savedKey;
+});
+
+test('Regression (AC-007): saveCon() duplicate-email merge/create-separate flow unaffected by this spec', function() {
+  resetDB();
+  ctx.DB.con.push({ id: 'C1', name: 'Existing', email: 'dup@example.com', enquiries: [], status: 'lead', source: 'manual', createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '', supplierId: null, role: '' });
+  ctx.EI.co = null;
+  mockEl('ct-name').value = 'New Name'; mockEl('ct-email').value = 'dup@example.com'; mockEl('ct-status').value = 'lead'; mockEl('ct-source').value = 'manual';
+  mockEl('ct-enq-summary').value = 'new enquiry text'; mockEl('ct-notes').value = ''; mockEl('ct-phone').value = ''; mockEl('ct-company').value = ''; mockEl('ct-sup').value = '';
+  ctx.confirm = function(){ return true; };
+  ctx.saveCon();
+  assertEqual(ctx.DB.con.length, 1, 'no duplicate record created — merged into existing');
+  assertEqual(ctx.DB.con[0].enquiries.length, 1, 'enquiry merged into existing record');
+  ctx.confirm = function(){ return false; };
+});
+
+test('openCon() — opening a fresh Contact modal after a prior check left #con-enqchk populated resets the panel', function() {
+  var panel = mockEl('con-enqchk');
+  panel.style.display = 'block'; panel.innerHTML = '<div>stale prior result</div>';
+  ctx.openCon();
+  assertEqual(mockEl('con-enqchk').style.display, 'none', 'panel hidden on open');
+  assertEqual(mockEl('con-enqchk').innerHTML, '', 'panel content cleared on open');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
