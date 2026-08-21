@@ -2433,6 +2433,13 @@ function backfillRefNums() {
   if (assign(DB.ord, 'ORD')) changed = true;
   if (changed) saveAll();
 }
+function backfillConIds() {
+  var changed = false;
+  DB.con.forEach(function(c) {
+    if (!c.id) { c.id = uid(); changed = true; }
+  });
+  if (changed) sv(K.co, DB.con);
+}
 function migrateLinkedPOIds() {
   var changed = false;
   DB.qt.forEach(function(q) {
@@ -2518,6 +2525,7 @@ function ordConfirmLineUpdate(ord, lineId, updateId) {
   return true;
 }
 function backfillOrderRequests() {
+  backfillConIds();
   var changed = false;
   DB.qt.forEach(function(q) {
     if (!q.sourceContactId) return;
@@ -3620,6 +3628,7 @@ async function pullAll() {
   }
 
   backfillRefNums();
+  backfillConIds();
   saveAll(); renderAll();
   if (failed.length) {
     setSyncStatus('err');
@@ -8460,6 +8469,7 @@ function doImport(e) {
     if (data.ord && Array.isArray(data.ord)) { DB.ord = data.ord; sv(K.ord, DB.ord); }
     seedAdHocBuyer();
     backfillRefNums();
+    backfillConIds();
     migrateLinkedPOIds();
     backfillOrderRequests();
     saveAll();
@@ -10215,6 +10225,7 @@ function initApp() {
     repairCalcFields();
     seedAdHocBuyer();
     backfillRefNums();
+    backfillConIds();
     migrateLinkedPOIds();
     backfillOrderRequests();
     if (SS.url) {
