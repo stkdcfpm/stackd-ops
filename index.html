@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.53</title>
+<title>Stackd Ops v2.9.54</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
+<script src="vendor/supabase-js-v2.min.js"></script>
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -213,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.53</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.54</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -737,6 +739,23 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
     </div>
     <div class="card">
+      <div class="ct">Cloud Data (Suppliers &amp; Buyers)</div>
+      <div class="fld" style="margin-bottom:10px;">
+        <label>Supabase Project URL</label>
+        <input type="text" id="cfg-sb-url" placeholder="https://xxxx.supabase.co" autocomplete="off">
+      </div>
+      <div class="fld" style="margin-bottom:10px;">
+        <label>Supabase Anon Key</label>
+        <input type="text" id="cfg-sb-key" placeholder="anon public key" autocomplete="off">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-s" onclick="saveSbConfig()">Save Cloud Data Config</button>
+        <button class="btn btn-g" onclick="migrateSuppliersBuyersToSupabase()">Migrate Suppliers/Buyers to Cloud</button>
+        <button class="btn btn-g" id="cfg-sb-restore-btn" style="display:none;" onclick="restoreFromMigrationArchive()">Restore Pre-Migration Suppliers/Buyers</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When configured, Suppliers and Buyers are stored in a shared Supabase database instead of only this browser's local storage, so a colleague on another device sees the same records. Requires a separate Supabase sign-in the first time a session loads with this configured. Everything else in the app stays local-only. Migrating existing local Suppliers/Buyers requires a full backup export first (a blocking step) and moves them to the cloud copy as the source of truth going forward — the "Ad-Hoc" default Buyer never migrates and stays local-only.</p>
+    </div>
+    <div class="card">
       <div class="ct">Accounting Export — Field Mapping Reference</div>
       <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Read-only reference. Gaps indicate data not available in Stackd that the platform expects.</p>
       <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Xero Invoice Import</div>
@@ -1175,9 +1194,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.53</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.54</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Cloud Data — Supabase-backed shared Suppliers/Buyers (REQ/SPEC-CLOUD-001) — Settings → Cloud Data lets an operator connect a shared Supabase database, so a colleague on a different device/browser sees the same Supplier/Buyer records; everything else in the app stays local-only. Vendored <code>@supabase/supabase-js</code> client (first use of the <code>DASH-GAP-001</code> vendoring precedent). Gated by a separate Supabase sign-in the first time a session loads with it configured, cached silently thereafter; the background refresh is fire-and-forget (mirrors the existing <code>pullAll()</code> pattern) so it never blocks app startup or the rest of the app behind a login. Migrating existing local Suppliers/Buyers is a one-time, explicit action requiring a full backup export first (mandatory, checkbox-gated) and a pre-flight duplicate-name scan; every local reference to a migrated Supplier/Buyer (Quotes, POs, Line Items, Contacts, Invoices) is remapped to the new cloud id in the same pass. The "Ad-Hoc" default Buyer never migrates and stays local-only permanently. Pre-migration data is archived locally for 30 days as a rollback safety net (Settings → Cloud Data → "Restore Pre-Migration Suppliers/Buyers", which also disconnects Cloud Data so the restore isn't immediately overwritten by the next background refresh). Went through 4 requirements-gate rounds and 4 spec-gate rounds (each independent, each catching genuine issues — an incomplete ID-remap, a whole-app auth-gate regression, two fictional/false cited-precedent claims, a missed second Buyer-creation path, and a restore that didn't actually hold — all resolved). No Sheets-sync regression: <code>saveSup()</code>/<code>delSup()</code> keep pushing to the existing Google Sheets mirror unchanged when Cloud Data isn't configured; when it is, Suppliers/Buyers are cloud-authoritative and the Sheets push is skipped for those two entities (not addressed by any REQ/SPEC version — a build-time judgement call, flagged for build-gate). 15 new tests. Tests: 469/469 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.53</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Supplier price intelligence (REQ/SPEC-SUP-001) — the Supplier modal now shows a Price History panel aggregating every recorded price point for that supplier across Line Items, Quotes, and Purchase Orders, newest first, each tagged by source and product. Prices older than a configurable threshold (Settings → Supplier Intelligence, default 12 months) are flagged with an amber staleness marker, reusing the existing FX-staleness-warning visual treatment. Also adds a cross-supplier product lookup (<code>getProductPriceHistory()</code>) for comparing what different suppliers have historically charged for similar items. Always shows <code>cost</code> (what the supplier charges), never this app's own landed-cost or sell-price figures, so cross-source and cross-supplier comparisons aren't distorted by freight/margin assumptions. No currency conversion in this version — each point displays in its own recorded currency. Purely additive: no new entity, no new Sheets sync mapping, nothing exported or synced.</li>
@@ -2312,6 +2340,49 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div style="padding:8px 14px 10px;display:flex;gap:8px;flex-shrink:0;">
       <input type="text" id="ai-input" placeholder="Ask a question about the portal…" style="flex:1;font-family:'DM Mono',monospace;font-size:.62rem;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMsg();}">
       <button class="btn btn-s" id="ai-send" onclick="sendAIMsg()">Send</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov-sb-login" onclick="if(event.target===this)sbLoginCancel()">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh"><h2 style="font-size:.75rem;">Cloud Data Sign In</h2><button class="mx" onclick="sbLoginCancel()">&#215;</button></div>
+    <div class="mb">
+      <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Sign in to access shared Supplier/Buyer data. This is separate from the app password and only applies to Cloud Data.</p>
+      <div class="fld" style="margin-bottom:10px;"><label>Email</label><input type="email" id="sb-login-email" autocomplete="username"></div>
+      <div class="fld" style="margin-bottom:10px;"><label>Password</label><input type="password" id="sb-login-pw" autocomplete="current-password"></div>
+      <div id="sb-login-err" style="font-size:.48rem;color:#f87171;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-g" onclick="sbLoginCancel()">Cancel</button>
+        <button class="btn btn-s" onclick="sbLoginSubmit()">Sign In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov-migration-backup">
+  <div class="modal" style="max-width:460px;">
+    <div class="mh"><h2 style="font-size:.75rem;">Back Up Before Migrating</h2></div>
+    <div class="mb">
+      <p style="font-size:.55rem;margin-bottom:12px;"><strong>Before migrating Suppliers/Buyers to the cloud, export a full backup.</strong> This cannot be automatically verified as complete — please confirm you have downloaded and can locate the export file.</p>
+      <button class="btn btn-s" style="margin-bottom:12px;" onclick="expAll()">&#8595; Export All Data</button>
+      <label style="display:flex;align-items:center;gap:6px;font-size:.52rem;margin-bottom:14px;"><input type="checkbox" id="mig-backup-ack" onchange="migBackupAckChg()"> I have downloaded and verified the backup file</label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-g" onclick="migBackupCancel()">Cancel</button>
+        <button class="btn btn-s" id="mig-backup-proceed" disabled onclick="migBackupProceed()">Proceed with Migration</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov-sb-dup" onclick="if(event.target===this)closeM('ov-sb-dup')">
+  <div class="modal" style="max-width:460px;">
+    <div class="mh"><h2 style="font-size:.75rem;">Migration Blocked — Duplicate Supplier Names</h2><button class="mx" onclick="closeM('ov-sb-dup')">&#215;</button></div>
+    <div class="mb">
+      <div id="sb-dup-list" style="font-size:.55rem;"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-g" onclick="closeM('ov-sb-dup')">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -4381,10 +4452,213 @@ function editSup(id) {
   renderSupPriceHistory();
   G('ov-sup').classList.add('on');
 }
+
+// ── CLOUD DATA (SPEC-CLOUD-001) — Supabase-backed Suppliers/Buyers ──
+var _sb = null;
+function initSbClient() {
+  if (!SS.supabaseUrl || !SS.supabaseAnonKey) { _sb = null; return; }
+  _sb = supabase.createClient(SS.supabaseUrl, SS.supabaseAnonKey);
+}
+
+var _sbLoginCallback = null;
+function openSbLoginModal(callback) {
+  _sbLoginCallback = callback;
+  if (G('sb-login-email')) G('sb-login-email').value = '';
+  if (G('sb-login-pw')) G('sb-login-pw').value = '';
+  if (G('sb-login-err')) G('sb-login-err').textContent = '';
+  G('ov-sb-login').classList.add('on');
+}
+async function sbLoginSubmit() {
+  var email = G('sb-login-email').value.trim();
+  var pw = G('sb-login-pw').value;
+  if (!email || !pw) { G('sb-login-err').textContent = 'Email and password are required.'; return; }
+  var result = await _sb.auth.signInWithPassword({ email: email, password: pw });
+  if (result.error) { G('sb-login-err').textContent = result.error.message; return; }
+  G('ov-sb-login').classList.remove('on');
+  if (_sbLoginCallback) { var cb = _sbLoginCallback; _sbLoginCallback = null; cb(true); }
+}
+function sbLoginCancel() {
+  G('ov-sb-login').classList.remove('on');
+  if (_sbLoginCallback) { var cb = _sbLoginCallback; _sbLoginCallback = null; cb(false); }
+}
+
+async function ensureSbAuth() {
+  if (!_sb) return false;
+  var session = (await _sb.auth.getSession()).data.session;
+  if (session) return true;
+  return new Promise(function(resolve){
+    openSbLoginModal(function(success){ resolve(success); });
+  });
+}
+
+async function initCloudDataLayer() {
+  initSbClient();
+  if (!_sb) return;
+  if (await ensureSbAuth()) {
+    await refreshSupFromSupabase();
+    await refreshBuyFromSupabase();
+  }
+}
+
+function saveSbConfig() {
+  SS.supabaseUrl = G('cfg-sb-url').value.trim();
+  SS.supabaseAnonKey = G('cfg-sb-key').value.trim();
+  sv(K.ss, SS);
+  initSbClient();
+  toast('Cloud Data config saved.');
+}
+
+async function refreshSupFromSupabase() {
+  if (!_sb) return;
+  var result = await _sb.from('suppliers').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Suppliers from Cloud Data.'); return; }
+  DB.sup = result.data.map(function(row){
+    return { id: row.id, num: row.num, name: row.name, country: row.country, ct: row.contact_name, email: row.email, phone: row.phone, cur: row.currency, notes: row.notes };
+  });
+  sv(K.s, DB.sup);
+  rSup();
+}
+
+async function refreshBuyFromSupabase() {
+  if (!_sb) return;
+  var result = await _sb.from('buyers').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Buyers from Cloud Data.'); return; }
+  DB.buy = result.data.map(function(row){
+    return { id: row.id, num: row.num, name: row.name, contactName: row.contact_name, email: row.email, phone: row.phone, address: row.address, currency: row.currency, paymentTerms: row.payment_terms, creditLimit: row.credit_limit, notes: row.notes, createdAt: row.created_at };
+  });
+  sv(K.bu, DB.buy);
+  seedAdHocBuyer();
+  renderBuyers();
+}
+
+function findDuplicateSupplierNames(sup) {
+  var groups = {};
+  sup.forEach(function(s){
+    var key = (s.name||'').trim().toLowerCase();
+    if (!key) return;
+    (groups[key] = groups[key] || []).push(s);
+  });
+  return Object.keys(groups).map(function(k){ return groups[k]; }).filter(function(g){ return g.length > 1; });
+}
+
+function showDuplicateConflictModal(dupes) {
+  G('sb-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following supplier names are duplicated (case-insensitive) and would violate the cloud database\'s unique-name constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
+    dupes.map(function(g){ return '<li>' + g.map(function(s){ return san(s.name); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
+  G('ov-sb-dup').classList.add('on');
+}
+
+var _sbMigrationResolve = null;
+function showBlockingBackupModal() {
+  return new Promise(function(resolve){
+    if (G('mig-backup-ack')) G('mig-backup-ack').checked = false;
+    if (G('mig-backup-proceed')) G('mig-backup-proceed').disabled = true;
+    _sbMigrationResolve = resolve;
+    G('ov-migration-backup').classList.add('on');
+  });
+}
+function migBackupAckChg() {
+  G('mig-backup-proceed').disabled = !G('mig-backup-ack').checked;
+}
+function migBackupProceed() {
+  G('ov-migration-backup').classList.remove('on');
+  if (_sbMigrationResolve) { var r = _sbMigrationResolve; _sbMigrationResolve = null; r(true); }
+}
+function migBackupCancel() {
+  G('ov-migration-backup').classList.remove('on');
+  if (_sbMigrationResolve) { var r = _sbMigrationResolve; _sbMigrationResolve = null; r(false); }
+}
+
+async function migrateSuppliersBuyersToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+
+  // REQ-CLOUD-001j: mandatory blocking backup — checkbox-gated attestation
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  // REQ-CLOUD-001f: pre-flight duplicate-name scan (Suppliers only — Buyers already checks this client-side in saveBuy())
+  var dupes = findDuplicateSupplierNames(DB.sup);
+  if (dupes.length) { showDuplicateConflictModal(dupes); return; }
+
+  var supIdMap = {}, buyIdMap = {};
+  for (var i = 0; i < DB.sup.length; i++) {
+    var s = DB.sup[i];
+    var result = await _sb.from('suppliers').insert({ num: s.num, name: s.name, country: s.country, contact_name: s.ct, email: s.email, phone: s.phone, currency: s.cur, notes: s.notes }).select().single();
+    if (result.error) { toast('Migration failed on supplier ' + s.name + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    supIdMap[s.id] = result.data.id;
+  }
+  for (var j = 0; j < DB.buy.length; j++) {
+    var b = DB.buy[j];
+    if (b.id === 'BUY-ADHOC') continue; // stays local-only, never migrated
+    var rb = await _sb.from('buyers').insert({ num: b.num, name: b.name, contact_name: b.contactName, email: b.email, phone: b.phone, address: b.address, currency: b.currency, payment_terms: b.paymentTerms, credit_limit: b.creditLimit, notes: b.notes }).select().single();
+    if (rb.error) { toast('Migration failed on buyer ' + b.name + ' — see dr-procedure.md.'); return; }
+    buyIdMap[b.id] = rb.data.id;
+  }
+
+  // REQ-CLOUD-001i: rewrite every existing local reference field
+  DB.qt.forEach(function(q){ (q.lines||[]).forEach(function(l){ if (supIdMap[l.supId]) l.supId = supIdMap[l.supId]; }); });
+  DB.po.forEach(function(p){ if (supIdMap[p.supId]) p.supId = supIdMap[p.supId]; });
+  DB.li.forEach(function(l){ if (supIdMap[l.supId]) l.supId = supIdMap[l.supId]; });
+  DB.con.forEach(function(c){ if (c.supplierId && supIdMap[c.supplierId]) c.supplierId = supIdMap[c.supplierId]; });
+  DB.inv.forEach(function(inv){ if (buyIdMap[inv.buyerId]) inv.buyerId = buyIdMap[inv.buyerId]; });
+  sv(K.qt, DB.qt); sv(K.p, DB.po); sv(K.l, DB.li); sv(K.co, DB.con); sv(K.i, DB.inv);
+
+  // REQ-CLOUD-001k: archive, don't delete, the pre-migration local arrays
+  localStorage.setItem('st_s_pre_migration', localStorage.getItem(K.s));
+  localStorage.setItem('st_bu_pre_migration', localStorage.getItem(K.bu));
+  localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+
+  await refreshSupFromSupabase();
+  await refreshBuyFromSupabase();
+  if (G('cfg-sb-restore-btn')) G('cfg-sb-restore-btn').style.display = '';
+  toast('Migration complete. Pre-migration data archived for 30 days.');
+}
+
+function restoreFromMigrationArchive() {
+  var archS = localStorage.getItem('st_s_pre_migration'), archB = localStorage.getItem('st_bu_pre_migration');
+  if (!archS || !archB) { toast('No migration archive available to restore.'); return; }
+  if (!confirm('Restore Suppliers and Buyers to their state immediately before the Supabase migration, and disconnect Cloud Data?\n\nThis does not affect Quotes, POs, Line Items, Invoices, or Contacts, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect later.')) return;
+  localStorage.setItem(K.s, archS);
+  localStorage.setItem(K.bu, archB);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+
+function cleanupExpiredMigrationArchive() {
+  var ts = localStorage.getItem('st_cloud_migration_ts');
+  if (!ts) return;
+  var days = (Date.now() - new Date(ts).getTime()) / 86400000;
+  if (days > 30) {
+    localStorage.removeItem('st_s_pre_migration');
+    localStorage.removeItem('st_bu_pre_migration');
+    localStorage.removeItem('st_cloud_migration_ts');
+  }
+}
+
 async function saveSup() {
   if (!vSup()) return;
   var _supIsNew = !EI.s;
   var _existSup = EI.s ? DB.sup.find(function(x){ return x.id===EI.s; }) : null;
+  if (_sb) {
+    if (!(await ensureSbAuth())) return;
+    var row = { name: G('sf-n').value.trim(), country: G('sf-c').value.trim(), contact_name: G('sf-ct').value.trim(), email: G('sf-e').value.trim(), phone: getSupPhone(), currency: G('sf-cur').value, notes: G('sf-nt').value.trim() };
+    var result;
+    if (EI.s) {
+      result = await _sb.from('suppliers').update(row).eq('id', EI.s).select().single();
+    } else {
+      row.num = nextRefNum(DB.sup, 'SUP');
+      result = await _sb.from('suppliers').insert(row).select().single();
+    }
+    if (result.error) { toast('Save failed: ' + result.error.message); return; }
+    closeM('ov-sup');
+    await refreshSupFromSupabase();
+    audit(EI.s?'UPDATE':'CREATE','supplier', result.data.id, result.data);
+    logEv('supplier', result.data.id, EI.s?'updated':'created', 'Supplier ' + result.data.name + (EI.s?' updated':' created'), 'operator');
+    toast('Supplier saved'); renderOnboarding();
+    return;
+  }
   var s = { id:EI.s||uid(), num:_existSup?_existSup.num:nextRefNum(DB.sup,'SUP'), name:G('sf-n').value.trim(), country:G('sf-c').value.trim(), ct:G('sf-ct').value.trim(), email:G('sf-e').value.trim(), phone:getSupPhone(), cur:G('sf-cur').value, notes:G('sf-nt').value.trim() };
   if (EI.s) { var i=DB.sup.findIndex(function(x){return x.id===EI.s;}); if(i>-1) DB.sup[i]=s; } else DB.sup.push(s);
   sv(K.s,DB.sup); closeM('ov-sup'); rSup(); audit(EI.s?'UPDATE':'CREATE','supplier',s.id,s);
@@ -4404,6 +4678,18 @@ async function delSup(id) {
   var msg = 'Delete this supplier?';
   if (warns.length) msg += '\n\nWarning: ' + warns.join('\n') + '\n\nThe POs and invoices will remain but will show a missing supplier reference.';
   if (!confirm(msg)) return;
+  if (_sb) {
+    if (!(await ensureSbAuth())) return;
+    var _delSupR = DB.sup.find(function(s){ return s.id===id; });
+    var result = await _sb.from('suppliers').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    DB.con.forEach(function(c){ if (c.supplierId === id) { c.supplierId = null; c.role = ''; } });
+    sv(K.co, DB.con);
+    if (_delSupR) logEv('supplier', _delSupR.id, 'deleted', 'Supplier ' + _delSupR.name + ' deleted', 'operator');
+    await refreshSupFromSupabase();
+    toast('Deleted');
+    return;
+  }
   var _delSup = DB.sup.find(function(s){ return s.id===id; });
   DB.sup = DB.sup.filter(function(s){ return s.id!==id; });
   DB.con.forEach(function(c){ if (c.supplierId === id) { c.supplierId = null; c.role = ''; } });
@@ -5446,13 +5732,22 @@ function populateBuyDropdown(selId, selectedId) {
       }).join('');
 }
 
-function quickAddBuyer() {
+async function quickAddBuyer() {
   var prevId = EI.i ? ((DB.inv.find(function(x){ return x.id === EI.i; }) || {}).buyerId || 'BUY-ADHOC') : 'BUY-ADHOC';
   var qName = prompt('New buyer name:');
   if (!qName || !qName.trim()) { populateBuyDropdown('if-b', prevId); return; }
   qName = qName.trim();
   var dup = DB.buy.find(function(b){ return b.name.toLowerCase() === qName.toLowerCase(); });
   if (dup) { alert('A buyer with this name already exists.'); populateBuyDropdown('if-b', dup.id); return; }
+  if (_sb) {
+    if (!(await ensureSbAuth())) { populateBuyDropdown('if-b', prevId); return; }
+    var result = await _sb.from('buyers').insert({ num: nextRefNum(DB.buy,'BUY'), name: qName, currency: 'GBP' }).select().single();
+    if (result.error) { toast('Could not create buyer: ' + result.error.message); populateBuyDropdown('if-b', prevId); return; }
+    await refreshBuyFromSupabase();
+    logEv('buyer', result.data.id, 'created', 'Buyer quick-created: ' + result.data.name, 'operator');
+    populateBuyDropdown('if-b', result.data.id);
+    return;
+  }
   var nb = { id:'BUY' + Date.now(), num:nextRefNum(DB.buy,'BUY'), name:qName, contactName:'', email:'', phone:'', address:'', currency:'GBP', paymentTerms:'', creditLimit:null, notes:'', createdAt:new Date().toISOString() };
   DB.buy.push(nb);
   sv(K.bu, DB.buy);
@@ -5539,12 +5834,31 @@ function openBuy(id) {
   G('ov-buy').classList.add('on');
 }
 
-function saveBuy() {
+async function saveBuy() {
   var name = G('buy-name').value.trim();
   if (!name) { vErr('buy-name', 'Company name is required'); return; }
   var dup = DB.buy.find(function(b){ return b.name.trim().toLowerCase() === name.toLowerCase() && b.id !== EI.bu; });
   if (dup) { vErr('buy-name', 'A buyer with this name already exists'); return; }
   vOk('buy-name');
+  if (_sb) {
+    if (!(await ensureSbAuth())) return;
+    var row = { name: name, contact_name: G('buy-cname').value.trim(), email: G('buy-email').value.trim(), phone: G('buy-phone').value.trim(),
+      address: G('buy-addr').value.trim(), currency: G('buy-cur').value, payment_terms: G('buy-pt').value,
+      credit_limit: G('buy-cl').value !== '' ? parseFloat(G('buy-cl').value) : null, notes: G('buy-notes').value.trim() };
+    var result;
+    if (EI.bu) {
+      result = await _sb.from('buyers').update(row).eq('id', EI.bu).select().single();
+    } else {
+      row.num = nextRefNum(DB.buy, 'BUY');
+      result = await _sb.from('buyers').insert(row).select().single();
+    }
+    if (result.error) { toast('Save failed: ' + result.error.message); return; }
+    logEv('buyer', result.data.id, EI.bu ? 'updated' : 'created', 'Buyer ' + result.data.name + (EI.bu ? ' updated' : ' created'), 'operator');
+    await refreshBuyFromSupabase();
+    closeM('ov-buy');
+    toast('Buyer saved');
+    return;
+  }
   if (EI.bu) {
     var rec = DB.buy.find(function(b){ return b.id === EI.bu; });
     if (rec) {
@@ -5569,11 +5883,22 @@ function saveBuy() {
   renderBuyers();
 }
 
-function delBuy(id) {
+async function delBuy(id) {
   if (!id || id === 'BUY-ADHOC') return;
   var linked = DB.inv.find(function(i){ return i.buyerId === id; });
   if (linked) { alert('Cannot delete: this buyer has linked invoices. Reassign invoices first.'); return; }
   if (!confirm('Delete buyer? This cannot be undone.')) return;
+  if (_sb) {
+    if (!(await ensureSbAuth())) return;
+    var recR = DB.buy.find(function(b){ return b.id === id; });
+    var result = await _sb.from('buyers').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    if (recR) logEv('buyer', recR.id, 'deleted', 'Buyer deleted: ' + recR.name, 'operator');
+    await refreshBuyFromSupabase();
+    closeM('ov-buy');
+    toast('Buyer deleted');
+    return;
+  }
   var rec = DB.buy.find(function(b){ return b.id === id; });
   if (rec) logEv('buyer', rec.id, 'deleted', 'Buyer deleted: ' + rec.name, 'operator');
   DB.buy = DB.buy.filter(function(b){ return b.id !== id; });
@@ -7393,7 +7718,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.53).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.54).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -7418,6 +7743,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Suppliers',
   'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes. Each supplier is auto-assigned a SUP-#### reference number on creation (see Reference Numbers above).',
+  'Cloud Data (v2.9.5x, REQ/SPEC-CLOUD-001): Settings → Cloud Data lets an operator connect a shared Supabase database for Suppliers and Buyers only — everything else in the app stays local-only. When configured, a colleague on a different device/browser sees the same Supplier/Buyer records, gated by a separate Supabase sign-in (distinct from the app password). Existing local Suppliers/Buyers are moved across via a one-time "Migrate Suppliers/Buyers to Cloud" action, which requires a full backup export first (mandatory, blocking) and archives the pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. If not configured, nothing changes — Suppliers/Buyers behave exactly as before.',
   '',
   '## Line Items (Product Catalogue)',
   'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox. Each line item is auto-assigned an LI-#### reference number on creation (see Reference Numbers above).',
@@ -8123,6 +8449,9 @@ function rCfg() {
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
   if(G('cfg-fwd-webhook')) G('cfg-fwd-webhook').value=SS.fwdWebhook||'';
   if(G('cfg-sup-intel-threshold')) G('cfg-sup-intel-threshold').value = +localStorage.getItem('stackd_sup_intel_threshold_months') || 12;
+  if(G('cfg-sb-url')) G('cfg-sb-url').value = SS.supabaseUrl||'';
+  if(G('cfg-sb-key')) G('cfg-sb-key').value = SS.supabaseAnonKey||'';
+  if(G('cfg-sb-restore-btn')) G('cfg-sb-restore-btn').style.display = localStorage.getItem('st_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-lang')) G('cfg-lang').value = _lang;
   rCoBrand();
   qteFillRates();
@@ -10328,6 +10657,7 @@ function initApp() {
     backfillConIds();
     migrateLinkedPOIds();
     backfillOrderRequests();
+    cleanupExpiredMigrationArchive();
     if (SS.url) {
       G('banner').style.display='none';
       G('cfg-url').value=SS.url;
@@ -10336,6 +10666,7 @@ function initApp() {
     G('auto-s').checked = SS.auto !== false;
     G('pol').checked = SS.pol !== false;
     renderAll();
+    initCloudDataLayer().catch(function(){}); // fire-and-forget, mirrors the pullAll() pattern above — never blocks app startup
     checkOnboarding();
     window.currentTab = 'dash';
     updateAIChips('dash');
