@@ -64,3 +64,4 @@ All active requirements have FM-1 clearance. See STACKD_CONTEXT.md for full exce
 | 1 | UI/AI layer features with no new localStorage entities | 2026-06-21 |
 | 2 | New fields on existing entities (e.g. supplierId, role on DB.con) | 2026-06-21 |
 | 3 | New internal-only K key / DB entity with no Sheets sync (K.ev / DB.events) | 2026-06-21 |
+| 4 | Live external database dependency for Suppliers + Buyers only (`REQ-CLOUD-001`, Supabase) — scope-specific, not a general category; condition: mandatory backed-up/rollback-verified migration (see `REQ-CLOUD-001-v3.md`) | 2026-08-21 |
