@@ -1,12 +1,17 @@
-# SPEC-CON-004-v1: AI-Assisted Enquiry Intake Check
+# SPEC-CON-004-v2: AI-Assisted Enquiry Intake Check
 
 **Implements:** REQ-CON-004-v2 (requirements-gate CONDITIONAL PASS on v1, resolved in v2).
 
-All line citations below independently re-verified against live `index.html` on `main` at spec-drafting time.
+**Supersedes:** SPEC-CON-004-v1 (independent spec-gate CONDITIONAL PASS — 1 blocking finding, 1 advisory, both verified against live `index.html`):
+
+1. **(Blocking) No `AI_SYSTEM_PROMPT` update was specified**, violating `CLAUDE.md`'s explicit "mandatory on every version, no exceptions" rule — the directly analogous precedent this spec mirrors (`REQ-ORD-005`'s per-line gap check) *is* documented there, and the sibling `SPEC-AI-GAP-002` in the same PR correctly includes its own prompt update. Fixed in new §5 below.
+2. **(Advisory) Two citation errors.** §0/§4's `ordCheckLineGaps()` button/output-div citations (`index.html:2654`/`2655`) were off by 21 lines — the real locations are `index.html:2675`/`2676`. Fixed below; the quoted class/style text itself was already correct, only the line numbers were wrong.
+
+All line citations re-verified against live `index.html` on `main` at v2 drafting time.
 
 ## 0. Design decisions this spec has to make that the REQ left open
 
-1. **Exact placement of the button/output panel.** The REQ specifies the button appears "next to the `ct-enq-summary` textarea" (a plain `<input type="text">` in the live code, not a textarea — confirmed at `index.html:2167`, `<input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">`) but leaves exact markup to spec-gate. **Decision: placed immediately below the input, mirroring the precise structural pattern already used for `ordCheckLineGaps()`'s button** (`index.html:2654`: `class="btn btn-g" style="font-size:.4rem;padding:1px 4px;"`, plus a sibling output `<div>` toggled from `display:none`) — not a new visual language invented for this REQ.
+1. **Exact placement of the button/output panel.** The REQ specifies the button appears "next to the `ct-enq-summary` textarea" (a plain `<input type="text">` in the live code, not a textarea — confirmed at `index.html:2167`, `<input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">`) but leaves exact markup to spec-gate. **Decision: placed immediately below the input, mirroring the precise structural pattern already used for `ordCheckLineGaps()`'s button** (`index.html:2675`: `class="btn btn-g" style="font-size:.4rem;padding:1px 4px;"`, plus a sibling output `<div>` toggled from `display:none`) — not a new visual language invented for this REQ.
 2. **Payload construction — the REQ's own corrected requirement (REQ-CON-004c) mandates the technique, not just the outcome.** The new function reads `G('ct-enq-summary').value`/`G('ct-company').value` directly off the form and builds `{ summary, company }` as its own object literal — it never touches, references, or is placed near `saveCon()`'s `con = {...}` construction (`index.html:9622-9638`). This is a structural choice, not a comment-level promise: the check function and `saveCon()` share no code, no helper, and no variable.
 
 ## 1. `CON_ENQUIRY_CHECK_PROMPT` — new bespoke prompt (REQ-CON-004b)
@@ -97,7 +102,7 @@ Added immediately after the existing `ct-enq-summary` input (`index.html:2167`):
 <div id="con-enqchk" style="display:none;margin-top:4px;"></div>
 ```
 
-Exact class/style values copied from `ordCheckLineGaps()`'s button (`index.html:2654`) and its output div (`index.html:2655`), per §0 decision 1 — no new visual pattern introduced.
+Exact class/style values copied from `ordCheckLineGaps()`'s button (`index.html:2675`) and its output div (`index.html:2676`), per §0 decision 1 — no new visual pattern introduced.
 
 **Reset whenever the Contact modal opens.** Both entry points into `ov-con` already reset `ct-enq-summary` today and need the identical one-line addition: `openCon()`'s field-clearing loop (`index.html:9527`, `['ct-name','ct-email','ct-phone','ct-company','ct-notes','ct-enq-summary'].forEach(...)`, for a new Contact) and `editCon(id)`'s explicit `G('ct-enq-summary').value = '';` (`index.html:9551`, for an existing Contact — the enquiry-note field is deliberately always blanked on edit, since it represents a *new* enquiry to log, not the last one shown). Neither function is otherwise modified — this spec adds one line to each, clearing the check panel alongside the fields they already reset:
 
@@ -106,6 +111,16 @@ var enqChk = G('con-enqchk'); if (enqChk) { enqChk.style.display = 'none'; enqCh
 ```
 
 This prevents a stale check result from a previously-open Contact bleeding into a freshly-opened one — not explicitly named as an AC, but a direct consequence of REQ-CON-004e's "nothing accumulates" intent applied to the modal-reopen case, which the REQ's own AC-006 (re-triggering reflects current text) implies but doesn't spell out for the open/close case specifically.
+
+## 5. `AI_SYSTEM_PROMPT` update (mandatory per `CLAUDE.md`'s "update on every version" rule)
+
+New paragraph added to the `## Contacts` section (`index.html:7593` onward), immediately after the existing "Enquiry log:" paragraph (`index.html:7598`), mirroring the style/level of detail of the analogous "Per-line gap check" paragraph already documented for `REQ-ORD-005` (`index.html:7456`):
+
+```
+'Enquiry intake check (v2.9.5x): a "Check enquiry" button next to the enquiry note field runs a single-shot, AI-assisted check (only if a Claude API key is configured) for vagueness or missing commercial detail in the enquiry text — e.g. no quantity mentioned, no destination market, too generic to source against — phrasing each issue as a specific question to send back to the prospect. Manual trigger only — never runs automatically on save or typing. Purely diagnostic: nothing is written to the contact record, no enquiries[] entry is created, and Save is never blocked regardless of whether the check ran, succeeded, or failed. The check\'s API payload is scoped to the enquiry text and company name only — never the contact\'s own name, email, or phone.',
+```
+
+This directly answers `CLAUDE.md`'s own test for this rule ("If the user asked the AI about this feature, would the answer be accurate?") — without it, the AI assistant would have no awareness this feature exists if an operator asked about it, exactly the gap `SPEC-AI-GAP-002`'s own §4 correctly avoided in the same PR.
 
 ## GDPR Data Flow
 
@@ -132,3 +147,4 @@ New suite `AI-assisted enquiry intake check (SPEC-CON-004)`, using the existing 
 ## Changelog
 
 - v1: Initial spec implementing REQ-CON-004-v2.
+- v2: Independent spec-gate CONDITIONAL PASS on v1 resolved — added the mandatory `AI_SYSTEM_PROMPT` update (§5), fixed two citation errors for `ordCheckLineGaps()`'s button/output-div line numbers (2654/2655 → 2675/2676). A confirmatory re-check caught one further off-by-one in §5's own new citation ("Enquiry log:" paragraph is at `index.html:7598`, not `7599`) — fixed in the same commit. No functional/GDPR logic changed from v1.
