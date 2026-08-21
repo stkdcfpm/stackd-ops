@@ -1,12 +1,14 @@
 For full project context including business strategy, FPM data, and programme roadmap, read STACKD_CONTEXT.md in this repo root.
 
+For operator-facing workflow detail (how to use each tab/feature today), read docs/user-guide.md.
+
 # Stackd Ops — Claude Code Context
 
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
-**Current version: v2.9.48**  
-**Test count: 395/395 PASS** (`node tests/run.js`)
+**Current version: v2.9.52**  
+**Test count: 434/434 PASS** (`node tests/run.js`)
 
 ---
 
@@ -110,6 +112,7 @@ At the end of each version delivery, update:
 - **`docs/version-history.md`** — prepend new version row
 - **`docs/known-gaps.md`** — add new gap entries as they are identified
 - **`AI_SYSTEM_PROMPT` in `index.html`** — **mandatory on every version, no exceptions.** Review against every change shipped. If any new entity, field, feature, workflow, setting, or known quirk was added or changed, update the prompt. Ask: "If the user asked the AI about this feature, would the answer be accurate?" A version is not complete until the prompt reflects current portal behaviour.
+- **`docs/user-guide.md`** — update the relevant feature-area section if this release changed operator-visible behavior (new feature, changed workflow, changed field). Skip only if the change is purely internal (bug fix with no visible behavior change, test-only, refactor).
 - **In-app changelog** — prepend a new version block with bullet-point summary of changes
 - **Raise a PR** — push the branch and raise a PR so the user can test functionality in the portal before merging
 
@@ -148,6 +151,8 @@ See `docs/known-gaps.md` for full entries.
 | BUY-GAP-002 | Buyers / legacy | Legacy invoices without buyerId matched by name on edit; default BUY-ADHOC if no match |
 | BUY-GAP-003 | Buyers / credit | Credit limit is display-only; no enforcement on invoice save |
 | DATA-GAP-003 | Reference numbers / cross-device | `num` (SUP-/LI-/BUY-/CON-####) can diverge between two devices that haven't synced; same-device `pullAll()` stripping is mitigated (v2.9.43); cross-device divergence remains open, accepted design trade-off |
+| DATA-GAP-004 | List-render onclick pattern | `rSup()`/`rLI()`/`rPO()`'s string-concatenation onclick handlers silently no-op delete/edit if a record is missing `id` — same root cause fixed for Contacts via REQ/SPEC-CON-003; backlogged for other entities absent a confirmed report |
+| DATA-GAP-005 | Contacts / Sheets sync | Backfilling a Contact's `id` (REQ/SPEC-CON-003) can orphan its Sheets sync row if it was previously pushed with a blank Contact ID column — creates a duplicate row on next sync, no automated reconciliation; accepted, same class as SEC-GAP-011 |
 | ORD-GAP-001 | Order Requests | Legacy-backfilled records (from Contact enquiry logs, no linked Quote) are lower-fidelity; abandoned-Quote PO/Invoice not auto-re-attributed on activeQuoteId reassignment — both accepted limitations |
 | ORD-GAP-002 | Order Requests / AI assistant | update_order_line AI action has no corresponding get_order_lines read tool — same read/write asymmetry as AI-GAP-008 |
 | CUR-GAP-001 | Display currency / Aging Report | Aging Report mixes currencies unconverted — pre-existing, out of scope for v2.9.46's currency toggle |

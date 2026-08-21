@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.48</title>
+<title>Stackd Ops v2.9.52</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.48</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.52</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -543,6 +543,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <input type="file" id="ul-ord" accept=".csv" style="display:none" onchange="bulkUpload('ord',this)">
       </div>
       <div id="imp-ord-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
+    </div>
+
+    <!-- Step 6: Contacts -->
+    <div class="card">
+      <div class="ct"><span style="background:var(--bl);color:white;font-family:'Bebas Neue',sans-serif;font-size:.9rem;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">6</span>Contacts</div>
+      <p style="font-size:.6rem;color:var(--m);margin-bottom:12px;line-height:1.7;">Upload a list of buyer/prospect contacts. Matched by email if present, else by exact name. Existing contacts are updated, not duplicated — columns left blank on a re-upload keep their previously-saved value.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="dlTemplate('co')">&#8595; Download Template</button>
+        <button class="btn btn-s" onclick="G('ul-co').click()">&#8593; Upload Contacts CSV</button>
+        <input type="file" id="ul-co" accept=".csv" style="display:none" onchange="bulkUpload('co',this)">
+      </div>
+      <div id="imp-co-result" style="font-size:.58rem;color:var(--m);min-height:16px;"></div>
     </div>
 
     <!-- Import log -->
@@ -1152,9 +1164,50 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.48</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.52</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Per-line quote margin override (REQ/SPEC-QTE-001, Part A) — each Quote line can now carry its own margin %, overriding the quote-level default; leaving it blank inherits the quote-level margin exactly as before. Overhead (origin/destination charges + admin fee) is no longer marked up — it's added to the Grand Total at cost, matching how the DG surcharge is already treated. This is a deliberate behavior change: resaving any pre-existing quote recomputes its Grand Total by exactly the amount overhead was previously marked up by. Went through 3 requirements-gate rounds and 1 spec-gate round (each independent, each catching genuine issues — including a real bug in an initially-proposed FX-staleness check and a wrong function citation for a later phase's hand-off, both since corrected in the requirement itself; the spec-gate round found the calculation logic sound with only citation/test-plan cleanup needed). Part B (RFQ supplier comparison & commit) is specified at the requirements level only — not built in this version.</li>
+          <li>12 new tests. Tests: 434/434 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.51</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Contacts CSV upload (REQ/SPEC-CON-002) — Import Data tab gains a sixth step for uploading a list of buyer/prospect contacts directly, reusing the field-mapping/dedup logic that previously only ran via the Google Sheets pull path. Matched by email if present, else exact name; unrecognized Status values default to "lead"; columns omitted on a re-upload preserve the existing contact's previously-saved values rather than blanking them.</li>
+          <li>10 new tests. Tests: 422/422 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.50</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Order Request per-line gap check (REQ/SPEC-ORD-005) — each Order Request line gets a "Check gaps" button. A structural check (instant, no AI) flags any unset packing spec, base UOM, base qty, source country, or unresolved qty status. An additional AI-assisted semantic check flags ambiguous/inconsistent values (e.g. a vague item spec) and phrases each as a specific question to send the buyer/supplier — manual trigger only, purely diagnostic (nothing is written to the line or persisted), API payload scoped to product/order fields only (never Contact name/email/phone).</li>
+          <li>11 new tests. Tests: 412/412 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.49</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix (REQ/SPEC-INV-001): the invoice quick-add "no library link" COGS warning fired even when a line had a valid manually-entered Unit Cost (e.g. pass-through charges like freight/customs at 0% margin), producing false alarms. Now only counts a line when it has neither a resolving library link nor a non-zero Unit Cost — matching what <code>cInv()</code>/<code>calcInv()</code> actually compute. Also now catches a previously-missed case: a dangling library link (catalogue item since deleted) with no Unit Cost.</li>
+          <li>AI_SYSTEM_PROMPT updated to describe quick-add's Unit Cost fallback accurately.</li>
+          <li>6 new tests. Tests: 401/401 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.48</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Order Request CSV import (REQ/SPEC-ORD-003) — Import Data tab gains a fifth step for uploading structured purchase requirements (e.g. from a webform). Rows sharing a Submission ID become one Order Request with multiple lines; Contacts are matched by email or auto-created (<code>status:'lead'</code>, <code>source:'webform'</code>). Re-importing an existing Submission ID only appends genuinely new lines — never overwrites lines already touched by an operator.</li>
@@ -2380,6 +2433,13 @@ function backfillRefNums() {
   if (assign(DB.ord, 'ORD')) changed = true;
   if (changed) saveAll();
 }
+function backfillConIds() {
+  var changed = false;
+  DB.con.forEach(function(c) {
+    if (!c.id) { c.id = uid(); changed = true; }
+  });
+  if (changed) sv(K.co, DB.con);
+}
 function migrateLinkedPOIds() {
   var changed = false;
   DB.qt.forEach(function(q) {
@@ -2465,6 +2525,7 @@ function ordConfirmLineUpdate(ord, lineId, updateId) {
   return true;
 }
 function backfillOrderRequests() {
+  backfillConIds();
   var changed = false;
   DB.qt.forEach(function(q) {
     if (!q.sourceContactId) return;
@@ -2566,6 +2627,15 @@ function rOrd() {
   G('ord-em').style.display  = rows.length ? 'none' : '';
   G('ord-tbody').innerHTML = rows.join('');
 }
+function ordLineGaps(line) {
+  var gaps = [];
+  if (!line.packingSpec) gaps.push({ field: 'packingSpec', label: 'Packing spec' });
+  if (!line.baseUom) gaps.push({ field: 'baseUom', label: 'Base UOM' });
+  if (line.baseQty === null || line.baseQty === undefined || line.baseQty === '') gaps.push({ field: 'baseQty', label: 'Base qty' });
+  if (!line.sourceCountry) gaps.push({ field: 'sourceCountry', label: 'Source country' });
+  if (line.qtyStatus === 'Unknown') gaps.push({ field: 'qtyStatus', label: 'Qty status (Unknown)' });
+  return gaps;
+}
 function rOrdLines(ord) {
   var el = G('of-lines-list'); if (!el) return;
   if (!ord) { el.innerHTML = '<div style="font-size:.55rem;color:var(--m);">Save the Order Request first, then add line items.</div>'; return; }
@@ -2581,8 +2651,78 @@ function rOrdLines(ord) {
       (pending.length ? '<div style="color:var(--gold);">' + pending.length + ' pending update(s): ' + pending.map(function(u){
         return san(u.field) + ' → ' + san(String(u.newValue)) + ' (' + san(u.source) + ') <button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="ordConfirmLineUpdateUI(\'' + l.id + '\',\'' + u.id + '\')">Confirm</button>';
       }).join(' ') + '</div>' : '') +
+      '<div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="ordCheckLineGaps(\'' + l.id + '\')">Check gaps</button></div>' +
+      '<div id="ord-gapchk-' + l.id + '" style="display:none;margin-top:4px;"></div>' +
       '</div>';
   }).join('') || '<div style="font-size:.55rem;color:var(--m);">No line items yet</div>';
+}
+function ordCheckLineGaps(lineId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+
+  var panel = G('ord-gapchk-' + lineId);
+  if (!panel) return;
+  panel.style.display = 'block';
+
+  var structuralGaps = ordLineGaps(line);
+  var structuralHtml = structuralGaps.length
+    ? '<div style="color:var(--gold);">Missing: ' + structuralGaps.map(function(g){ return san(g.label); }).join(', ') + '</div>'
+    : '<div style="color:var(--gn);">No structural gaps.</div>';
+  panel.innerHTML = structuralHtml + '<div style="color:var(--m);">Checking for ambiguities…</div>';
+
+  ordCheckLineGapsSemantic(line).then(function(result){
+    if (G('ord-gapchk-' + lineId) !== panel) return;
+    var semanticHtml;
+    if (result === null) {
+      semanticHtml = '<div style="color:var(--m);">AI ambiguity check unavailable.</div>';
+    } else if (!result.length) {
+      semanticHtml = '<div style="color:var(--gn);">No ambiguities flagged.</div>';
+    } else {
+      semanticHtml = '<div>' + result.map(function(item){
+        return '<div style="margin-top:2px;">⚠ ' + san(item.issue) + ' — <em>' + san(item.question) + '</em></div>';
+      }).join('') + '</div>';
+    }
+    panel.innerHTML = structuralHtml + semanticHtml;
+  });
+}
+var ORD_GAP_CHECK_PROMPT = 'You review a single trade order line for ambiguity or internal inconsistency (not for missing fields — that is handled separately). Given the line\'s fields as JSON, identify up to 3 issues where a value is present but vague, unclear, or does not reconcile with another field on the same line (e.g. a generic item description, a stated order volume that doesn\'t reconcile with the base unit/quantity, a category that doesn\'t match the described item). For each issue, phrase a specific, concrete question an operator could send to the buyer or supplier to resolve it. Respond with ONLY a JSON array (no prose, no markdown fences): [{"issue":"<short description>","question":"<specific question to send>"}]. Respond with an empty array [] if nothing is ambiguous.';
+async function ordCheckLineGapsSemantic(line) {
+  if (!AI.key) return null;
+  var payload = {
+    category: line.category, itemSpec: line.itemSpec,
+    orderVolumeQty: line.orderVolumeQty, orderVolumeUnit: line.orderVolumeUnit,
+    packingSpec: line.packingSpec, baseUom: line.baseUom, baseQty: line.baseQty,
+    sourceCountry: line.sourceCountry, variantOption: line.variantOption, qtyStatus: line.qtyStatus
+  };
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': AI.key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        temperature: 0.2,
+        system: ORD_GAP_CHECK_PROMPT,
+        messages: [{ role: 'user', content: JSON.stringify(payload) }]
+      })
+    });
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var parsed = JSON.parse(text.trim());
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter(function(x){ return x && typeof x.issue === 'string' && typeof x.question === 'string'; });
+  } catch (e) {
+    return null;
+  }
 }
 function ordAddLine() {
   if (!EI.ord) { toast('Save the Order Request first, then add line items.', 4000); return; }
@@ -3488,6 +3628,7 @@ async function pullAll() {
   }
 
   backfillRefNums();
+  backfillConIds();
   saveAll(); renderAll();
   if (failed.length) {
     setSyncStatus('err');
@@ -4447,7 +4588,11 @@ function quickAddLine() {
 }
 
 function _updQaWarn() {
-  var qaCount = cIL.filter(function(li){ return !li.lid; }).length;
+  var qaCount = cIL.filter(function(li){
+    var resolved = li.lid && DB.li.find(function(x){ return x.id === li.lid; });
+    var hasCost = +li.unitCost > 0;
+    return !resolved && !hasCost;
+  }).length;
   var el = G('inv-qa-warn');
   var ct = G('inv-qa-warn-count');
   if (!el) return;
@@ -6311,13 +6456,17 @@ var TEMPLATES = {
   ord: {
     headers: ['Submission ID','Contact Name','Contact Email','Order Description','Category','Item/Spec','Order Volume Qty','Order Volume Unit','Packing Spec','Base UOM','Base Qty','Qty Status','Source Country','Variant/Option'],
     example: ['WEB-0001','Thorpes Produce Inc','buyer@thorpes.example','Q3 restock','Fresh produce','Red seedless grapes','3','pallets','','','', 'Estimated','Chile','']
+  },
+  co: {
+    headers: ['Name','Email','Phone','Company','Status','Source','Enquiry Summary','Notes'],
+    example: ['Jane Buyer','jane@example.com','+1 246 555 0100','Island Fresh Imports Ltd','lead','manual','Interested in Q3 restock of frozen produce','Follow up after site visit']
   }
 };
 
 function dlTemplate(entity) {
   var tpl = TEMPLATES[entity];
   if (!tpl) return;
-  var names = { sup:'suppliers', li:'line-items', inv:'invoices', po:'purchase-orders', ord:'order-requests' };
+  var names = { sup:'suppliers', li:'line-items', inv:'invoices', po:'purchase-orders', ord:'order-requests', co:'contacts' };
   var csv = tpl.headers.join(',') + '\n' + tpl.example.map(function(v){ return '"'+v+'"'; }).join(',');
   var a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -6528,6 +6677,40 @@ function processImport(entity, csvText) {
     sv(K.p,DB.po);
     var msg='POs: '+added+' added, '+updated+' updated, '+skipped+' skipped'+(errors.length?' | '+errors.join('; '):'');
     G('imp-po-result').textContent=msg; impLog(msg); rPO(); rDash();
+  }
+
+  else if (entity === 'co') {
+    rows.forEach(function(r) {
+      var email = String(r['Email']||r['email']||'').trim().toLowerCase();
+      var name  = String(r['Name']||r['name']||'').trim();
+      if (!name && !email) { skipped++; return; }
+      var existing = email ? DB.con.find(function(c){ return (c.email||'').toLowerCase()===email; })
+                           : DB.con.find(function(c){ return c.name===name; });
+      var validStatuses = ['lead','qualified','converted','closed'];
+      var status = validStatuses.indexOf(String(r['Status']||'').toLowerCase()) >= 0
+        ? String(r['Status']).toLowerCase() : 'lead';
+      var gdprBasis = (status === 'lead' || status === 'qualified') ? 'pre_contract' : 'legitimate_interests';
+      var rec = {
+        id: existing ? existing.id : uid(),
+        name: name || (existing ? existing.name : ''),
+        email: email || (existing ? existing.email : ''),
+        phone: String(r['Phone']||r['phone']||existing&&existing.phone||''),
+        company: String(r['Company']||r['company']||existing&&existing.company||''),
+        status: status,
+        source: String(r['Source']||r['source']||existing&&existing.source||'manual'),
+        enquirySummary: String(r['Enquiry Summary']||r['enquirySummary']||existing&&existing.enquirySummary||''),
+        notes: String(r['Notes']||r['notes']||existing&&existing.notes||''),
+        createdAt: existing ? existing.createdAt : (r['Created At']||now),
+        lastContactedAt: r['Last Contacted']||existing&&existing.lastContactedAt||now,
+        gdprBasis: gdprBasis,
+        enquiries: existing ? existing.enquiries : []
+      };
+      if (existing) { var i=DB.con.findIndex(function(c){return c.id===existing.id;}); DB.con[i]=rec; updated++; impLog('Updated contact: '+(name||email)); }
+      else { DB.con.push(rec); added++; }
+    });
+    sv(K.co, DB.con);
+    var msg = 'Contacts: '+added+' added, '+updated+' updated, '+skipped+' skipped';
+    G('imp-co-result').textContent = msg; impLog(msg); rCon();
   }
 
   else if (entity === 'ord') {
@@ -7111,7 +7294,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.48).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.52).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -7171,12 +7354,13 @@ var AI_SYSTEM_PROMPT = [
   'Every change to a line field is logged to that line\'s update history (who/what said it — buyer, supplier, AI, or operator — when, old value, new value, note), never silently overwritten. AI-proposed updates (via the update_order_line action) are always logged as pending and never change the live field until the operator clicks Confirm on that specific entry.',
   'Moving an Order Request to Quoted while any line still has qtyStatus "Unknown" shows a warning (does not block the save) — quoting against unresolved quantities is allowed but flagged.',
   'CSV import (v2.9.48): Import Data tab → Order Requests step. Rows sharing a Submission ID column become one Order Request with multiple lines. Contact is matched by email (case-insensitive) or auto-created as a lead-status Contact with source "webform". Re-importing an existing Submission ID only appends genuinely new lines (matched by category+item/spec) — never overwrites a line already touched by an operator.',
+  'Per-line gap check (v2.9.50): each Order Request line has a "Check gaps" button. Structural check (instant, no AI) flags any unset packing spec, base UOM, base qty, source country, or qtyStatus still "Unknown". Semantic check (AI-assisted, only runs if a Claude API key is configured) additionally flags ambiguous or inconsistent values (e.g. a vague item spec, an order volume that doesn\'t reconcile with base UOM/qty) and phrases each as a specific question to send the buyer/supplier. Manual trigger only — never runs automatically on save/import. Purely diagnostic: nothing is written to the line, no lineUpdates entry is created, and it does not change the existing Quoted-transition warning behavior. The semantic check\'s API payload is scoped to product/order fields only — never the linked Contact\'s name/email/phone or any lineUpdates history.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
   '1. Invoice #, Buyer, Address, Destination (country lookup), Date, Currency, Status',
   '2. Shipping: Freight Type, Port of Loading (UN/LOCODE lookup), Port of Discharge (UN/LOCODE lookup), Country of Origin (country lookup), Incoterm (Incoterms 2020 select — required), Payment Terms (controlled lookup — required)',
-  '3. Line Items: use Import from Library (preferred — pulls correct COGS) or quick-add form (no COGS link)',
+  '3. Line Items: use Import from Library (preferred — pulls correct COGS automatically) or quick-add form (enter Unit Cost manually — COGS is tracked correctly as long as a cost is entered; leaving Unit Cost at 0 is what causes COGS/profit to be understated for that line, v2.9.49).',
   '4. Charges: Local Freight, Insurance, Tax Rate (0% for zero-rated exports)',
   '5. Click Save Invoice — line items are NOT saved automatically. Always save before closing the modal.',
   'Statuses: Draft → Pro-forma → Sent → Partially Paid → Paid → Cancelled. CN Draft / CN Issued / CN Applied for credit notes.',
@@ -7276,7 +7460,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Known Quirks',
   '1. Always click Save Invoice before closing the modal — line items are lost if you close without saving.',
-  '2. Import from Library is preferred over quick-add — quick-add has no COGS link, breaks profit tracking.',
+  '2. Import from Library is preferred over quick-add for physical products — it pulls COGS automatically. Quick-add is fine for pass-through charges (freight, customs, etc.) as long as Unit Cost is entered; leaving it at 0 is what breaks profit tracking, not the absence of a library link itself.',
   '3. Do not enable auto-sync.',
   '4. Run Repair after every Sheets pull.',
   '5. Do not use both the Local Freight charge field AND a local freight line item — double-counts charges.',
@@ -7313,7 +7497,7 @@ var AI_SYSTEM_PROMPT = [
   'Dedup: saving a new contact with an email that already exists prompts to merge the enquiry into the existing record, or create a separate record anyway. Edit-path email changes are not deduped.',
   'Quote integration: "→ Quote" button on any contact row opens the New Quote modal pre-populated with the contact\'s name (Client field) and email (Notes field). Saving that quote automatically sets the contact status to Converted. Deleting the quote reverts the contact to Qualified.',
   'Enquiry log: each enquiry note is appended to the contact\'s enquiries[] array with timestamp and source. The count is shown in the list view. Individual enquiry entries are not shown in the edit modal.',
-  'Contacts sync to Google Sheets (st_co → "Contacts" sheet tab). syncAll() and pushAll() include the co entity; pullAll() merges Contacts on pull (Sheets wins for tracked fields, local-only records preserved, untracked fields like enquiries[] survive verbatim on a matched pull — v2.9.47). saveCon() triggers syncEnt("co") for real-time upsert. Import Data → Sheets → Contacts button pulls from the Contacts sheet.',
+  'Contacts sync to Google Sheets (st_co → "Contacts" sheet tab). syncAll() and pushAll() include the co entity; pullAll() merges Contacts on pull (Sheets wins for tracked fields, local-only records preserved, untracked fields like enquiries[] survive verbatim on a matched pull — v2.9.47). saveCon() triggers syncEnt("co") for real-time upsert. Import Data → Sheets → Contacts button pulls from the Contacts sheet. Contacts CSV upload (v2.9.51): Import Data tab → Contacts step. Matched by email if present, else exact name; unrecognized Status values default to "lead"; columns omitted on a re-upload preserve the existing contact\'s previously-saved values rather than blanking them.',
   '',
   '## Activity Event Log (DB.events)',
   'DB.events is a local-only array of operational event records stored in localStorage key st_ev. It is NOT synced to Google Sheets and is never transmitted externally.',
@@ -8285,6 +8469,7 @@ function doImport(e) {
     if (data.ord && Array.isArray(data.ord)) { DB.ord = data.ord; sv(K.ord, DB.ord); }
     seedAdHocBuyer();
     backfillRefNums();
+    backfillConIds();
     migrateLinkedPOIds();
     backfillOrderRequests();
     saveAll();
@@ -8782,6 +8967,22 @@ function cQteLine(line, qr, freightMode, totalCBM) {
   return { freight: freight, dgAmt: dgAmt, ins: ins, duty: duty, landed: landed };
 }
 
+function qteEffectiveMargin(line, quoteMarkup) {
+  var lm = line.markup;
+  return (lm !== undefined && lm !== null && lm !== '') ? +lm : +quoteMarkup;
+}
+
+function qteSellTotals(lines, lineCalcs, quoteMarkup, qr) {
+  var sellUSD = lines.reduce(function(sum, l, i) {
+    var m = qteEffectiveMargin(l, quoteMarkup);
+    return sum + lineCalcs[i].landed * (1 + m / 100);
+  }, 0);
+  var overhead = qr.originCharges + qr.destCharges + qr.fpmAdmin;
+  sellUSD += overhead; // SPEC-QTE-001: overhead is never marked up, added at cost
+  var sellGBP = sellUSD / qr.fxGBPUSD;
+  return { sellUSD: sellUSD, sellGBP: sellGBP, overhead: overhead };
+}
+
 function cQte(qt) {
   var qr = QR;
   var mode = qt.freightMode || 'LCL';
@@ -8789,12 +8990,10 @@ function cQte(qt) {
   var totalCBM = lines.reduce(function(s,l){ return s + (+l.cbm||0); }, 0);
   var lineCalcs = lines.map(function(l){ return cQteLine(l, qr, mode, totalCBM); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
-  var overhead = qr.originCharges + qr.destCharges + qr.fpmAdmin;
-  var quotedTotal = totalLanded + overhead;
   var markup = +qt.markup || 0;
-  var sellUSD = quotedTotal * (1 + markup / 100);
-  var sellGBP = sellUSD / qr.fxGBPUSD;
-  return { totalLanded: totalLanded, overhead: overhead, quotedTotal: quotedTotal, sellUSD: sellUSD, sellGBP: sellGBP, lineCalcs: lineCalcs };
+  var totals = qteSellTotals(lines, lineCalcs, markup, qr);
+  var quotedTotal = totalLanded + totals.overhead;
+  return { totalLanded: totalLanded, overhead: totals.overhead, quotedTotal: quotedTotal, sellUSD: totals.sellUSD, sellGBP: totals.sellGBP, lineCalcs: lineCalcs };
 }
 
 function rQte() {
@@ -8890,6 +9089,11 @@ function qlFld(rid, f) {
   return el.type === 'checkbox' ? el.checked : el.value;
 }
 
+function qlEffectiveMarkupInput(rid) {
+  var raw = qlFld(rid, 'mkp');
+  return raw === '' ? undefined : +raw;
+}
+
 function addQteLine() {
   cQL.push({ rid: uid(), supId:'', desc:'', qty:1, uom:'pcs', cost:0, cbm:0, dg:false, dutyPct:0 });
   rQLT();
@@ -8909,13 +9113,17 @@ function rQLT() {
     return;
   }
   var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
+  var quoteMarkup = G('qf-mkp') ? +G('qf-mkp').value : 15;
   var totalCBM = cQL.reduce(function(s,l){ return s+(+l.cbm||0); }, 0);
-  el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:900px;">'
-    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th>Landed</th><th>Note</th><th></th></tr></thead>'
+  el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:980px;">'
+    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th>Margin %</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
     + '<tbody>'
     + cQL.map(function(l){
         var calcR = cQteLine(l, QR, mode, totalCBM);
+        var effM = qteEffectiveMargin(l, quoteMarkup);
+        var sellP = calcR.landed * (1 + effM / 100);
         var hCount = l.priceHistory ? l.priceHistory.length : 0;
+        var mkpVal = (l.markup !== undefined && l.markup !== null) ? l.markup : '';
         return '<tr>'
           + '<td><select id="ql-supId-' + l.rid + '" style="font-size:.5rem;width:110px;" onchange="calcQte()">'
             + '<option value="">— Supplier —</option>'
@@ -8928,7 +9136,9 @@ function rQLT() {
           + '<td><input type="number" id="ql-cbm-' + l.rid + '" value="' + (+l.cbm||0) + '" min="0" step="0.001" style="font-size:.5rem;width:50px;" oninput="calcQte()"></td>'
           + '<td style="text-align:center;"><input type="checkbox" id="ql-dg-' + l.rid + '"' + (l.dg?' checked':'') + ' onchange="calcQte()"></td>'
           + '<td><input type="number" id="ql-dutyPct-' + l.rid + '" value="' + (+l.dutyPct||0) + '" min="0" max="100" step="0.5" style="font-size:.5rem;width:46px;" oninput="calcQte()"></td>'
+          + '<td><input type="number" id="ql-mkp-' + l.rid + '" value="' + mkpVal + '" placeholder="' + quoteMarkup + '" min="0" max="500" step="0.5" style="font-size:.5rem;width:50px;" oninput="calcQte()" title="Blank = inherit quote-level ' + quoteMarkup + '%"></td>'
           + '<td style="font-weight:600;">$' + fn(calcR.landed,0) + '</td>'
+          + '<td style="font-weight:600;color:var(--cr);">$' + fn(sellP,0) + '</td>'
           + '<td><input type="text" id="ql-note-' + l.rid + '" placeholder="Version note…" style="font-size:.46rem;width:88px;border:none;border-bottom:1px solid var(--ln);outline:none;"></td>'
           + '<td style="white-space:nowrap;">'
             + '<button onclick="toggleQteLineHistory(\'' + l.rid + '\')" style="font-size:.44rem;background:transparent;border:1px solid var(--ln);color:var(--m);padding:1px 5px;cursor:pointer;margin-right:2px;" title="Price history">&#128336;' + (hCount ? '&nbsp;' + hCount : '') + '</button>'
@@ -8936,7 +9146,7 @@ function rQLT() {
           + '</td>'
           + '</tr>'
           + '<tr id="ql-hist-row-' + l.rid + '" style="display:none;">'
-          + '<td colspan="11" style="padding:4px 8px 8px;background:#fafafa;">'
+          + '<td colspan="13" style="padding:4px 8px 8px;background:#fafafa;">'
             + '<div id="ql-hist-' + l.rid + '"></div>'
           + '</td>'
           + '</tr>';
@@ -8990,20 +9200,19 @@ function calcQte() {
   var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
   var markup = G('qf-mkp') ? +G('qf-mkp').value : 15;
   var totalCBM = cQL.reduce(function(s,l){ return s+(+qlFld(l.rid,'cbm')||0); }, 0);
-  var totalLanded = cQL.reduce(function(s,l){
-    var line = { cost:+qlFld(l.rid,'cost')||0, cbm:+qlFld(l.rid,'cbm')||0, dg:qlFld(l.rid,'dg'), dutyPct:+qlFld(l.rid,'dutyPct')||0 };
-    return s + cQteLine(line, QR, mode, totalCBM).landed;
-  }, 0);
-  var overhead = QR.originCharges + QR.destCharges + QR.fpmAdmin;
-  var sellUSD = (totalLanded + overhead) * (1 + markup/100);
-  var sellGBP = sellUSD / QR.fxGBPUSD;
+  var lines = cQL.map(function(l){
+    return { cost:+qlFld(l.rid,'cost')||0, cbm:+qlFld(l.rid,'cbm')||0, dg:qlFld(l.rid,'dg'), dutyPct:+qlFld(l.rid,'dutyPct')||0, markup: qlEffectiveMarkupInput(l.rid) };
+  });
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM); });
+  var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
+  var totals = qteSellTotals(lines, lineCalcs, markup, QR);
   if (G('qt-orig'))     G('qt-orig').textContent     = '$' + fn(QR.originCharges,0);
   if (G('qt-dest'))     G('qt-dest').textContent     = '$' + fn(QR.destCharges,0);
   if (G('qt-adm'))      G('qt-adm').textContent      = '$' + fn(QR.fpmAdmin,0);
   if (G('qt-landed'))   G('qt-landed').textContent   = '$' + fn(totalLanded,0);
   if (G('qt-mkp-disp')) G('qt-mkp-disp').textContent = markup + '%';
-  if (G('qt-sell-usd')) G('qt-sell-usd').textContent = fmt(sellUSD,'USD');
-  if (G('qt-sell-gbp')) G('qt-sell-gbp').textContent = '£' + fn(sellGBP,0);
+  if (G('qt-sell-usd')) G('qt-sell-usd').textContent = fmt(totals.sellUSD,'USD');
+  if (G('qt-sell-gbp')) G('qt-sell-gbp').textContent = '£' + fn(totals.sellGBP,0);
   calcFeasibility();
 }
 
@@ -9076,7 +9285,8 @@ function saveQte() {
       cost: +qlFld(l.rid,'cost')||0,
       cbm: +qlFld(l.rid,'cbm')||0,
       dg: qlFld(l.rid,'dg'),
-      dutyPct: +qlFld(l.rid,'dutyPct')||0
+      dutyPct: +qlFld(l.rid,'dutyPct')||0,
+      markup: qlEffectiveMarkupInput(l.rid)
     };
   });
   var totalCBM = lines.reduce(function(s,l){ return s+(l.cbm||0); }, 0);
@@ -9089,16 +9299,17 @@ function saveQte() {
     var history = existLine && existLine.priceHistory ? existLine.priceHistory.slice() : [];
     var lastV = history.length ? history[history.length-1] : null;
     var calcR = lineCalcs[i];
-    var sellP = +(calcR.landed * (1 + markup/100)).toFixed(2);
-    var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== markup;
+    var effM = qteEffectiveMargin(l, markup);
+    var sellP = +(calcR.landed * (1 + effM/100)).toFixed(2);
+    var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== effM;
     if (changed) {
-      history.push({ v: lastV ? lastV.v+1 : 1, ts: new Date().toISOString(), cost: l.cost, dutyPct: l.dutyPct, markup: markup, landed: +fn(calcR.landed,2), sellPrice: sellP, note: qlFld(l.rid,'note') });
+      history.push({ v: lastV ? lastV.v+1 : 1, ts: new Date().toISOString(), cost: l.cost, dutyPct: l.dutyPct, markup: effM, landed: +fn(calcR.landed,2), sellPrice: sellP, note: qlFld(l.rid,'note') });
     }
     l.priceHistory = history;
   });
-  var overhead = QR.originCharges + QR.destCharges + QR.fpmAdmin;
-  var sellUSD = (totalLanded + overhead) * (1 + markup/100);
-  var sellGBP = sellUSD / QR.fxGBPUSD;
+  var totals = qteSellTotals(lines, lineCalcs, markup, QR);
+  var sellUSD = totals.sellUSD;
+  var sellGBP = totals.sellGBP;
   var wasAccepted = existQ && existQ.status === 'Accepted';
   var isAccepted  = G('qf-st').value === 'Accepted';
   var qt = {
@@ -10014,6 +10225,7 @@ function initApp() {
     repairCalcFields();
     seedAdHocBuyer();
     backfillRefNums();
+    backfillConIds();
     migrateLinkedPOIds();
     backfillOrderRequests();
     if (SS.url) {

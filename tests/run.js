@@ -45,7 +45,22 @@ const mockSession = { getItem: () => null, setItem: () => {}, removeItem: () => 
 // then delete/reset it afterward. Any entity not present in the map falls back to the old static
 // default ({status:'ok', records:[]}), matching prior test behavior for every existing test.
 let _mockPullResponses = {};
+// Mock for ordCheckLineGapsSemantic()'s direct Anthropic call (SPEC-ORD-005).
+// Set _mockAnthropic to one of: 'reject' (network error), {status:<non-200>},
+// or {status:200, text:<raw response body text>} before calling the function under test.
+let _mockAnthropic = null;
+let _lastAnthropicBody = null;
 function mockFetch(url, opts) {
+  if (typeof url === 'string' && url.indexOf('api.anthropic.com') >= 0) {
+    _lastAnthropicBody = JSON.parse((opts && opts.body) || '{}');
+    if (_mockAnthropic === 'reject') return Promise.reject(new Error('network error'));
+    var m = _mockAnthropic || { status: 200, text: '[]' };
+    return Promise.resolve({
+      ok: m.status === 200,
+      status: m.status,
+      json: () => Promise.resolve({ content: [{ type: 'text', text: m.text || '' }] }),
+    });
+  }
   var body = {};
   try { body = JSON.parse((opts && opts.body) || '{}'); } catch (e) {}
   var resp = (body.action === 'pull_entity' && _mockPullResponses[body.entity])
@@ -694,17 +709,21 @@ test('cQteLine calculates landed cost correctly (LCL)', () => {
   assert(Math.abs(r.landed - 723.35) < 0.001, 'landed total correct');
 });
 
-test('cQte sums lines and adds overheads correctly', () => {
+test('cQte sums lines and adds overheads correctly (SPEC-QTE-001: overhead never marked up)', () => {
   var savedQR = ctx.QR;
   ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
   var qt = { freightMode:'LCL', markup:20, lines:[{ cost:500, cbm:2, dg:false, dutyPct:10 }] };
-  // line landed=723.35, overhead=675, quotedTotal=1398.35, sellUSD=1678.02
+  // line landed=723.35, overhead=675, quotedTotal=1398.35 (unchanged definitions)
+  // sellUSD = landed*(1+markup/100) + overhead(unmarked-up) = 723.35*1.20 + 675 = 1543.02
+  // (pre-SPEC-QTE-001 this was quotedTotal*1.20 = 1678.02 — the 135 difference is
+  // exactly overhead's old 20% markup, 675*0.20=135, confirming the delta is purely
+  // the documented overhead-treatment change and nothing else moved)
   var c = ctx.cQte(qt);
   assert(Math.abs(c.totalLanded - 723.35) < 0.01, 'totalLanded ≈ 723.35');
   assertEqual(c.overhead, 675, 'overhead = originCharges+destCharges+fpmAdmin');
   assert(Math.abs(c.quotedTotal - 1398.35) < 0.01, 'quotedTotal = landed+overhead');
-  assert(Math.abs(c.sellUSD - 1678.02) < 0.01, 'sellUSD = quotedTotal*(1+markup/100)');
-  assert(Math.abs(c.sellGBP - (1678.02/1.27)) < 0.5, 'sellGBP = sellUSD/fxGBPUSD');
+  assert(Math.abs(c.sellUSD - 1543.02) < 0.01, 'sellUSD = landed*(1+effective margin) + overhead unmarked-up');
+  assert(Math.abs(c.sellGBP - (1543.02/1.27)) < 0.5, 'sellGBP = sellUSD/fxGBPUSD');
   ctx.QR = savedQR;
 });
 
@@ -840,6 +859,189 @@ test('version sellPrice equals landed * (1 + markup/100)', () => {
   const expected = +(v.landed * 1.25).toFixed(2);
   assertEqual(v.sellPrice, expected, 'sellPrice = landed * (1 + 0.25)');
   assert(v.landed > 0, 'landed is positive');
+});
+
+// ── Per-line quote margin (SPEC-QTE-001) ────────────────────────
+console.log('\nPer-line quote margin (SPEC-QTE-001)');
+
+test('qteEffectiveMargin: line with no markup key inherits quote markup', () => {
+  assertEqual(ctx.qteEffectiveMargin({}, 15), 15, 'inherits quote markup when unset');
+});
+
+test('qteEffectiveMargin: line with markup 0 returns 0, not the quote markup', () => {
+  assertEqual(ctx.qteEffectiveMargin({ markup: 0 }, 15), 0, 'explicit 0 override is not collapsed to inherit');
+});
+
+test('qteEffectiveMargin: line with markup 12.5 returns 12.5 regardless of quote markup', () => {
+  assertEqual(ctx.qteEffectiveMargin({ markup: 12.5 }, 20), 12.5, 'explicit override wins over quote markup');
+});
+
+test('qlEffectiveMarkupInput: blank input returns undefined (inherit)', () => {
+  mockEl('ql-mkp-qlm1').value = '';
+  assertEqual(ctx.qlEffectiveMarkupInput('qlm1'), undefined, 'blank field means inherit');
+});
+
+test('qlEffectiveMarkupInput: explicit "0" returns the number 0, not undefined', () => {
+  mockEl('ql-mkp-qlm2').value = '0';
+  assertEqual(ctx.qlEffectiveMarkupInput('qlm2'), 0, 'explicit zero is preserved, not collapsed to inherit');
+});
+
+test('qteSellTotals: a 0-margin line sells at exactly landed cost; an inheriting line uses quote markup', () => {
+  var savedQR = ctx.QR;
+  ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:0, destCharges:0, fpmAdmin:0, fxGBPUSD:1.27 };
+  var lines = [
+    { cost:500, cbm:0, dg:false, dutyPct:0, markup:0 },      // pass-through line
+    { cost:500, cbm:0, dg:false, dutyPct:0 }                 // inherits quote markup
+  ];
+  var lineCalcs = lines.map(function(l){ return ctx.cQteLine(l, ctx.QR, 'LCL', 0); });
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 20, ctx.QR);
+  // both lines landed = cost + ins = 500 + 500*0.005 = 502.5 (no freight/duty at cbm=0/dutyPct=0)
+  var landed = lineCalcs[0].landed;
+  var expected = landed * 1 /* 0% margin */ + landed * 1.20 /* inherits 20% */;
+  assert(Math.abs(totals.sellUSD - expected) < 0.01, '0-margin line contributes at cost, inheriting line contributes at quote markup');
+  ctx.QR = savedQR;
+});
+
+test('qteSellTotals: overhead is added exactly once, never scaled by any margin', () => {
+  var savedQR = ctx.QR;
+  ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
+  var lines = [{ cost:500, cbm:0, dg:false, dutyPct:0 }];
+  var lineCalcs = lines.map(function(l){ return ctx.cQteLine(l, ctx.QR, 'LCL', 0); });
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 50, ctx.QR); // deliberately large markup
+  assertEqual(totals.overhead, 675, 'overhead = originCharges+destCharges+fpmAdmin, unscaled');
+  var expectedSell = lineCalcs[0].landed * 1.50 + 675;
+  assert(Math.abs(totals.sellUSD - expectedSell) < 0.01, 'overhead component is not multiplied by (1+markup/100)');
+  ctx.QR = savedQR;
+});
+
+test('saveQte: a line-level override change creates a new version; an unrelated sibling override does not (AC-003, direction 1)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [
+    { rid:'ac3a-1', supId:'', desc:'Line A', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 },
+    { rid:'ac3a-2', supId:'', desc:'Line B', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }
+  ];
+  mockEl('qf-num').value = 'QTE-0002'; mockEl('qf-client').value = 'AC3 Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-cur').value = 'USD'; mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '15'; mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  ['ac3a-1','ac3a-2'].forEach(function(rid){
+    mockEl('ql-supId-'+rid).value=''; mockEl('ql-desc-'+rid).value='Line'; mockEl('ql-qty-'+rid).value='1';
+    mockEl('ql-uom-'+rid).value='pcs'; mockEl('ql-cost-'+rid).value='500'; mockEl('ql-cbm-'+rid).value='2';
+    mockEl('ql-dg-'+rid).checked=false; mockEl('ql-dutyPct-'+rid).value='0'; mockEl('ql-note-'+rid).value='';
+  });
+  mockEl('ql-mkp-ac3a-1').value = '10';
+  mockEl('ql-mkp-ac3a-2').value = '25';
+  ctx.saveQte();
+
+  var qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  mockEl('ql-mkp-ac3a-1').value = '12'; // only line A's override changes
+  mockEl('ql-note-ac3a-1').value = 'Margin adjusted for line A only';
+  ctx.saveQte();
+
+  var lineA = ctx.DB.qt[0].lines.find(function(l){ return l.rid === 'ac3a-1'; });
+  var lineB = ctx.DB.qt[0].lines.find(function(l){ return l.rid === 'ac3a-2'; });
+  assertEqual(lineA.priceHistory.length, 2, 'line A gets a new version when its own override changes');
+  assertEqual(lineB.priceHistory.length, 1, 'line B (unrelated, unchanged override) does not get a spurious version');
+});
+
+test('saveQte: a quote-level default change versions an inheriting line but not an overridden sibling (AC-003, direction 2)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [
+    { rid:'ac3b-1', supId:'', desc:'Line A', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 },
+    { rid:'ac3b-2', supId:'', desc:'Line B', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }
+  ];
+  mockEl('qf-num').value = 'QTE-0003'; mockEl('qf-client').value = 'AC3 Client 2'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-cur').value = 'USD'; mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '15'; mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  ['ac3b-1','ac3b-2'].forEach(function(rid){
+    mockEl('ql-supId-'+rid).value=''; mockEl('ql-desc-'+rid).value='Line'; mockEl('ql-qty-'+rid).value='1';
+    mockEl('ql-uom-'+rid).value='pcs'; mockEl('ql-cost-'+rid).value='500'; mockEl('ql-cbm-'+rid).value='2';
+    mockEl('ql-dg-'+rid).checked=false; mockEl('ql-dutyPct-'+rid).value='0'; mockEl('ql-note-'+rid).value='';
+  });
+  mockEl('ql-mkp-ac3b-1').value = '';   // Line A inherits quote-level default
+  mockEl('ql-mkp-ac3b-2').value = '30'; // Line B has its own override
+  ctx.saveQte();
+
+  var qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  mockEl('qf-mkp').value = '18'; // quote-level default changes 15→18
+  mockEl('ql-mkp-ac3b-1').value = '';
+  mockEl('ql-mkp-ac3b-2').value = '30';
+  ctx.saveQte();
+
+  var lineA = ctx.DB.qt[0].lines.find(function(l){ return l.rid === 'ac3b-1'; });
+  var lineB = ctx.DB.qt[0].lines.find(function(l){ return l.rid === 'ac3b-2'; });
+  assertEqual(lineA.priceHistory.length, 2, 'inheriting line gets a new version when the quote-level default changes (its effective margin genuinely changed)');
+  assertEqual(lineB.priceHistory.length, 1, 'overridden line is unaffected by the quote-level change');
+});
+
+test('saveQte: clearing a line-level override reverts that line to the quote-level default (AC-004)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'ac4', supId:'', desc:'Line', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  mockEl('qf-num').value = 'QTE-0004'; mockEl('qf-client').value = 'AC4 Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-cur').value = 'USD'; mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '15'; mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  mockEl('ql-supId-ac4').value=''; mockEl('ql-desc-ac4').value='Line'; mockEl('ql-qty-ac4').value='1';
+  mockEl('ql-uom-ac4').value='pcs'; mockEl('ql-cost-ac4').value='500'; mockEl('ql-cbm-ac4').value='2';
+  mockEl('ql-dg-ac4').checked=false; mockEl('ql-dutyPct-ac4').value='0'; mockEl('ql-note-ac4').value='';
+  mockEl('ql-mkp-ac4').value = '5'; // explicit override
+  ctx.saveQte();
+  assertEqual(ctx.DB.qt[0].lines[0].markup, 5, 'override saved as 5');
+
+  var qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  mockEl('ql-mkp-ac4').value = ''; // operator clears the override
+  ctx.saveQte();
+
+  var line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.markup, undefined, 'cleared override is persisted as undefined, not 0 or the stale 5');
+  var latestV = line.priceHistory[line.priceHistory.length - 1];
+  assertEqual(latestV.markup, 15, 'effective margin in the new version reflects the quote-level default, not the stale override');
+});
+
+test('cQte/saveQte backward compatibility: pre-existing quote with no line markup field recomputes with only the documented overhead delta (AC-002)', () => {
+  resetDB();
+  var savedQR = ctx.QR;
+  ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
+  // Simulate a v2.9.51-era saved quote: line has no markup key at all.
+  var legacyQt = {
+    id: 'legacy-qte-1', num: 'QTE-LEGACY', client: 'Legacy Client', dt: '2026-04-01', validUntil: '',
+    currency: 'USD', freightMode: 'LCL', markup: 20, status: 'Draft', notes: '', linkedPOIds: [], sourceContactId: '',
+    lines: [{ rid: 'legacy-l1', supId: '', desc: 'Legacy line', qty: 1, uom: 'pcs', cost: 500, cbm: 2, dg: false, dutyPct: 10, priceHistory: [] }]
+  };
+  ctx.DB.qt = [legacyQt];
+
+  var before = ctx.cQte(legacyQt);
+  var oldStyleSellUSD = before.quotedTotal * (1 + legacyQt.markup / 100); // the pre-SPEC-QTE-001 formula, computed independently here
+  var expectedDelta = before.overhead * (legacyQt.markup / 100); // overhead's old markup contribution, now removed
+  assert(Math.abs((oldStyleSellUSD - before.sellUSD) - expectedDelta) < 0.01, 'sellUSD differs from the old formula by exactly overhead\'s former markup contribution, nothing else');
+
+  // Per-line landed/sell figures are unaffected by the overhead change — only the quote-wide total moved.
+  var perLineSellUnchanged = before.lineCalcs[0].landed * (1 + legacyQt.markup / 100);
+  var expectedPerLineSell = before.lineCalcs[0].landed * (1 + ctx.qteEffectiveMargin(legacyQt.lines[0], legacyQt.markup) / 100);
+  assertEqual(perLineSellUnchanged, expectedPerLineSell, 'per-line sell price formula is identical pre/post — only overhead treatment moved');
+  ctx.QR = savedQR;
+});
+
+test('rQLT: renders blank value for a line with no markup key, and "0" for an explicit markup:0 override', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [
+    { rid:'dom1', supId:'', desc:'No override', qty:1, uom:'pcs', cost:100, cbm:0, dg:false, dutyPct:0 },
+    { rid:'dom2', supId:'', desc:'Zero override', qty:1, uom:'pcs', cost:100, cbm:0, dg:false, dutyPct:0, markup:0 }
+  ];
+  mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '15';
+  ctx.rQLT();
+  var rendered = mockEl('qt-lines').innerHTML;
+  assertContains(rendered, 'id="ql-mkp-dom1" value=""', 'no-override line renders a blank margin input, not "0"');
+  assertContains(rendered, 'id="ql-mkp-dom2" value="0"', 'explicit markup:0 renders as "0", distinct from blank');
 });
 
 // ── qteToPoConvert ─────────────────────────────────────────────
@@ -1529,6 +1731,63 @@ testAsync('pullAll integration — sup/payments/co still merge correctly by id (
   assertEqual(ctx.DB.payments[0].type, 'buyer_payment', 'untracked type survives');
 });
 
+// ── Invoice quick-add COGS warning (SPEC-INV-001) ───────────────
+console.log('\nInvoice quick-add COGS warning (SPEC-INV-001)');
+
+test('_updQaWarn — no lid, unitCost 0 → counted', function() {
+  resetDB();
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:0 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'block');
+  assertEqual(mockEl('inv-qa-warn-count').textContent, 1);
+});
+
+test('_updQaWarn — no lid, unitCost > 0 → not counted (INV10032 regression case)', function() {
+  resetDB();
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'none');
+});
+
+test('_updQaWarn — lid resolves to a real DB.li record → not counted regardless of unitCost', function() {
+  resetDB();
+  ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Widget', cost:10, price:12 }];
+  ctx.cIL = [{ rid:'r1', lid:'l1', desc:'Widget', qty:1, up:12, unitCost:0 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'none');
+});
+
+test('_updQaWarn — dangling lid (no matching DB.li record), unitCost 0 → counted', function() {
+  resetDB();
+  ctx.DB.li = [];
+  ctx.cIL = [{ rid:'r1', lid:'stale-id-no-longer-exists', desc:'Widget', qty:1, up:12, unitCost:0 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'block');
+  assertEqual(mockEl('inv-qa-warn-count').textContent, 1);
+});
+
+test('_updQaWarn — dangling lid, unitCost > 0 → not counted', function() {
+  resetDB();
+  ctx.DB.li = [];
+  ctx.cIL = [{ rid:'r1', lid:'stale-id-no-longer-exists', desc:'Widget', qty:1, up:262, unitCost:262 }];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'none');
+});
+
+test('_updQaWarn — mixed invoice counts only the genuinely at-risk lines', function() {
+  resetDB();
+  ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Widget', cost:10, price:12 }];
+  ctx.cIL = [
+    { rid:'r1', lid:'l1', desc:'Widget', qty:1, up:12, unitCost:0 },              // resolved — safe
+    { rid:'r2', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 },     // no lid but cost present — safe
+    { rid:'r3', lid:'', desc:'Mystery Charge', qty:1, up:100, unitCost:0 },        // no lid, no cost — at risk
+    { rid:'r4', lid:'stale', desc:'Old Item', qty:1, up:50, unitCost:0 }           // dangling lid, no cost — at risk
+  ];
+  ctx._updQaWarn();
+  assertEqual(mockEl('inv-qa-warn').style.display, 'block');
+  assertEqual(mockEl('inv-qa-warn-count').textContent, 2);
+});
+
 // ── Order Request CSV import (SPEC-ORD-003) ────────────────────
 console.log('\nOrder Request CSV import (SPEC-ORD-003)');
 
@@ -1629,6 +1888,90 @@ test('processImport ord — Qty Status values map correctly, unrecognised/blank 
   assertEqual(lines[1].qtyStatus, 'Confirmed');
   assertEqual(lines[2].qtyStatus, 'Unknown');
   assertEqual(lines[3].qtyStatus, 'Unknown');
+});
+
+// ── Contacts CSV upload (SPEC-CON-002) ──────────────────────────
+console.log('\nContacts CSV upload (SPEC-CON-002)');
+
+test('processImport co: fresh contact row creates one new DB.con record with fields mapped', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Phone,Company,Status,Source,Enquiry Summary,Notes\nJane Buyer,jane@example.com,+1246,Island Fresh,qualified,manual,Interested in grapes,Follow up soon\n');
+  assertEqual(ctx.DB.con.length, 1);
+  var rec = ctx.DB.con[0];
+  assertEqual(rec.name, 'Jane Buyer');
+  assertEqual(rec.email, 'jane@example.com');
+  assertEqual(rec.phone, '+1246');
+  assertEqual(rec.company, 'Island Fresh');
+  assertEqual(rec.status, 'qualified');
+  assertEqual(rec.source, 'manual');
+  assertEqual(rec.enquirySummary, 'Interested in grapes');
+  assertEqual(rec.notes, 'Follow up soon');
+  assertEqual(rec.gdprBasis, 'pre_contract');
+});
+
+test('processImport co: re-uploading same email updates, not duplicates', () => {
+  resetDB();
+  var csv = 'Name,Email\nJane Buyer,jane@example.com\n';
+  ctx.processImport('co', csv);
+  ctx.processImport('co', csv);
+  assertEqual(ctx.DB.con.length, 1, 'no duplicate created on re-upload');
+});
+
+test('processImport co: email match takes priority over name match', () => {
+  resetDB();
+  ctx.DB.con = [
+    { id:'c1', name:'Jane Buyer', email:'old@example.com', phone:'', company:'', status:'lead', source:'manual', enquirySummary:'', notes:'', createdAt:'x', lastContactedAt:'x', gdprBasis:'pre_contract', enquiries:[] }
+  ];
+  ctx.processImport('co', 'Name,Email\nJane Buyer,new@example.com\n');
+  assertEqual(ctx.DB.con.length, 2, 'email not matching any existing contact creates a new record, even though name matches an existing one');
+});
+
+test('processImport co: row with no Name and no Email is skipped', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Notes\n,,just some notes\n');
+  assertEqual(ctx.DB.con.length, 0);
+});
+
+test('processImport co: invalid Status defaults to lead', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Status\nJane Buyer,jane@example.com,Prospect\n');
+  assertEqual(ctx.DB.con[0].status, 'lead');
+});
+
+test('processImport co: re-upload omitting Notes preserves existing notes value', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Notes\nJane Buyer,jane@example.com,Original note\n');
+  ctx.processImport('co', 'Name,Email\nJane Buyer,jane@example.com\n');
+  assertEqual(ctx.DB.con[0].notes, 'Original note', 'notes preserved when column omitted on re-upload');
+});
+
+test('TEMPLATES.co headers match exactly what the co import branch reads', () => {
+  var allowedKeys = ['Name','Email','Phone','Company','Status','Source','Enquiry Summary','Notes'];
+  assertEqual(ctx.TEMPLATES.co.headers.slice().sort().join(','), allowedKeys.slice().sort().join(','));
+});
+
+test('processImport co: imp-co-result message matches standard added/updated/skipped format', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email\nJane Buyer,jane@example.com\n');
+  assertEqual(mockEl('imp-co-result').textContent, 'Contacts: 1 added, 0 updated, 0 skipped');
+});
+
+test('processImport co branch calls rCon() to refresh the live view', () => {
+  resetDB();
+  var called = false;
+  var origRCon = ctx.rCon;
+  ctx.rCon = function(){ called = true; };
+  ctx.processImport('co', 'Name,Email\nTest Contact,test@example.com\n');
+  assert(called, 'rCon() invoked after a co import');
+  ctx.rCon = origRCon;
+});
+
+test('processImport co branch: Created At / Last Contacted columns populate on a new contact', () => {
+  resetDB();
+  ctx.processImport('co', 'Name,Email,Created At,Last Contacted\nTest Contact,test2@example.com,2024-01-01,2024-06-01\n');
+  var rec = ctx.DB.con.find(function(c){ return c.email === 'test2@example.com'; });
+  assertEqual(rec.createdAt, '2024-01-01', 'createdAt populated from Created At column, not defaulted to now');
+  assertEqual(rec.lastContactedAt, '2024-06-01', 'lastContactedAt populated from Last Contacted column, not defaulted to now');
 });
 
 // ── Quote approval audit trail (SPEC-ORD-003) ───────────────────
@@ -4663,6 +5006,99 @@ test('delCon: nulls contactId on linked Order Requests rather than leaving a dan
   assertEqual(ctx.DB.ord[0].contactId, null, 'contactId nulled, not left dangling');
 });
 
+// ── Contact id backfill (SPEC-CON-003) ──────────────────────────
+console.log('\nContact id backfill (SPEC-CON-003)');
+
+test('backfillConIds: record with id undefined is assigned a real id', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Nameless', status:'lead', source:'manual', gdprBasis:'pre_contract', createdAt:'', lastContactedAt:'', notes:'', phone:'', company:'', email:'', enquiries:[] }];
+  ctx.backfillConIds();
+  assert(!!ctx.DB.con[0].id, 'id assigned');
+  assertEqual(typeof ctx.DB.con[0].id, 'string');
+});
+
+test('backfillConIds: record with id "" is assigned a real id', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'', name:'Blank Id', status:'lead' }];
+  ctx.backfillConIds();
+  assert(!!ctx.DB.con[0].id, 'id assigned for empty-string id');
+});
+
+test('backfillConIds: record with a real existing id is left unchanged', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Has Id', status:'lead' }];
+  ctx.backfillConIds();
+  assertEqual(ctx.DB.con[0].id, 'c1', 'existing id untouched');
+});
+
+test('backfillConIds: two records missing id in one run each get distinct ids', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'A', status:'lead' }, { name:'B', status:'lead' }];
+  ctx.backfillConIds();
+  assert(!!ctx.DB.con[0].id && !!ctx.DB.con[1].id, 'both assigned');
+  assert(ctx.DB.con[0].id !== ctx.DB.con[1].id, 'distinct ids');
+});
+
+test('backfillConIds: no sv() call when nothing needed backfilling', () => {
+  resetDB();
+  ctx.DB.con = [{ id:'c1', name:'Has Id', status:'lead' }];
+  var svCalled = false;
+  var origSv = ctx.sv;
+  ctx.sv = function(k, v){ if (k === ctx.K.co) svCalled = true; origSv(k, v); };
+  ctx.backfillConIds();
+  assert(!svCalled, 'sv(K.co) not called when no record needed backfilling');
+  ctx.sv = origSv;
+});
+
+test('backfillConIds: sv() called when a record was backfilled', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Nameless', status:'lead' }];
+  var svCalled = false;
+  var origSv = ctx.sv;
+  ctx.sv = function(k, v){ if (k === ctx.K.co) svCalled = true; origSv(k, v); };
+  ctx.backfillConIds();
+  assert(svCalled, 'sv(K.co) called when a record was backfilled');
+  ctx.sv = origSv;
+});
+
+test('backfillConIds: after backfill, delCon() successfully removes the record (regression case)', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Was Broken', status:'lead' }];
+  ctx.backfillConIds();
+  var newId = ctx.DB.con[0].id;
+  ctx.confirm = function(){ return true; };
+  ctx.rCon = function(){};
+  ctx.delCon(newId);
+  assertEqual(ctx.DB.con.length, 0, 'record deletable after backfill');
+});
+
+test('backfillConIds: after backfill, editCon() successfully locates the record (regression case)', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Was Broken', status:'lead' }];
+  ctx.backfillConIds();
+  var newId = ctx.DB.con[0].id;
+  ctx.editCon(newId);
+  assertEqual(ctx.EI.co, newId, 'editCon locates and opens the backfilled record');
+});
+
+test('backfillConIds: DB.ord records are untouched (DB.con-only scope)', () => {
+  resetDB();
+  ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'New', actions:[] }];
+  ctx.DB.con = [{ id:'c1', name:'Has Id', status:'lead' }];
+  var before = JSON.stringify(ctx.DB.ord);
+  ctx.backfillConIds();
+  assertEqual(JSON.stringify(ctx.DB.ord), before, 'DB.ord unchanged by backfillConIds');
+});
+
+test('backfillOrderRequests called standalone (no prior backfillConIds) never writes contactId: undefined (ordering-hazard regression)', () => {
+  resetDB();
+  ctx.DB.con = [{ name:'Nameless Enquirer', status:'lead', enquiries:[{ id:'e1', ts:'2026-01-01T00:00:00.000Z', summary:'Interested in widgets' }] }];
+  ctx.backfillOrderRequests();
+  assertEqual(ctx.DB.ord.length, 1, 'Order Request backfilled');
+  assert(!!ctx.DB.ord[0].contactId, 'contactId is a real backfilled id, never undefined/blank');
+  assertEqual(ctx.DB.ord[0].contactId, ctx.DB.con[0].id, 'contactId matches the now-backfilled contact id');
+});
+
 // ── Order Request line items (SPEC-ORD-002) ─────────────────────
 console.log('\nOrder Request line items — SPEC-ORD-002');
 
@@ -4811,6 +5247,112 @@ test('Resave-heals-missing-lines regression: existing.lines || [] on a lines-les
   ctx.saveOrdFromForm();
   assert(Array.isArray(ctx.DB.ord[0].lines), 'lines healed to a real array on ordinary resave');
   assertEqual(ctx.DB.ord[0].lines.length, 0, 'healed to empty, not populated from nowhere');
+});
+
+// ── Order Request line gap detection (SPEC-ORD-005) ─────────────
+console.log('\nOrder Request line gap detection (SPEC-ORD-005)');
+
+test('ordLineGaps: all 5 fields unset → all 5 gaps returned', () => {
+  var line = _ordLineFixture({ packingSpec:'', baseUom:'', baseQty:null, sourceCountry:'', qtyStatus:'Unknown' });
+  var gaps = ctx.ordLineGaps(line);
+  assertEqual(gaps.length, 5, 'all 5 gaps flagged');
+});
+
+test('ordLineGaps: fully populated, Confirmed → empty array', () => {
+  var line = _ordLineFixture({ packingSpec:'5kg boxes', baseUom:'kg', baseQty:500, sourceCountry:'China', qtyStatus:'Confirmed' });
+  var gaps = ctx.ordLineGaps(line);
+  assertEqual(gaps.length, 0, 'no gaps on a fully-populated line');
+});
+
+test('ordLineGaps: baseQty 0 is a valid quantity, not a gap', () => {
+  var line = _ordLineFixture({ packingSpec:'boxes', baseUom:'kg', baseQty:0, sourceCountry:'China', qtyStatus:'Confirmed' });
+  var gaps = ctx.ordLineGaps(line);
+  assert(!gaps.some(function(g){ return g.field === 'baseQty'; }), 'baseQty: 0 is not flagged as unset');
+});
+
+test('ordCheckLineGapsSemantic: no AI.key configured → resolves null, no fetch call', async () => {
+  ctx.AI = { key: '' };
+  ctx._lastAnthropicBody = null;
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result, null, 'resolves null with no key');
+  assertEqual(ctx._lastAnthropicBody, null, 'no fetch call made');
+});
+
+test('ordCheckLineGapsSemantic: network error → resolves null, no thrown exception', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = 'reject';
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result, null, 'resolves null on network error');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGapsSemantic: non-200 response → resolves null', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = { status: 500, text: '' };
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result, null, 'resolves null on non-200');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGapsSemantic: malformed (non-JSON-array) response text → resolves null', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = { status: 200, text: 'not valid json {' };
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result, null, 'resolves null on malformed response');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGapsSemantic: well-formed response → resolves parsed array', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = { status: 200, text: '[{"issue":"vague spec","question":"Can you clarify the item spec?"}]' };
+  var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
+  assertEqual(result.length, 1, 'one flagged item returned');
+  assertEqual(result[0].issue, 'vague spec');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGapsSemantic: payload sent to Anthropic contains only the 10 scoped fields — no PII', async () => {
+  ctx.AI = { key: 'test-key' };
+  ctx._mockAnthropic = { status: 200, text: '[]' };
+  var line = _ordLineFixture({ id: 'l1' });
+  await ctx.ordCheckLineGapsSemantic(line);
+  var sentPayload = JSON.parse(ctx._lastAnthropicBody.messages[0].content);
+  var allowedFields = ['category','itemSpec','orderVolumeQty','orderVolumeUnit','packingSpec','baseUom','baseQty','sourceCountry','variantOption','qtyStatus'];
+  assertEqual(Object.keys(sentPayload).sort().join(','), allowedFields.slice().sort().join(','), 'payload contains exactly the scoped fields');
+  assert(!('contactId' in sentPayload), 'contactId never sent');
+  assert(!('id' in sentPayload), 'line id never sent');
+  assert(!('lineUpdates' in sentPayload), 'lineUpdates never sent');
+  ctx._mockAnthropic = null;
+});
+
+test('ordCheckLineGaps: triggering does not mutate DB.ord (no persistence)', async () => {
+  resetDB();
+  ctx.AI = { key: '' };
+  var ord = { id:'o1', num:'ORD-0001', contactId:null, stage:'New', actions:[], lines:[ _ordLineFixture() ] };
+  ctx.DB.ord = [ord];
+  ctx.EI.ord = 'o1';
+  var before = JSON.stringify(ctx.DB.ord);
+  ctx.ordCheckLineGaps('l1');
+  await Promise.resolve().then(function(){}).then(function(){});
+  assertEqual(JSON.stringify(ctx.DB.ord), before, 'DB.ord unchanged by a gap-check trigger');
+});
+
+test('ordCheckLineGaps: re-triggering reflects current field state, not stale prior output', async () => {
+  resetDB();
+  ctx.AI = { key: '' };
+  var line = _ordLineFixture({ packingSpec: '' });
+  var ord = { id:'o1', num:'ORD-0001', contactId:null, stage:'New', actions:[], lines:[ line ] };
+  ctx.DB.ord = [ord];
+  ctx.EI.ord = 'o1';
+  ctx.ordCheckLineGaps('l1');
+  await Promise.resolve().then(function(){}).then(function(){});
+  var firstPanel = mockEl('ord-gapchk-l1').innerHTML;
+  assert(firstPanel.indexOf('Packing spec') >= 0, 'first check flags missing packing spec');
+  line.packingSpec = '5kg boxes';
+  ctx.ordCheckLineGaps('l1');
+  await Promise.resolve().then(function(){}).then(function(){});
+  var secondPanel = mockEl('ord-gapchk-l1').innerHTML;
+  assert(secondPanel.indexOf('Packing spec') < 0, 'second check reflects the field now being set, not the stale first result');
 });
 
 // ── DISPLAY CURRENCY (SPEC-CUR-001) ─────────────────────────────
