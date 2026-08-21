@@ -3686,13 +3686,13 @@ test('AC-2: unlinkSupCon nulls supplierId and clears role, contact preserved', f
   assertEqual(ctx.DB.con.length, 1, 'contact preserved');
 });
 
-test('AC-5: delSup nulls supplierId on linked contacts and preserves them', function() {
+testAsync('AC-5: delSup nulls supplierId on linked contacts and preserves them', async function() {
   resetDB();
   ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
   ctx.DB.con.push({ id: 'C1', name: 'Alice', email: 'alice@example.com', supplierId: 'S1', role: 'supplier_contact', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
   ctx.DB.con.push({ id: 'C2', name: 'Bob', email: 'bob@example.com', supplierId: null, role: '', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
   ctx.confirm = function(){ return true; };
-  ctx.delSup('S1');
+  await ctx.delSup('S1');
   assertEqual(ctx.DB.con.length, 2, 'both contacts preserved');
   assertEqual(ctx.DB.con[0].supplierId, null, 'C1 supplierId nulled');
   assertEqual(ctx.DB.con[0].role, '', 'C1 role cleared');
@@ -4345,7 +4345,7 @@ test('savePO creates po_created event', function() {
   assertEqual(evts.length, 1, 'PO created event emitted');
 });
 
-test('saveSup creates supplier_created event', function() {
+testAsync('saveSup creates supplier_created event', async function() {
   resetDB();
   ctx.EI.s = null;
   ctx.DB.events = [];
@@ -4355,7 +4355,7 @@ test('saveSup creates supplier_created event', function() {
   mockEl('sf-ct').value = '';
   mockEl('sf-e').value  = '';
   mockEl('sf-nt').value = '';
-  ctx.saveSup();
+  await ctx.saveSup();
   var evts = ctx.DB.events.filter(function(e){ return e.entityType==='supplier'&&e.verb==='created'; });
   assertEqual(evts.length, 1, 'supplier created event emitted');
 });
@@ -4505,7 +4505,7 @@ test('T-BUY-02 seedAdHocBuyer is idempotent (no duplicate on second call)', () =
   assertEqual(ctx.DB.buy.length, 1, 'should still have exactly 1 record');
 });
 
-test('T-BUY-03 saveBuy creates a new buyer record', () => {
+testAsync('T-BUY-03 saveBuy creates a new buyer record', async () => {
   resetDB();
   ctx.seedAdHocBuyer();
   ctx.EI.bu = null;
@@ -4518,14 +4518,14 @@ test('T-BUY-03 saveBuy creates a new buyer record', () => {
   mockEl('buy-pt').value = 'Net 30';
   mockEl('buy-cl').value = '10000';
   mockEl('buy-notes').value = 'Key account';
-  ctx.saveBuy();
+  await ctx.saveBuy();
   var found = ctx.DB.buy.find(function(b){ return b.name === 'Apex Trading Ltd'; });
   assert(found, 'buyer should be created');
   assertEqual(found.currency, 'BBD', 'currency should be BBD');
   assertEqual(found.creditLimit, 10000, 'credit limit should be 10000');
 });
 
-test('T-BUY-04 saveBuy blocks empty name', () => {
+testAsync('T-BUY-04 saveBuy blocks empty name', async () => {
   resetDB();
   ctx.EI.bu = null;
   mockEl('buy-name').value = '';
@@ -4533,11 +4533,11 @@ test('T-BUY-04 saveBuy blocks empty name', () => {
   mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'GBP'; mockEl('buy-pt').value = '';
   mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
   var before = ctx.DB.buy.length;
-  ctx.saveBuy();
+  await ctx.saveBuy();
   assertEqual(ctx.DB.buy.length, before, 'no buyer should be added');
 });
 
-test('T-BUY-05 saveBuy blocks duplicate name (case-insensitive)', () => {
+testAsync('T-BUY-05 saveBuy blocks duplicate name (case-insensitive)', async () => {
   resetDB();
   ctx.seedAdHocBuyer();
   ctx.EI.bu = null;
@@ -4545,15 +4545,15 @@ test('T-BUY-05 saveBuy blocks duplicate name (case-insensitive)', () => {
   mockEl('buy-cname').value = ''; mockEl('buy-email').value = ''; mockEl('buy-phone').value = '';
   mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'GBP'; mockEl('buy-pt').value = '';
   mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
-  ctx.saveBuy();
+  await ctx.saveBuy();
   var before = ctx.DB.buy.length;
   ctx.EI.bu = null;
   mockEl('buy-name').value = 'apex trading';
-  ctx.saveBuy();
+  await ctx.saveBuy();
   assertEqual(ctx.DB.buy.length, before, 'duplicate should not be added');
 });
 
-test('T-BUY-06 saveBuy updates an existing buyer record', () => {
+testAsync('T-BUY-06 saveBuy updates an existing buyer record', async () => {
   resetDB();
   ctx.seedAdHocBuyer();
   ctx.EI.bu = null;
@@ -4561,20 +4561,20 @@ test('T-BUY-06 saveBuy updates an existing buyer record', () => {
   mockEl('buy-cname').value = ''; mockEl('buy-email').value = ''; mockEl('buy-phone').value = '';
   mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'USD'; mockEl('buy-pt').value = '';
   mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
-  ctx.saveBuy();
+  await ctx.saveBuy();
   var rec = ctx.DB.buy.find(function(b){ return b.name === 'Sunrise Imports'; });
   ctx.EI.bu = rec.id;
   mockEl('buy-name').value = 'Sunrise Imports Ltd';
   mockEl('buy-cname').value = 'Alice'; mockEl('buy-email').value = 'alice@sunrise.com';
   mockEl('buy-phone').value = ''; mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'USD';
   mockEl('buy-pt').value = 'Net 60'; mockEl('buy-cl').value = '5000'; mockEl('buy-notes').value = '';
-  ctx.saveBuy();
+  await ctx.saveBuy();
   var updated = ctx.DB.buy.find(function(b){ return b.id === rec.id; });
   assertEqual(updated.name, 'Sunrise Imports Ltd', 'name should be updated');
   assertEqual(updated.paymentTerms, 'Net 60', 'paymentTerms should be updated');
 });
 
-test('T-BUY-07 delBuy removes buyer and emits event', () => {
+testAsync('T-BUY-07 delBuy removes buyer and emits event', async () => {
   resetDB();
   ctx.seedAdHocBuyer();
   ctx.EI.bu = null;
@@ -4582,20 +4582,20 @@ test('T-BUY-07 delBuy removes buyer and emits event', () => {
   mockEl('buy-cname').value = ''; mockEl('buy-email').value = ''; mockEl('buy-phone').value = '';
   mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'USD'; mockEl('buy-pt').value = '';
   mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
-  ctx.saveBuy();
+  await ctx.saveBuy();
   var rec = ctx.DB.buy.find(function(b){ return b.name === 'Temp Buyer'; });
   var beforeEvts = ctx.DB.events.length;
-  ctx._confirmOverride = true;
-  ctx.delBuy(rec.id);
+  ctx.confirm = function(){ return true; };
+  await ctx.delBuy(rec.id);
   assert(!ctx.DB.buy.find(function(b){ return b.id === rec.id; }), 'buyer should be removed');
   assert(ctx.DB.events.length > beforeEvts, 'delete event should be logged');
+  ctx.confirm = function(){ return false; };
 });
 
-test('T-BUY-08 delBuy blocks deletion of BUY-ADHOC', () => {
+testAsync('T-BUY-08 delBuy blocks deletion of BUY-ADHOC', async () => {
   resetDB();
   ctx.seedAdHocBuyer();
-  ctx._confirmOverride = true;
-  ctx.delBuy('BUY-ADHOC');
+  await ctx.delBuy('BUY-ADHOC');
   assert(ctx.DB.buy.find(function(b){ return b.id === 'BUY-ADHOC'; }), 'BUY-ADHOC should still exist');
 });
 
@@ -4719,18 +4719,18 @@ test('CRITICAL: pullAll num-stripping is healed by immediate backfillRefNums cal
   assertEqual(ctx.DB.sup.find(function(s){ return s.id === 's2'; }).num, 'SUP-0006', 'other record must be undisturbed');
 });
 
-test('saveSup: new record gets num, edit does not change it', () => {
+testAsync('saveSup: new record gets num, edit does not change it', async () => {
   resetDB();
   ctx.EI.s = null;
   mockEl('sf-n').value = 'New Co'; mockEl('sf-c').value = ''; mockEl('sf-ct').value = '';
   mockEl('sf-e').value = ''; mockEl('sf-cur').value = 'USD'; mockEl('sf-nt').value = '';
-  ctx.saveSup();
+  await ctx.saveSup();
   var rec = ctx.DB.sup.find(function(s){ return s.name === 'New Co'; });
   assert(rec.num, 'new supplier should get a num');
   var originalNum = rec.num;
   ctx.EI.s = rec.id;
   mockEl('sf-n').value = 'New Co Updated';
-  ctx.saveSup();
+  await ctx.saveSup();
   var updated = ctx.DB.sup.find(function(s){ return s.id === rec.id; });
   assertEqual(updated.num, originalNum, 'num must not change on edit');
 });
@@ -4754,7 +4754,7 @@ test('saveLi: new record gets num, edit does not change it', () => {
   assertEqual(updated.num, originalNum, 'num must not change on edit');
 });
 
-test('saveBuy: new record gets num, edit does not change it', () => {
+testAsync('saveBuy: new record gets num, edit does not change it', async () => {
   resetDB();
   ctx.seedAdHocBuyer();
   ctx.EI.bu = null;
@@ -4762,13 +4762,13 @@ test('saveBuy: new record gets num, edit does not change it', () => {
   mockEl('buy-cname').value = ''; mockEl('buy-email').value = ''; mockEl('buy-phone').value = '';
   mockEl('buy-addr').value = ''; mockEl('buy-cur').value = 'USD'; mockEl('buy-pt').value = '';
   mockEl('buy-cl').value = ''; mockEl('buy-notes').value = '';
-  ctx.saveBuy();
+  await ctx.saveBuy();
   var rec = ctx.DB.buy.find(function(b){ return b.name === 'Ref Buyer'; });
   assert(rec.num, 'new buyer should get a num');
   var originalNum = rec.num;
   ctx.EI.bu = rec.id;
   mockEl('buy-name').value = 'Ref Buyer Ltd';
-  ctx.saveBuy();
+  await ctx.saveBuy();
   var updated = ctx.DB.buy.find(function(b){ return b.id === rec.id; });
   assertEqual(updated.num, originalNum, 'num must not change on edit');
 });
@@ -5884,6 +5884,53 @@ test('initCloudDataLayer() is fire-and-forget — calling it does not block or t
   afterLineRan = true; // proves control returned immediately, not deferred behind any await
   assert(!threw, 'calling initCloudDataLayer().catch(...) without awaiting does not throw synchronously');
   assert(afterLineRan, 'code after the call runs immediately — fire-and-forget, never blocks the caller');
+});
+
+testAsync('pullAll — Supplier pull-back skipped entirely when Cloud Data is configured, avoiding a race with the background Supabase refresh', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.sup = [{ id: 'cloud-uuid-1', num: 'SUP-0001', name: 'Cloud-Sourced Supplier', country: '', cur: 'USD' }];
+  ctx._sb = mockSb({});
+  _mockPullResponses = { sup: { status:'ok', records: [
+    { 'Supplier ID':'cloud-uuid-1', 'Name':'Stale Sheets Name', 'Country':'', 'Contact':'', 'Email':'', 'Phone':'', 'Currency':'USD', 'Payment Terms':'', 'Lead Time':'', 'DG Capable':'', 'Notes':'' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.sup.length, 1, 'DB.sup untouched by the Sheets pull');
+  assertEqual(ctx.DB.sup[0].name, 'Cloud-Sourced Supplier', 'Sheets pull never runs for suppliers — no risk of overwriting the Supabase-sourced record');
+  ctx._sb = null;
+});
+
+testAsync('pullAll — Supplier pull-back still happens when Cloud Data is not configured (unchanged existing behavior)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx._sb = null;
+  ctx.DB.sup = [{ id: 's1', num: 'SUP-0001', name: 'Old Name', country: '', cur: 'USD' }];
+  _mockPullResponses = { sup: { status:'ok', records: [
+    { 'Supplier ID':'s1', 'Name':'New Name From Sheets', 'Country':'', 'Contact':'', 'Email':'', 'Phone':'', 'Currency':'USD', 'Payment Terms':'', 'Lead Time':'', 'DG Capable':'', 'Notes':'' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.sup[0].name, 'New Name From Sheets', 'Sheets pull still updates DB.sup exactly as before when Cloud Data is unconfigured');
+});
+
+testAsync('openSbLoginModal — re-entrant call cancels (resolves false) a still-pending prior call rather than leaking it forever', async function() {
+  var firstResult = null, secondResult = null;
+  var firstPromise = new Promise(function(resolve){ ctx.openSbLoginModal(function(v){ firstResult = v; resolve(v); }); });
+  var secondPromise = new Promise(function(resolve){ ctx.openSbLoginModal(function(v){ secondResult = v; resolve(v); }); });
+  firstResult = await firstPromise;
+  assertEqual(firstResult, false, 'first (now-superseded) call resolves false instead of hanging forever');
+  ctx._sbLoginCallback(true); // simulate the operator completing the second (still-open) modal
+  secondResult = await secondPromise;
+  assertEqual(secondResult, true, 'second call still resolves normally on its own outcome');
+});
+
+testAsync('showBlockingBackupModal — re-entrant call cancels (resolves false) a still-pending prior call rather than leaking it forever', async function() {
+  var firstPromise = ctx.showBlockingBackupModal();
+  ctx.showBlockingBackupModal(); // second call while the first is still pending
+  var firstResult = await firstPromise;
+  assertEqual(firstResult, false, 'first (now-superseded) call resolves false via the cancellation, instead of hanging forever');
+  ctx.migBackupCancel(); // clean up the still-open second modal so it doesn't leak into later tests
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────

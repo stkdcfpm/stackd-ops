@@ -1199,7 +1199,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
-          <li>New: Cloud Data — Supabase-backed shared Suppliers/Buyers (REQ/SPEC-CLOUD-001) — Settings → Cloud Data lets an operator connect a shared Supabase database, so a colleague on a different device/browser sees the same Supplier/Buyer records; everything else in the app stays local-only. Vendored <code>@supabase/supabase-js</code> client (first use of the <code>DASH-GAP-001</code> vendoring precedent). Gated by a separate Supabase sign-in the first time a session loads with it configured, cached silently thereafter; the background refresh is fire-and-forget (mirrors the existing <code>pullAll()</code> pattern) so it never blocks app startup or the rest of the app behind a login. Migrating existing local Suppliers/Buyers is a one-time, explicit action requiring a full backup export first (mandatory, checkbox-gated) and a pre-flight duplicate-name scan; every local reference to a migrated Supplier/Buyer (Quotes, POs, Line Items, Contacts, Invoices) is remapped to the new cloud id in the same pass. The "Ad-Hoc" default Buyer never migrates and stays local-only permanently. Pre-migration data is archived locally for 30 days as a rollback safety net (Settings → Cloud Data → "Restore Pre-Migration Suppliers/Buyers", which also disconnects Cloud Data so the restore isn't immediately overwritten by the next background refresh). Went through 4 requirements-gate rounds and 4 spec-gate rounds (each independent, each catching genuine issues — an incomplete ID-remap, a whole-app auth-gate regression, two fictional/false cited-precedent claims, a missed second Buyer-creation path, and a restore that didn't actually hold — all resolved). No Sheets-sync regression: <code>saveSup()</code>/<code>delSup()</code> keep pushing to the existing Google Sheets mirror unchanged when Cloud Data isn't configured; when it is, Suppliers/Buyers are cloud-authoritative and the Sheets push is skipped for those two entities (not addressed by any REQ/SPEC version — a build-time judgement call, flagged for build-gate). 15 new tests. Tests: 469/469 pass.</li>
+          <li>New: Cloud Data — Supabase-backed shared Suppliers/Buyers (REQ/SPEC-CLOUD-001) — Settings → Cloud Data lets an operator connect a shared Supabase database, so a colleague on a different device/browser sees the same Supplier/Buyer records; everything else in the app stays local-only. Vendored <code>@supabase/supabase-js</code> client (first use of the <code>DASH-GAP-001</code> vendoring precedent). Gated by a separate Supabase sign-in the first time a session loads with it configured, cached silently thereafter; the background refresh is fire-and-forget (mirrors the existing <code>pullAll()</code> pattern) so it never blocks app startup or the rest of the app behind a login. Migrating existing local Suppliers/Buyers is a one-time, explicit action requiring a full backup export first (mandatory, checkbox-gated) and a pre-flight duplicate-name scan; every local reference to a migrated Supplier/Buyer (Quotes, POs, Line Items, Contacts, Invoices) is remapped to the new cloud id in the same pass. The "Ad-Hoc" default Buyer never migrates and stays local-only permanently. Pre-migration data is archived locally for 30 days as a rollback safety net (Settings → Cloud Data → "Restore Pre-Migration Suppliers/Buyers", which also disconnects Cloud Data so the restore isn't immediately overwritten by the next background refresh). Went through 4 requirements-gate rounds and 4 spec-gate rounds (each independent, each catching genuine issues — an incomplete ID-remap, a whole-app auth-gate regression, two fictional/false cited-precedent claims, a missed second Buyer-creation path, and a restore that didn't actually hold — all resolved), then 1 independent build-gate round that caught a real defect the specs never addressed: <code>pullAll()</code>'s existing Sheets sync silently pulls Suppliers back into <code>DB.sup</code> on every load (a genuine two-writer race against the new Supabase refresh, not merely a one-way push as first assumed) — fixed by excluding Suppliers from that pull whenever Cloud Data is configured. The same round also fixed a Promise-leak on double-invoking the login/migration-backup modals (a re-entrant call now cancels the earlier still-pending one instead of hanging it forever) and converted the pre-existing <code>saveSup</code>/<code>delSup</code>/<code>saveBuy</code>/<code>delBuy</code> tests to <code>testAsync()</code> as the spec required. Buyers have no Sheets sync of any kind today (verified), so no equivalent fix was needed there. 19 new tests. Tests: 473/473 pass.</li>
         </ul>
       </div>
 
@@ -3689,6 +3689,11 @@ async function pullAll() {
 
   // ── Simple entities (Sheets wins; local-only records preserved; untracked fields survive — SYNC-GAP-001) ─
   var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+  // Suppliers are cloud-authoritative once Cloud Data is configured (SPEC-CLOUD-001) — pulling them from
+  // Sheets here would race the fire-and-forget Supabase refresh in initCloudDataLayer(), with whichever
+  // resolves last silently overwriting DB.sup/localStorage. Excluded entirely when _sb is configured;
+  // zero change to this loop when it isn't.
+  if (_sb) simpleEnts = simpleEnts.filter(function(e){ return e !== 'sup'; });
   var idKeyedEnts = ['sup', 'payments', 'co'];
   for (var ei = 0; ei < simpleEnts.length; ei++) {
     var eKey = simpleEnts[ei];
@@ -4462,6 +4467,7 @@ function initSbClient() {
 
 var _sbLoginCallback = null;
 function openSbLoginModal(callback) {
+  if (_sbLoginCallback) { var _prevCb = _sbLoginCallback; _sbLoginCallback = null; _prevCb(false); } // a still-pending prior call is cancelled, never left hanging
   _sbLoginCallback = callback;
   if (G('sb-login-email')) G('sb-login-email').value = '';
   if (G('sb-login-pw')) G('sb-login-pw').value = '';
@@ -4550,6 +4556,7 @@ function showDuplicateConflictModal(dupes) {
 var _sbMigrationResolve = null;
 function showBlockingBackupModal() {
   return new Promise(function(resolve){
+    if (_sbMigrationResolve) { var _prevResolve = _sbMigrationResolve; _sbMigrationResolve = null; _prevResolve(false); } // a still-pending prior call is cancelled, never left hanging
     if (G('mig-backup-ack')) G('mig-backup-ack').checked = false;
     if (G('mig-backup-proceed')) G('mig-backup-proceed').disabled = true;
     _sbMigrationResolve = resolve;
@@ -4642,8 +4649,11 @@ async function saveSup() {
   var _supIsNew = !EI.s;
   var _existSup = EI.s ? DB.sup.find(function(x){ return x.id===EI.s; }) : null;
   if (_sb) {
+    var _supName = G('sf-n').value.trim();
+    var _supDup = DB.sup.find(function(s){ return s.name.trim().toLowerCase() === _supName.toLowerCase() && s.id !== EI.s; });
+    if (_supDup) { vErr('sf-n', 'A supplier with this name already exists'); return; }
     if (!(await ensureSbAuth())) return;
-    var row = { name: G('sf-n').value.trim(), country: G('sf-c').value.trim(), contact_name: G('sf-ct').value.trim(), email: G('sf-e').value.trim(), phone: getSupPhone(), currency: G('sf-cur').value, notes: G('sf-nt').value.trim() };
+    var row = { name: _supName, country: G('sf-c').value.trim(), contact_name: G('sf-ct').value.trim(), email: G('sf-e').value.trim(), phone: getSupPhone(), currency: G('sf-cur').value, notes: G('sf-nt').value.trim() };
     var result;
     if (EI.s) {
       result = await _sb.from('suppliers').update(row).eq('id', EI.s).select().single();
