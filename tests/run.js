@@ -5598,6 +5598,294 @@ test('SPEC-SUP-001 scope guard — no export/sync side effect on the aggregated 
   assertEqual(ctx.FIELD_MAPS.li.supPriceHistory, undefined, 'no supPriceHistory entry added to FIELD_MAPS.li for this feature');
 });
 
+// ── CLOUD DATA — Supabase-backed Suppliers/Buyers (SPEC-CLOUD-001) ──
+
+// Minimal mock Supabase client covering the 4 call shapes this app actually uses:
+//   .from(t).select('*').is(col,val)                    -> awaited directly (read)
+//   .from(t).insert(row).select().single()               -> awaited (create)
+//   .from(t).update(row).eq('id',id).select().single()   -> awaited (update, returns row)
+//   .from(t).update(row).eq('id',id)                     -> awaited directly (soft-delete, no row)
+function mockSb(config) {
+  config = config || {};
+  var calls = [];
+  function table(name) {
+    var cfg = config[name] || {};
+    var pendingOp = null, pendingRow = null, pendingId = null;
+    var chain = {
+      select: function(){ return chain; },
+      insert: function(row){ pendingOp = 'insert'; pendingRow = row; calls.push({ table: name, op: 'insert', row: row }); return chain; },
+      update: function(row){ pendingOp = 'update'; pendingRow = row; calls.push({ table: name, op: 'update', row: row }); return chain; },
+      eq: function(col, val){ pendingId = val; calls.push({ table: name, op: 'eq', col: col, val: val }); return chain; },
+      is: function(col, val){
+        calls.push({ table: name, op: 'is', col: col, val: val });
+        return Promise.resolve({ data: cfg.selectData !== undefined ? cfg.selectData : [], error: cfg.selectError || null });
+      },
+      single: function(){
+        if (pendingOp === 'insert') {
+          if (cfg.insertError) return Promise.resolve({ data: null, error: cfg.insertError });
+          var created = cfg.insertImpl ? cfg.insertImpl(pendingRow) : Object.assign({ id: 'mock-' + calls.length }, pendingRow);
+          return Promise.resolve({ data: created, error: null });
+        }
+        if (pendingOp === 'update') {
+          if (cfg.updateError) return Promise.resolve({ data: null, error: cfg.updateError });
+          var updated = cfg.updateImpl ? cfg.updateImpl(pendingRow, pendingId) : Object.assign({ id: pendingId }, pendingRow);
+          return Promise.resolve({ data: updated, error: null });
+        }
+        return Promise.resolve({ data: null, error: null });
+      },
+      then: function(resolveFn, rejectFn) {
+        var error = (pendingOp === 'update' && cfg.updateError) ? cfg.updateError : null;
+        return Promise.resolve({ error: error }).then(resolveFn, rejectFn);
+      }
+    };
+    return chain;
+  }
+  return {
+    from: table,
+    _calls: calls,
+    auth: {
+      getSession: function(){ return Promise.resolve({ data: { session: config._session !== undefined ? config._session : { user: 'mock' } } }); },
+      signInWithPassword: function(){ return Promise.resolve({ error: null }); }
+    }
+  };
+}
+
+testAsync('refreshSupFromSupabase — mocked select returning 2 rows populates DB.sup correctly, persists to localStorage', async function() {
+  resetDB();
+  ctx._sb = mockSb({ suppliers: { selectData: [
+    { id: 'u1', num: 'SUP-0001', name: 'ACME', country: 'CN', contact_name: 'Bob', email: 'b@acme.com', phone: '123', currency: 'USD', notes: 'n1' },
+    { id: 'u2', num: 'SUP-0002', name: 'Globex', country: 'US', contact_name: '', email: '', phone: '', currency: 'GBP', notes: '' }
+  ] } });
+  await ctx.refreshSupFromSupabase();
+  assertEqual(ctx.DB.sup.length, 2, '2 suppliers loaded');
+  assertEqual(ctx.DB.sup[0].id, 'u1', 'id mapped');
+  assertEqual(ctx.DB.sup[0].ct, 'Bob', 'contact_name mapped to ct');
+  assertEqual(ctx.DB.sup[0].cur, 'USD', 'currency mapped to cur');
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.s)).length, 2, 'persisted to localStorage via sv(K.s,...)');
+});
+
+testAsync('refreshSupFromSupabase — mocked select error shows a toast, does not clear or corrupt existing DB.sup', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'local1', name: 'Existing Local Supplier' });
+  ctx._sb = mockSb({ suppliers: { selectError: { message: 'network down' } } });
+  await ctx.refreshSupFromSupabase();
+  assertEqual(ctx.DB.sup.length, 1, 'existing DB.sup untouched');
+  assertEqual(ctx.DB.sup[0].id, 'local1', 'existing record preserved');
+});
+
+testAsync('refreshBuyFromSupabase — result set never includes BUY-ADHOC; re-seeded exactly once', async function() {
+  resetDB();
+  ctx._sb = mockSb({ buyers: { selectData: [
+    { id: 'ub1', num: 'BUY-0001', name: 'Acme Buyer', contact_name: '', email: '', phone: '', address: '', currency: 'GBP', payment_terms: '', credit_limit: null, notes: '', created_at: '' }
+  ] } });
+  await ctx.refreshBuyFromSupabase();
+  var adhocCount = ctx.DB.buy.filter(function(b){ return b.id === 'BUY-ADHOC'; }).length;
+  assertEqual(adhocCount, 1, 'exactly one BUY-ADHOC present (re-seeded, not duplicated)');
+  assertEqual(ctx.DB.buy.length, 2, 'real buyer + BUY-ADHOC only');
+});
+
+testAsync('saveSup — Cloud Data configured: create calls insert with client-generated num but no client-generated id; update calls update().eq(), never insert', async function() {
+  resetDB();
+  ctx.EI.s = null;
+  ['sf-n','sf-c','sf-ct','sf-e','sf-cur','sf-nt'].forEach(function(id){ mockEl(id); });
+  mockEl('sf-n').value = 'New Supplier'; mockEl('sf-c').value = 'CN'; mockEl('sf-ct').value = '';
+  mockEl('sf-e').value = ''; mockEl('sf-cur').value = 'USD'; mockEl('sf-nt').value = '';
+  ctx.getSupPhone = function(){ return ''; };
+  var sb = mockSb({ suppliers: { insertImpl: function(row){ return Object.assign({ id: 'new-uuid' }, row); } } });
+  ctx._sb = sb;
+  await ctx.saveSup();
+  var insertCall = sb._calls.find(function(c){ return c.op === 'insert'; });
+  assert(insertCall, 'insert was called');
+  assert(insertCall.row.num, 'client-generated num present on insert');
+  assertEqual(insertCall.row.id, undefined, 'no client-generated id sent on insert');
+
+  ctx.EI.s = 'new-uuid';
+  var sb2 = mockSb({ suppliers: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); } } });
+  ctx._sb = sb2;
+  await ctx.saveSup();
+  var updateCall = sb2._calls.find(function(c){ return c.op === 'update'; });
+  var insertCall2 = sb2._calls.find(function(c){ return c.op === 'insert'; });
+  assert(updateCall, 'update was called on edit path');
+  assert(!insertCall2, 'insert never called on edit path');
+});
+
+testAsync('delSup — Cloud Data configured: soft-delete via update({deleted_at}), never a hard delete; local DB.con supplierId nulling preserved', async function() {
+  resetDB();
+  ctx.DB.con.push({ id: 'C1', name: 'Alice', email: 'a@x.com', supplierId: 'u1', role: 'supplier_contact', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
+  ctx.DB.sup.push({ id: 'u1', name: 'ACME' });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.delSup('u1');
+  var updateCall = sb._calls.find(function(c){ return c.op === 'update'; });
+  assert(updateCall, 'update called (soft-delete)');
+  assert(updateCall.row.deleted_at, 'deleted_at timestamp set, not a hard delete');
+  assertEqual(ctx.DB.con[0].supplierId, null, 'linked contact supplierId nulled locally');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('quickAddBuyer — Cloud Data configured: calls insert, never pushes directly to DB.buy; unconfigured: unchanged local-only behavior', async function() {
+  resetDB();
+  mockEl('if-b');
+  ctx.prompt = function(){ return 'Cloud Buyer'; };
+  var sb = mockSb({ buyers: { insertImpl: function(row){ return Object.assign({ id: 'cloud-buyer-1' }, row); } } });
+  ctx._sb = sb;
+  await ctx.quickAddBuyer();
+  var insertCall = sb._calls.find(function(c){ return c.op === 'insert'; });
+  assert(insertCall, 'insert called when Cloud Data configured');
+  assertEqual(insertCall.row.name, 'Cloud Buyer', 'insert payload carries the entered name');
+  assertEqual(ctx.DB.buy.some(function(b){ return b.id === 'cloud-buyer-1'; }), false, 'DB.buy is fully replaced by refreshBuyFromSupabase() (mock select() has no rows configured — real Supabase would return the just-inserted row here)');
+
+  resetDB();
+  ctx._sb = null;
+  ctx.prompt = function(){ return 'Local Buyer'; };
+  ctx.quickAddBuyer();
+  assertEqual(ctx.DB.buy.filter(function(b){ return b.name === 'Local Buyer'; }).length, 1, 'unconfigured path still pushes directly to DB.buy, unchanged');
+  ctx.prompt = function(){ return null; };
+});
+
+testAsync('migrateSuppliersBuyersToSupabase — duplicate supplier names blocked before any insert', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'Acme Ltd' });
+  ctx.DB.sup.push({ id: 's2', num: 'SUP-0002', name: 'ACME LTD' });
+  var sb = mockSb({});
+  ctx._sb = sb;
+  ctx._sbMigrationResolve = null;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('sb-dup-list');
+  await ctx.migrateSuppliersBuyersToSupabase();
+  assertEqual(sb._calls.filter(function(c){ return c.op === 'insert'; }).length, 0, 'no insert calls made — blocked by duplicate scan');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateSuppliersBuyersToSupabase — remaps DB.qt/po/li/con supplier refs and DB.inv buyer refs to new uuids; BUY-ADHOC excluded', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'Acme Supplier', cur: 'USD' });
+  ctx.DB.buy.push({ id: 'BUY-ADHOC', num: '', name: 'Ad-Hoc', currency: 'GBP' });
+  ctx.DB.buy.push({ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', currency: 'GBP' });
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE1', currency: 'USD', lines: [{ supId: 's1', desc: 'Widget' }] });
+  ctx.DB.po.push({ id: 'p1', num: 'PO1', supId: 's1' });
+  ctx.DB.li.push({ id: 'l1', supId: 's1', desc: 'Widget' });
+  ctx.DB.con.push({ id: 'c1', name: 'Contact', email: 'c@x.com', supplierId: 's1', role: 'supplier_contact', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' });
+  ctx.DB.inv.push({ id: 'i1', num: 'INV10001', buyerId: 'b1' });
+
+  var sb = mockSb({
+    suppliers: { insertImpl: function(row){ return Object.assign({ id: 'new-sup-uuid' }, row); } },
+    buyers:    { insertImpl: function(row){ return Object.assign({ id: 'new-buy-uuid' }, row); } }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-restore-btn');
+  await ctx.migrateSuppliersBuyersToSupabase();
+
+  assertEqual(ctx.DB.qt[0].lines[0].supId, 'new-sup-uuid', 'Quote line supId remapped');
+  assertEqual(ctx.DB.po[0].supId, 'new-sup-uuid', 'PO supId remapped');
+  assertEqual(ctx.DB.li[0].supId, 'new-sup-uuid', 'Line Item supId remapped');
+  assertEqual(ctx.DB.con[0].supplierId, 'new-sup-uuid', 'Contact supplierId remapped');
+  assertEqual(ctx.DB.inv[0].buyerId, 'new-buy-uuid', 'Invoice buyerId remapped');
+
+  var buyInsertCalls = sb._calls.filter(function(c){ return c.table === 'buyers' && c.op === 'insert'; });
+  assertEqual(buyInsertCalls.length, 1, 'exactly one buyer inserted (BUY-ADHOC excluded)');
+  assert(!buyInsertCalls.some(function(c){ return c.row.name === 'Ad-Hoc'; }), 'BUY-ADHOC never sent to insert');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+test('showBlockingBackupModal — Proceed button stays disabled until the backup checkbox is checked', function() {
+  mockEl('mig-backup-ack').checked = false;
+  mockEl('mig-backup-proceed').disabled = true;
+  ctx.showBlockingBackupModal(); // opens the modal, returns a pending promise — not awaited here, testing UI-state only
+  assertEqual(mockEl('mig-backup-proceed').disabled, true, 'Proceed starts disabled');
+  mockEl('mig-backup-ack').checked = true;
+  ctx.migBackupAckChg();
+  assertEqual(mockEl('mig-backup-proceed').disabled, false, 'Proceed enabled once checkbox is checked');
+  ctx.migBackupCancel(); // resolve the pending promise so it doesn't leak into later tests
+});
+
+test('restoreFromMigrationArchive — restores DB.sup/DB.buy-backing keys and clears SS.supabaseUrl/supabaseAnonKey', function() {
+  resetDB();
+  ctx.localStorage.setItem('st_s_pre_migration', JSON.stringify([{ id: 'orig1', name: 'Original Supplier' }]));
+  ctx.localStorage.setItem('st_bu_pre_migration', JSON.stringify([{ id: 'orig2', name: 'Original Buyer' }]));
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co';
+  ctx.SS.supabaseAnonKey = 'mock-anon-key';
+  ctx.confirm = function(){ return true; };
+  var reloaded = false;
+  var origReload = ctx.location.reload;
+  ctx.location.reload = function(){ reloaded = true; };
+  var origSetTimeout = ctx.setTimeout;
+  ctx.setTimeout = function(fn){ fn(); }; // run the reload callback synchronously for the test
+  ctx.restoreFromMigrationArchive();
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.s))[0].id, 'orig1', 'st_s restored from archive');
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.bu))[0].id, 'orig2', 'st_bu restored from archive');
+  assertEqual(ctx.SS.supabaseUrl, '', 'supabaseUrl cleared so the restore is not immediately overwritten');
+  assertEqual(ctx.SS.supabaseAnonKey, '', 'supabaseAnonKey cleared');
+  assert(reloaded, 'page reload triggered');
+  ctx.location.reload = origReload;
+  ctx.setTimeout = origSetTimeout;
+  ctx.confirm = function(){ return false; };
+});
+
+test('restoreFromMigrationArchive — no archive present shows a toast and makes no changes', function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_s_pre_migration');
+  ctx.localStorage.removeItem('st_bu_pre_migration');
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co';
+  ctx.restoreFromMigrationArchive();
+  assertEqual(ctx.SS.supabaseUrl, 'https://mock.supabase.co', 'no change made when archive is absent');
+  ctx.SS.supabaseUrl = '';
+});
+
+test('cleanupExpiredMigrationArchive — archived keys persist at day 29, removed at day 31', function() {
+  var day29 = new Date(Date.now() - 29*86400000).toISOString();
+  ctx.localStorage.setItem('st_cloud_migration_ts', day29);
+  ctx.localStorage.setItem('st_s_pre_migration', '[]');
+  ctx.localStorage.setItem('st_bu_pre_migration', '[]');
+  ctx.cleanupExpiredMigrationArchive();
+  assert(ctx.localStorage.getItem('st_s_pre_migration') !== null, 'archive persists at day 29');
+
+  var day31 = new Date(Date.now() - 31*86400000).toISOString();
+  ctx.localStorage.setItem('st_cloud_migration_ts', day31);
+  ctx.cleanupExpiredMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_s_pre_migration'), null, 'archive removed at day 31');
+  assertEqual(ctx.localStorage.getItem('st_cloud_migration_ts'), null, 'timestamp key removed at day 31');
+});
+
+testAsync('ensureSbAuth — cached session resolves true without opening the login modal; no session opens it and resolves on outcome', async function() {
+  ctx._sb = mockSb({ _session: { user: 'cached' } });
+  ctx._sbLoginCallback = null;
+  var resultCached = await ctx.ensureSbAuth();
+  assertEqual(resultCached, true, 'cached session resolves true');
+  assertEqual(ctx._sbLoginCallback, null, 'login modal never opened (no callback registered) when a session is already cached');
+
+  ctx._sb = mockSb({ _session: null });
+  var pending = ctx.ensureSbAuth();
+  // ensureSbAuth() awaits _sb.auth.getSession() before calling openSbLoginModal(), so the
+  // callback isn't registered until that microtask settles — wait a couple of ticks for it.
+  for (var tick = 0; tick < 5 && typeof ctx._sbLoginCallback !== 'function'; tick++) { await Promise.resolve(); }
+  assertEqual(typeof ctx._sbLoginCallback, 'function', 'login modal opened (callback registered) when no session is cached');
+  // simulate operator submitting the login form successfully
+  ctx._sbLoginCallback(true);
+  var resultNoSession = await pending;
+  assertEqual(resultNoSession, true, 'resolves true once the login callback reports success');
+});
+
+test('initCloudDataLayer — SS.supabaseUrl unset: _sb stays null, no refresh calls, no modal shown', async function() {
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+  ctx._sb = 'sentinel'; // prove initSbClient() actually runs and nulls this out
+  await ctx.initCloudDataLayer();
+  assertEqual(ctx._sb, null, '_sb stays null when not configured');
+});
+
+test('initCloudDataLayer() is fire-and-forget — calling it does not block or throw synchronously, matching the pullAll() pattern it mirrors', function() {
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+  var threw = false, afterLineRan = false;
+  try { ctx.initCloudDataLayer().catch(function(){}); } catch (e) { threw = true; }
+  afterLineRan = true; // proves control returned immediately, not deferred behind any await
+  assert(!threw, 'calling initCloudDataLayer().catch(...) without awaiting does not throw synchronously');
+  assert(afterLineRan, 'code after the call runs immediately — fire-and-forget, never blocks the caller');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
