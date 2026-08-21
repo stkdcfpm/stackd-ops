@@ -103,6 +103,18 @@ Open browser DevTools → Application → Local Storage → delete all `st_` key
 
 ---
 
+## Rolling back the Supabase migration (Suppliers & Buyers)
+
+If the Supabase-backed Suppliers/Buyers feature (REQ/SPEC-CLOUD-001) needs to be undone:
+
+1. **Fast path — code rollback (within 30 days of migration):** redeploy the `index.html` version from immediately before this feature's release. `st_s`/`st_bu` (the live, continuously-synced local keys) already hold the most recent cloud-mirrored data, so the prior app version reads current data immediately — no re-entry needed, no dependency on the archive.
+2. **Fast path — data-only rollback (within 30 days of migration):** if the migration itself produced bad Supplier/Buyer data (not a reason to abandon the feature permanently, just to undo one migration run), use Settings → Cloud Data → "Restore Pre-Migration Suppliers/Buyers" (`restoreFromMigrationArchive()`). This restores `DB.sup`/`DB.buy` only — Quotes/POs/Line Items/Contacts/Invoices keep their current (already-remapped) references — and disconnects Cloud Data so the restored local data isn't immediately overwritten again by the next background refresh. Reconnect via Settings → Cloud Data (re-entering the Supabase URL/key) once the underlying Supabase data issue is resolved.
+3. **Slow path (after the 30-day archive window, or if `localStorage` was cleared):** redeploy the pre-migration `index.html` version, then restore your most recent JSON backup (Settings → Data → Export All, or the mandatory pre-migration backup taken during setup) via Settings → Data → Import.
+4. **If migration failed partway through** (some Suppliers/Buyers inserted into Supabase, some not — the app shows an error toast naming the record it stopped on): local data was never modified. In the Supabase dashboard, delete the partially-inserted rows from the `suppliers`/`buyers` tables (a fresh migration run is not safe to re-run over a partial one — it will duplicate the already-succeeded inserts), then retry "Migrate Suppliers/Buyers to Cloud" from a clean table.
+5. In all cases, the Supabase project itself can be left in place or deleted at your discretion once the prior `index.html` version (or the restored local data) is in use.
+
+---
+
 ## Known limitations
 
 - No automatic backup — export must be triggered manually
