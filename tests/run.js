@@ -709,17 +709,21 @@ test('cQteLine calculates landed cost correctly (LCL)', () => {
   assert(Math.abs(r.landed - 723.35) < 0.001, 'landed total correct');
 });
 
-test('cQte sums lines and adds overheads correctly', () => {
+test('cQte sums lines and adds overheads correctly (SPEC-QTE-001: overhead never marked up)', () => {
   var savedQR = ctx.QR;
   ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
   var qt = { freightMode:'LCL', markup:20, lines:[{ cost:500, cbm:2, dg:false, dutyPct:10 }] };
-  // line landed=723.35, overhead=675, quotedTotal=1398.35, sellUSD=1678.02
+  // line landed=723.35, overhead=675, quotedTotal=1398.35 (unchanged definitions)
+  // sellUSD = landed*(1+markup/100) + overhead(unmarked-up) = 723.35*1.20 + 675 = 1543.02
+  // (pre-SPEC-QTE-001 this was quotedTotal*1.20 = 1678.02 — the 135 difference is
+  // exactly overhead's old 20% markup, 675*0.20=135, confirming the delta is purely
+  // the documented overhead-treatment change and nothing else moved)
   var c = ctx.cQte(qt);
   assert(Math.abs(c.totalLanded - 723.35) < 0.01, 'totalLanded ≈ 723.35');
   assertEqual(c.overhead, 675, 'overhead = originCharges+destCharges+fpmAdmin');
   assert(Math.abs(c.quotedTotal - 1398.35) < 0.01, 'quotedTotal = landed+overhead');
-  assert(Math.abs(c.sellUSD - 1678.02) < 0.01, 'sellUSD = quotedTotal*(1+markup/100)');
-  assert(Math.abs(c.sellGBP - (1678.02/1.27)) < 0.5, 'sellGBP = sellUSD/fxGBPUSD');
+  assert(Math.abs(c.sellUSD - 1543.02) < 0.01, 'sellUSD = landed*(1+effective margin) + overhead unmarked-up');
+  assert(Math.abs(c.sellGBP - (1543.02/1.27)) < 0.5, 'sellGBP = sellUSD/fxGBPUSD');
   ctx.QR = savedQR;
 });
 
@@ -855,6 +859,189 @@ test('version sellPrice equals landed * (1 + markup/100)', () => {
   const expected = +(v.landed * 1.25).toFixed(2);
   assertEqual(v.sellPrice, expected, 'sellPrice = landed * (1 + 0.25)');
   assert(v.landed > 0, 'landed is positive');
+});
+
+// ── Per-line quote margin (SPEC-QTE-001) ────────────────────────
+console.log('\nPer-line quote margin (SPEC-QTE-001)');
+
+test('qteEffectiveMargin: line with no markup key inherits quote markup', () => {
+  assertEqual(ctx.qteEffectiveMargin({}, 15), 15, 'inherits quote markup when unset');
+});
+
+test('qteEffectiveMargin: line with markup 0 returns 0, not the quote markup', () => {
+  assertEqual(ctx.qteEffectiveMargin({ markup: 0 }, 15), 0, 'explicit 0 override is not collapsed to inherit');
+});
+
+test('qteEffectiveMargin: line with markup 12.5 returns 12.5 regardless of quote markup', () => {
+  assertEqual(ctx.qteEffectiveMargin({ markup: 12.5 }, 20), 12.5, 'explicit override wins over quote markup');
+});
+
+test('qlEffectiveMarkupInput: blank input returns undefined (inherit)', () => {
+  mockEl('ql-mkp-qlm1').value = '';
+  assertEqual(ctx.qlEffectiveMarkupInput('qlm1'), undefined, 'blank field means inherit');
+});
+
+test('qlEffectiveMarkupInput: explicit "0" returns the number 0, not undefined', () => {
+  mockEl('ql-mkp-qlm2').value = '0';
+  assertEqual(ctx.qlEffectiveMarkupInput('qlm2'), 0, 'explicit zero is preserved, not collapsed to inherit');
+});
+
+test('qteSellTotals: a 0-margin line sells at exactly landed cost; an inheriting line uses quote markup', () => {
+  var savedQR = ctx.QR;
+  ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:0, destCharges:0, fpmAdmin:0, fxGBPUSD:1.27 };
+  var lines = [
+    { cost:500, cbm:0, dg:false, dutyPct:0, markup:0 },      // pass-through line
+    { cost:500, cbm:0, dg:false, dutyPct:0 }                 // inherits quote markup
+  ];
+  var lineCalcs = lines.map(function(l){ return ctx.cQteLine(l, ctx.QR, 'LCL', 0); });
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 20, ctx.QR);
+  // both lines landed = cost + ins = 500 + 500*0.005 = 502.5 (no freight/duty at cbm=0/dutyPct=0)
+  var landed = lineCalcs[0].landed;
+  var expected = landed * 1 /* 0% margin */ + landed * 1.20 /* inherits 20% */;
+  assert(Math.abs(totals.sellUSD - expected) < 0.01, '0-margin line contributes at cost, inheriting line contributes at quote markup');
+  ctx.QR = savedQR;
+});
+
+test('qteSellTotals: overhead is added exactly once, never scaled by any margin', () => {
+  var savedQR = ctx.QR;
+  ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
+  var lines = [{ cost:500, cbm:0, dg:false, dutyPct:0 }];
+  var lineCalcs = lines.map(function(l){ return ctx.cQteLine(l, ctx.QR, 'LCL', 0); });
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 50, ctx.QR); // deliberately large markup
+  assertEqual(totals.overhead, 675, 'overhead = originCharges+destCharges+fpmAdmin, unscaled');
+  var expectedSell = lineCalcs[0].landed * 1.50 + 675;
+  assert(Math.abs(totals.sellUSD - expectedSell) < 0.01, 'overhead component is not multiplied by (1+markup/100)');
+  ctx.QR = savedQR;
+});
+
+test('saveQte: a line-level override change creates a new version; an unrelated sibling override does not (AC-003, direction 1)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [
+    { rid:'ac3a-1', supId:'', desc:'Line A', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 },
+    { rid:'ac3a-2', supId:'', desc:'Line B', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }
+  ];
+  mockEl('qf-num').value = 'QTE-0002'; mockEl('qf-client').value = 'AC3 Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-cur').value = 'USD'; mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '15'; mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  ['ac3a-1','ac3a-2'].forEach(function(rid){
+    mockEl('ql-supId-'+rid).value=''; mockEl('ql-desc-'+rid).value='Line'; mockEl('ql-qty-'+rid).value='1';
+    mockEl('ql-uom-'+rid).value='pcs'; mockEl('ql-cost-'+rid).value='500'; mockEl('ql-cbm-'+rid).value='2';
+    mockEl('ql-dg-'+rid).checked=false; mockEl('ql-dutyPct-'+rid).value='0'; mockEl('ql-note-'+rid).value='';
+  });
+  mockEl('ql-mkp-ac3a-1').value = '10';
+  mockEl('ql-mkp-ac3a-2').value = '25';
+  ctx.saveQte();
+
+  var qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  mockEl('ql-mkp-ac3a-1').value = '12'; // only line A's override changes
+  mockEl('ql-note-ac3a-1').value = 'Margin adjusted for line A only';
+  ctx.saveQte();
+
+  var lineA = ctx.DB.qt[0].lines.find(function(l){ return l.rid === 'ac3a-1'; });
+  var lineB = ctx.DB.qt[0].lines.find(function(l){ return l.rid === 'ac3a-2'; });
+  assertEqual(lineA.priceHistory.length, 2, 'line A gets a new version when its own override changes');
+  assertEqual(lineB.priceHistory.length, 1, 'line B (unrelated, unchanged override) does not get a spurious version');
+});
+
+test('saveQte: a quote-level default change versions an inheriting line but not an overridden sibling (AC-003, direction 2)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [
+    { rid:'ac3b-1', supId:'', desc:'Line A', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 },
+    { rid:'ac3b-2', supId:'', desc:'Line B', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }
+  ];
+  mockEl('qf-num').value = 'QTE-0003'; mockEl('qf-client').value = 'AC3 Client 2'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-cur').value = 'USD'; mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '15'; mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  ['ac3b-1','ac3b-2'].forEach(function(rid){
+    mockEl('ql-supId-'+rid).value=''; mockEl('ql-desc-'+rid).value='Line'; mockEl('ql-qty-'+rid).value='1';
+    mockEl('ql-uom-'+rid).value='pcs'; mockEl('ql-cost-'+rid).value='500'; mockEl('ql-cbm-'+rid).value='2';
+    mockEl('ql-dg-'+rid).checked=false; mockEl('ql-dutyPct-'+rid).value='0'; mockEl('ql-note-'+rid).value='';
+  });
+  mockEl('ql-mkp-ac3b-1').value = '';   // Line A inherits quote-level default
+  mockEl('ql-mkp-ac3b-2').value = '30'; // Line B has its own override
+  ctx.saveQte();
+
+  var qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  mockEl('qf-mkp').value = '18'; // quote-level default changes 15→18
+  mockEl('ql-mkp-ac3b-1').value = '';
+  mockEl('ql-mkp-ac3b-2').value = '30';
+  ctx.saveQte();
+
+  var lineA = ctx.DB.qt[0].lines.find(function(l){ return l.rid === 'ac3b-1'; });
+  var lineB = ctx.DB.qt[0].lines.find(function(l){ return l.rid === 'ac3b-2'; });
+  assertEqual(lineA.priceHistory.length, 2, 'inheriting line gets a new version when the quote-level default changes (its effective margin genuinely changed)');
+  assertEqual(lineB.priceHistory.length, 1, 'overridden line is unaffected by the quote-level change');
+});
+
+test('saveQte: clearing a line-level override reverts that line to the quote-level default (AC-004)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'ac4', supId:'', desc:'Line', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  mockEl('qf-num').value = 'QTE-0004'; mockEl('qf-client').value = 'AC4 Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-cur').value = 'USD'; mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '15'; mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  mockEl('ql-supId-ac4').value=''; mockEl('ql-desc-ac4').value='Line'; mockEl('ql-qty-ac4').value='1';
+  mockEl('ql-uom-ac4').value='pcs'; mockEl('ql-cost-ac4').value='500'; mockEl('ql-cbm-ac4').value='2';
+  mockEl('ql-dg-ac4').checked=false; mockEl('ql-dutyPct-ac4').value='0'; mockEl('ql-note-ac4').value='';
+  mockEl('ql-mkp-ac4').value = '5'; // explicit override
+  ctx.saveQte();
+  assertEqual(ctx.DB.qt[0].lines[0].markup, 5, 'override saved as 5');
+
+  var qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  mockEl('ql-mkp-ac4').value = ''; // operator clears the override
+  ctx.saveQte();
+
+  var line = ctx.DB.qt[0].lines[0];
+  assertEqual(line.markup, undefined, 'cleared override is persisted as undefined, not 0 or the stale 5');
+  var latestV = line.priceHistory[line.priceHistory.length - 1];
+  assertEqual(latestV.markup, 15, 'effective margin in the new version reflects the quote-level default, not the stale override');
+});
+
+test('cQte/saveQte backward compatibility: pre-existing quote with no line markup field recomputes with only the documented overhead delta (AC-002)', () => {
+  resetDB();
+  var savedQR = ctx.QR;
+  ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
+  // Simulate a v2.9.51-era saved quote: line has no markup key at all.
+  var legacyQt = {
+    id: 'legacy-qte-1', num: 'QTE-LEGACY', client: 'Legacy Client', dt: '2026-04-01', validUntil: '',
+    currency: 'USD', freightMode: 'LCL', markup: 20, status: 'Draft', notes: '', linkedPOIds: [], sourceContactId: '',
+    lines: [{ rid: 'legacy-l1', supId: '', desc: 'Legacy line', qty: 1, uom: 'pcs', cost: 500, cbm: 2, dg: false, dutyPct: 10, priceHistory: [] }]
+  };
+  ctx.DB.qt = [legacyQt];
+
+  var before = ctx.cQte(legacyQt);
+  var oldStyleSellUSD = before.quotedTotal * (1 + legacyQt.markup / 100); // the pre-SPEC-QTE-001 formula, computed independently here
+  var expectedDelta = before.overhead * (legacyQt.markup / 100); // overhead's old markup contribution, now removed
+  assert(Math.abs((oldStyleSellUSD - before.sellUSD) - expectedDelta) < 0.01, 'sellUSD differs from the old formula by exactly overhead\'s former markup contribution, nothing else');
+
+  // Per-line landed/sell figures are unaffected by the overhead change — only the quote-wide total moved.
+  var perLineSellUnchanged = before.lineCalcs[0].landed * (1 + legacyQt.markup / 100);
+  var expectedPerLineSell = before.lineCalcs[0].landed * (1 + ctx.qteEffectiveMargin(legacyQt.lines[0], legacyQt.markup) / 100);
+  assertEqual(perLineSellUnchanged, expectedPerLineSell, 'per-line sell price formula is identical pre/post — only overhead treatment moved');
+  ctx.QR = savedQR;
+});
+
+test('rQLT: renders blank value for a line with no markup key, and "0" for an explicit markup:0 override', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [
+    { rid:'dom1', supId:'', desc:'No override', qty:1, uom:'pcs', cost:100, cbm:0, dg:false, dutyPct:0 },
+    { rid:'dom2', supId:'', desc:'Zero override', qty:1, uom:'pcs', cost:100, cbm:0, dg:false, dutyPct:0, markup:0 }
+  ];
+  mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '15';
+  ctx.rQLT();
+  var rendered = mockEl('qt-lines').innerHTML;
+  assertContains(rendered, 'id="ql-mkp-dom1" value=""', 'no-override line renders a blank margin input, not "0"');
+  assertContains(rendered, 'id="ql-mkp-dom2" value="0"', 'explicit markup:0 renders as "0", distinct from blank');
 });
 
 // ── qteToPoConvert ─────────────────────────────────────────────

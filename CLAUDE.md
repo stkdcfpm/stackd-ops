@@ -1,12 +1,14 @@
 For full project context including business strategy, FPM data, and programme roadmap, read STACKD_CONTEXT.md in this repo root.
 
+For operator-facing workflow detail (how to use each tab/feature today), read docs/user-guide.md.
+
 # Stackd Ops — Claude Code Context
 
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies. Deployed via GitHub Pages.
 
 **Current version: v2.9.52**  
-**Test count: 432/432 PASS** (`node tests/run.js`)
+**Test count: 434/434 PASS** (`node tests/run.js`)
 
 ---
 
@@ -109,6 +111,7 @@ At the end of each version delivery, update:
 - **`docs/version-history.md`** — prepend new version row
 - **`docs/known-gaps.md`** — add new gap entries as they are identified
 - **`AI_SYSTEM_PROMPT` in `index.html`** — **mandatory on every version, no exceptions.** Review against every change shipped. If any new entity, field, feature, workflow, setting, or known quirk was added or changed, update the prompt. Ask: "If the user asked the AI about this feature, would the answer be accurate?" A version is not complete until the prompt reflects current portal behaviour.
+- **`docs/user-guide.md`** — update the relevant feature-area section if this release changed operator-visible behavior (new feature, changed workflow, changed field). Skip only if the change is purely internal (bug fix with no visible behavior change, test-only, refactor).
 - **In-app changelog** — prepend a new version block with bullet-point summary of changes
 - **Raise a PR** — push the branch and raise a PR so the user can test functionality in the portal before merging
 
