@@ -7454,6 +7454,7 @@ var AI_SYSTEM_PROMPT = [
   'Moving an Order Request to Quoted while any line still has qtyStatus "Unknown" shows a warning (does not block the save) — quoting against unresolved quantities is allowed but flagged.',
   'CSV import (v2.9.48): Import Data tab → Order Requests step. Rows sharing a Submission ID column become one Order Request with multiple lines. Contact is matched by email (case-insensitive) or auto-created as a lead-status Contact with source "webform". Re-importing an existing Submission ID only appends genuinely new lines (matched by category+item/spec) — never overwrites a line already touched by an operator.',
   'Per-line gap check (v2.9.50): each Order Request line has a "Check gaps" button. Structural check (instant, no AI) flags any unset packing spec, base UOM, base qty, source country, or qtyStatus still "Unknown". Semantic check (AI-assisted, only runs if a Claude API key is configured) additionally flags ambiguous or inconsistent values (e.g. a vague item spec, an order volume that doesn\'t reconcile with base UOM/qty) and phrases each as a specific question to send the buyer/supplier. Manual trigger only — never runs automatically on save/import. Purely diagnostic: nothing is written to the line, no lineUpdates entry is created, and it does not change the existing Quoted-transition warning behavior. The semantic check\'s API payload is scoped to product/order fields only — never the linked Contact\'s name/email/phone or any lineUpdates history.',
+  'get_suppliers/get_buyers tools exist to resolve a name to an id before emitting create_invoice/create_line_item/create_po action blocks — call one of these first whenever a supplier or buyer name is mentioned but no id is already known from the conversation, and ask a clarifying question rather than guessing if there are zero or multiple ambiguous matches. These tools deliberately do not return contact/email/phone — if the user asks for a supplier\'s or buyer\'s contact details, say that information isn\'t available through these tools and point them to the Suppliers/Buyers tab instead, rather than inventing an answer.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
@@ -7475,7 +7476,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Purchase Orders',
   'Auto-generated from invoice line items on save, grouped by supplier. Also created via Convert to PO from an Accepted quote. Only works when line items were added via Import from Library. Review and edit in Purchase Orders tab.',
-  'PO status: Draft → Sent → Confirmed → In Production → Shipped → Completed.',
+  'PO status: Draft → Sent → Deposit Paid → Settled → Cancelled.',
   'Payment Terms field available on PO (optional).',
   '',
   '## Payments',
@@ -7607,7 +7608,7 @@ var AI_SYSTEM_PROMPT = [
   'Supplier→Contact link: each contact record has a supplierId (string or null) and role (supplier_contact or empty). A contact may be linked to at most one supplier at a time. When editing a supplier, a "Contacts" sub-panel appears showing all linked contacts with an Unlink button each. "+ Link Contact" opens a prompt-based picker showing contacts not yet linked to another supplier. "+ New Contact" opens the Contact modal with the Supplier dropdown pre-filled. Contacts already linked to a different supplier are excluded from the picker. The Contacts list table shows a Supplier column with the linked supplier name (or — if none). Deleting a supplier nulls supplierId on all previously linked contacts before the async delete. supplierId and role are not synced to Google Sheets (omitted by mapRec()).',
   'Retention cap: 2,000 events maximum (FIFO). When the cap is exceeded, the oldest entries are silently dropped. No user-visible warning is shown (EVT-GAP-001).',
   'The event log is included in JSON backups (Settings → Data → Backup All JSON) and restored on import. It is not counted in the restore confirm dialog (operational metadata, not user records).',
-  'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, Contact, Supplier, or Buyer and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\ncreate_supplier → { name, country, currency, contactPerson, email, phone, notes }\ncreate_buyer → { name, contactName, email, phone, address, currency, paymentTerms, creditLimit, notes }\nupdate_order_line → { ordId, lineId, field, newValue, note } — proposes an update to one field on one Order Request line item (e.g. field:"packingSpec"). This is ALWAYS a pending, unconfirmed proposal — it is logged to that line\'s update history for operator review and never changes the live field value itself. Only use this when the user is relaying a specific fact from a buyer/supplier conversation about a specific, already-existing line (you cannot create a line via an action block).\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.',
+  'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, Contact, Supplier, Buyer, Invoice, Line Item, or Credit Note and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\ncreate_supplier → { name, country, currency, contactPerson, email, phone, notes }\ncreate_buyer → { name, contactName, email, phone, address, currency, paymentTerms, creditLimit, notes }\ncreate_invoice → { buyId, cur, inco, pt, lineItems:[{desc,qty,cost,price,uom}] } — call get_buyers first if the buyer\'s id isn\'t already known from this conversation; if zero or multiple ambiguous matches, ask a clarifying question instead of guessing. Never include an invoice number — it is auto-assigned. Requires at least one line item; if none is known yet, ask rather than emitting an empty block. If Incoterm or Payment Terms aren\'t known, ask rather than guessing.\ncreate_line_item → { desc, supId, sku, uom, cost, price, hsCode, notes } — call get_suppliers first if the supplier\'s id isn\'t already known. Only Description and Supplier are required; Cost, UOM, and HS code may be added later and should not block emitting the action.\ncreate_credit_note → { linkedInvNum, goodwill, amount, reason, buyer, date, cur, notes } — a distinct action from create_invoice, not a variant of it. Either linkedInvNum (a standard credit note against an existing invoice) or goodwill:true (a goodwill credit, no linked invoice) must be specified, not both. buyer is a plain name, not an id.\nupdate_order_line → { ordId, lineId, field, newValue, note } — proposes an update to one field on one Order Request line item (e.g. field:"packingSpec"). This is ALWAYS a pending, unconfirmed proposal — it is logged to that line\'s update history for operator review and never changes the live field value itself. Only use this when the user is relaying a specific fact from a buyer/supplier conversation about a specific, already-existing line (you cannot create a line via an action block).\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.',
   '',
   '## VAT Return (MTD)',
   'Invoices tab → VAT Return button. Opens a Making Tax Digital (VAT 100) calculator. Select From and To dates (defaults to previous calendar quarter). Click Calculate to see all 9 HMRC VAT boxes computed from invoices in the period.',
@@ -7851,6 +7852,45 @@ function handleAIAction(action) {
     if (p.paymentTerms)  G('buy-pt').value    = p.paymentTerms;
     if (p.creditLimit != null) G('buy-cl').value = p.creditLimit;
     if (p.notes)         G('buy-notes').value = p.notes;
+  } else if (action.action === 'create_invoice') {
+    if (!Array.isArray(p.lineItems) || !p.lineItems.length) {
+      toast('At least one line item is required to create an invoice — ask for product/quantity/cost details first.');
+      return;
+    }
+    openInv();
+    if (p.buyId) G('if-b').value   = p.buyId;
+    if (p.cur)   G('if-cur').value = p.cur;
+    if (p.inco)  G('if-inco').value = p.inco;
+    if (p.pt)    G('if-pt').value  = p.pt;
+    cIL = p.lineItems.map(function(li){
+      return { rid: uid(), lid: '', desc: li.desc||'', uom: li.uom||'', qty: +li.qty||1, up: +li.price||0, unitCost: +li.cost||0, lineType: 'product' };
+    });
+    rILT(); calcInv(); _updQaWarn();
+  } else if (action.action === 'create_line_item') {
+    if (!p.desc || !p.supId) {
+      toast('Description and Supplier are required to create a line item.');
+      return;
+    }
+    openLI();
+    G('lf-d').value = p.desc;
+    G('lf-sup').value = p.supId;
+    if (p.sku)      G('lf-s').value  = p.sku;
+    if (p.uom)      G('lf-u').value  = p.uom;
+    if (p.cost != null)  G('lf-c').value = p.cost;
+    if (p.price != null) G('lf-p').value = p.price;
+    if (p.hsCode)   G('lf-hs').value = p.hsCode;
+    if (p.notes)    G('lf-nt').value = p.notes;
+    liMgn();
+  } else if (action.action === 'create_credit_note') {
+    openNewCN();
+    if (p.goodwill)        { G('cnf-type').value = 'goodwill_credit'; onCNTypeChg(); }
+    else if (p.linkedInvNum) G('cnf-linked').value = p.linkedInvNum;
+    if (p.amount != null)  G('cnf-amount').value = p.amount;
+    if (p.reason)          G('cnf-reason').value = p.reason;
+    if (p.buyer)           G('cnf-b').value = p.buyer;
+    if (p.date)            G('cnf-dt').value = p.date;
+    if (p.cur)             G('cnf-cur').value = p.cur;
+    if (p.notes)           G('cnf-nt').value = p.notes;
   } else if (action.action === 'update_order_line') {
     // payload: { ordId, lineId, field, newValue, note }
     var ordForUpdate = DB.ord.find(function(o){ return o.id === p.ordId; });
@@ -7906,7 +7946,27 @@ var AI_TOOLS = [
       type: 'object',
       properties: {
         supplier: { type: 'string', description: 'Supplier name — partial match, case-insensitive' },
-        status:   { type: 'string', description: 'PO status: Draft, Sent, Confirmed, In Production, Shipped, Completed' }
+        status:   { type: 'string', description: 'PO status: Draft, Sent, Deposit Paid, Settled, Cancelled' }
+      }
+    }
+  },
+  {
+    name: 'get_suppliers',
+    description: 'Look up suppliers by name to resolve a supId for other actions (e.g. create_po, create_line_item). Filter by name (partial, case-insensitive). Returns id, reference number, name, country, and currency — does not return contact/email/phone.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Supplier name — partial match, case-insensitive' }
+      }
+    }
+  },
+  {
+    name: 'get_buyers',
+    description: 'Look up buyers by name to resolve a buyId for other actions (e.g. create_invoice). Filter by name (partial, case-insensitive). Returns id, reference number, name, and currency — does not return contact name/email/phone/credit limit.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Buyer name — partial match, case-insensitive' }
       }
     }
   }
@@ -7976,6 +8036,24 @@ function _aiExecTool(name, inp) {
         totalShipments:      DB.sh.length,
         totalPOs:            DB.po.length
       });
+    }
+    if (name === 'get_suppliers') {
+      var sups = DB.sup.filter(function(s) {
+        if (inp.name && (s.name||'').toLowerCase().indexOf(inp.name.toLowerCase()) === -1) return false;
+        return true;
+      });
+      return JSON.stringify(sups.map(function(s) {
+        return { id: s.id, num: s.num||'', name: s.name, country: s.country||'', currency: s.cur||'' };
+      }));
+    }
+    if (name === 'get_buyers') {
+      var buys = DB.buy.filter(function(b) {
+        if (inp.name && (b.name||'').toLowerCase().indexOf(inp.name.toLowerCase()) === -1) return false;
+        return true;
+      });
+      return JSON.stringify(buys.map(function(b) {
+        return { id: b.id, num: b.num||'', name: b.name, currency: b.currency||'' };
+      }));
     }
     if (name === 'get_pos') {
       var pos = DB.po.filter(function(po) {
