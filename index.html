@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.52</title>
+<title>Stackd Ops v2.9.53</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
@@ -213,7 +213,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.52</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.53</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -730,6 +730,13 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When a webhook URL is configured, shipment data (origin/destination ports, ETD, cargo description, forwarder contact name and email) is posted to that endpoint on each Forwarder Update Request. Only configure a URL you control or trust. Webhook is opt-in — no data is transmitted if no URL is configured.</p>
     </div>
     <div class="card">
+      <div class="ct">Supplier Intelligence</div>
+      <div class="fld" style="margin-bottom:10px;">
+        <label>Price staleness threshold (months) <span style="font-size:.44rem;color:var(--m);">(price history older than this is flagged in the Supplier modal)</span></label>
+        <input type="number" id="cfg-sup-intel-threshold" min="1" value="12" onchange="setSupIntelThreshold(this.value)" style="width:80px;">
+      </div>
+    </div>
+    <div class="card">
       <div class="ct">Accounting Export — Field Mapping Reference</div>
       <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Read-only reference. Gaps indicate data not available in Stackd that the platform expects.</p>
       <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Xero Invoice Import</div>
@@ -955,6 +962,10 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" style="font-size:.48rem;" onclick="openCon(EI.s)">+ New Contact</button>
       </div>
     </div>
+    <div id="sup-price-panel" style="grid-column:1/-1;margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;display:none;">
+      <div style="font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);margin-bottom:8px;">Price History</div>
+      <div id="sup-price-list" style="font-size:.5rem;margin-bottom:10px;"></div>
+    </div>
   </div>
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
     <button class="btn btn-g" onclick="closeM('ov-sup')">Cancel</button>
@@ -1164,9 +1175,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.52</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.53</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Supplier price intelligence (REQ/SPEC-SUP-001) — the Supplier modal now shows a Price History panel aggregating every recorded price point for that supplier across Line Items, Quotes, and Purchase Orders, newest first, each tagged by source and product. Prices older than a configurable threshold (Settings → Supplier Intelligence, default 12 months) are flagged with an amber staleness marker, reusing the existing FX-staleness-warning visual treatment. Also adds a cross-supplier product lookup (<code>getProductPriceHistory()</code>) for comparing what different suppliers have historically charged for similar items. Always shows <code>cost</code> (what the supplier charges), never this app's own landed-cost or sell-price figures, so cross-source and cross-supplier comparisons aren't distorted by freight/margin assumptions. No currency conversion in this version — each point displays in its own recorded currency. Purely additive: no new entity, no new Sheets sync mapping, nothing exported or synced.</li>
+          <li>9 new tests. Tests: 454/454 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.52</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Per-line quote margin override (REQ/SPEC-QTE-001, Part A) — each Quote line can now carry its own margin %, overriding the quote-level default; leaving it blank inherits the quote-level margin exactly as before. Overhead (origin/destination charges + admin fee) is no longer marked up — it's added to the Grand Total at cost, matching how the DG surcharge is already treated. This is a deliberate behavior change: resaving any pre-existing quote recomputes its Grand Total by exactly the amount overhead was previously marked up by. Went through 3 requirements-gate rounds and 1 spec-gate round (each independent, each catching genuine issues — including a real bug in an initially-proposed FX-staleness check and a wrong function citation for a later phase's hand-off, both since corrected in the requirement itself; the spec-gate round found the calculation logic sound with only citation/test-plan cleanup needed). Part B (RFQ supplier comparison & commit) is specified at the requirements level only — not built in this version.</li>
@@ -4222,6 +4243,60 @@ function populateConSupDrop() {
     DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
   el.value = cur;
 }
+function getSupplierPriceHistory(supId) {
+  var points = [];
+
+  DB.li.filter(function(l){ return l.supId === supId; }).forEach(function(l){
+    (l.priceHistory || []).forEach(function(h){
+      points.push({
+        date: h.date || '', sourceType: 'line_item', sourceRef: l.num || l.sku || l.desc,
+        desc: l.desc || '', price: +h.cost || 0, currency: l.cur || 'USD', status: ''
+      });
+    });
+  });
+
+  DB.qt.forEach(function(q){
+    (q.lines || []).filter(function(l){ return l.supId === supId; }).forEach(function(l){
+      (l.priceHistory || []).forEach(function(h){
+        points.push({
+          date: h.ts ? h.ts.slice(0,10) : '', sourceType: 'quote', sourceRef: q.num || '',
+          desc: l.desc || '', price: +h.cost || 0, currency: q.currency || 'USD', status: q.status || ''
+        });
+      });
+    });
+  });
+
+  DB.po.filter(function(p){ return p.supId === supId; }).forEach(function(p){
+    (p.lineItems || []).forEach(function(li){
+      points.push({
+        date: p.date || '', sourceType: 'po', sourceRef: p.num || '',
+        desc: li.desc || '', price: +li.cost || 0, currency: p.cur || 'USD', status: p.status || ''
+      });
+    });
+  });
+
+  points.sort(function(a,b){ return (b.date||'') < (a.date||'') ? -1 : 1; });
+  return points;
+}
+function supPriceStaleness(dateStr) {
+  if (!dateStr) return null;
+  var months = (Date.now() - new Date(dateStr).getTime()) / (30.44 * 86400000);
+  return months;
+}
+function getProductPriceHistory(query) {
+  var q = (query || '').toLowerCase();
+  var all = [];
+  DB.sup.forEach(function(s){
+    getSupplierPriceHistory(s.id).forEach(function(p){
+      if (!q || p.desc.toLowerCase().indexOf(q) !== -1) all.push(Object.assign({ supName: s.name, supId: s.id }, p));
+    });
+  });
+  all.sort(function(a,b){ return (b.date||'') < (a.date||'') ? -1 : 1; });
+  return all;
+}
+function setSupIntelThreshold(months) {
+  localStorage.setItem('stackd_sup_intel_threshold_months', String(+months || 12));
+}
 function renderSupContacts() {
   var el = G('sup-con-list'); if (!el) return;
   var linked = DB.con.filter(function(c){ return c.supplierId === EI.s; });
@@ -4231,6 +4306,27 @@ function renderSupContacts() {
       return '<tr><td>' + san(c.name) + '</td><td>' + san(c.email) + '</td>' +
         '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
         '<td><button class="ab" onclick="unlinkSupCon(\'' + c.id + '\')">Unlink</button></td></tr>';
+    }).join('') + '</tbody></table>';
+}
+function renderSupPriceHistory() {
+  var el = G('sup-price-list'); if (!el) return;
+  var points = getSupplierPriceHistory(EI.s);
+  if (!points.length) { el.innerHTML = '<span style="color:var(--m);">No price history yet.</span>'; return; }
+  var thresholdMonths = +localStorage.getItem('stackd_sup_intel_threshold_months') || 12;
+  var typeLabels = { line_item: 'Line Item', quote: 'Quote', po: 'PO' };
+  el.innerHTML = '<table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Date</th><th>Source</th><th>Ref</th><th>Product</th><th>Price</th><th>Status</th></tr></thead><tbody>' +
+    points.map(function(p){
+      var age = supPriceStaleness(p.date);
+      var stale = age !== null && age > thresholdMonths;
+      var ageLabel = age === null ? '' : (age < 1 ? 'this month' : Math.round(age) + ' mo ago');
+      return '<tr' + (stale ? ' style="background:#FFF8E1;"' : '') + '>'
+        + '<td>' + san(p.date || '-') + (ageLabel ? ' <span style="color:' + (stale ? '#B8860B' : 'var(--m)') + ';">(' + ageLabel + (stale ? ' &#9888;' : '') + ')</span>' : '') + '</td>'
+        + '<td><span class="tag">' + san(typeLabels[p.sourceType] || p.sourceType) + '</span></td>'
+        + '<td>' + san(p.sourceRef || '-') + '</td>'
+        + '<td>' + san(p.desc || '-') + '</td>'
+        + '<td style="font-weight:600;">' + san(p.currency) + ' ' + fn(p.price,2) + '</td>'
+        + '<td>' + san(p.status || '-') + '</td>'
+        + '</tr>';
     }).join('') + '</tbody></table>';
 }
 function unlinkSupCon(contactId) {
@@ -4268,6 +4364,7 @@ function openSup() {
   var ab = G('sup-activity-body'); if (ab) ab.style.display = 'none';
   var al = G('sup-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
   var panel = G('sup-con-panel'); if (panel) panel.style.display = 'none';
+  var pricePanel = G('sup-price-panel'); if (pricePanel) pricePanel.style.display = 'none';
   G('ov-sup').classList.add('on'); setTimeout(function(){ G('sf-n').focus(); }, 50);
 }
 function editSup(id) {
@@ -4280,6 +4377,8 @@ function editSup(id) {
   var al = G('sup-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
   var panel = G('sup-con-panel'); if (panel) panel.style.display = '';
   renderSupContacts();
+  var pricePanel = G('sup-price-panel'); if (pricePanel) pricePanel.style.display = '';
+  renderSupPriceHistory();
   G('ov-sup').classList.add('on');
 }
 async function saveSup() {
@@ -7294,7 +7393,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.52).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.53).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8023,6 +8122,7 @@ function rCfg() {
   if(G('cfg-ai-key')) G('cfg-ai-key').value=AI.key||'';
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
   if(G('cfg-fwd-webhook')) G('cfg-fwd-webhook').value=SS.fwdWebhook||'';
+  if(G('cfg-sup-intel-threshold')) G('cfg-sup-intel-threshold').value = +localStorage.getItem('stackd_sup_intel_threshold_months') || 12;
   if(G('cfg-lang')) G('cfg-lang').value = _lang;
   rCoBrand();
   qteFillRates();

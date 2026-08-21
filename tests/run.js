@@ -5495,6 +5495,109 @@ test('renderDispCurWarn — shows staleness banner only when displayCurrency is 
   ctx.QR = savedQR;
 });
 
+// ── SUPPLIER PRICE INTELLIGENCE (SPEC-SUP-001) ──────────────────
+
+test('getSupplierPriceHistory — aggregates Line Item, Quote, and PO sources, correctly attributed by sourceType', function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'L1', supId: 'S1', desc: 'Widget', cur: 'USD', priceHistory: [{ date: '2026-01-01', cost: 10 }, { date: '2026-02-01', cost: 11 }] });
+  ctx.DB.qt.push({ id: 'Q1', num: 'QTE1', currency: 'USD', status: 'Sent', lines: [{ supId: 'S1', desc: 'Widget', priceHistory: [{ ts: '2026-03-01T00:00:00.000Z', cost: 9 }] }] });
+  ctx.DB.po.push({ id: 'P1', num: 'PO1', supId: 'S1', date: '2026-04-01', cur: 'USD', status: 'Sent', lineItems: [{ desc: 'Widget', cost: 12 }] });
+  var points = ctx.getSupplierPriceHistory('S1');
+  assertEqual(points.length, 4, 'exactly 4 points');
+  assertEqual(points.filter(function(p){ return p.sourceType === 'line_item'; }).length, 2, '2 line_item points');
+  assertEqual(points.filter(function(p){ return p.sourceType === 'quote'; }).length, 1, '1 quote point');
+  assertEqual(points.filter(function(p){ return p.sourceType === 'po'; }).length, 1, '1 po point');
+});
+
+test('getSupplierPriceHistory — supplier with no matching records returns empty array', function() {
+  resetDB();
+  var points = ctx.getSupplierPriceHistory('S-NONE');
+  assertEqual(points.length, 0, 'empty array, not an error');
+});
+
+test('getSupplierPriceHistory — Quote-sourced points use cost, never landed/sellPrice', function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'Q1', num: 'QTE1', currency: 'USD', status: 'Sent', lines: [{ supId: 'S1', desc: 'Widget', priceHistory: [{ ts: '2026-03-01T00:00:00.000Z', cost: 9, landed: 15, sellPrice: 20 }] }] });
+  var points = ctx.getSupplierPriceHistory('S1');
+  assertEqual(points[0].price, 9, 'price equals cost, not landed or sellPrice');
+});
+
+test('getSupplierPriceHistory — sorted newest-first across mixed sources', function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'L1', supId: 'S1', desc: 'Widget', cur: 'USD', priceHistory: [{ date: '2026-01-01', cost: 10 }] });
+  ctx.DB.po.push({ id: 'P1', num: 'PO1', supId: 'S1', date: '2026-05-01', cur: 'USD', status: 'Sent', lineItems: [{ desc: 'Widget', cost: 12 }] });
+  var points = ctx.getSupplierPriceHistory('S1');
+  assertEqual(points[0].sourceType, 'po', 'PO (dated later) appears first regardless of source type');
+});
+
+test('supPriceStaleness — 13 months ago > 12, 1 month ago < 12, null/empty returns null', function() {
+  var d13 = new Date(); d13.setMonth(d13.getMonth() - 13);
+  var d1 = new Date(); d1.setMonth(d1.getMonth() - 1);
+  assert(ctx.supPriceStaleness(d13.toISOString().slice(0,10)) > 12, '13 months ago is > 12');
+  assert(ctx.supPriceStaleness(d1.toISOString().slice(0,10)) < 12, '1 month ago is < 12');
+  assertEqual(ctx.supPriceStaleness(null), null, 'null input returns null');
+  assertEqual(ctx.supPriceStaleness(''), null, 'empty input returns null');
+});
+
+test('renderSupPriceHistory — point older than threshold renders with stale marker, point within threshold does not', function() {
+  resetDB();
+  ctx.EI.s = 'S1';
+  var old = new Date(); old.setMonth(old.getMonth() - 14);
+  var recent = new Date(); recent.setMonth(recent.getMonth() - 1);
+  ctx.DB.li.push({ id: 'L1', supId: 'S1', desc: 'Old Widget', cur: 'USD', priceHistory: [{ date: old.toISOString().slice(0,10), cost: 10 }] });
+  ctx.DB.qt.push({ id: 'Q1', num: 'QTE1', currency: 'USD', status: 'Sent', lines: [{ supId: 'S1', desc: 'New Widget', priceHistory: [{ ts: recent.toISOString(), cost: 9 }] }] });
+  ctx.localStorage.setItem('stackd_sup_intel_threshold_months', '12');
+  ctx.renderSupPriceHistory();
+  var html = mockEl('sup-price-list').innerHTML;
+  assertContains(html, '#FFF8E1', 'stale row has amber background');
+  var rows = html.split('<tr');
+  assert(rows.some(function(r){ return r.indexOf('Old Widget') >= 0 && r.indexOf('#FFF8E1') >= 0; }), 'old point marked stale');
+  assert(rows.some(function(r){ return r.indexOf('New Widget') >= 0 && r.indexOf('#FFF8E1') < 0; }), 'recent point not marked stale');
+});
+
+test('renderSupPriceHistory — no threshold configured defaults to 12 months, not NaN', function() {
+  resetDB();
+  ctx.EI.s = 'S1';
+  ctx.localStorage.removeItem('stackd_sup_intel_threshold_months');
+  var old = new Date(); old.setMonth(old.getMonth() - 13);
+  ctx.DB.li.push({ id: 'L1', supId: 'S1', desc: 'Widget', cur: 'USD', priceHistory: [{ date: old.toISOString().slice(0,10), cost: 10 }] });
+  ctx.renderSupPriceHistory();
+  var html = mockEl('sup-price-list').innerHTML;
+  assert(html.indexOf('NaN') < 0, 'no NaN in output');
+  assertContains(html, '#FFF8E1', 'defaults to 12 months and still flags a 13-month-old point as stale');
+});
+
+test('getProductPriceHistory — query matching across two suppliers returns points from both, correctly tagged', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME' });
+  ctx.DB.sup.push({ id: 'S2', name: 'Globex' });
+  ctx.DB.li.push({ id: 'L1', supId: 'S1', desc: 'Blue Widget', cur: 'USD', priceHistory: [{ date: '2026-01-01', cost: 10 }] });
+  ctx.DB.li.push({ id: 'L2', supId: 'S2', desc: 'Blue Widget Deluxe', cur: 'USD', priceHistory: [{ date: '2026-01-02', cost: 20 }] });
+  var results = ctx.getProductPriceHistory('blue widget');
+  assertEqual(results.length, 2, 'both suppliers matched');
+  assert(results.some(function(p){ return p.supName === 'ACME'; }), 'ACME point tagged');
+  assert(results.some(function(p){ return p.supName === 'Globex'; }), 'Globex point tagged');
+});
+
+test('openSup()/editSup() — sup-price-panel hidden on openSup, shown with renderSupPriceHistory invoked on editSup', function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'S1', name: 'ACME', cur: 'USD' });
+  ctx.openSup();
+  assertEqual(mockEl('sup-price-panel').style.display, 'none', 'hidden on openSup (new supplier)');
+  ctx.editSup('S1');
+  assertEqual(mockEl('sup-price-panel').style.display, '', 'shown on editSup');
+});
+
+test('SPEC-SUP-001 scope guard — no export/sync side effect on the aggregated data', function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'L1', supId: 'S1', desc: 'Widget', cur: 'USD', priceHistory: [{ date: '2026-01-01', cost: 10 }] });
+  var pointsA = ctx.getSupplierPriceHistory('S1');
+  var pointsB = ctx.getProductPriceHistory('widget');
+  assert(Array.isArray(pointsA) && Array.isArray(pointsB), 'both return plain in-memory arrays');
+  assertEqual(ctx.FIELD_MAPS.sup.priceHistory, undefined, 'no priceHistory entry added to FIELD_MAPS.sup for this feature');
+  assertEqual(ctx.FIELD_MAPS.li.supPriceHistory, undefined, 'no supPriceHistory entry added to FIELD_MAPS.li for this feature');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
