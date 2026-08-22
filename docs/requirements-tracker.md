@@ -28,7 +28,7 @@ Last updated: 2026-08-22 (v2.9.56 — QTE-001 Part B shipped)
 | ID | Title | Area | Logged | Decision |
 |---|---|---|---|---|
 | AI-GAP-001 (broad) | Agentic multi-step order flow | AI Assistant | v2.9.27 | Deferred v3.0.x — requires server-side proxy |
-| REQ-V3-GAP-006 (ev) | Event log emissions on delCon / link / unlink | Event log + Contacts | v2.9.28 | Deferred — dependent on REQ-V3-GAP-006 shipping first; target v2.9.29+ |
+| REQ-V3-GAP-006 (ev) | Event log emissions on delCon / link / unlink | Event log + Contacts | v2.9.28 | **✓ closed v2.9.56.** `delCon()`'s emission (the only part `REQ-V3-GAP-006-v3.md` actually deferred) was found already implemented when checked against the live code — `link`/`unlink` emissions were never a formally-gated requirement (only present in this backlog row's own description), added as a small, proportionate fix mirroring the already-established `logEv()` pattern rather than run through a full REQ/SPEC cycle. |
 | S3-1 | Demo shipment mode | Trial conversion | pre-sprint | ✓ shipped v2.9.31 |
 | S3-2 | MTD-compatible VAT export | Compliance | pre-sprint | ✓ shipped v2.9.32 |
 | REQ-RPT-001 G-01 | AI date filter (get_invoices, get_payments) | AI / Reporting | v2.9.33 | **✓ shipped v2.9.34** (SPEC-RPT-001-G01-G04-v1.md) — tracker row corrected 2026-08-22, previously left showing "target v2.9.34" after shipping; see `docs/version-history.md` v2.9.34. |

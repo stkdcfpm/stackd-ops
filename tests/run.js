@@ -3684,6 +3684,10 @@ test('AC-2: unlinkSupCon nulls supplierId and clears role, contact preserved', f
   assertEqual(ctx.DB.con[0].supplierId, null, 'supplierId nulled');
   assertEqual(ctx.DB.con[0].role, '', 'role cleared');
   assertEqual(ctx.DB.con.length, 1, 'contact preserved');
+  var ev = ctx.DB.events[ctx.DB.events.length - 1];
+  assertEqual(ev.entityType, 'contact', 'event logged against the contact entity (REQ-V3-GAP-006 ev)');
+  assertEqual(ev.entityId, 'C1'); assertEqual(ev.verb, 'unlinked');
+  assertContains(ev.summary, 'ACME', 'summary names the supplier that was unlinked');
 });
 
 testAsync('AC-5: delSup nulls supplierId on linked contacts and preserves them', async function() {
@@ -3711,6 +3715,10 @@ test('AC-6: openSupConPicker links contact — supplierId and role set', functio
   ctx.prompt = function(){ return null; };
   assertEqual(ctx.DB.con[0].supplierId, 'S1', 'supplierId set');
   assertEqual(ctx.DB.con[0].role, 'supplier_contact', 'role set');
+  var ev = ctx.DB.events[ctx.DB.events.length - 1];
+  assertEqual(ev.entityType, 'contact', 'event logged against the contact entity (REQ-V3-GAP-006 ev)');
+  assertEqual(ev.entityId, 'C1'); assertEqual(ev.verb, 'linked');
+  assertContains(ev.summary, 'ACME', 'summary names the supplier that was linked');
 });
 
 test('AC-3: contact linked to Supplier X excluded from picker for Supplier Y', function() {

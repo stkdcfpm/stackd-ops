@@ -1223,6 +1223,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: RFQ supplier comparison &amp; commit (REQ/SPEC-QTE-001, Part B) — each Order Request line gains a "Compare RFQs" panel for recording multiple suppliers' quotes (unit cost, currency, CBM, duty %, DG flag, MOQ, lead time, payment terms, optional linked Contact, notes) via a new <code>ov-rfq</code> modal. Responses are ranked by landed cost converted to GBP using the same <code>cQteLine()</code> rate engine Quotes already use (LCL basis, since no Quote/freight-mode decision exists yet at comparison time) — the nominal cheapest quoted price is not always the landed-cheapest once freight/duty/DG and currency are factored in. A response with CBM not entered is flagged with a warning next to its landed cost rather than silently looking cheapest. Exactly one response per line can be marked Committed; re-committing replaces the prior choice and no response is ever deleted. Converting an Order Request to a Quote now pre-fills one Quote line per committed response, carrying over supplier, quantity (the line's own base qty, if set), and unit cost — <strong>correctly currency-converted</strong> to the new Quote's working currency, not copied verbatim. <code>delSup()</code>/<code>delCon()</code> extended to warn on/clean up RFQ response references. Went through 1 independent spec-gate round (CONDITIONAL PASS — 1 blocking finding: the Quote hand-off initially dropped currency conversion entirely, which would have silently corrupted every downstream Quote calculation for a non-USD committed response; fixed and confirmed via a second independent review, PASS). While building this feature's tests, found and fixed a latent defect in the test harness itself: 8 pre-existing async tests (the Order Request per-line gap check's semantic-check tests) were registered with the synchronous <code>test()</code> helper despite having internal <code>await</code>s — their assertions ran as detached, untracked microtasks that always reported a false-positive pass, and separately mis-referenced their mock configuration variable (<code>ctx._mockAnthropic</code> instead of the module-scope <code>_mockAnthropic</code> the mock <code>fetch</code> actually reads), meaning the mock was silently never engaged. Converted to <code>testAsync()</code> and fixed the variable reference — all 8 now genuinely exercise and verify real behavior. 14 new tests. Tests: 506/506 pass.</li>
+          <li>Fix: Contact event log — closes the last open item from REQ-V3-GAP-006 (v2.9.29) — <code>unlinkSupCon()</code> and <code>openSupConPicker()</code>'s link action now call <code>logEv()</code> (verbs <code>linked</code>/<code>unlinked</code>, naming the supplier), matching every other Contact mutation already logged. <code>delCon()</code>'s own event emission, separately deferred at the time pending <code>DB.events</code> shipping, was found already implemented once checked against the live code — this fix closes the one remaining real gap. 2 tests extended (no new test count).</li>
         </ul>
       </div>
 
@@ -4632,9 +4633,11 @@ function renderSupPriceHistory() {
 }
 function unlinkSupCon(contactId) {
   var c = DB.con.find(function(x){ return x.id === contactId; }); if (!c) return;
+  var sup = DB.sup.find(function(s){ return s.id === c.supplierId; });
   c.supplierId = null;
   c.role = '';
   sv(K.co, DB.con);
+  logEv('contact', c.id, 'unlinked', 'Unlinked from supplier ' + (sup ? sup.name : '(unknown)'), 'user');
   renderSupContacts();
   rCon();
   toast('Contact unlinked');
@@ -4653,6 +4656,8 @@ function openSupConPicker() {
   c.supplierId = EI.s;
   c.role = 'supplier_contact';
   sv(K.co, DB.con);
+  var sup = DB.sup.find(function(s){ return s.id === EI.s; });
+  logEv('contact', c.id, 'linked', 'Linked to supplier ' + (sup ? sup.name : '(unknown)'), 'user');
   renderSupContacts();
   rCon();
   toast('Contact linked');
@@ -8171,7 +8176,7 @@ var AI_SYSTEM_PROMPT = [
   '## Activity Event Log (DB.events)',
   'DB.events is a local-only array of operational event records stored in localStorage key st_ev. It is NOT synced to Google Sheets and is never transmitted externally.',
   'Each event record contains: id (unique), ts (ISO 8601 timestamp), entityType (e.g. contact), entityId (ID of the affected entity), verb (created/updated/status_changed/note_added/deleted/converted), summary (plain operational text — no personal names), actor (user or system).',
-  'Events are written by logEv() whenever a contact is created, edited, has its status changed, has a note added, is deleted, or is converted via quote creation. Supplier events are scaffolded for a future version.',
+  'Events are written by logEv() whenever a contact is created, edited, has its status changed, has a note added, is deleted, is linked/unlinked to a supplier, or is converted via quote creation. Supplier events (created, updated, deleted) are also logged, as are Invoice, Purchase Order, Payment, Buyer, and Order Request stage-override events — logEv() coverage is not contact-only.',
   'To view contact activity: open or edit a Contact → click the "Activity" header to expand the accordion. Shows the most recent 50 events for that contact, newest first, in YYYY-MM-DD format.',
   'Supplier modal also has an Activity accordion but always shows "No activity recorded." — supplier events are not yet emitted.',
   'Supplier→Contact link: each contact record has a supplierId (string or null) and role (supplier_contact or empty). A contact may be linked to at most one supplier at a time. When editing a supplier, a "Contacts" sub-panel appears showing all linked contacts with an Unlink button each. "+ Link Contact" opens a prompt-based picker showing contacts not yet linked to another supplier. "+ New Contact" opens the Contact modal with the Supplier dropdown pre-filled. Contacts already linked to a different supplier are excluded from the picker. The Contacts list table shows a Supplier column with the linked supplier name (or — if none). Deleting a supplier nulls supplierId on all previously linked contacts before the async delete. supplierId and role are not synced to Google Sheets (omitted by mapRec()).',
