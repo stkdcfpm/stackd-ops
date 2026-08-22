@@ -3757,6 +3757,11 @@ async function pullAll() {
 
   // ── Simple entities (Sheets wins; local-only records preserved; untracked fields survive — SYNC-GAP-001) ─
   var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+  // Suppliers are cloud-authoritative once Cloud Data is configured (SPEC-CLOUD-001) — pulling them from
+  // Sheets here would race the fire-and-forget Supabase refresh in initCloudDataLayer(), with whichever
+  // resolves last silently overwriting DB.sup/localStorage. Excluded entirely when _sb is configured;
+  // zero change to this loop when it isn't.
+  if (_sb) simpleEnts = simpleEnts.filter(function(e){ return e !== 'sup'; });
   var idKeyedEnts = ['sup', 'payments', 'co'];
   for (var ei = 0; ei < simpleEnts.length; ei++) {
     var eKey = simpleEnts[ei];
@@ -4530,6 +4535,7 @@ function initSbClient() {
 
 var _sbLoginCallback = null;
 function openSbLoginModal(callback) {
+  if (_sbLoginCallback) { var _prevCb = _sbLoginCallback; _sbLoginCallback = null; _prevCb(false); } // a still-pending prior call is cancelled, never left hanging
   _sbLoginCallback = callback;
   if (G('sb-login-email')) G('sb-login-email').value = '';
   if (G('sb-login-pw')) G('sb-login-pw').value = '';
@@ -4618,6 +4624,7 @@ function showDuplicateConflictModal(dupes) {
 var _sbMigrationResolve = null;
 function showBlockingBackupModal() {
   return new Promise(function(resolve){
+    if (_sbMigrationResolve) { var _prevResolve = _sbMigrationResolve; _sbMigrationResolve = null; _prevResolve(false); } // a still-pending prior call is cancelled, never left hanging
     if (G('mig-backup-ack')) G('mig-backup-ack').checked = false;
     if (G('mig-backup-proceed')) G('mig-backup-proceed').disabled = true;
     _sbMigrationResolve = resolve;
@@ -4710,8 +4717,11 @@ async function saveSup() {
   var _supIsNew = !EI.s;
   var _existSup = EI.s ? DB.sup.find(function(x){ return x.id===EI.s; }) : null;
   if (_sb) {
+    var _supName = G('sf-n').value.trim();
+    var _supDup = DB.sup.find(function(s){ return s.name.trim().toLowerCase() === _supName.toLowerCase() && s.id !== EI.s; });
+    if (_supDup) { vErr('sf-n', 'A supplier with this name already exists'); return; }
     if (!(await ensureSbAuth())) return;
-    var row = { name: G('sf-n').value.trim(), country: G('sf-c').value.trim(), contact_name: G('sf-ct').value.trim(), email: G('sf-e').value.trim(), phone: getSupPhone(), currency: G('sf-cur').value, notes: G('sf-nt').value.trim() };
+    var row = { name: _supName, country: G('sf-c').value.trim(), contact_name: G('sf-ct').value.trim(), email: G('sf-e').value.trim(), phone: getSupPhone(), currency: G('sf-cur').value, notes: G('sf-nt').value.trim() };
     var result;
     if (EI.s) {
       result = await _sb.from('suppliers').update(row).eq('id', EI.s).select().single();
