@@ -8566,7 +8566,7 @@ async function sendAIMsg() {
     var parsed = parseAIAction(finalText);
     replyEl.textContent = parsed.clean;
     if (parsed.action) {
-      var actionLabels = { create_po: 'PO', create_quote: 'Quote', create_shipment: 'Shipment', create_contact: 'Contact', create_supplier: 'Supplier', create_buyer: 'Buyer', update_order_line: 'Order Line Update' };
+      var actionLabels = { create_po: 'PO', create_quote: 'Quote', create_shipment: 'Shipment', create_contact: 'Contact', create_supplier: 'Supplier', create_buyer: 'Buyer', update_order_line: 'Order Line Update', create_invoice: 'Invoice', create_line_item: 'Line Item', create_credit_note: 'Credit Note' };
       var label = actionLabels[parsed.action.action] || parsed.action.action;
       var btn = document.createElement('button');
       btn.className = 'btn btn-s';

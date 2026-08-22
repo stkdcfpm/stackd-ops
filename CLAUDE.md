@@ -133,9 +133,9 @@ See `docs/known-gaps.md` for full entries.
 | SEC-GAP-003 | API key in browser | Anthropic key in localStorage — inherent no-server constraint |
 | SEC-GAP-004 | Invoice locking | Client-side UX control only — not tamper-proof |
 | AI-GAP-007 | AI assistant | Action block emission inconsistent — temperature 0.2 mitigation shipped v2.9.42, confirmed 3/3 on retest |
-| AI-GAP-008 | AI assistant | create_po requires internal supId with no name resolution — dead end when chaining create_supplier then create_po in one conversation |
-| AI-GAP-009 | AI assistant | AI_SYSTEM_PROMPT's PO status vocabulary doesn't match the live po-sm dropdown (Draft/Sent/Deposit Paid/Settled/Cancelled) — found via workflow-bpmn.md cross-check |
-| AI-GAP-006 | AI assistant | Supplier + Buyer creation shipped v2.9.41; Invoices, Line Items, Credit Notes still unsupported by handleAIAction() |
+| AI-GAP-008 | AI assistant | create_po required internal supId with no name resolution — Fixed v2.9.55 via new get_suppliers/get_buyers read tools |
+| AI-GAP-009 | AI assistant | AI_SYSTEM_PROMPT's PO status vocabulary didn't match the live po-sm dropdown — Fixed v2.9.55 (prompt + get_pos tool description both corrected to Draft/Sent/Deposit Paid/Settled/Cancelled) |
+| AI-GAP-006 | AI assistant | All nine creatable entities now supported by handleAIAction() — Fixed v2.9.55 (Invoices/Line Items/Credit Notes shipped, closing out Suppliers/Buyers from v2.9.41) |
 | INV-GAP-001 | Invoice rendering | Pro-forma status rendered as plain Invoice document — Fixed v2.9.40 |
 | SEC-GAP-020 | Public Pages exposure | Live PII was publicly served — fully resolved 2026-07-05 (purge, history rewrite, GDPR assessment, GitHub PR/cache purge all complete) |
 | SEC-GAP-011 | Sync / data integrity | `pullAll()` overwrites local records unconditionally — Sheets wins, no timestamp-based conflict resolution |
