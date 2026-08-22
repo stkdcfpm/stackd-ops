@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.54</title>
+<title>Stackd Ops v2.9.55</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.54</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.55</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1194,12 +1194,23 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.54</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.55</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
-          <li>New: Cloud Data — Supabase-backed shared Suppliers/Buyers (REQ/SPEC-CLOUD-001) — Settings → Cloud Data lets an operator connect a shared Supabase database, so a colleague on a different device/browser sees the same Supplier/Buyer records; everything else in the app stays local-only. Vendored <code>@supabase/supabase-js</code> client (first use of the <code>DASH-GAP-001</code> vendoring precedent). Gated by a separate Supabase sign-in the first time a session loads with it configured, cached silently thereafter; the background refresh is fire-and-forget (mirrors the existing <code>pullAll()</code> pattern) so it never blocks app startup or the rest of the app behind a login. Migrating existing local Suppliers/Buyers is a one-time, explicit action requiring a full backup export first (mandatory, checkbox-gated) and a pre-flight duplicate-name scan; every local reference to a migrated Supplier/Buyer (Quotes, POs, Line Items, Contacts, Invoices) is remapped to the new cloud id in the same pass. The "Ad-Hoc" default Buyer never migrates and stays local-only permanently. Pre-migration data is archived locally for 30 days as a rollback safety net (Settings → Cloud Data → "Restore Pre-Migration Suppliers/Buyers", which also disconnects Cloud Data so the restore isn't immediately overwritten by the next background refresh). Went through 4 requirements-gate rounds and 4 spec-gate rounds (each independent, each catching genuine issues — an incomplete ID-remap, a whole-app auth-gate regression, two fictional/false cited-precedent claims, a missed second Buyer-creation path, and a restore that didn't actually hold — all resolved), then 1 independent build-gate round that caught a real defect the specs never addressed: <code>pullAll()</code>'s existing Sheets sync silently pulls Suppliers back into <code>DB.sup</code> on every load (a genuine two-writer race against the new Supabase refresh, not merely a one-way push as first assumed) — fixed by excluding Suppliers from that pull whenever Cloud Data is configured. The same round also fixed a Promise-leak on double-invoking the login/migration-backup modals (a re-entrant call now cancels the earlier still-pending one instead of hanging it forever) and converted the pre-existing <code>saveSup</code>/<code>delSup</code>/<code>saveBuy</code>/<code>delBuy</code> tests to <code>testAsync()</code> as the spec required. Buyers have no Sheets sync of any kind today (verified), so no equivalent fix was needed there. 19 new tests. Tests: 473/473 pass.</li>
+          <li>New: AI Assistant Supplier/Buyer read tools + Invoice/Line Item/Credit Note creation (REQ/SPEC-AI-GAP-002) — new <code>get_suppliers</code>/<code>get_buyers</code> tools return only <code>{id,num,name,country,currency}</code>/<code>{id,num,name,currency}</code> — no contact/email/phone PII field is ever assembled into the payload sent to the AI. <code>get_pos</code>'s status filter description fixed to the real vocabulary (<code>Deposit Paid</code>, <code>Settled</code>) instead of a stale, never-matching list. New <code>create_invoice</code>, <code>create_line_item</code>, and <code>create_credit_note</code> action blocks added to <code>handleAIAction()</code>, following the existing propose-never-auto-save pattern (AI proposes a payload, operator reviews and saves in the real form) — each rejects on missing required fields before opening its modal. Closes AI-GAP-006/AI-GAP-008/AI-GAP-009.</li>
+          <li>New: AI-assisted enquiry intake check (REQ/SPEC-CON-004) — "Check enquiry" button on the Contact modal's Enquiry Summary field calls new <code>conCheckEnquirySemantic()</code>, a single-shot, non-conversational Anthropic call mirroring the existing <code>ordCheckLineGapsSemantic()</code> pattern, flagging ambiguous/incomplete enquiry text and phrasing follow-up questions. The API payload is built defensively field-by-field (company name + enquiry text only) rather than assumed safe by precedent, since the Contact form has PII fields directly adjacent to the enquiry text being read. Manual trigger only — no auto-run on save, no field mutation, no persistence.</li>
+          <li>Both features went through independent requirements-gate and spec-gate rounds (AI-GAP-002: 1 blocking finding on <code>create_line_item</code>'s stated minimum fields, resolved in v2; CON-004: 1 blocking finding on a missing mandatory <code>AI_SYSTEM_PROMPT</code> update, resolved in v2) before build. 23 new tests. Tests: 492/492 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.54</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Cloud Data — Supabase-backed shared Suppliers/Buyers (REQ/SPEC-CLOUD-001) — Settings → Cloud Data lets an operator connect a shared Supabase database, so a colleague on a different device/browser sees the same Supplier/Buyer records; everything else in the app stays local-only. Vendored <code>@supabase/supabase-js</code> client (first use of the <code>DASH-GAP-001</code> vendoring precedent). Gated by a separate Supabase sign-in the first time a session loads with it configured, cached silently thereafter; the background refresh is fire-and-forget (mirrors the existing <code>pullAll()</code> pattern) so it never blocks app startup or the rest of the app behind a login. Migrating existing local Suppliers/Buyers is a one-time, explicit action requiring a full backup export first (mandatory, checkbox-gated) and a pre-flight duplicate-name scan; every local reference to a migrated Supplier/Buyer (Quotes, POs, Line Items, Contacts, Invoices) is remapped to the new cloud id in the same pass. The "Ad-Hoc" default Buyer never migrates and stays local-only permanently. Pre-migration data is archived locally for 30 days as a rollback safety net (Settings → Cloud Data → "Restore Pre-Migration Suppliers/Buyers", which also disconnects Cloud Data so the restore isn't immediately overwritten by the next background refresh). Went through 4 requirements-gate rounds and 4 spec-gate rounds (each independent, each catching genuine issues — an incomplete ID-remap, a whole-app auth-gate regression, two fictional/false cited-precedent claims, a missed second Buyer-creation path, and a restore that didn't actually hold — all resolved). Fix (build-gate round 2): <code>pullAll()</code>'s Sheets pull-back for Suppliers (<code>simpleEnts</code> including <code>'sup'</code>) raced against the new Supabase background refresh once Cloud Data is configured — now skipped for Suppliers in that case. Fix: <code>openSbLoginModal()</code>/<code>showBlockingBackupModal()</code> re-entrancy guard added (a second call no longer silently orphans the first pending callback/resolver). ~9 pre-existing sync tests converted to <code>testAsync()</code> per spec. 19 new tests. Tests: 473/473 pass.</li>
         </ul>
       </div>
 
@@ -2193,6 +2204,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     </select>
     <label>New enquiry note</label>
     <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
+    <div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="conCheckEnquiry()">Check enquiry</button></div>
+    <div id="con-enqchk" style="display:none;margin-top:4px;"></div>
     <label>Internal notes</label>
     <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
     <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;">
@@ -2816,6 +2829,61 @@ async function ordCheckLineGapsSemantic(line) {
     return null;
   }
 }
+
+// ── ENQUIRY INTAKE CHECK (SPEC-CON-004) ─────────────────────────
+var CON_ENQUIRY_CHECK_PROMPT = 'You review a raw sales enquiry summary for vagueness or missing commercial detail before it is turned into a sourcing request. Given the enquiry text (and optionally the company name) as JSON, identify up to 3 issues where the text is too vague to act on — e.g. no quantity mentioned, no indication of destination market, a product description too generic to source against. For each issue, phrase a specific, concrete question the operator could send back to the prospect. Respond with ONLY a JSON array (no prose, no markdown fences): [{"issue":"<short description>","question":"<specific question to send>"}]. Respond with an empty array [] if nothing is ambiguous.';
+async function conCheckEnquirySemantic(summary, company) {
+  if (!AI.key) return null;
+  var payload = { summary: summary };
+  if (company) payload.company = company;
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': AI.key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        temperature: 0.2,
+        system: CON_ENQUIRY_CHECK_PROMPT,
+        messages: [{ role: 'user', content: JSON.stringify(payload) }]
+      })
+    });
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var parsed = JSON.parse(text.trim());
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter(function(x){ return x && typeof x.issue === 'string' && typeof x.question === 'string'; });
+  } catch (e) {
+    return null;
+  }
+}
+function conCheckEnquiry() {
+  var panel = G('con-enqchk'); if (!panel) return;
+  var summary = G('ct-enq-summary').value.trim();
+  if (!summary) { panel.style.display = 'block'; panel.innerHTML = '<div style="color:var(--m);">Enter an enquiry note first.</div>'; return; }
+  var company = G('ct-company') ? G('ct-company').value.trim() : '';
+  panel.style.display = 'block';
+  panel.innerHTML = '<div style="color:var(--m);">Checking for ambiguities…</div>';
+  conCheckEnquirySemantic(summary, company).then(function(result){
+    if (G('con-enqchk') !== panel) return;
+    if (result === null) {
+      panel.innerHTML = '<div style="color:var(--m);">AI ambiguity check unavailable.</div>';
+    } else if (!result.length) {
+      panel.innerHTML = '<div style="color:var(--gn);">No ambiguities flagged.</div>';
+    } else {
+      panel.innerHTML = '<div>' + result.map(function(item){
+        return '<div style="margin-top:2px;">⚠ ' + san(item.issue) + ' — <em>' + san(item.question) + '</em></div>';
+      }).join('') + '</div>';
+    }
+  });
+}
+
 function ordAddLine() {
   if (!EI.ord) { toast('Save the Order Request first, then add line items.', 4000); return; }
   var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
@@ -7728,7 +7796,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.54).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.55).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -7790,6 +7858,7 @@ var AI_SYSTEM_PROMPT = [
   'Moving an Order Request to Quoted while any line still has qtyStatus "Unknown" shows a warning (does not block the save) — quoting against unresolved quantities is allowed but flagged.',
   'CSV import (v2.9.48): Import Data tab → Order Requests step. Rows sharing a Submission ID column become one Order Request with multiple lines. Contact is matched by email (case-insensitive) or auto-created as a lead-status Contact with source "webform". Re-importing an existing Submission ID only appends genuinely new lines (matched by category+item/spec) — never overwrites a line already touched by an operator.',
   'Per-line gap check (v2.9.50): each Order Request line has a "Check gaps" button. Structural check (instant, no AI) flags any unset packing spec, base UOM, base qty, source country, or qtyStatus still "Unknown". Semantic check (AI-assisted, only runs if a Claude API key is configured) additionally flags ambiguous or inconsistent values (e.g. a vague item spec, an order volume that doesn\'t reconcile with base UOM/qty) and phrases each as a specific question to send the buyer/supplier. Manual trigger only — never runs automatically on save/import. Purely diagnostic: nothing is written to the line, no lineUpdates entry is created, and it does not change the existing Quoted-transition warning behavior. The semantic check\'s API payload is scoped to product/order fields only — never the linked Contact\'s name/email/phone or any lineUpdates history.',
+  'get_suppliers/get_buyers tools exist to resolve a name to an id before emitting create_invoice/create_line_item/create_po action blocks — call one of these first whenever a supplier or buyer name is mentioned but no id is already known from the conversation, and ask a clarifying question rather than guessing if there are zero or multiple ambiguous matches. These tools deliberately do not return contact/email/phone — if the user asks for a supplier\'s or buyer\'s contact details, say that information isn\'t available through these tools and point them to the Suppliers/Buyers tab instead, rather than inventing an answer.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
@@ -7811,7 +7880,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Purchase Orders',
   'Auto-generated from invoice line items on save, grouped by supplier. Also created via Convert to PO from an Accepted quote. Only works when line items were added via Import from Library. Review and edit in Purchase Orders tab.',
-  'PO status: Draft → Sent → Confirmed → In Production → Shipped → Completed.',
+  'PO status: Draft → Sent → Deposit Paid → Settled → Cancelled.',
   'Payment Terms field available on PO (optional).',
   '',
   '## Payments',
@@ -7932,6 +8001,7 @@ var AI_SYSTEM_PROMPT = [
   'Dedup: saving a new contact with an email that already exists prompts to merge the enquiry into the existing record, or create a separate record anyway. Edit-path email changes are not deduped.',
   'Quote integration: "→ Quote" button on any contact row opens the New Quote modal pre-populated with the contact\'s name (Client field) and email (Notes field). Saving that quote automatically sets the contact status to Converted. Deleting the quote reverts the contact to Qualified.',
   'Enquiry log: each enquiry note is appended to the contact\'s enquiries[] array with timestamp and source. The count is shown in the list view. Individual enquiry entries are not shown in the edit modal.',
+  'Enquiry intake check (v2.9.5x): a "Check enquiry" button next to the enquiry note field runs a single-shot, AI-assisted check (only if a Claude API key is configured) for vagueness or missing commercial detail in the enquiry text — e.g. no quantity mentioned, no destination market, too generic to source against — phrasing each issue as a specific question to send back to the prospect. Manual trigger only — never runs automatically on save or typing. Purely diagnostic: nothing is written to the contact record, no enquiries[] entry is created, and Save is never blocked regardless of whether the check ran, succeeded, or failed. The check\'s API payload is scoped to the enquiry text and company name only — never the contact\'s own name, email, or phone.',
   'Contacts sync to Google Sheets (st_co → "Contacts" sheet tab). syncAll() and pushAll() include the co entity; pullAll() merges Contacts on pull (Sheets wins for tracked fields, local-only records preserved, untracked fields like enquiries[] survive verbatim on a matched pull — v2.9.47). saveCon() triggers syncEnt("co") for real-time upsert. Import Data → Sheets → Contacts button pulls from the Contacts sheet. Contacts CSV upload (v2.9.51): Import Data tab → Contacts step. Matched by email if present, else exact name; unrecognized Status values default to "lead"; columns omitted on a re-upload preserve the existing contact\'s previously-saved values rather than blanking them.',
   '',
   '## Activity Event Log (DB.events)',
@@ -7943,7 +8013,7 @@ var AI_SYSTEM_PROMPT = [
   'Supplier→Contact link: each contact record has a supplierId (string or null) and role (supplier_contact or empty). A contact may be linked to at most one supplier at a time. When editing a supplier, a "Contacts" sub-panel appears showing all linked contacts with an Unlink button each. "+ Link Contact" opens a prompt-based picker showing contacts not yet linked to another supplier. "+ New Contact" opens the Contact modal with the Supplier dropdown pre-filled. Contacts already linked to a different supplier are excluded from the picker. The Contacts list table shows a Supplier column with the linked supplier name (or — if none). Deleting a supplier nulls supplierId on all previously linked contacts before the async delete. supplierId and role are not synced to Google Sheets (omitted by mapRec()).',
   'Retention cap: 2,000 events maximum (FIFO). When the cap is exceeded, the oldest entries are silently dropped. No user-visible warning is shown (EVT-GAP-001).',
   'The event log is included in JSON backups (Settings → Data → Backup All JSON) and restored on import. It is not counted in the restore confirm dialog (operational metadata, not user records).',
-  'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, Contact, Supplier, or Buyer and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\ncreate_supplier → { name, country, currency, contactPerson, email, phone, notes }\ncreate_buyer → { name, contactName, email, phone, address, currency, paymentTerms, creditLimit, notes }\nupdate_order_line → { ordId, lineId, field, newValue, note } — proposes an update to one field on one Order Request line item (e.g. field:"packingSpec"). This is ALWAYS a pending, unconfirmed proposal — it is logged to that line\'s update history for operator review and never changes the live field value itself. Only use this when the user is relaying a specific fact from a buyer/supplier conversation about a specific, already-existing line (you cannot create a line via an action block).\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.',
+  'ACTION BLOCKS: When the user clearly requests creation of a PO, Quote, Shipment, Contact, Supplier, Buyer, Invoice, Line Item, or Credit Note and sufficient detail is present, embed an action block in your reply — on its own lines, AFTER your conversational text:\n@@ACTION\n{"action":"<key>","payload":{<fields>}}\n@@END\n\nSupported keys and payload fields:\ncreate_po → { supId, cur, notes, lineItems:[{desc,qty,cost,uom}] }\ncreate_quote → { client, freightMode, currency, notes, lineItems:[{desc,qty,cost,uom,hsCode,dutyPct}] }\ncreate_shipment → { ref, originPort, destPort, etd, eta, notes }\ncreate_contact → { name, email, phone, company, status, source }\ncreate_supplier → { name, country, currency, contactPerson, email, phone, notes }\ncreate_buyer → { name, contactName, email, phone, address, currency, paymentTerms, creditLimit, notes }\ncreate_invoice → { buyId, cur, inco, pt, lineItems:[{desc,qty,cost,price,uom}] } — call get_buyers first if the buyer\'s id isn\'t already known from this conversation; if zero or multiple ambiguous matches, ask a clarifying question instead of guessing. Never include an invoice number — it is auto-assigned. Requires at least one line item; if none is known yet, ask rather than emitting an empty block. If Incoterm or Payment Terms aren\'t known, ask rather than guessing.\ncreate_line_item → { desc, supId, sku, uom, cost, price, hsCode, notes } — call get_suppliers first if the supplier\'s id isn\'t already known. Only Description and Supplier are required; Cost, UOM, and HS code may be added later and should not block emitting the action.\ncreate_credit_note → { linkedInvNum, goodwill, amount, reason, buyer, date, cur, notes } — a distinct action from create_invoice, not a variant of it. Either linkedInvNum (a standard credit note against an existing invoice) or goodwill:true (a goodwill credit, no linked invoice) must be specified, not both. buyer is a plain name, not an id.\nupdate_order_line → { ordId, lineId, field, newValue, note } — proposes an update to one field on one Order Request line item (e.g. field:"packingSpec"). This is ALWAYS a pending, unconfirmed proposal — it is logged to that line\'s update history for operator review and never changes the live field value itself. Only use this when the user is relaying a specific fact from a buyer/supplier conversation about a specific, already-existing line (you cannot create a line via an action block).\n\nOnly emit a block when the request is unambiguous and key fields are present. If detail is missing, ask a clarifying question instead. Never emit a block for edit/delete operations. The user reviews and confirms before anything is saved.',
   '',
   '## VAT Return (MTD)',
   'Invoices tab → VAT Return button. Opens a Making Tax Digital (VAT 100) calculator. Select From and To dates (defaults to previous calendar quarter). Click Calculate to see all 9 HMRC VAT boxes computed from invoices in the period.',
@@ -8187,6 +8257,45 @@ function handleAIAction(action) {
     if (p.paymentTerms)  G('buy-pt').value    = p.paymentTerms;
     if (p.creditLimit != null) G('buy-cl').value = p.creditLimit;
     if (p.notes)         G('buy-notes').value = p.notes;
+  } else if (action.action === 'create_invoice') {
+    if (!Array.isArray(p.lineItems) || !p.lineItems.length) {
+      toast('At least one line item is required to create an invoice — ask for product/quantity/cost details first.');
+      return;
+    }
+    openInv();
+    if (p.buyId) G('if-b').value   = p.buyId;
+    if (p.cur)   G('if-cur').value = p.cur;
+    if (p.inco)  G('if-inco').value = p.inco;
+    if (p.pt)    G('if-pt').value  = p.pt;
+    cIL = p.lineItems.map(function(li){
+      return { rid: uid(), lid: '', desc: li.desc||'', uom: li.uom||'', qty: +li.qty||1, up: +li.price||0, unitCost: +li.cost||0, lineType: 'product' };
+    });
+    rILT(); calcInv(); _updQaWarn();
+  } else if (action.action === 'create_line_item') {
+    if (!p.desc || !p.supId) {
+      toast('Description and Supplier are required to create a line item.');
+      return;
+    }
+    openLI();
+    G('lf-d').value = p.desc;
+    G('lf-sup').value = p.supId;
+    if (p.sku)      G('lf-s').value  = p.sku;
+    if (p.uom)      G('lf-u').value  = p.uom;
+    if (p.cost != null)  G('lf-c').value = p.cost;
+    if (p.price != null) G('lf-p').value = p.price;
+    if (p.hsCode)   G('lf-hs').value = p.hsCode;
+    if (p.notes)    G('lf-nt').value = p.notes;
+    liMgn();
+  } else if (action.action === 'create_credit_note') {
+    openNewCN();
+    if (p.goodwill)        { G('cnf-type').value = 'goodwill_credit'; onCNTypeChg(); }
+    else if (p.linkedInvNum) G('cnf-linked').value = p.linkedInvNum;
+    if (p.amount != null)  G('cnf-amount').value = p.amount;
+    if (p.reason)          G('cnf-reason').value = p.reason;
+    if (p.buyer)           G('cnf-b').value = p.buyer;
+    if (p.date)            G('cnf-dt').value = p.date;
+    if (p.cur)             G('cnf-cur').value = p.cur;
+    if (p.notes)           G('cnf-nt').value = p.notes;
   } else if (action.action === 'update_order_line') {
     // payload: { ordId, lineId, field, newValue, note }
     var ordForUpdate = DB.ord.find(function(o){ return o.id === p.ordId; });
@@ -8242,7 +8351,27 @@ var AI_TOOLS = [
       type: 'object',
       properties: {
         supplier: { type: 'string', description: 'Supplier name — partial match, case-insensitive' },
-        status:   { type: 'string', description: 'PO status: Draft, Sent, Confirmed, In Production, Shipped, Completed' }
+        status:   { type: 'string', description: 'PO status: Draft, Sent, Deposit Paid, Settled, Cancelled' }
+      }
+    }
+  },
+  {
+    name: 'get_suppliers',
+    description: 'Look up suppliers by name to resolve a supId for other actions (e.g. create_po, create_line_item). Filter by name (partial, case-insensitive). Returns id, reference number, name, country, and currency — does not return contact/email/phone.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Supplier name — partial match, case-insensitive' }
+      }
+    }
+  },
+  {
+    name: 'get_buyers',
+    description: 'Look up buyers by name to resolve a buyId for other actions (e.g. create_invoice). Filter by name (partial, case-insensitive). Returns id, reference number, name, and currency — does not return contact name/email/phone/credit limit.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Buyer name — partial match, case-insensitive' }
       }
     }
   }
@@ -8312,6 +8441,24 @@ function _aiExecTool(name, inp) {
         totalShipments:      DB.sh.length,
         totalPOs:            DB.po.length
       });
+    }
+    if (name === 'get_suppliers') {
+      var sups = DB.sup.filter(function(s) {
+        if (inp.name && (s.name||'').toLowerCase().indexOf(inp.name.toLowerCase()) === -1) return false;
+        return true;
+      });
+      return JSON.stringify(sups.map(function(s) {
+        return { id: s.id, num: s.num||'', name: s.name, country: s.country||'', currency: s.cur||'' };
+      }));
+    }
+    if (name === 'get_buyers') {
+      var buys = DB.buy.filter(function(b) {
+        if (inp.name && (b.name||'').toLowerCase().indexOf(inp.name.toLowerCase()) === -1) return false;
+        return true;
+      });
+      return JSON.stringify(buys.map(function(b) {
+        return { id: b.id, num: b.num||'', name: b.name, currency: b.currency||'' };
+      }));
     }
     if (name === 'get_pos') {
       var pos = DB.po.filter(function(po) {
@@ -8429,7 +8576,7 @@ async function sendAIMsg() {
     var parsed = parseAIAction(finalText);
     replyEl.textContent = parsed.clean;
     if (parsed.action) {
-      var actionLabels = { create_po: 'PO', create_quote: 'Quote', create_shipment: 'Shipment', create_contact: 'Contact', create_supplier: 'Supplier', create_buyer: 'Buyer', update_order_line: 'Order Line Update' };
+      var actionLabels = { create_po: 'PO', create_quote: 'Quote', create_shipment: 'Shipment', create_contact: 'Contact', create_supplier: 'Supplier', create_buyer: 'Buyer', update_order_line: 'Order Line Update', create_invoice: 'Invoice', create_line_item: 'Line Item', create_credit_note: 'Credit Note' };
       var label = actionLabels[parsed.action.action] || parsed.action.action;
       var btn = document.createElement('button');
       btn.className = 'btn btn-s';
@@ -9872,6 +10019,7 @@ function openCon(prefillSupplierId) {
   vClr('ct-email');
   var ab = G('con-activity-body'); if (ab) ab.style.display = 'none';
   var al = G('con-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
+  var enqChk = G('con-enqchk'); if (enqChk) { enqChk.style.display = 'none'; enqChk.innerHTML = ''; }
   G('ov-con').classList.add('on');
 }
 
@@ -9894,6 +10042,7 @@ function editCon(id) {
   vClr('ct-email');
   var ab = G('con-activity-body'); if (ab) ab.style.display = 'none';
   var al = G('con-activity-list'); if (al) al.innerHTML = 'No activity recorded.';
+  var enqChk = G('con-enqchk'); if (enqChk) { enqChk.style.display = 'none'; enqChk.innerHTML = ''; }
   G('ov-con').classList.add('on');
 }
 
