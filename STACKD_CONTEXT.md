@@ -10,14 +10,14 @@
 
 | Field | Value |
 |-------|-------|
-| Last updated | 10 August 2026 (verified against `main` @ `547c860`, code-level facts confirmed by running `node tests/run.js`) |
-| Current version | v2.9.51 |
-| Test count | 422 / 422 passing (confirmed by re-running the suite, not just read from source) |
+| Last updated | 23 August 2026 (verified against `main` @ `fcd912f`, code-level facts confirmed by running `node tests/run.js`) |
+| Current version | v2.9.57 |
+| Test count | 521 / 521 passing (confirmed by re-running the suite, not just read from source) |
 | Build branch | main |
 | Deployment | **GitHub Pages**, custom domain `app.getstackdops.com` (see `CNAME`) — live, not pending |
 | CI/CD | GitHub Actions (`qa.yml`) — runs `node tests/run.js` on every push/PR to main |
 
-**Correction from the previous version of this file:** this file was frozen at v2.9.32 / 263 tests since 21 June while the codebase moved on to v2.9.51 / 422 tests. The two items previously listed as "CRITICAL — next sprint" (demo shipment mode, MTD export) both shipped one version after this file's last edit — see Version history below. Deployment was also previously listed as "Vercel — deploy pending"; there is no Vercel reference anywhere in the repo. The live deployment is GitHub Pages on `app.getstackdops.com`.
+**Correction from the previous version of this file:** this file was frozen at v2.9.51 / 422 tests since 10 August while the codebase moved on to v2.9.57 / 521 tests across six shipped versions (v2.9.52–v2.9.57 — per-line quote margins, Supplier price intelligence, the first Supabase-backed layer (Suppliers/Buyers Cloud Data), three new AI Assistant capabilities, RFQ supplier comparison, and a data-integrity cleanup tool). See Version history below for the full list.
 
 ---
 
@@ -41,7 +41,7 @@
 
 **Not verifiable from this repo.** The portal is `localStorage`-only (see Architecture below) — there is no server, no database, and no data file committed to git. The KPI/entity figures in the previous version of this file (Invoice Revenue $53,441, 4 invoices, 9 suppliers, etc., "verified 13 May 2026") cannot be confirmed or refuted from source control, and are now three months stale regardless. Two facts *are* code-verifiable and matter for interpreting any such figures:
 
-- **SYNC-GAP-001 (fixed v2.9.47):** between v2.9.12 and v2.9.46, the Google Sheets "⟲ Sync" **pull** path corrupted every pulled record (fields landed under the wrong property names) and silently broke the delete buttons for those records. Any data pulled from Sheets in that window may contain blank-looking phantom records consuming reference numbers. Fixed in v2.9.47 with reverse field-mapping (`unmapRec()`) and business-key matching.
+- **SYNC-GAP-001 (fixed v2.9.47; residue cleanup shipped v2.9.57):** between v2.9.12 and v2.9.46, the Google Sheets "⟲ Sync" **pull** path corrupted every pulled record (fields landed under the wrong property names) and silently broke the delete buttons for those records. Any data pulled from Sheets in that window may contain blank-looking phantom records consuming reference numbers. Fixed in v2.9.47 with reverse field-mapping (`unmapRec()`) and business-key matching — but records already corrupted *before* that fix were never cleaned up, and this is exactly what the operator reported seeing in the live portal (blank/undeletable Supplier and other records) in August 2026. **REQ/SPEC-DATA-002 (v2.9.57)** added a Settings → Data "Scan for phantom records" tool: a read-only scan, a mandatory backup gate, then removal plus sequential renumbering of Supplier/Line Item/Buyer/Contact/Order Request reference numbers (Invoice/PO/Quote/Credit Note numbers are permanently excluded from renumbering, since those are real cross-entity lookup keys elsewhere and appear on documents already sent out). Also hardened `pullAll()` itself so a live recurrence of this defect class is dropped at the source with a console warning, not just historical residue.
 - **SEC-GAP-020 (fully resolved 2026-07-05):** GitHub Pages serves the *entire* repository, not just `index.html`. A live business data export (`Test-data/Stackd-Clean-2026-05-17.json`) and this file's supplier-contact table were publicly exposed at `app.getstackdops.com` for some period before discovery. Both were purged, git history was rewritten (`git filter-repo`) across all branches and force-pushed, GitHub deleted the 33 affected PRs at the operator's request, and a GDPR Art. 33(5) assessment concluded it was not ICO-reportable (low risk, B2B professional contacts only, same-day remediation). **Process going forward: every file in this repo is public. Never commit live data exports, backups, or PII.**
 
 To get current KPI/entity figures, read them from the live portal (`app.getstackdops.com`) or its export, not from this file or git.
@@ -50,25 +50,35 @@ To get current KPI/entity figures, read them from the live portal (`app.getstack
 
 ## Architecture
 
-**Stack — still localStorage, now v2.9.51 (unchanged shape, more entities):**
+**Stack — still localStorage as the primary store, now v2.9.57 (same shape, one new optional cloud layer for two entities):**
 
 ```
-index.html          — entire application: HTML + CSS + JS in one file (~654 KB)
-tests/run.js         — Node.js test runner, 422 tests, Node VM sandbox
+index.html           — entire application: HTML + CSS + JS in one file (~850 KB)
+tests/run.js         — Node.js test runner, 521 tests, Node VM sandbox
 tests/fixtures.js     — shared test fixtures
 apps-script/Code.gs  — Google Apps Script webhook handler (Sheets sync backend)
 cloudflare-worker/worker.js — CORS proxy in front of the Apps Script endpoint
                        (validates the request path against the Apps Script
                        deployment pattern; no auth/secrets of its own — the
                        sync token still travels in the POST body)
+vendor/supabase-js-v2.min.js — vendored Supabase JS client (same-origin static
+                       file, no CDN, no auto-update) — Cloud Data feature only
+supabase/migrations/0001_suppliers_buyers.sql — the one Supabase table pair
+                       (Suppliers, Buyers) built so far — see Cloud Data below
 CLAUDE.md            — Claude Code session context (technical)
 STACKD_CONTEXT.md    — cross-tool master context (this file)
 docs/known-gaps.md   — known gaps log (much more detailed than this file's summary)
 docs/version-history.md — full version changelog
+docs/requirements-tracker.md — every REQ/SPEC feature's gate history (req-gate →
+                       spec-gate → build-gate), the FM-1 exception register, and
+                       the full backlog/unscoped list (including the G-01…G-10
+                       reporting-compliance items and v3.0.x-deferred items)
 docs/dr-procedure.md — disaster recovery / backup procedure
 docs/data-model.md, docs/agent-architecture.md, docs/workflow-bpmn.md,
 docs/reporting-pipeline-runbook.md, docs/councils/ — supporting docs
 ```
+
+**Cloud Data (v2.9.54, REQ/SPEC-CLOUD-001) — the first crack in "pure localStorage":** Settings → Cloud Data lets an operator connect Suppliers and Buyers specifically to a shared Supabase project, so more than one browser/device sees the same Supplier/Buyer records. This is genuinely useful prior art for any v3.0 multi-tenant redesign, but it is explicitly **not** multi-tenant: it is one shared Postgres table pair behind Row Level Security that grants any authenticated user full read/write access — there is no tenant/org column, no per-customer isolation, and no role distinction. Migrating existing local Suppliers/Buyers to it is a one-time, explicit, backup-gated action; everything else in the app (Quotes, Invoices, POs, Contacts, Order Requests, the event log) stays local-only, per-browser. A real v3.0 multi-tenant schema would need to design tenant isolation from scratch — this pilot answers "can this app talk to Supabase at all" (yes) but not "how do we partition data between paying customers."
 
 **State layer:**
 
@@ -83,7 +93,7 @@ const QR_DEFAULTS = { fxGBPUSD, fxGBPRMB, fxGBPBBD, lclPerCBM, fcl20GP,
 var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2.9.46)
 ```
 
-**Entities (10, up from 7 in the last version of this file):**
+**Entities (10, unchanged since the last version of this file — no new top-level `DB` entity has shipped since v2.9.51; new capability in this period extended existing entities/fields instead, e.g. `rfqResponses[]` on Order Request lines):**
 
 | Key | Store key | Description | Synced to Sheets? |
 |---|---|---|---|
@@ -110,28 +120,37 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2
 | ID | Area | Summary | Status |
 |----|------|---------|--------|
 | TRIAL-001 / Demo Mode | Trial conversion | No demo shipment mode | **✓ Fixed v2.9.31** — `loadDemoData()` seeds a full cross-entity scenario, excluded from KPI aggregates, `[DEMO]` badges |
-| MTD-001 | Tax compliance | No MTD-compatible VAT export | **✓ Fixed v2.9.32** — full HMRC VAT 100 9-box export + transaction detail CSV. Two residual sub-gaps remain open: **MTD-GAP-001** (no input VAT tracking, Boxes 4/7 always £0.00) and **MTD-GAP-002** (FX rate is export-time not invoice-date) — both accepted as operator responsibility until v3.x |
-| SYNC-GAP-001 | Data integrity | `pullAll()` corrupted every pulled record's field names and silently broke delete | **✓ Fixed v2.9.47** |
+| MTD-001 | Tax compliance | No MTD-compatible VAT export | **✓ Fixed v2.9.32** — full HMRC VAT 100 9-box export + transaction detail CSV. Two residual sub-gaps remain open: **MTD-GAP-001** (no input VAT tracking, Boxes 4/7 always £0.00) and **MTD-GAP-002** (FX rate is export-time not invoice-date) — both accepted as operator responsibility until v3.x. A formal council-gated attempt to close MTD-GAP-001 (tracked as **REQ-RPT-001 G-07**) reached requirements-gate CONDITIONAL PASS in v2.9.33 but was explicitly deferred 2026-08-22: building input-VAT tracking against the single-file, no-server, no-real-audit-trail v2.9.x stack was judged higher-risk than closing it just ahead of the v3.0 migration, where server-side validation makes it safer to get right |
+| SYNC-GAP-001 | Data integrity | `pullAll()` corrupted every pulled record's field names and silently broke delete | **✓ Fixed v2.9.47.** Residue from before the fix (phantom blank records already in operators' data) went unaddressed until **✓ v2.9.57** shipped a Settings → Data cleanup tool (REQ/SPEC-DATA-002) — read-only scan, backup-gated removal, safe renumbering, FK-integrity self-check |
 | SEC-GAP-020 | Security/GDPR | Entire repo (incl. live PII) publicly served via GitHub Pages | **✓ Fully resolved 2026-07-05** — history purged, PII redacted, GDPR-assessed non-reportable |
 | PO-GAP-001 | Purchase orders | Quote→PO conversion misattributed every line except the first supplier's on multi-supplier quotes | **✓ Fixed v2.9.44** (one PO per distinct supplier now). **PO-GAP-002** (open, accepted): historical POs before v2.9.44 may carry incorrect attribution, not retroactively fixable |
 | QTE-GAP-001 | Quote status | Convert to PO restricted to Accepted status | ✓ Fixed v2.9.25 (carried over, unchanged) |
 | SEC-GAP-001 | Security | Code.gs secrets hardcoded in source | ✓ Fixed v2.9.15/23 (Script Properties) |
+| AI-GAP-006/008/009 | AI Assistant | Three of nine creatable entities lacked AI pre-fill; `create_po` couldn't resolve an unsaved supplier by name; `AI_SYSTEM_PROMPT`'s PO status vocabulary didn't match the live dropdown | **✓ All resolved v2.9.55** — Invoice/Line Item/Credit Note AI creation shipped, new `get_suppliers`/`get_buyers` PII-minimized read tools added, prompt vocabulary corrected |
 | BUY-GAP-001 | Buyers | Buyers entity not synced to Sheets | Open — deferred to v3.x under FM-1 |
+| CLOUD-GAP-001 | Cloud Data / Suppliers | Legacy CSV/Sheets Supplier importers bypass Cloud Data — writes silently discarded on next reload once Cloud Data is configured | Open, logged v2.9.54 |
 | DATA-GAP-003 | Data integrity | Friendly ref numbers (`num`) can diverge across unsynced devices | Open, accepted as permanent localStorage-architecture trade-off |
-| AI-GAP-007/008 | AI Assistant | Action-block emission is non-deterministic; `create_po` can't resolve a name to an ID for a not-yet-saved supplier | Open — `temperature:0.2` mitigation shipped v2.9.42, not a full fix |
+| AI-GAP-007 | AI Assistant | Action-block emission is non-deterministic | Mitigation (`temperature:0.2`) shipped v2.9.42, confirmed effective on retest — not a full fix |
 | LIB-GAP-001 | Library sync | `syncEnt('li')` not called when `invoiceRefs` mutates | Backlog, unchanged |
 | SEC-GAP-003 | Security | Anthropic API key in localStorage | Accepted, inherent no-server constraint |
 | SEC-GAP-004 | Security | Invoice locking is client-side UX only — not tamper-proof | Accepted by design, v3.0.0 for a real control |
 | SEC-GAP-011 | Data integrity | `pullAll()` still has no timestamp-based conflict resolution — Sheets wins | Open, accepted at current operator scale |
 | SDLC-GAP-003 | Staging | No same-origin PR preview environment | Backlog, unchanged |
 | EVT-GAP-001 | Event log | No warning when 2,000-event cap is hit | Backlog, unchanged |
+| REQ-RPT-001 G-08/G-09/G-10 | Compliance / Operational / Data Integrity | Intrastat report; supplier performance tracking; HS-code duty recalculation on existing invoices | Deferred to v3.0.x, unscoped |
 
 ---
 
-## Version history (v2.9.32 → v2.9.51 — everything shipped since this file was last updated)
+## Version history (v2.9.32 → v2.9.57 — everything shipped since this file was last updated)
 
 | Version | Key changes |
 |---------|------------|
+| v2.9.57 | New: **Data Integrity Cleanup** (REQ/SPEC-DATA-002) — Settings → Data "Scan for phantom records": read-only scan → mandatory backup gate → removal of blank/corrupted records (residue of SYNC-GAP-001, predating the v2.9.47 fix) → sequential renumbering of Supplier/Line Item/Buyer/Contact/Order Request numbers only (Invoice/PO/Quote/Credit Note numbers permanently excluded — real lookup keys elsewhere) → post-cleanup FK-integrity self-check. Also hardens `pullAll()` so a live recurrence is dropped at the source, not just cleaned up after the fact. 15 new tests. **521/521.** |
+| v2.9.56 | New: **RFQ supplier comparison & commit** (REQ/SPEC-QTE-001 Part B) — each Order Request line gets a "Compare RFQs" panel recording multiple suppliers' quoted responses, ranked by landed cost converted to a common currency; exactly one response can be committed per line, and committing feeds a Quote hand-off with correct currency conversion. Fix: closes the last open item from REQ-V3-GAP-006 (Contact link/unlink event logging). 14 new tests. 506/506. |
+| v2.9.55 | New: **AI Assistant** gains Invoice/Line Item/Credit Note creation plus PII-minimized Supplier/Buyer read tools (REQ/SPEC-AI-GAP-002) — closes AI-GAP-006/008/009. New: **AI-assisted enquiry intake check** (REQ/SPEC-CON-004) — flags ambiguous Contact enquiry text via a single-shot Anthropic call, PII-scoped payload. 23 new tests. 492/492. |
+| v2.9.54 | New: **Cloud Data** — first Supabase-backed layer, Suppliers/Buyers only (REQ/SPEC-CLOUD-001). One shared Postgres table pair behind RLS, not multi-tenant (see Architecture above). Backup-gated one-time migration with automatic reference remapping across Quotes/POs/Line Items/Contacts/Invoices; 30-day local rollback archive. Went through 4 independent requirements-gate and 4 independent spec-gate rounds before build. 19 new tests. 473/473. |
+| v2.9.53 | New: **Supplier price intelligence** (REQ/SPEC-SUP-001) — Price History panel aggregating every recorded price point for a Supplier across Line Items/Quotes/POs, with staleness flagging. 10 new tests. 454/454. |
+| v2.9.52 | New: **Per-line quote margin override** (REQ/SPEC-QTE-001 Part A) — each Quote line can override the quote-level margin; overhead charges no longer marked up (deliberate behavior change, recomputes existing quotes' Grand Total). 12 new tests. 434/434. |
 | v2.9.51 | New: Contacts CSV upload (Import Data tab, 6th step) — reuses existing Sheets-pull dedup/mapping logic. 10 new tests. **422/422.** |
 | v2.9.50 | New: Order Request per-line gap check — structural (instant) + AI-assisted semantic check, manual trigger, nothing persisted. 11 new tests. 412/412. |
 | v2.9.49 | Fix: invoice quick-add COGS warning fired on legitimate zero-margin pass-through lines. 6 new tests. 401/401. |
@@ -159,28 +178,32 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2
 
 ## Build queue
 
-**Completed since this file was last accurate (Sprints 1–2, referenced in the old version, remain done as recorded).**
+**Completed since this file was last accurate:** all six versions in the Version history table above (v2.9.52–v2.9.57) shipped through the full requirements-gate → spec-gate → build → independent build-gate review pipeline documented in `docs/requirements-tracker.md`, each merged to `main` via PR.
 
-**In progress / unmerged — needs attention:**
+**Stale unmerged branches — still present on the remote, now confirmed superseded, worth deleting in a cleanup pass:**
 
-| Item | Status |
-|------|--------|
-| `claude/con-003-id-backfill` | Unmerged branch, HEAD commit titled "Version delivery for **v2.9.52**: Contact id backfill fix" |
-| `claude/doc-001-user-guide` | Unmerged branch, HEAD commit **also** titled "Version delivery for **v2.9.52**: version-controlled user guide" |
+| Branch | Status |
+|--------|--------|
+| `claude/con-003-id-backfill` | Superseded — Contact id backfill (`backfillConIds()`) shipped on `main` under REQ/SPEC-CON-003 |
+| `claude/doc-001-user-guide` | Superseded — `docs/user-guide.md` has since been fully rewritten and shipped on `main` directly |
+| `claude/inv-cogs-warning-fix` | Superseded — the invoice quick-add COGS warning fix shipped as v2.9.49 |
+| `claude/ord-005-gap-detection` | Superseded — Order Request per-line gap detection shipped as v2.9.50 |
 
-**These two branches independently claim the same next version number (v2.9.52).** Only one can actually ship as v2.9.52 — whichever merges second needs to be renumbered to v2.9.53 before merge, or the two need to be combined into one release. Flagging this now so it isn't discovered as a collision at merge time. Several other feature branches exist unmerged (`ord-followup-fixes` @ v2.9.44 base, `sync-race-condition-fixes-*` @ v2.9.25 base, `triage-tool-page` @ v2.9.48 base, `inv-cogs-warning-fix` @ v2.9.49 base, `ord-005-gap-detection` @ v2.9.50 base, and others) — not investigated in this pass; worth a branch cleanup/triage session.
+**Unmerged branches not verified this pass** (`claude/ord-followup-fixes`, `claude/sync-race-condition-fixes-*`, `claude/triage-tool-page`) — still exist on the remote, content not checked against what's since shipped on `main`. A full branch cleanup/triage session (delete confirmed-superseded branches, check the rest for unique unshipped work) remains outstanding.
 
-**Backlog carried forward from known-gaps.md (business-priority items, still open):**
+**Backlog carried forward from `docs/known-gaps.md` / `docs/requirements-tracker.md` (business-priority items, still open):**
 
 | Item | Notes |
 |------|-------|
-| MTD-GAP-001/002 | Input VAT tracking, invoice-date FX — deferred to v3.x |
+| MTD-GAP-001/002 (REQ-RPT-001 G-07) | Input VAT tracking, invoice-date FX — requirements-gate reached CONDITIONAL PASS in v2.9.33 but explicitly deferred to v3.0.x on 2026-08-22 rather than building it against the pre-Supabase stack |
+| REQ-RPT-001 G-08/09/10 | Intrastat report, supplier performance tracking, HS-code duty recalculation — all deferred to v3.0.x, unscoped |
 | BUY-GAP-001 | Buyers → Sheets sync — deferred to v3.x (FM-1) |
-| AI-GAP-006 (remaining 3 of 9) | Invoices, Line Items, Credit Notes still lack AI-assisted creation — closed-set dropdown / no-lookup blockers documented |
+| AI-GAP-001 (broad) | Agentic multi-step order flow — deferred to v3.0.x, requires a server-side proxy |
 | DASH-GAP-001 | Dashboard charts are hand-rolled divs, no interactivity — Chart.js vendoring recommended if picked up |
+| CLOUD-GAP-001 | Legacy CSV/Sheets Supplier importers bypass Cloud Data once configured |
 | SDLC-GAP-003 | Same-origin PR preview environment |
 
-**v3.0.0 (still the stated target, no code-verifiable date):** Supabase backend, multi-tenancy, MFA, RBAC, server-side API proxy, referral mechanics. Prerequisite: freelance data architect engagement.
+**v3.0.0 (still the stated target, no code-verifiable date):** Supabase backend, multi-tenancy, MFA, RBAC, server-side API proxy, referral mechanics. Prerequisite: freelance data architect engagement. See `docs/v3-architect-handoff.md` for the consolidated technical/business handoff packet assembled for that engagement.
 
 ---
 
@@ -277,4 +300,4 @@ Apps Script write bridge live: actions `update_requirements_tracker` and `update
 ---
 
 *STACKD · Source · Supply · Ship · FPM International Ltd · getstackdops.com*
-*Living document — last updated 10 August 2026*
+*Living document — last updated 23 August 2026*
