@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.56</title>
+<title>Stackd Ops v2.9.57</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.56</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.57</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -678,8 +678,10 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" onclick="expCSV()">&#8595; Export invoices CSV</button>
         <button class="btn btn-g" style="border-color:#c00;color:#c00;" onclick="clearData()">Clear local data</button>
         <button class="btn btn-g" style="border-color:var(--gold);color:var(--gold);" onclick="runDataRepair()">&#9881; Repair invoice totals</button>
+        <button class="btn btn-g" style="border-color:var(--gold);color:var(--gold);" onclick="openDataCleanupScan()">&#9881; Scan for phantom records</button>
       </div>
       <div id="repair-status" style="font-size:.56rem;color:var(--m);margin-top:6px;min-height:14px;"></div>
+      <div id="data-cleanup-status" style="font-size:.56rem;color:var(--m);margin-top:6px;min-height:14px;"></div>
     </div>
     <div class="card">
       <div class="ct">Privacy &amp; Data</div>
@@ -1217,9 +1219,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.56</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.57</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Data Integrity Cleanup (REQ/SPEC-DATA-002) — Settings → Data gains a "Scan for phantom records" tool that finds and removes blank/corrupted records left over from a historical Sheets-sync bug (<code>SYNC-GAP-001</code>, fixed in v2.9.47 for new pulls, but pre-existing corrupted records were never cleaned up). A record is phantom if it has no internal <code>id</code>; Contacts use a compound check (<code>!id || (!name &amp;&amp; !email)</code>) since <code>backfillConIds()</code> otherwise silently "heals" a corrupted Contact with a fresh id on every load, masking it from a plain <code>!id</code> test. The scan is read-only and shows a preview before anything changes; a zero-found scan reports clean and skips the confirm/backup step entirely. Removal is followed by sequential renumbering of Supplier/Line Item/Buyer/Contact/Order Request reference numbers only — Invoice/PO/Quote/Credit Note numbers are permanently excluded, since (unlike the others) their <code>num</code> field is a real cross-entity lookup key elsewhere in the app (Credit Note linking, CSV/Sheets import matching, <code>pullAll()</code>'s business-key matcher) and renumbering them would break already-issued documents. Renumbering preserves relative creation order and is gated behind a mandatory checkbox-confirmed backup (mirroring the existing Supabase-migration backup gate). Every removal and renumbering is written to the same Activity-tab event log every other mutation uses, so an affected Supplier/Contact/etc.'s own Activity tab shows what happened to it. A self-check after cleanup scans the known foreign-key fields (<code>supplierId</code>, <code>supId</code>, <code>buyerId</code>, <code>contactId</code> incl. nested RFQ-response contacts, <code>sourceContactId</code>, <code>lid</code>) for anything left dangling and reports it if found. Also hardens <code>pullAll()</code> itself: an id-keyed entity (Supplier/Payment/Contact) pulled from Sheets that resolves to no usable id is now dropped with a console warning instead of silently entering the database, closing off the live version of the same gap class going forward. Went through 2 independent review rounds (requirements-gate and spec-gate), each an initial round with real blocking findings followed by a confirmatory re-review — both closed PASS. One pre-existing test's expectations were updated to match the corrected <code>pullAll()</code> behavior (a header-keyed blank stub used to survive as a phantom Supplier; it is now dropped at the source). 15 new tests. Tests: 521/521 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.56</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: RFQ supplier comparison &amp; commit (REQ/SPEC-QTE-001, Part B) — each Order Request line gains a "Compare RFQs" panel for recording multiple suppliers' quotes (unit cost, currency, CBM, duty %, DG flag, MOQ, lead time, payment terms, optional linked Contact, notes) via a new <code>ov-rfq</code> modal. Responses are ranked by landed cost converted to GBP using the same <code>cQteLine()</code> rate engine Quotes already use (LCL basis, since no Quote/freight-mode decision exists yet at comparison time) — the nominal cheapest quoted price is not always the landed-cheapest once freight/duty/DG and currency are factored in. A response with CBM not entered is flagged with a warning next to its landed cost rather than silently looking cheapest. Exactly one response per line can be marked Committed; re-committing replaces the prior choice and no response is ever deleted. Converting an Order Request to a Quote now pre-fills one Quote line per committed response, carrying over supplier, quantity (the line's own base qty, if set), and unit cost — <strong>correctly currency-converted</strong> to the new Quote's working currency, not copied verbatim. <code>delSup()</code>/<code>delCon()</code> extended to warn on/clean up RFQ response references. Went through 1 independent spec-gate round (CONDITIONAL PASS — 1 blocking finding: the Quote hand-off initially dropped currency conversion entirely, which would have silently corrupted every downstream Quote calculation for a non-USD committed response; fixed and confirmed via a second independent review, PASS). While building this feature's tests, found and fixed a latent defect in the test harness itself: 8 pre-existing async tests (the Order Request per-line gap check's semantic-check tests) were registered with the synchronous <code>test()</code> helper despite having internal <code>await</code>s — their assertions ran as detached, untracked microtasks that always reported a false-positive pass, and separately mis-referenced their mock configuration variable (<code>ctx._mockAnthropic</code> instead of the module-scope <code>_mockAnthropic</code> the mock <code>fetch</code> actually reads), meaning the mock was silently never engaged. Converted to <code>testAsync()</code> and fixed the variable reference — all 8 now genuinely exercise and verify real behavior. 14 new tests. Tests: 506/506 pass.</li>
@@ -2433,6 +2444,34 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<div class="ov" id="ov-data-cleanup-preview" onclick="if(event.target===this)closeM('ov-data-cleanup-preview')">
+  <div class="modal" style="max-width:520px;">
+    <div class="mh"><h2 style="font-size:.75rem;">Data Integrity Scan</h2><button class="mx" onclick="closeM('ov-data-cleanup-preview')">&#215;</button></div>
+    <div class="mb">
+      <div id="data-cleanup-preview-body" style="font-size:.55rem;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-g" onclick="closeM('ov-data-cleanup-preview')">Close</button>
+        <button class="btn btn-s" id="data-cleanup-proceed-btn" style="display:none;" onclick="confirmDataCleanup()">Clean Up Now</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov-data-cleanup-backup">
+  <div class="modal" style="max-width:460px;">
+    <div class="mh"><h2 style="font-size:.75rem;">Back Up Before Cleanup</h2></div>
+    <div class="mb">
+      <p style="font-size:.55rem;margin-bottom:12px;"><strong>Before cleaning up phantom records and renumbering, export a full backup.</strong> This cannot be automatically verified as complete — please confirm you have downloaded and can locate the export file.</p>
+      <button class="btn btn-s" style="margin-bottom:12px;" onclick="expAll()">&#8595; Export All Data</button>
+      <label style="display:flex;align-items:center;gap:6px;font-size:.52rem;margin-bottom:14px;"><input type="checkbox" id="data-cleanup-backup-ack" onchange="dataCleanupBackupAckChg()"> I have downloaded and verified the backup file</label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-g" onclick="dataCleanupBackupCancel()">Cancel</button>
+        <button class="btn btn-s" id="data-cleanup-backup-proceed" disabled onclick="dataCleanupBackupProceed()">Proceed with Cleanup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <input type="file" id="imp-file" accept=".json" style="display:none" onchange="doImport(event)">
 <datalist id="dl-countries"></datalist>
@@ -2579,6 +2618,22 @@ function backfillConIds() {
     if (!c.id) { c.id = uid(); changed = true; }
   });
   if (changed) sv(K.co, DB.con);
+}
+
+// ── DATA INTEGRITY CLEANUP (REQ-DATA-002) ────────────────────────
+function isPhantomRecord(entityKey, rec) {
+  if (entityKey === 'con') {
+    return !rec.id || (!rec.name && !rec.email);
+  }
+  return !rec.id;
+}
+function scanForPhantomRecords() {
+  var result = {};
+  ['sup', 'li', 'inv', 'po', 'qt', 'payments', 'con', 'buy', 'ord', 'sh'].forEach(function(key) {
+    var phantoms = (DB[key] || []).filter(function(rec) { return isPhantomRecord(key, rec); });
+    if (phantoms.length) result[key] = phantoms;
+  });
+  return result;
 }
 function migrateLinkedPOIds() {
   var changed = false;
@@ -3941,9 +3996,12 @@ async function pullAll() {
             matchedLocalIds[local.id] = true;
           } else if (idKeyedEnts.indexOf(eKey) === -1) {
             m.id = uid(); // business-keyed, genuinely unmatched (no local record, or its match was already claimed this pull)
+          } else if (!m.id) {
+            console.warn('[Stackd] pullAll: dropping ' + eKey + ' record with no resolvable id (SYNC-GAP-001 class)', m);
+            return null;
           }
           return m;
-        });
+        }).filter(function(m) { return m !== null; });
         var localOnly = localArr.filter(function(r){ return !matchedLocalIds[r.id]; });
         DB[dbKey] = merged.concat(localOnly);
       }
@@ -4803,6 +4861,28 @@ function migBackupProceed() {
 function migBackupCancel() {
   G('ov-migration-backup').classList.remove('on');
   if (_sbMigrationResolve) { var r = _sbMigrationResolve; _sbMigrationResolve = null; r(false); }
+}
+
+var _dataCleanupBackupResolve = null;
+function showDataCleanupBackupModal() {
+  return new Promise(function(resolve){
+    if (_dataCleanupBackupResolve) { var _prevResolve = _dataCleanupBackupResolve; _dataCleanupBackupResolve = null; _prevResolve(false); } // a still-pending prior call is cancelled, never left hanging
+    if (G('data-cleanup-backup-ack')) G('data-cleanup-backup-ack').checked = false;
+    if (G('data-cleanup-backup-proceed')) G('data-cleanup-backup-proceed').disabled = true;
+    _dataCleanupBackupResolve = resolve;
+    G('ov-data-cleanup-backup').classList.add('on');
+  });
+}
+function dataCleanupBackupAckChg() {
+  G('data-cleanup-backup-proceed').disabled = !G('data-cleanup-backup-ack').checked;
+}
+function dataCleanupBackupProceed() {
+  G('ov-data-cleanup-backup').classList.remove('on');
+  if (_dataCleanupBackupResolve) { var r = _dataCleanupBackupResolve; _dataCleanupBackupResolve = null; r(true); }
+}
+function dataCleanupBackupCancel() {
+  G('ov-data-cleanup-backup').classList.remove('on');
+  if (_dataCleanupBackupResolve) { var r = _dataCleanupBackupResolve; _dataCleanupBackupResolve = null; r(false); }
 }
 
 async function migrateSuppliersBuyersToSupabase() {
@@ -7760,6 +7840,141 @@ async function runDataRepair() {
   status.style.color = '#4ade80';
 }
 
+var DATA_CLEANUP_LABELS = { sup:'Supplier', li:'Line Item', inv:'Invoice', po:'PO', qt:'Quote', payments:'Payment', con:'Contact', buy:'Buyer', ord:'Order Request', sh:'Shipment' };
+var DATA_CLEANUP_ENTITY_TYPE = { sup:'supplier', li:'line_item', inv:'invoice', po:'po', qt:'quote', payments:'payment', con:'contact', buy:'buyer', ord:'order', sh:'shipment' };
+
+function openDataCleanupScan() {
+  var scan = scanForPhantomRecords();
+  var total = Object.keys(scan).reduce(function(s, k) { return s + scan[k].length; }, 0);
+  if (total === 0) {
+    var status = G('data-cleanup-status');
+    status.textContent = '✓ No phantom records found — data looks clean';
+    status.style.color = '#4ade80';
+    return;
+  }
+  renderDataCleanupPreview(scan);
+  G('ov-data-cleanup-preview').classList.add('on');
+}
+
+function renderDataCleanupPreview(scan) {
+  var keys = Object.keys(scan);
+  var total = keys.reduce(function(s, k) { return s + scan[k].length; }, 0);
+  var html = '<p style="margin-bottom:10px;"><strong>' + total + ' phantom record(s) found.</strong> These are blank/corrupted records (missing internal ID, or — for Contacts — missing both name and email) left over from a historical sync issue. They will be permanently removed. Supplier, Line Item, Buyer, Contact, and Order Request reference numbers will then be renumbered sequentially to close the resulting gaps.</p>';
+  html += '<ul style="padding-left:18px;">' + keys.map(function(k) {
+    return '<li>' + DATA_CLEANUP_LABELS[k] + ': ' + scan[k].length + ' phantom record(s)</li>';
+  }).join('') + '</ul>';
+  G('data-cleanup-preview-body').innerHTML = html;
+  G('data-cleanup-proceed-btn').style.display = total > 0 ? '' : 'none';
+}
+
+function renumberEntitySequentially(arr, prefix) {
+  var sorted = arr.slice().sort(function(a, b) {
+    var an = parseRefNum(a.num, prefix), bn = parseRefNum(b.num, prefix);
+    var aHas = an !== null, bHas = bn !== null;
+    if (aHas && bHas) return an - bn;
+    if (aHas && !bHas) return -1;
+    if (!aHas && bHas) return 1;
+    // Both records lack a valid existing num at this point. Fall back to createdAt; if BOTH also lack
+    // createdAt, this returns 0 for that pair, and Array.prototype.sort's stability guarantee (satisfied
+    // by every browser this app supports) preserves their original relative array order deterministically.
+    // This is deliberate, not an accidental fallthrough — REQ-DATA-002f requires it be spelled out here.
+    var aC = a.createdAt || '', bC = b.createdAt || '';
+    return aC < bC ? -1 : (aC > bC ? 1 : 0);
+  });
+  // Returns the list of records that actually changed (id + old/new num), not just a changed/unchanged
+  // boolean — REQ-DATA-002h requires logging each renumbering per affected record, not one aggregate
+  // entry per entity, so the caller needs to know exactly which records changed and what they changed to.
+  var changes = [];
+  sorted.forEach(function(rec, i) {
+    var newNum = prefix + '-' + String(i + 1).padStart(4, '0');
+    if (rec.num !== newNum) changes.push({ id: rec.id, oldNum: rec.num, newNum: newNum });
+    rec.num = newNum;
+  });
+  return changes;
+}
+
+function verifyFkIntegrityAfterCleanup() {
+  var idsOf = function(key) { var m = {}; (DB[key]||[]).forEach(function(r){ m[r.id] = true; }); return m; };
+  var supIds = idsOf('sup'), liIds = idsOf('li'), buyIds = idsOf('buy'), conIds = idsOf('con');
+  var dangling = [];
+  DB.con.forEach(function(c){ if (c.supplierId && !supIds[c.supplierId]) dangling.push('Contact ' + c.id + ' supplierId'); });
+  DB.li.forEach(function(l){ if (l.supId && !supIds[l.supId]) dangling.push('Line Item ' + l.id + ' supId'); });
+  DB.inv.forEach(function(i){
+    if (i.buyerId && !buyIds[i.buyerId]) dangling.push('Invoice ' + i.id + ' buyerId');
+    (i.lineItems||[]).forEach(function(li){ if (li.lid && !liIds[li.lid]) dangling.push('Invoice ' + i.id + ' line lid'); });
+  });
+  DB.po.forEach(function(p){
+    if (p.supId && !supIds[p.supId]) dangling.push('PO ' + p.id + ' supId');
+    (p.lineItems||[]).forEach(function(li){ if (li.lid && !liIds[li.lid]) dangling.push('PO ' + p.id + ' line lid'); });
+  });
+  DB.qt.forEach(function(q){
+    if (q.sourceContactId && !conIds[q.sourceContactId]) dangling.push('Quote ' + q.id + ' sourceContactId');
+    (q.lines||[]).forEach(function(l){
+      if (l.supId && !supIds[l.supId]) dangling.push('Quote ' + q.id + ' line supId');
+      // Quote lines don't currently populate `lid` anywhere in the live code (a dead field on this
+      // entity, the same class as the already-known-dead `liId` in qteToPoConvert()) — checked anyway,
+      // never skipped, per REQ-DATA-002g's explicit "not a subset" instruction.
+      if (l.lid && !liIds[l.lid]) dangling.push('Quote ' + q.id + ' line lid');
+    });
+  });
+  DB.ord.forEach(function(o){
+    if (o.contactId && !conIds[o.contactId]) dangling.push('Order Request ' + o.id + ' contactId');
+    (o.lines||[]).forEach(function(l){
+      (l.rfqResponses||[]).forEach(function(r){
+        if (r.contactId && !conIds[r.contactId]) dangling.push('Order Request ' + o.id + ' rfqResponse contactId');
+        if (r.supId && !supIds[r.supId]) dangling.push('Order Request ' + o.id + ' rfqResponse supId');
+      });
+    });
+  });
+  return dangling;
+}
+
+async function confirmDataCleanup() {
+  closeM('ov-data-cleanup-preview');
+  var backupConfirmed = await showDataCleanupBackupModal();
+  if (!backupConfirmed) return;
+  executeDataCleanup();
+}
+
+function executeDataCleanup() {
+  var removedCounts = {};
+  ['sup', 'li', 'inv', 'po', 'qt', 'payments', 'con', 'buy', 'ord', 'sh'].forEach(function(key) {
+    var before = DB[key].length;
+    DB[key] = DB[key].filter(function(rec) { return !isPhantomRecord(key, rec); });
+    var removed = before - DB[key].length;
+    if (removed > 0) {
+      removedCounts[key] = removed;
+      logEv(DATA_CLEANUP_ENTITY_TYPE[key], null, 'phantom_removed', removed + ' phantom ' + DATA_CLEANUP_LABELS[key] + ' record(s) removed during data integrity cleanup', 'operator');
+    }
+  });
+
+  var renumberedLabels = [];
+  [['sup','SUP'], ['li','LI'], ['buy','BUY'], ['con','CON'], ['ord','ORD']].forEach(function(pair) {
+    var key = pair[0], prefix = pair[1];
+    var changes = renumberEntitySequentially(DB[key], prefix);
+    if (changes.length) {
+      renumberedLabels.push(DATA_CLEANUP_LABELS[key]);
+      changes.forEach(function(c) {
+        logEv(DATA_CLEANUP_ENTITY_TYPE[key], c.id, 'renumbered', 'Renumbered from ' + (c.oldNum || '(none)') + ' to ' + c.newNum + ' during data integrity cleanup', 'operator');
+      });
+    }
+  });
+
+  var dangling = verifyFkIntegrityAfterCleanup();
+  saveAll();
+  renderAll();
+
+  var totalRemoved = Object.keys(removedCounts).reduce(function(s, k) { return s + removedCounts[k]; }, 0);
+  var msg = totalRemoved > 0
+    ? '✓ Removed ' + totalRemoved + ' phantom record(s).' + (renumberedLabels.length ? ' Renumbered: ' + renumberedLabels.join(', ') + '.' : '')
+    : '✓ No phantom records to remove.';
+  if (dangling.length) msg += ' ⚠ ' + dangling.length + ' unexpected reference issue(s) found — see console.';
+  if (dangling.length) console.warn('[Stackd] Data cleanup: unexpected dangling references', dangling);
+  var status = G('data-cleanup-status');
+  status.textContent = msg;
+  status.style.color = dangling.length ? '#f87171' : '#4ade80';
+}
+
 
 // ── CREDIT NOTES ──────────────────────────────────────────────
 function isCN(num) { return num && String(num).toUpperCase().startsWith('CN'); }
@@ -7964,7 +8179,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.56).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.57).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8131,6 +8346,9 @@ var AI_SYSTEM_PROMPT = [
   '## Data Repair',
   'Settings → Data → ⚙ Repair invoice totals. Run after every Sheets pull, when KPIs look wrong, or after clearing browser cache.',
   '',
+  '## Data Integrity Cleanup',
+  'Settings → Data → ⚙ Scan for phantom records. Finds blank/corrupted Supplier/Contact/Buyer/Line Item/Order Request/etc. records (residue from a historical Sheets-sync bug, fixed for new pulls in v2.9.47) and, after a mandatory backup export, removes them and renumbers Supplier/Line Item/Buyer/Contact/Order Request reference numbers sequentially to close the gaps. Invoice/PO/Quote/Credit Note numbers are never renumbered, since those are used as real lookup keys elsewhere. A scan finding nothing reports clean and does not prompt for a backup. Every removal and renumbering is logged to that record\'s own Activity tab.',
+  '',
   '## Known Quirks',
   '1. Always click Save Invoice before closing the modal — line items are lost if you close without saving.',
   '2. Import from Library is preferred over quick-add for physical products — it pulls COGS automatically. Quick-add is fine for pass-through charges (freight, customs, etc.) as long as Unit Cost is entered; leaving it at 0 is what breaks profit tracking, not the absence of a library link itself.',
@@ -8151,6 +8369,7 @@ var AI_SYSTEM_PROMPT = [
   '- Storage health red (≥85%) → export JSON backup immediately, consider clearing old data',
   '- Sync button shows error → invalid or expired Apps Script URL → Settings → verify URL, redeploy Apps Script',
   '- Credit note not reducing balance → CN status must be CN Applied. Also check that the linked invoice number in the CN matches the invoice number exactly (case-insensitive).',
+  '- Blank/undeletable Supplier or other records in a list → Settings → Data → ⚙ Scan for phantom records. Back up first when prompted.',
   '',
   '## Settings',
   'Language & Localisation card: switch interface between English (EN) and Simplified Chinese (ZH). Nav tabs and key labels update instantly. AI assistant replies in Mandarin when ZH is active.',
@@ -8161,7 +8380,7 @@ var AI_SYSTEM_PROMPT = [
   'Reference Data card: browse all controlled lookup tables. Add custom ports.',
   'Google Sheets card: Apps Script URL, Secret Token.',
   'Integrations card: Forwarder webhook URL for Power Automate / Make.',
-  'Data: Export CSV, Backup All JSON, Restore from JSON, ⚙ Repair invoice totals, Clear local data.',
+  'Data: Export CSV, Backup All JSON, Restore from JSON, ⚙ Repair invoice totals, ⚙ Scan for phantom records (data integrity cleanup), Clear local data.',
   'AI Assistant: Claude API Key (stored locally in browser only).',
   '',
   '## Contacts',

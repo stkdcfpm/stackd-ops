@@ -1685,7 +1685,7 @@ testAsync('pullAll integration — no-duplicate-keys pull behaves identically to
   assertEqual(ctx.DB.li[0].desc, 'New');
 });
 
-testAsync('pullAll integration — corrupted-backup shape (header-keyed blank stub) never spuriously matches a real local Supplier', async function() {
+testAsync('pullAll integration — corrupted-backup shape (header-keyed blank stub) is dropped, not merged in with a spurious id (REQ-DATA-002j)', async function() {
   resetDB();
   ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
   ctx.DB.sup = [{ id:'sup1', name:'Real Supplier', country:'China', email:'real@sup.example' }];
@@ -1695,13 +1695,14 @@ testAsync('pullAll integration — corrupted-backup shape (header-keyed blank st
   ] } };
   await ctx.pullAll();
   _mockPullResponses = {};
-  assertEqual(ctx.DB.sup.length, 2, 'the legitimate match and the blank stub both present, no spurious merge');
+  // Prior to REQ-DATA-002j, the header-keyed blank stub (falsy id, since it's an id-keyed entity)
+  // used to survive the merge and enter DB.sup as a genuine phantom record — this is the exact
+  // SYNC-GAP-001-class mechanism the cleanup feature exists to clean up residue from. It is now
+  // dropped at the source instead.
+  assertEqual(ctx.DB.sup.length, 1, 'the blank stub is dropped — only the real, matched Supplier remains');
   var real = ctx.DB.sup.find(function(s){ return s.id === 'sup1'; });
   assert(real, 'real supplier retains its original id');
   assertEqual(real.name, 'Real Supplier (updated)');
-  var blank = ctx.DB.sup.find(function(s){ return s.id !== 'sup1'; });
-  assert(blank, 'blank stub gets its own distinct id, never colliding with sup1');
-  assertEqual(blank.name, '');
 });
 
 testAsync('pullAll integration — co pull matching by id preserves untracked enquiries array', async function() {
@@ -6375,6 +6376,175 @@ test('ordConvertToQuote() — converts a non-USD committed response\'s cost to t
   ctx.QR = origQR;
   var expected = (700 / 9.20) * 1.27; // toGBP(700,'RMB') then fromGBP(...,'USD') — the new Quote defaults to USD
   assertApprox(ctx.cQL[0].cost, expected, 'RMB response cost is converted to the Quote\'s working currency (USD), not copied verbatim');
+});
+
+console.log('\nData Integrity Cleanup (REQ/SPEC-DATA-002)');
+
+test('isPhantomRecord() — plain !id criterion for non-Contact entities (AC-1)', function() {
+  assertEqual(ctx.isPhantomRecord('sup', { id: '', name: 'Blank' }), true);
+  assertEqual(ctx.isPhantomRecord('sup', { id: 'S1', name: 'Real' }), false);
+});
+
+test('isPhantomRecord() — compound criterion for Contacts catches backfillConIds()-healed zombies (AC-1b)', function() {
+  assertEqual(ctx.isPhantomRecord('con', { id: 'C9', name: '', email: '' }), true, 'truthy id but no name/email is still phantom');
+  assertEqual(ctx.isPhantomRecord('con', { id: 'C1', name: 'Jane', email: '' }), false);
+  assertEqual(ctx.isPhantomRecord('con', { id: 'C2', name: '', email: 'a@b.com' }), false);
+  assertEqual(ctx.isPhantomRecord('con', { id: '', name: '', email: '' }), true);
+});
+
+test('scanForPhantomRecords() — reports exactly the phantom Suppliers, leaves DB untouched (AC-1)', function() {
+  resetDB();
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }, { id: '', name: '' }, { id: 'S2', name: 'B' }, { id: '', name: '' }, { id: 'S3', name: 'C' }];
+  var scan = ctx.scanForPhantomRecords();
+  assertEqual(scan.sup.length, 2, 'exactly 2 phantom Suppliers found');
+  assertEqual(ctx.DB.sup.length, 5, 'scan is read-only — DB unmodified');
+});
+
+test('scanForPhantomRecords() — reports exactly the phantom Contact via the compound criterion (AC-1b)', function() {
+  resetDB();
+  ctx.DB.con = [{ id: 'C1', name: 'Jane' }, { id: 'C2', name: 'John' }, { id: 'C3', name: '', email: '' }];
+  var scan = ctx.scanForPhantomRecords();
+  assertEqual(scan.con.length, 1, 'exactly 1 phantom Contact found');
+});
+
+test('scanForPhantomRecords() — zero phantoms across all entities reports nothing (AC-9)', function() {
+  resetDB();
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  ctx.DB.con = [{ id: 'C1', name: 'Jane' }];
+  var scan = ctx.scanForPhantomRecords();
+  assertEqual(Object.keys(scan).length, 0, 'no entity keys reported when nothing is phantom');
+});
+
+test('openDataCleanupScan() — zero-found case reports clean and does not open the preview modal (AC-9)', function() {
+  resetDB();
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  mockEl('ov-data-cleanup-preview').classList.add = function() { throw new Error('preview modal must not open when nothing is phantom'); };
+  ctx.openDataCleanupScan();
+  assertContains(mockEl('data-cleanup-status').textContent, 'No phantom records found');
+  mockEl('ov-data-cleanup-preview').classList.add = function() {};
+});
+
+test('confirmDataCleanup() — declining the backup gate blocks the actual cleanup (AC-2)', async function() {
+  resetDB();
+  ctx.DB.sup = [{ id: 'S1', name: 'Real' }, { id: '', name: '' }];
+  var origShow = ctx.showDataCleanupBackupModal;
+  ctx.showDataCleanupBackupModal = function() { return Promise.resolve(false); };
+  await ctx.confirmDataCleanup();
+  ctx.showDataCleanupBackupModal = origShow;
+  assertEqual(ctx.DB.sup.length, 2, 'DB unmodified when backup is not confirmed');
+});
+
+test('executeDataCleanup() — removes phantoms, real Supplier data unchanged except num (AC-3)', function() {
+  resetDB();
+  ctx.DB.sup = [
+    { id: 'S1', name: 'Acme', num: 'SUP-0001', country: 'CN' },
+    { id: '', name: '' },
+    { id: 'S2', name: 'Beta', num: 'SUP-0003', country: 'VN' },
+    { id: '', name: '' },
+    { id: 'S3', name: 'Gamma', num: 'SUP-0007', country: 'IN' },
+  ];
+  ctx.executeDataCleanup();
+  assertEqual(ctx.DB.sup.length, 3, 'phantom Suppliers removed');
+  var acme = ctx.DB.sup.find(function(s) { return s.id === 'S1'; });
+  assertEqual(acme.name, 'Acme'); assertEqual(acme.country, 'CN');
+});
+
+test('renumberEntitySequentially() — closes gaps, preserves original relative order (AC-4)', function() {
+  var arr = [
+    { id: 'S1', num: 'SUP-0001' },
+    { id: 'S2', num: 'SUP-0003' },
+    { id: 'S3', num: 'SUP-0007' },
+  ];
+  ctx.renumberEntitySequentially(arr, 'SUP');
+  assertEqual(arr[0].num, 'SUP-0001'); assertEqual(arr[0].id, 'S1');
+  assertEqual(arr[1].num, 'SUP-0002'); assertEqual(arr[1].id, 'S2');
+  assertEqual(arr[2].num, 'SUP-0003'); assertEqual(arr[2].id, 'S3');
+});
+
+test('renumberEntitySequentially() — returns only the records that actually changed', function() {
+  var arr = [{ id: 'S1', num: 'SUP-0001' }, { id: 'S2', num: 'SUP-0003' }];
+  var changes = ctx.renumberEntitySequentially(arr, 'SUP');
+  assertEqual(changes.length, 1, 'only the gapped record actually changes num');
+  assertEqual(changes[0].id, 'S2'); assertEqual(changes[0].oldNum, 'SUP-0003'); assertEqual(changes[0].newNum, 'SUP-0002');
+});
+
+test('executeDataCleanup() — never renumbers or touches Invoice/PO/Quote/Credit Note num (AC-5)', function() {
+  resetDB();
+  ctx.DB.inv = [{ id: 'I1', num: 'INV10005' }, { id: '', num: '' }];
+  ctx.DB.po  = [{ id: 'P1', num: 'PO-0009' }, { id: '', num: '' }];
+  ctx.DB.qt  = [{ id: 'Q1', num: 'QT-0009' }];
+  ctx.executeDataCleanup();
+  assertEqual(ctx.DB.inv.length, 1, 'phantom Invoice removed');
+  assertEqual(ctx.DB.inv[0].num, 'INV10005', 'real Invoice num untouched');
+  assertEqual(ctx.DB.po.length, 1, 'phantom PO removed');
+  assertEqual(ctx.DB.po[0].num, 'PO-0009', 'real PO num untouched');
+  assertEqual(ctx.DB.qt[0].num, 'QT-0009', 'real Quote num untouched');
+});
+
+test('verifyFkIntegrityAfterCleanup() — FK fields still resolve after the referenced record is renumbered (AC-6)', function() {
+  resetDB();
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme', num: 'SUP-0001' }];
+  ctx.DB.li  = [{ id: 'LI1', num: 'LI-0001' }];
+  ctx.DB.con = [{ id: 'C1', name: 'Jane', supplierId: 'S1' }];
+  ctx.DB.qt  = [{ id: 'Q1', num: 'QT-0001', sourceContactId: 'C1', lines: [{ supId: 'S1', lid: 'LI1' }] }];
+  ctx.DB.inv = [{ id: 'INV1', num: 'INV10001', lineItems: [{ lid: 'LI1' }] }];
+  ctx.renumberEntitySequentially(ctx.DB.sup, 'SUP'); // renumbers S1 (no-op num here, but id is what FKs use)
+  var dangling = ctx.verifyFkIntegrityAfterCleanup();
+  assertEqual(dangling.length, 0, 'Contact.supplierId, Quote.sourceContactId, Quote line supId/lid, Invoice line lid all still resolve — id never changes, only num');
+});
+
+test('verifyFkIntegrityAfterCleanup() — detects a genuinely dangling reference', function() {
+  resetDB();
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.DB.con = [{ id: 'C1', name: 'Jane', supplierId: 'GONE' }];
+  var dangling = ctx.verifyFkIntegrityAfterCleanup();
+  assertEqual(dangling.length, 1);
+  assertContains(dangling[0], 'C1');
+});
+
+test('executeDataCleanup() — writes real per-record entityType/entityId to the event log, not a raw DB-key or placeholder (AC-7)', function() {
+  resetDB();
+  ctx.DB.sup = [
+    { id: 'S1', name: 'Acme', num: 'SUP-0001' },
+    { id: '', name: '' },
+    { id: 'S2', name: 'Beta', num: 'SUP-0003' },
+  ];
+  ctx.executeDataCleanup();
+  var removalEv = ctx.DB.events.find(function(e) { return e.verb === 'phantom_removed'; });
+  assert(removalEv, 'a removal event was logged');
+  assertEqual(removalEv.entityType, 'supplier', 'entityType uses the app-wide human-readable vocabulary, not a raw DB key like "sup"');
+  var renumberEv = ctx.DB.events.find(function(e) { return e.verb === 'renumbered'; });
+  assert(renumberEv, 'a renumbering event was logged');
+  assertEqual(renumberEv.entityType, 'supplier');
+  assertEqual(renumberEv.entityId, 'S2', 'entityId is the real renumbered record\'s own id, not a "bulk" placeholder — so it shows in that record\'s own Activity tab');
+});
+
+testAsync('pullAll() — drops an id-keyed pulled record (Contact) that resolves to a falsy id, keeps the rest of the batch (AC-8)', async function() {
+  resetDB();
+  ctx.SS = { url: 'https://example.com/exec', auto: false, pull: true };
+  _mockPullResponses = {
+    sup: { status: 'ok', records: [] },
+    li: { status: 'ok', records: [] },
+    payments: { status: 'ok', records: [] },
+    sh: { status: 'ok', records: [] },
+    qt: { status: 'ok', records: [] },
+    co: {
+      status: 'ok',
+      records: [
+        { 'Contact ID': 'C1', 'Name': 'Jane', 'Email': 'jane@x.com', 'Phone': '', 'Company': '', 'Status': '', 'Source': '', 'Enquiry Summary': '', 'Notes': '', 'Created At': '', 'Last Contacted': '', 'GDPR Basis': '' },
+        { 'Contact ID': '', 'Name': 'NoId', 'Email': 'noid@x.com', 'Phone': '', 'Company': '', 'Status': '', 'Source': '', 'Enquiry Summary': '', 'Notes': '', 'Created At': '', 'Last Contacted': '', 'GDPR Basis': '' }, // header-keyed blank id — SYNC-GAP-001 class
+      ],
+    },
+  };
+  var warned = [];
+  var origWarn = console.warn;
+  console.warn = function() { warned.push(Array.prototype.slice.call(arguments).join(' ')); };
+  await ctx.pullAll();
+  console.warn = origWarn;
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.con.length, 1, 'the falsy-id record is dropped, the valid one survives');
+  assertEqual(ctx.DB.con[0].name, 'Jane');
+  assert(warned.some(function(w) { return w.indexOf('dropping') >= 0; }), 'a console warning is emitted for the dropped record');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
