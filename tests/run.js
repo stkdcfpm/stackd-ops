@@ -3684,6 +3684,10 @@ test('AC-2: unlinkSupCon nulls supplierId and clears role, contact preserved', f
   assertEqual(ctx.DB.con[0].supplierId, null, 'supplierId nulled');
   assertEqual(ctx.DB.con[0].role, '', 'role cleared');
   assertEqual(ctx.DB.con.length, 1, 'contact preserved');
+  var ev = ctx.DB.events[ctx.DB.events.length - 1];
+  assertEqual(ev.entityType, 'contact', 'event logged against the contact entity (REQ-V3-GAP-006 ev)');
+  assertEqual(ev.entityId, 'C1'); assertEqual(ev.verb, 'unlinked');
+  assertContains(ev.summary, 'ACME', 'summary names the supplier that was unlinked');
 });
 
 testAsync('AC-5: delSup nulls supplierId on linked contacts and preserves them', async function() {
@@ -3711,6 +3715,10 @@ test('AC-6: openSupConPicker links contact — supplierId and role set', functio
   ctx.prompt = function(){ return null; };
   assertEqual(ctx.DB.con[0].supplierId, 'S1', 'supplierId set');
   assertEqual(ctx.DB.con[0].role, 'supplier_contact', 'role set');
+  var ev = ctx.DB.events[ctx.DB.events.length - 1];
+  assertEqual(ev.entityType, 'contact', 'event logged against the contact entity (REQ-V3-GAP-006 ev)');
+  assertEqual(ev.entityId, 'C1'); assertEqual(ev.verb, 'linked');
+  assertContains(ev.summary, 'ACME', 'summary names the supplier that was linked');
 });
 
 test('AC-3: contact linked to Supplier X excluded from picker for Supplier Y', function() {
@@ -5270,62 +5278,62 @@ test('ordLineGaps: baseQty 0 is a valid quantity, not a gap', () => {
   assert(!gaps.some(function(g){ return g.field === 'baseQty'; }), 'baseQty: 0 is not flagged as unset');
 });
 
-test('ordCheckLineGapsSemantic: no AI.key configured → resolves null, no fetch call', async () => {
+testAsync('ordCheckLineGapsSemantic: no AI.key configured → resolves null, no fetch call', async () => {
   ctx.AI = { key: '' };
-  ctx._lastAnthropicBody = null;
+  _lastAnthropicBody = null;
   var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
   assertEqual(result, null, 'resolves null with no key');
-  assertEqual(ctx._lastAnthropicBody, null, 'no fetch call made');
+  assertEqual(_lastAnthropicBody, null, 'no fetch call made');
 });
 
-test('ordCheckLineGapsSemantic: network error → resolves null, no thrown exception', async () => {
+testAsync('ordCheckLineGapsSemantic: network error → resolves null, no thrown exception', async () => {
   ctx.AI = { key: 'test-key' };
-  ctx._mockAnthropic = 'reject';
+  _mockAnthropic = 'reject';
   var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
   assertEqual(result, null, 'resolves null on network error');
-  ctx._mockAnthropic = null;
+  _mockAnthropic = null;
 });
 
-test('ordCheckLineGapsSemantic: non-200 response → resolves null', async () => {
+testAsync('ordCheckLineGapsSemantic: non-200 response → resolves null', async () => {
   ctx.AI = { key: 'test-key' };
-  ctx._mockAnthropic = { status: 500, text: '' };
+  _mockAnthropic = { status: 500, text: '' };
   var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
   assertEqual(result, null, 'resolves null on non-200');
-  ctx._mockAnthropic = null;
+  _mockAnthropic = null;
 });
 
-test('ordCheckLineGapsSemantic: malformed (non-JSON-array) response text → resolves null', async () => {
+testAsync('ordCheckLineGapsSemantic: malformed (non-JSON-array) response text → resolves null', async () => {
   ctx.AI = { key: 'test-key' };
-  ctx._mockAnthropic = { status: 200, text: 'not valid json {' };
+  _mockAnthropic = { status: 200, text: 'not valid json {' };
   var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
   assertEqual(result, null, 'resolves null on malformed response');
-  ctx._mockAnthropic = null;
+  _mockAnthropic = null;
 });
 
-test('ordCheckLineGapsSemantic: well-formed response → resolves parsed array', async () => {
+testAsync('ordCheckLineGapsSemantic: well-formed response → resolves parsed array', async () => {
   ctx.AI = { key: 'test-key' };
-  ctx._mockAnthropic = { status: 200, text: '[{"issue":"vague spec","question":"Can you clarify the item spec?"}]' };
+  _mockAnthropic = { status: 200, text: '[{"issue":"vague spec","question":"Can you clarify the item spec?"}]' };
   var result = await ctx.ordCheckLineGapsSemantic(_ordLineFixture());
   assertEqual(result.length, 1, 'one flagged item returned');
   assertEqual(result[0].issue, 'vague spec');
-  ctx._mockAnthropic = null;
+  _mockAnthropic = null;
 });
 
-test('ordCheckLineGapsSemantic: payload sent to Anthropic contains only the 10 scoped fields — no PII', async () => {
+testAsync('ordCheckLineGapsSemantic: payload sent to Anthropic contains only the 10 scoped fields — no PII', async () => {
   ctx.AI = { key: 'test-key' };
-  ctx._mockAnthropic = { status: 200, text: '[]' };
+  _mockAnthropic = { status: 200, text: '[]' };
   var line = _ordLineFixture({ id: 'l1' });
   await ctx.ordCheckLineGapsSemantic(line);
-  var sentPayload = JSON.parse(ctx._lastAnthropicBody.messages[0].content);
+  var sentPayload = JSON.parse(_lastAnthropicBody.messages[0].content);
   var allowedFields = ['category','itemSpec','orderVolumeQty','orderVolumeUnit','packingSpec','baseUom','baseQty','sourceCountry','variantOption','qtyStatus'];
   assertEqual(Object.keys(sentPayload).sort().join(','), allowedFields.slice().sort().join(','), 'payload contains exactly the scoped fields');
   assert(!('contactId' in sentPayload), 'contactId never sent');
   assert(!('id' in sentPayload), 'line id never sent');
   assert(!('lineUpdates' in sentPayload), 'lineUpdates never sent');
-  ctx._mockAnthropic = null;
+  _mockAnthropic = null;
 });
 
-test('ordCheckLineGaps: triggering does not mutate DB.ord (no persistence)', async () => {
+testAsync('ordCheckLineGaps: triggering does not mutate DB.ord (no persistence)', async () => {
   resetDB();
   ctx.AI = { key: '' };
   var ord = { id:'o1', num:'ORD-0001', contactId:null, stage:'New', actions:[], lines:[ _ordLineFixture() ] };
@@ -5337,7 +5345,7 @@ test('ordCheckLineGaps: triggering does not mutate DB.ord (no persistence)', asy
   assertEqual(JSON.stringify(ctx.DB.ord), before, 'DB.ord unchanged by a gap-check trigger');
 });
 
-test('ordCheckLineGaps: re-triggering reflects current field state, not stale prior output', async () => {
+testAsync('ordCheckLineGaps: re-triggering reflects current field state, not stale prior output', async () => {
   resetDB();
   ctx.AI = { key: '' };
   var line = _ordLineFixture({ packingSpec: '' });
@@ -5870,7 +5878,7 @@ testAsync('ensureSbAuth — cached session resolves true without opening the log
   assertEqual(resultNoSession, true, 'resolves true once the login callback reports success');
 });
 
-test('initCloudDataLayer — SS.supabaseUrl unset: _sb stays null, no refresh calls, no modal shown', async function() {
+testAsync('initCloudDataLayer — SS.supabaseUrl unset: _sb stays null, no refresh calls, no modal shown', async function() {
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
   ctx._sb = 'sentinel'; // prove initSbClient() actually runs and nulls this out
   await ctx.initCloudDataLayer();
@@ -6138,6 +6146,235 @@ test('openCon() — opening a fresh Contact modal after a prior check left #con-
   ctx.openCon();
   assertEqual(mockEl('con-enqchk').style.display, 'none', 'panel hidden on open');
   assertEqual(mockEl('con-enqchk').innerHTML, '', 'panel content cleared on open');
+});
+
+// ── RFQ Supplier Comparison & Commit (REQ/SPEC-QTE-001 Part B) ──
+console.log('\nRFQ Supplier Comparison & Commit (REQ/SPEC-QTE-001 Part B)');
+
+function mkOrdWithLine(lineOverrides) {
+  var line = Object.assign({
+    id: 'L1', category: 'Salt fish', itemSpec: 'Dried salt fish',
+    orderVolumeQty: '1', orderVolumeUnit: 'pallet', packingSpec: '', baseUom: '',
+    baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '',
+    lineUpdates: [], rfqResponses: [], committedResponseId: null
+  }, lineOverrides || {});
+  ctx.DB.ord = [{ id: 'O1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [], lines: [line] }];
+  ctx.EI.ord = 'O1';
+  return line;
+}
+
+test('openRfqResponse() — resets modal fields and populates supplier/contact dropdowns', function() {
+  resetDB();
+  mkOrdWithLine();
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme Foods' }];
+  ctx.DB.con = [{ id: 'C1', name: 'Jane Contact' }];
+  mockEl('rfq-cost').value = '999';
+  ctx.openRfqResponse('L1');
+  assertEqual(ctx.cRfqOrdId, 'O1', 'cRfqOrdId set');
+  assertEqual(ctx.cRfqLineId, 'L1', 'cRfqLineId set');
+  assertEqual(mockEl('rfq-cost').value, '', 'cost field reset');
+  assertEqual(mockEl('rfq-cur').value, 'USD', 'currency defaults to USD');
+  assertContains(mockEl('rfq-sup').innerHTML, 'Acme Foods', 'supplier dropdown populated');
+  assertContains(mockEl('rfq-con').innerHTML, 'Jane Contact', 'contact dropdown populated');
+});
+
+test('saveRfqResponse() — rejects when no supplier is selected', function() {
+  resetDB();
+  var line = mkOrdWithLine();
+  ctx.cRfqOrdId = 'O1'; ctx.cRfqLineId = 'L1';
+  mockEl('rfq-sup').value = '';
+  mockEl('rfq-cost').value = '10';
+  ctx.saveRfqResponse();
+  assertEqual(line.rfqResponses.length, 0, 'no response recorded without a supplier');
+});
+
+test('saveRfqResponse() — rejects a missing or invalid unit cost', function() {
+  resetDB();
+  var line = mkOrdWithLine();
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.cRfqOrdId = 'O1'; ctx.cRfqLineId = 'L1';
+  mockEl('rfq-sup').value = 'S1';
+  mockEl('rfq-cost').value = '';
+  ctx.saveRfqResponse();
+  assertEqual(line.rfqResponses.length, 0, 'no response recorded without a valid cost');
+});
+
+test('saveRfqResponse() — records a full response with the exact expected key set (AC-012)', function() {
+  resetDB();
+  var line = mkOrdWithLine();
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.DB.con = [{ id: 'C1', name: 'Jane' }];
+  ctx.cRfqOrdId = 'O1'; ctx.cRfqLineId = 'L1';
+  mockEl('rfq-sup').value = 'S1';
+  mockEl('rfq-cost').value = '250';
+  mockEl('rfq-cur').value = 'USD';
+  mockEl('rfq-cbm').value = '0.5';
+  mockEl('rfq-dutypct').value = '5';
+  mockEl('rfq-dg').checked = true;
+  mockEl('rfq-moq').value = '500 units';
+  mockEl('rfq-leadtime').value = '30 days';
+  mockEl('rfq-payterms').value = '30% deposit';
+  mockEl('rfq-con').value = 'C1';
+  mockEl('rfq-notes').value = 'Sample notes';
+  ctx.saveRfqResponse();
+  assertEqual(line.rfqResponses.length, 1, 'response recorded');
+  var r = line.rfqResponses[0];
+  var expectedKeys = ['id','supId','cost','currency','cbm','dutyPct','dg','moq','leadTime','paymentTerms','notes','contactId','ts'].sort().join(',');
+  assertEqual(Object.keys(r).sort().join(','), expectedKeys, 'exact key set — no name/email/phone field exists (AC-012)');
+  assertEqual(r.supId, 'S1'); assertEqual(r.cost, 250); assertEqual(r.currency, 'USD'); assertEqual(r.contactId, 'C1');
+});
+
+test('renderRfqComparison() — ranks by GBP-converted landed cost, not raw quoted number (AC-005)', function() {
+  resetDB();
+  mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' },
+    { id: 'R2', supId: 'S2', cost: 90,  currency: 'GBP', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }
+  ]});
+  ctx.DB.sup = [{ id: 'S1', name: 'Supplier USD' }, { id: 'S2', name: 'Supplier GBP' }];
+  var origQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR, { fxGBPUSD: 1.27, lclPerCBM: 0, insRate: 0, dgSurcharge: 0 });
+  ctx.renderRfqComparison('L1');
+  ctx.QR = origQR;
+  var html = mockEl('ord-rfq-L1').innerHTML;
+  // R1: $100 -> ~£78.74 landed. R2: flat £90 landed. R1's raw number (100) is nominally
+  // larger than R2's (90), but R1 is the true GBP-landed-cheapest once converted.
+  assert(html.indexOf('Supplier USD') < html.indexOf('Supplier GBP'), 'the true landed-cheapest (USD $100 ≈ £78.74) ranks before the nominal-cheaper-looking £90 response');
+});
+
+test('ordCommitRfqResponse() — commits, replaces on re-commit, and un-commits without deleting any response (AC-006/AC-007)', function() {
+  resetDB();
+  var line = mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' },
+    { id: 'R2', supId: 'S2', cost: 90,  currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }
+  ]});
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }, { id: 'S2', name: 'B' }];
+  ctx.ordCommitRfqResponse('L1', 'R1');
+  assertEqual(line.committedResponseId, 'R1', 'first commit');
+  ctx.ordCommitRfqResponse('L1', 'R2');
+  assertEqual(line.committedResponseId, 'R2', 'commit replaces prior selection, never both (AC-006)');
+  assertEqual(line.rfqResponses.length, 2, 'no response deleted by re-committing');
+  ctx.ordCommitRfqResponse('L1', 'R2');
+  assertEqual(line.committedResponseId, null, 'clicking the same committed response again un-commits it (AC-007)');
+  assertEqual(line.rfqResponses.length, 2, 'un-committing does not delete any previously recorded response (AC-007)');
+});
+
+test('saveRfqResponse()/ordCommitRfqResponse() — never call syncEnt/delEnt; no FIELD_MAPS.ord entry (AC-008)', function() {
+  resetDB();
+  var line = mkOrdWithLine();
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  var calls = 0;
+  var origSync = ctx.syncEnt, origDel = ctx.delEnt;
+  ctx.syncEnt = function(){ calls++; return Promise.resolve(); };
+  ctx.delEnt  = function(){ calls++; return Promise.resolve(); };
+  ctx.cRfqOrdId = 'O1'; ctx.cRfqLineId = 'L1';
+  mockEl('rfq-sup').value = 'S1'; mockEl('rfq-cost').value = '10';
+  ctx.saveRfqResponse();
+  ctx.ordCommitRfqResponse('L1', line.rfqResponses[0].id);
+  ctx.syncEnt = origSync; ctx.delEnt = origDel;
+  assertEqual(calls, 0, 'no sync/delete calls made by either function');
+  assertEqual(ctx.FIELD_MAPS.ord, undefined, 'FIELD_MAPS has no ord key (AC-008)');
+});
+
+test('rfqStalenessWarn() — warns when a response is non-GBP and FX rates are stale, independent of QR.displayCurrency (AC-013)', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 30 * 3600000).toISOString(); // 30h ago, stale
+  var origDisp = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'GBP';
+  var warn = ctx.rfqStalenessWarn([{ currency: 'USD' }]);
+  ctx.QR.displayCurrency = origDisp;
+  delete mockStorage['st_qr_ts'];
+  assertContains(warn, 'stale', 'warns even though QR.displayCurrency is left at its default GBP');
+});
+
+test('rfqStalenessWarn() — no warning when every response is already GBP, regardless of staleness (AC-013)', function() {
+  mockStorage['st_qr_ts'] = new Date(Date.now() - 30 * 3600000).toISOString();
+  var warn = ctx.rfqStalenessWarn([{ currency: 'GBP' }, { currency: 'gbp' }]);
+  delete mockStorage['st_qr_ts'];
+  assertEqual(warn, '', 'no warning when every response is already GBP');
+});
+
+test('renderRfqComparison() — flags a response with CBM not entered next to its landed cost', function() {
+  resetDB();
+  mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' },
+    { id: 'R2', supId: 'S2', cost: 100, currency: 'USD', cbm: 2, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }
+  ]});
+  ctx.DB.sup = [{ id: 'S1', name: 'NoCBM' }, { id: 'S2', name: 'HasCBM' }];
+  ctx.renderRfqComparison('L1');
+  assertContains(mockEl('ord-rfq-L1').innerHTML, 'CBM not entered', 'zero/unset-CBM response is flagged rather than silently looking cheapest');
+});
+
+testAsync('delSup() — warns on RFQ response references and the comparison degrades gracefully after deletion (AC-011)', async function() {
+  resetDB();
+  var line = mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'SUP-DEL', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }
+  ]});
+  ctx.DB.sup = [{ id: 'SUP-DEL', name: 'ToDelete' }];
+  var capturedMsg;
+  ctx.confirm = function(msg){ capturedMsg = msg; return true; };
+  await ctx.delSup('SUP-DEL');
+  ctx.confirm = function(){ return false; };
+  assertContains(capturedMsg, '1 Order Request line', 'confirm message includes the RFQ-reference warning count (AC-011)');
+  ctx.renderRfqComparison('L1');
+  assertContains(mockEl('ord-rfq-L1').innerHTML, 'supplier deleted', 'comparison renders without throwing and shows the supplier is gone (AC-011)');
+  assertEqual(line.rfqResponses[0].supId, 'SUP-DEL', 'supId left in place as a historical record, not nulled');
+});
+
+test('delCon() — nulls contactId nested inside rfqResponses[], not just the top-level Order Request field (AC-017)', function() {
+  resetDB();
+  var line = mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: 'CON-DEL', ts: '' }
+  ]});
+  ctx.DB.ord[0].contactId = 'CON-DEL';
+  ctx.DB.con = [{ id: 'CON-DEL', name: 'Someone', email: 'x@x.com', status: 'lead', source: 'manual', enquiries: [], createdAt: '', lastContactedAt: '', gdprBasis: 'legitimate_interests', notes: '' }];
+  ctx.confirm = function(){ return true; };
+  ctx.delCon('CON-DEL');
+  ctx.confirm = function(){ return false; };
+  assertEqual(ctx.DB.ord[0].contactId, null, 'top-level contactId nulled (pre-existing behavior, unchanged)');
+  assertEqual(line.rfqResponses[0].contactId, null, 'nested rfqResponses[].contactId also nulled (AC-017)');
+});
+
+test('ordConvertToQuote() — seeds cQL from committed RFQ responses (supId, baseQty fallback, no markup) (AC-009/AC-015/AC-016)', function() {
+  resetDB();
+  ctx.DB.ord = [{
+    id: 'O1', num: 'ORD-0001', contactId: null, stage: 'Qualifying', actions: [],
+    lines: [
+      { id: 'L1', category: 'Cat A', itemSpec: 'Item A', orderVolumeQty: '1', orderVolumeUnit: 'pallet', packingSpec: '', baseUom: '', baseQty: 10, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [],
+        rfqResponses: [{ id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 1, dutyPct: 2, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }],
+        committedResponseId: 'R1' },
+      { id: 'L2', category: 'Cat B', itemSpec: 'Item B', orderVolumeQty: '2', orderVolumeUnit: 'pallet', packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [],
+        rfqResponses: [{ id: 'R2', supId: 'S2', cost: 200, currency: 'USD', cbm: 2, dutyPct: 0, dg: true, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }],
+        committedResponseId: 'R2' }
+    ]
+  }];
+  ctx.DB.sup = [{ id: 'S1', name: 'Sup1' }, { id: 'S2', name: 'Sup2' }];
+  ctx.cQL = [];
+  ctx.ordConvertToQuote('O1');
+  assertEqual(ctx.cQL.length, 2, 'one Quote line per committed response');
+  assertEqual(ctx.cQL[0].supId, 'S1'); assertEqual(ctx.cQL[0].desc, 'Item A');
+  assertEqual(ctx.cQL[0].qty, 10, 'qty uses the Order Request line\'s own baseQty when set');
+  assertEqual(ctx.cQL[0].cost, 100, 'same-currency (USD->USD) conversion is an identity — cost unchanged');
+  assertEqual(ctx.cQL[1].supId, 'S2'); assertEqual(ctx.cQL[1].qty, 1, 'qty falls back to 1 when baseQty is unset');
+  assertEqual(ctx.cQL[1].dg, true, 'dg flag carried over');
+  assertEqual(ctx.cQL[0].markup, undefined, 'no markup set on a hand-off-created line (AC-016)');
+  assertEqual(ctx.cQL[1].markup, undefined, 'no markup set on a hand-off-created line (AC-016)');
+});
+
+test('ordConvertToQuote() — converts a non-USD committed response\'s cost to the new Quote\'s working currency', function() {
+  resetDB();
+  ctx.DB.ord = [{
+    id: 'O1', num: 'ORD-0001', contactId: null, stage: 'Qualifying', actions: [],
+    lines: [{ id: 'L1', category: 'Cat', itemSpec: 'Item', orderVolumeQty: '1', orderVolumeUnit: 'pallet', packingSpec: '', baseUom: '', baseQty: 1, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [],
+      rfqResponses: [{ id: 'R1', supId: 'S1', cost: 700, currency: 'RMB', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }],
+      committedResponseId: 'R1' }]
+  }];
+  ctx.DB.sup = [{ id: 'S1', name: 'Sup1' }];
+  ctx.cQL = [];
+  var origQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR, { fxGBPRMB: 9.20, fxGBPUSD: 1.27 });
+  ctx.ordConvertToQuote('O1');
+  ctx.QR = origQR;
+  var expected = (700 / 9.20) * 1.27; // toGBP(700,'RMB') then fromGBP(...,'USD') — the new Quote defaults to USD
+  assertApprox(ctx.cQL[0].cost, expected, 'RMB response cost is converted to the Quote\'s working currency (USD), not copied verbatim');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
