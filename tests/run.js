@@ -6547,6 +6547,246 @@ testAsync('pullAll() — drops an id-keyed pulled record (Contact) that resolves
   assert(warned.some(function(w) { return w.indexOf('dropping') >= 0; }), 'a console warning is emitted for the dropped record');
 });
 
+console.log('\nOrder Request/RFQ -> Quote -> Invoice referential integrity (REQ/SPEC-INTEG-001 Phase 1)');
+
+function mkOrdWithCommittedResponse() {
+  ctx.DB.ord = [{
+    id: 'O1', num: 'ORD-0001', contactId: null, stage: 'Qualifying', actions: [],
+    lines: [{
+      id: 'L1', category: 'Cat A', itemSpec: 'Item A', orderVolumeQty: '1', orderVolumeUnit: 'pallet',
+      packingSpec: '', baseUom: '', baseQty: 10, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [],
+      rfqResponses: [{ id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 1, dutyPct: 2, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }],
+      committedResponseId: 'R1'
+    }]
+  }];
+  ctx.DB.sup = [{ id: 'S1', name: 'Sup1' }];
+}
+
+function saveQteSetupIntegLine(rid) {
+  mockEl('ql-supId-' + rid).value = 'S1';
+  mockEl('ql-desc-' + rid).value = 'Item A';
+  mockEl('ql-qty-' + rid).value = '10';
+  mockEl('ql-uom-' + rid).value = 'pcs';
+  mockEl('ql-cost-' + rid).value = '100';
+  mockEl('ql-cbm-' + rid).value = '1';
+  mockEl('ql-dg-' + rid).checked = false;
+  mockEl('ql-dutyPct-' + rid).value = '2';
+  mockEl('ql-note-' + rid).value = '';
+}
+
+test('ordConvertToQuote() -> saveQte() — Quote line carries sourceOrdId/sourceOrdLineId/sourceRfqResponseId (AC-1)', function() {
+  resetDB();
+  mkOrdWithCommittedResponse();
+  ctx.cQL = [];
+  ctx.ordConvertToQuote('O1');
+  assertEqual(ctx.cQL.length, 1);
+  var rid = ctx.cQL[0].rid;
+  assertEqual(ctx.cQL[0].sourceOrdId, 'O1');
+  assertEqual(ctx.cQL[0].sourceOrdLineId, 'L1');
+  assertEqual(ctx.cQL[0].sourceRfqResponseId, 'R1');
+  mockEl('qf-num').value = 'QTE-0001'; mockEl('qf-client').value = 'Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-mode').value = 'LCL'; mockEl('qf-mkp').value = '15';
+  mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  saveQteSetupIntegLine(rid);
+  ctx.saveQte();
+  var savedLine = ctx.DB.qt[0].lines[0];
+  assertEqual(savedLine.sourceOrdId, 'O1', 'sourceOrdId persisted through saveQte()');
+  assertEqual(savedLine.sourceOrdLineId, 'L1', 'sourceOrdLineId persisted');
+  assertEqual(savedLine.sourceRfqResponseId, 'R1', 'sourceRfqResponseId persisted');
+});
+
+test('saveQte() — re-saving an existing Quote with no changes preserves source fields (AC-2)', function() {
+  resetDB();
+  mkOrdWithCommittedResponse();
+  ctx.cQL = [];
+  ctx.ordConvertToQuote('O1');
+  var rid = ctx.cQL[0].rid;
+  mockEl('qf-num').value = 'QTE-0001'; mockEl('qf-client').value = 'Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-mode').value = 'LCL'; mockEl('qf-mkp').value = '15';
+  mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  saveQteSetupIntegLine(rid);
+  ctx.saveQte();
+  var qtId = ctx.DB.qt[0].id;
+  ctx.EI.qt = qtId;
+  ctx.cQL = ctx.DB.qt[0].lines.map(function(l){ return Object.assign({}, l); });
+  saveQteSetupIntegLine(rid);
+  ctx.saveQte();
+  var savedLine = ctx.DB.qt[0].lines[0];
+  assertEqual(savedLine.sourceOrdId, 'O1', 'sourceOrdId survives a no-op re-save');
+  assertEqual(savedLine.sourceOrdLineId, 'L1', 'sourceOrdLineId survives a no-op re-save');
+  assertEqual(savedLine.sourceRfqResponseId, 'R1', 'sourceRfqResponseId survives a no-op re-save');
+});
+
+test('addQteLine() + saveQte() — a manually-added line has no source fields at all (AC-3)', function() {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [];
+  ctx.addQteLine();
+  var rid = ctx.cQL[0].rid;
+  mockEl('qf-num').value = 'QTE-0002'; mockEl('qf-client').value = 'Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-mode').value = 'LCL'; mockEl('qf-mkp').value = '15';
+  mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  mockEl('ql-supId-' + rid).value = ''; mockEl('ql-desc-' + rid).value = 'Manual item';
+  mockEl('ql-qty-' + rid).value = '1'; mockEl('ql-uom-' + rid).value = 'pcs';
+  mockEl('ql-cost-' + rid).value = '50'; mockEl('ql-cbm-' + rid).value = '0';
+  mockEl('ql-dg-' + rid).checked = false; mockEl('ql-dutyPct-' + rid).value = '0'; mockEl('ql-note-' + rid).value = '';
+  ctx.saveQte();
+  var savedLine = ctx.DB.qt[0].lines[0];
+  assertEqual('sourceOrdId' in savedLine, false, 'manually-added line has no sourceOrdId key at all');
+  assertEqual('sourceOrdLineId' in savedLine, false, 'manually-added line has no sourceOrdLineId key at all');
+  assertEqual('sourceRfqResponseId' in savedLine, false, 'manually-added line has no sourceRfqResponseId key at all');
+});
+
+test('renderQteSourceDriftWarn() — matching commitment shows no banner (AC-4)', function() {
+  resetDB();
+  ctx.DB.ord = [{ id: 'O1', lines: [{ id: 'L1', committedResponseId: 'R1' }] }];
+  var q = { lines: [{ sourceOrdId: 'O1', sourceOrdLineId: 'L1', sourceRfqResponseId: 'R1' }] };
+  ctx.renderQteSourceDriftWarn(q);
+  assertEqual(mockEl('qt-drift-warn').innerHTML, '');
+});
+
+test('renderQteSourceDriftWarn() — a different RFQ response now committed shows the mismatch banner (AC-5)', function() {
+  resetDB();
+  ctx.DB.ord = [{ id: 'O1', lines: [{ id: 'L1', committedResponseId: 'R2' }] }];
+  var q = { lines: [{ sourceOrdId: 'O1', sourceOrdLineId: 'L1', sourceRfqResponseId: 'R1' }] };
+  ctx.renderQteSourceDriftWarn(q);
+  assertContains(mockEl('qt-drift-warn').innerHTML, 'Source pricing has changed');
+});
+
+test('renderQteSourceDriftWarn() — source Order Request deleted shows a distinct message (AC-6)', function() {
+  resetDB();
+  ctx.DB.ord = [];
+  var q = { lines: [{ sourceOrdId: 'O1', sourceOrdLineId: 'L1', sourceRfqResponseId: 'R1' }] };
+  ctx.renderQteSourceDriftWarn(q);
+  assertContains(mockEl('qt-drift-warn').innerHTML, 'no longer exists');
+  assertNotContains(mockEl('qt-drift-warn').innerHTML, 'Source pricing has changed', 'deleted-source message is distinct from the mismatch message');
+});
+
+test('renderQteSourceDriftWarn() — a Quote with no source-tracked lines never shows a banner (AC-7)', function() {
+  resetDB();
+  var q = { lines: [{ desc: 'Manual line' }] };
+  ctx.renderQteSourceDriftWarn(q);
+  assertEqual(mockEl('qt-drift-warn').innerHTML, '');
+});
+
+test('renderQteSourceDriftWarn() — a mixed Quote (one manual line, one stale tracked line) still shows the banner (AC-15)', function() {
+  resetDB();
+  ctx.DB.ord = [{ id: 'O1', lines: [{ id: 'L1', committedResponseId: 'R2' }] }];
+  var q = { lines: [
+    { desc: 'Manual line' },
+    { sourceOrdId: 'O1', sourceOrdLineId: 'L1', sourceRfqResponseId: 'R1' }
+  ] };
+  ctx.renderQteSourceDriftWarn(q);
+  assertContains(mockEl('qt-drift-warn').innerHTML, 'Source pricing has changed');
+});
+
+function mkAutoPosInvAndPo(invUp, invQty) {
+  var inv = { id: 'I1', num: 'INV20001', lineItems: [{ rid: 'r1', lid: 'LI1', desc: 'Widget', uom: 'pcs', qty: invQty, up: invUp, unitCost: 0, lineType: 'product' }] };
+  var po = { id: 'P1', num: 'PO-1', supId: 'S1', invId: 'I1', invNum: 'INV20001', lineItems: [{ rid: 'pr1', lid: 'LI1', desc: 'Widget', sku: '', uom: 'pcs', qty: invQty, cost: 5, sourceInvUp: invUp }] };
+  ctx.DB.inv = [inv];
+  ctx.DB.po = [po];
+  ctx.DB.li = [{ id: 'LI1', supId: 'S1' }];
+  return po;
+}
+
+test('renderPoSourceDriftWarn() — unchanged invoice since autoPos() generation shows no banner (AC-8)', function() {
+  resetDB();
+  var po = mkAutoPosInvAndPo(10, 5);
+  ctx.renderPoSourceDriftWarn(po);
+  assertEqual(mockEl('po-drift-warn').innerHTML, '');
+});
+
+test('renderPoSourceDriftWarn() — invoice line price changed since generation shows the banner (AC-9)', function() {
+  resetDB();
+  var po = mkAutoPosInvAndPo(10, 5);
+  ctx.DB.inv[0].lineItems[0].up = 15;
+  ctx.renderPoSourceDriftWarn(po);
+  assertContains(mockEl('po-drift-warn').innerHTML, 'Source Invoice has changed');
+});
+
+test('renderPoSourceDriftWarn() — invoice line qty changed since generation shows the banner (AC-9)', function() {
+  resetDB();
+  var po = mkAutoPosInvAndPo(10, 5);
+  ctx.DB.inv[0].lineItems[0].qty = 8;
+  ctx.renderPoSourceDriftWarn(po);
+  assertContains(mockEl('po-drift-warn').innerHTML, 'Source Invoice has changed');
+});
+
+test('renderPoSourceDriftWarn() — a historical PO line with no sourceInvUp at all is never falsely flagged on price (AC-8, spec-gate B-1 regression guard)', function() {
+  resetDB();
+  var inv = { id: 'I1', num: 'INV20002', lineItems: [{ rid: 'r1', lid: 'LI1', desc: 'Widget', uom: 'pcs', qty: 5, up: 99, unitCost: 0, lineType: 'product' }] };
+  // Built directly, NOT via autoPos() — simulates a PO generated before this phase shipped, so its
+  // line item genuinely has no sourceInvUp key at all (not undefined-via-autoPos, absent entirely).
+  var po = { id: 'P1', num: 'PO-1', supId: 'S1', invId: 'I1', invNum: 'INV20002', lineItems: [{ rid: 'pr1', lid: 'LI1', desc: 'Widget', sku: '', uom: 'pcs', qty: 5, cost: 5 }] };
+  ctx.DB.inv = [inv];
+  ctx.DB.po = [po];
+  ctx.DB.li = [{ id: 'LI1', supId: 'S1' }];
+  assertEqual('sourceInvUp' in po.lineItems[0], false, 'precondition: no sourceInvUp key present at all');
+  ctx.renderPoSourceDriftWarn(po);
+  assertEqual(mockEl('po-drift-warn').innerHTML, '', 'no false positive from a missing price baseline on an otherwise-unchanged historical PO');
+});
+
+test('renderPoSourceDriftWarn() — source Invoice deleted shows a distinct message (AC-11)', function() {
+  resetDB();
+  var po = mkAutoPosInvAndPo(10, 5);
+  ctx.DB.inv = [];
+  ctx.renderPoSourceDriftWarn(po);
+  assertContains(mockEl('po-drift-warn').innerHTML, 'no longer exists');
+  assertNotContains(mockEl('po-drift-warn').innerHTML, 'Source Invoice has changed', 'deleted-source message is distinct from the mismatch message');
+});
+
+test('renderPoSourceDriftWarn() — a PO with no invId (manual or qteToPoConvert()-originated) is never checked (AC-12)', function() {
+  resetDB();
+  ctx.DB.inv = [{ id: 'I1', lineItems: [] }];
+  var po = { id: 'P1', supId: 'S1', invId: '', quoteId: 'Q1', lineItems: [] };
+  ctx.renderPoSourceDriftWarn(po);
+  assertEqual(mockEl('po-drift-warn').innerHTML, '');
+});
+
+test('renderPoSourceDriftWarn() — a new line added to the invoice for the same supplier shows the banner even though existing lines are unchanged (AC-16)', function() {
+  resetDB();
+  var po = mkAutoPosInvAndPo(10, 5);
+  ctx.DB.inv[0].lineItems.push({ rid: 'r2', lid: 'LI2', desc: 'New Widget', uom: 'pcs', qty: 3, up: 20, unitCost: 0, lineType: 'product' });
+  ctx.DB.li.push({ id: 'LI2', supId: 'S1' });
+  ctx.renderPoSourceDriftWarn(po);
+  assertContains(mockEl('po-drift-warn').innerHTML, 'Source Invoice has changed', 'new same-supplier line detected even with every existing PO line individually unchanged');
+});
+
+test('renderPoSourceDriftWarn() — a manually-added PO line (lid:\'\') coexists safely with an unchanged real line (AC-17)', function() {
+  resetDB();
+  var po = mkAutoPosInvAndPo(10, 5);
+  po.lineItems.push({ rid: 'pr2', lid: '', desc: 'Manual extra', sku: '', uom: 'pcs', qty: 1, cost: 0 });
+  ctx.renderPoSourceDriftWarn(po);
+  assertEqual(mockEl('po-drift-warn').innerHTML, '', 'manually-added line is excluded from comparison, causes no false positive');
+});
+
+test('saveInv() — a brand-new invoice has sourceQuoteId present and equal to \'\' (AC-13)', function() {
+  resetDB();
+  ctx.EI.i = null;
+  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Test item', uom: 'pcs', qty: 1, up: 50 }];
+  mockEl('if-n').value = 'INV20003'; mockEl('if-b').value = 'Test Buyer'; mockEl('if-ba').value = '';
+  mockEl('if-st').value = ''; mockEl('if-dst').value = 'Barbados'; mockEl('if-cid').value = '';
+  mockEl('if-dt').value = '2026-05-01'; mockEl('if-ex').value = ''; mockEl('if-sd').value = '';
+  mockEl('if-ft').value = ''; mockEl('if-wt').value = ''; mockEl('if-cbm').value = ''; mockEl('if-pk').value = '';
+  mockEl('if-pol').value = ''; mockEl('if-pod').value = ''; mockEl('if-coo').value = ''; mockEl('if-cur').value = 'USD';
+  mockEl('if-tx').value = '0'; mockEl('if-lf').value = '0'; mockEl('if-ins').value = '0'; mockEl('if-leg').value = '0';
+  mockEl('if-isp').value = '0'; mockEl('if-oth').value = '0'; mockEl('if-dep').value = '0';
+  mockEl('if-inco').value = 'CIF'; mockEl('if-pt').value = 'Net 30'; mockEl('if-terms').value = '';
+  mockEl('if-chi').checked = true; mockEl('inv-sm').value = 'Draft';
+  ctx.saveInv();
+  assertEqual(ctx.DB.inv[0].sourceQuoteId, '', 'sourceQuoteId present and empty on a brand-new invoice');
+});
+
+test('renderPoSourceDriftWarn() — a new-supplier invoice line with no PO at all causes no error anywhere (AC-18, accepted residual gap)', function() {
+  resetDB();
+  var po = mkAutoPosInvAndPo(10, 5);
+  ctx.DB.inv[0].lineItems.push({ rid: 'r2', lid: 'LI2', desc: 'Brand new supplier item', uom: 'pcs', qty: 1, up: 40, unitCost: 0, lineType: 'product' });
+  ctx.DB.li.push({ id: 'LI2', supId: 'S2' }); // a supplier with no PO from this invoice at all
+  assertEqual(ctx.DB.po.filter(function(p){ return p.supId === 'S2'; }).length, 0, 'precondition: genuinely no PO exists for the new supplier');
+  ctx.renderPoSourceDriftWarn(po); // must not throw
+  assertEqual(mockEl('po-drift-warn').innerHTML, '', 'the existing (unrelated) PO for S1 is correctly unaffected by an S2 line it has nothing to do with');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
