@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.57</title>
+<title>Stackd Ops v2.9.58</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.57</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.58</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1219,9 +1219,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.57</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.58</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Order Request/RFQ → Quote → Invoice referential integrity, Phase 1 of 4 (REQ/SPEC-INTEG-001) — traceability and read-only staleness detection only, closing <code>ORD-GAP-003</code> and <code>PO-GAP-003</code>. A Quote line created via "Create Quote" from a committed RFQ response now carries <code>sourceOrdId</code>/<code>sourceOrdLineId</code>/<code>sourceRfqResponseId</code> back to its source; if a <em>different</em> RFQ response is committed on that Order Request line afterward, re-opening the Quote shows a warning banner rather than silently going stale. A PO auto-generated from an Invoice (<code>autoPos()</code>) now captures each line's invoice unit price at generation time; if the Invoice's price, quantity, or line items change afterward — including a brand-new line added for the same supplier — re-opening the PO shows an equivalent warning. Neither banner auto-fixes anything; both are detection-and-surface only, per this phase's explicit scope. Invoice also gains a schema-only <code>sourceQuoteId</code> field with no automatic population in this phase — no Quote→Invoice conversion path exists anywhere in the codebase to populate it from (confirmed by direct search, twice independently), so it's added now purely so a future phase doesn't need a second schema migration. Went through 2 independent review rounds each for requirements-gate and spec-gate — every round 1 surfaced a real, code-verified blocking finding (the original PO staleness design could only ever catch 2 of the 3 drift types <code>PO-GAP-003</code> itself names, never a newly-added line; separately, the price-comparison mechanism would have permanently false-flagged every PO that already exists today, since its new price-snapshot field has no backfill) — both resolved and confirmed PASS in a confirmatory round 2. One accepted, disclosed residual gap remains: a brand-new-supplier line added to an already-invoiced order has no PO to attach a warning to. 18 new tests. Tests: 539/539 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.57</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Data Integrity Cleanup (REQ/SPEC-DATA-002) — Settings → Data gains a "Scan for phantom records" tool that finds and removes blank/corrupted records left over from a historical Sheets-sync bug (<code>SYNC-GAP-001</code>, fixed in v2.9.47 for new pulls, but pre-existing corrupted records were never cleaned up). A record is phantom if it has no internal <code>id</code>; Contacts use a compound check (<code>!id || (!name &amp;&amp; !email)</code>) since <code>backfillConIds()</code> otherwise silently "heals" a corrupted Contact with a fresh id on every load, masking it from a plain <code>!id</code> test. The scan is read-only and shows a preview before anything changes; a zero-found scan reports clean and skips the confirm/backup step entirely. Removal is followed by sequential renumbering of Supplier/Line Item/Buyer/Contact/Order Request reference numbers only — Invoice/PO/Quote/Credit Note numbers are permanently excluded, since (unlike the others) their <code>num</code> field is a real cross-entity lookup key elsewhere in the app (Credit Note linking, CSV/Sheets import matching, <code>pullAll()</code>'s business-key matcher) and renumbering them would break already-issued documents. Renumbering preserves relative creation order and is gated behind a mandatory checkbox-confirmed backup (mirroring the existing Supabase-migration backup gate). Every removal and renumbering is written to the same Activity-tab event log every other mutation uses, so an affected Supplier/Contact/etc.'s own Activity tab shows what happened to it. A self-check after cleanup scans the known foreign-key fields (<code>supplierId</code>, <code>supId</code>, <code>buyerId</code>, <code>contactId</code> incl. nested RFQ-response contacts, <code>sourceContactId</code>, <code>lid</code>) for anything left dangling and reports it if found. Also hardens <code>pullAll()</code> itself: an id-keyed entity (Supplier/Payment/Contact) pulled from Sheets that resolves to no usable id is now dropped with a console warning instead of silently entering the database, closing off the live version of the same gap class going forward. Went through 2 independent review rounds (requirements-gate and spec-gate), each an initial round with real blocking findings followed by a confirmatory re-review — both closed PASS. One pre-existing test's expectations were updated to match the corrected <code>pullAll()</code> behavior (a header-keyed blank stub used to survive as a phantom Supplier; it is now dropped at the source). 15 new tests. Tests: 521/521 pass.</li>
@@ -2096,6 +2105,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld"><label>Currency</label><select id="pf-cur"><option>USD</option><option>CNY</option><option>GBP</option><option>EUR</option></select></div>
         <div class="fld"><label>Payment Terms</label><select id="pf-pt"><option value="">Select (optional)...</option></select></div>
       </div>
+      <div id="po-drift-warn" style="margin-bottom:8px;"></div>
       <div class="ms"><div class="mst b">Line Items (this supplier only)</div>
         <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description / SKU</th><th style="width:65px">UOM</th><th style="width:52px">Qty</th><th style="width:105px">Unit Cost</th><th style="width:85px" class="num">Total</th><th style="width:22px"></th></tr></thead><tbody id="pl-tb"></tbody></table>
         <button class="btn btn-g" style="width:100%;margin-top:5px;" onclick="addPLI()">+ Add Line Item</button>
@@ -2347,6 +2357,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         </div>
       </div>
       <div id="qt-rates-warn" style="margin-bottom:8px;"></div>
+      <div id="qt-drift-warn" style="margin-bottom:8px;"></div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:.08em;color:var(--cr);margin-bottom:6px;">LINE ITEMS</div>
       <div id="qt-lines" style="overflow-x:auto;margin-bottom:8px;"></div>
       <button class="btn btn-g" style="font-size:.5rem;padding:3px 10px;margin-bottom:14px;" onclick="addQteLine()">+ Add Line</button>
@@ -2808,7 +2819,8 @@ function ordConvertToQuote(ordId) {
     if (!resp) return;
     cQL.push({
       rid: uid(), supId: resp.supId, desc: l.itemSpec, qty: l.baseQty || 1, uom: 'pcs',
-      cost: fromGBP(toGBP(resp.cost, resp.currency), qCur), cbm: resp.cbm || 0, dg: !!resp.dg, dutyPct: resp.dutyPct || 0
+      cost: fromGBP(toGBP(resp.cost, resp.currency), qCur), cbm: resp.cbm || 0, dg: !!resp.dg, dutyPct: resp.dutyPct || 0,
+      sourceOrdId: ord.id, sourceOrdLineId: l.id, sourceRfqResponseId: resp.id
     });
   });
   if (committedLines.length) rQLT();
@@ -5428,6 +5440,7 @@ async function saveInv() {
     incoterm:G('if-inco').value, paymentTerms:G('if-pt').value.trim(),
     terms:G('if-terms').value.trim(), chargesIncluded:G('if-chi').checked, status:G('inv-sm').value,
     lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0,unitCost:+li.unitCost||0,lineType:li.lineType||'product'}; }), pos:[],
+    sourceQuoteId: '',
     type:(function(){ if(!isCN(G('if-n').value.trim())) return 'invoice'; return (G('if-cn-goodwill')&&G('if-cn-goodwill').checked)?'goodwill_credit':'credit_note'; })(),
     linkedInvNum:G('if-linked')?G('if-linked').value.trim():'',
     linkedInvId:(function(){ var l=G('if-linked')?G('if-linked').value.trim():''; var r=DB.inv.find(function(i){return i.num===l;}); return r?r.id:''; })(),
@@ -5450,6 +5463,7 @@ async function saveInv() {
     if(idx>-1){
       var existing=DB.inv[idx];
       inv.pos=existing.pos||[];
+      inv.sourceQuoteId=existing.sourceQuoteId||'';
       // If no live line items in this save, preserve existing calc_ fields and lineItems
       if(cIL.length===0) {
         inv.calc_grandTotal = existing.calc_grandTotal||inv.calc_grandTotal||'0';
@@ -5565,7 +5579,7 @@ function autoPos(inv) {
   var sm = {};
   (inv.lineItems||[]).forEach(function(li){
     var r=DB.li.find(function(x){return x.id===li.lid;});
-    if(r&&r.supId){ if(!sm[r.supId]) sm[r.supId]=[]; sm[r.supId].push({rid:uid(),lid:li.lid,desc:li.desc,sku:r.sku||'',uom:r.uom||li.uom,qty:li.qty,cost:r.cost||0}); }
+    if(r&&r.supId){ if(!sm[r.supId]) sm[r.supId]=[]; sm[r.supId].push({rid:uid(),lid:li.lid,desc:li.desc,sku:r.sku||'',uom:r.uom||li.uom,qty:li.qty,cost:r.cost||0,sourceInvUp:+li.up||0}); }
   });
   var cnt=Object.keys(sm).length; if(!cnt) return;
   var idx=0;
@@ -5579,6 +5593,48 @@ function autoPos(inv) {
   });
   sv(K.p,DB.po); sv(K.i,DB.inv); rPO();
   toast(cnt+' PO'+(cnt!==1?'s':'')+' auto-generated');
+}
+
+function renderPoSourceDriftWarn(po) {
+  var el = G('po-drift-warn');
+  if (!el) return;
+  el.innerHTML = '';
+  if (!po.invId) return;
+  var inv = DB.inv.find(function(x){ return x.id === po.invId; });
+  if (!inv) {
+    el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;">&#9888; Source Invoice no longer exists for this PO.</div>';
+    return;
+  }
+  var invLines = inv.lineItems || [];
+  var stale = false;
+
+  // Existing PO lines: has the matched invoice line's qty/price changed, or vanished entirely?
+  // An absent sourceInvUp (a historical, pre-Phase-1 PO with no snapshot at all) means "predates
+  // price tracking," not "price is 0" — the price leg is only evaluated when a real baseline
+  // was actually captured, so this never false-flags every PO generated before this field existed.
+  (po.lineItems || []).forEach(function(pl) {
+    if (!pl.lid) return; // manually-added via addPLI() — no source to compare, never flags
+    var invLine = invLines.find(function(il){ return il.lid === pl.lid; });
+    if (!invLine) { stale = true; return; }
+    if (+invLine.qty !== +pl.qty) stale = true;
+    if (typeof pl.sourceInvUp !== 'undefined' && +invLine.up !== +pl.sourceInvUp) stale = true;
+  });
+
+  // Reverse check: has a NEW line for this PO's own supplier appeared on the invoice
+  // since generation?
+  if (!stale) {
+    var poLids = {};
+    (po.lineItems || []).forEach(function(pl){ if (pl.lid) poLids[pl.lid] = true; });
+    invLines.some(function(il) {
+      if (!il.lid || poLids[il.lid]) return false;
+      var cat = DB.li.find(function(x){ return x.id === il.lid; });
+      if (cat && cat.supId === po.supId) { stale = true; return true; }
+      return false;
+    });
+  }
+
+  if (!stale) return;
+  el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;">&#9888; Source Invoice has changed since this PO was generated — review before proceeding.</div>';
 }
 
 // ── VAT RETURN (MTD) ───────────────────────────────────────────
@@ -6447,6 +6503,7 @@ function editPO(id) {
   G('pf-del').value=po.del||''; G('pf-sup').value=po.supId||'';
   G('pf-cur').value=po.cur||'USD'; G('pf-dep').value=po.dep||'';
   G('pf-oth').value=po.oth||''; G('pf-nt').value=po.notes||''; G('pf-inv').value=po.invNum||''; G('pf-pt').value=po.paymentTerms||'';
+  renderPoSourceDriftWarn(po);
   rPLT(); calcPO(); showV('po',document.querySelector('[data-v="po"]')); G('ov-po').classList.add('on');
 }
 function addPLI() { cPL.push({rid:uid(),lid:'',desc:'',sku:'',uom:'',qty:1,cost:0}); rPLT(); calcPO(); }
@@ -8179,7 +8236,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.57).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.58).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8243,6 +8300,7 @@ var AI_SYSTEM_PROMPT = [
   'Per-line gap check (v2.9.50): each Order Request line has a "Check gaps" button. Structural check (instant, no AI) flags any unset packing spec, base UOM, base qty, source country, or qtyStatus still "Unknown". Semantic check (AI-assisted, only runs if a Claude API key is configured) additionally flags ambiguous or inconsistent values (e.g. a vague item spec, an order volume that doesn\'t reconcile with base UOM/qty) and phrases each as a specific question to send the buyer/supplier. Manual trigger only — never runs automatically on save/import. Purely diagnostic: nothing is written to the line, no lineUpdates entry is created, and it does not change the existing Quoted-transition warning behavior. The semantic check\'s API payload is scoped to product/order fields only — never the linked Contact\'s name/email/phone or any lineUpdates history.',
   'RFQ supplier comparison (v2.9.56): each Order Request line can record multiple suppliers\' RFQ responses (unit cost, currency, CBM, duty %, DG flag, MOQ, lead time, payment terms, optional linked Contact, notes) via "Compare RFQs" → "+ Add Response". Responses are ranked by landed cost converted to GBP (same rate engine as Quotes, LCL basis) — the nominal cheapest quoted price is not always the landed-cheapest once freight/duty/DG are factored in and currencies are converted. A response with no CBM entered shows a warning next to its landed cost, since its freight component reads as zero rather than unknown. Exactly one response per line can be marked Committed at a time; committing again on a different response replaces the prior choice, and no response is ever deleted — all remain visible as a record of what was compared. Converting a Contact\'s Order Request to a Quote ("Create Quote") pre-fills one Quote line per line that has a committed response, carrying over that response\'s supplier, quantity (its Order Request line\'s base qty, if set), and unit cost — converted to the Quote\'s working currency if the response was recorded in a different one — so the operator never has to retype or reconvert either. A committed line\'s new Quote line has no per-line margin override set; it uses the quote\'s own default margin like any manually-added line.',
   'get_suppliers/get_buyers tools exist to resolve a name to an id before emitting create_invoice/create_line_item/create_po action blocks — call one of these first whenever a supplier or buyer name is mentioned but no id is already known from the conversation, and ask a clarifying question rather than guessing if there are zero or multiple ambiguous matches. These tools deliberately do not return contact/email/phone — if the user asks for a supplier\'s or buyer\'s contact details, say that information isn\'t available through these tools and point them to the Suppliers/Buyers tab instead, rather than inventing an answer.',
+  'Source traceability & staleness warning (v2.9.58, Phase 1 of a referential-integrity build): a Quote line created via "Create Quote" from a committed RFQ response now records which Order Request line and which specific RFQ response it came from. If the operator later commits a *different* RFQ response on that same Order Request line, re-opening the Quote shows a warning banner ("Source pricing has changed since this Quote was created — review before sending") — the Quote itself is never auto-updated, only flagged. A distinct message appears if the source Order Request has been deleted entirely. Quotes created before this version, or built entirely from manually-added lines, never show this banner — there is nothing to trace them back to. Manually-added lines and AI-proposed Quotes (create_quote action) are unaffected and never carry this traceability.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
@@ -8266,6 +8324,7 @@ var AI_SYSTEM_PROMPT = [
   'Auto-generated from invoice line items on save, grouped by supplier. Also created via Convert to PO from an Accepted quote. Only works when line items were added via Import from Library. Review and edit in Purchase Orders tab.',
   'PO status: Draft → Sent → Deposit Paid → Settled → Cancelled.',
   'Payment Terms field available on PO (optional).',
+  'Source Invoice staleness warning (v2.9.58): a PO auto-generated from an Invoice\'s line items records that Invoice\'s unit prices/quantities at generation time. If the Invoice is edited afterward — a line\'s price or quantity changes, a line is removed, or a new line is added for that same supplier — re-opening the PO shows a warning banner ("Source Invoice has changed since this PO was generated — review before proceeding"). The PO itself is never auto-updated, only flagged. A distinct message appears if the source Invoice has been deleted entirely. This check only applies to POs auto-generated from an Invoice — a PO created manually or via Convert to PO from a Quote never shows it. One known, accepted gap: a brand-new line added for a supplier that has no PO from that invoice at all is not flagged anywhere, since there is no PO to attach a warning to — the operator should still check Purchase Orders manually after adding a new supplier\'s line to an already-invoiced order.',
   '',
   '## Payments',
   'Invoices tab → click $ on invoice row. Enter: Date, Amount, Method, Reference, Notes → Save Payment.',
@@ -10054,6 +10113,7 @@ function editQte(id) {
   rQLT();
   calcQte();
   renderQteRatesWarn();
+  renderQteSourceDriftWarn(q);
   G('ov-qt').classList.add('on');
 }
 
@@ -10250,7 +10310,7 @@ function saveQte() {
   if (!vQte()) return;
   var mode = G('qf-mode').value;
   var lines = cQL.map(function(l){
-    return {
+    var out = {
       rid: l.rid,
       supId: qlFld(l.rid,'supId'),
       desc: qlFld(l.rid,'desc'),
@@ -10262,6 +10322,12 @@ function saveQte() {
       dutyPct: +qlFld(l.rid,'dutyPct')||0,
       markup: qlEffectiveMarkupInput(l.rid)
     };
+    if (l.sourceOrdId) {
+      out.sourceOrdId = l.sourceOrdId;
+      out.sourceOrdLineId = l.sourceOrdLineId;
+      out.sourceRfqResponseId = l.sourceRfqResponseId;
+    }
+    return out;
   });
   var totalCBM = lines.reduce(function(s,l){ return s+(l.cbm||0); }, 0);
   var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM); });
@@ -10741,6 +10807,27 @@ function renderQteRatesWarn() {
     ? 'FX rates were last refreshed ' + ageH + 'h ago. Update in Settings → Rates & FX before finalising this quote.'
     : 'FX rates have never been refreshed from live data. Update in Settings → Rates & FX.';
   el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;">⚠ ' + msg + '</div>';
+}
+
+function renderQteSourceDriftWarn(q) {
+  var el = G('qt-drift-warn');
+  if (!el) return;
+  el.innerHTML = '';
+  var trackedLines = (q.lines || []).filter(function(l){ return l.sourceOrdId; });
+  if (!trackedLines.length) return;
+  var sourceDeleted = false, mismatched = false;
+  trackedLines.forEach(function(l) {
+    var ord = DB.ord.find(function(o){ return o.id === l.sourceOrdId; });
+    if (!ord) { sourceDeleted = true; return; }
+    var ordLine = (ord.lines || []).find(function(x){ return x.id === l.sourceOrdLineId; });
+    if (!ordLine) { sourceDeleted = true; return; }
+    if (ordLine.committedResponseId !== l.sourceRfqResponseId) mismatched = true;
+  });
+  if (!sourceDeleted && !mismatched) return;
+  var msg = sourceDeleted
+    ? 'Source Order Request no longer exists for one or more lines on this Quote.'
+    : 'Source pricing has changed since this Quote was created — review before sending.';
+  el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;">&#9888; ' + msg + '</div>';
 }
 
 // ── PRINT ─────────────────────────────────────────────────────

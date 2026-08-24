@@ -87,9 +87,13 @@ One current limitation: the legacy CSV upload and "Import from Google Sheets" pa
 
 Build a Quote from one or more lines; the app calculates freight, duty, insurance, and landed cost per line, then rolls up to a total quoted price and margin. Each line can carry its own margin override — leave it blank to inherit the quote-level default, or set an explicit value (including `0`) to override it for just that line. Changing cost, duty percentage, or margin on a saved Quote creates a new version, so you can see how pricing evolved. Setting a Quote's status to **Accepted** reveals two additional fields — **Approved By** (required) and an optional Approval Note — and captures an approval timestamp automatically the first time the quote transitions into Accepted (re-saving an already-Accepted quote never overwrites that original timestamp). Once Accepted, a **Convert to PO** button appears — clicking it creates one Purchase Order per distinct supplier on the quote's lines (so a multi-supplier quote correctly produces multiple POs, not one PO wrongly attributed to a single supplier).
 
+**Source pricing changed since this Quote was created:** if a Quote line was created via "Create Quote" from an Order Request's committed RFQ response, and you later commit a *different* supplier response on that same Order Request line, re-opening the Quote shows a warning banner. Nothing on the Quote changes automatically — it's a prompt to review the Quote's pricing before sending it, not a block on saving. A separate message appears if the source Order Request has since been deleted entirely.
+
 ## Purchase Orders
 
 Track what you owe each supplier — status (Draft/Sent/Deposit Paid/Settled/Cancelled), deposit and balance, and an optional link to the Invoice it's funding. POs created via Convert to PO from a Quote are pre-populated and linked automatically.
+
+**Source Invoice changed since this PO was generated:** a PO auto-generated from an Invoice's line items remembers the invoice's price at the time it was created. If you later edit that Invoice — change a line's price or quantity, remove a line, or add a new line for the same supplier — re-opening the PO shows a warning banner. As with the Quote-side warning above, nothing is fixed automatically; it's there so you notice before proceeding with a now-outdated PO. A separate message appears if the source Invoice has since been deleted. One known gap: a brand-new line added for a supplier that has no PO yet from that invoice isn't flagged anywhere — check Purchase Orders manually after adding a new supplier's line to an already-invoiced order.
 
 ## Invoices
 

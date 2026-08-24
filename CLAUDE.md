@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used only for Suppliers/Buyers when Cloud Data is configured — REQ/SPEC-CLOUD-001, no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.57**  
-**Test count: 521/521 PASS** (`node tests/run.js`)
+**Current version: v2.9.58**  
+**Test count: 539/539 PASS** (`node tests/run.js`)
 
 ---
 
@@ -143,6 +143,8 @@ See `docs/known-gaps.md` for full entries.
 | SDLC-GAP-003 | Staging / preview | No same-origin PR preview environment — Netlify blocked by localStorage origin isolation; gh-pages path preview deferred post-pilot |
 | CON-GAP-001 | Contacts / GDPR | No automated purge of stale contacts — manual deletion only; UI flags >700d |
 | CLOUD-GAP-001 | Cloud Data / Suppliers | Legacy CSV/Sheets Supplier importers bypass Cloud Data — writes silently discarded on next reload once Cloud Data is configured |
+| ORD-GAP-003 | Order Requests / Quotes | RFQ commit ↔ Quote drift, no back-reference or staleness warning — Fixed v2.9.58 (REQ/SPEC-INTEG-001 Phase 1) |
+| PO-GAP-003 | Invoices / Purchase Orders | Invoice ↔ auto-generated PO drift, no re-sync or warning after `autoPos()`'s first-save-only guard — Fixed v2.9.58 (REQ/SPEC-INTEG-001 Phase 1) |
 | CON-GAP-002 | Contacts / dedup | Email dedup is soft (force-new allowed); no enforcement of true uniqueness; edit-path email changes not deduped |
 | CON-GAP-004 | Contacts / data integrity | Deleting a contact leaves dangling sourceContactId on associated quotes; runtime guards no-op safely |
 | CON-GAP-005 | Contacts / import | Restoring a v2 backup (no con key) preserves live contacts rather than clearing them; WARNING dialog text is not updated to reflect this |
