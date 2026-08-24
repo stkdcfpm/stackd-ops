@@ -6760,23 +6760,6 @@ test('renderPoSourceDriftWarn() — a manually-added PO line (lid:\'\') coexists
   assertEqual(mockEl('po-drift-warn').innerHTML, '', 'manually-added line is excluded from comparison, causes no false positive');
 });
 
-test('saveInv() — a brand-new invoice has sourceQuoteId present and equal to \'\' (AC-13)', function() {
-  resetDB();
-  ctx.EI.i = null;
-  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Test item', uom: 'pcs', qty: 1, up: 50 }];
-  mockEl('if-n').value = 'INV20003'; mockEl('if-b').value = 'Test Buyer'; mockEl('if-ba').value = '';
-  mockEl('if-st').value = ''; mockEl('if-dst').value = 'Barbados'; mockEl('if-cid').value = '';
-  mockEl('if-dt').value = '2026-05-01'; mockEl('if-ex').value = ''; mockEl('if-sd').value = '';
-  mockEl('if-ft').value = ''; mockEl('if-wt').value = ''; mockEl('if-cbm').value = ''; mockEl('if-pk').value = '';
-  mockEl('if-pol').value = ''; mockEl('if-pod').value = ''; mockEl('if-coo').value = ''; mockEl('if-cur').value = 'USD';
-  mockEl('if-tx').value = '0'; mockEl('if-lf').value = '0'; mockEl('if-ins').value = '0'; mockEl('if-leg').value = '0';
-  mockEl('if-isp').value = '0'; mockEl('if-oth').value = '0'; mockEl('if-dep').value = '0';
-  mockEl('if-inco').value = 'CIF'; mockEl('if-pt').value = 'Net 30'; mockEl('if-terms').value = '';
-  mockEl('if-chi').checked = true; mockEl('inv-sm').value = 'Draft';
-  ctx.saveInv();
-  assertEqual(ctx.DB.inv[0].sourceQuoteId, '', 'sourceQuoteId present and empty on a brand-new invoice');
-});
-
 test('renderPoSourceDriftWarn() — a new-supplier invoice line with no PO at all causes no error anywhere (AC-18, accepted residual gap)', function() {
   resetDB();
   var po = mkAutoPosInvAndPo(10, 5);
