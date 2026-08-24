@@ -10,14 +10,14 @@
 
 | Field | Value |
 |-------|-------|
-| Last updated | 24 August 2026 (verified against `main` @ `fef6ab1`, code-level facts confirmed by running `node tests/run.js`) |
-| Current version | v2.9.58 |
-| Test count | 539 / 539 passing (confirmed by re-running the suite, not just read from source) |
+| Last updated | 24 August 2026 (verified against `main` @ `fef6ab1`; the v2.9.59 facts below are ahead of `main` — pending merge — but recorded now per standard version-delivery process) |
+| Current version | v2.9.59 (built, not yet merged to `main`) |
+| Test count | 538 / 538 passing (confirmed by re-running the suite, not just read from source) |
 | Build branch | main |
 | Deployment | **GitHub Pages**, custom domain `app.getstackdops.com` (see `CNAME`) — live, not pending |
 | CI/CD | GitHub Actions (`qa.yml`) — runs `node tests/run.js` on every push/PR to main |
 
-**Correction from the previous version of this file:** this file was frozen at v2.9.51 / 422 tests since 10 August while the codebase moved on to v2.9.57 / 521 tests across six shipped versions (v2.9.52–v2.9.57 — per-line quote margins, Supplier price intelligence, the first Supabase-backed layer (Suppliers/Buyers Cloud Data), three new AI Assistant capabilities, RFQ supplier comparison, and a data-integrity cleanup tool). See Version history below for the full list, including v2.9.58 (Phase 1 of an Order Request/RFQ → Quote → Invoice referential integrity build), shipped and merged as of this update.
+**Correction from the previous version of this file:** this file was frozen at v2.9.51 / 422 tests since 10 August while the codebase moved on to v2.9.57 / 521 tests across six shipped versions (v2.9.52–v2.9.57 — per-line quote margins, Supplier price intelligence, the first Supabase-backed layer (Suppliers/Buyers Cloud Data), three new AI Assistant capabilities, RFQ supplier comparison, and a data-integrity cleanup tool). See Version history below for the full list, including v2.9.58 (Phase 1 of an Order Request/RFQ → Quote → Invoice referential integrity build), shipped and merged. v2.9.59 (removes v2.9.58's unused `sourceQuoteId` field, confirmed unnecessary post-merge) is built and tested but not yet merged as of this update.
 
 ---
 
@@ -143,10 +143,11 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2
 
 ---
 
-## Version history (v2.9.32 → v2.9.58 — everything shipped since this file was last updated)
+## Version history (v2.9.32 → v2.9.59 — everything shipped since this file was last updated)
 
 | Version | Key changes |
 |---------|------------|
+| v2.9.59 | Removed: Invoice's schema-only `sourceQuoteId` field, added in v2.9.58 as forward-compatibility for a possible future Quote-aware Invoice-creation path. Confirmed with the business post-merge: direct Quote→Invoice traceability is not needed — the real workflow is always Quote → PO → Invoice, and that chain is already fully covered by two pre-existing mechanisms, `qteToPoConvert()` (`quoteId`/`quoteNum` on PO) and `autoPos()` (`invId`/`invNum` on PO). Everything else from Phase 1 (Quote-line source back-references, both staleness-warning banners) is unaffected. 1 test removed. **538/538.** |
 | v2.9.58 | New: **Order Request/RFQ → Quote → Invoice referential integrity, Phase 1 of 4** (REQ/SPEC-INTEG-001) — traceability and read-only staleness detection only, closing `ORD-GAP-003` and `PO-GAP-003`. A Quote line created from a committed RFQ response now carries a back-reference to the exact Order Request line/response it came from; a warning banner appears if a *different* response is later committed. An `autoPos()`-generated PO now captures the invoice's unit price at generation time; a warning banner appears if the invoice's price, quantity, or line items (including a newly-added line for the same supplier) change afterward. Neither banner auto-fixes anything — detection and a visible warning only. Invoice also gains a schema-only `sourceQuoteId` field with no automatic population (no Quote→Invoice conversion path exists in the codebase to populate it from). Went through 2 independent review rounds each for requirements-gate and spec-gate; both round-1s caught a real blocking defect (the original PO check could only catch 2 of 3 named drift types; the price-comparison mechanism would have permanently false-flagged every pre-existing PO), both fixed and confirmed in round 2. 18 new tests. **539/539.** Build-gate independent review PASS, no findings. |
 | v2.9.57 | New: **Data Integrity Cleanup** (REQ/SPEC-DATA-002) — Settings → Data "Scan for phantom records": read-only scan → mandatory backup gate → removal of blank/corrupted records (residue of SYNC-GAP-001, predating the v2.9.47 fix) → sequential renumbering of Supplier/Line Item/Buyer/Contact/Order Request numbers only (Invoice/PO/Quote/Credit Note numbers permanently excluded — real lookup keys elsewhere) → post-cleanup FK-integrity self-check. Also hardens `pullAll()` so a live recurrence is dropped at the source, not just cleaned up after the fact. 15 new tests. **521/521.** |
 | v2.9.56 | New: **RFQ supplier comparison & commit** (REQ/SPEC-QTE-001 Part B) — each Order Request line gets a "Compare RFQs" panel recording multiple suppliers' quoted responses, ranked by landed cost converted to a common currency; exactly one response can be committed per line, and committing feeds a Quote hand-off with correct currency conversion. Fix: closes the last open item from REQ-V3-GAP-006 (Contact link/unlink event logging). 14 new tests. 506/506. |
