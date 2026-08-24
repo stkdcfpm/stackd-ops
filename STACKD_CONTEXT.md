@@ -10,14 +10,14 @@
 
 | Field | Value |
 |-------|-------|
-| Last updated | 24 August 2026 (verified against `main` @ `fef6ab1`; the v2.9.59 facts below are ahead of `main` — pending merge — but recorded now per standard version-delivery process) |
-| Current version | v2.9.59 (built, not yet merged to `main`) |
+| Last updated | 24 August 2026 (verified against `main` @ `0a9c23f`, code-level facts confirmed by running `node tests/run.js`) |
+| Current version | v2.9.59 |
 | Test count | 538 / 538 passing (confirmed by re-running the suite, not just read from source) |
 | Build branch | main |
 | Deployment | **GitHub Pages**, custom domain `app.getstackdops.com` (see `CNAME`) — live, not pending |
 | CI/CD | GitHub Actions (`qa.yml`) — runs `node tests/run.js` on every push/PR to main |
 
-**Correction from the previous version of this file:** this file was frozen at v2.9.51 / 422 tests since 10 August while the codebase moved on to v2.9.57 / 521 tests across six shipped versions (v2.9.52–v2.9.57 — per-line quote margins, Supplier price intelligence, the first Supabase-backed layer (Suppliers/Buyers Cloud Data), three new AI Assistant capabilities, RFQ supplier comparison, and a data-integrity cleanup tool). See Version history below for the full list, including v2.9.58 (Phase 1 of an Order Request/RFQ → Quote → Invoice referential integrity build), shipped and merged. v2.9.59 (removes v2.9.58's unused `sourceQuoteId` field, confirmed unnecessary post-merge) is built and tested but not yet merged as of this update.
+**Correction from the previous version of this file:** this file was frozen at v2.9.51 / 422 tests since 10 August while the codebase moved on to v2.9.57 / 521 tests across six shipped versions (v2.9.52–v2.9.57 — per-line quote margins, Supplier price intelligence, the first Supabase-backed layer (Suppliers/Buyers Cloud Data), three new AI Assistant capabilities, RFQ supplier comparison, and a data-integrity cleanup tool). See Version history below for the full list, including v2.9.58 (Phase 1 of an Order Request/RFQ → Quote → Invoice referential integrity build) and v2.9.59 (removes v2.9.58's unused `sourceQuoteId` field, confirmed unnecessary post-merge), both shipped and merged as of this update.
 
 ---
 
@@ -182,7 +182,7 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2
 
 ## Build queue
 
-**Completed since this file was last accurate:** all seven versions in the Version history table above (v2.9.52–v2.9.58) shipped through the full requirements-gate → spec-gate → build → independent build-gate review pipeline documented in `docs/requirements-tracker.md`, each merged to `main` via PR.
+**Completed since this file was last accurate:** all eight versions in the Version history table above (v2.9.52–v2.9.59) shipped, each merged to `main` via PR. v2.9.52–v2.9.58 each went through the full requirements-gate → spec-gate → build → independent build-gate review pipeline documented in `docs/requirements-tracker.md`; v2.9.59 was a small, low-risk post-merge cleanup (removing one confirmed-dead schema field) verified by check-first and a full test-suite run rather than a full gate cycle.
 
 **Stale unmerged branches — still present on the remote, now confirmed superseded, worth deleting in a cleanup pass:**
 
