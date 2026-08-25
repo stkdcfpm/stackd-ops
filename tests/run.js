@@ -6770,6 +6770,243 @@ test('renderPoSourceDriftWarn() — a new-supplier invoice line with no PO at al
   assertEqual(mockEl('po-drift-warn').innerHTML, '', 'the existing (unrelated) PO for S1 is correctly unaffected by an S2 line it has nothing to do with');
 });
 
+// ── Buyer-approval capture on Invoice (REQ/SPEC-INTEG-001 Phase 2) ─
+console.log('\nBuyer-approval capture on Invoice (Phase 2)');
+
+test('saveInv() — brand-new invoice has all six new fields present and falsy (AC-1)', function() {
+  resetDB();
+  ctx.EI.i = null; ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }];
+  setupInvForm('INV20001');
+  ctx.saveInv();
+  var inv = ctx.DB.inv[0];
+  ['buyerApprovedAt','buyerApprovedBy','approvalMethod','approvalNote','linkedQuoteId','linkedQuoteNum'].forEach(function(f) {
+    assertEqual(!!inv[f], false, f + ' must be falsy on a brand-new invoice');
+  });
+});
+
+test('saveInvApprove() — records approval with method + approver, logs buyer_approved event (AC-2)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-a', num: 'INV20002', status: 'Pro-forma', lineItems: [], pos: [] });
+  ctx.openInvApprove('inv-a');
+  mockEl('ia-method').value = 'Email';
+  mockEl('ia-by').value = 'J. Smith';
+  ctx.saveInvApprove();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-a'; });
+  assert(!!inv.buyerApprovedAt, 'buyerApprovedAt set');
+  assertEqual(inv.buyerApprovedBy, 'J. Smith');
+  assertEqual(inv.approvalMethod, 'Email');
+  assertEqual(inv.approvalNote, '');
+  var evts = ctx.DB.events.filter(function(e){ return e.verb === 'buyer_approved'; });
+  assertEqual(evts.length, 1, 'one buyer_approved event logged');
+  assertEqual(evts[0].entityId, 'inv-a');
+});
+
+test('vInvApprove() — blocks when Method is Other and Note is empty (AC-3)', function() {
+  resetDB();
+  mockEl('ia-method').value = 'Other';
+  mockEl('ia-by').value = 'J. Smith';
+  mockEl('ia-note').value = '';
+  var ok = ctx.vInvApprove();
+  assertEqual(ok, false, 'validation fails when Other has no note');
+  assertContains(mockEl('ia-verr').textContent, 'Approval Note is required', 'error names the missing note');
+});
+
+test('invApprovalActionVisible() — false for Draft and Sent (AC-4)', function() {
+  assertEqual(ctx.invApprovalActionVisible({ status: 'Draft' }), false);
+  assertEqual(ctx.invApprovalActionVisible({ status: 'Sent' }), false);
+});
+
+test('saveInv() — header-only edit on an approved invoice does not clear approval (AC-5)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-b', num: 'INV20005', status: 'Pro-forma',
+    lineItems: [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [],
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
+  ctx.EI.i = 'inv-b';
+  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }];
+  setupInvForm('INV20005');
+  mockEl('inv-sm').value = 'Pro-forma';
+  mockEl('if-inco').value = 'CIF'; // header field change only
+  ctx.saveInv();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-b'; });
+  assertEqual(inv.buyerApprovedAt, '2026-01-01T00:00:00.000Z', 'approval preserved on unrelated header edit');
+  assertEqual(ctx.DB.events.filter(function(e){ return e.verb === 'approval_cleared'; }).length, 0, 'no approval_cleared event');
+});
+
+test('saveInv() — changing a line qty/price on an approved invoice clears approval (AC-6)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-c', num: 'INV20006', status: 'Pro-forma',
+    lineItems: [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [],
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
+  ctx.EI.i = 'inv-c';
+  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 25 }]; // price changed
+  setupInvForm('INV20006');
+  mockEl('inv-sm').value = 'Pro-forma';
+  ctx.saveInv();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-c'; });
+  assertEqual(inv.buyerApprovedAt, '', 'approval cleared after price change');
+  assertEqual(inv.buyerApprovedBy, ''); assertEqual(inv.approvalMethod, ''); assertEqual(inv.approvalNote, '');
+  assertEqual(ctx.DB.events.filter(function(e){ return e.verb === 'approval_cleared'; }).length, 1, 'approval_cleared event logged');
+});
+
+test('saveInv() — adding a line to an approved invoice clears approval (AC-7)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-d', num: 'INV20007', status: 'Pro-forma',
+    lineItems: [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [],
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
+  ctx.EI.i = 'inv-d';
+  ctx.cIL = [
+    { rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 },
+    { rid: 'r2', lid: '', desc: 'Gadget', uom: 'pcs', qty: 1, up: 5 }
+  ];
+  setupInvForm('INV20007');
+  mockEl('inv-sm').value = 'Pro-forma';
+  ctx.saveInv();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-d'; });
+  assertEqual(inv.buyerApprovedAt, '', 'approval cleared after a line is added');
+});
+
+test('saveInv() — editing lines on a never-approved invoice logs no approval_cleared event (AC-8)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-e', num: 'INV20008', status: 'Pro-forma',
+    lineItems: [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [] });
+  ctx.EI.i = 'inv-e';
+  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 5, up: 10 }];
+  setupInvForm('INV20008');
+  mockEl('inv-sm').value = 'Pro-forma';
+  ctx.saveInv();
+  assertEqual(ctx.DB.events.filter(function(e){ return e.verb === 'approval_cleared'; }).length, 0, 'no clear event — nothing was ever approved');
+});
+
+test('saveInvProgress() — no Quote selected: fields stay empty, event logged, status unchanged (AC-9)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-f', num: 'INV20003', status: 'Pro-forma', lineItems: [], pos: [],
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
+  ctx.openInvProgress('inv-f');
+  mockEl('ip-qt').value = '';
+  ctx.saveInvProgress();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-f'; });
+  assertEqual(inv.linkedQuoteId, ''); assertEqual(inv.linkedQuoteNum, '');
+  assertEqual(inv.status, 'Pro-forma', 'status untouched');
+  var evts = ctx.DB.events.filter(function(e){ return e.verb === 'progressed_to_invoicing'; });
+  assertEqual(evts.length, 1);
+  assertContains(evts[0].summary, 'no Quote linked');
+});
+
+test('saveInvProgress() — Quote selected: fields set, status unchanged (AC-10)', function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'q1', num: 'QT-1', client: 'Acme', dt: '2026-01-01' });
+  ctx.DB.inv.push({ id: 'inv-g', num: 'INV20004', status: 'Pro-forma', lineItems: [], pos: [],
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
+  ctx.openInvProgress('inv-g');
+  mockEl('ip-qt').value = 'q1';
+  ctx.saveInvProgress();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-g'; });
+  assertEqual(inv.linkedQuoteId, 'q1'); assertEqual(inv.linkedQuoteNum, 'QT-1');
+  assertEqual(inv.status, 'Pro-forma', 'status untouched');
+});
+
+test('invProgressActionVisible() — false when not yet approved (AC-11)', function() {
+  assertEqual(ctx.invProgressActionVisible({ status: 'Pro-forma', buyerApprovedAt: '' }), false);
+});
+
+test('saveInvProgress() — re-running with a different Quote updates the link and logs a second event (AC-12)', function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'q1', num: 'QT-1', client: 'Acme', dt: '2026-01-01' });
+  ctx.DB.qt.push({ id: 'q2', num: 'QT-2', client: 'Acme', dt: '2026-02-01' });
+  ctx.DB.inv.push({ id: 'inv-h', num: 'INV20011', status: 'Pro-forma', lineItems: [], pos: [],
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
+  ctx.openInvProgress('inv-h'); mockEl('ip-qt').value = 'q1'; ctx.saveInvProgress();
+  ctx.openInvProgress('inv-h'); mockEl('ip-qt').value = 'q2'; ctx.saveInvProgress();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-h'; });
+  assertEqual(inv.linkedQuoteId, 'q2'); assertEqual(inv.linkedQuoteNum, 'QT-2');
+  var evts = ctx.DB.events.filter(function(e){ return e.verb === 'progressed_to_invoicing'; });
+  assertEqual(evts.length, 2, 'both events remain in the log');
+});
+
+test('populateInvProgressQte() — lists every Quote plus the None default even when buyer matches nothing (AC-14)', function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'q1', num: 'QT-1', client: 'Unrelated Co', dt: '2026-01-01' });
+  var inv = { id: 'inv-i', buyer: 'Nobody Matches', linkedQuoteId: '' };
+  ctx.populateInvProgressQte(inv);
+  var html = mockEl('ip-qt').innerHTML;
+  assertContains(html, 'None / not applicable', 'default option present');
+  assertContains(html, 'QT-1', 'Quote still listed despite no buyer match');
+});
+
+test('saveInvApprove() — re-confirming an approved invoice re-stamps the timestamp and logs a second event (AC-15)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-j', num: 'INV20012', status: 'Pro-forma', lineItems: [], pos: [] });
+  ctx.openInvApprove('inv-j'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith'; ctx.saveInvApprove();
+  var firstStamp = ctx.DB.inv.find(function(x){ return x.id === 'inv-j'; }).buyerApprovedAt;
+  ctx.openInvApprove('inv-j'); mockEl('ia-method').value = 'WhatsApp'; mockEl('ia-by').value = 'A. Jones'; ctx.saveInvApprove();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-j'; });
+  assertEqual(inv.approvalMethod, 'WhatsApp', 'method updated on re-confirmation');
+  assert(inv.buyerApprovedAt >= firstStamp, 'timestamp is new/later on re-confirmation');
+  assertEqual(ctx.DB.events.filter(function(e){ return e.verb === 'buyer_approved'; }).length, 2, 'both approval events remain in the log');
+});
+
+test('invProgressActionVisible() — false once status has moved past Pro-forma, even if approved (AC-16)', function() {
+  assertEqual(ctx.invProgressActionVisible({ status: 'Sent', buyerApprovedAt: '2026-01-01T00:00:00.000Z' }), false);
+});
+
+test('saveInv() — a save with no live line items (cIL.length===0) on an approved invoice does not falsely clear approval (ordering regression guard)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-k', num: 'INV20009', status: 'Pro-forma',
+    lineItems: [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [],
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '',
+    calc_grandTotal: '10', calc_cogs: '0', calc_grossProfit: '0', calc_netProfit: '0',
+    calc_margin: '0', calc_balanceDue: '0', calc_liTotal: '10', calc_taxAmt: '0' });
+  ctx.EI.i = 'inv-k';
+  ctx.cIL = []; // e.g. a save path that doesn't touch line items
+  setupInvForm('INV20009');
+  mockEl('inv-sm').value = 'Pro-forma';
+  ctx.saveInv();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-k'; });
+  assertEqual(inv.buyerApprovedAt, '2026-01-01T00:00:00.000Z', 'approval NOT falsely cleared when cIL is empty and lines are actually unchanged');
+  assertEqual(ctx.DB.events.filter(function(e){ return e.verb === 'approval_cleared'; }).length, 0);
+});
+
+test('invLinesChanged() — rid-less legacy line items (no rid field) do not false-positive on an unchanged re-save (rid-fallback regression guard)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-l', num: 'INV20010', status: 'Pro-forma',
+    lineItems: [{ lid: '', desc: 'Widget', uom: 'pcs', qty: 20, up: 1928.42 }], pos: [], // no rid — mirrors DINV-0001's rid-less shape
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
+  ctx.EI.i = 'inv-l';
+  // cIL mirrors the same line's content; saveInv()'s literal always mints a fresh rid when absent
+  ctx.cIL = [{ rid: '', lid: '', desc: 'Widget', uom: 'pcs', qty: 20, up: 1928.42 }];
+  setupInvForm('INV20010');
+  mockEl('inv-sm').value = 'Pro-forma';
+  ctx.saveInv();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-l'; });
+  assertEqual(inv.buyerApprovedAt, '2026-01-01T00:00:00.000Z', 'approval not falsely cleared for a rid-less legacy line with no real change');
+});
+
+test('processImport() — CSV import update preserves approval/link fields on an already-approved invoice (CSV-import regression guard)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-csv1', num: 'INV-CSV-1', buyer: 'Test Buyer', status: 'Pro-forma', lineItems: [], pos: [],
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '',
+    linkedQuoteId: 'q1', linkedQuoteNum: 'QT-1' });
+  ctx.processImport('inv', 'Invoice #,Buyer\nINV-CSV-1,Test Buyer\n');
+  var inv = ctx.DB.inv.find(function(x){ return x.num === 'INV-CSV-1'; });
+  assertEqual(inv.buyerApprovedAt, '2026-01-01T00:00:00.000Z', 'buyerApprovedAt survives processImport() update');
+  assertEqual(inv.buyerApprovedBy, 'J. Smith');
+  assertEqual(inv.approvalMethod, 'Email');
+  assertEqual(inv.linkedQuoteId, 'q1');
+  assertEqual(inv.linkedQuoteNum, 'QT-1');
+});
+
+test('processImportRecords() — record-based import update preserves approval/link fields (CSV-import regression guard)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-csv2', num: 'INV-CSV-2', buyer: 'Test Buyer', status: 'Pro-forma', lineItems: [], pos: [],
+    buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '',
+    linkedQuoteId: 'q1', linkedQuoteNum: 'QT-1' });
+  ctx.processImportRecords('inv', [{ 'Invoice #': 'INV-CSV-2', 'Buyer': 'Test Buyer' }], function(){});
+  var inv = ctx.DB.inv.find(function(x){ return x.num === 'INV-CSV-2'; });
+  assertEqual(inv.buyerApprovedAt, '2026-01-01T00:00:00.000Z', 'buyerApprovedAt survives processImportRecords() update');
+  assertEqual(inv.linkedQuoteId, 'q1');
+  assertEqual(inv.linkedQuoteNum, 'QT-1');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
