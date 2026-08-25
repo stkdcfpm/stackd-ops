@@ -101,6 +101,8 @@ Invoices track what a buyer owes you, including a Pro-forma status distinct from
 
 **Credit Notes** are issued from the same modal — either linked to a specific existing invoice (standard credit) or marked as a standalone goodwill credit. A credit note reduces the linked invoice's balance due automatically.
 
+**Buyer approval.** While an invoice is at Pro-forma status, use **Mark Buyer Approved** to record that the buyer confirmed approval — by email, WhatsApp, WeChat, phone/verbal, or another method — along with who confirmed it and an optional note. This does not change the invoice's status; it's a record of authorization. Editing any line item afterward (price, quantity, or adding/removing a line) automatically clears the approval, so you're never invoicing off stale-approved numbers — editing an unrelated header field (Incoterm, payment terms, etc.) does not. Once approved, **Progress to Invoicing** becomes available: it logs that you're proceeding, and optionally lets you record which Quote this invoice corresponds to, purely for your own audit trail — it doesn't require or enforce any particular process, and it never changes the invoice's status either.
+
 ## Shipments
 
 Track a shipment's freight mode, origin/destination ports, ETD/ETA, and its link back to the Invoice it's fulfilling.
