@@ -161,7 +161,7 @@ function assertApprox(a, b, msg) {
 }
 
 function resetDB() {
-  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [], events: [], buy: [], ord: [] };
+  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [], events: [], buy: [], ord: [], supPayments: [] };
 }
 function loadFixtures() {
   ctx.DB = JSON.parse(JSON.stringify(fixtures));
@@ -4063,6 +4063,151 @@ test('loadDemoData scenario 7: DPO-0002 shows the PO staleness banner (DINV-0005
     'precondition: invoice line now diverges from the PO\'s captured snapshot');
   ctx.renderPoSourceDriftWarn(po);
   assertContains(mockEl('po-drift-warn').innerHTML, 'Source Invoice has changed', 'PO staleness banner renders for the seeded scenario');
+});
+
+// ── REQ-INTEG-002 (2a): Supplier Payment ledger ───────────────────────────────
+console.log('\nSupplier Payment ledger (REQ-INTEG-002 2a)');
+
+test('addSupPaymentFromForm() creates a record with poId/poNum and a rateLock snapshot (AC-1)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-1', num: 'PO-0001', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  mockEl('spm-date').value = '2026-01-01';
+  mockEl('spm-amount').value = '500';
+  mockEl('spm-cur').value = 'USD';
+  mockEl('spm-purpose').value = 'Deposit';
+  mockEl('spm-method').value = 'Bank Transfer';
+  mockEl('spm-ref').value = 'REF-1';
+  mockEl('spm-notes').value = '';
+  ctx.addSupPaymentFromForm('po-1');
+  assertEqual(ctx.DB.supPayments.length, 1, 'one record created');
+  var pm = ctx.DB.supPayments[0];
+  assertEqual(pm.poId, 'po-1'); assertEqual(pm.poNum, 'PO-0001');
+  assert(!!pm.rateLock, 'rateLock present');
+});
+
+test('lockFxRate() — RMB payment captures exactly the applied rate and correct GBP-equivalent (AC-2)', function() {
+  ctx.QR.fxGBPRMB = 9.20;
+  var lock = ctx.lockFxRate(920, 'RMB');
+  assertEqual(lock.ratesUsed.fxGBPRMB, 9.20, 'ratesUsed captures the applied rate');
+  assertEqual(Object.keys(lock.ratesUsed).length, 1, 'ratesUsed has exactly one key');
+  assertApprox(lock.gbpEquiv, 100, 'gbpEquiv = 920 / 9.20');
+});
+
+test('rateLock snapshot is never recomputed on read — later QR changes do not affect a saved record (AC-3)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-2', num: 'PO-0002', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  ctx.QR.fxGBPRMB = 9.20;
+  mockEl('spm-date').value = '2026-01-01';
+  mockEl('spm-amount').value = '920';
+  mockEl('spm-cur').value = 'RMB';
+  mockEl('spm-purpose').value = 'Deposit';
+  mockEl('spm-method').value = 'Bank Transfer';
+  mockEl('spm-ref').value = '';
+  mockEl('spm-notes').value = '';
+  ctx.addSupPaymentFromForm('po-2');
+  var savedGbpEquiv = ctx.DB.supPayments[0].rateLock.gbpEquiv;
+  ctx.QR.fxGBPRMB = 5.00; // rate changes after save
+  var reread = ctx.DB.supPayments.find(function(p){ return p.poId === 'po-2'; });
+  assertEqual(reread.rateLock.gbpEquiv, savedGbpEquiv, 'gbpEquiv unchanged despite later QR mutation');
+  assertEqual(reread.rateLock.ratesUsed.fxGBPRMB, 9.20, 'ratesUsed unchanged despite later QR mutation');
+});
+
+test('getPOTotalPaid() sums rateLock.gbpEquiv across multiple native currencies, not raw amount (AC-4)', function() {
+  resetDB();
+  ctx.DB.supPayments.push({ id: 'p1', poId: 'po-3', poNum: 'PO-0003', date: '2026-01-01', amount: 100, currency: 'RMB', purpose: 'Deposit', rateLock: { gbpEquiv: 10 } });
+  ctx.DB.supPayments.push({ id: 'p2', poId: 'po-3', poNum: 'PO-0003', date: '2026-01-02', amount: 50, currency: 'USD', purpose: 'Balance', rateLock: { gbpEquiv: 20 } });
+  ctx.DB.supPayments.push({ id: 'p3', poId: 'po-3', poNum: 'PO-0003', date: '2026-01-03', amount: 30, currency: 'GBP', purpose: 'Other', rateLock: { gbpEquiv: 30 } });
+  assertEqual(ctx.getPOTotalPaid('po-3'), 60, 'sum of gbpEquiv values, not raw amounts');
+});
+
+test('lockFxRate() — GBP payment applies no rate at all (AC-4b)', function() {
+  var lock = ctx.lockFxRate(50, 'GBP');
+  assertEqual(Object.keys(lock.ratesUsed).length, 0, 'ratesUsed is empty for GBP');
+  assertEqual(lock.gbpEquiv, 50, 'gbpEquiv equals amount for GBP (identity)');
+});
+
+test('vSupPay() blocks when purpose is empty (AC-5)', function() {
+  mockEl('spm-date').value = '';
+  mockEl('spm-amount').value = '';
+  var ok = ctx.vSupPay('2026-01-01', 100, '');
+  assertEqual(ok, false, 'validation fails when purpose is empty');
+});
+
+test('addSupPaymentFromForm() always requires a poId — no unlinked record possible (AC-6)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-4', num: 'PO-0004', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  mockEl('spm-date').value = '2026-01-01';
+  mockEl('spm-amount').value = '100';
+  mockEl('spm-cur').value = 'USD';
+  mockEl('spm-purpose').value = 'Deposit';
+  mockEl('spm-method').value = 'Bank Transfer';
+  mockEl('spm-ref').value = ''; mockEl('spm-notes').value = '';
+  ctx.addSupPaymentFromForm('po-4');
+  assertEqual(ctx.DB.supPayments[0].poId, 'po-4', 'record always carries the poId passed at the call site');
+});
+
+test('delPO() does not cascade-delete linked Supplier Payment records (AC-7)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-5', num: 'PO-0005', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'p1', poId: 'po-5', poNum: 'PO-0005', date: '2026-01-01', amount: 100, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 80 } });
+  ctx.DB.supPayments.push({ id: 'p2', poId: 'po-5', poNum: 'PO-0005', date: '2026-01-02', amount: 50, currency: 'USD', purpose: 'Balance', rateLock: { gbpEquiv: 40 } });
+  ctx.confirm = function(){ return true; };
+  ctx.delPO('po-5');
+  ctx.confirm = function(){ return false; };
+  assertEqual(ctx.DB.po.length, 0, 'PO removed');
+  assertEqual(ctx.DB.supPayments.length, 2, 'both Supplier Payment records remain, unchanged');
+});
+
+test('Editing a PO\'s num does not retroactively update existing Supplier Payment records\' poNum (AC-8)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-6', num: 'PO-0006', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'p1', poId: 'po-6', poNum: 'PO-0006', date: '2026-01-01', amount: 100, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 80 } });
+  ctx.EI.p = 'po-6';
+  mockEl('pf-n').value = 'PO-0006-RENAMED';
+  mockEl('pf-sup').value = 'sup-1'; mockEl('pf-cur').value = 'USD'; mockEl('pf-inv').value = '';
+  mockEl('pf-dt').value = '2026-01-01'; mockEl('pf-del').value = ''; mockEl('pf-pt').value = '';
+  mockEl('pf-dep').value = ''; mockEl('pf-fpm').value = ''; mockEl('pf-oth').value = ''; mockEl('pf-nt').value = '';
+  mockEl('pf-rec').checked = false; mockEl('po-sm').value = 'Confirmed';
+  ctx.cPL = [];
+  ctx.savePO();
+  var pm = ctx.DB.supPayments.find(function(p){ return p.id === 'p1'; });
+  assertEqual(pm.poId, 'po-6', 'poId still resolves to the same PO');
+  assertEqual(pm.poNum, 'PO-0006', 'poNum on the existing record is unchanged (stale), matching buyer Payments\' invNum characteristic');
+});
+
+test('renderPOPaymentsTab() displays date, native amount+currency, GBP-equivalent, and purpose per record (AC-11)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-7', num: 'PO-0007', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'p1', poId: 'po-7', poNum: 'PO-0007', date: '2026-01-01', amount: 100, currency: 'RMB', purpose: 'Deposit', method: 'Bank Transfer', reference: '', notes: '', rateLock: { gbpEquiv: 10.87 } });
+  ctx.DB.supPayments.push({ id: 'p2', poId: 'po-7', poNum: 'PO-0007', date: '2026-01-02', amount: 200, currency: 'USD', purpose: 'Balance', method: 'Wire Transfer', reference: '', notes: '', rateLock: { gbpEquiv: 157.48 } });
+  ctx.renderPOPaymentsTab('po-7');
+  var html = mockEl('po-payments-tab').innerHTML;
+  assertContains(html, '2026-01-01'); assertContains(html, 'Deposit'); assertContains(html, 'Balance');
+});
+
+test('FM-1: no FIELD_MAPS entry and no bulk-sync entity-list membership for supPayments (AC-12)', function() {
+  assertEqual(ctx.FIELD_MAPS.hasOwnProperty('supPayments'), false, 'no FIELD_MAPS entry');
+  var arrays = [
+    { name: 'synEnts',     re: /var\s+synEnts\s*=\s*\[([^\]]*)\]/ },
+    { name: 'simpleEnts',  re: /var\s+simpleEnts\s*=\s*\[([^\]]*)\]/ },
+    { name: 'idKeyedEnts', re: /var\s+idKeyedEnts\s*=\s*\[([^\]]*)\]/ },
+    { name: 'ents',        re: /var\s+ents\s*=\s*\[([^\]]*)\]/ }
+  ];
+  arrays.forEach(function(a) {
+    var m = a.re.exec(html);
+    assert(!!m, a.name + ' array found in source');
+    assertNotContains(m[1], 'supPayments', a.name + ' does not list supPayments');
+  });
+});
+
+test('expAll()/doImport() round-trip supPayments (AC-13)', function() {
+  resetDB();
+  ctx.DB.supPayments.push({ id: 'p1', poId: 'po-8', poNum: 'PO-0008', date: '2026-01-01', amount: 100, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 78.74 } });
+  var snap = { _app: 'Stackd Ops', supPayments: ctx.DB.supPayments };
+  resetDB();
+  if (snap.supPayments && Array.isArray(snap.supPayments)) { ctx.DB.supPayments = snap.supPayments; }
+  assertEqual(ctx.DB.supPayments.length, 1, 'supPayments restored from backup snapshot shape');
+  assertEqual(ctx.DB.supPayments[0].poId, 'po-8');
 });
 
 // ── REQ-MTD-001: VAT Return ──────────────────────────────────────────────────
