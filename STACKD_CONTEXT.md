@@ -10,14 +10,14 @@
 
 | Field | Value |
 |-------|-------|
-| Last updated | 25 August 2026 (verified against branch `claude/demo-data-integ-001-coverage`, code-level facts confirmed by running `node tests/run.js`; v2.9.61 pending merge to `main`) |
+| Last updated | 25 August 2026 (verified against `main` @ `c5fd079`, code-level facts confirmed by running `node tests/run.js`) |
 | Current version | v2.9.61 |
 | Test count | 563 / 563 passing (confirmed by re-running the suite, not just read from source) |
 | Build branch | main |
 | Deployment | **GitHub Pages**, custom domain `app.getstackdops.com` (see `CNAME`) — live, not pending |
 | CI/CD | GitHub Actions (`qa.yml`) — runs `node tests/run.js` on every push/PR to main |
 
-**Correction from the previous version of this file:** this file was frozen at v2.9.51 / 422 tests since 10 August while the codebase moved on to v2.9.57 / 521 tests across six shipped versions (v2.9.52–v2.9.57 — per-line quote margins, Supplier price intelligence, the first Supabase-backed layer (Suppliers/Buyers Cloud Data), three new AI Assistant capabilities, RFQ supplier comparison, and a data-integrity cleanup tool). See Version history below for the full list, including v2.9.58 (Phase 1 of an Order Request/RFQ → Quote → Invoice referential integrity build), v2.9.59 (removes v2.9.58's unused `sourceQuoteId` field, confirmed unnecessary post-merge), and v2.9.60 (Phase 2 of the same initiative — buyer-approval capture on Invoice), all shipped and merged. v2.9.61 (Demo Mode expanded with 7 scenarios so Phase 1/2 can be tested locally instead of against production data — interim mitigation for `SDLC-GAP-003`) is pending merge as of this update.
+**Correction from the previous version of this file:** this file was frozen at v2.9.51 / 422 tests since 10 August while the codebase moved on to v2.9.57 / 521 tests across six shipped versions (v2.9.52–v2.9.57 — per-line quote margins, Supplier price intelligence, the first Supabase-backed layer (Suppliers/Buyers Cloud Data), three new AI Assistant capabilities, RFQ supplier comparison, and a data-integrity cleanup tool). See Version history below for the full list, including v2.9.58 (Phase 1 of an Order Request/RFQ → Quote → Invoice referential integrity build), v2.9.59 (removes v2.9.58's unused `sourceQuoteId` field, confirmed unnecessary post-merge), and v2.9.60 (Phase 2 of the same initiative — buyer-approval capture on Invoice), and v2.9.61 (Demo Mode expanded with 7 scenarios so Phase 1/2 can be tested locally instead of against production data — interim mitigation for `SDLC-GAP-003`), all shipped and merged as of this update.
 
 ---
 
@@ -184,7 +184,7 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2
 
 ## Build queue
 
-**Completed since this file was last accurate:** all ten versions in the Version history table above (v2.9.52–v2.9.61) shipped or pending merge, each via PR. v2.9.52–v2.9.58 and v2.9.60 each went through the full requirements-gate → spec-gate → build → independent build-gate review pipeline documented in `docs/requirements-tracker.md`; v2.9.59 was a small, low-risk post-merge cleanup (removing one confirmed-dead schema field) verified by check-first and a full test-suite run rather than a full gate cycle. v2.9.61 (this update) is test/demo-data tooling, not a REQ/SPEC-gated feature — standard build-gate review only, no `docs/requirements-tracker.md` entry — and is pending its build-gate review and merge.
+**Completed since this file was last accurate:** all ten versions in the Version history table above (v2.9.52–v2.9.61) shipped, each merged to `main` via PR. v2.9.52–v2.9.58 and v2.9.60 each went through the full requirements-gate → spec-gate → build → independent build-gate review pipeline documented in `docs/requirements-tracker.md`; v2.9.59 was a small, low-risk post-merge cleanup (removing one confirmed-dead schema field) verified by check-first and a full test-suite run rather than a full gate cycle. v2.9.61 is test/demo-data tooling, not a REQ/SPEC-gated feature — standard build-gate review only (independent review PASS), no `docs/requirements-tracker.md` entry, per its own brief.
 
 **Stale unmerged branches — still present on the remote, now confirmed superseded, worth deleting in a cleanup pass:**
 
