@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.61</title>
+<title>Stackd Ops v2.9.62</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.61</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.62</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1244,6 +1244,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<!-- SUPPLIER PAYMENT SECTION — mirrors ov-payments, opened per-PO -->
+<div class="ov" id="ov-po-payments" onclick="if(event.target===this)closeM('ov-po-payments')" style="display:none;">
+  <div class="modal" style="max-width:700px;">
+    <div class="mh">
+      <h2 id="spm-title">Supplier Payment History</h2>
+      <button class="mx" onclick="G('ov-po-payments').style.display='none'">&#215;</button>
+    </div>
+    <div class="mb">
+      <div id="po-payments-tab"></div>
+    </div>
+  </div>
+</div>
+
 
 <!-- CHANGELOG MODAL -->
 <div class="ov" id="ov-changelog" onclick="if(event.target===this)closeM('ov-changelog')" >
@@ -1257,9 +1270,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.61</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.62</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: Supplier Payment ledger (REQ/SPEC-INTEG-002, sub-phase 2a of a larger Payment Allocation build). Every payment FPM makes to a supplier can now be recorded individually against its PO — date, amount, native currency, purpose (Deposit/Balance/Other), method, reference, notes — via a new "$" action on the Purchase Orders tab, replacing the old single-overwrite <code>PO.dep</code>/<code>PO.fpmFunded</code> fields' complete lack of history. Each payment locks in a GBP-equivalent snapshot (<code>lockFxRate()</code>) at save time using the existing <code>toGBP()</code> mechanism and current FX rates — the snapshot never changes later even if rates are updated afterward, so historical totals stay accurate. New <code>getPOTotalPaid()</code> sums a PO's payments correctly across multiple native currencies by summing the locked GBP-equivalents, not raw amounts. This is a standalone ledger alongside the existing PO fields — it does not read from, write to, or replace them, and this phase does not yet link to buyer-side payments or Invoice collections (later sub-phases). Went through 2 independent review rounds each for requirements-gate and spec-gate; round-1s each caught a real blocking defect (a false claim that the buyer-side Payments ledger is unsynced, which would have wrongly justified giving the new entity an inert field-map entry — corrected once the facts showed buyer Payments is actually bulk-synced, so the new entity instead follows the genuine no-sync precedent already used by Order Requests/Buyers; and a missing backup/restore wiring that would have made the new ledger's only backup — the local JSON export — silently drop every record). 12 new tests. Tests: 575/575 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.61</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Expanded Demo Mode (<code>loadDemoData()</code>) with 7 new scenarios so REQ-INTEG-001 Phase 1/2 can actually be exercised locally instead of against production data (interim mitigation for SDLC-GAP-003, no staging environment): an Order Request (DORD-0001) with 2 RFQ responses from different suppliers, for the comparison panel; a Quote (DQ-0002) converted from it whose source RFQ response was re-committed afterward, reproducing the Phase 1 Quote staleness banner; an unapproved Pro-forma invoice (DINV-0002); an approved, non-stale invoice (DINV-0003) for the clean "Progress to Invoicing" path; an invoice (DINV-0004) that was approved then had a line edited, showing Phase 2's automatic approval-clearing already having fired (both events present in the log); and an invoice/PO pair (DINV-0005/DPO-0002) reproducing the Phase 1 PO staleness banner. One scenario in the original brief — an illegal Order-Request-stage auto-advance from "Progress to Invoicing" — was not built: check-first confirmed Progress to Invoicing never touches Order Request stage in the shipped Phase 2 design (an explicit, confirmed decision from that build), so there is no such transition to exercise. Also fixed a real pre-existing gap while extending Demo Mode: <code>loadDemoData()</code>/<code>clearDemoData()</code> never included Order Requests or the Line Item catalogue at all — both are now covered by the idempotency check and cleanup. 6 new tests. Tests: 563/563 pass.</li>
@@ -2601,7 +2623,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 // ───────────────────────────────────────────────────────────────
 
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev', bu:'st_buy', ord:'st_ord'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev', bu:'st_buy', ord:'st_ord', spm:'st_spm'};
 
 var _storageOK = (function() {
   try { localStorage.setItem('_stk_t','1'); localStorage.removeItem('_stk_t'); return true; }
@@ -2614,7 +2636,7 @@ function ld(k) {
 }
 function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 
-let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev), buy: ldArr(K.bu), ord: ldArr(K.ord) };
+let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev), buy: ldArr(K.bu), ord: ldArr(K.ord), supPayments: ldArr(K.spm) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'', email:'', phone:'', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
 let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null, co:null, bu:null, ord:null };
@@ -3319,7 +3341,7 @@ function sv(k, d) {
     }
   }
 }
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); sv(K.bu,DB.buy); sv(K.ord,DB.ord); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); sv(K.bu,DB.buy); sv(K.ord,DB.ord); sv(K.spm,DB.supPayments); };
 function logEv(entityType, entityId, verb, summary, actor) {
   var ev = {
     id:         uid(),
@@ -4281,6 +4303,23 @@ function fromGBP(gbp, cur) {
   if (cur === 'RMB' || cur === 'CNY') return n * (QR.fxGBPRMB || QR_DEFAULTS.fxGBPRMB);
   if (cur === 'BBD') return n * (QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD);
   return n;
+}
+
+function lockFxRate(amount, currency) {
+  var cur = (currency || 'USD').toUpperCase();
+  var ratesUsed = {};
+  if (cur === 'USD') ratesUsed.fxGBPUSD = QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD;
+  else if (cur === 'RMB' || cur === 'CNY') ratesUsed.fxGBPRMB = QR.fxGBPRMB || QR_DEFAULTS.fxGBPRMB;
+  else if (cur === 'BBD') ratesUsed.fxGBPBBD = QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD;
+  // GBP, or any unrecognized currency string: no rate applied, ratesUsed stays {} —
+  // matches toGBP()'s own fall-through branch identically.
+  return {
+    amount: +amount || 0,
+    currency: cur,
+    gbpEquiv: toGBP(amount, cur),
+    ratesUsed: ratesUsed,
+    ts: new Date().toISOString()
+  };
 }
 
 function toDisp(amount, cur) {
@@ -6847,6 +6886,7 @@ function rPO() {
       '<td class="num" style="color:var(--gold);">' + fmt(bal,cur) + '</td>' +
       '<td style="white-space:nowrap;">' +
         '<button class="ab" onclick="editPO(\'' + po.id + '\')">&#9998;</button>' +
+        '<button class="ab" onclick="openPOPayments(\'' + po.id + '\',\'' + po.num + '\')" title="Supplier Payments" style="color:var(--gn);">$</button>' +
         '<button class="ab" onclick="prevPOId(\'' + po.id + '\')" style="color:var(--bl);">&#128065;</button>' +
         '<button class="ab" onclick="delPO(\'' + po.id + '\')">&#10005;</button>' +
       '</td></tr>';
@@ -8523,7 +8563,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.61).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.62).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8613,6 +8653,7 @@ var AI_SYSTEM_PROMPT = [
   'PO status: Draft → Sent → Deposit Paid → Settled → Cancelled.',
   'Payment Terms field available on PO (optional).',
   'Source Invoice staleness warning (v2.9.58): a PO auto-generated from an Invoice\'s line items records that Invoice\'s unit prices/quantities at generation time. If the Invoice is edited afterward — a line\'s price or quantity changes, a line is removed, or a new line is added for that same supplier — re-opening the PO shows a warning banner ("Source Invoice has changed since this PO was generated — review before proceeding"). The PO itself is never auto-updated, only flagged. A distinct message appears if the source Invoice has been deleted entirely. This check only applies to POs auto-generated from an Invoice — a PO created manually or via Convert to PO from a Quote never shows it. One known, accepted gap: a brand-new line added for a supplier that has no PO from that invoice at all is not flagged anywhere, since there is no PO to attach a warning to — the operator should still check Purchase Orders manually after adding a new supplier\'s line to an already-invoiced order.',
+  'Supplier Payment ledger (v2.9.62): click $ on a PO row to record individual payments made to that supplier — date, amount, native currency, purpose (Deposit/Balance/Other), method, reference, notes. Each payment locks in a GBP-equivalent snapshot at save time using the current FX rate, which never changes later even if rates are updated afterward. This is a separate, standalone ledger alongside the PO\'s existing Deposit Paid/FPM Funded fields — it does not read from or write to them, and does not affect PO balance calculations. Deleting a PO does not delete its payment history. This is sub-phase 2a of a larger Payment Allocation build — it does not yet link to buyer-side payments or Invoice collections.',
   '',
   '## Payments',
   'Invoices tab → click $ on invoice row. Enter: Date, Amount, Method, Reference, Notes → Save Payment.',
@@ -9729,6 +9770,7 @@ function expAll() {
     events: DB.events,
     buy: DB.buy,
     ord: DB.ord,
+    supPayments: DB.supPayments,
     settings: { url: SS.url, auto: SS.auto, pol: SS.pol }, // token excluded — credential, not config
     company: AS,
     branding: getCoBrand(),
@@ -9788,6 +9830,7 @@ function doImport(e) {
     if (data.fpmRepairDone) { localStorage.setItem('st_fpm_repair_v1', data.fpmRepairDone); }
     if (data.buy && Array.isArray(data.buy)) { DB.buy = data.buy; sv(K.bu, DB.buy); }
     if (data.ord && Array.isArray(data.ord)) { DB.ord = data.ord; sv(K.ord, DB.ord); }
+    if (data.supPayments && Array.isArray(data.supPayments)) { DB.supPayments = data.supPayments; sv(K.spm, DB.supPayments); }
     seedAdHocBuyer();
     backfillRefNums();
     backfillConIds();
@@ -11423,6 +11466,151 @@ function addPaymentFromForm(invId) {
   if (G('pm-notes')) G('pm-notes').value = '';
 
   toast('\u2713 Payment of ' + fmt(amount, inv ? inv.cur : 'USD') + ' recorded');
+}
+
+function getPOPayments(poId) {
+  return DB.supPayments.filter(function(p){ return p.poId === poId; })
+    .sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+}
+
+function getPOTotalPaid(poId) {
+  return getPOPayments(poId).reduce(function(s,p){ return s + (+(p.rateLock && p.rateLock.gbpEquiv) || 0); }, 0);
+}
+
+function vSupPay(date, amount, purpose) {
+  var dateEl = G('spm-date'), amtEl = G('spm-amount');
+  if (!amount || +amount <= 0) {
+    if (amtEl) { amtEl.style.borderBottomColor='#f87171'; amtEl.focus(); }
+    toast('\u26a0 Payment amount must be greater than zero'); return false;
+  }
+  if (!RX.currency(String(amount))) {
+    if (amtEl) amtEl.style.borderBottomColor='#f87171';
+    toast('\u26a0 Payment amount must be a valid number with at most 2 decimal places'); return false;
+  }
+  if (amtEl) amtEl.style.borderBottomColor='var(--gn)';
+  if (!date || !RX.date.test(date) || isNaN(new Date(date).getTime())) {
+    if (dateEl) { dateEl.style.borderBottomColor='#f87171'; dateEl.focus(); }
+    toast('\u26a0 Payment date is required and must be a valid date'); return false;
+  }
+  if (dateEl) dateEl.style.borderBottomColor='var(--gn)';
+  if (!purpose) {
+    toast('\u26a0 Purpose is required'); return false;
+  }
+  return true;
+}
+
+function saveSupPayment(payment) {
+  var existing = DB.supPayments.findIndex(function(p){ return p.id === payment.id; });
+  if (existing >= 0) { DB.supPayments[existing] = payment; }
+  else { DB.supPayments.push(payment); }
+  sv(K.spm, DB.supPayments);
+  audit('SAVE', 'sup_payment', payment.id, payment);
+  logEv('sup_payment', payment.id, 'created', 'Supplier payment ' + payment.currency + ' ' + (+payment.amount||0).toFixed(2) + ' recorded \u2014 ' + (payment.poNum||payment.poId||''), 'operator');
+}
+
+function deleteSupPayment(id) {
+  var pm = DB.supPayments.find(function(p){ return p.id === id; });
+  if (!pm) return;
+  if (!confirm('Delete this supplier payment record?')) return;
+  logEv('sup_payment', pm.id, 'deleted', 'Supplier payment deleted \u2014 ' + (pm.poNum||pm.poId||''), 'operator');
+  DB.supPayments = DB.supPayments.filter(function(p){ return p.id !== id; });
+  sv(K.spm, DB.supPayments);
+  audit('DELETE', 'sup_payment', id, pm);
+  renderPOPaymentsTab(pm.poId);
+}
+
+function renderPOPaymentsTab(poId) {
+  var container = G('po-payments-tab');
+  if (!container) return;
+  var payments = getPOPayments(poId);
+  var totalPaidGBP = getPOTotalPaid(poId);
+
+  var html = '<div style="margin-bottom:12px;display:flex;gap:16px;padding:10px 12px;background:var(--bg);">' +
+    '<div><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);">Total Paid (GBP equiv.)</div>' +
+    '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;color:var(--gn);">' + fmt(totalPaidGBP,'GBP') + '</div></div>' +
+    '</div>';
+
+  if (payments.length) {
+    html += '<table class="tbl"><thead><tr>' +
+      '<th>Date</th><th>Amount</th><th>GBP Equiv.</th><th>Purpose</th><th>Method</th><th>Reference</th><th>Notes</th><th></th>' +
+      '</tr></thead><tbody>';
+    payments.forEach(function(pm) {
+      html += '<tr>' +
+        '<td style="white-space:nowrap;">' + san(pm.date||'-') + '</td>' +
+        '<td class="num" style="color:var(--gn);font-weight:600;">' + fmt(pm.amount, pm.currency) + '</td>' +
+        '<td class="num" style="color:var(--m);">' + fmt((pm.rateLock&&pm.rateLock.gbpEquiv)||0,'GBP') + '</td>' +
+        '<td>' + san(pm.purpose||'-') + '</td>' +
+        '<td>' + san(pm.method||'-') + '</td>' +
+        '<td style="font-size:.54rem;color:var(--m);">' + san(pm.reference||'-') + '</td>' +
+        '<td style="font-size:.54rem;color:var(--m);">' + san(pm.notes||'-') + '</td>' +
+        '<td><button class="btn btn-g" style="font-size:.5rem;padding:2px 7px;" onclick="deleteSupPayment(\'' + pm.id + '\')">\u00d7</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div class="empty"><div class="ei">\ud83d\udcb3</div><p>No supplier payments recorded yet.</p></div>';
+  }
+
+  html += '<div style="margin-top:12px;padding:12px;background:var(--bg);border-top:2px solid var(--gold);">' +
+    '<div style="font-size:.56rem;font-weight:600;color:var(--ink);margin-bottom:8px;letter-spacing:.06em;">RECORD SUPPLIER PAYMENT</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">' +
+    '<div class="fld"><label>Date</label><input type="date" id="spm-date" value="' + today() + '"></div>' +
+    '<div class="fld"><label>Amount</label><input type="number" id="spm-amount" placeholder="0.00" step="0.01" style="border-bottom-color:var(--gn);"></div>' +
+    '<div class="fld"><label>Currency</label><select id="spm-cur">' +
+    ['USD','GBP','RMB','BBD'].map(function(c){ return '<option>' + c + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="fld"><label>Purpose</label><select id="spm-purpose"><option value="">Select...</option><option>Deposit</option><option>Balance</option><option>Other</option></select></div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">' +
+    '<div class="fld"><label>Method</label><select id="spm-method">' +
+    PAYMENT_METHODS.map(function(m){ return '<option>' + m + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="fld"><label>Reference / Transaction ID</label><input type="text" id="spm-ref" placeholder="Bank ref, transaction ID..."></div>' +
+    '<div class="fld"><label>Notes</label><input type="text" id="spm-notes" placeholder="Optional notes..."></div>' +
+    '</div>' +
+    '<button class="btn btn-s" style="margin-top:10px;" onclick="addSupPaymentFromForm(\'' + poId + '\')">\u2713 Save Payment</button>' +
+    '</div>';
+
+  container.innerHTML = html;
+}
+
+function addSupPaymentFromForm(poId) {
+  var date = G('spm-date') ? G('spm-date').value : today();
+  var amount = G('spm-amount') ? +G('spm-amount').value : 0;
+  var currency = G('spm-cur') ? G('spm-cur').value : 'USD';
+  var purpose = G('spm-purpose') ? G('spm-purpose').value : '';
+  var method = G('spm-method') ? G('spm-method').value : 'Bank Transfer';
+  var ref = G('spm-ref') ? G('spm-ref').value.trim() : '';
+  var notes = G('spm-notes') ? G('spm-notes').value.trim() : '';
+
+  if (!vSupPay(date, amount, purpose)) return;
+
+  var po = DB.po.find(function(p){ return p.id === poId; });
+  var pm = {
+    id: uid(),
+    poId: poId,
+    poNum: po ? po.num : '',
+    date: date,
+    amount: amount,
+    currency: currency,
+    purpose: purpose,
+    method: method,
+    reference: ref,
+    notes: notes,
+    rateLock: lockFxRate(amount, currency),
+    type: 'supplier_payment',
+    creAt: new Date().toISOString()
+  };
+
+  saveSupPayment(pm);
+  renderPOPaymentsTab(poId);
+}
+
+function openPOPayments(poId, poNum) {
+  var title = G('spm-title');
+  if (title) title.textContent = 'Supplier Payments \u2014 ' + poNum;
+  renderPOPaymentsTab(poId);
+  G('ov-po-payments').style.display = 'flex';
 }
 
 // ── TOOLTIPS ───────────────────────────────────────────────────
