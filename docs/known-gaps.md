@@ -369,6 +369,16 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 ---
 
+### PROC-GAP-002 — EUR has no FX conversion path in `toGBP()`/`fromGBP()`
+
+**Area:** Shared currency-conversion mechanism (`toGBP()`, `fromGBP()`), used by Invoices, Purchase Orders, and the Supplier Payment ledger.
+**Logged:** v2.9.63 (REQ-INTEG-002-2a-fix, discovered during requirements-gate review while designing `getPOEffectiveDep()`'s reconciliation logic).
+**Detail:** `toGBP()`/`fromGBP()` (and the `QR`/`QR_DEFAULTS` rate tables behind them) have branches for USD, RMB/CNY, and BBD only — there is no `fxGBPEUR` rate and no EUR branch. An EUR amount passed to either function falls through to the final `return n;`, i.e. is silently treated as numerically equal to GBP (no rate applied at all). `pf-cur` (PO currency) and several other currency fields across the app do offer EUR as an option, so this gap is reachable in normal use, not merely theoretical.
+**Status:** Open — Backlog, not scheduled.
+**Note:** Discovered while building `getPOEffectiveDep()`'s currency reconciliation for the Supplier Payment ledger fix (REQ-INTEG-002-2a-fix). That fix does **not** solve this gap — it explicitly guards against it (a currency allow-list, `PO_DEP_RECONCILE_CURS`, excludes EUR, so a EUR-denominated PO simply falls back to its legacy, unreconciled `PO.dep` figure rather than risk a silently wrong converted number). Fixing the underlying gap would mean adding a real `QR.fxGBPEUR` rate, wiring it into `toGBP()`/`fromGBP()`, and extending every currency dropdown that should offer EUR consistently — a change to the shared FX mechanism used everywhere, not a scoped fix, and out of scope for the Supplier Payment ledger work. Revisit if/when EUR-denominated transactions become operationally significant enough to justify the shared-mechanism change.
+
+---
+
 ## External Services — FPM Website (fpmsg.co.uk)
 
 ### CHAT-GAP-001 — AI chat conversation history includes prospect PII in Anthropic API calls

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.62</title>
+<title>Stackd Ops v2.9.63</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.62</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.63</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1270,9 +1270,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.62</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.63</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: Reconcile Supplier Deposit Paid with the Supplier Payment ledger (REQ-INTEG-002-2a-fix, a fix-forward against v2.9.62's Sub-phase 2a). Real-world testing found that recording a payment through the new ledger had zero visible effect anywhere — the Edit PO modal, PO PDF, Dashboard, Accounts view, and AI assistant all continued to read the old, disconnected <code>PO.dep</code> field directly. New <code>getPOEffectiveDep(po)</code> is now the single point of truth for every one of those 10 read sites: once a PO has linked Supplier Payment records, its Deposit Paid figure is reconciled from the ledger (native-currency amounts summed directly and exactly; a different-currency payment converts via its own historically-locked FX rate, not today's live rate — <code>lockFxRate()</code> now snapshots the full rate table, not just the one rate it used, so this second conversion leg is genuinely historical too). A PO with no linked records, or a currency this mechanism can't yet safely reconcile (EUR — logged as <code>PROC-GAP-002</code>), keeps showing its manually-entered figure exactly as before, with a note explaining why. The "Supplier Deposit Paid" field itself becomes read-only once ledger records exist, directing the operator to the payment ledger instead of creating two ways to change the same number. Went through 2 independent review rounds each for requirements-gate and spec-gate; round-1s each caught a real blocking defect (a missed 10th read site plus a EUR-currency PO that would have shown a silently wrong, mislabeled figure on its own PDF; and a read-only/note state that could leak from an edited PO into a freshly-opened new one). 19 new tests. Tests: 594/594 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.62</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: Supplier Payment ledger (REQ/SPEC-INTEG-002, sub-phase 2a of a larger Payment Allocation build). Every payment FPM makes to a supplier can now be recorded individually against its PO — date, amount, native currency, purpose (Deposit/Balance/Other), method, reference, notes — via a new "$" action on the Purchase Orders tab, replacing the old single-overwrite <code>PO.dep</code>/<code>PO.fpmFunded</code> fields' complete lack of history. Each payment locks in a GBP-equivalent snapshot (<code>lockFxRate()</code>) at save time using the existing <code>toGBP()</code> mechanism and current FX rates — the snapshot never changes later even if rates are updated afterward, so historical totals stay accurate. New <code>getPOTotalPaid()</code> sums a PO's payments correctly across multiple native currencies by summing the locked GBP-equivalents, not raw amounts. This is a standalone ledger alongside the existing PO fields — it does not read from, write to, or replace them, and this phase does not yet link to buyer-side payments or Invoice collections (later sub-phases). Went through 2 independent review rounds each for requirements-gate and spec-gate; round-1s each caught a real blocking defect (a false claim that the buyer-side Payments ledger is unsynced, which would have wrongly justified giving the new entity an inert field-map entry — corrected once the facts showed buyer Payments is actually bulk-synced, so the new entity instead follows the genuine no-sync precedent already used by Order Requests/Buyers; and a missing backup/restore wiring that would have made the new ledger's only backup — the local JSON export — silently drop every record). 12 new tests. Tests: 575/575 pass.</li>
@@ -2198,7 +2207,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" style="width:100%;margin-top:5px;" onclick="addPLI()">+ Add Line Item</button>
       </div>
       <div class="fg fg3" style="margin-top:12px;">
-        <div class="fld"><label id="lbl-po-dep">Supplier Deposit Paid</label><input type="number" id="pf-dep" placeholder="0.00" step="0.01" oninput="calcPO()" style="border-bottom-color:var(--bl);background:rgba(26,79,219,.04);"></div>
+        <div class="fld"><label id="lbl-po-dep">Supplier Deposit Paid</label><input type="number" id="pf-dep" placeholder="0.00" step="0.01" oninput="calcPO()" style="border-bottom-color:var(--bl);background:rgba(26,79,219,.04);"><div id="po-dep-note"></div></div>
         <div class="fld"><label style="color:var(--cr);">FPM Funded (out of pocket)</label><input type="number" id="pf-fpm" placeholder="0.00" step="0.01" oninput="calcPO()" style="border-bottom-color:var(--cr);background:rgba(184,40,58,.04);" title="Amount of the deposit you paid from your own funds — not covered by buyer deposit. Auto-recovered when invoice is marked Paid."></div>
         <div class="fld"><label>Other Charges</label><input type="number" id="pf-oth" placeholder="0.00" step="0.01" oninput="calcPO()"></div>
       </div>
@@ -4307,12 +4316,15 @@ function fromGBP(gbp, cur) {
 
 function lockFxRate(amount, currency) {
   var cur = (currency || 'USD').toUpperCase();
-  var ratesUsed = {};
-  if (cur === 'USD') ratesUsed.fxGBPUSD = QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD;
-  else if (cur === 'RMB' || cur === 'CNY') ratesUsed.fxGBPRMB = QR.fxGBPRMB || QR_DEFAULTS.fxGBPRMB;
-  else if (cur === 'BBD') ratesUsed.fxGBPBBD = QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD;
-  // GBP, or any unrecognized currency string: no rate applied, ratesUsed stays {} —
-  // matches toGBP()'s own fall-through branch identically.
+  // Snapshot ALL three static rates at save time, not just the one relevant to this
+  // payment's own currency — a later reconciliation against a DIFFERENT PO currency
+  // (getPOTotalPaidNative()) needs a historically-locked rate for that second leg
+  // too, not just the payment's own currency-to-GBP leg.
+  var ratesUsed = {
+    fxGBPUSD: QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD,
+    fxGBPRMB: QR.fxGBPRMB || QR_DEFAULTS.fxGBPRMB,
+    fxGBPBBD: QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD
+  };
   return {
     amount: +amount || 0,
     currency: cur,
@@ -4320,6 +4332,25 @@ function lockFxRate(amount, currency) {
     ratesUsed: ratesUsed,
     ts: new Date().toISOString()
   };
+}
+
+// Converts a GBP amount into `currency` using a PASSED-IN, already-locked rate table
+// (a Supplier Payment record's own rateLock.ratesUsed) instead of the live QR object —
+// mirrors fromGBP()'s branching exactly, but the rate source is historical, not live.
+// Backward-compat fallback: a rate missing from `ratesUsed` (a pre-fix record, which
+// only ever stored ONE key) falls back to the live QR value/QR_DEFAULTS, exactly what
+// fromGBP() itself would do — this path must never be taken for any record created
+// after this fix ships, since lockFxRate() above now always populates all three keys.
+function fromGBPLocked(gbpAmount, currency, ratesUsed) {
+  var n = +gbpAmount || 0;
+  var cur = (currency || 'GBP').toUpperCase();
+  var rates = ratesUsed || {};
+  if (cur === 'GBP') return n;
+  if (cur === 'USD') return n * (rates.fxGBPUSD || QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD);
+  if (cur === 'RMB' || cur === 'CNY') return n * (rates.fxGBPRMB || QR.fxGBPRMB || QR_DEFAULTS.fxGBPRMB);
+  if (cur === 'BBD') return n * (rates.fxGBPBBD || QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD);
+  return n; // unrecognized currency (e.g. EUR) — never actually reached: getPOEffectiveDep()
+            // filters via PO_DEP_RECONCILE_CURS before ever calling this function.
 }
 
 function toDisp(amount, cur) {
@@ -4509,7 +4540,7 @@ function rDash() {
   var tPO = DB.po.filter(function(p){ return !p._demo && p.status!=='Cancelled' && p.status!=='Settled'; })
     .reduce(function(s,p){
       var t = (p.lineItems||[]).reduce(function(a,l){ return a + (+l.qty||0)*(+l.cost||0); }, 0);
-      return s + toDisp(t - (+p.dep||0), p.cur||'USD');
+      return s + toDisp(t - getPOEffectiveDep(p), p.cur||'USD');
     }, 0);
   var mg = ai.map(function(i){ return iCalc(i).mgn; }).filter(function(m){ return m !== null && !isNaN(m); });
   var aM = mg.length ? mg.reduce(function(a,b){ return a+b; }, 0) / mg.length : 0;
@@ -4517,7 +4548,7 @@ function rDash() {
   // Net cash: total buyer deposits received minus total supplier deposits paid minus goodwill credits issued
   var tBuyerDep = ai.reduce(function(s,i){ return s + toDisp(+i.dep||0, i.cur||'USD'); }, 0);
   var tSupDep = DB.po.filter(function(p){ return !p._demo && p.status!=='Cancelled'; })
-    .reduce(function(s,p){ return s + toDisp(+p.dep||0, p.cur||'USD'); }, 0);
+    .reduce(function(s,p){ return s + toDisp(getPOEffectiveDep(p), p.cur||'USD'); }, 0);
   var tGoodwillCredits = DB.inv.filter(function(i){ return !i._demo && i.type==='goodwill_credit' && i.status!=='Cancelled'; })
     .reduce(function(s,i){ return s + toDisp(Math.abs(+i.cnAmount||0), i.cur||'USD'); }, 0);
   var netCash = tBuyerDep - tSupDep - tGoodwillCredits;
@@ -4584,7 +4615,7 @@ function rDash() {
   var mxP = Math.max.apply(null, apo.map(function(p){ return (p.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0); }).concat([1]));
   G('po-chart').innerHTML = apo.length ? apo.slice(-6).map(function(p){
     var t = (p.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0);
-    return '<div class="br"><div class="bl2">' + san(p.num||gsn(p.supId)||'-') + '</div><div class="bt"><div class="bf bl" style="width:' + (t/mxP*100) + '%"></div></div><div class="bv">' + fmt(t-(+p.dep||0),p.cur||'USD') + '</div></div>';
+    return '<div class="br"><div class="bl2">' + san(p.num||gsn(p.supId)||'-') + '</div><div class="bt"><div class="bf bl" style="width:' + (t/mxP*100) + '%"></div></div><div class="bv">' + fmt(t-getPOEffectiveDep(p),p.cur||'USD') + '</div></div>';
   }).join('') : '<p style="font-size:.56rem;color:var(--m)">No active POs</p>';
 
   // Shipment Pipeline mini-list
@@ -4666,12 +4697,12 @@ function renderAccts() {
     var linkedPOs = DB.po.filter(function(p){
       return p.invId === inv.id || p.invNum === inv.num;
     });
-    var supDepPaid  = linkedPOs.reduce(function(s,p){ return s + (+p.dep||0); }, 0);
+    var supDepPaid  = linkedPOs.reduce(function(s,p){ return s + getPOEffectiveDep(p); }, 0);
     var fpmFunded   = linkedPOs.reduce(function(s,p){ return s + (+p.fpmFunded||0); }, 0);
     var fpmRecovered= linkedPOs.every(function(p){ return !p.fpmFunded || p.fpmRecovered; });
     var supBalDue   = linkedPOs.reduce(function(s,p){
       var t = (p.lineItems||[]).reduce(function(a,l){ return a+(+l.qty||0)*(+l.cost||0); },0);
-      return s + Math.max(0, t + (+p.oth||0) - (+p.dep||0));
+      return s + Math.max(0, t + (+p.oth||0) - getPOEffectiveDep(p));
     }, 0);
 
     // Total to chase = invoice balance + any unrecovered FPM-funded deposits
@@ -4731,10 +4762,10 @@ function renderAccts() {
     var totalCOGS = s.pos.reduce(function(a,p){
       return a + (p.lineItems||[]).reduce(function(b,l){ return b+(+l.qty||0)*(+l.cost||0); },0);
     }, 0);
-    var totalDep = s.pos.reduce(function(a,p){ return a+(+p.dep||0); },0);
+    var totalDep = s.pos.reduce(function(a,p){ return a+getPOEffectiveDep(p); },0);
     var totalBal = s.pos.reduce(function(a,p){
       var t=(p.lineItems||[]).reduce(function(b,l){return b+(+l.qty||0)*(+l.cost||0);},0);
-      return a+Math.max(0,t+(+p.oth||0)-(+p.dep||0));
+      return a+Math.max(0,t+(+p.oth||0)-getPOEffectiveDep(p));
     },0);
     var pct = totalCOGS > 0 ? ((totalDep/totalCOGS)*100).toFixed(0) : 0;
     var settled = s.pos.filter(function(p){return p.status==='Settled';}).length;
@@ -4769,7 +4800,7 @@ function renderAccts() {
   // ── TOTALS BAR ────────────────────────────────────────────
   var tBD = ai.reduce(function(s,i){ return s+(+i.dep||0); },0);
   var tSD = DB.po.filter(function(p){return p.status!=='Cancelled';})
-    .reduce(function(s,p){return s+(+p.dep||0);},0);
+    .reduce(function(s,p){return s+getPOEffectiveDep(p);},0);
   var tFPM = DB.po.filter(function(p){return p.status!=='Cancelled' && !p.fpmRecovered && +p.fpmFunded>0;})
     .reduce(function(s,p){return s+(+p.fpmFunded||0);},0);
   var net = tBD - tSD;
@@ -5957,6 +5988,18 @@ function renderPoSourceDriftWarn(po) {
   el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;">&#9888; Source Invoice has changed since this PO was generated — review before proceeding.</div>';
 }
 
+function renderPoDepNote(depInfo) {
+  var el = G('po-dep-note');
+  if (!el) return;
+  if (depInfo.source === 'ledger') {
+    el.innerHTML = '<div style="font-size:.48rem;color:var(--m);margin-top:2px;">Derived from recorded Supplier Payments — use the $ action to add another payment.</div>';
+  } else if (depInfo.source === 'legacy-unsupported-currency') {
+    el.innerHTML = '<div style="font-size:.48rem;color:#B8283A;margin-top:2px;">&#9888; Supplier Payments exist for this PO but its currency cannot yet be reconciled automatically — showing the manually-entered figure. This value is not derived from the ledger.</div>';
+  } else {
+    el.innerHTML = '';
+  }
+}
+
 // ── VAT RETURN (MTD) ───────────────────────────────────────────
 function _vatPrevQuarter(now) {
   if (!now) now = new Date();
@@ -6812,6 +6855,8 @@ function openPO() {
   ['pf-n','pf-del','pf-nt'].forEach(function(f){var e=G(f);if(e)e.value='';});
   G('pf-dep').value=''; G('pf-fpm').value=''; G('pf-oth').value=''; G('pf-rec').checked=false; G('pf-rec-label').textContent='FPM funds recovered (auto-set when invoice marked Paid)'; G('pf-dt').value=today();
   G('pf-sup').value=''; G('pf-cur').value='USD'; G('pf-inv').value=''; G('pf-pt').value='';
+  G('pf-dep').readOnly=false;
+  renderPoDepNote({source:'legacy-no-records'});
   vClrAll(['pf-n','pf-sup','pf-dep','pf-fpm','pf-oth','pf-dt','pf-del']);
   rPLT(); calcPO(); G('ov-po').classList.add('on');
 }
@@ -6821,8 +6866,12 @@ function editPO(id) {
   G('po-mt').textContent='Edit PO'; G('po-sm').value=po.status||'Draft';
   G('pf-n').value=po.num||''; G('pf-dt').value=po.date||today();
   G('pf-del').value=po.del||''; G('pf-sup').value=po.supId||'';
-  G('pf-cur').value=po.cur||'USD'; G('pf-dep').value=po.dep||'';
+  G('pf-cur').value=po.cur||'USD';
   G('pf-oth').value=po.oth||''; G('pf-nt').value=po.notes||''; G('pf-inv').value=po.invNum||''; G('pf-pt').value=po.paymentTerms||'';
+  var depInfo = getPOEffectiveDepInfo(po);
+  G('pf-dep').value = depInfo.value || '';
+  G('pf-dep').readOnly = (depInfo.source === 'ledger');
+  renderPoDepNote(depInfo);
   renderPoSourceDriftWarn(po);
   rPLT(); calcPO(); showV('po',document.querySelector('[data-v="po"]')); G('ov-po').classList.add('on');
 }
@@ -6873,7 +6922,7 @@ function rPO() {
   G('po-em').style.display=f.length?'none':'block';
   G('po-tb').innerHTML=f.slice().reverse().map(function(po){
     var liT=(po.lineItems||[]).reduce(function(s,li){return s+(+li.qty||0)*(+li.cost||0);},0);
-    var dep=+po.dep||0, bal=liT+(+po.oth||0)-dep, cur=po.cur||'USD';
+    var dep=getPOEffectiveDep(po), bal=liT+(+po.oth||0)-dep, cur=po.cur||'USD';
     var sc=(po.status||'draft').toLowerCase().replace(/ /g,'-');
     return '<tr>' +
       '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + san(po.num||'-') + (po._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
@@ -7115,7 +7164,7 @@ function prevPODoc(po) {
   var lis = po.lineItems||[];
   if (typeof lis === 'string') { try { lis=JSON.parse(lis); } catch(e){ lis=[]; } }
   var liT = lis.reduce(function(s,li){ return s+(+li.qty||0)*(+li.cost||0); },0);
-  var dep=+po.dep||0, oth=+po.oth||0, grand=liT+oth, bal=grand-dep;
+  var dep=getPOEffectiveDep(po), oth=+po.oth||0, grand=liT+oth, bal=grand-dep;
   var sup = DB.sup.find(function(x){ return x.id===po.supId; });
   var poNum = po.num||'DRAFT';
   var docTitle = 'PO ' + poNum;
@@ -8563,7 +8612,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.62).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.63).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8653,7 +8702,7 @@ var AI_SYSTEM_PROMPT = [
   'PO status: Draft → Sent → Deposit Paid → Settled → Cancelled.',
   'Payment Terms field available on PO (optional).',
   'Source Invoice staleness warning (v2.9.58): a PO auto-generated from an Invoice\'s line items records that Invoice\'s unit prices/quantities at generation time. If the Invoice is edited afterward — a line\'s price or quantity changes, a line is removed, or a new line is added for that same supplier — re-opening the PO shows a warning banner ("Source Invoice has changed since this PO was generated — review before proceeding"). The PO itself is never auto-updated, only flagged. A distinct message appears if the source Invoice has been deleted entirely. This check only applies to POs auto-generated from an Invoice — a PO created manually or via Convert to PO from a Quote never shows it. One known, accepted gap: a brand-new line added for a supplier that has no PO from that invoice at all is not flagged anywhere, since there is no PO to attach a warning to — the operator should still check Purchase Orders manually after adding a new supplier\'s line to an already-invoiced order.',
-  'Supplier Payment ledger (v2.9.62): click $ on a PO row to record individual payments made to that supplier — date, amount, native currency, purpose (Deposit/Balance/Other), method, reference, notes. Each payment locks in a GBP-equivalent snapshot at save time using the current FX rate, which never changes later even if rates are updated afterward. This is a separate, standalone ledger alongside the PO\'s existing Deposit Paid/FPM Funded fields — it does not read from or write to them, and does not affect PO balance calculations. Deleting a PO does not delete its payment history. This is sub-phase 2a of a larger Payment Allocation build — it does not yet link to buyer-side payments or Invoice collections.',
+  'Supplier Payment ledger (v2.9.62): click $ on a PO row to record individual payments made to that supplier — date, amount, native currency, purpose (Deposit/Balance/Other), method, reference, notes. Each payment locks in a GBP-equivalent snapshot at save time using the current FX rate, which never changes later even if rates are updated afterward. Deleting a PO does not delete its payment history. This is sub-phase 2a of a larger Payment Allocation build — it does not yet link to buyer-side payments or Invoice collections. As of v2.9.63, the PO\'s own "Supplier Deposit Paid" figure (Edit PO modal, PO PDF, Dashboard, Accounts view, and this assistant\'s PO answers) is reconciled from this ledger once any payments are recorded against a PO, becoming read-only at that point — it is no longer a separate, unrelated number once the ledger has entries for that PO. A PO with no ledger records yet, or a currency this reconciliation cannot yet safely handle (EUR), still shows and allows editing the manually-entered figure.',
   '',
   '## Payments',
   'Invoices tab → click $ on invoice row. Enter: Date, Amount, Method, Reference, Notes → Save Payment.',
@@ -9203,7 +9252,7 @@ function _aiExecTool(name, inp) {
       var poBal = DB.po.filter(function(p){ return p.status!=='Completed'&&p.status!=='Cancelled'; })
         .reduce(function(s,p){
           var t = (p.lineItems||[]).reduce(function(a,l){ return a+(+l.qty||0)*(+l.cost||0); },0);
-          return s + Math.max(0, t + (+p.oth||0) - (+p.dep||0));
+          return s + Math.max(0, t + (+p.oth||0) - getPOEffectiveDep(p));
         }, 0);
       return JSON.stringify({
         invoiceRevenue:      +revenue.toFixed(2),
@@ -9249,10 +9298,11 @@ function _aiExecTool(name, inp) {
       return JSON.stringify(pos.map(function(po) {
         var sup      = DB.sup.find(function(s){ return s.id===po.supId; });
         var lineTotal = (po.lineItems||[]).reduce(function(s,l){ return s+(+l.qty||0)*(+l.cost||0); },0);
-        var balance   = Math.max(0, lineTotal + (+po.oth||0) - (+po.dep||0));
+        var effDep    = getPOEffectiveDep(po);
+        var balance   = Math.max(0, lineTotal + (+po.oth||0) - effDep);
         return { num: po.num, supplier: sup ? sup.name : po.supId, date: po.date,
                  status: po.status, currency: po.cur||'USD',
-                 lineTotal: +lineTotal.toFixed(2), depositPaid: +(+po.dep||0).toFixed(2),
+                 lineTotal: +lineTotal.toFixed(2), depositPaid: +effDep.toFixed(2),
                  balanceDue: +balance.toFixed(2) };
       }));
     }
@@ -11475,6 +11525,59 @@ function getPOPayments(poId) {
 
 function getPOTotalPaid(poId) {
   return getPOPayments(poId).reduce(function(s,p){ return s + (+(p.rateLock && p.rateLock.gbpEquiv) || 0); }, 0);
+}
+
+// Currencies getPOEffectiveDep()/getPOTotalPaidNative() can safely reconcile a PO's
+// ledger against. A PO in any OTHER currency (today, only EUR is reachable via
+// pf-cur) falls back to the legacy po.dep figure rather than risk a silently
+// wrong/mislabeled conversion.
+var PO_DEP_RECONCILE_CURS = ['USD', 'GBP', 'RMB', 'CNY', 'BBD'];
+
+// Sums a PO's linked Supplier Payment records DENOMINATED IN THE PO'S OWN CURRENCY
+// (po.cur), not GBP. Only called once getPOEffectiveDep() below has already confirmed
+// po.cur is in PO_DEP_RECONCILE_CURS — never call this directly with an unsupported
+// PO currency.
+function getPOTotalPaidNative(po) {
+  var poCur = (po.cur || 'USD').toUpperCase();
+  if (poCur === 'CNY') poCur = 'RMB'; // normalize: PO currency uses CNY, payment currency uses RMB — same real currency
+  return getPOPayments(po.id).reduce(function(sum, p) {
+    var pCur = (p.currency || 'USD').toUpperCase();
+    if (pCur === 'CNY') pCur = 'RMB';
+    if (pCur === poCur) {
+      // Same currency as the PO: sum the raw native amount directly. Zero conversion,
+      // zero FX rounding noise — exact.
+      return sum + (+p.amount || 0);
+    }
+    // Different currency than the PO: pivot through this record's OWN locked
+    // GBP-equivalent, converted into the PO's currency using that SAME record's
+    // own locked rate table — never today's live QR rate for either leg.
+    var gbp = (p.rateLock && p.rateLock.gbpEquiv) || 0;
+    var ratesUsed = (p.rateLock && p.rateLock.ratesUsed) || {};
+    return sum + fromGBPLocked(gbp, po.cur, ratesUsed);
+  }, 0);
+}
+
+// Single point of truth for "what should this PO's Deposit Paid figure show." Returns
+// { value, source } — source is one of:
+//   'ledger'                      — reconciled from DB.supPayments via getPOTotalPaidNative()
+//   'legacy-no-records'           — no Supplier Payment records exist yet; raw po.dep
+//   'legacy-unsupported-currency' — records exist, but po.cur isn't in PO_DEP_RECONCILE_CURS; raw po.dep
+// Never mutates po.dep. Safe to call from any read-only render context.
+function getPOEffectiveDepInfo(po) {
+  var payments = getPOPayments(po.id);
+  if (!payments.length) {
+    return { value: +po.dep || 0, source: 'legacy-no-records' };
+  }
+  var poCur = (po.cur || 'USD').toUpperCase();
+  if (poCur === 'CNY') poCur = 'RMB';
+  if (PO_DEP_RECONCILE_CURS.indexOf(poCur) === -1) {
+    return { value: +po.dep || 0, source: 'legacy-unsupported-currency' };
+  }
+  return { value: getPOTotalPaidNative(po), source: 'ledger' };
+}
+
+function getPOEffectiveDep(po) {
+  return getPOEffectiveDepInfo(po).value;
 }
 
 function vSupPay(date, amount, purpose) {

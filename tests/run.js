@@ -4089,7 +4089,7 @@ test('lockFxRate() — RMB payment captures exactly the applied rate and correct
   ctx.QR.fxGBPRMB = 9.20;
   var lock = ctx.lockFxRate(920, 'RMB');
   assertEqual(lock.ratesUsed.fxGBPRMB, 9.20, 'ratesUsed captures the applied rate');
-  assertEqual(Object.keys(lock.ratesUsed).length, 1, 'ratesUsed has exactly one key');
+  assertEqual(Object.keys(lock.ratesUsed).length, 3, 'ratesUsed now has all three keys (REQ-INTEG-002-2a-fix-a), not just the one applied');
   assertApprox(lock.gbpEquiv, 100, 'gbpEquiv = 920 / 9.20');
 });
 
@@ -4120,9 +4120,9 @@ test('getPOTotalPaid() sums rateLock.gbpEquiv across multiple native currencies,
   assertEqual(ctx.getPOTotalPaid('po-3'), 60, 'sum of gbpEquiv values, not raw amounts');
 });
 
-test('lockFxRate() — GBP payment applies no rate at all (AC-4b)', function() {
+test('lockFxRate() — GBP payment applies no rate to gbpEquiv, but ratesUsed still snapshots all three (AC-4b)', function() {
   var lock = ctx.lockFxRate(50, 'GBP');
-  assertEqual(Object.keys(lock.ratesUsed).length, 0, 'ratesUsed is empty for GBP');
+  assertEqual(Object.keys(lock.ratesUsed).length, 3, 'ratesUsed has all three keys even though gbpEquiv used none of them (REQ-INTEG-002-2a-fix-a)');
   assertEqual(lock.gbpEquiv, 50, 'gbpEquiv equals amount for GBP (identity)');
 });
 
@@ -4208,6 +4208,207 @@ test('expAll()/doImport() round-trip supPayments (AC-13)', function() {
   if (snap.supPayments && Array.isArray(snap.supPayments)) { ctx.DB.supPayments = snap.supPayments; }
   assertEqual(ctx.DB.supPayments.length, 1, 'supPayments restored from backup snapshot shape');
   assertEqual(ctx.DB.supPayments[0].poId, 'po-8');
+});
+
+// ── REQ-INTEG-002-2a-fix: Reconcile PO.dep display with the Supplier Payment ledger ──
+
+test('fromGBPLocked() — converts using the passed-in rate table, each supported currency', function() {
+  var rates = { fxGBPUSD: 1.25, fxGBPRMB: 9.0, fxGBPBBD: 2.5 };
+  assertApprox(ctx.fromGBPLocked(100, 'USD', rates), 125, 'USD leg');
+  assertApprox(ctx.fromGBPLocked(100, 'RMB', rates), 900, 'RMB leg');
+  assertApprox(ctx.fromGBPLocked(100, 'CNY', rates), 900, 'CNY aliases to RMB rate');
+  assertApprox(ctx.fromGBPLocked(100, 'BBD', rates), 250, 'BBD leg');
+  assertEqual(ctx.fromGBPLocked(100, 'GBP', rates), 100, 'GBP is identity, no rate needed');
+});
+
+test('fromGBPLocked() — backward-compat fallback to live QR when a rate is missing (pre-fix record)', function() {
+  ctx.QR.fxGBPUSD = 1.30;
+  var result = ctx.fromGBPLocked(100, 'USD', { fxGBPRMB: 9.0 }); // pre-fix single-key ratesUsed, missing fxGBPUSD
+  assertApprox(result, 130, 'falls back to live QR.fxGBPUSD, does not throw or return NaN');
+});
+
+test('getPOTotalPaidNative() — same-currency payments sum raw native amounts, immune to FX rate mutation (AC-2a)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-1', num: 'PO-FIX-1', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pf1', poId: 'po-fix-1', poNum: 'PO-FIX-1', date: '2026-01-01', amount: 100, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 999, ratesUsed: {} } });
+  ctx.DB.supPayments.push({ id: 'pf2', poId: 'po-fix-1', poNum: 'PO-FIX-1', date: '2026-01-02', amount: 50, currency: 'USD', purpose: 'Balance', rateLock: { gbpEquiv: 999, ratesUsed: {} } });
+  ctx.QR.fxGBPUSD = 0.01; // deliberately wrong — must have zero effect on the same-currency path
+  var po = ctx.DB.po[0];
+  assertEqual(ctx.getPOTotalPaidNative(po), 150, 'exact raw sum, FX untouched');
+});
+
+test('getPOTotalPaidNative() — cross-currency payment converts via ITS OWN locked rates, not live QR (AC-2b)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-2', num: 'PO-FIX-2', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pf3', poId: 'po-fix-2', poNum: 'PO-FIX-2', date: '2026-01-01', amount: 50, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 40, ratesUsed: { fxGBPUSD: 1.25, fxGBPRMB: 9.0, fxGBPBBD: 2.5 } } });
+  ctx.DB.supPayments.push({ id: 'pf4', poId: 'po-fix-2', poNum: 'PO-FIX-2', date: '2026-01-02', amount: 900, currency: 'RMB', purpose: 'Balance', rateLock: { gbpEquiv: 100, ratesUsed: { fxGBPUSD: 1.25, fxGBPRMB: 9.0, fxGBPBBD: 2.5 } } });
+  var po = ctx.DB.po[0];
+  var expected = 50 + ctx.fromGBPLocked(100, 'USD', { fxGBPUSD: 1.25, fxGBPRMB: 9.0, fxGBPBBD: 2.5 });
+  ctx.QR.fxGBPUSD = 999; ctx.QR.fxGBPRMB = 999; // deliberately wrong live rates
+  assertApprox(ctx.getPOTotalPaidNative(po), expected, 'cross-currency leg uses the record\'s own locked rates, unaffected by live QR mutation');
+});
+
+test('getPOTotalPaidNative() — CNY (PO currency) / RMB (payment currency) normalize as the same currency (AC-2c)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-3', num: 'PO-FIX-3', supId: 'sup-1', cur: 'CNY', status: 'Confirmed', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pf5', poId: 'po-fix-3', poNum: 'PO-FIX-3', date: '2026-01-01', amount: 500, currency: 'RMB', purpose: 'Deposit', rateLock: { gbpEquiv: 999, ratesUsed: {} } });
+  ctx.QR.fxGBPRMB = 0.01; // wrong on purpose — same-currency path must never touch this
+  var po = ctx.DB.po[0];
+  assertEqual(ctx.getPOTotalPaidNative(po), 500, 'CNY/RMB normalized as same currency — raw sum, no conversion');
+});
+
+test('getPOEffectiveDepInfo() — zero linked records falls back to legacy po.dep (AC-2d)', function() {
+  resetDB();
+  var po = { id: 'po-fix-4', num: 'PO-FIX-4', cur: 'USD', dep: 5000 };
+  ctx.DB.po.push(po);
+  var info = ctx.getPOEffectiveDepInfo(po);
+  assertEqual(info.value, 5000, 'raw po.dep returned unchanged');
+  assertEqual(info.source, 'legacy-no-records', 'source flag correct');
+});
+
+test('getPOEffectiveDepInfo() — EUR PO with ledger records falls back safely, never produces a wrong converted figure (AC-2e)', function() {
+  resetDB();
+  var po = { id: 'po-fix-5', num: 'PO-FIX-5', cur: 'EUR', dep: 1000 };
+  ctx.DB.po.push(po);
+  ctx.DB.supPayments.push({ id: 'pf6', poId: 'po-fix-5', poNum: 'PO-FIX-5', date: '2026-01-01', amount: 100, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 80, ratesUsed: { fxGBPUSD: 1.25, fxGBPRMB: 9.0, fxGBPBBD: 2.5 } } });
+  var info = ctx.getPOEffectiveDepInfo(po);
+  assertEqual(info.value, 1000, 'legacy po.dep returned, NOT a mislabeled GBP-equivalent number — this is the regression the v1 requirements-gate review flagged as closed');
+  assertEqual(info.source, 'legacy-unsupported-currency', 'source flag identifies the unsupported-currency fallback');
+});
+
+test('getPOEffectiveDep() always equals getPOEffectiveDepInfo().value, for all three source cases (AC-2f)', function() {
+  resetDB();
+  var poNoRecords = { id: 'po-fix-6a', num: 'PO-FIX-6A', cur: 'USD', dep: 10 };
+  var poLedger = { id: 'po-fix-6b', num: 'PO-FIX-6B', cur: 'USD', dep: 10 };
+  var poEur = { id: 'po-fix-6c', num: 'PO-FIX-6C', cur: 'EUR', dep: 10 };
+  ctx.DB.po.push(poNoRecords, poLedger, poEur);
+  ctx.DB.supPayments.push({ id: 'pf7', poId: 'po-fix-6b', poNum: 'PO-FIX-6B', date: '2026-01-01', amount: 20, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 16, ratesUsed: {} } });
+  ctx.DB.supPayments.push({ id: 'pf8', poId: 'po-fix-6c', poNum: 'PO-FIX-6C', date: '2026-01-01', amount: 20, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 16, ratesUsed: {} } });
+  [poNoRecords, poLedger, poEur].forEach(function(po) {
+    assertEqual(ctx.getPOEffectiveDep(po), ctx.getPOEffectiveDepInfo(po).value, 'getPOEffectiveDep() never disagrees with getPOEffectiveDepInfo().value for ' + po.id);
+  });
+});
+
+test('rPO() — Deposit column reflects the ledger total, not raw po.dep, once records exist (AC-3a)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-7', num: 'PO-FIX-7', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pf9', poId: 'po-fix-7', poNum: 'PO-FIX-7', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  mockEl('po-q').value = ''; mockEl('po-sf').value = '';
+  ctx.rPO();
+  var html = mockElements['po-tb'].innerHTML;
+  assertContains(html, '250', 'shows the ledger total (250), not the stale raw po.dep (999)');
+});
+
+test('prevPODoc() — PDF Deposit Paid reflects the ledger total, not raw po.dep (AC-3b)', function() {
+  var getHtml = makePreviewMock();
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-8', num: 'PO-FIX-8', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, oth: 0, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pf10', poId: 'po-fix-8', poNum: 'PO-FIX-8', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  var po = ctx.DB.po[0];
+  ctx.prevPODoc(po);
+  var html = getHtml();
+  assertContains(html, '250', 'PDF shows the ledger total, the headline reason this fix exists');
+});
+
+test('rDash() — outstanding PO balance KPI and PO Commitments chart use the ledger total, not raw po.dep (AC-3c/d)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-9', num: 'PO-FIX-9', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 10, cost: 100 }] });
+  ctx.DB.supPayments.push({ id: 'pf11', poId: 'po-fix-9', poNum: 'PO-FIX-9', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  ctx.rDash();
+  var chart = mockElements['po-chart'] ? mockElements['po-chart'].innerHTML : '';
+  // Balance shown = COGS(1000) - effectiveDep(250) = 750, not COGS(1000) - staleDep(999) = 1
+  assertContains(chart, '750', 'PO Commitments chart bar reflects the ledger-derived balance');
+});
+
+test('renderAccts() — per-invoice, per-supplier, and totals-bar sections all use the ledger total, not raw po.dep (AC-3e/f/g)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-fix-1', num: 'INV20099', status: 'Sent', cur: 'USD', dep: 0, lineItems: [], taxRate: 0 });
+  ctx.DB.po.push({ id: 'po-fix-10', num: 'PO-FIX-10', supId: 'sup-1', invId: 'inv-fix-1', invNum: 'INV20099', cur: 'USD', status: 'Confirmed', dep: 999, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 10, cost: 100 }] });
+  ctx.DB.supPayments.push({ id: 'pf12', poId: 'po-fix-10', poNum: 'PO-FIX-10', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  ctx.renderAccts();
+  var acctInv = mockElements['acct-inv'] ? mockElements['acct-inv'].innerHTML : '';
+  var acctSup = mockElements['acct-sup'] ? mockElements['acct-sup'].innerHTML : '';
+  var acctTotals = mockElements['acct-totals'] ? mockElements['acct-totals'].innerHTML : '';
+  assertContains(acctInv, '250', 'per-invoice Sup. Dep. Paid column uses the ledger total');
+  assertContains(acctSup, '250', 'per-supplier Dep. Paid column uses the ledger total');
+  assertContains(acctTotals, '250', 'totals bar Total Paid to Suppliers uses the ledger total');
+});
+
+test("_aiExecTool('get_kpis')/('get_pos') — poBalanceDue/depositPaid/balanceDue use the ledger total, not raw po.dep (AC-3h/i)", function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-11', num: 'PO-FIX-11', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 10, cost: 100 }] });
+  ctx.DB.supPayments.push({ id: 'pf13', poId: 'po-fix-11', poNum: 'PO-FIX-11', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  var kpis = JSON.parse(ctx._aiExecTool('get_kpis', {}));
+  assertEqual(kpis.poBalanceDue, 750, 'get_kpis.poBalanceDue = COGS(1000) - ledger total(250)');
+  var pos = JSON.parse(ctx._aiExecTool('get_pos', {}));
+  var po = pos.find(function(p){ return p.num === 'PO-FIX-11'; });
+  assertEqual(po.depositPaid, 250, 'get_pos.depositPaid uses the ledger total');
+  assertEqual(po.balanceDue, 750, 'get_pos.balanceDue uses the ledger total');
+});
+
+test('editPO() — PO with ledger records: pf-dep shows the ledger total and becomes readOnly (AC-4a)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-12', num: 'PO-FIX-12', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pf14', poId: 'po-fix-12', poNum: 'PO-FIX-12', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  ctx.editPO('po-fix-12');
+  assertEqual(mockEl('pf-dep').value, 250, 'pf-dep shows the ledger total');
+  assertEqual(mockEl('pf-dep').readOnly, true, 'pf-dep is readOnly once ledger records exist');
+  assertContains(mockEl('po-dep-note').innerHTML, 'Derived from recorded Supplier Payments', 'note explains the readOnly state');
+});
+
+test('editPO() — PO with zero ledger records: pf-dep stays editable and shows raw po.dep (AC-4b)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-13', num: 'PO-FIX-13', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 500, lineItems: [] });
+  ctx.editPO('po-fix-13');
+  assertEqual(mockEl('pf-dep').value, 500, 'pf-dep shows raw po.dep');
+  assertEqual(mockEl('pf-dep').readOnly, false, 'pf-dep remains editable — no ledger records to reconcile');
+});
+
+test('editPO() — PO with ledger records but unsupported (EUR) currency: pf-dep stays editable with a warning note (AC-4c)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-14', num: 'PO-FIX-14', supId: 'sup-1', cur: 'EUR', status: 'Confirmed', dep: 500, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pf15', poId: 'po-fix-14', poNum: 'PO-FIX-14', date: '2026-01-01', amount: 100, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 80, ratesUsed: {} } });
+  ctx.editPO('po-fix-14');
+  assertEqual(mockEl('pf-dep').value, 500, 'pf-dep shows raw po.dep — cannot safely reconcile EUR');
+  assertEqual(mockEl('pf-dep').readOnly, false, 'pf-dep remains editable for the unsupported-currency case');
+  assertContains(mockEl('po-dep-note').innerHTML, 'cannot yet be reconciled', 'note explains why the figure is not from the ledger');
+});
+
+test('openPO() — resets pf-dep readOnly/note left over from a previously-edited PO (AC-4d, spec-gate B-1 regression)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-15', num: 'PO-FIX-15', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pf16', poId: 'po-fix-15', poNum: 'PO-FIX-15', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  ctx.editPO('po-fix-15');
+  assertEqual(mockEl('pf-dep').readOnly, true, 'sanity check: editing set readOnly true');
+  ctx.openPO();
+  assertEqual(mockEl('pf-dep').readOnly, false, 'opening a brand-new PO resets readOnly to false — no leak from the previous edit');
+  assertEqual(mockEl('po-dep-note').innerHTML, '', 'the previous PO\'s ledger note is cleared, not left stale');
+});
+
+test('savePO() persists whatever the (possibly readOnly, ledger-derived) pf-dep value displays (AC-4e)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-16', num: 'PO-FIX-16', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pf17', poId: 'po-fix-16', poNum: 'PO-FIX-16', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  ctx.EI.p = 'po-fix-16';
+  ctx.editPO('po-fix-16');
+  mockEl('pf-n').value = 'PO-FIX-16'; mockEl('pf-sup').value = 'sup-1'; mockEl('pf-cur').value = 'USD'; mockEl('pf-inv').value = '';
+  mockEl('pf-dt').value = '2026-01-01'; mockEl('pf-del').value = ''; mockEl('pf-pt').value = '';
+  mockEl('pf-fpm').value = ''; mockEl('pf-oth').value = ''; mockEl('pf-nt').value = '';
+  mockEl('pf-rec').checked = false; mockEl('po-sm').value = 'Confirmed';
+  ctx.cPL = [];
+  ctx.savePO();
+  var saved = ctx.DB.po.find(function(p){ return p.id === 'po-fix-16'; });
+  assertEqual(saved.dep, 250, 'savePO() persists the reconciled figure that was displayed in the readOnly field, not the stale original 999');
+});
+
+test('Backward compatibility: a PO with dep>0 and zero supPayments records is completely unaffected by this fix (AC-5)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-fix-17', num: 'PO-FIX-17', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 28000, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 20, cost: 9875 }] });
+  var po = ctx.DB.po[0];
+  assertEqual(ctx.getPOEffectiveDep(po), 28000, 'raw po.dep returned unchanged when no ledger records exist');
+  mockEl('po-q').value = ''; mockEl('po-sf').value = '';
+  ctx.rPO();
+  assertContains(mockElements['po-tb'].innerHTML, '28,000', 'rPO() list view unaffected for a pre-existing PO with no ledger records');
 });
 
 // ── REQ-MTD-001: VAT Return ──────────────────────────────────────────────────
