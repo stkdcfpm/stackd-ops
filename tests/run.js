@@ -3855,18 +3855,20 @@ test('handleAIAction: create_buyer pre-fills buyer modal fields', function() {
 
 // ── REQ-DEMO-001: Demo mode ──────────────────────────────────────────────────
 
-test('loadDemoData: seeds 6 entity records + 1 payment + 2 events', function() {
+test('loadDemoData: seeds 15 entity records + 1 payment + 4 events', function() {
   resetDB();
   ctx.DB.events = [];
   ctx.loadDemoData();
-  assertEqual(ctx.DB.sup.length, 1, 'supplier seeded');
+  assertEqual(ctx.DB.sup.length, 2, '2 suppliers seeded (2nd for RFQ comparison)');
   assertEqual(ctx.DB.con.length, 1, 'contact seeded');
-  assertEqual(ctx.DB.qt.length, 1, 'quote seeded');
-  assertEqual(ctx.DB.po.length, 1, 'po seeded');
-  assertEqual(ctx.DB.inv.length, 1, 'invoice seeded');
+  assertEqual(ctx.DB.qt.length, 2, '2 quotes seeded (DQ-0001, DQ-0002)');
+  assertEqual(ctx.DB.po.length, 2, '2 POs seeded (DPO-0001, DPO-0002)');
+  assertEqual(ctx.DB.inv.length, 5, '5 invoices seeded (DINV-0001..0005)');
   assertEqual(ctx.DB.sh.length, 1, 'shipment seeded');
+  assertEqual(ctx.DB.ord.length, 1, 'order request seeded');
+  assertEqual(ctx.DB.li.length, 1, 'line item catalogue entry seeded');
   assertEqual(ctx.DB.payments.length, 1, 'payment seeded');
-  assertEqual(ctx.DB.events.length, 2, '2 events seeded');
+  assertEqual(ctx.DB.events.length, 4, '4 events seeded');
   assert(ctx.DB.sh[0]._demo === true, 'shipment has _demo flag');
   assert(ctx.DB.con[0]._demo === true, 'contact has _demo flag');
 });
@@ -3876,15 +3878,17 @@ test('loadDemoData: idempotent — second call does not duplicate (AC-2)', funct
   ctx.DB.events = [];
   ctx.loadDemoData();
   ctx.loadDemoData();
-  assertEqual(ctx.DB.sup.length, 1, 'no duplicate supplier');
+  assertEqual(ctx.DB.sup.length, 2, 'no duplicate suppliers');
   assertEqual(ctx.DB.sh.length, 1, 'no duplicate shipment');
+  assertEqual(ctx.DB.ord.length, 1, 'no duplicate order request');
+  assertEqual(ctx.DB.li.length, 1, 'no duplicate line item');
 });
 
 test('loadDemoData: all seeded records have _demo:true', function() {
   resetDB();
   ctx.DB.events = [];
   ctx.loadDemoData();
-  var allDemoArrays = [ctx.DB.sup, ctx.DB.con, ctx.DB.qt, ctx.DB.po, ctx.DB.inv, ctx.DB.sh, ctx.DB.payments];
+  var allDemoArrays = [ctx.DB.sup, ctx.DB.con, ctx.DB.qt, ctx.DB.po, ctx.DB.inv, ctx.DB.sh, ctx.DB.payments, ctx.DB.ord, ctx.DB.li];
   allDemoArrays.forEach(function(arr){
     arr.forEach(function(r){ assert(r._demo === true, 'record has _demo:true'); });
   });
@@ -3924,10 +3928,12 @@ test('clearDemoData: removes all _demo records (AC-6)', function() {
   ctx.confirm = function(){ return true; };
   ctx.clearDemoData();
   ctx.confirm = function(){ return false; };
-  assertEqual(ctx.DB.sup.length, 0, 'demo supplier removed');
+  assertEqual(ctx.DB.sup.length, 0, 'demo suppliers removed');
   assertEqual(ctx.DB.sh.length, 0, 'demo shipment removed');
   assertEqual(ctx.DB.payments.length, 0, 'demo payment removed');
   assertEqual(ctx.DB.events.length, 0, 'demo events removed');
+  assertEqual(ctx.DB.ord.length, 0, 'demo order request removed');
+  assertEqual(ctx.DB.li.length, 0, 'demo line item removed');
   assertEqual(ctx.DB.con.length, 1, 'real contact preserved');
   assertEqual(ctx.DB.con[0].id, 'real-con', 'real contact id correct');
 });
@@ -3939,7 +3945,9 @@ test('clearDemoData: confirm cancel leaves records intact (AC-7)', function() {
   ctx.confirm = function(){ return false; };
   ctx.clearDemoData();
   assertEqual(ctx.DB.sh.length, 1, 'shipment intact');
-  assertEqual(ctx.DB.events.length, 2, 'events intact');
+  assertEqual(ctx.DB.events.length, 4, 'events intact');
+  assertEqual(ctx.DB.ord.length, 1, 'order request intact');
+  assertEqual(ctx.DB.li.length, 1, 'line item intact');
 });
 
 test('rDash KPI exclusion: demo invoice not counted in revenue (AC-4)', function() {
@@ -3971,6 +3979,90 @@ test('rDash KPI exclusion: demo shipment not counted in in-transit (AC-4)', func
   ctx.loadDemoData();
   var inTransit = ctx.DB.sh.filter(function(s){ return !s._demo && s.status === 'In Transit'; }).length;
   assertEqual(inTransit, 0, 'demo shipment excluded from in-transit count');
+});
+
+// ── Demo data expansion for REQ-INTEG-001 Phase 1/2 test coverage (v2.9.61) ───
+
+test('loadDemoData scenario 1: DORD-0001 line has 2 rfqResponses from different suppliers, RFQ comparison panel renders both', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var ord = ctx.DB.ord.find(function(o){ return o.num === 'DORD-0001'; });
+  assert(!!ord, 'demo Order Request seeded');
+  var line = ord.lines[0];
+  assertEqual(line.rfqResponses.length, 2, '2 RFQ responses on the line');
+  var supIds = line.rfqResponses.map(function(r){ return r.supId; });
+  assert(supIds[0] !== supIds[1], 'responses are from 2 different suppliers');
+  ctx.EI.ord = ord.id;
+  ctx.renderRfqComparison(line.id);
+  var html = mockEl('ord-rfq-' + line.id).innerHTML;
+  assertContains(html, 'Romerry International', 'first supplier shown in comparison panel');
+  assertContains(html, 'Guangzhou Sea Harvest', 'second supplier shown in comparison panel');
+});
+
+test('loadDemoData scenario 2: DQ-0002 shows the Phase 1 staleness banner (source RFQ response re-committed after conversion)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var ord = ctx.DB.ord.find(function(o){ return o.num === 'DORD-0001'; });
+  var qt = ctx.DB.qt.find(function(q){ return q.num === 'DQ-0002'; });
+  assert(!!qt, 'DQ-0002 seeded');
+  var line = qt.lines[0];
+  assertEqual(line.sourceOrdId, ord.id, 'Quote line carries sourceOrdId');
+  assert(line.sourceRfqResponseId !== ord.lines[0].committedResponseId, 'precondition: stored source response no longer matches the Order Request line\'s current commitment');
+  ctx.renderQteSourceDriftWarn(qt);
+  assertContains(mockEl('qt-drift-warn').innerHTML, 'Source pricing has changed', 'staleness banner renders for the seeded scenario');
+});
+
+test('loadDemoData scenario 3: DINV-0002 is Pro-forma and unapproved — "Mark Buyer Approved" available, "Progress to Invoicing" not', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'DINV-0002'; });
+  assert(!!inv, 'DINV-0002 seeded');
+  assertEqual(inv.status, 'Pro-forma');
+  assertEqual(!!inv.buyerApprovedAt, false, 'not yet approved');
+  assertEqual(ctx.invApprovalActionVisible(inv), true, 'Mark Buyer Approved available');
+  assertEqual(ctx.invProgressActionVisible(inv), false, 'Progress to Invoicing not available yet');
+});
+
+test('loadDemoData scenario 4: DINV-0003 is approved and not stale — both actions available, clean path for Progress to Invoicing', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'DINV-0003'; });
+  assert(!!inv, 'DINV-0003 seeded');
+  assert(!!inv.buyerApprovedAt, 'already approved');
+  assertEqual(inv.approvalMethod, 'Email');
+  assertEqual(ctx.invApprovalActionVisible(inv), true);
+  assertEqual(ctx.invProgressActionVisible(inv), true, 'Progress to Invoicing available on the clean path');
+});
+
+test('loadDemoData scenario 5: DINV-0004 shows approval already cleared by a post-approval line-item edit, with both events in the log', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'DINV-0004'; });
+  assert(!!inv, 'DINV-0004 seeded');
+  assertEqual(inv.buyerApprovedAt, '', 'approval fields are empty — already cleared');
+  assertEqual(inv.buyerApprovedBy, ''); assertEqual(inv.approvalMethod, ''); assertEqual(inv.approvalNote, '');
+  var evts = ctx.DB.events.filter(function(e){ return e.entityId === inv.id; }).map(function(e){ return e.verb; }).sort();
+  assert(evts.indexOf('buyer_approved') >= 0, 'buyer_approved event present — proves it WAS approved (distinguishes from DINV-0002)');
+  assert(evts.indexOf('approval_cleared') >= 0, 'approval_cleared event present — proves the clearing actually happened');
+});
+
+test('loadDemoData scenario 7: DPO-0002 shows the PO staleness banner (DINV-0005 line edited after auto-generation)', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'DINV-0005'; });
+  var po = ctx.DB.po.find(function(p){ return p.num === 'PO-DINV-0005-1'; });
+  assert(!!inv, 'DINV-0005 seeded'); assert(!!po, 'DPO-0002 seeded');
+  assertEqual(po.invId, inv.id, 'PO correctly linked to its source invoice');
+  assert(+inv.lineItems[0].qty !== +po.lineItems[0].qty || +inv.lineItems[0].up !== +po.lineItems[0].sourceInvUp,
+    'precondition: invoice line now diverges from the PO\'s captured snapshot');
+  ctx.renderPoSourceDriftWarn(po);
+  assertContains(mockEl('po-drift-warn').innerHTML, 'Source Invoice has changed', 'PO staleness banner renders for the seeded scenario');
 });
 
 // ── REQ-MTD-001: VAT Return ──────────────────────────────────────────────────

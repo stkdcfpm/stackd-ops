@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.60</title>
+<title>Stackd Ops v2.9.61</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.60</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.61</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1257,9 +1257,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.60</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.61</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Expanded Demo Mode (<code>loadDemoData()</code>) with 7 new scenarios so REQ-INTEG-001 Phase 1/2 can actually be exercised locally instead of against production data (interim mitigation for SDLC-GAP-003, no staging environment): an Order Request (DORD-0001) with 2 RFQ responses from different suppliers, for the comparison panel; a Quote (DQ-0002) converted from it whose source RFQ response was re-committed afterward, reproducing the Phase 1 Quote staleness banner; an unapproved Pro-forma invoice (DINV-0002); an approved, non-stale invoice (DINV-0003) for the clean "Progress to Invoicing" path; an invoice (DINV-0004) that was approved then had a line edited, showing Phase 2's automatic approval-clearing already having fired (both events present in the log); and an invoice/PO pair (DINV-0005/DPO-0002) reproducing the Phase 1 PO staleness banner. One scenario in the original brief — an illegal Order-Request-stage auto-advance from "Progress to Invoicing" — was not built: check-first confirmed Progress to Invoicing never touches Order Request stage in the shipped Phase 2 design (an explicit, confirmed decision from that build), so there is no such transition to exercise. Also fixed a real pre-existing gap while extending Demo Mode: <code>loadDemoData()</code>/<code>clearDemoData()</code> never included Order Requests or the Line Item catalogue at all — both are now covered by the idempotency check and cleanup. 6 new tests. Tests: 563/563 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.60</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Added: Buyer-approval capture on Invoice (REQ/SPEC-INTEG-001 Phase 2). While an invoice is at Pro-forma status, a new "Mark Buyer Approved" action records <code>buyerApprovedAt</code>/<code>buyerApprovedBy</code>/<code>approvalMethod</code> (closed-set: Email, WhatsApp, WeChat, Phone / Verbal, Other)/<code>approvalNote</code>, confirming the buyer's out-of-band approval (email, WhatsApp, WeChat, phone/verbal — never inside the app). Editing any line item (price, quantity, or an added/removed line) after approval automatically clears all four fields, forcing re-approval — header-only edits never clear it. A new "Progress to Invoicing" action, available once approved, never changes the invoice's status; it only logs the authorization event and, optionally, records a manual, non-binding link to a Quote (<code>linkedQuoteId</code>/<code>linkedQuoteNum</code>) for audit trail — there is no automatic Quote→Invoice path in this codebase (confirmed, third time this initiative), so the link is a deliberate manual selection, not a derived one. Both actions bypass <code>saveInv()</code>'s form-rebuild entirely (direct record mutation, matching the same <code>sv()</code>/persistence mechanism), so they can't be tripped up by unrelated in-progress edits in the main modal. Also extended the same field-preservation pattern already used for <code>pos</code> to both CSV-import code paths (<code>processImport()</code>/<code>processImportRecords()</code>), which otherwise would have silently dropped an already-recorded approval on a re-import. 19 new tests. Tests: 557/557 pass.</li>
@@ -2894,7 +2903,7 @@ function rOrd() {
     var openActions = (o.actions||[]).filter(function(a){ return !a.done; }).length;
     var margin = o.stage === 'Fulfilled' ? ordRealisedMargin(o).gp : 0;
     return '<tr>'
-      + '<td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(o.num||'-') + '</td>'
+      + '<td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(o.num||'-') + (o._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>'
       + '<td>' + (c ? san(c.name) : '<span style="color:var(--m);">— contact deleted —</span>') + '</td>'
       + '<td><span class="tag">' + san(o.stage) + '</span></td>'
       + '<td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(o.description||'') + (o._backfilled ? ' <span style="font-size:.4rem;color:var(--m);">(legacy)</span>' : '') + '</td>'
@@ -4323,7 +4332,7 @@ function _demoDate(offsetDays) {
   return d.toISOString().slice(0, 10);
 }
 function loadDemoData() {
-  var allArrays = [DB.sup, DB.con, DB.qt, DB.po, DB.inv, DB.sh, DB.payments, DB.events];
+  var allArrays = [DB.sup, DB.con, DB.qt, DB.po, DB.inv, DB.sh, DB.payments, DB.events, DB.ord, DB.li];
   var hasDemo = allArrays.some(function(arr){ return arr.some(function(r){ return r._demo === true; }); });
   if (hasDemo) { toast('Demo data already loaded'); return; }
   var supId = 'demo-sup-001';
@@ -4342,9 +4351,91 @@ function loadDemoData() {
   DB.sh.push({ id: shId, ref: 'DSHP-0001', blNum: 'MSCD0001234', vessel: 'MSC Altair', carrier: 'MSC', originPort: 'CNQAO', destPort: 'DEHAM', etd: _demoDate(-14), eta: _demoDate(28), containerType: '40HQ', containerNum: 'MSCU1234567', dg: false, docsStatus: 'Complete', status: 'In Transit', linkedInvs: ['DINV-0001'], forwarder: 'Kuehne+Nagel', forwarderEmail: 'ops@kn-demo.example', notes: 'Demo shipment — Apex Cold Chain refrigeration units', _demo: true });
   DB.events.push({ id: uid(), ts: new Date(Date.now() - 30*86400000).toISOString(), entityType: 'contact', entityId: conId, verb: 'created', summary: 'Contact created', actor: 'system', _demo: true });
   DB.events.push({ id: uid(), ts: new Date(Date.now() - 14*86400000).toISOString(), entityType: 'contact', entityId: conId, verb: 'converted', summary: 'Quote DQ-0001 created — contact converted', actor: 'system', _demo: true });
+
+  // ── REQ-INTEG-001 Phase 1/2 test-coverage scenarios (v2.9.61) ──────────────
+  // Second supplier, for the RFQ comparison scenario (needs 2+ suppliers).
+  var sup2Id = 'demo-sup-002';
+  DB.sup.push({ id: sup2Id, name: 'Guangzhou Sea Harvest Ltd', country: 'China', cur: 'USD', ct: 'Amy Chen', email: 'amy@gzseaharvest.example', phone: '', notes: '', _demo: true });
+
+  // Scenario 1+2: Order Request with 2 RFQ responses from different suppliers; a Quote
+  // converted from the response committed at the time (respA); the Order Request line's
+  // committedResponseId subsequently re-pointed at a different response (respB) — this
+  // mismatch against the Quote's stored sourceRfqResponseId is exactly what
+  // renderQteSourceDriftWarn() (REQ-INTEG-001e) detects, so opening DQ-0002 must show
+  // the staleness banner. The 2 rfqResponses also exercise the RFQ comparison panel itself.
+  var ordId = 'demo-ord-001';
+  var ordLineId = 'demo-ordline-001';
+  var respAId = 'demo-rfq-resp-a';
+  var respBId = 'demo-rfq-resp-b';
+  var qt2Id = 'demo-qt-002';
+  DB.ord.push({
+    id: ordId, num: 'DORD-0001', contactId: conId, stage: 'Quoted', description: 'Demo order — chest freezers, RFQ comparison scenario',
+    activeQuoteId: qt2Id, actions: [], outcome: { result: null, reason: '', closedAt: null }, createdAt: _demoDate(-40),
+    lines: [{
+      id: ordLineId, category: 'Refrigeration', itemSpec: 'Chest Freezer CF-45L (RFQ comparison)',
+      orderVolumeQty: '1', orderVolumeUnit: 'container', packingSpec: 'Export carton, palletised', baseUom: 'pcs', baseQty: 15,
+      qtyStatus: 'Confirmed', sourceCountry: 'China', variantOption: '', lineUpdates: [],
+      rfqResponses: [
+        { id: respAId, supId: supId, cost: 620, currency: 'CNY', cbm: 0.8, dutyPct: 3.5, dg: false, moq: '10 units', leadTime: '35 days', paymentTerms: '30% deposit, 70% on BL', notes: 'Initial RFQ response', contactId: null, ts: new Date(Date.now() - 40*86400000).toISOString() },
+        { id: respBId, supId: sup2Id, cost: 95, currency: 'USD', cbm: 0.75, dutyPct: 3.5, dg: false, moq: '5 units', leadTime: '28 days', paymentTerms: '50/50', notes: 'Alternate response — faster lead time, committed after the Quote was already created (produces the staleness scenario)', contactId: null, ts: new Date(Date.now() - 10*86400000).toISOString() }
+      ],
+      committedResponseId: respBId // re-committed AFTER DQ-0002 was created from respA — deliberate mismatch
+    }],
+    _demo: true
+  });
+  DB.qt.push({ id: qt2Id, num: 'DQ-0002', client: 'Apex Cold Chain GmbH', dt: _demoDate(-38), validUntil: _demoDate(20), status: 'Converted', freightMode: 'LCL', markup: 20, currency: 'USD', notes: 'Demo quote #2 — RFQ comparison & Phase 1 staleness scenario (source RFQ response has since changed)', sourceContactId: conId, linkedPOIds: [], _demo: true,
+    lines: [{ rid: 'demo-ql-002', supId: supId, desc: 'Chest Freezer CF-45L (RFQ comparison)', uom: 'pcs', qty: 15, cost: 620, cbm: 0.8, dutyPct: 3.5, dg: false,
+      sourceOrdId: ordId, sourceOrdLineId: ordLineId, sourceRfqResponseId: respAId,
+      priceHistory: [{ v: 1, ts: new Date(Date.now() - 38*86400000).toISOString(), cost: 620, dutyPct: 3.5, markup: 20, landed: 698, sellPrice: 837.6, note: 'Initial quote from committed RFQ response (Romerry)' }]
+    }] });
+
+  // Scenario 3: Invoice at Pro-forma, not yet buyer-approved — clean starting point for
+  // "Mark Buyer Approved" (REQ-INTEG-001i).
+  DB.inv.push({ id: 'demo-inv-002', num: 'DINV-0002', buyer: 'Apex Cold Chain GmbH', dst: 'Hamburg, Germany', status: 'Pro-forma', type: 'invoice', cur: 'USD', date: _demoDate(-3),
+    lineItems: [{ rid: 'demo-il-002', lid: '', desc: 'Chest Freezer CF-45L', sku: 'CF-45L', qty: 15, up: 837.6, unitCost: 698, uom: 'pcs', lineType: 'product' }],
+    buyerApprovedAt: '', buyerApprovedBy: '', approvalMethod: '', approvalNote: '', linkedQuoteId: '', linkedQuoteNum: '',
+    notes: 'Demo invoice — Pro-forma, not yet buyer-approved (Phase 2 "Mark Buyer Approved" starting point)', _demo: true });
+
+  // Scenario 4: Invoice already buyer-approved and not stale — clean path for
+  // "Progress to Invoicing" (REQ-INTEG-001k).
+  DB.inv.push({ id: 'demo-inv-003', num: 'DINV-0003', buyer: 'Apex Cold Chain GmbH', dst: 'Hamburg, Germany', status: 'Pro-forma', type: 'invoice', cur: 'USD', date: _demoDate(-4),
+    lineItems: [{ rid: 'demo-il-003', lid: '', desc: 'Chest Freezer CF-45L', sku: 'CF-45L', qty: 15, up: 837.6, unitCost: 698, uom: 'pcs', lineType: 'product' }],
+    buyerApprovedAt: new Date(Date.now() - 2*86400000).toISOString(), buyerApprovedBy: 'Thomas Bergmann', approvalMethod: 'Email', approvalNote: 'Approved via email — see PO confirmation thread',
+    linkedQuoteId: '', linkedQuoteNum: '',
+    notes: 'Demo invoice — buyer-approved, not stale (Phase 2 "Progress to Invoicing" clean-path starting point)', _demo: true });
+
+  // Scenario 5: Invoice that WAS buyer-approved, then had a line item changed afterward —
+  // approval has already been auto-cleared (REQ-INTEG-001j). Fields are empty, but the
+  // event log shows both the original approval and the clearing, distinguishing this from
+  // DINV-0002 (never approved at all).
+  var inv4Id = 'demo-inv-004';
+  DB.inv.push({ id: inv4Id, num: 'DINV-0004', buyer: 'Apex Cold Chain GmbH', dst: 'Hamburg, Germany', status: 'Pro-forma', type: 'invoice', cur: 'USD', date: _demoDate(-6),
+    lineItems: [{ rid: 'demo-il-004', lid: '', desc: 'Chest Freezer CF-45L', sku: 'CF-45L', qty: 18, up: 837.6, unitCost: 698, uom: 'pcs', lineType: 'product' }],
+    buyerApprovedAt: '', buyerApprovedBy: '', approvalMethod: '', approvalNote: '', linkedQuoteId: '', linkedQuoteNum: '',
+    notes: 'Demo invoice — was buyer-approved, then a line item was edited, automatically clearing approval (Phase 2 staleness-clear-on-edit — see event log)', _demo: true });
+  DB.events.push({ id: uid(), ts: new Date(Date.now() - 5*86400000).toISOString(), entityType: 'invoice', entityId: inv4Id, verb: 'buyer_approved', summary: 'Buyer approval recorded — Email (by Thomas Bergmann)', actor: 'operator', _demo: true });
+  DB.events.push({ id: uid(), ts: new Date(Date.now() - 3*86400000).toISOString(), entityType: 'invoice', entityId: inv4Id, verb: 'approval_cleared', summary: 'Buyer approval cleared — line items changed after approval', actor: 'operator', _demo: true });
+
+  // Scenario 7: an Invoice whose line items produced an autoPos()-generated PO, then the
+  // invoice's line item was edited afterward — exercises renderPoSourceDriftWarn()
+  // (REQ-INTEG-001f / PO-GAP-003). Needs a Line Item catalogue entry so autoPos()'s
+  // supId-grouping lookup (via DB.li) resolves, matching how the real feature works.
+  var li1Id = 'demo-li-001';
+  DB.li.push({ id: li1Id, num: 'DLI-0001', sku: 'VF-75L-DEMO', desc: 'Vertical Display Freezer VF-75L (Demo)', uom: 'pcs', cost: 1450, price: 1928.42, cur: 'USD', supId: supId, notes: 'Demo catalogue item', priceHistory: [], invoiceRefs: [], _demo: true });
+  var inv5Id = 'demo-inv-005';
+  DB.inv.push({ id: inv5Id, num: 'DINV-0005', buyer: 'Apex Cold Chain GmbH', dst: 'Hamburg, Germany', status: 'Pro-forma', type: 'invoice', cur: 'USD', date: _demoDate(-5),
+    lineItems: [{ rid: 'demo-il-005', lid: li1Id, desc: 'Vertical Display Freezer VF-75L (Demo)', sku: 'VF-75L-DEMO', qty: 12, up: 2200, unitCost: 1450, uom: 'pcs', lineType: 'product' }],
+    buyerApprovedAt: '', buyerApprovedBy: '', approvalMethod: '', approvalNote: '', linkedQuoteId: '', linkedQuoteNum: '',
+    pos: ['demo-po-002'],
+    notes: 'Demo invoice — line item (qty/price) edited after its PO was auto-generated, so the PO now shows as stale', _demo: true });
+  DB.po.push({ id: 'demo-po-002', num: 'PO-DINV-0005-1', supId: supId, invId: inv5Id, invNum: 'DINV-0005', date: _demoDate(-5), del: '', cur: 'USD', dep: 0, oth: 0,
+    notes: 'Demo PO — auto-generated from DINV-0005; invoice line has since been edited (PO-GAP-003 staleness demo)', status: 'Draft', creAt: new Date(Date.now() - 5*86400000).toISOString(),
+    lineItems: [{ rid: 'demo-pl-002', lid: li1Id, desc: 'Vertical Display Freezer VF-75L (Demo)', sku: 'VF-75L-DEMO', uom: 'pcs', qty: 10, cost: 1450, sourceInvUp: 2000 }],
+    _demo: true });
+
   saveAll();
   renderAll();
-  toast('Demo data loaded — 6 entity records + 1 payment + 2 events seeded');
+  toast('Demo data loaded — 15 entity records + 1 payment + 4 events seeded');
 }
 function clearDemoData() {
   if (!confirm('Clear all demo data? This cannot be undone.')) return;
@@ -4356,6 +4447,8 @@ function clearDemoData() {
   DB.sh       = DB.sh.filter(function(r){ return !r._demo; });
   DB.payments = DB.payments.filter(function(r){ return !r._demo; });
   DB.events   = DB.events.filter(function(r){ return !r._demo; });
+  DB.ord      = DB.ord.filter(function(r){ return !r._demo; });
+  DB.li       = DB.li.filter(function(r){ return !r._demo; });
   saveAll();
   renderAll();
   toast('Demo data cleared');
@@ -5126,7 +5219,7 @@ function rLI() {
           }).join('') +
           '</tbody></table></div></td></tr>'
       : '';
-    return '<tr><td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(li.num||'-') + '</td><td style="color:var(--m);font-size:.54rem;">' + (san(li.sku)||'-') + '</td><td style="font-weight:500;">' + (san(li.desc)||'-') + '</td><td style="color:var(--m);font-size:.56rem;">' + san(li.specs||'-') + '</td><td style="color:var(--m);font-size:.54rem;">' + san(li.hs||'-') + '</td><td>' + san(gsn(li.supId)) + '</td>' +
+    return '<tr><td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(li.num||'-') + (li._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td><td style="color:var(--m);font-size:.54rem;">' + (san(li.sku)||'-') + '</td><td style="font-weight:500;">' + (san(li.desc)||'-') + '</td><td style="color:var(--m);font-size:.56rem;">' + san(li.specs||'-') + '</td><td style="color:var(--m);font-size:.54rem;">' + san(li.hs||'-') + '</td><td>' + san(gsn(li.supId)) + '</td>' +
       '<td class="num">' + fmt(li.cost,li.cur||'USD') + '</td>' +
       '<td class="num">' + fmt(li.price,li.cur||'USD') + phBadge + '</td>' +
       '<td>' + (li.uom||'-') + '</td>' +
@@ -8430,7 +8523,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.60).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.61).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8664,7 +8757,7 @@ var AI_SYSTEM_PROMPT = [
   'Both export buttons are disabled until Calculate has been run. All GBP values use configured QR rates at export time (MTD-GAP-002 — not historic rates).',
   '',
   '## Demo Mode',
-  'Settings → Demo Mode card → Load Demo Data: seeds a complete end-to-end trade scenario across all entities — 1 supplier (Romerry International), 1 contact (Thomas Bergmann / Apex Cold Chain GmbH), 1 quote (DQ-0001), 1 PO (DPO-0001), 1 invoice (DINV-0001), 1 payment, 1 shipment (DSHP-0001, In Transit CNQAO→DEHAM), and 2 activity events. All demo records carry _demo:true.',
+  'Settings → Demo Mode card → Load Demo Data: seeds a complete end-to-end trade scenario across all entities — 2 suppliers, 1 contact (Thomas Bergmann / Apex Cold Chain GmbH), 1 order request (DORD-0001, with 2 RFQ responses from different suppliers for the comparison panel), 2 quotes (DQ-0001; DQ-0002 converted from DORD-0001 — its source RFQ response was re-committed afterward, so opening it shows the Phase 1 staleness banner), 2 POs (DPO-0001; DPO-0002 auto-generated from DINV-0005, then the invoice line was edited, so opening it shows the Phase 1 PO staleness banner), 1 line item catalogue entry, 5 invoices covering the Phase 2 buyer-approval states (DINV-0001 Partially Paid; DINV-0002 Pro-forma unapproved; DINV-0003 approved and not stale, clean path for Progress to Invoicing; DINV-0004 was approved then a line was edited, so approval shows as auto-cleared; DINV-0005 source of the stale DPO-0002), 1 payment, 1 shipment (DSHP-0001, In Transit CNQAO→DEHAM), and 4 activity events. All demo records carry _demo:true, and none count toward dashboard KPIs.',
   'Demo records are excluded from all financial KPIs on the Dashboard (revenue, net profit, outstanding, PO balance, net cash, in-transit count). A yellow banner appears above KPIs when demo data is active.',
   'All six entity list tables (Suppliers, Contacts, Quotes, POs, Invoices, Shipments) show a purple [DEMO] badge on demo records.',
   'D-prefix reference numbers (DQ-, DPO-, DINV-, DSHP-) are reserved for demo records — do not create real records with these prefixes.',
