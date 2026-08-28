@@ -308,4 +308,4 @@ Apps Script write bridge live: actions `update_requirements_tracker` and `update
 ---
 
 *STACKD · Source · Supply · Ship · FPM International Ltd · getstackdops.com*
-*Living document — last updated 24 August 2026*
+*Living document — last updated 27 August 2026*
