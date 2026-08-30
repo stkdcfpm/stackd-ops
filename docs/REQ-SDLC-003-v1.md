@@ -67,9 +67,9 @@ None of these steps touch `stackd-ops`'s own Pages configuration or `app.getstac
 
 | # | Given | When | Then |
 |---|---|---|---|
-| AC-1 | A new PR opened against `main` | `preview-deploy.yml` runs | `stkdcfpm/stackd-ops-preview`'s default branch gains `preview/PR-<N>/index.html` matching the PR head's `index.html` exactly |
+| AC-1 | A new PR opened against `main` | `preview-deploy.yml` runs | `stkdcfpm/stackd-ops-preview`'s default branch gains `PR-<N>/index.html` matching the PR head's `index.html` exactly |
 | AC-2 | A PR previously previewed, then pushed again | `preview-deploy.yml` runs again | The existing PR comment is edited in place (same comment, updated link/timestamp) — not a second, duplicate comment |
-| AC-3 | A PR closed (merged or not) that had a preview deployed | `preview-cleanup.yml` runs | `preview/PR-<N>/` is removed from `stackd-ops-preview` |
+| AC-3 | A PR closed (merged or not) that had a preview deployed | `preview-cleanup.yml` runs | `PR-<N>/` is removed from `stackd-ops-preview` |
 | AC-4 | `PREVIEW_DEPLOY_TOKEN` not yet configured (steps in §3 not yet done) | A PR is opened | `preview-deploy.yml`'s push step fails cleanly; `qa.yml` and the production Pages deployment are entirely unaffected |
 | AC-5 | `stackd-ops`'s own `main`-branch Pages configuration | This REQ ships | Unchanged — no edit to `CNAME`, no new deploy workflow triggered by `push` to `main` for the production site itself |
 
