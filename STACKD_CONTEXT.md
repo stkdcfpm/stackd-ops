@@ -10,7 +10,7 @@
 
 | Field | Value |
 |-------|-------|
-| Last updated | 30 August 2026 (verified against `main` @ `afea2ea`, code-level facts confirmed by running `node tests/run.js`) |
+| Last updated | 30 August 2026 (verified against `main` @ `2a78654`, code-level facts confirmed by running `node tests/run.js`) |
 | Current version | v2.9.66 |
 | Test count | 620 / 620 passing (confirmed by re-running the suite, not just read from source) |
 | Build branch | main |
