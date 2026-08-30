@@ -1,6 +1,6 @@
 # SPEC-INTEG-002-2b — Invoice→PO enumeration fix
 
-**Status:** v3 — supersedes v2 (and v1). Implements `docs/REQ-INTEG-002-2b-v3.md`. v1's own spec-gate review found a blocking issue: a false claim that `autoPos()` is the only PO-linking path, missing `processImport()`/`processImportRecords()`'s `'po'` branches — fixed in v2 (§2.2). The v2 confirmatory requirements-gate round then found a THIRD PO-linking path both v1 and v2 missed: `pullAll()`'s own bulk Purchase-Orders Sheets-merge block. v3 adds §2.3 to close this. v3 also fixes an advisory nit the confirmatory reviewer found in v2's own §5 (a fabricated test-precedent citation — corrected below). Everything else from v1/v2 is unchanged.
+**Status:** v3 — supersedes v2 (and v1). Implements `docs/REQ-INTEG-002-2b-v3.md` (requirements-gate: CONDITIONAL PASS after a second confirmatory round found no fourth PO-linking path — see that document's §7). v1's own spec-gate review found a blocking issue: a false claim that `autoPos()` is the only PO-linking path, missing `processImport()`/`processImportRecords()`'s `'po'` branches — fixed in v2 (§2.2). The v2 confirmatory requirements-gate round then found a THIRD PO-linking path both v1 and v2 missed: `pullAll()`'s own bulk Purchase-Orders Sheets-merge block. v3 adds §2.3 to close this. v3 also fixes an advisory nit the confirmatory reviewer found in v2's own §5 (a fabricated test-precedent citation — corrected below). Everything else from v1/v2 is unchanged.
 **Build baseline:** `main` @ `74dab27`, 609/609 tests passing.
 
 ---
