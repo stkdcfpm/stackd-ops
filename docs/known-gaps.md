@@ -379,6 +379,16 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 ---
 
+### ACCT-GAP-001 — `renderAccts()`'s per-invoice/per-supplier view sums mix currencies without conversion
+
+**Area:** Accounts tab (`renderAccts()`) — per-invoice view's "Sup. Dep. Paid"/"Sup. Bal. Due" columns, and per-supplier view's "Dep. Paid"/"Bal. Due" columns.
+**Logged:** v2.9.64 (REQ-INTEG-002-2a-fix-2, found during manual testing of v2.9.63's Accounts totals bar — that specific bug was fixed; this adjacent, pre-existing one was found and deliberately deferred rather than folded into the same fix).
+**Detail:** Both sections sum a PO's (or a set of POs') deposit/balance figures without converting through `toDisp()` first, then display the raw sum labeled with a single currency (the linked invoice's currency, for the per-invoice view; no currency label at all, for the per-supplier view). Whenever a linked PO's own currency differs from its invoice's — or a single supplier's POs span more than one currency — the displayed figure is a meaningless mixed-currency sum, the same underlying defect class as the totals-bar bug fixed in REQ-INTEG-002-2a-fix-2, just not fixed at these two sites.
+**Status:** Open — Backlog, not scheduled.
+**Note:** Confirmed pre-existing, not introduced by v2.9.63's `PO.dep`→`getPOEffectiveDep()` reconciliation swap — the raw-sum-with-no-conversion pattern was already present at both sites beforehand (only the specific field reference changed, not the missing-conversion behavior). Fixing this would mean applying the same `toDisp()`-before-summing pattern used in the totals-bar fix to these two additional call sites, plus deciding what currency label to show for the per-invoice view (the invoice's own currency isn't necessarily meaningful once the sum spans multiple PO currencies) — a small, well-understood fix, just not bundled into REQ-INTEG-002-2a-fix-2 to keep that fix narrowly scoped to what was actually reported and reviewed.
+
+---
+
 ## External Services — FPM Website (fpmsg.co.uk)
 
 ### CHAT-GAP-001 — AI chat conversation history includes prospect PII in Anthropic API calls
@@ -551,3 +561,13 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Root cause:** `AI_SYSTEM_PROMPT` is free-text, hand-maintained prose describing app behavior — there is no automated or gate-level check that any given status-vocabulary claim in the prompt still matches its corresponding live `<select>`/enum in `index.html`. This is a general risk (any entity's status prompt text could drift the same way over time, not just PO), of which this is the first concretely confirmed instance.
 **Fix (v2.9.55, REQ/SPEC-AI-GAP-002):** `AI_SYSTEM_PROMPT`'s PO status line corrected to the real vocabulary, and the `get_pos` tool's own status-filter description in `AI_TOOLS` was fixed to match (it carried the identical stale vocabulary, not previously caught by this gap's original scope which only checked the prompt). Independent build-gate review confirmed the corrected vocabulary against the live `<select id="po-sm">`/`<select id="po-sf">` option lists. The broader mitigation (an automated spot-check for status-vocabulary drift generally) was not built — this fix corrects the one confirmed instance only.
 **Original decision (superseded):** Backlogged. Recommended fix: correct the `AI_SYSTEM_PROMPT` line to read "PO status: Draft → Sent → Deposit Paid → Settled. Cancelled from any non-terminal status." As a broader mitigation, consider adding a lightweight test-suite check (or a build-gate checklist item) that spot-checks each entity's status-vocabulary claim in `AI_SYSTEM_PROMPT` against its actual `<select>` options at least once per version that touches that entity's status field, rather than relying solely on manual review discipline.
+
+---
+
+### AI-GAP-010 — `_aiExecTool('get_kpis')` sums invoice/PO figures across currencies with no conversion
+
+**Area:** `_aiExecTool()`'s `get_kpis` case (`index.html`, `revenue`/`np`/`outstanding`/`poBal` reduces).
+**Logged:** v2.9.64 (found during REQ-INTEG-002-2a-fix-2 check-first, while confirming no other site had the totals-bar currency-mixing bug — this one is unrelated to that fix and predates it).
+**Detail:** All four of `get_kpis`' headline aggregates — `invoiceRevenue`, `netProfit`, `outstanding` (each summed from `iCalc(i).grand`/`.np`/`.bal` across `DB.inv`), and `poBalanceDue` (summed via `getPOEffectiveDep(p)` across `DB.po`) — sum raw native-currency amounts across records with no `toDisp()` conversion, the same defect class fixed in `renderAccts()`'s totals bar (REQ-INTEG-002-2a-fix-2) and already handled correctly in `rDash()`'s own KPI tiles. Whenever invoices or POs span more than one currency, whichever operator or integration asks the AI assistant for these figures gets a meaningless mixed-currency number with no indication anything is wrong.
+**Status:** Open — Backlog, not scheduled.
+**Note:** Confirmed pre-existing — `revenue`/`np`/`outstanding` are pure invoice aggregates untouched by any Supplier Payment ledger work; `poBal` used `+p.dep||0` before v2.9.63 and `getPOEffectiveDep(p)` now, but the missing conversion was present both before and after that change. Broader than `ACCT-GAP-001` (which is PO-side only) — this one also affects the AI assistant's invoice-side figures. Not fixed alongside REQ-INTEG-002-2a-fix-2 to keep that fix narrowly scoped to the Accounts page bug actually reported; the fix, when picked up, is the same pattern: wrap each item in `toDisp(amount, itemCur)` before summing, and decide what currency label/unit the AI assistant should report these converted figures in (probably `QR.displayCurrency`, consistent with the rest of the app, with the unit named explicitly in the tool's response so the AI doesn't present a converted number as if it were still native-currency).
