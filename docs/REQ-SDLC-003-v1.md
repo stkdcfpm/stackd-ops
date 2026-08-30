@@ -33,7 +33,9 @@ There is no way to see a PR branch running as a live app before merging it to `m
 ## 2. Requirements
 
 ### REQ-SDLC-003a — New repository: `stkdcfpm/stackd-ops-preview`
-Public (matching `stackd-ops`'s own visibility — GitHub Pages requires either a public repo or a paid plan for private-repo Pages, and there's no reason for this repo to hold anything sensitive: it contains only build output, never real data). GitHub Pages enabled, source: repository's default branch, root. No custom domain configured — this is the entire point; the default `stkdcfpm.github.io/stackd-ops-preview/` address is what provides origin isolation from `app.getstackdops.com`.
+Public (matching `stackd-ops`'s own visibility — GitHub Pages requires either a public repo or a paid plan for private-repo Pages, and there's no reason for this repo to hold anything sensitive: it contains only build output, never real data). Initialized with a commit (e.g. auto-init with a README) so it has a real default branch before any workflow ever runs against it — see SPEC §1's bootstrapping fix. GitHub Pages enabled, source: repository's default branch, root. No custom domain configured — this is the entire point; the default `stkdcfpm.github.io/stackd-ops-preview/` address is what provides origin isolation from `app.getstackdops.com`.
+
+**Discovered during implementation, not anticipated at requirements-gate: Claude Code's GitHub integration for this session cannot create a new repository** — `create_repository` returned `403 Resource not accessible by integration`, confirming this session's GitHub App installation is scoped only to already-granted repositories (`stackd-ops`, `getstackdops`), not account-level repo creation. This moves REQ-SDLC-003a from "Claude Code creates it" to a fourth manual step (§3) — the user creates the repository (public, initialized with a README) and then grants this session access to it via `add_repo`/an installation update, after which Claude Code can push the initial content and everything else in this REQ that touches that repository.
 
 ### REQ-SDLC-003b — `preview-deploy.yml` (new workflow in `stackd-ops`)
 Triggers on `pull_request` (`opened`, `synchronize`, `reopened`) targeting `main`. Steps:
@@ -50,13 +52,14 @@ Triggers on `pull_request` (`closed` — covers both merged and closed-without-m
 
 ---
 
-## 3. Manual steps (cannot be performed by Claude Code — no credential/settings-management tool available)
+## 3. Manual steps (cannot be performed by Claude Code — no credential/settings-management tool, and no repo-creation permission, available)
 
+0. **Create the `stkdcfpm/stackd-ops-preview` repository** — public, initialized with a README (so it has a real default branch — see SPEC §1). Discovered during implementation: this session's GitHub App integration returned `403 Resource not accessible by integration` on `create_repository`, confirming it's scoped only to already-granted repositories, not account-level repo creation. Once created, grant this Claude Code session access to it (the same `add_repo` mechanism already used for `stackd-ops`/`getstackdops`) so the workflow files and any other repo content can be pushed.
 1. **Create a fine-grained GitHub Personal Access Token** scoped to only the `stkdcfpm/stackd-ops-preview` repository, with **Contents: Read and write** permission (no broader scope needed — this token can only ever touch that one, non-sensitive repository).
 2. **Add it as a repository secret** on `stkdcfpm/stackd-ops`, named `PREVIEW_DEPLOY_TOKEN` (Settings → Secrets and variables → Actions → New repository secret).
-3. **Enable GitHub Pages** on the newly-created `stkdcfpm/stackd-ops-preview` repository (Settings → Pages → Source → Deploy from a branch → the repo's default branch → `/ (root)`). Claude Code will create the repository itself (REQ-SDLC-003a) but cannot toggle this Settings switch.
+3. **Enable GitHub Pages** on the `stkdcfpm/stackd-ops-preview` repository (Settings → Pages → Source → Deploy from a branch → the repo's default branch → `/ (root)`).
 
-None of these steps touch `stackd-ops`'s own Pages configuration or `app.getstackdops.com` — the production site is unaffected regardless of when (or whether) these three steps are completed. Until they are, the two new workflows will simply fail their push step harmlessly (no preview posted, no effect on `main`, `qa.yml`, or the live site).
+None of these steps touch `stackd-ops`'s own Pages configuration or `app.getstackdops.com` — the production site is unaffected regardless of when (or whether) these four steps are completed. Until they are, the two new workflows will simply fail their checkout/push step harmlessly (no preview posted, no effect on `main`, `qa.yml`, or the live site) — this failure mode is itself covered by AC-4 below, and merging the workflow files ahead of these manual steps is a deliberate, safe sequencing choice, not something to wait on.
 
 ---
 

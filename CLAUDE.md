@@ -141,7 +141,7 @@ See `docs/known-gaps.md` for full entries.
 | SEC-GAP-020 | Public Pages exposure | Live PII was publicly served — fully resolved 2026-07-05 (purge, history rewrite, GDPR assessment, GitHub PR/cache purge all complete) |
 | SEC-GAP-011 | Sync / data integrity | `pullAll()` overwrites local records unconditionally — Sheets wins, no timestamp-based conflict resolution |
 | PROC-GAP-001 | Dashboard / accounting | Multi-currency KPI aggregation without FX conversion — Fixed v2.9.15 via `toGBP()` |
-| SDLC-GAP-003 | Staging / preview | No same-origin PR preview environment — Netlify blocked by localStorage origin isolation; gh-pages path preview deferred post-pilot |
+| SDLC-GAP-003 | Staging / preview | Fixed — REQ-SDLC-003: a second, dedicated `stkdcfpm/stackd-ops-preview` repo (no custom domain) gives genuine origin isolation from `app.getstackdops.com`; a same-repo preview was verified to be impossible (GitHub Pages redirects a repo's own github.io URL to its configured custom domain) |
 | CON-GAP-001 | Contacts / GDPR | No automated purge of stale contacts — manual deletion only; UI flags >700d |
 | CLOUD-GAP-001 | Cloud Data / Suppliers | Legacy CSV/Sheets Supplier importers bypass Cloud Data — writes silently discarded on next reload once Cloud Data is configured |
 | ORD-GAP-003 | Order Requests / Quotes | RFQ commit ↔ Quote drift, no back-reference or staleness warning — Fixed v2.9.58 (REQ/SPEC-INTEG-001 Phase 1) |

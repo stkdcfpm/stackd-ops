@@ -155,13 +155,14 @@ No modification. It continues to run on push/PR to `main`, independent of both n
 
 ---
 
-## 5. Manual steps (unchanged from REQ §3, restated for the build)
+## 5. Manual steps (restated from REQ §3, updated with the repo-creation finding from implementation)
 
+0. Create `stkdcfpm/stackd-ops-preview` — public, initialized with a README — and grant this Claude Code session access to it. Not anticipated at requirements-gate: `create_repository` returned `403 Resource not accessible by integration` when attempted during the build, confirming this session's GitHub App installation can't create new repositories, only work within ones it's already been granted.
 1. Create a fine-grained PAT scoped to `stkdcfpm/stackd-ops-preview` only, Contents: Read and write.
 2. Add it as a `stkdcfpm/stackd-ops` repository secret named `PREVIEW_DEPLOY_TOKEN`.
 3. Enable GitHub Pages on `stkdcfpm/stackd-ops-preview` (Settings -> Pages -> Deploy from a branch -> default branch -> `/ (root)`).
 
-Until all three are done, `preview-deploy.yml`'s "Checkout preview repo" step fails (no valid token to authenticate the cross-repo checkout) and the workflow run shows red on the PR's checks list — this does not block merging (it isn't a required check, unlike `qa.yml`) and has no effect on `main`, `qa.yml`, or the production site.
+Until all four are done, `preview-deploy.yml`'s "Checkout preview repo" step fails (no repository to check out, or no valid token to authenticate the cross-repo checkout) and the workflow run shows red on the PR's checks list — this does not block merging (it isn't a required check, unlike `qa.yml`) and has no effect on `main`, `qa.yml`, or the production site. Merging the workflow files now, ahead of these steps, is a deliberate sequencing choice — see REQ §3's note.
 
 ---
 

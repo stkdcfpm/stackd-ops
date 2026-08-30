@@ -1,0 +1,83 @@
+name: PR Preview Deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+
+      - name: Checkout preview repo
+        uses: actions/checkout@v4
+        with:
+          repository: stkdcfpm/stackd-ops-preview
+          token: ${{ secrets.PREVIEW_DEPLOY_TOKEN }}
+          path: preview-repo
+          fetch-depth: 0
+
+      - name: Copy index.html into PR-<number>/
+        run: |
+          mkdir -p "preview-repo/PR-${{ github.event.pull_request.number }}"
+          cp index.html "preview-repo/PR-${{ github.event.pull_request.number }}/index.html"
+
+      - name: Commit and push preview
+        working-directory: preview-repo
+        run: |
+          git config user.name "stackd-ops-preview-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "PR-${{ github.event.pull_request.number }}/index.html"
+          if git diff --cached --quiet; then
+            echo "No changes to preview — skipping commit"
+          else
+            git commit -m "Preview for PR #${{ github.event.pull_request.number }}"
+            git push
+          fi
+
+      - name: Comment on PR with preview link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- stackd-ops-preview-comment -->';
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://stkdcfpm.github.io/stackd-ops-preview/PR-${prNumber}/`;
+            const body = [
+              marker,
+              '### Preview deployed',
+              '',
+              previewUrl,
+              '',
+              '**Before testing:** open Settings -> Load Demo Data. This preview shares storage with every other open preview and with no production data at all -- do not assume it is empty or matches production.'
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
