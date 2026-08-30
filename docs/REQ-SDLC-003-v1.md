@@ -38,12 +38,12 @@ Public (matching `stackd-ops`'s own visibility — GitHub Pages requires either 
 ### REQ-SDLC-003b — `preview-deploy.yml` (new workflow in `stackd-ops`)
 Triggers on `pull_request` (`opened`, `synchronize`, `reopened`) targeting `main`. Steps:
 1. Check out the PR's head commit.
-2. Copy `index.html` (the entire application — no build step exists or is needed) to `preview/PR-<number>/index.html` in the target repository.
+2. Copy `index.html` (the entire application — no build step exists or is needed) to `PR-<number>/index.html` in the target repository.
 3. Push that single file to `stkdcfpm/stackd-ops-preview`'s default branch, using a repository secret (`PREVIEW_DEPLOY_TOKEN`, see §4) for cross-repo write access — the workflow's own automatic `GITHUB_TOKEN` is scoped only to the repository it runs in and cannot write to a second repository.
 4. Post or update a single, sticky PR comment (searched for and edited on repeat runs, not duplicated on every push) with the live preview link (`https://stkdcfpm.github.io/stackd-ops-preview/PR-<number>/`) and a short, explicit warning: *"Preview environment — click Settings → Load Demo Data before testing. Do not assume this matches production; it shares storage with every other open preview."*
 
 ### REQ-SDLC-003c — `preview-cleanup.yml` (new workflow in `stackd-ops`)
-Triggers on `pull_request` (`closed` — covers both merged and closed-without-merging). Removes `preview/PR-<number>/` from `stackd-ops-preview`'s default branch using the same `PREVIEW_DEPLOY_TOKEN`, so closed PRs don't accumulate stale previews indefinitely.
+Triggers on `pull_request` (`closed` — covers both merged and closed-without-merging). Removes `PR-<number>/` from `stackd-ops-preview`'s default branch using the same `PREVIEW_DEPLOY_TOKEN`, so closed PRs don't accumulate stale previews indefinitely.
 
 ### REQ-SDLC-003d — `docs/known-gaps.md` update
 `SDLC-GAP-003` marked Fixed once this ships, with the corrected origin-isolation finding (§1.2) recorded so a future reader doesn't re-propose the same flawed same-repository design the 2026-06-06 council recommendation carried.
