@@ -305,7 +305,7 @@ Apps Script write bridge live: actions `update_requirements_tracker` and `update
 **For new Claude conversations:** Paste this URL into your first message: `https://raw.githubusercontent.com/stkdcfpm/stackd-ops/main/STACKD_CONTEXT.md`
 
 **Update protocol:**
-1. After every version delivery — Claude Code updates version, tests, build queue, known gaps.
+1. After every version delivery — Claude Code updates version, tests, build queue, known gaps, and the Backlog carried forward table (add new gaps found this delivery, remove/mark shipped ones, add the next explicit step of any in-flight multi-phase initiative). See the "On version delivery" checklist in `CLAUDE.md`.
 2. After every strategy session — update sprint status, risk register, decisions.
 3. After every China trip / business-development meeting — update contacts, agent pipeline, trip outcomes.
 4. Monthly — update regulatory calendar status, competitive scan notes.
