@@ -255,6 +255,14 @@ becomes:
 
 ## 4. Tests — `tests/run.js`
 
+### 4.0 Pre-existing test regression to fix first (spec-gate finding, blocking)
+
+`tests/run.js:4344-4354` (`_aiExecTool('get_kpis')/('get_pos') — poBalanceDue/depositPaid/balanceDue use the ledger total...`) pushes a PO with `cur:'USD'` and asserts `kpis.poBalanceDue === 750` as a raw numeric equality, without pinning `QR.displayCurrency`. `QR.displayCurrency` defaults to `'GBP'` (`QR_DEFAULTS.displayCurrency`), so once `poBal` is wrapped in `toDisp(x, p.cur||'USD')` per §2 above, this test's `poBal` becomes `toDisp(750,'USD')` (a GBP-converted figure, not 750) and the assertion breaks.
+
+**Fix (apply before/alongside the SPEC's other changes):** pin `ctx.QR.displayCurrency = 'USD'` (matching the PO's own currency, save/restore per the established precedent at line 4329-4330/4341) around the `get_kpis` call at line 4348, so `toDisp()` is a no-op and the existing assertion (`poBalanceDue === 750`) continues to hold unchanged. The `get_pos` calls/assertions in the same test (lines 4350-4353) are untouched — `get_pos` is not in REQ-CUR-002's scope and its own currency-mixing state, if any, is not addressed here.
+
+### 4.1 New tests
+
 Following the established pattern at `tests/run.js:4548-4571` (save/restore `ctx.QR.displayCurrency`, compute expected via `ctx.toDisp()` then `ctx.fmt()`, assert against rendered HTML or parsed JSON):
 
 1. **`renderAccts` per-invoice, multi-currency POs** — one invoice (native `cur`, e.g. `'USD'`) with 2 linked POs in different currencies (e.g. one `'GBP'`, one `'USD'`), one PO with `fpmFunded` set and unrecovered. Set `QR.displayCurrency` to a third currency (e.g. `'EUR'` — check `PO_DEP_RECONCILE_CURS`/EUR exclusion doesn't block this; if EUR is excluded from PO.dep reconciliation, use `'GBP'` as `dispCur` instead to avoid conflating two different known-gap areas). Compute expected `supDepPaid`/`fpmFunded`/`supBalDue`/`totalToChase` via `ctx.toDisp()` per the SPEC formulas above, format via `ctx.fmt(expected, dispCur)`, assert each appears in `mockElements['acct-inv'].innerHTML`.
