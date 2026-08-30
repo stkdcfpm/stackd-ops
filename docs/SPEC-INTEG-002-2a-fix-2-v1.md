@@ -1,6 +1,6 @@
 # SPEC-INTEG-002 (Sub-phase 2a) — Fix 2: Currency-mixing bug in Accounts totals bar
 
-**Implements:** `docs/REQ-INTEG-002-2a-fix-2-v1.md` (requirements-gate pending/PASS — see tracker for final status)
+**Implements:** `docs/REQ-INTEG-002-2a-fix-2-v1.md` (requirements-gate: PASS, no blocking findings)
 **Status:** v1.
 
 All line numbers below are cited against `main` @ `c2ce5aa` plus this branch's own Priority 2/3/demo-fix commits (see `git log claude/v2963-postship-fixes`), 599/599 tests passing. Re-verify against current branch head before build if any time has passed.

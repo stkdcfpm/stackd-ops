@@ -1,6 +1,6 @@
 # REQ-INTEG-002 (Sub-phase 2a) — Fix 2: Currency-mixing bug in Accounts totals bar
 
-**Status:** v1.
+**Status:** v1 — requirements-gate independent review: **PASS** (no blocking findings; 2 advisory notes incorporated in place — the test-precedent citation and the `||'USD'` fallback are now spelled out explicitly in §2).
 **Type:** Production-bug remediation against already-shipped v2.9.63 (REQ-INTEG-002-2a-fix). Not new scope, not a new REQ number — a further patch row against the same Sub-phase 2a tracker entry.
 **Scope:** This document covers only the Priority 1 finding (currency-mixing totals). Priority 2 (PO list not re-rendering), Priority 3 (deposit-field float display, readOnly visual affordance), and the demo-data seed fix are implemented alongside this in the same PR but go through standard build-gate only, per explicit instruction — they involve no design decision and no financial-total-computation change.
 
@@ -28,12 +28,13 @@ Manual (Cowork-driven) testing of v2.9.63 found that `renderAccts()`'s totals ba
 ## 2. Requirements
 
 ### REQ-INTEG-002-2a-fix2-a — Convert before summing in the totals bar
-`renderAccts()`'s totals-bar computation must convert each item's native-currency amount into the display currency (`QR.displayCurrency || 'GBP'`) via the existing `toDisp(amount, cur)` function *before* accumulating the sum — for all three totals: `tBD`, `tSD`, `tFPM`. `net` (`tBD - tSD`) requires no separate change once both operands are already display-currency-denominated.
+`renderAccts()`'s totals-bar computation must convert each item's native-currency amount into the display currency (`QR.displayCurrency || 'GBP'`) via the existing `toDisp(amount, cur)` function *before* accumulating the sum — for all three totals: `tBD`, `tSD`, `tFPM`. Each item's currency argument must fall back to `'USD'` when absent (`i.cur||'USD'` / `p.cur||'USD'`), exactly matching `rDash()`'s own `tPO`/`tBuyerDep`/`tSupDep` calls (`index.html:4540-4551`) — this is not a new convention, just the existing one carried over unchanged. `net` (`tBD - tSD`) requires no separate change once both operands are already display-currency-denominated.
 
 ### REQ-INTEG-002-2a-fix2-b — Label the totals with the correct currency
 Each of the four rendered figures (`tBD`, `tSD`, `net`, `tFPM`) must be rendered via `fmt(amount, dispCur)` where `dispCur = QR.displayCurrency || 'GBP'` — not the current bare `fmt(amount)`, which silently mislabels every converted total as USD regardless of what `QR.displayCurrency` actually is.
 
 ### REQ-INTEG-002-2a-fix2-c — Tests
+Follow the existing precedent test for this exact function/element (`tests/run.js:4323`, "renderAccts() — per-invoice, per-supplier, and totals-bar sections..." — uses `resetDB()`/`ctx.DB.po.push()`/`ctx.DB.inv.push()`, calls `ctx.renderAccts()`, asserts on `mockElements['acct-totals'].innerHTML`) as the mechanical template for all of the below:
 - A test constructing POs in 2+ different currencies (matching the tester's exact repro shape — e.g. one CNY, one USD) and asserting `renderAccts()`'s `tSD`-derived totals-bar figure equals the correctly-converted sum, not the raw sum.
 - An equivalent test for `tBD` using invoices in 2+ different currencies (the buyer-side case that was untested in the original manual pass because all seeded invoices happened to share one currency).
 - A test for `tFPM` with `fpmFunded` set on POs of different currencies.
