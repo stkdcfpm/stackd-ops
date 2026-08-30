@@ -31,7 +31,7 @@
 
 **Wedge feature** — live shipment visibility without human cover. The feature that makes operators sign up. Everything else makes them stay.
 
-**Design principle** — Automation First. Every feature evaluated against one question: does this remove manual work or just move it? Non-negotiable.
+**Design principle** — Automation First. Every feature evaluated against one question: does this remove manual work or just move it? Non-negotiable. **Forward-compatibility clause:** the goal is AI-augmented, not AI-run — Automation First does not mean every click must disappear in the current architecture. Where the v2.9.x stack (single-file, `localStorage`-only, no server-side proxy) genuinely can't eliminate a manual step, the requirement downgrades from "remove the click" to "don't build the data model, UX, or integration point in a way that needs rework at the v3.0.0 migration." A feature that leaves a manual step in place but shapes its data/API surface so v3.0.0's server-side architecture can automate it without a redesign satisfies the principle; one that removes the click today by bolting on something the v3.0.0 migration would have to unpick does not.
 
 **ICP** — UK-based sole traders to micro-firms sourcing from Asia, selling to Caribbean and West Africa. Expanding to UK-Nigeria, UK-Ghana, UK-India corridors.
 
