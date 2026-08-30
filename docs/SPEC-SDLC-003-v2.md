@@ -1,13 +1,13 @@
 # SPEC-SDLC-003 — PR preview environment
 
-**Status:** v1 — implements `docs/REQ-SDLC-003-v1.md` (requirements-gate: PASS, 1 advisory folded in below).
+**Status:** v2 — supersedes v1. v1's spec-gate review found one blocking bug (§1): creating the preview repo with no initial commit means `actions/checkout@v4` fails on every run, forever — checkout happens *before* any push, so there's no bootstrapping path that ever gets past it. Fixed by creating the repo with an initial commit (`autoInit: true`). Everything else from v1 (§2-§6) passed spec-gate unchanged, with one non-blocking advisory (§2's comment-lookup pagination, noted in place, not fixed — see the note there).
 **Build baseline:** `main` @ current HEAD, 620/620 tests passing.
 
 ---
 
 ## 1. New repository: `stkdcfpm/stackd-ops-preview`
 
-Created via `create_repository` (public, no auto-init README needed — the first push from `preview-deploy.yml` establishes the default branch). GitHub Pages enabled on it is a manual step (REQ §3) — the workflows below degrade gracefully (fail their push/deploy step, no effect elsewhere) until that's done.
+Created via `create_repository` with **`autoInit: true`** (public) — this is the fix for v1's blocking bug: a repo created with no commits has no default-branch ref for `actions/checkout@v4` to fetch, so every `preview-deploy.yml`/`preview-cleanup.yml` run would fail at the "Checkout preview repo" step before ever reaching the push step that was supposed to create that first commit. With `autoInit: true`, the repo has a real initial commit (a generated README) and an established default branch (`main`, matching the source repo's convention) before any workflow ever runs against it. GitHub Pages enabled on it is a manual step (REQ §3) — the workflows below degrade gracefully (fail their push/deploy step, no effect elsewhere) until that's done.
 
 ---
 

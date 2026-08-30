@@ -83,3 +83,9 @@ Single independent review round (not the multi-round financial-logic escalation 
 - `docs/known-gaps.md`: `SDLC-GAP-003` marked Fixed, corrected origin-isolation finding recorded (§1.2).
 - `docs/requirements-tracker.md`: new row (first SDLC-track REQ/SPEC pair in this tracker).
 - `STACKD_CONTEXT.md`: version-ship housekeeping per the standing checklist, plus a one-line addition to the Architecture section noting the new `stkdcfpm/stackd-ops-preview` repository's existence and purpose.
+
+---
+
+## 7. Spec-gate note
+
+`docs/SPEC-SDLC-003-v2.md` supersedes v1 after spec-gate review found one blocking bug: creating the preview repo with no initial commit leaves it with no default-branch ref, so `actions/checkout@v4` would fail on every workflow run, forever — checkout happens before the push step that was supposed to create that first commit, so the repo can never bootstrap itself. Fixed by creating the repository with an initial commit (`autoInit: true`) at creation time (REQ-SDLC-003a's own requirement text — "new repository," no init details specified — is unaffected; this is purely an implementation detail resolved in the SPEC). One non-blocking advisory (the sticky-comment lookup fetches only the first 100 PR comments, `octokit.paginate` not used) noted in the SPEC, not fixed — low risk in practice since the preview comment is created near the front of the list on the PR's `opened` event.
