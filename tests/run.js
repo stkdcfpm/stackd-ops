@@ -4343,6 +4343,12 @@ test('renderAccts() — per-invoice, per-supplier, and totals-bar sections all u
 
 test("_aiExecTool('get_kpis')/('get_pos') — poBalanceDue/depositPaid/balanceDue use the ledger total, not raw po.dep (AC-3h/i)", function() {
   resetDB();
+  // Pin displayCurrency to the PO's own currency (USD) so get_kpis' now-
+  // currency-converted poBalanceDue (REQ-CUR-002) is numerically a no-op and
+  // this test's assertion stays about ledger-vs-raw-po.dep sourcing, not
+  // currency conversion (covered separately by its own tests).
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'USD';
   ctx.DB.po.push({ id: 'po-fix-11', num: 'PO-FIX-11', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 10, cost: 100 }] });
   ctx.DB.supPayments.push({ id: 'pf13', poId: 'po-fix-11', poNum: 'PO-FIX-11', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
   var kpis = JSON.parse(ctx._aiExecTool('get_kpis', {}));
@@ -4351,6 +4357,7 @@ test("_aiExecTool('get_kpis')/('get_pos') — poBalanceDue/depositPaid/balanceDu
   var po = pos.find(function(p){ return p.num === 'PO-FIX-11'; });
   assertEqual(po.depositPaid, 250, 'get_pos.depositPaid uses the ledger total');
   assertEqual(po.balanceDue, 750, 'get_pos.balanceDue uses the ledger total');
+  ctx.QR.displayCurrency = savedDispCur;
 });
 
 test('editPO() — PO with ledger records: pf-dep shows the ledger total and becomes readOnly (AC-4a)', function() {
@@ -4568,6 +4575,104 @@ test('renderAccts() totals bar — same-currency scenario is a true no-op vs. th
   assertContains(html, ctx.fmt(1200, 'USD'), 'Total Received from Buyers unchanged from the raw amount under this precondition');
   assertContains(html, ctx.fmt(800, 'USD'), 'Total Paid to Suppliers unchanged from the raw amount under this precondition');
   assertContains(html, ctx.fmt(400, 'USD'), 'Net Cash Position (1200-800) matches the pre-fix raw-arithmetic result under this precondition');
+  ctx.QR.displayCurrency = savedDispCur;
+});
+
+// ── REQ-CUR-002: close ACCT-GAP-001 and AI-GAP-010 ───────────────────────────
+
+test('renderAccts() per-invoice — mixed-currency linked POs convert before summing supDepPaid/fpmFunded/supBalDue/totalToChase', function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'GBP';
+  ctx.DB.inv.push({ id: 'inv-cur-1', num: 'INV20201', status: 'Sent', cur: 'USD', dep: 500, lineItems: [{ qty: 1, up: 2000 }], taxRate: 0 });
+  ctx.DB.po.push({ id: 'po-cur-1', num: 'PO-CUR-1', supId: 'sup-1', invId: 'inv-cur-1', invNum: 'INV20201', cur: 'GBP', status: 'Confirmed', dep: 300, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 1, cost: 1000 }] });
+  ctx.DB.po.push({ id: 'po-cur-2', num: 'PO-CUR-2', supId: 'sup-1', invId: 'inv-cur-1', invNum: 'INV20201', cur: 'USD', status: 'Confirmed', dep: 0, oth: 0, fpmFunded: 600, fpmRecovered: false, lineItems: [{ rid:'r2', lid:'', qty: 1, cost: 800 }] });
+  ctx.DB.supPayments.push({ id: 'pcur-1', poId: 'po-cur-2', poNum: 'PO-CUR-2', date: '2026-01-01', amount: 400, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: ctx.toGBP(400,'USD'), ratesUsed: {} } });
+  var po1 = ctx.DB.po[0], po2 = ctx.DB.po[1];
+  var dep1 = ctx.getPOEffectiveDep(po1), dep2 = ctx.getPOEffectiveDep(po2);
+  var dispCur = ctx.QR.displayCurrency;
+  var expSupDepPaid = ctx.toDisp(dep1, 'GBP') + ctx.toDisp(dep2, 'USD');
+  var expFpmFunded  = ctx.toDisp(0, 'GBP') + ctx.toDisp(600, 'USD');
+  var expSupBalDue  = ctx.toDisp(Math.max(0, 1000 - dep1), 'GBP') + ctx.toDisp(Math.max(0, 800 - dep2), 'USD');
+  var expBalFromBuyer = 1500; // grand(2000) - dep(500)
+  var expTotalToChase = ctx.toDisp(expBalFromBuyer, 'USD') + expFpmFunded; // fpmRecovered is false (po-cur-2 unrecovered)
+  ctx.renderAccts();
+  var html = mockElements['acct-inv'].innerHTML;
+  assertContains(html, ctx.fmt(expSupDepPaid, dispCur), 'Sup. Dep. Paid reflects the converted sum across GBP+USD POs');
+  assertContains(html, ctx.fmt(expFpmFunded, dispCur), 'FPM Funded reflects the converted sum');
+  assertContains(html, ctx.fmt(expSupBalDue, dispCur), 'Sup. Bal. Due reflects the converted sum');
+  assertContains(html, ctx.fmt(expTotalToChase, dispCur), 'Total to Chase combines the converted buyer balance and the converted unrecovered FPM deposit in the same currency');
+  ctx.QR.displayCurrency = savedDispCur;
+});
+
+test('renderAccts() per-supplier — mixed-currency POs convert before summing totalCOGS/totalDep/totalBal, pct uses the converted figures', function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'GBP';
+  ctx.DB.po.push({ id: 'po-cur-3', num: 'PO-CUR-3', supId: 'sup-1', cur: 'GBP', status: 'Confirmed', dep: 300, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 1, cost: 1000 }] });
+  ctx.DB.po.push({ id: 'po-cur-4', num: 'PO-CUR-4', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 400, oth: 0, lineItems: [{ rid:'r2', lid:'', qty: 1, cost: 800 }] });
+  var dispCur = ctx.QR.displayCurrency;
+  var expCOGS = ctx.toDisp(1000, 'GBP') + ctx.toDisp(800, 'USD');
+  var expDep  = ctx.toDisp(300, 'GBP') + ctx.toDisp(400, 'USD');
+  var expBal  = ctx.toDisp(700, 'GBP') + ctx.toDisp(400, 'USD');
+  var expPct  = ((expDep/expCOGS)*100).toFixed(0);
+  ctx.renderAccts();
+  var html = mockElements['acct-sup'].innerHTML;
+  assertContains(html, ctx.fmt(expCOGS, dispCur), 'Total COGS reflects the converted sum across GBP+USD POs');
+  assertContains(html, ctx.fmt(expDep, dispCur), 'Dep. Paid reflects the converted sum');
+  assertContains(html, ctx.fmt(expBal, dispCur), 'Bal. Due to Sup. reflects the converted sum');
+  assertContains(html, '>' + expPct + '%<', 'Dep. Coverage % is computed from the already-converted totals, correct automatically by ratio-invariance');
+  ctx.QR.displayCurrency = savedDispCur;
+});
+
+test('renderAccts() per-invoice/per-supplier — same-currency regression guard (Priority pattern: pin displayCurrency to the scenario\'s own currency)', function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'USD';
+  ctx.DB.inv.push({ id: 'inv-cur-2', num: 'INV20202', status: 'Sent', cur: 'USD', dep: 200, lineItems: [{ qty: 1, up: 1500 }], taxRate: 0 });
+  ctx.DB.po.push({ id: 'po-cur-5', num: 'PO-CUR-5', supId: 'sup-2', invId: 'inv-cur-2', invNum: 'INV20202', cur: 'USD', status: 'Confirmed', dep: 350, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 1, cost: 900 }] });
+  ctx.renderAccts();
+  var invHtml = mockElements['acct-inv'].innerHTML;
+  var supHtml = mockElements['acct-sup'].innerHTML;
+  assertContains(invHtml, ctx.fmt(350, 'USD'), 'Sup. Dep. Paid unchanged from the raw amount when displayCurrency matches every item\'s own currency');
+  assertContains(invHtml, ctx.fmt(550, 'USD'), 'Sup. Bal. Due (900-350) unchanged under this precondition');
+  assertContains(supHtml, ctx.fmt(900, 'USD'), 'Total COGS unchanged under this precondition');
+  ctx.QR.displayCurrency = savedDispCur;
+});
+
+test("_aiExecTool('get_kpis') — mixed-currency invoices/POs convert before summing, response includes a currency field", function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'GBP';
+  ctx.DB.inv.push({ id: 'inv-cur-3', num: 'INV20203', status: 'Sent', cur: 'USD', dep: 0, lineItems: [{ qty: 1, up: 1000 }], taxRate: 0 });
+  ctx.DB.inv.push({ id: 'inv-cur-4', num: 'INV20204', status: 'Partially Paid', cur: 'GBP', dep: 0, lineItems: [{ qty: 1, up: 2000 }], taxRate: 0 });
+  ctx.DB.po.push({ id: 'po-cur-6', num: 'PO-CUR-6', supId: 'sup-1', cur: 'GBP', status: 'Confirmed', dep: 300, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 1, cost: 1000 }] });
+  ctx.DB.po.push({ id: 'po-cur-7', num: 'PO-CUR-7', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 400, oth: 0, lineItems: [{ rid:'r2', lid:'', qty: 1, cost: 800 }] });
+  var inv1 = ctx.DB.inv[0], inv2 = ctx.DB.inv[1];
+  var c1 = ctx.iCalc(inv1), c2 = ctx.iCalc(inv2);
+  var dispCur = ctx.QR.displayCurrency;
+  var expRevenue = ctx.toDisp(c1.grand,'USD') + ctx.toDisp(c2.grand,'GBP');
+  var expNp      = ctx.toDisp(c1.np,'USD')    + ctx.toDisp(c2.np,'GBP');
+  var expOutstanding = ctx.toDisp(c1.bal,'USD') + ctx.toDisp(c2.bal,'GBP'); // both Sent/Partially Paid, both counted
+  var expPoBal = ctx.toDisp(Math.max(0,1000-300),'GBP') + ctx.toDisp(Math.max(0,800-400),'USD');
+  var kpis = JSON.parse(ctx._aiExecTool('get_kpis', {}));
+  assertEqual(kpis.currency, dispCur, 'get_kpis response now includes an explicit currency field matching QR.displayCurrency');
+  assertApprox(kpis.invoiceRevenue, +expRevenue.toFixed(2), 'invoiceRevenue reflects the converted sum across USD+GBP invoices');
+  assertApprox(kpis.netProfit, +expNp.toFixed(2), 'netProfit reflects the converted sum');
+  assertApprox(kpis.outstanding, +expOutstanding.toFixed(2), 'outstanding reflects the converted sum');
+  assertApprox(kpis.poBalanceDue, +expPoBal.toFixed(2), 'poBalanceDue reflects the converted sum across GBP+USD POs');
+  ctx.QR.displayCurrency = savedDispCur;
+});
+
+test("_aiExecTool('get_kpis') — same-currency regression guard, currency field matches the pinned displayCurrency", function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'USD';
+  ctx.DB.inv.push({ id: 'inv-cur-5', num: 'INV20205', status: 'Sent', cur: 'USD', dep: 0, lineItems: [{ qty: 1, up: 1000 }], taxRate: 0 });
+  var kpis = JSON.parse(ctx._aiExecTool('get_kpis', {}));
+  var c1 = ctx.iCalc(ctx.DB.inv[0]);
+  assertEqual(kpis.currency, 'USD', 'currency field matches the pinned displayCurrency');
+  assertApprox(kpis.invoiceRevenue, c1.grand, 'invoiceRevenue unchanged from the raw amount when displayCurrency matches the invoice\'s own currency');
   ctx.QR.displayCurrency = savedDispCur;
 });
 
