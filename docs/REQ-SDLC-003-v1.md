@@ -1,6 +1,6 @@
 # REQ-SDLC-003 — Same-origin PR preview environment (closes SDLC-GAP-003)
 
-**Status:** v1 — pre-review draft.
+**Status:** v1 — requirements-gate independent review: **PASS**. Both load-bearing claims in §1.2 (GitHub Pages' custom-domain redirect behavior; `localStorage`'s origin-only partitioning) were independently verified against GitHub's own documentation/community discussions and a direct code check (no service worker/iframe/sandboxing in `index.html` that could change the storage analysis), not merely asserted. The reviewer additionally confirmed no `stkdcfpm.github.io` user-level Pages site exists that could cascade a redirect down onto the new preview repo despite it having no `CNAME` of its own, and confirmed the REQ's `pull_request` (not `pull_request_target`) trigger choice is the fork-safe one — a malicious fork PR cannot exfiltrate `PREVIEW_DEPLOY_TOKEN`. One advisory (non-blocking): the sticky-PR-comment mechanism (REQ-SDLC-003b) should identify its own prior comment via a hidden marker plus bot-author check, not naive body-text matching, to avoid misfiring against a human's comment — folded into the SPEC.
 **Type:** SDLC/infrastructure build, not an app feature — no financial data or business logic touched. Closes `SDLC-GAP-003` ("No staging/preview environment for PR review"), logged v2.9.24, revisited per its own 2026-08-25 trigger now that Payment Allocation is moving into sub-phase 2c.
 
 ---
