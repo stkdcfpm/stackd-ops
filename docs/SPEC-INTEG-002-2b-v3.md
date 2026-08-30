@@ -1,6 +1,6 @@
 # SPEC-INTEG-002-2b — Invoice→PO enumeration fix
 
-**Status:** v2 — supersedes v1. Implements `docs/REQ-INTEG-002-2b-v2.md`. v1 of this SPEC's own spec-gate review found a blocking issue against v1 of the REQ: a false foundational claim that `autoPos()` is the only PO-linking path, missing two live CSV/Sheets import paths (`processImport()`/`processImportRecords()`'s `'po'` branches) that also link a PO to an invoice without touching `inv.pos[]`. The REQ was corrected to v2 (widening REQ-INTEG-002-2b-a) and went through a fresh confirmatory requirements-gate round; this SPEC v2 adds §2.2 to close the same gap at the spec level. Everything else from v1 is unchanged.
+**Status:** v3 — supersedes v2 (and v1). Implements `docs/REQ-INTEG-002-2b-v3.md`. v1's own spec-gate review found a blocking issue: a false claim that `autoPos()` is the only PO-linking path, missing `processImport()`/`processImportRecords()`'s `'po'` branches — fixed in v2 (§2.2). The v2 confirmatory requirements-gate round then found a THIRD PO-linking path both v1 and v2 missed: `pullAll()`'s own bulk Purchase-Orders Sheets-merge block. v3 adds §2.3 to close this. v3 also fixes an advisory nit the confirmatory reviewer found in v2's own §5 (a fabricated test-precedent citation — corrected below). Everything else from v1/v2 is unchanged.
 **Build baseline:** `main` @ `74dab27`, 609/609 tests passing.
 
 ---
@@ -136,6 +136,26 @@ becomes:
 
 `backfillInvoicePOs()` must be defined (§2) before either of these two call sites are reached at runtime — both are inside functions defined later in the file than `backfillInvoicePOs()`'s own definition point (near `migrateLinkedPOIds()`, early in the file), so no forward-reference/hoisting concern applies (both `processImport()`/`processImportRecords()` are themselves plain `function` declarations, hoisted the same way).
 
+### 2.3 Wiring — `pullAll()`'s bulk Purchase-Orders Sheets-merge block (new in v3)
+
+`pullAll()`'s own PO-merge block (`index.html:4083-4101`) is a third, distinct path — the "↓ Pull"/auto-poll-on-boot bulk sync, not a manual per-entity import — that can create or re-link a PO's `invNum` without touching `inv.pos[]` (REQ §1.1). `backfillInvoicePOs()` is called once, in `pullAll()`'s own existing tail, alongside its sibling migrations.
+
+Current (`index.html:4143-4145`):
+```js
+  backfillRefNums();
+  backfillConIds();
+  saveAll(); renderAll();
+```
+becomes:
+```js
+  backfillRefNums();
+  backfillConIds();
+  backfillInvoicePOs();
+  saveAll(); renderAll();
+```
+
+This one call covers the entire pull, not just the `'po'` block specifically — cheap (two array scans over what are, in practice, small entity counts) and correctly handles both a brand-new pulled PO (no local match, `invId` absent per `mergePulledWithLocal()`, `index.html:3971`) and a re-matched existing PO whose `invNum` was just overwritten by the pull (`index.html:3972`, `Object.assign({}, localMatch, pulledMapped)`) — `backfillInvoicePOs()`'s replace-not-merge semantics (§2) correctly move the PO's id out of its old invoice's `pos[]` and into its new one in the same pass, since it always rebuilds every invoice's `pos[]` from the current, post-merge `DB.po`/`DB.inv` state.
+
 ---
 
 ## 3. `delPO()` — new cleanup step
@@ -260,10 +280,12 @@ This remains a separate, independent copy of the same logic as §4.2 — per `RE
 5. **`saveInv()` FPM-recovery regression guard (AC-7)** — a PO with `fpmFunded>0, fpmRecovered:false` linked to an invoice (via `autoPos()`, so `inv.pos[]` is correctly populated); save the invoice with `status:'Paid'`; assert the PO's `fpmRecovered` becomes `true` — identical outcome to pre-fix behavior, now sourced via `getInvoicePOs()`.
 6. **`savePayment()` FPM-recovery regression guard (AC-8)** — same scenario, triggered via the payment-completion path instead of `saveInv()` directly (mirroring however the existing test suite currently exercises this block, if such a test already exists — check for one first as precedent).
 7. **`autoPos()` unchanged (AC-9)** — a new invoice with 2 line items from 2 different suppliers, saved for the first time: assert both generated POs' ids appear in `inv.pos[]`, and `getInvoicePOs(inv)` returns both.
-8. **`processImport()` CSV-linked PO syncs `inv.pos[]` immediately (AC-11, new in v2)** — seed an existing invoice (`ctx.DB.inv.push(...)`) and a supplier, then `ctx.processImport('po', csv)` with a CSV row whose "Linked Invoice #" column matches that invoice's `num` (mirroring the existing `processImport('po', ...)` call pattern used by other PO-import tests, e.g. the `AC-3h/i` ledger-total test's seed shape). Assert the invoice's `pos[]` now contains the imported PO's id — no reload/boot needed.
+8. **`processImport()` CSV-linked PO syncs `inv.pos[]` immediately (AC-11, new in v2)** — seed an existing invoice (`ctx.DB.inv.push(...)`) and a supplier, then `ctx.processImport('po', csv)` with a CSV row whose "Linked Invoice #" column matches that invoice's `num` (a plain CSV string with a header row and one data row — no existing `processImport('po', ...)` test currently exists in `tests/run.js` to mirror; the header/column names follow `processImport()`'s own field-lookup keys, `index.html:7883-7888`: `'PO #'`, `'Supplier Name'`, `'Linked Invoice #'`). Assert the invoice's `pos[]` now contains the imported PO's id — no reload/boot needed.
 9. **`processImportRecords()` Sheets-linked PO syncs `inv.pos[]` immediately (AC-12, new in v2)** — same scenario via `ctx.processImportRecords('po', [{ 'PO #': ..., 'Linked Invoice #': invNum, ... }], function(){})`, mirroring the existing `processImportRecords('inv', [...], function(){})` call pattern at `tests/run.js:7706`. Same assertion as AC-11.
+10. **`pullAll()`'s PO-merge block syncs `inv.pos[]` for a brand-new pulled PO (AC-13, new in v3)** — mirroring the established `pullAll integration` test pattern at `tests/run.js:1624-1639` (`ctx.SS.url`/`ctx.SS.auto`/`ctx.SS.pol` set, `_mockPullResponses = { po: { status:'ok', records: [...] } }`, `await ctx.pullAll()`, then `_mockPullResponses = {}`). Seed an existing local invoice (`ctx.DB.inv.push(...)`), set `_mockPullResponses.po.records` to one row with `'PO #'`/`'Supplier'`/`'Linked Invoice'` (the actual `FIELD_MAPS.po` Sheet-column names, `index.html:3933` — not `'Linked Invoice #'`, which is `processImport()`'s own CSV header name, a different string) matching that invoice's `num`, and no matching local PO (so it's treated as brand-new per `mergePulledWithLocal()`). After `await ctx.pullAll()`, assert the invoice's `pos[]` contains the newly-pulled PO's id.
+11. **`pullAll()`'s PO-merge block re-links `inv.pos[]` when an existing PO's linked invoice changes (AC-14, new in v3)** — seed two local invoices and one local PO already linked (`invId`/`invNum`) to the first; `_mockPullResponses.po.records` returns a row matching that PO's `num` but with `'Linked Invoice'` now naming the second invoice. After `await ctx.pullAll()`, assert the PO's id is present in the second invoice's `pos[]` and absent from the first's.
 
-Checked `tests/run.js` for existing coverage of the two `fpmRecovered` auto-set blocks before writing this section: no test currently exercises either block's actual trigger path (an invoice reaching `Paid` status auto-setting a linked PO's `fpmRecovered`) — existing `fpmRecovered:false` seed data is used only for rendering/display tests (e.g. the REQ-CUR-002 totals-bar tests), not for testing the auto-recovery logic itself. AC-7/8 are therefore genuinely new tests, not extensions of existing ones.
+Checked `tests/run.js` for existing coverage of the two `fpmRecovered` auto-set blocks before writing this section: no test currently exercises either block's actual trigger path (an invoice reaching `Paid` status auto-setting a linked PO's `fpmRecovered`) — existing `fpmRecovered:false` seed data is used only for rendering/display tests (e.g. the REQ-CUR-002 totals-bar tests), not for testing the auto-recovery logic itself. AC-7/8 are therefore genuinely new tests, not extensions of existing ones. Also checked (per the confirmatory reviewer's advisory finding on v2): no existing `processImport('po',...)`/`processImportRecords('po',...)` test exists anywhere in `tests/run.js` to mirror for items 8-9 — v2's citation claiming otherwise was fabricated and is corrected above; items 8-9 are standalone new tests, built directly from the real function signatures/field names, not adapted from a non-existent precedent.
 
 ---
 
