@@ -10,7 +10,7 @@
 
 | Field | Value |
 |-------|-------|
-| Last updated | 30 August 2026 (branch `claude/integ002-2b-invoice-po-enum`, PR pending merge — code-level facts confirmed by running `node tests/run.js`) |
+| Last updated | 30 August 2026 (verified against `main` @ `afea2ea`, code-level facts confirmed by running `node tests/run.js`) |
 | Current version | v2.9.66 |
 | Test count | 620 / 620 passing (confirmed by re-running the suite, not just read from source) |
 | Build branch | main |
@@ -189,7 +189,7 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2
 
 ## Build queue
 
-**Completed since this file was last accurate:** all fifteen versions v2.9.52–v2.9.66 shipped and merged to `main` via PR (v2.9.66's PR pending merge as of this update). v2.9.52–v2.9.58, v2.9.60, v2.9.62, v2.9.63, v2.9.64, v2.9.65, and v2.9.66 each went through the full requirements-gate → spec-gate → build → independent build-gate review pipeline documented in `docs/requirements-tracker.md` (v2.9.63's requirements-gate and spec-gate, and v2.9.64's spec-gate, each needed one revision round after an initial FAIL/CONDITIONAL PASS before reaching PASS; v2.9.65's spec-gate caught one blocking issue, fixed in the spec before implementation, no second round needed; v2.9.66 needed 4 REQ/SPEC revisions — three independent review rounds each found a genuine missed real-world PO-linking code path, and a fourth found a real algorithm bug in the fix's own migration, all fixed before implementation; every build-gate round returned PASS); v2.9.59 was a small, low-risk post-merge cleanup (removing one confirmed-dead schema field) verified by check-first and a full test-suite run rather than a full gate cycle. v2.9.61 is test/demo-data tooling, not a REQ/SPEC-gated feature — standard build-gate review only (independent review PASS), no `docs/requirements-tracker.md` entry, per its own brief.
+**Completed since this file was last accurate:** all fifteen versions v2.9.52–v2.9.66 shipped and merged to `main` via PR. v2.9.52–v2.9.58, v2.9.60, v2.9.62, v2.9.63, v2.9.64, v2.9.65, and v2.9.66 each went through the full requirements-gate → spec-gate → build → independent build-gate review pipeline documented in `docs/requirements-tracker.md` (v2.9.63's requirements-gate and spec-gate, and v2.9.64's spec-gate, each needed one revision round after an initial FAIL/CONDITIONAL PASS before reaching PASS; v2.9.65's spec-gate caught one blocking issue, fixed in the spec before implementation, no second round needed; v2.9.66 needed 4 REQ/SPEC revisions — three independent review rounds each found a genuine missed real-world PO-linking code path, and a fourth found a real algorithm bug in the fix's own migration, all fixed before implementation; every build-gate round returned PASS); v2.9.59 was a small, low-risk post-merge cleanup (removing one confirmed-dead schema field) verified by check-first and a full test-suite run rather than a full gate cycle. v2.9.61 is test/demo-data tooling, not a REQ/SPEC-gated feature — standard build-gate review only (independent review PASS), no `docs/requirements-tracker.md` entry, per its own brief.
 
 **Stale unmerged branches — still present on the remote, now confirmed superseded, worth deleting in a cleanup pass:**
 
