@@ -1,6 +1,6 @@
 # SPEC-INTEG-002-2b — Invoice→PO enumeration fix
 
-**Status:** v1 — implements `docs/REQ-INTEG-002-2b-v1.md` (requirements-gate: PASS, 1 advisory nit corrected in place).
+**Status:** v2 — supersedes v1. Implements `docs/REQ-INTEG-002-2b-v2.md`. v1 of this SPEC's own spec-gate review found a blocking issue against v1 of the REQ: a false foundational claim that `autoPos()` is the only PO-linking path, missing two live CSV/Sheets import paths (`processImport()`/`processImportRecords()`'s `'po'` branches) that also link a PO to an invoice without touching `inv.pos[]`. The REQ was corrected to v2 (widening REQ-INTEG-002-2b-a) and went through a fresh confirmatory requirements-gate round; this SPEC v2 adds §2.2 to close the same gap at the spec level. Everything else from v1 is unchanged.
 **Build baseline:** `main` @ `74dab27`, 609/609 tests passing.
 
 ---
@@ -86,6 +86,55 @@ becomes:
     backfillOrderRequests();
     backfillInvoicePOs();
 ```
+
+### 2.2 Wiring — the two CSV/Sheets PO-import paths (new in v2, per REQ-INTEG-002-2b-a's widened scope)
+
+Both `processImport()`'s and `processImportRecords()`'s `'po'` branches can link a PO to an invoice by number (`index.html:7889-7900`, `8242`) without ever touching `inv.pos[]`. Rather than duplicate per-row sync logic inline in the import loop, each branch calls the same `backfillInvoicePOs()` migration once, right after its batch `sv(K.p,DB.po)` call — a full re-derivation is cheap (two array scans) and correctly handles both newly-added and updated PO rows uniformly, regardless of how many rows in the batch were invoice-linked.
+
+**`processImport()`'s `'po'` branch**, current (`index.html:7910-7915`):
+```js
+      if (existing) { var i=DB.po.findIndex(function(p){return p.num===num;}); DB.po[i]=rec; updated++; impLog('Updated PO: '+num); }
+      else { DB.po.push(rec); added++; }
+    });
+    sv(K.p,DB.po);
+    var msg='POs: '+added+' added, '+updated+' updated, '+skipped+' skipped'+(errors.length?' | '+errors.join('; '):'');
+    G('imp-po-result').textContent=msg; impLog(msg); rPO(); rDash();
+  }
+```
+becomes:
+```js
+      if (existing) { var i=DB.po.findIndex(function(p){return p.num===num;}); DB.po[i]=rec; updated++; impLog('Updated PO: '+num); }
+      else { DB.po.push(rec); added++; }
+    });
+    sv(K.p,DB.po);
+    backfillInvoicePOs();
+    var msg='POs: '+added+' added, '+updated+' updated, '+skipped+' skipped'+(errors.length?' | '+errors.join('; '):'');
+    G('imp-po-result').textContent=msg; impLog(msg); rPO(); rDash();
+  }
+```
+
+**`processImportRecords()`'s `'po'` branch**, current (`index.html:8256-8261`):
+```js
+      if (existing) {
+        var i=DB.po.findIndex(function(p){return p.num===num;}); DB.po[i]=rec; updated++;
+      } else { DB.po.push(rec); added++; }
+    });
+    sv(K.p, DB.po); rPO(); rDash();
+  }
+```
+becomes:
+```js
+      if (existing) {
+        var i=DB.po.findIndex(function(p){return p.num===num;}); DB.po[i]=rec; updated++;
+      } else { DB.po.push(rec); added++; }
+    });
+    sv(K.p, DB.po);
+    backfillInvoicePOs();
+    rPO(); rDash();
+  }
+```
+
+`backfillInvoicePOs()` must be defined (§2) before either of these two call sites are reached at runtime — both are inside functions defined later in the file than `backfillInvoicePOs()`'s own definition point (near `migrateLinkedPOIds()`, early in the file), so no forward-reference/hoisting concern applies (both `processImport()`/`processImportRecords()` are themselves plain `function` declarations, hoisted the same way).
 
 ---
 
@@ -211,6 +260,8 @@ This remains a separate, independent copy of the same logic as §4.2 — per `RE
 5. **`saveInv()` FPM-recovery regression guard (AC-7)** — a PO with `fpmFunded>0, fpmRecovered:false` linked to an invoice (via `autoPos()`, so `inv.pos[]` is correctly populated); save the invoice with `status:'Paid'`; assert the PO's `fpmRecovered` becomes `true` — identical outcome to pre-fix behavior, now sourced via `getInvoicePOs()`.
 6. **`savePayment()` FPM-recovery regression guard (AC-8)** — same scenario, triggered via the payment-completion path instead of `saveInv()` directly (mirroring however the existing test suite currently exercises this block, if such a test already exists — check for one first as precedent).
 7. **`autoPos()` unchanged (AC-9)** — a new invoice with 2 line items from 2 different suppliers, saved for the first time: assert both generated POs' ids appear in `inv.pos[]`, and `getInvoicePOs(inv)` returns both.
+8. **`processImport()` CSV-linked PO syncs `inv.pos[]` immediately (AC-11, new in v2)** — seed an existing invoice (`ctx.DB.inv.push(...)`) and a supplier, then `ctx.processImport('po', csv)` with a CSV row whose "Linked Invoice #" column matches that invoice's `num` (mirroring the existing `processImport('po', ...)` call pattern used by other PO-import tests, e.g. the `AC-3h/i` ledger-total test's seed shape). Assert the invoice's `pos[]` now contains the imported PO's id — no reload/boot needed.
+9. **`processImportRecords()` Sheets-linked PO syncs `inv.pos[]` immediately (AC-12, new in v2)** — same scenario via `ctx.processImportRecords('po', [{ 'PO #': ..., 'Linked Invoice #': invNum, ... }], function(){})`, mirroring the existing `processImportRecords('inv', [...], function(){})` call pattern at `tests/run.js:7706`. Same assertion as AC-11.
 
 Checked `tests/run.js` for existing coverage of the two `fpmRecovered` auto-set blocks before writing this section: no test currently exercises either block's actual trigger path (an invoice reaching `Paid` status auto-setting a linked PO's `fpmRecovered`) — existing `fpmRecovered:false` seed data is used only for rendering/display tests (e.g. the REQ-CUR-002 totals-bar tests), not for testing the auto-recovery logic itself. AC-7/8 are therefore genuinely new tests, not extensions of existing ones.
 
