@@ -200,17 +200,22 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2
 
 **Unmerged branches not verified this pass** (`claude/ord-followup-fixes`, `claude/sync-race-condition-fixes-*`, `claude/triage-tool-page`) — still exist on the remote, content not checked against what's since shipped on `main`. A full branch cleanup/triage session (delete confirmed-superseded branches, check the rest for unique unshipped work) remains outstanding.
 
-**Backlog carried forward from `docs/known-gaps.md` / `docs/requirements-tracker.md` (business-priority items, still open):**
+**Backlog carried forward from `docs/known-gaps.md` / `docs/requirements-tracker.md` (business-priority items, still open), roughly in priority order:**
 
 | Item | Notes |
 |------|-------|
-| MTD-GAP-001/002 (REQ-RPT-001 G-07) | Input VAT tracking, invoice-date FX — requirements-gate reached CONDITIONAL PASS in v2.9.33 but explicitly deferred to v3.0.x on 2026-08-22 rather than building it against the pre-Supabase stack |
+| REQ-INTEG-002 (Sub-phase 2b) | Not a gap — the explicit next step of the in-flight Payment Allocation build (2a Supplier ledger → **2b Invoice→PO enumeration fix** → 2c Buyer payment tranches → 2d full allocation link). 2a shipped v2.9.62, stabilized over two fix-forward rounds (v2.9.63, v2.9.64 — the second closing a real currency-mixing bug in the Accounts totals bar). 2b is unbriefed as of this update. |
+| AI-GAP-010 | `_aiExecTool('get_kpis')` sums invoice revenue/profit/outstanding and PO balance across currencies with zero conversion — same defect class just fixed in the Accounts totals bar (v2.9.64), still open here. Higher priority than `ACCT-GAP-001` below: can hand an operator or anything built on the assistant a confidently wrong number with no visual cue. Logged v2.9.64. |
+| ACCT-GAP-001 | Same currency-mixing defect, still open in `renderAccts()`'s per-invoice/per-supplier columns (the totals bar itself was fixed v2.9.64). Logged v2.9.64. |
+| MTD-GAP-001/002 (REQ-RPT-001 G-07) | Input VAT tracking, invoice-date FX — a real, recurring VAT-reclaim under-claim. Requirements-gate reached CONDITIONAL PASS in v2.9.33 but explicitly deferred to v3.0.x on 2026-08-22 rather than building it against the pre-Supabase stack — the most consequential item in "deferred," not "someday." |
+| SDLC-GAP-003 | No staging/preview environment. Carries an explicit revisit trigger logged 2026-08-25: risk increases with each phase of financial automation, and interim mitigation (Demo Mode + a low-stakes real order) is flagged as insufficient once Phase 4 adds live email sending — worth a real look before Payment Allocation 2c/2d push further into real-money territory. |
+| ORD-GAP-004 | Order Request stage doesn't auto-advance on "Progress to Invoicing" — logged as backlog after REQ-INTEG-001 Phase 2 fact-finding confirmed this was a drafting scope-narrowing decision, not a bug; a previously-infeasible path (Invoice → Quote → `sourceOrdId` → Order Request) may now be viable since Phase 1 shipped that back-reference, but feasibility has never been investigated. |
 | REQ-RPT-001 G-08/09/10 | Intrastat report, supplier performance tracking, HS-code duty recalculation — all deferred to v3.0.x, unscoped |
+| PROC-GAP-002 | EUR has no FX conversion path anywhere in `toGBP()`/`fromGBP()` — only matters if EUR transactions actually happen. Logged v2.9.64 (found while building the `PO.dep` reconciliation fix, which explicitly guards against it rather than fixing it). |
 | BUY-GAP-001 | Buyers → Sheets sync — deferred to v3.x (FM-1) |
-| AI-GAP-001 (broad) | Agentic multi-step order flow — deferred to v3.0.x, requires a server-side proxy |
 | DASH-GAP-001 | Dashboard charts are hand-rolled divs, no interactivity — Chart.js vendoring recommended if picked up |
 | CLOUD-GAP-001 | Legacy CSV/Sheets Supplier importers bypass Cloud Data once configured |
-| SDLC-GAP-003 | Same-origin PR preview environment |
+| AI-GAP-001 (broad) | Agentic multi-step order flow — deferred to v3.0.x, requires a server-side proxy |
 
 **v3.0.0 (still the stated target, no code-verifiable date):** Supabase backend, multi-tenancy, MFA, RBAC, server-side API proxy, referral mechanics. Prerequisite: freelance data architect engagement. See `docs/v3-architect-handoff.md` for the consolidated technical/business handoff packet assembled for that engagement.
 
