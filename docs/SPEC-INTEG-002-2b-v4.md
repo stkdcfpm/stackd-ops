@@ -1,6 +1,6 @@
 # SPEC-INTEG-002-2b — Invoice→PO enumeration fix
 
-**Status:** v3 — supersedes v2 (and v1). Implements `docs/REQ-INTEG-002-2b-v3.md` (requirements-gate: CONDITIONAL PASS after a second confirmatory round found no fourth PO-linking path — see that document's §7). v1's own spec-gate review found a blocking issue: a false claim that `autoPos()` is the only PO-linking path, missing `processImport()`/`processImportRecords()`'s `'po'` branches — fixed in v2 (§2.2). The v2 confirmatory requirements-gate round then found a THIRD PO-linking path both v1 and v2 missed: `pullAll()`'s own bulk Purchase-Orders Sheets-merge block. v3 adds §2.3 to close this. v3 also fixes an advisory nit the confirmatory reviewer found in v2's own §5 (a fabricated test-precedent citation — corrected below). Everything else from v1/v2 is unchanged.
+**Status:** v4 — supersedes v3. Implements `docs/REQ-INTEG-002-2b-v4.md`. v3's own spec-gate review (checking only the v3-new §2.3/§5 content) found a genuine logic defect in `backfillInvoicePOs()` itself, present since v1 but only exposed once §2.3's `pullAll()`-re-link scenario (AC-14) was traced against it: the algorithm's per-invoice `p.invId===inv.id||p.invNum===inv.num` filter is not mutually exclusive across invoices when a PO's `invId` and `invNum` disagree (exactly what a `pullAll()` re-link produces, since `FIELD_MAPS.po` overwrites `invNum` but never touches `invId`) — the same PO could land in TWO invoices' `pos[]` simultaneously (the old one via stale `invId`, the new one via fresh `invNum`), not move cleanly from one to the other as claimed. **Fixed in v4:** §2's algorithm is inverted — instead of iterating invoices and filtering POs per-invoice, it now iterates POs once and assigns each to a single "home" invoice, preferring an `invNum` match (the field every import/pull path keeps fresh — `processImport()`/`processImportRecords()`/`pullAll()` all write `invNum`, and `FIELD_MAPS.po` never maps `invId` at all, so `invNum` is always the more up-to-date of the two whenever they disagree) and falling back to `invId` only when `invNum` is blank or doesn't resolve to any invoice. This guarantees every PO belongs to at most one invoice's `pos[]`, and correctly lets a Sheets-driven re-link (which can only ever change `invNum`, never `invId`) actually take effect — the opposite priority (preferring `invId`) would have silently ignored every such re-link forever, since the stale `invId` would always keep resolving to the old invoice. For every existing write path (`autoPos()`, `processImport()`, `processImportRecords()`, the `loadDemoData()` seed), `invId` and `invNum` are always set together from the same source and never disagree — so this priority choice changes nothing for any of AC-1 through AC-13's scenarios, only AC-14's genuine disagreement case. AC-14's test is corrected to assert exclusive membership, and a new direct regression test (§5 item 2b) targets the exclusivity property itself. Everything else from v1/v2/v3 is unchanged. See `docs/REQ-INTEG-002-2b-v4.md`'s §7 for the full five-round review-resolution log.
 **Build baseline:** `main` @ `74dab27`, 609/609 tests passing.
 
 ---
@@ -38,12 +38,20 @@ function migrateLinkedPOIds() {
 }
 ```
 
-New function, added directly below it:
+New function, added directly below it. **v4 correction:** rather than iterating invoices and filtering `DB.po` per-invoice with an OR condition (v1-v3's approach, which is not mutually exclusive when a PO's `invId`/`invNum` disagree — see the v4 status note above), this iterates `DB.po` once and assigns each PO to exactly one "home" invoice, preferring an `invNum` match (the field every import/pull path keeps fresh) and falling back to `invId` only when `invNum` is blank or doesn't resolve:
 ```js
 function backfillInvoicePOs() {
+  var posByInv = {};
+  DB.po.forEach(function(po) {
+    var home = po.invNum ? DB.inv.find(function(i){ return i.num === po.invNum; }) : null;
+    if (!home && po.invId) home = DB.inv.find(function(i){ return i.id === po.invId; });
+    if (!home) return;
+    if (!posByInv[home.id]) posByInv[home.id] = [];
+    posByInv[home.id].push(po.id);
+  });
   var changed = false;
   DB.inv.forEach(function(inv) {
-    var live = DB.po.filter(function(p){ return p.invId === inv.id || p.invNum === inv.num; }).map(function(p){ return p.id; });
+    var live = posByInv[inv.id] || [];
     var current = inv.pos || [];
     var same = current.length === live.length && current.every(function(id, i){ return id === live[i]; });
     if (!same) {
@@ -55,7 +63,7 @@ function backfillInvoicePOs() {
 }
 ```
 
-The `same` check (rather than unconditionally reassigning) keeps this a true no-op on the common case where nothing has changed, matching `migrateLinkedPOIds()`'s own "only call `saveAll()` if something actually changed" discipline — reassigning `inv.pos` to a new-but-identical array every boot would otherwise mark `changed=true` unconditionally.
+The `same` check (rather than unconditionally reassigning) keeps this a true no-op on the common case where nothing has changed, matching `migrateLinkedPOIds()`'s own "only call `saveAll()` if something actually changed" discipline — reassigning `inv.pos` to a new-but-identical array every boot would otherwise mark `changed=true` unconditionally. Since `posByInv` is built from a single pass over `DB.po` where each PO contributes to exactly one `home.id` bucket (or none, if neither `invNum` nor `invId` resolves), no PO can ever appear under two different invoices — this is what actually guarantees the exclusivity property AC-14 requires, not an incidental side effect of the per-invoice loop that follows. No mutation to `po.invId`/`po.invNum` themselves — this migration only ever writes `inv.pos[]`, leaving the PO's own fields exactly as every other write path left them (their divergence in the disagreement case is an accepted, pre-existing characteristic of those fields, not something this REQ sets out to reconcile).
 
 ### 2.1 Wiring — two call sites, mirroring `migrateLinkedPOIds()`/`backfillOrderRequests()` exactly
 
@@ -274,7 +282,8 @@ This remains a separate, independent copy of the same logic as §4.2 — per `RE
 ## 5. Tests — `tests/run.js`
 
 1. **`getInvoicePOs(inv)`** — an invoice with `pos: ['id1','id2']` where both ids resolve in `DB.po`: returns both records in order. An invoice with `pos: ['id1','stale-id']` where `stale-id` doesn't resolve: returns only the resolving record (defensive-drop, AC not explicitly numbered but covered by the helper's own contract). An invoice with no `pos` field at all: returns `[]`.
-2. **`backfillInvoicePOs()` (AC-2, AC-5)** — an invoice whose `inv.pos` contains a stale id (simulating a pre-fix deletion) plus is missing a currently-linked PO's id: after running, `inv.pos` exactly matches the live `po.invId===inv.id||po.invNum===inv.num` set, in the same order `DB.po` would filter to. Run twice in a row: second run makes no further change (assert via a marker — e.g. capture `JSON.stringify(DB.inv)` before/after the second run and compare, or spy on `saveAll` call count staying at the first-run total) — idempotency (AC-5).
+2. **`backfillInvoicePOs()` (AC-2, AC-5)** — an invoice whose `inv.pos` contains a stale id (simulating a pre-fix deletion) plus is missing a currently-linked PO's id (a PO whose `invId` resolves to that invoice): after running, `inv.pos` exactly matches the set of POs whose `invId` resolves to that invoice (or, for a PO with no resolving `invId`, whose `invNum` matches), in `DB.po` iteration order. Run twice in a row: second run makes no further change (assert via a marker — e.g. capture `JSON.stringify(DB.inv)` before/after the second run and compare, or spy on `saveAll` call count staying at the first-run total) — idempotency (AC-5).
+2b. **`backfillInvoicePOs()` exclusivity (AC-15, new in v4)** — two invoices, and one PO whose `invId` resolves to the first invoice while its `invNum` matches the second invoice's `num` (the exact `invId`/`invNum` disagreement `pullAll()`'s re-link produces). After running `backfillInvoicePOs()`, assert the PO's id appears in the SECOND invoice's `pos[]` (via the resolving `invNum`, which takes priority) and is absent from the first invoice's `pos[]` — never both.
 3. **`delPO()` removes the id from `inv.pos[]` (AC-3)** — an invoice with 2 POs in `pos[]`; delete one via `delPO()`; assert the invoice's `pos[]` now contains only the surviving PO's id, and `getInvoicePOs(inv)` returns only that one PO.
 4. **`renderAccts()` regression guard (AC-6)** — an invoice with 2 linked POs (mirroring an existing REQ-CUR-002-style multi-currency scenario or a simpler same-currency one): assert `supDepPaid`/`fpmFunded`/`supBalDue`/`totalToChase` are unchanged from what direct computation via the OLD filter would have produced — i.e., this test should be constructible without needing to know internals, since both old and new sources should now return the identical set for an invoice generated the normal way (via `autoPos()`, which already correctly populates `pos[]`).
 5. **`saveInv()` FPM-recovery regression guard (AC-7)** — a PO with `fpmFunded>0, fpmRecovered:false` linked to an invoice (via `autoPos()`, so `inv.pos[]` is correctly populated); save the invoice with `status:'Paid'`; assert the PO's `fpmRecovered` becomes `true` — identical outcome to pre-fix behavior, now sourced via `getInvoicePOs()`.
