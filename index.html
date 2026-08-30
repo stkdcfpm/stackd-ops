@@ -2771,6 +2771,27 @@ function migrateLinkedPOIds() {
   });
   if (changed) saveAll();
 }
+function backfillInvoicePOs() {
+  var posByInv = {};
+  DB.po.forEach(function(po) {
+    var home = po.invNum ? DB.inv.find(function(i){ return i.num === po.invNum; }) : null;
+    if (!home && po.invId) home = DB.inv.find(function(i){ return i.id === po.invId; });
+    if (!home) return;
+    if (!posByInv[home.id]) posByInv[home.id] = [];
+    posByInv[home.id].push(po.id);
+  });
+  var changed = false;
+  DB.inv.forEach(function(inv) {
+    var live = posByInv[inv.id] || [];
+    var current = inv.pos || [];
+    var same = current.length === live.length && current.every(function(id, i){ return id === live[i]; });
+    if (!same) {
+      inv.pos = live;
+      changed = true;
+    }
+  });
+  if (changed) saveAll();
+}
 
 // ── ORDER REQUESTS (SPEC-ORD-001) ───────────────────────────────
 var ORD_TRANSITIONS = {
@@ -4142,6 +4163,7 @@ async function pullAll() {
 
   backfillRefNums();
   backfillConIds();
+  backfillInvoicePOs();
   saveAll(); renderAll();
   if (failed.length) {
     setSyncStatus('err');
@@ -4720,9 +4742,7 @@ function renderAccts() {
     // Convert each linked PO's figure to the display currency BEFORE
     // summing — a PO's own currency may differ from this invoice's, and
     // from other linked POs'. Mirrors the totals-bar pattern.
-    var linkedPOs = DB.po.filter(function(p){
-      return p.invId === inv.id || p.invNum === inv.num;
-    });
+    var linkedPOs = getInvoicePOs(inv);
     var supDepPaid  = linkedPOs.reduce(function(s,p){ return s + toDisp(getPOEffectiveDep(p), p.cur||'USD'); }, 0);
     var fpmFunded   = linkedPOs.reduce(function(s,p){ return s + toDisp(+p.fpmFunded||0, p.cur||'USD'); }, 0);
     var fpmRecovered= linkedPOs.every(function(p){ return !p.fpmFunded || p.fpmRecovered; });
@@ -5859,8 +5879,8 @@ async function saveInv() {
   // Auto-recover FPM-funded deposits when invoice is marked Paid
   if (inv.status === 'Paid') {
     var recovered = false;
-    DB.po.forEach(function(po) {
-      if ((po.invId === inv.id || po.invNum === inv.num) && po.fpmFunded > 0 && !po.fpmRecovered) {
+    getInvoicePOs(inv).forEach(function(po) {
+      if (po.fpmFunded > 0 && !po.fpmRecovered) {
         po.fpmRecovered = true;
         po.updAt = new Date().toISOString();
         recovered = true;
@@ -5978,6 +5998,10 @@ function autoPos(inv) {
   });
   sv(K.p,DB.po); sv(K.i,DB.inv); rPO();
   toast(cnt+' PO'+(cnt!==1?'s':'')+' auto-generated');
+}
+
+function getInvoicePOs(inv) {
+  return (inv.pos||[]).map(function(id){ return DB.po.find(function(p){ return p.id===id; }); }).filter(Boolean);
 }
 
 function renderPoSourceDriftWarn(po) {
@@ -7002,8 +7026,15 @@ async function delPO(id) {
   var _poRec = DB.po.find(function(p){return p.id===id;});
   var _poNum = (_poRec||{}).num||id;
   DB.po=DB.po.filter(function(p){return p.id!==id;});
+  var _posChanged = false;
+  DB.inv.forEach(function(i){
+    if (i.pos && i.pos.length) {
+      var idx = i.pos.indexOf(id);
+      if (idx > -1) { i.pos.splice(idx,1); _posChanged = true; }
+    }
+  });
   if (_poRec) logEv('po', _poRec.id, 'deleted', 'PO ' + _poNum + ' deleted', 'operator');
-  sv(K.p,DB.po); rPO(); rDash(); toast('Deleted'); await delEnt('po',_poNum).catch(function(){});
+  sv(K.p,DB.po); if (_posChanged) sv(K.i,DB.inv); rPO(); rDash(); toast('Deleted'); await delEnt('po',_poNum).catch(function(){});
 }
 
 // ── PRINT PREVIEWS ─────────────────────────────────────────────
@@ -7911,6 +7942,7 @@ function processImport(entity, csvText) {
       else { DB.po.push(rec); added++; }
     });
     sv(K.p,DB.po);
+    backfillInvoicePOs();
     var msg='POs: '+added+' added, '+updated+' updated, '+skipped+' skipped'+(errors.length?' | '+errors.join('; '):'');
     G('imp-po-result').textContent=msg; impLog(msg); rPO(); rDash();
   }
@@ -8257,7 +8289,9 @@ function processImportRecords(entity, records, callback) {
         var i=DB.po.findIndex(function(p){return p.num===num;}); DB.po[i]=rec; updated++;
       } else { DB.po.push(rec); added++; }
     });
-    sv(K.p, DB.po); rPO(); rDash();
+    sv(K.p, DB.po);
+    backfillInvoicePOs();
+    rPO(); rDash();
   }
 
   else if (entity === 'co') {
@@ -9946,6 +9980,7 @@ function doImport(e) {
     backfillConIds();
     migrateLinkedPOIds();
     backfillOrderRequests();
+    backfillInvoicePOs();
     saveAll();
     renderAll();
     rCfg();
@@ -11444,8 +11479,8 @@ function savePayment(payment) {
     // Auto-recover FPM deposits if now Paid
     if (inv.status === 'Paid' && prevStatus !== 'Paid') {
       var recovered = false;
-      DB.po.forEach(function(po) {
-        if ((po.invId === inv.id || po.invNum === inv.num) && +po.fpmFunded > 0 && !po.fpmRecovered) {
+      getInvoicePOs(inv).forEach(function(po) {
+        if (+po.fpmFunded > 0 && !po.fpmRecovered) {
           po.fpmRecovered = true;
           po.updAt = new Date().toISOString();
           recovered = true;
@@ -11937,6 +11972,7 @@ function initApp() {
     backfillConIds();
     migrateLinkedPOIds();
     backfillOrderRequests();
+    backfillInvoicePOs();
     cleanupExpiredMigrationArchive();
     if (SS.url) {
       G('banner').style.display='none';

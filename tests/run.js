@@ -4331,6 +4331,7 @@ test('renderAccts() — per-invoice, per-supplier, and totals-bar sections all u
   ctx.DB.inv.push({ id: 'inv-fix-1', num: 'INV20099', status: 'Sent', cur: 'USD', dep: 0, lineItems: [], taxRate: 0 });
   ctx.DB.po.push({ id: 'po-fix-10', num: 'PO-FIX-10', supId: 'sup-1', invId: 'inv-fix-1', invNum: 'INV20099', cur: 'USD', status: 'Confirmed', dep: 999, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 10, cost: 100 }] });
   ctx.DB.supPayments.push({ id: 'pf12', poId: 'po-fix-10', poNum: 'PO-FIX-10', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  ctx.backfillInvoicePOs(); // this PO was seeded directly (not via autoPos()), so inv.pos[] needs the same sync a real app boot would do
   ctx.renderAccts();
   var acctInv = mockElements['acct-inv'] ? mockElements['acct-inv'].innerHTML : '';
   var acctSup = mockElements['acct-sup'] ? mockElements['acct-sup'].innerHTML : '';
@@ -4588,6 +4589,7 @@ test('renderAccts() per-invoice — mixed-currency linked POs convert before sum
   ctx.DB.po.push({ id: 'po-cur-1', num: 'PO-CUR-1', supId: 'sup-1', invId: 'inv-cur-1', invNum: 'INV20201', cur: 'GBP', status: 'Confirmed', dep: 300, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 1, cost: 1000 }] });
   ctx.DB.po.push({ id: 'po-cur-2', num: 'PO-CUR-2', supId: 'sup-1', invId: 'inv-cur-1', invNum: 'INV20201', cur: 'USD', status: 'Confirmed', dep: 0, oth: 0, fpmFunded: 600, fpmRecovered: false, lineItems: [{ rid:'r2', lid:'', qty: 1, cost: 800 }] });
   ctx.DB.supPayments.push({ id: 'pcur-1', poId: 'po-cur-2', poNum: 'PO-CUR-2', date: '2026-01-01', amount: 400, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: ctx.toGBP(400,'USD'), ratesUsed: {} } });
+  ctx.backfillInvoicePOs(); // these POs were seeded directly (not via autoPos()), so inv.pos[] needs the same sync a real app boot would do
   var po1 = ctx.DB.po[0], po2 = ctx.DB.po[1];
   var dep1 = ctx.getPOEffectiveDep(po1), dep2 = ctx.getPOEffectiveDep(po2);
   var dispCur = ctx.QR.displayCurrency;
@@ -4631,6 +4633,7 @@ test('renderAccts() per-invoice/per-supplier — same-currency regression guard 
   ctx.QR.displayCurrency = 'USD';
   ctx.DB.inv.push({ id: 'inv-cur-2', num: 'INV20202', status: 'Sent', cur: 'USD', dep: 200, lineItems: [{ qty: 1, up: 1500 }], taxRate: 0 });
   ctx.DB.po.push({ id: 'po-cur-5', num: 'PO-CUR-5', supId: 'sup-2', invId: 'inv-cur-2', invNum: 'INV20202', cur: 'USD', status: 'Confirmed', dep: 350, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 1, cost: 900 }] });
+  ctx.backfillInvoicePOs(); // this PO was seeded directly (not via autoPos()), so inv.pos[] needs the same sync a real app boot would do
   ctx.renderAccts();
   var invHtml = mockElements['acct-inv'].innerHTML;
   var supHtml = mockElements['acct-sup'].innerHTML;
@@ -4674,6 +4677,147 @@ test("_aiExecTool('get_kpis') — same-currency regression guard, currency field
   assertEqual(kpis.currency, 'USD', 'currency field matches the pinned displayCurrency');
   assertApprox(kpis.invoiceRevenue, c1.grand, 'invoiceRevenue unchanged from the raw amount when displayCurrency matches the invoice\'s own currency');
   ctx.QR.displayCurrency = savedDispCur;
+});
+
+// ── REQ-INTEG-002 (Sub-phase 2b): Invoice→PO enumeration fix ─────────────────
+
+test('getInvoicePOs(inv) — resolves ids to live PO records, drops stale/unresolvable ids, handles a missing pos field', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-2b-1', num: 'PO-2B-1' }, { id: 'po-2b-2', num: 'PO-2B-2' });
+  var invBoth = { id: 'i1', pos: ['po-2b-1', 'po-2b-2'] };
+  var resultBoth = ctx.getInvoicePOs(invBoth);
+  assertEqual(resultBoth.length, 2, 'both ids resolve');
+  assertEqual(resultBoth[0].id, 'po-2b-1', 'returned in pos[] order');
+
+  var invStale = { id: 'i2', pos: ['po-2b-1', 'stale-id'] };
+  var resultStale = ctx.getInvoicePOs(invStale);
+  assertEqual(resultStale.length, 1, 'the stale, non-resolving id is dropped, not returned as undefined');
+
+  var invNoPos = { id: 'i3' };
+  assertEqual(ctx.getInvoicePOs(invNoPos).length, 0, 'an invoice with no pos field returns []');
+});
+
+test('backfillInvoicePOs() — rebuilds inv.pos[] from live po.invNum/invId, discarding stale prior contents, idempotent', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2b-1', num: 'INV-2B-1', pos: ['dead-po-id'] });
+  ctx.DB.po.push({ id: 'po-2b-3', num: 'PO-2B-3', invId: 'inv-2b-1', invNum: 'INV-2B-1' });
+  ctx.backfillInvoicePOs();
+  assertEqual(JSON.stringify(ctx.DB.inv[0].pos), JSON.stringify(['po-2b-3']), 'stale id removed, live PO added — a rebuild, not a merge');
+
+  var snapshotAfterFirstRun = JSON.stringify(ctx.DB.inv);
+  ctx.backfillInvoicePOs();
+  assertEqual(JSON.stringify(ctx.DB.inv), snapshotAfterFirstRun, 'second run is a true no-op (idempotent)');
+});
+
+test('backfillInvoicePOs() — exclusivity: a PO whose invId/invNum resolve to two different invoices lands in exactly one pos[] (AC-15)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2b-a', num: 'INV-2B-A' }, { id: 'inv-2b-b', num: 'INV-2B-B' });
+  // Simulates the post-pullAll()-re-link state: invNum was overwritten to point at B, invId still stale-points at A.
+  ctx.DB.po.push({ id: 'po-2b-4', num: 'PO-2B-4', invId: 'inv-2b-a', invNum: 'INV-2B-B' });
+  ctx.backfillInvoicePOs();
+  var invA = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-a'; });
+  var invB = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-b'; });
+  assertEqual((invB.pos||[]).indexOf('po-2b-4') > -1, true, 'the invNum match (B) wins — the fresher field for a real re-link');
+  assertEqual((invA.pos||[]).indexOf('po-2b-4') > -1, false, 'never present in both — the stale invId match (A) is not also populated');
+});
+
+test('delPO() removes the deleted PO\'s id from every invoice\'s pos[] (AC-3)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2b-2', num: 'INV-2B-2', pos: ['po-2b-5', 'po-2b-6'] });
+  ctx.DB.po.push({ id: 'po-2b-5', num: 'PO-2B-5', invId: 'inv-2b-2', invNum: 'INV-2B-2' });
+  ctx.DB.po.push({ id: 'po-2b-6', num: 'PO-2B-6', invId: 'inv-2b-2', invNum: 'INV-2B-2' });
+  var origConfirm = ctx.confirm; ctx.confirm = function(){ return true; };
+  return ctx.delPO('po-2b-5').then(function(){
+    ctx.confirm = origConfirm;
+    var inv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-2'; });
+    assertEqual(JSON.stringify(inv.pos), JSON.stringify(['po-2b-6']), 'deleted PO\'s id removed, surviving PO\'s id untouched');
+    assertEqual(ctx.getInvoicePOs(inv).length, 1, 'getInvoicePOs() now returns only the surviving PO');
+  });
+});
+
+testAsync('saveInv() FPM-recovery block uses getInvoicePOs(inv), auto-set behavior unchanged (AC-7)', async function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2b-3', num: 'INV20301', status: 'Sent', cur: 'USD', dep: 0, lineItems: [{ qty: 1, up: 1000 }], taxRate: 0, calc_grandTotal: '1000', pos: ['po-2b-7'] });
+  ctx.DB.po.push({ id: 'po-2b-7', num: 'PO-2B-7', invId: 'inv-2b-3', invNum: 'INV20301', fpmFunded: 500, fpmRecovered: false });
+  ctx.EI.i = 'inv-2b-3';
+  ctx.cIL = [];
+  setupInvForm('INV20301');
+  mockEl('inv-sm').value = 'Paid';
+  await ctx.saveInv();
+  var po = ctx.DB.po.find(function(p){ return p.id === 'po-2b-7'; });
+  assertEqual(po.fpmRecovered, true, 'linked PO\'s fpmFunded deposit is recovered once its invoice reaches Paid, sourced via getInvoicePOs()');
+});
+
+test('savePayment() FPM-recovery block auto-sets fpmRecovered on the invoice\'s linked PO once fully paid (AC-8)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2b-4', num: 'INV-2B-4', status: 'Sent', cur: 'USD', dep: 0, lineItems: [{ qty: 1, up: 1000 }], calc_grandTotal: '1000', pos: ['po-2b-8'] });
+  ctx.DB.po.push({ id: 'po-2b-8', num: 'PO-2B-8', invId: 'inv-2b-4', invNum: 'INV-2B-4', fpmFunded: 300, fpmRecovered: false });
+  ctx.savePayment({ id: 'pay-2b-1', invId: 'inv-2b-4', invNum: 'INV-2B-4', amount: 1000, date: '2026-01-01', method: 'Bank Transfer' });
+  var po = ctx.DB.po.find(function(p){ return p.id === 'po-2b-8'; });
+  assertEqual(po.fpmRecovered, true, 'a payment that fully settles the invoice auto-recovers the linked PO\'s FPM-funded deposit, sourced via getInvoicePOs()');
+});
+
+test('autoPos() still correctly populates inv.pos[] on an invoice\'s first save (AC-9, unchanged)', function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'li-2b-1', supId: 'sup-2b-1', cost: 10 }, { id: 'li-2b-2', supId: 'sup-2b-2', cost: 20 });
+  var inv = { id: 'inv-2b-5', num: 'INV-2B-5', lineItems: [{ lid: 'li-2b-1', qty: 1, up: 15 }, { lid: 'li-2b-2', qty: 1, up: 25 }] };
+  ctx.DB.inv.push(inv);
+  ctx.autoPos(inv);
+  var savedInv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-5'; });
+  assertEqual(savedInv.pos.length, 2, 'both auto-generated POs (one per distinct supplier) recorded in inv.pos[]');
+  assertEqual(ctx.getInvoicePOs(savedInv).length, 2, 'getInvoicePOs() resolves both immediately, no boot/migration needed');
+});
+
+test('processImport() CSV-linked PO syncs inv.pos[] immediately, no reload needed (AC-11)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2b-6', num: 'INV-2B-6' });
+  var csv = 'PO #,Linked Invoice #\nPO-2B-9,INV-2B-6\n';
+  ctx.processImport('po', csv);
+  var inv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-6'; });
+  var po = ctx.DB.po.find(function(p){ return p.num === 'PO-2B-9'; });
+  assertEqual((inv.pos||[]).indexOf(po.id) > -1, true, 'the CSV-imported PO\'s id is synced into the matched invoice\'s pos[] immediately');
+});
+
+test('processImportRecords() Sheets-record-linked PO syncs inv.pos[] immediately, no reload needed (AC-12)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2b-7', num: 'INV-2B-7' });
+  ctx.processImportRecords('po', [{ 'PO #': 'PO-2B-10', 'Linked Invoice #': 'INV-2B-7' }], function(){});
+  var inv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-7'; });
+  var po = ctx.DB.po.find(function(p){ return p.num === 'PO-2B-10'; });
+  assertEqual((inv.pos||[]).indexOf(po.id) > -1, true, 'the Sheets-record-imported PO\'s id is synced into the matched invoice\'s pos[] immediately');
+});
+
+testAsync('pullAll() syncs inv.pos[] for a brand-new pulled PO with no local match (AC-13)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.inv = [{ id: 'inv-2b-8', num: 'INV-2B-8' }];
+  _mockPullResponses = { po: { status: 'ok', records: [
+    { 'PO #': 'PO-2B-11', 'Supplier': '', 'Linked Invoice': 'INV-2B-8' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  var inv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-8'; });
+  var po = ctx.DB.po.find(function(p){ return p.num === 'PO-2B-11'; });
+  assert(po, 'the brand-new pulled PO was merged into DB.po');
+  assertEqual((inv.pos||[]).indexOf(po.id) > -1, true, 'the newly-pulled PO is synced into the matched invoice\'s pos[], no reload needed');
+});
+
+testAsync('pullAll() re-links inv.pos[] when an existing PO\'s Linked Invoice changes on re-pull (AC-14)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.inv = [{ id: 'inv-2b-9', num: 'INV-2B-9' }, { id: 'inv-2b-10', num: 'INV-2B-10' }];
+  ctx.DB.po = [{ id: 'po-2b-12', num: 'PO-2B-12', invId: 'inv-2b-9', invNum: 'INV-2B-9', pos: undefined }];
+  ctx.DB.inv[0].pos = ['po-2b-12'];
+  _mockPullResponses = { po: { status: 'ok', records: [
+    { 'PO #': 'PO-2B-12', 'Supplier': '', 'Linked Invoice': 'INV-2B-10' }
+  ] } };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  var invOld = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-9'; });
+  var invNew = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-10'; });
+  var po = ctx.DB.po.find(function(p){ return p.num === 'PO-2B-12'; });
+  assertEqual((invNew.pos||[]).indexOf(po.id) > -1, true, 'the re-linked PO now appears in the new invoice\'s pos[]');
+  assertEqual((invOld.pos||[]).indexOf(po.id) > -1, false, 'and is fully removed from the old invoice\'s pos[] — not left in both');
 });
 
 // ── REQ-MTD-001: VAT Return ──────────────────────────────────────────────────
