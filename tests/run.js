@@ -4322,6 +4322,12 @@ test('rDash() — outstanding PO balance KPI and PO Commitments chart use the le
 
 test('renderAccts() — per-invoice, per-supplier, and totals-bar sections all use the ledger total, not raw po.dep (AC-3e/f/g)', function() {
   resetDB();
+  // Pin displayCurrency to the PO's own currency (USD) so the totals bar's
+  // now-currency-converted figure (REQ-INTEG-002-2a-fix-2) is numerically a
+  // no-op and this test's assertion stays about ledger-vs-raw-po.dep sourcing,
+  // not currency conversion (covered separately by its own tests).
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'USD';
   ctx.DB.inv.push({ id: 'inv-fix-1', num: 'INV20099', status: 'Sent', cur: 'USD', dep: 0, lineItems: [], taxRate: 0 });
   ctx.DB.po.push({ id: 'po-fix-10', num: 'PO-FIX-10', supId: 'sup-1', invId: 'inv-fix-1', invNum: 'INV20099', cur: 'USD', status: 'Confirmed', dep: 999, oth: 0, lineItems: [{ rid:'r1', lid:'', qty: 10, cost: 100 }] });
   ctx.DB.supPayments.push({ id: 'pf12', poId: 'po-fix-10', poNum: 'PO-FIX-10', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
@@ -4332,6 +4338,7 @@ test('renderAccts() — per-invoice, per-supplier, and totals-bar sections all u
   assertContains(acctInv, '250', 'per-invoice Sup. Dep. Paid column uses the ledger total');
   assertContains(acctSup, '250', 'per-supplier Dep. Paid column uses the ledger total');
   assertContains(acctTotals, '250', 'totals bar Total Paid to Suppliers uses the ledger total');
+  ctx.QR.displayCurrency = savedDispCur;
 });
 
 test("_aiExecTool('get_kpis')/('get_pos') — poBalanceDue/depositPaid/balanceDue use the ledger total, not raw po.dep (AC-3h/i)", function() {
@@ -4490,6 +4497,78 @@ test('loadDemoData(): PO-DINV-0005-1 seeds a real legacy deposit with zero ledge
   var info = ctx.getPOEffectiveDepInfo(po);
   assertEqual(info.source, 'legacy-no-records', 'getPOEffectiveDepInfo() correctly classifies this demo PO as the fallback case');
   assertEqual(info.value, 13225, 'effective figure equals the seeded legacy deposit');
+});
+
+// ── REQ-INTEG-002-2a-fix-2: Priority 1 — Accounts totals-bar currency mixing ──
+
+test('renderAccts() totals bar — mixed-currency POs convert before summing tSD (Priority 1, the originally reported bug)', function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'GBP';
+  ctx.DB.po.push({ id: 'po-acct-1', num: 'PO-ACCT-1', supId: 'sup-1', cur: 'CNY', status: 'Confirmed', dep: 28000, oth: 0, lineItems: [] });
+  ctx.DB.po.push({ id: 'po-acct-2', num: 'PO-ACCT-2', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 0, oth: 0, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pacct-2', poId: 'po-acct-2', poNum: 'PO-ACCT-2', date: '2026-01-01', amount: 2000, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: ctx.toGBP(2000,'USD'), ratesUsed: {} } });
+  var po1 = ctx.DB.po[0], po2 = ctx.DB.po[1];
+  var dep1 = ctx.getPOEffectiveDep(po1), dep2 = ctx.getPOEffectiveDep(po2);
+  var expected = ctx.toDisp(dep1, po1.cur) + ctx.toDisp(dep2, po2.cur);
+  var expectedFormatted = ctx.fmt(expected, ctx.QR.displayCurrency || 'GBP');
+  var rawSumFormatted = ctx.fmt(dep1 + dep2, ctx.QR.displayCurrency || 'GBP');
+  ctx.renderAccts();
+  assertContains(mockElements['acct-totals'].innerHTML, expectedFormatted, 'totals bar shows the correctly-converted sum');
+  assertNotContains(mockElements['acct-totals'].innerHTML, rawSumFormatted, 'the meaningless raw mixed-currency sum does not appear');
+  ctx.QR.displayCurrency = savedDispCur;
+});
+
+test('renderAccts() totals bar — mixed-currency invoices convert before summing tBD (Priority 1, the buyer-side case)', function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'GBP';
+  ctx.DB.inv.push({ id: 'inv-acct-1', num: 'INV20101', status: 'Sent', cur: 'GBP', dep: 1000, lineItems: [], taxRate: 0 });
+  ctx.DB.inv.push({ id: 'inv-acct-2', num: 'INV20102', status: 'Sent', cur: 'USD', dep: 500, lineItems: [], taxRate: 0 });
+  var expected = ctx.toDisp(1000, 'GBP') + ctx.toDisp(500, 'USD');
+  var expectedFormatted = ctx.fmt(expected, ctx.QR.displayCurrency || 'GBP');
+  ctx.renderAccts();
+  assertContains(mockElements['acct-totals'].innerHTML, expectedFormatted, 'Total Received from Buyers shows the correctly-converted sum, untested in the original manual pass because all seeded invoices shared one currency');
+  ctx.QR.displayCurrency = savedDispCur;
+});
+
+test('renderAccts() totals bar — mixed-currency FPM Funded POs convert before summing tFPM (Priority 1)', function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'GBP';
+  ctx.DB.po.push({ id: 'po-acct-3', num: 'PO-ACCT-3', supId: 'sup-1', cur: 'CNY', status: 'Confirmed', dep: 0, oth: 0, fpmFunded: 9200, fpmRecovered: false, lineItems: [] });
+  ctx.DB.po.push({ id: 'po-acct-4', num: 'PO-ACCT-4', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 0, oth: 0, fpmFunded: 1000, fpmRecovered: false, lineItems: [] });
+  var expected = ctx.toDisp(9200, 'CNY') + ctx.toDisp(1000, 'USD');
+  var expectedFormatted = ctx.fmt(expected, ctx.QR.displayCurrency || 'GBP');
+  ctx.renderAccts();
+  assertContains(mockElements['acct-totals'].innerHTML, expectedFormatted, 'FPM Exposure shows the correctly-converted sum, same defect class as tBD/tSD, same block');
+  ctx.QR.displayCurrency = savedDispCur;
+});
+
+test('renderAccts() totals bar — renders in the actual QR.displayCurrency, not an implicit USD default (Priority 1)', function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'RMB';
+  ctx.DB.po.push({ id: 'po-acct-5', num: 'PO-ACCT-5', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 250, oth: 0, lineItems: [] });
+  var expected = ctx.toDisp(250, 'USD');
+  var expectedFormatted = ctx.fmt(expected, 'RMB');
+  ctx.renderAccts();
+  assertContains(mockElements['acct-totals'].innerHTML, expectedFormatted, 'totals bar labels/formats using the real display currency (RMB), not fmt()\'s own implicit USD default');
+  ctx.QR.displayCurrency = savedDispCur;
+});
+
+test('renderAccts() totals bar — same-currency scenario is a true no-op vs. the pre-fix raw sum, only when displayCurrency matches every item\'s currency (Priority 1 regression guard)', function() {
+  resetDB();
+  var savedDispCur = ctx.QR.displayCurrency;
+  ctx.QR.displayCurrency = 'USD'; // pinned to match every item's own currency below — the no-op identity does NOT hold under the app's actual default ('GBP', QR_DEFAULTS.displayCurrency)
+  ctx.DB.inv.push({ id: 'inv-acct-3', num: 'INV20103', status: 'Sent', cur: 'USD', dep: 1200, lineItems: [], taxRate: 0 });
+  ctx.DB.po.push({ id: 'po-acct-6', num: 'PO-ACCT-6', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 800, oth: 0, lineItems: [] });
+  ctx.renderAccts();
+  var html = mockElements['acct-totals'].innerHTML;
+  assertContains(html, ctx.fmt(1200, 'USD'), 'Total Received from Buyers unchanged from the raw amount under this precondition');
+  assertContains(html, ctx.fmt(800, 'USD'), 'Total Paid to Suppliers unchanged from the raw amount under this precondition');
+  assertContains(html, ctx.fmt(400, 'USD'), 'Net Cash Position (1200-800) matches the pre-fix raw-arithmetic result under this precondition');
+  ctx.QR.displayCurrency = savedDispCur;
 });
 
 // ── REQ-MTD-001: VAT Return ──────────────────────────────────────────────────
