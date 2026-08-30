@@ -156,6 +156,15 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 ---
 
+### PO-GAP-004 — `savePO()` can silently clear a PO's `invId` if its linked invoice is renamed *(Open, accepted)*
+**Area:** `savePO()` (`index.html:6963-6968`, `pf-inv` field declared `readonly` at `index.html:2217`)
+**Logged:** v2.9.66, found during REQ-INTEG-002-2b's check-first (Invoice→PO enumeration fix)
+**Detail:** `savePO()` re-derives `po.invId` on every save by looking up `DB.inv.find(i => i.num === invNumVal)`, where `invNumVal` comes from the `pf-inv` field — marked read-only in the UI, so an operator can't type into it directly, but its value is still submitted on every save, populated from `po.invNum` when the edit form opened. In ordinary use this is a harmless no-op re-confirmation of an existing link. But if the linked invoice's own `num` is changed after the PO was linked to it, the next time that PO is opened and saved, `linkedInv` fails to resolve against the now-stale `invNumVal` text, and `po.invId` is silently cleared to `''` — while `po.invNum` itself (the stale text) is left unchanged, so the two fields end up disagreeing.
+**Risk:** low — invoice numbers are a stable, friendly reference key elsewhere in the app and aren't expected to be edited routinely once assigned. If it does happen, the PO's `invId`/`invNum` disagreement is not silently harmful: `getInvoicePOs()`'s underlying `backfillInvoicePOs()` migration (REQ-INTEG-002-2b) already resolves this exact disagreement case correctly, preferring the fresher `invNum` field — so the PO would still end up correctly enumerated under the right invoice on the next backfill run, just not necessarily immediately on that one PO save.
+**Decision:** Not fixed — a narrow, low-likelihood edge case in a different function (`savePO()`) than the one this REQ set out to fix (Invoice→PO enumeration), logged for visibility rather than folded into that REQ's scope. Revisit if invoice renaming after PO-linking is ever confirmed to happen in practice.
+
+---
+
 ## Security — Accepted Architecture Risks
 
 ### SEC-GAP-001 — Apps Script sync token and spreadsheet IDs in source control *(FIXED)*

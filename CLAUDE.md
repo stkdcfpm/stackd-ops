@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used only for Suppliers/Buyers when Cloud Data is configured — REQ/SPEC-CLOUD-001, no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.65**  
-**Test count: 609/609 PASS** (`node tests/run.js`)
+**Current version: v2.9.66**  
+**Test count: 620/620 PASS** (`node tests/run.js`)
 
 ---
 
