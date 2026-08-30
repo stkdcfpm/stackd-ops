@@ -4498,8 +4498,8 @@ function loadDemoData() {
     buyerApprovedAt: '', buyerApprovedBy: '', approvalMethod: '', approvalNote: '', linkedQuoteId: '', linkedQuoteNum: '',
     pos: ['demo-po-002'],
     notes: 'Demo invoice — line item (qty/price) edited after its PO was auto-generated, so the PO now shows as stale', _demo: true });
-  DB.po.push({ id: 'demo-po-002', num: 'PO-DINV-0005-1', supId: supId, invId: inv5Id, invNum: 'DINV-0005', date: _demoDate(-5), del: '', cur: 'USD', dep: 0, oth: 0,
-    notes: 'Demo PO — auto-generated from DINV-0005; invoice line has since been edited (PO-GAP-003 staleness demo)', status: 'Draft', creAt: new Date(Date.now() - 5*86400000).toISOString(),
+  DB.po.push({ id: 'demo-po-002', num: 'PO-DINV-0005-1', supId: supId, invId: inv5Id, invNum: 'DINV-0005', date: _demoDate(-5), del: '', cur: 'USD', dep: 13225, oth: 0,
+    notes: 'Demo PO — auto-generated from DINV-0005; invoice line has since been edited (PO-GAP-003 staleness demo). Also carries a legacy, manually-entered Supplier Deposit Paid figure with zero linked Supplier Payment records, exercising getPOEffectiveDep()\'s "legacy-no-records" backward-compat fallback path (REQ-INTEG-002-2a-fix).', status: 'Draft', creAt: new Date(Date.now() - 5*86400000).toISOString(),
     lineItems: [{ rid: 'demo-pl-002', lid: li1Id, desc: 'Vertical Display Freezer VF-75L (Demo)', sku: 'VF-75L-DEMO', uom: 'pcs', qty: 10, cost: 1450, sourceInvUp: 2000 }],
     _demo: true });
 
@@ -5990,13 +5990,31 @@ function renderPoSourceDriftWarn(po) {
 
 function renderPoDepNote(depInfo) {
   var el = G('po-dep-note');
-  if (!el) return;
-  if (depInfo.source === 'ledger') {
-    el.innerHTML = '<div style="font-size:.48rem;color:var(--m);margin-top:2px;">Derived from recorded Supplier Payments — use the $ action to add another payment.</div>';
-  } else if (depInfo.source === 'legacy-unsupported-currency') {
-    el.innerHTML = '<div style="font-size:.48rem;color:#B8283A;margin-top:2px;">&#9888; Supplier Payments exist for this PO but its currency cannot yet be reconciled automatically — showing the manually-entered figure. This value is not derived from the ledger.</div>';
-  } else {
-    el.innerHTML = '';
+  var inp = G('pf-dep');
+  if (el) {
+    if (depInfo.source === 'ledger') {
+      el.innerHTML = '<div style="font-size:.48rem;color:var(--m);margin-top:2px;">Derived from recorded Supplier Payments — use the $ action to add another payment.</div>';
+    } else if (depInfo.source === 'legacy-unsupported-currency') {
+      el.innerHTML = '<div style="font-size:.48rem;color:#B8283A;margin-top:2px;">&#9888; Supplier Payments exist for this PO but its currency cannot yet be reconciled automatically — showing the manually-entered figure. This value is not derived from the ledger.</div>';
+    } else {
+      el.innerHTML = '';
+    }
+  }
+  // Strengthen the visual signal for the readOnly (ledger-derived) state — the
+  // note text alone was easy to miss (AC: readOnly must be unambiguous at a
+  // glance, not just functionally correct).
+  if (inp) {
+    if (depInfo.source === 'ledger') {
+      inp.style.cursor = 'not-allowed';
+      inp.style.background = 'rgba(0,0,0,.06)';
+      inp.style.color = 'var(--m)';
+      inp.style.borderBottomColor = 'var(--m)';
+    } else {
+      inp.style.cursor = '';
+      inp.style.background = 'rgba(26,79,219,.04)';
+      inp.style.color = '';
+      inp.style.borderBottomColor = 'var(--bl)';
+    }
   }
 }
 
@@ -6856,8 +6874,8 @@ function openPO() {
   G('pf-dep').value=''; G('pf-fpm').value=''; G('pf-oth').value=''; G('pf-rec').checked=false; G('pf-rec-label').textContent='FPM funds recovered (auto-set when invoice marked Paid)'; G('pf-dt').value=today();
   G('pf-sup').value=''; G('pf-cur').value='USD'; G('pf-inv').value=''; G('pf-pt').value='';
   G('pf-dep').readOnly=false;
-  renderPoDepNote({source:'legacy-no-records'});
   vClrAll(['pf-n','pf-sup','pf-dep','pf-fpm','pf-oth','pf-dt','pf-del']);
+  renderPoDepNote({source:'legacy-no-records'});
   rPLT(); calcPO(); G('ov-po').classList.add('on');
 }
 function editPO(id) {
@@ -6869,7 +6887,11 @@ function editPO(id) {
   G('pf-cur').value=po.cur||'USD';
   G('pf-oth').value=po.oth||''; G('pf-nt').value=po.notes||''; G('pf-inv').value=po.invNum||''; G('pf-pt').value=po.paymentTerms||'';
   var depInfo = getPOEffectiveDepInfo(po);
-  G('pf-dep').value = depInfo.value || '';
+  // Display formatting only — round to 2dp for the input's shown value (avoids
+  // long float artifacts from cross-currency GBP-pivot conversion, e.g.
+  // 61732.28346456693). The underlying getPOEffectiveDep()/ledger math, the PDF,
+  // and the dashboard are unaffected — this only changes what this one field shows.
+  G('pf-dep').value = depInfo.value ? Math.round(depInfo.value * 100) / 100 : '';
   G('pf-dep').readOnly = (depInfo.source === 'ledger');
   renderPoDepNote(depInfo);
   renderPoSourceDriftWarn(po);
@@ -11620,6 +11642,7 @@ function deleteSupPayment(id) {
   sv(K.spm, DB.supPayments);
   audit('DELETE', 'sup_payment', id, pm);
   renderPOPaymentsTab(pm.poId);
+  rPO(); rDash();
 }
 
 function renderPOPaymentsTab(poId) {
@@ -11707,6 +11730,7 @@ function addSupPaymentFromForm(poId) {
 
   saveSupPayment(pm);
   renderPOPaymentsTab(poId);
+  rPO(); rDash();
 }
 
 function openPOPayments(poId, poNum) {

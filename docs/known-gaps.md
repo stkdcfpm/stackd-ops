@@ -379,6 +379,16 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 ---
 
+### ACCT-GAP-001 — `renderAccts()`'s per-invoice/per-supplier view sums mix currencies without conversion
+
+**Area:** Accounts tab (`renderAccts()`) — per-invoice view's "Sup. Dep. Paid"/"Sup. Bal. Due" columns, and per-supplier view's "Dep. Paid"/"Bal. Due" columns.
+**Logged:** v2.9.64 (REQ-INTEG-002-2a-fix-2, found during manual testing of v2.9.63's Accounts totals bar — that specific bug was fixed; this adjacent, pre-existing one was found and deliberately deferred rather than folded into the same fix).
+**Detail:** Both sections sum a PO's (or a set of POs') deposit/balance figures without converting through `toDisp()` first, then display the raw sum labeled with a single currency (the linked invoice's currency, for the per-invoice view; no currency label at all, for the per-supplier view). Whenever a linked PO's own currency differs from its invoice's — or a single supplier's POs span more than one currency — the displayed figure is a meaningless mixed-currency sum, the same underlying defect class as the totals-bar bug fixed in REQ-INTEG-002-2a-fix-2, just not fixed at these two sites.
+**Status:** Open — Backlog, not scheduled.
+**Note:** Confirmed pre-existing, not introduced by v2.9.63's `PO.dep`→`getPOEffectiveDep()` reconciliation swap — the raw-sum-with-no-conversion pattern was already present at both sites beforehand (only the specific field reference changed, not the missing-conversion behavior). Fixing this would mean applying the same `toDisp()`-before-summing pattern used in the totals-bar fix to these two additional call sites, plus deciding what currency label to show for the per-invoice view (the invoice's own currency isn't necessarily meaningful once the sum spans multiple PO currencies) — a small, well-understood fix, just not bundled into REQ-INTEG-002-2a-fix-2 to keep that fix narrowly scoped to what was actually reported and reviewed.
+
+---
+
 ## External Services — FPM Website (fpmsg.co.uk)
 
 ### CHAT-GAP-001 — AI chat conversation history includes prospect PII in Anthropic API calls

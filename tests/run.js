@@ -4411,6 +4411,87 @@ test('Backward compatibility: a PO with dep>0 and zero supPayments records is co
   assertContains(mockElements['po-tb'].innerHTML, '28,000', 'rPO() list view unaffected for a pre-existing PO with no ledger records');
 });
 
+// ── REQ-INTEG-002-2a-fix-2: Priority 2/3 + demo-data post-ship fixes ──────────
+
+test('addSupPaymentFromForm() re-renders the PO list table, not just the modal\'s own tab (Priority 2)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-p2-1', num: 'PO-P2-1', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, lineItems: [] });
+  mockEl('po-q').value = ''; mockEl('po-sf').value = '';
+  ctx.rPO();
+  assertContains(mockElements['po-tb'].innerHTML, '999', 'baseline: list shows the stale legacy figure before any payment exists');
+  mockEl('spm-date').value = '2026-01-01';
+  mockEl('spm-amount').value = '250';
+  mockEl('spm-cur').value = 'USD';
+  mockEl('spm-purpose').value = 'Deposit';
+  mockEl('spm-method').value = 'Bank Transfer';
+  mockEl('spm-ref').value = ''; mockEl('spm-notes').value = '';
+  ctx.addSupPaymentFromForm('po-p2-1');
+  assertContains(mockElements['po-tb'].innerHTML, '250', 'PO list table reflects the new ledger total without the operator navigating away and back');
+});
+
+test('deleteSupPayment() re-renders the PO list table (Priority 2)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-p2-2', num: 'PO-P2-2', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 500, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pmp2', poId: 'po-p2-2', poNum: 'PO-P2-2', date: '2026-01-01', amount: 300, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 240, ratesUsed: {} } });
+  mockEl('po-q').value = ''; mockEl('po-sf').value = '';
+  ctx.rPO();
+  assertContains(mockElements['po-tb'].innerHTML, '300', 'baseline: list shows the ledger total while the record exists');
+  ctx.confirm = function(){ return true; };
+  ctx.deleteSupPayment('pmp2');
+  ctx.confirm = function(){ return false; };
+  assertContains(mockElements['po-tb'].innerHTML, '500', 'PO list table falls back to the legacy figure immediately after the only ledger record is deleted');
+});
+
+test('editPO() rounds the displayed pf-dep value to 2dp without touching underlying precision (Priority 3a)', function() {
+  resetDB();
+  // Pin QR to known rates so the derived gbpEquiv below is deterministic
+  // regardless of what earlier tests left QR set to.
+  ctx.QR.fxGBPUSD = 1.27; ctx.QR.fxGBPRMB = 9.20; ctx.QR.fxGBPBBD = 2.54;
+  var rates = { fxGBPUSD: ctx.QR.fxGBPUSD, fxGBPRMB: ctx.QR.fxGBPRMB, fxGBPBBD: ctx.QR.fxGBPBBD };
+  ctx.DB.po.push({ id: 'po-p3a', num: 'PO-P3A', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, lineItems: [] });
+  // Use the app's own toGBP() to derive a genuinely float-noisy gbpEquiv
+  // (matching how production code actually computes it), rather than a
+  // hand-picked clean number that wouldn't reproduce the reported symptom.
+  var rmbGbpEquiv = ctx.toGBP(61890.50, 'RMB');
+  ctx.DB.supPayments.push({ id: 'pmp3a1', poId: 'po-p3a', poNum: 'PO-P3A', date: '2026-01-01', amount: 500, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: ctx.toGBP(500,'USD'), ratesUsed: rates } });
+  ctx.DB.supPayments.push({ id: 'pmp3a2', poId: 'po-p3a', poNum: 'PO-P3A', date: '2026-01-02', amount: 61890.50, currency: 'RMB', purpose: 'Balance', rateLock: { gbpEquiv: rmbGbpEquiv, ratesUsed: rates } });
+  var po = ctx.DB.po[0];
+  var rawEffective = ctx.getPOEffectiveDep(po); // native-currency sum: 500 (USD, exact) + fromGBPLocked(rmbGbpEquiv,'USD',...) — genuine float noise
+  assert(rawEffective % 1 !== 0 && String(rawEffective).length > 8, 'precondition: the raw underlying figure genuinely has float noise worth rounding for display, got ' + rawEffective);
+  ctx.editPO('po-p3a');
+  var shown = +mockEl('pf-dep').value;
+  assertEqual(shown, Math.round(rawEffective * 100) / 100, 'displayed value is rounded to 2dp');
+  assertEqual(ctx.getPOEffectiveDep(po), rawEffective, 'the underlying getPOEffectiveDep() computation itself is untouched — still the full-precision float');
+});
+
+test('editPO()/openPO() toggle a strong, unambiguous visual signal on pf-dep for the readOnly state (Priority 3b)', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-p3b', num: 'PO-P3B', supId: 'sup-1', cur: 'USD', status: 'Confirmed', dep: 999, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'pmp3b', poId: 'po-p3b', poNum: 'PO-P3B', date: '2026-01-01', amount: 250, currency: 'USD', purpose: 'Deposit', rateLock: { gbpEquiv: 200, ratesUsed: {} } });
+  ctx.editPO('po-p3b');
+  assertEqual(mockEl('pf-dep').readOnly, true, 'sanity: readOnly is set for the ledger case');
+  assertEqual(mockEl('pf-dep').style.cursor, 'not-allowed', 'cursor signals the field cannot be edited');
+  assert(mockEl('pf-dep').style.background.indexOf('0,0,0') >= 0, 'background is visually distinct (greyed) from the normal editable state');
+  ctx.openPO();
+  assertEqual(mockEl('pf-dep').readOnly, false, 'sanity: readOnly is reset on a brand-new PO');
+  assertEqual(mockEl('pf-dep').style.cursor, '', 'cursor is restored to normal once the field is editable again');
+  assert(mockEl('pf-dep').style.background.indexOf('26,79,219') >= 0, 'background is restored to the original active-field styling');
+});
+
+test('loadDemoData(): PO-DINV-0005-1 seeds a real legacy deposit with zero ledger records, exercising the backward-compat fallback path', function() {
+  resetDB();
+  ctx.DB.events = [];
+  ctx.loadDemoData();
+  var po = ctx.DB.po.find(function(p){ return p.num === 'PO-DINV-0005-1'; });
+  assert(!!po, 'PO-DINV-0005-1 seeded');
+  assertEqual(po.dep, 13225, 'legacy deposit is a real, nonzero, testable figure');
+  var linked = ctx.DB.supPayments.filter(function(p){ return p.poId === po.id; });
+  assertEqual(linked.length, 0, 'zero linked Supplier Payment records — this is the "legacy-no-records" case, not "ledger"');
+  var info = ctx.getPOEffectiveDepInfo(po);
+  assertEqual(info.source, 'legacy-no-records', 'getPOEffectiveDepInfo() correctly classifies this demo PO as the fallback case');
+  assertEqual(info.value, 13225, 'effective figure equals the seeded legacy deposit');
+});
+
 // ── REQ-MTD-001: VAT Return ──────────────────────────────────────────────────
 
 test('_vatPrevQuarter: returns Q4 of prior year when called in Q1 (Jan-Mar)', function() {
