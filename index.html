@@ -4694,29 +4694,40 @@ function setAcctView(view) {
 
 function renderAccts() {
   var ai = DB.inv.filter(function(i){ return i.status !== 'Cancelled'; });
+  var dispCur = QR.displayCurrency || 'GBP';
 
   // ── PER INVOICE VIEW ──────────────────────────────────────
+  // NOTE: Invoice Total / Buyer Dep. Rec. / Buyer Bal. Due render in the
+  // invoice's own native currency (cur). Sup. Dep. Paid / FPM Funded /
+  // Sup. Bal. Due / Total to Chase render in dispCur, since they aggregate
+  // figures that may span multiple PO currencies.
   var invRows = ai.slice().reverse().map(function(inv) {
     var cur = inv.cur || 'USD';
     var c = cInv(inv);
     var buyerDep = +inv.dep || 0;
     var balFromBuyer = c.bal;
 
-    // Sum supplier deposits across all POs linked to this invoice
+    // Sum supplier deposits across all POs linked to this invoice.
+    // Convert each linked PO's figure to the display currency BEFORE
+    // summing — a PO's own currency may differ from this invoice's, and
+    // from other linked POs'. Mirrors the totals-bar pattern.
     var linkedPOs = DB.po.filter(function(p){
       return p.invId === inv.id || p.invNum === inv.num;
     });
-    var supDepPaid  = linkedPOs.reduce(function(s,p){ return s + getPOEffectiveDep(p); }, 0);
-    var fpmFunded   = linkedPOs.reduce(function(s,p){ return s + (+p.fpmFunded||0); }, 0);
+    var supDepPaid  = linkedPOs.reduce(function(s,p){ return s + toDisp(getPOEffectiveDep(p), p.cur||'USD'); }, 0);
+    var fpmFunded   = linkedPOs.reduce(function(s,p){ return s + toDisp(+p.fpmFunded||0, p.cur||'USD'); }, 0);
     var fpmRecovered= linkedPOs.every(function(p){ return !p.fpmFunded || p.fpmRecovered; });
     var supBalDue   = linkedPOs.reduce(function(s,p){
       var t = (p.lineItems||[]).reduce(function(a,l){ return a+(+l.qty||0)*(+l.cost||0); },0);
-      return s + Math.max(0, t + (+p.oth||0) - getPOEffectiveDep(p));
+      return s + toDisp(Math.max(0, t + (+p.oth||0) - getPOEffectiveDep(p)), p.cur||'USD');
     }, 0);
 
-    // Total to chase = invoice balance + any unrecovered FPM-funded deposits
+    // Total to chase = invoice balance + any unrecovered FPM-funded deposits.
+    // balFromBuyer is buyer-native; fpmFunded is now already in dispCur — both
+    // must be in the same currency before adding, since the buyer's currency
+    // can differ from the supplier POs' currency.
     var unrecoveredFPM = fpmRecovered ? 0 : fpmFunded;
-    var totalToChase = balFromBuyer + unrecoveredFPM;
+    var totalToChase = toDisp(balFromBuyer, cur) + unrecoveredFPM;
     var netPos = buyerDep - supDepPaid;
     var nc = netPos >= 0 ? 'pos' : 'neg';
     var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
@@ -4724,11 +4735,11 @@ function renderAccts() {
     var fpmCell = fpmFunded > 0
       ? (fpmRecovered
           ? '<span style="color:var(--gn);font-size:.52rem;">&#10003; Recovered</span>'
-          : '<span style="color:var(--cr);">' + fmt(fpmFunded,cur) + '</span>')
+          : '<span style="color:var(--cr);">' + fmt(fpmFunded,dispCur) + '</span>')
       : '-';
 
     var chaseCell = totalToChase > 0
-      ? '<span style="color:var(--cr);font-weight:600;">' + fmt(totalToChase,cur) + (unrecoveredFPM>0?' <span style="font-size:.48rem;">(inc. FPM dep)</span>':'') + '</span>'
+      ? '<span style="color:var(--cr);font-weight:600;">' + fmt(totalToChase,dispCur) + (unrecoveredFPM>0?' <span style="font-size:.48rem;">(inc. FPM dep)</span>':'') + '</span>'
       : '<span style="color:var(--gn);">&#10003; Settled</span>';
 
     return '<tr>' +
@@ -4739,9 +4750,9 @@ function renderAccts() {
       '<td class="num">' + fmt(c.grand, cur) + '</td>' +
       '<td class="num" style="color:var(--gn);">' + (buyerDep ? fmt(buyerDep,cur) : '-') + '</td>' +
       '<td class="num ' + (balFromBuyer>0?'neg':'') + '">' + (balFromBuyer>0 ? fmt(balFromBuyer,cur) : '<span style="color:var(--gn);">&#10003;</span>') + '</td>' +
-      '<td class="num" style="color:var(--bl);">' + (supDepPaid ? fmt(supDepPaid,cur) : '-') + '</td>' +
+      '<td class="num" style="color:var(--bl);">' + (supDepPaid ? fmt(supDepPaid,dispCur) : '-') + '</td>' +
       '<td class="num">' + fpmCell + '</td>' +
-      '<td class="num ' + (supBalDue>0?'neg':'') + '">' + (supBalDue>0 ? fmt(supBalDue,cur) : (linkedPOs.length?'<span style="color:var(--gn);">&#10003;</span>':'-')) + '</td>' +
+      '<td class="num ' + (supBalDue>0?'neg':'') + '">' + (supBalDue>0 ? fmt(supBalDue,dispCur) : (linkedPOs.length?'<span style="color:var(--gn);">&#10003;</span>':'-')) + '</td>' +
       '<td class="num">' + chaseCell + '</td>' +
       '</tr>';
   }).join('');
@@ -4769,12 +4780,13 @@ function renderAccts() {
 
   var supRows = Object.values(supMap).map(function(s) {
     var totalCOGS = s.pos.reduce(function(a,p){
-      return a + (p.lineItems||[]).reduce(function(b,l){ return b+(+l.qty||0)*(+l.cost||0); },0);
+      var t = (p.lineItems||[]).reduce(function(b,l){ return b+(+l.qty||0)*(+l.cost||0); },0);
+      return a + toDisp(t, p.cur||'USD');
     }, 0);
-    var totalDep = s.pos.reduce(function(a,p){ return a+getPOEffectiveDep(p); },0);
+    var totalDep = s.pos.reduce(function(a,p){ return a+toDisp(getPOEffectiveDep(p), p.cur||'USD'); },0);
     var totalBal = s.pos.reduce(function(a,p){
       var t=(p.lineItems||[]).reduce(function(b,l){return b+(+l.qty||0)*(+l.cost||0);},0);
-      return a+Math.max(0,t+(+p.oth||0)-getPOEffectiveDep(p));
+      return a+toDisp(Math.max(0,t+(+p.oth||0)-getPOEffectiveDep(p)), p.cur||'USD');
     },0);
     var pct = totalCOGS > 0 ? ((totalDep/totalCOGS)*100).toFixed(0) : 0;
     var settled = s.pos.filter(function(p){return p.status==='Settled';}).length;
@@ -4782,9 +4794,9 @@ function renderAccts() {
     return '<tr>' +
       '<td style="font-weight:500;color:var(--cr);">' + san(s.name) + '</td>' +
       '<td class="num">' + s.pos.length + '</td>' +
-      '<td class="num">' + fmt(totalCOGS) + '</td>' +
-      '<td class="num" style="color:var(--bl);">' + fmt(totalDep) + '</td>' +
-      '<td class="num ' + (totalBal>0?'neg':'pos') + '">' + fmt(totalBal) + '</td>' +
+      '<td class="num">' + fmt(totalCOGS,dispCur) + '</td>' +
+      '<td class="num" style="color:var(--bl);">' + fmt(totalDep,dispCur) + '</td>' +
+      '<td class="num ' + (totalBal>0?'neg':'pos') + '">' + fmt(totalBal,dispCur) + '</td>' +
       '<td class="num"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">' +
         '<div style="width:60px;height:6px;background:var(--bg);border-radius:2px;">' +
           '<div style="width:' + Math.min(100,+pct) + '%;height:100%;background:var(--bl);border-radius:2px;"></div>' +
@@ -4811,7 +4823,6 @@ function renderAccts() {
   // pattern already used correctly in rDash()'s KPI tiles (tPO/tBuyerDep/
   // tSupDep/tGoodwillCredits). Summing raw native-currency amounts across
   // items of different currencies produces a meaningless mixed total.
-  var dispCur = QR.displayCurrency || 'GBP';
   var tBD = ai.reduce(function(s,i){ return s+toDisp(+i.dep||0, i.cur||'USD'); },0);
   var tSD = DB.po.filter(function(p){return p.status!=='Cancelled';})
     .reduce(function(s,p){return s+toDisp(getPOEffectiveDep(p), p.cur||'USD');},0);
@@ -9202,7 +9213,7 @@ var AI_TOOLS = [
   },
   {
     name: 'get_kpis',
-    description: 'Get current dashboard KPI values: total invoice revenue, net profit, average margin, total outstanding balance, PO balance due, in-transit shipment count, and entity counts.',
+    description: 'Get current dashboard KPI values: total invoice revenue, net profit, average margin, total outstanding balance, PO balance due, in-transit shipment count, and entity counts. All monetary figures are converted to and returned in a single common currency, given in the response\'s currency field — do not assume USD.',
     input_schema: { type: 'object', properties: {} }
   },
   {
@@ -9277,20 +9288,24 @@ function _aiExecTool(name, inp) {
       }));
     }
     if (name === 'get_kpis') {
+      var dispCur = QR.displayCurrency || 'GBP';
       var activeInvs = DB.inv.filter(function(i){
         return i.status !== 'Cancelled' && i.type !== 'credit_note' && i.type !== 'goodwill_credit' && !isCN(i.num);
       });
-      var revenue = activeInvs.reduce(function(s,i){ return s + iCalc(i).grand; }, 0);
-      var np      = activeInvs.reduce(function(s,i){ return s + iCalc(i).np;    }, 0);
+      // Convert each invoice/PO figure to the display currency before summing —
+      // invoices/POs may be denominated in different currencies (see ACCT-GAP-001).
+      var revenue = activeInvs.reduce(function(s,i){ return s + toDisp(iCalc(i).grand, i.cur||'USD'); }, 0);
+      var np      = activeInvs.reduce(function(s,i){ return s + toDisp(iCalc(i).np,    i.cur||'USD'); }, 0);
       var outstanding = activeInvs.filter(function(i){
         return i.status==='Partially Paid'||i.status==='Sent'||i.status==='Pro-forma';
-      }).reduce(function(s,i){ return s + iCalc(i).bal; }, 0);
+      }).reduce(function(s,i){ return s + toDisp(iCalc(i).bal, i.cur||'USD'); }, 0);
       var poBal = DB.po.filter(function(p){ return p.status!=='Completed'&&p.status!=='Cancelled'; })
         .reduce(function(s,p){
           var t = (p.lineItems||[]).reduce(function(a,l){ return a+(+l.qty||0)*(+l.cost||0); },0);
-          return s + Math.max(0, t + (+p.oth||0) - getPOEffectiveDep(p));
+          return s + toDisp(Math.max(0, t + (+p.oth||0) - getPOEffectiveDep(p)), p.cur||'USD');
         }, 0);
       return JSON.stringify({
+        currency:            dispCur,
         invoiceRevenue:      +revenue.toFixed(2),
         netProfit:           +np.toFixed(2),
         avgMargin:           revenue > 0 ? +(np/revenue*100).toFixed(1) : 0,
