@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.70</title>
+<title>Stackd Ops v2.9.71</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.70</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.71</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1270,9 +1270,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.70</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.71</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong>CSV import corruption on multi-line quoted fields</strong> (REQ/SPEC-DATA-003, closes <code>IMPORT-GAP-001</code>). User reported their Suppliers tab had become "majorly corrupted" after a CSV re-import — several rows turned out to be fragments of one other supplier's multi-line Notes/address content, each torn off into its own new record with a real, sequential <code>SUP-####</code> number and dash placeholders in every other column. Root cause: <code>parseImportCSV()</code> split the file into rows on every literal newline before any CSV quote-state tracking existed, so a quoted multi-line cell (exactly what Excel/Sheets produce for a wrapped Notes/Address field) had each of its internal lines torn into a separate phantom row — invisible to the existing "Scan for phantom records" tool, since every fragment gets a real, non-empty <code>id</code> (that tool only detects a <em>missing</em> id). Directly answers the user's other question too: confirmed by reading the entire Apps Script sync path that Google Sheets sync is not involved — this is specifically a CSV-import-time defect. Rewrote <code>parseImportCSV()</code> as a single-pass character-stream parser that tracks quote state continuously (a newline is a row separator only when not inside an open quote), plus added RFC 4180 escaped-quote (<code>""</code>) support the old parser never had. Went through requirements-gate (PASS, 2 advisories fixed) → spec-gate (PASS, every acceptance criterion — including the two highest-risk, escaped-quote and unterminated-quote safety — independently verified by actually running the proposed code against adversarial inputs, plus the full test suite run against the patched file) → build-gate (PASS, no findings — the mutation-test claim of "exactly 5 tests fail on revert" verified precisely). Shared by every CSV import type (Suppliers, Line Items, Invoices, POs, Order Requests, Contacts) — the fix and its cross-entity test both confirm it applies uniformly, not just to Suppliers. 10 new tests, closing a pre-existing zero-coverage gap for Supplier CSV import. Tests: 681/681 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.70</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>AI-assisted RFQ response update from a pasted supplier email</strong> (REQ/SPEC-AI-GAP-011). User asked, in the same conversation that produced REQ-ORD-006, whether an AI capability existed to submit a supplier's email content and have it update an existing RFQ response automatically — it didn't. Each response row's "Compare RFQs" panel now has an envelope (✉) button (only functional with a Claude API key configured): the operator pastes a supplier's email text and a single scoped AI call extracts any of cost/currency/MOQ/lead time/payment terms/notes the email explicitly states a new value for, shown as an old→new diff for the operator to Apply or Discard — nothing changes automatically. Apply reuses REQ-ORD-006's <code>editRfqResponse()</code>/<code>saveRfqResponse()</code> edit path unmodified, so the id-rotation/staleness-banner behavior for a committed response is inherited automatically rather than reimplemented. Went through requirements-gate (CONDITIONAL PASS, 5 advisories fixed) → spec-gate (CONDITIONAL PASS — 1 real blocking finding: the pending-proposal state wasn't scoped per Order Request line, but multiple lines' comparison panels can be open at once, so a stale Apply button from an abandoned line could silently act on a different line's proposal; fixed by tracking which line produced the current proposal and verifying it before acting, plus 4 advisories) → build-gate (CONDITIONAL PASS — a stray one-character formatting change and incomplete version-ship housekeeping, both fixed here; the feature logic itself had no findings). The cross-line fix was independently mutation-tested twice (once by this build, once by the build-gate reviewer): removing the primary guard doesn't corrupt data — a second guard still catches it — but does silently break the legitimate follow-up Apply on the unaffected line, proving the guard is genuinely load-bearing. 17 new tests. Tests: 671/671 pass.</li>
@@ -8072,26 +8081,39 @@ function bulkUpload(entity, input) {
 }
 
 function parseImportCSV(text) {
-  var lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return { headers: [], rows: [] };
-  var headers = lines[0].split(',').map(function(h){ return h.replace(/^"|"$/g,'').trim(); });
-  var rows = [];
-  for (var i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    // Handle quoted fields with commas
-    var cols = [];
-    var current = '';
-    var inQuote = false;
-    for (var c = 0; c < lines[i].length; c++) {
-      var ch = lines[i][c];
-      if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { cols.push(current.trim()); current = ''; }
+  var t = text.trim();
+  if (!t) return { headers: [], rows: [] };
+  var allRows = [];
+  var row = [];
+  var current = '';
+  var inQuote = false;
+  for (var i = 0; i < t.length; i++) {
+    var ch = t[i];
+    if (inQuote) {
+      if (ch === '"') {
+        if (t[i + 1] === '"') { current += '"'; i++; }
+        else { inQuote = false; }
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') { inQuote = true; }
+      else if (ch === ',') { row.push(current.trim()); current = ''; }
+      else if (ch === '\r') { /* ignore — normalize CRLF row endings to the following \n */ }
+      else if (ch === '\n') { row.push(current.trim()); current = ''; allRows.push(row); row = []; }
       else { current += ch; }
     }
-    cols.push(current.trim());
-    var row = {};
+  }
+  if (current !== '' || row.length > 0) { row.push(current.trim()); allRows.push(row); }
+  allRows = allRows.filter(function(r){ return r.some(function(v){ return v !== ''; }); });
+  if (allRows.length < 2) return { headers: [], rows: [] };
+  var headers = allRows[0].map(function(h){ return h.trim(); });
+  var rows = [];
+  for (var r = 1; r < allRows.length; r++) {
+    var cols = allRows[r];
+    var obj = {};
     headers.forEach(function(h, idx) {
-      var val = (cols[idx]||'').replace(/^"|"$/g,'').trim();
+      var val = (cols[idx]||'').trim();
       // Strip thousand separators from numeric-looking values e.g. "30,755.80" -> "30755.80"
       if (/^[\d,]+(\.\d+)?$/.test(val)) val = val.replace(/,/g,'');
       // Normalise date formats: DD/MM/YYYY -> YYYY-MM-DD
@@ -8104,9 +8126,9 @@ function parseImportCSV(text) {
         var dp = val.split('-');
         val = dp[2] + '-' + dp[1].padStart(2,'0') + '-' + dp[0].padStart(2,'0');
       }
-      row[h] = val;
+      obj[h] = val;
     });
-    rows.push(row);
+    rows.push(obj);
   }
   return { headers: headers, rows: rows };
 }
@@ -9008,7 +9030,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.70).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.71).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
