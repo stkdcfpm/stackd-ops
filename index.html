@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.69</title>
+<title>Stackd Ops v2.9.70</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.69</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.70</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1270,9 +1270,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.69</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.70</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>AI-assisted RFQ response update from a pasted supplier email</strong> (REQ/SPEC-AI-GAP-011). User asked, in the same conversation that produced REQ-ORD-006, whether an AI capability existed to submit a supplier's email content and have it update an existing RFQ response automatically — it didn't. Each response row's "Compare RFQs" panel now has an envelope (✉) button (only functional with a Claude API key configured): the operator pastes a supplier's email text and a single scoped AI call extracts any of cost/currency/MOQ/lead time/payment terms/notes the email explicitly states a new value for, shown as an old→new diff for the operator to Apply or Discard — nothing changes automatically. Apply reuses REQ-ORD-006's <code>editRfqResponse()</code>/<code>saveRfqResponse()</code> edit path unmodified, so the id-rotation/staleness-banner behavior for a committed response is inherited automatically rather than reimplemented. Went through requirements-gate (CONDITIONAL PASS, 5 advisories fixed) → spec-gate (CONDITIONAL PASS — 1 real blocking finding: the pending-proposal state wasn't scoped per Order Request line, but multiple lines' comparison panels can be open at once, so a stale Apply button from an abandoned line could silently act on a different line's proposal; fixed by tracking which line produced the current proposal and verifying it before acting, plus 4 advisories) → build-gate (CONDITIONAL PASS — a stray one-character formatting change and incomplete version-ship housekeeping, both fixed here; the feature logic itself had no findings). The cross-line fix was independently mutation-tested twice (once by this build, once by the build-gate reviewer): removing the primary guard doesn't corrupt data — a second guard still catches it — but does silently break the legitimate follow-up Apply on the unaffected line, proving the guard is genuinely load-bearing. 17 new tests. Tests: 671/671 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.69</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Edit and delete RFQ responses</strong> (REQ/SPEC-ORD-006). User asked how to update a recorded RFQ response when a supplier sends revised pricing, having found none of the "Compare RFQs" row's buttons could change or remove an existing response — only "+ Add Response" existed, so a correction could only ever be recorded as an extra, misleading entry. New Edit and Delete buttons on each response row: Edit reopens the same modal pre-filled with that response's values; Delete removes it outright, with a plain confirm prompt, or (if the response is currently committed) a confirm naming the un-commit and staleness-warning consequences before proceeding. Editing or deleting the response a Quote was already converted from now correctly re-triggers the existing "Source pricing has changed" staleness banner (REQ/SPEC-INTEG-001 Phase 1) — an edit generates a new response id and repoints the line's commitment to it, rather than mutating the response in place, specifically so the existing drift-detection comparison (which only compares ids) can't miss it. Went through requirements-gate (CONDITIONAL PASS, 2 advisories fixed) → spec-gate (PASS, 3 advisories fixed) → build-gate (CONDITIONAL PASS — 1 real finding, this AI assistant's own description of the feature still claimed "no response is ever deleted," now false; fixed below). The core id-rotation/repoint mechanism was independently hand-traced and then verified by mutation testing (reverting the fix reproduces exactly the staleness-banner regression it exists to prevent). 13 new tests. Tests: 654/654 pass.</li>
@@ -2712,6 +2721,9 @@ var cConvertOrdId = null;
 var cRfqOrdId = null;
 var cRfqLineId = null;
 var cRfqEditId = null;
+var cRfqEmailParseLineId = null;
+var cRfqEmailParseRespId = null;
+var cRfqEmailParseProposed = null;
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
@@ -3294,13 +3306,159 @@ function renderRfqComparison(lineId) {
       '<td style="white-space:nowrap;">' +
         '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="ordCommitRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">' + (committed ? 'Uncommit' : 'Commit') + '</button> ' +
         '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="editRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Edit</button> ' +
-        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Del</button>' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Del</button> ' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 4px;" onclick="rfqOpenEmailParse(\'' + lineId + '\',\'' + r.id + '\')" title="Parse update from email">&#9993;</button>' +
       '</td>' +
       '</tr>';
   }).join('');
   panel.innerHTML = rfqStalenessWarn(responses) +
     '<table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Supplier</th><th>Unit Cost</th><th>Landed (GBP)</th><th>MOQ</th><th>Lead Time</th><th>Payment Terms</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div id="ord-rfq-emailparse-' + lineId + '" style="display:none;margin-top:6px;"></div>' +
     '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;margin-top:4px;" onclick="openRfqResponse(\'' + lineId + '\')">+ Add Response</button>';
+}
+
+function rfqOpenEmailParse(lineId, responseId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+  var resp = (line.rfqResponses || []).find(function(r){ return r.id === responseId; });
+  if (!resp) return;
+  var panel = G('ord-rfq-emailparse-' + lineId);
+  if (!panel) return;
+  cRfqEmailParseLineId = lineId;
+  cRfqEmailParseRespId = responseId;
+  cRfqEmailParseProposed = null;
+  var sup = DB.sup.find(function(s){ return s.id === resp.supId; });
+  var supName = sup ? san(sup.name) : '(supplier deleted)';
+  panel.style.display = 'block';
+  panel.innerHTML = '<div style="border:1px solid var(--ln);border-radius:4px;padding:6px;">' +
+    '<div style="font-size:.5rem;margin-bottom:4px;">Parse update from email — ' + supName + '</div>' +
+    '<div style="font-size:.46rem;color:var(--m);margin-bottom:4px;">Paste only the pricing-relevant portion of the email.</div>' +
+    '<textarea id="rfq-emailparse-text-' + lineId + '" rows="4" style="width:100%;font-size:.5rem;"></textarea>' +
+    '<div style="margin-top:4px;">' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqRunEmailParse(\'' + lineId + '\')">Parse</button> ' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseEmailParse(\'' + lineId + '\')">Cancel</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function rfqCloseEmailParse(lineId) {
+  if (lineId === cRfqEmailParseLineId) {
+    cRfqEmailParseLineId = null;
+    cRfqEmailParseRespId = null;
+    cRfqEmailParseProposed = null;
+  }
+  var panel = G('ord-rfq-emailparse-' + lineId);
+  if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
+}
+
+function rfqRunEmailParse(lineId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+  var responseId = cRfqEmailParseRespId;
+  var resp = (line.rfqResponses || []).find(function(r){ return r.id === responseId; });
+  if (!resp) return;
+  var panel = G('ord-rfq-emailparse-' + lineId);
+  if (!panel) return;
+  var textEl = G('rfq-emailparse-text-' + lineId);
+  var emailText = (textEl && textEl.value || '').trim();
+  if (!emailText) { toast('Paste the email text first.'); return; }
+  panel.innerHTML = '<div style="color:var(--m);">Parsing…</div>';
+  rfqParseUpdateFromEmail(emailText, resp).then(function(result){
+    if (G('ord-rfq-emailparse-' + lineId) !== panel) return;
+    if (result === null) {
+      panel.innerHTML = '<div style="color:var(--m);">AI parse unavailable.</div>' +
+        '<div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseEmailParse(\'' + lineId + '\')">Close</button></div>';
+      return;
+    }
+    var fields = Object.keys(result);
+    if (!fields.length) {
+      panel.innerHTML = '<div style="color:var(--m);">No new commercial terms found in that email.</div>' +
+        '<div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseEmailParse(\'' + lineId + '\')">Close</button></div>';
+      return;
+    }
+    cRfqEmailParseProposed = result;
+    var rows = fields.map(function(f){
+      var oldVal = resp[f] != null && resp[f] !== '' ? String(resp[f]) : '(unset)';
+      return '<div>' + san(f) + ': ' + san(oldVal) + ' &rarr; <strong>' + san(String(result[f])) + '</strong></div>';
+    }).join('');
+    panel.innerHTML = '<div style="font-size:.5rem;">' + rows + '</div>' +
+      '<div style="margin-top:4px;">' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqApplyEmailParse(\'' + lineId + '\')">Apply</button> ' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseEmailParse(\'' + lineId + '\')">Discard</button>' +
+      '</div>';
+  });
+}
+
+function rfqApplyEmailParse(lineId) {
+  if (lineId !== cRfqEmailParseLineId) return;
+  var responseId = cRfqEmailParseRespId;
+  var proposed = cRfqEmailParseProposed;
+  if (!responseId || !proposed) return;
+  editRfqResponse(lineId, responseId);
+  if (cRfqEditId !== responseId) {
+    cRfqEmailParseLineId = null;
+    cRfqEmailParseRespId = null;
+    cRfqEmailParseProposed = null;
+    return;
+  }
+  if (proposed.cost !== undefined) G('rfq-cost').value = proposed.cost;
+  if (proposed.currency !== undefined) G('rfq-cur').value = proposed.currency;
+  if (proposed.moq !== undefined) G('rfq-moq').value = proposed.moq;
+  if (proposed.leadTime !== undefined) G('rfq-leadtime').value = proposed.leadTime;
+  if (proposed.paymentTerms !== undefined) G('rfq-payterms').value = proposed.paymentTerms;
+  if (proposed.notes !== undefined) G('rfq-notes').value = proposed.notes;
+  saveRfqResponse();
+  cRfqEmailParseLineId = null;
+  cRfqEmailParseRespId = null;
+  cRfqEmailParseProposed = null;
+}
+
+// ── RFQ RESPONSE EMAIL PARSE (REQ/SPEC-AI-GAP-011) ──────────────
+var RFQ_EMAIL_PARSE_PROMPT = 'Given this email text and the current known values for one supplier\'s RFQ response, identify any of {cost, currency, moq, leadTime, paymentTerms, notes} that the email explicitly states a new/changed value for. Respond with ONLY a JSON object containing just the fields you found evidence for (omit fields the email doesn\'t address) — no prose, no markdown fences. Respond with an empty object {} if the email doesn\'t specify any new commercial terms.';
+async function rfqParseUpdateFromEmail(emailText, currentResponse) {
+  if (!AI.key) return null;
+  var payload = {
+    emailText: emailText,
+    currentValues: {
+      cost: currentResponse.cost, currency: currentResponse.currency,
+      moq: currentResponse.moq, leadTime: currentResponse.leadTime, paymentTerms: currentResponse.paymentTerms
+    }
+  };
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': AI.key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        temperature: 0.2,
+        system: RFQ_EMAIL_PARSE_PROMPT,
+        messages: [{ role: 'user', content: JSON.stringify(payload) }]
+      })
+    });
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var parsed = JSON.parse(text.trim());
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    var allowed = ['cost', 'currency', 'moq', 'leadTime', 'paymentTerms', 'notes'];
+    var filtered = {};
+    allowed.forEach(function(k){ if (parsed[k] !== undefined) filtered[k] = parsed[k]; });
+    return filtered;
+  } catch (e) {
+    return null;
+  }
 }
 
 // ── ENQUIRY INTAKE CHECK (SPEC-CON-004) ─────────────────────────
@@ -8850,7 +9008,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.69).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.70).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8916,7 +9074,7 @@ var AI_SYSTEM_PROMPT = [
   'RFQ supplier comparison (v2.9.56): each Order Request line can record multiple suppliers\' RFQ responses (unit cost, currency, CBM, duty %, DG flag, MOQ, lead time, payment terms, optional linked Contact, notes) via "Compare RFQs" → "+ Add Response". Responses are ranked by landed cost converted to GBP (same rate engine as Quotes, LCL basis) — the nominal cheapest quoted price is not always the landed-cheapest once freight/duty/DG are factored in and currencies are converted. A response with no CBM entered shows a warning next to its landed cost, since its freight component reads as zero rather than unknown. Exactly one response per line can be marked Committed at a time; committing again on a different response replaces the prior choice. Each response can also be individually edited or deleted (v2.9.69, REQ/SPEC-ORD-006) — see below. Converting a Contact\'s Order Request to a Quote ("Create Quote") pre-fills one Quote line per line that has a committed response, carrying over that response\'s supplier, quantity (its Order Request line\'s base qty, if set), and unit cost — converted to the Quote\'s working currency if the response was recorded in a different one — so the operator never has to retype or reconvert either. A committed line\'s new Quote line has no per-line margin override set; it uses the quote\'s own default margin like any manually-added line.',
   'get_suppliers/get_buyers tools exist to resolve a name to an id before emitting create_invoice/create_line_item/create_po action blocks — call one of these first whenever a supplier or buyer name is mentioned but no id is already known from the conversation, and ask a clarifying question rather than guessing if there are zero or multiple ambiguous matches. These tools deliberately do not return contact/email/phone — if the user asks for a supplier\'s or buyer\'s contact details, say that information isn\'t available through these tools and point them to the Suppliers/Buyers tab instead, rather than inventing an answer.',
   'Source traceability & staleness warning (v2.9.58, Phase 1 of a referential-integrity build): a Quote line created via "Create Quote" from a committed RFQ response now records which Order Request line and which specific RFQ response it came from. If the operator later commits a *different* RFQ response on that same Order Request line, re-opening the Quote shows a warning banner ("Source pricing has changed since this Quote was created — review before sending") — the Quote itself is never auto-updated, only flagged. A distinct message appears if the source Order Request has been deleted entirely. Quotes created before this version, or built entirely from manually-added lines, never show this banner — there is nothing to trace them back to. Manually-added lines and AI-proposed Quotes (create_quote action) are unaffected and never carry this traceability.',
-  'Edit and delete RFQ responses (v2.9.69, REQ/SPEC-ORD-006): each response row in "Compare RFQs" now has Edit and Delete buttons alongside Commit/Uncommit. Edit reopens the same "+ Add Response" modal pre-filled with that response\'s values; saving replaces it in place (same position, same count of responses) rather than adding a new one. Delete removes a response outright; if it is the line\'s currently committed response, the operator sees an explicit warning before confirming that this will un-commit the line and may trigger the staleness banner described above on any Quote already converted from it — deleting or editing the specific response a Quote was sourced from re-triggers that same staleness banner, exactly as committing a different response already did.',
+  'Edit and delete RFQ responses (v2.9.69, REQ/SPEC-ORD-006): each response row in "Compare RFQs" now has Edit and Delete buttons alongside Commit/Uncommit. Edit reopens the same "+ Add Response" modal pre-filled with that response\'s values; saving replaces it in place (same position, same count of responses) rather than adding a new one. Delete removes a response outright; if it is the line\'s currently committed response, the operator sees an explicit warning before confirming that this will un-commit the line and may trigger the staleness banner described above on any Quote already converted from it — deleting or editing the specific response a Quote was sourced from re-triggers that same staleness banner, exactly as committing a different response already did. Each response row also has an envelope (✉) button (v2.9.70, REQ/SPEC-AI-GAP-011, only functional if a Claude API key is configured) — the operator pastes a supplier\'s email text, and a single AI call extracts any of cost/currency/MOQ/lead time/payment terms/notes the email explicitly states a new value for, shown as a before/after diff for the operator to Apply or Discard; nothing is applied automatically, and Apply goes through the exact same edit mechanism described above, including the id-rotation/staleness-banner behavior if the response is committed. If asked whether the chat assistant itself can do this from a pasted email, say no — direct the operator to this button on the specific response instead, since that is the only place this capability exists.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
