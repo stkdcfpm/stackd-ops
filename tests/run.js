@@ -7681,6 +7681,232 @@ test('renderRfqComparison() — each response row shows Edit and Delete buttons 
   assertContains(html, "delRfqResponse('L1','R2')", 'row for R2 has a Delete button wired to delRfqResponse');
 });
 
+console.log('\nRFQ Response Email Parse (REQ/SPEC-AI-GAP-011)');
+
+function _rfqRespFixture(overrides) {
+  return Object.assign({
+    id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 1, dutyPct: 0, dg: false,
+    moq: '500 units', leadTime: '30 days', paymentTerms: '30% deposit', notes: 'orig notes', contactId: null, ts: ''
+  }, overrides || {});
+}
+
+testAsync('rfqParseUpdateFromEmail: no AI.key configured → resolves null, no fetch call', async () => {
+  ctx.AI = { key: '' };
+  _lastAnthropicBody = null;
+  var result = await ctx.rfqParseUpdateFromEmail('New price is $120/unit.', _rfqRespFixture());
+  assertEqual(result, null, 'resolves null with no key');
+  assertEqual(_lastAnthropicBody, null, 'no fetch call made');
+});
+
+testAsync('rfqParseUpdateFromEmail: network error → resolves null, no thrown exception', async () => {
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = 'reject';
+  var result = await ctx.rfqParseUpdateFromEmail('New price is $120/unit.', _rfqRespFixture());
+  assertEqual(result, null, 'resolves null on network error');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromEmail: non-200 response → resolves null', async () => {
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 500, text: '' };
+  var result = await ctx.rfqParseUpdateFromEmail('New price is $120/unit.', _rfqRespFixture());
+  assertEqual(result, null, 'resolves null on non-200');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromEmail: malformed (non-JSON) response text → resolves null', async () => {
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: 'not valid json {' };
+  var result = await ctx.rfqParseUpdateFromEmail('New price is $120/unit.', _rfqRespFixture());
+  assertEqual(result, null, 'resolves null on malformed response');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromEmail: a JSON array response → resolves null (object-shape guard, not just Array.isArray)', async () => {
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: '[{"cost":120}]' };
+  var result = await ctx.rfqParseUpdateFromEmail('New price is $120/unit.', _rfqRespFixture());
+  assertEqual(result, null, 'an array is rejected even though typeof [] === "object"');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromEmail: empty commercial terms → resolves {} not null (AC-3)', async () => {
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: '{}' };
+  var result = await ctx.rfqParseUpdateFromEmail('We will ship next Tuesday.', _rfqRespFixture());
+  assertEqual(Object.keys(result).length, 0, 'resolves an empty object');
+  assert(result !== null, 'not null — a real empty object, distinct from the null failure case');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromEmail: only the fields the email addresses are returned (AC-2)', async () => {
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: '{"cost":120,"currency":"USD"}' };
+  var result = await ctx.rfqParseUpdateFromEmail('New price is $120/unit, same currency.', _rfqRespFixture());
+  assertEqual(Object.keys(result).sort().join(','), 'cost,currency', 'only cost and currency present — nothing fabricated');
+  assertEqual(result.cost, 120);
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromEmail: an out-of-schema key from the model is stripped by the whitelist filter', async () => {
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: '{"cost":120,"foo":"bar"}' };
+  var result = await ctx.rfqParseUpdateFromEmail('New price is $120/unit.', _rfqRespFixture());
+  assertEqual(result.cost, 120, 'cost passed through');
+  assert(!('foo' in result), 'unrecognized key never survives the filter');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromEmail: currentValues payload sent to Anthropic excludes notes (matches REQ §2b exactly)', async () => {
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: '{}' };
+  await ctx.rfqParseUpdateFromEmail('Some email text.', _rfqRespFixture());
+  var sentPayload = JSON.parse(_lastAnthropicBody.messages[0].content);
+  assertEqual(Object.keys(sentPayload.currentValues).sort().join(','), 'cost,currency,leadTime,moq,paymentTerms', 'currentValues carries exactly the five REQ-specified fields, not notes');
+  _mockAnthropic = null;
+});
+
+test('rfqOpenEmailParse() — populates the shared panel with the response context and sets tracking state', function() {
+  resetDB();
+  mkOrdWithLine({ rfqResponses: [_rfqRespFixture()] });
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.rfqOpenEmailParse('L1', 'R1');
+  assertEqual(ctx.cRfqEmailParseLineId, 'L1', 'line id tracked');
+  assertEqual(ctx.cRfqEmailParseRespId, 'R1', 'response id tracked');
+  assertEqual(ctx.cRfqEmailParseProposed, null, 'no proposal yet');
+  assertContains(mockEl('ord-rfq-emailparse-L1').innerHTML, 'Acme', 'panel shows the supplier name for context');
+  ctx.rfqCloseEmailParse('L1');
+});
+
+test('rfqCloseEmailParse() — clears tracking state and hides the panel (serves both Cancel and Discard, AC-7)', function() {
+  resetDB();
+  var line = mkOrdWithLine({ rfqResponses: [_rfqRespFixture()] });
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.rfqOpenEmailParse('L1', 'R1');
+  ctx.cRfqEmailParseProposed = { cost: 150 };
+  ctx.rfqCloseEmailParse('L1');
+  assertEqual(ctx.cRfqEmailParseLineId, null, 'line id cleared');
+  assertEqual(ctx.cRfqEmailParseRespId, null, 'response id cleared');
+  assertEqual(ctx.cRfqEmailParseProposed, null, 'proposal cleared');
+  assertEqual(mockEl('ord-rfq-emailparse-L1').innerHTML, '', 'panel emptied');
+  assertEqual(line.rfqResponses.length, 1, 'nothing on the actual response changed');
+});
+
+testAsync('rfqRunEmailParse() — a successful parse populates a diff review with Apply/Discard, does not mutate the response (AC-5)', async function() {
+  resetDB();
+  var line = mkOrdWithLine({ rfqResponses: [_rfqRespFixture()] });
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: '{"cost":150}' };
+  ctx.rfqOpenEmailParse('L1', 'R1');
+  mockEl('rfq-emailparse-text-L1').value = 'New price is $150/unit.';
+  ctx.rfqRunEmailParse('L1');
+  for (var i = 0; i < 10; i++) { await Promise.resolve(); }
+  _mockAnthropic = null;
+  assertEqual(ctx.cRfqEmailParseProposed.cost, 150, 'proposal captured');
+  var html = mockEl('ord-rfq-emailparse-L1').innerHTML;
+  assertContains(html, '100', 'diff shows the old value');
+  assertContains(html, '150', 'diff shows the proposed new value');
+  assertContains(html, "rfqApplyEmailParse('L1')", 'Apply button present');
+  assertContains(html, "rfqCloseEmailParse('L1')", 'Discard button present');
+  assertEqual(line.rfqResponses[0].cost, 100, 'the actual response is untouched until Apply is clicked (AC-5)');
+  ctx.rfqCloseEmailParse('L1');
+});
+
+testAsync('rfqRunEmailParse() — AI unavailable (no key) shows a graceful message, no crash', async function() {
+  resetDB();
+  mkOrdWithLine({ rfqResponses: [_rfqRespFixture()] });
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.AI = { key: '' };
+  ctx.rfqOpenEmailParse('L1', 'R1');
+  mockEl('rfq-emailparse-text-L1').value = 'New price is $150/unit.';
+  ctx.rfqRunEmailParse('L1');
+  for (var i = 0; i < 10; i++) { await Promise.resolve(); }
+  assertContains(mockEl('ord-rfq-emailparse-L1').innerHTML, 'unavailable', 'graceful unavailable message shown');
+  ctx.rfqCloseEmailParse('L1');
+});
+
+test('rfqApplyEmailParse() — non-committed response: applies via the real edit path, new id, proposed fields merged with unchanged ones (AC-6a)', function() {
+  resetDB();
+  var line = mkOrdWithLine({ rfqResponses: [_rfqRespFixture()] });
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.rfqOpenEmailParse('L1', 'R1');
+  ctx.cRfqEmailParseProposed = { cost: 150 };
+  ctx.rfqApplyEmailParse('L1');
+  assertEqual(line.rfqResponses.length, 1, 'still exactly one entry');
+  assertEqual(line.rfqResponses[0].cost, 150, 'proposed cost applied');
+  assertEqual(line.rfqResponses[0].moq, '500 units', 'untouched field (moq) preserved from the current value, not blanked');
+  assert(line.rfqResponses[0].id !== 'R1', 'response gets a new id via the real edit path (REQ-ORD-006 mechanism)');
+  assertEqual(ctx.cRfqEmailParseLineId, null, 'tracking state cleared after Apply');
+  assertEqual(ctx.cRfqEmailParseProposed, null, 'proposal cleared after Apply');
+});
+
+test('rfqApplyEmailParse() — committed response with a Quote already converted from it: repoints committedResponseId and re-triggers the staleness banner (AC-6b)', function() {
+  resetDB();
+  mkOrdWithCommittedResponse();
+  ctx.EI.ord = 'O1';
+  ctx.cQL = [];
+  ctx.ordConvertToQuote('O1');
+  var rid = ctx.cQL[0].rid;
+  mockEl('qf-num').value = 'QTE-0001'; mockEl('qf-client').value = 'Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-mode').value = 'LCL'; mockEl('qf-mkp').value = '15';
+  mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  saveQteSetupIntegLine(rid);
+  ctx.saveQte();
+  var qt = ctx.DB.qt[0];
+  var line = ctx.DB.ord[0].lines[0];
+  ctx.rfqOpenEmailParse('L1', 'R1');
+  ctx.cRfqEmailParseProposed = { cost: 150 };
+  ctx.rfqApplyEmailParse('L1');
+  var newId = line.rfqResponses[0].id;
+  assertEqual(line.committedResponseId, newId, 'committedResponseId repointed to the new id (inherited from REQ-ORD-006)');
+  ctx.renderQteSourceDriftWarn(qt);
+  assertContains(mockEl('qt-drift-warn').innerHTML, 'Source pricing has changed', 'applying an AI-parsed change to the committed, Quote-sourced response fires the staleness banner (AC-6b)');
+});
+
+test('rfqApplyEmailParse() — cross-line safety: a stale Apply button from an abandoned line cannot act on another line\'s proposal (spec-gate blocking-finding regression test)', function() {
+  resetDB();
+  ctx.DB.ord = [{
+    id: 'O1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [],
+    lines: [
+      { id: 'A', category: 'Cat A', itemSpec: 'Item A', orderVolumeQty: '1', orderVolumeUnit: 'pallet', packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [], rfqResponses: [_rfqRespFixture({ id: 'R1', cost: 100 })], committedResponseId: null },
+      { id: 'B', category: 'Cat B', itemSpec: 'Item B', orderVolumeQty: '1', orderVolumeUnit: 'pallet', packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [], rfqResponses: [_rfqRespFixture({ id: 'R2', supId: 'S2', cost: 200 })], committedResponseId: null }
+    ]
+  }];
+  ctx.EI.ord = 'O1';
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }, { id: 'S2', name: 'Beta' }];
+  var lineA = ctx.DB.ord[0].lines[0];
+  var lineB = ctx.DB.ord[0].lines[1];
+
+  ctx.rfqOpenEmailParse('A', 'R1');
+  ctx.cRfqEmailParseProposed = { cost: 111 };
+  // Line A's parse is left un-Applied; line B's parse now overwrites the shared tracking state.
+  ctx.rfqOpenEmailParse('B', 'R2');
+  ctx.cRfqEmailParseProposed = { cost: 222 };
+
+  // Simulate a click on line A's now-stale, still-rendered Apply button.
+  ctx.rfqApplyEmailParse('A');
+  assertEqual(lineA.rfqResponses[0].id, 'R1', 'line A untouched — the stale click was a no-op');
+  assertEqual(lineA.rfqResponses[0].cost, 100, 'line A cost unchanged');
+  assertEqual(lineB.rfqResponses[0].id, 'R2', 'line B also untouched by the stale click on A');
+  assertEqual(lineB.rfqResponses[0].cost, 200, 'line B cost unchanged');
+
+  // The legitimate Apply on line B, whose proposal is actually the one tracked, must still work.
+  ctx.rfqApplyEmailParse('B');
+  assertEqual(lineB.rfqResponses[0].cost, 222, 'line B correctly receives its own proposal via a legitimate Apply');
+  assert(lineB.rfqResponses[0].id !== 'R2', 'line B response rotates id via the real edit path');
+});
+
+test('renderRfqComparison() — each response row shows the envelope (parse-update-from-email) button, and the shared parse panel div exists (AC layout)', function() {
+  resetDB();
+  mkOrdWithLine({ rfqResponses: [_rfqRespFixture({ id: 'R1' })] });
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.renderRfqComparison('L1');
+  var html = mockEl('ord-rfq-L1').innerHTML;
+  assertContains(html, "rfqOpenEmailParse('L1','R1')", 'envelope button wired to rfqOpenEmailParse');
+  assert(mockEl('ord-rfq-emailparse-L1') !== undefined, 'shared parse panel div exists for rfqOpenEmailParse to populate');
+});
+
 testAsync('delSup() — warns on RFQ response references and the comparison degrades gracefully after deletion (AC-011)', async function() {
   resetDB();
   var line = mkOrdWithLine({ rfqResponses: [

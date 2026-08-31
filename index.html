@@ -2712,6 +2712,9 @@ var cConvertOrdId = null;
 var cRfqOrdId = null;
 var cRfqLineId = null;
 var cRfqEditId = null;
+var cRfqEmailParseLineId = null;
+var cRfqEmailParseRespId = null;
+var cRfqEmailParseProposed = null;
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
@@ -3294,17 +3297,163 @@ function renderRfqComparison(lineId) {
       '<td style="white-space:nowrap;">' +
         '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="ordCommitRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">' + (committed ? 'Uncommit' : 'Commit') + '</button> ' +
         '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="editRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Edit</button> ' +
-        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Del</button>' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Del</button> ' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 4px;" onclick="rfqOpenEmailParse(\'' + lineId + '\',\'' + r.id + '\')" title="Parse update from email">&#9993;</button>' +
       '</td>' +
       '</tr>';
   }).join('');
   panel.innerHTML = rfqStalenessWarn(responses) +
     '<table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Supplier</th><th>Unit Cost</th><th>Landed (GBP)</th><th>MOQ</th><th>Lead Time</th><th>Payment Terms</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div id="ord-rfq-emailparse-' + lineId + '" style="display:none;margin-top:6px;"></div>' +
     '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;margin-top:4px;" onclick="openRfqResponse(\'' + lineId + '\')">+ Add Response</button>';
 }
 
+function rfqOpenEmailParse(lineId, responseId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+  var resp = (line.rfqResponses || []).find(function(r){ return r.id === responseId; });
+  if (!resp) return;
+  var panel = G('ord-rfq-emailparse-' + lineId);
+  if (!panel) return;
+  cRfqEmailParseLineId = lineId;
+  cRfqEmailParseRespId = responseId;
+  cRfqEmailParseProposed = null;
+  var sup = DB.sup.find(function(s){ return s.id === resp.supId; });
+  var supName = sup ? san(sup.name) : '(supplier deleted)';
+  panel.style.display = 'block';
+  panel.innerHTML = '<div style="border:1px solid var(--ln);border-radius:4px;padding:6px;">' +
+    '<div style="font-size:.5rem;margin-bottom:4px;">Parse update from email — ' + supName + '</div>' +
+    '<div style="font-size:.46rem;color:var(--m);margin-bottom:4px;">Paste only the pricing-relevant portion of the email.</div>' +
+    '<textarea id="rfq-emailparse-text-' + lineId + '" rows="4" style="width:100%;font-size:.5rem;"></textarea>' +
+    '<div style="margin-top:4px;">' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqRunEmailParse(\'' + lineId + '\')">Parse</button> ' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseEmailParse(\'' + lineId + '\')">Cancel</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function rfqCloseEmailParse(lineId) {
+  if (lineId === cRfqEmailParseLineId) {
+    cRfqEmailParseLineId = null;
+    cRfqEmailParseRespId = null;
+    cRfqEmailParseProposed = null;
+  }
+  var panel = G('ord-rfq-emailparse-' + lineId);
+  if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
+}
+
+function rfqRunEmailParse(lineId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+  var responseId = cRfqEmailParseRespId;
+  var resp = (line.rfqResponses || []).find(function(r){ return r.id === responseId; });
+  if (!resp) return;
+  var panel = G('ord-rfq-emailparse-' + lineId);
+  if (!panel) return;
+  var textEl = G('rfq-emailparse-text-' + lineId);
+  var emailText = (textEl && textEl.value || '').trim();
+  if (!emailText) { toast('Paste the email text first.'); return; }
+  panel.innerHTML = '<div style="color:var(--m);">Parsing…</div>';
+  rfqParseUpdateFromEmail(emailText, resp).then(function(result){
+    if (G('ord-rfq-emailparse-' + lineId) !== panel) return;
+    if (result === null) {
+      panel.innerHTML = '<div style="color:var(--m);">AI parse unavailable.</div>' +
+        '<div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseEmailParse(\'' + lineId + '\')">Close</button></div>';
+      return;
+    }
+    var fields = Object.keys(result);
+    if (!fields.length) {
+      panel.innerHTML = '<div style="color:var(--m);">No new commercial terms found in that email.</div>' +
+        '<div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseEmailParse(\'' + lineId + '\')">Close</button></div>';
+      return;
+    }
+    cRfqEmailParseProposed = result;
+    var rows = fields.map(function(f){
+      var oldVal = resp[f] != null && resp[f] !== '' ? String(resp[f]) : '(unset)';
+      return '<div>' + san(f) + ': ' + san(oldVal) + ' &rarr; <strong>' + san(String(result[f])) + '</strong></div>';
+    }).join('');
+    panel.innerHTML = '<div style="font-size:.5rem;">' + rows + '</div>' +
+      '<div style="margin-top:4px;">' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqApplyEmailParse(\'' + lineId + '\')">Apply</button> ' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseEmailParse(\'' + lineId + '\')">Discard</button>' +
+      '</div>';
+  });
+}
+
+function rfqApplyEmailParse(lineId) {
+  if (lineId !== cRfqEmailParseLineId) return;
+  var responseId = cRfqEmailParseRespId;
+  var proposed = cRfqEmailParseProposed;
+  if (!responseId || !proposed) return;
+  editRfqResponse(lineId, responseId);
+  if (cRfqEditId !== responseId) {
+    cRfqEmailParseLineId = null;
+    cRfqEmailParseRespId = null;
+    cRfqEmailParseProposed = null;
+    return;
+  }
+  if (proposed.cost !== undefined) G('rfq-cost').value = proposed.cost;
+  if (proposed.currency !== undefined) G('rfq-cur').value = proposed.currency;
+  if (proposed.moq !== undefined) G('rfq-moq').value = proposed.moq;
+  if (proposed.leadTime !== undefined) G('rfq-leadtime').value = proposed.leadTime;
+  if (proposed.paymentTerms !== undefined) G('rfq-payterms').value = proposed.paymentTerms;
+  if (proposed.notes !== undefined) G('rfq-notes').value = proposed.notes;
+  saveRfqResponse();
+  cRfqEmailParseLineId = null;
+  cRfqEmailParseRespId = null;
+  cRfqEmailParseProposed = null;
+}
+
+// ── RFQ RESPONSE EMAIL PARSE (REQ/SPEC-AI-GAP-011) ──────────────
+var RFQ_EMAIL_PARSE_PROMPT = 'Given this email text and the current known values for one supplier\'s RFQ response, identify any of {cost, currency, moq, leadTime, paymentTerms, notes} that the email explicitly states a new/changed value for. Respond with ONLY a JSON object containing just the fields you found evidence for (omit fields the email doesn\'t address) — no prose, no markdown fences. Respond with an empty object {} if the email doesn\'t specify any new commercial terms.';
+async function rfqParseUpdateFromEmail(emailText, currentResponse) {
+  if (!AI.key) return null;
+  var payload = {
+    emailText: emailText,
+    currentValues: {
+      cost: currentResponse.cost, currency: currentResponse.currency,
+      moq: currentResponse.moq, leadTime: currentResponse.leadTime, paymentTerms: currentResponse.paymentTerms
+    }
+  };
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': AI.key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        temperature: 0.2,
+        system: RFQ_EMAIL_PARSE_PROMPT,
+        messages: [{ role: 'user', content: JSON.stringify(payload) }]
+      })
+    });
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var parsed = JSON.parse(text.trim());
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    var allowed = ['cost', 'currency', 'moq', 'leadTime', 'paymentTerms', 'notes'];
+    var filtered = {};
+    allowed.forEach(function(k){ if (parsed[k] !== undefined) filtered[k] = parsed[k]; });
+    return filtered;
+  } catch (e) {
+    return null;
+  }
+}
+
 // ── ENQUIRY INTAKE CHECK (SPEC-CON-004) ─────────────────────────
-var CON_ENQUIRY_CHECK_PROMPT = 'You review a raw sales enquiry summary for vagueness or missing commercial detail before it is turned into a sourcing request. Given the enquiry text (and optionally the company name) as JSON, identify up to 3 issues where the text is too vague to act on — e.g. no quantity mentioned, no indication of destination market, a product description too generic to source against. For each issue, phrase a specific, concrete question the operator could send back to the prospect. Respond with ONLY a JSON array (no prose, no markdown fences): [{"issue":"<short description>","question":"<specific question to send>"}]. Respond with an empty array [] if nothing is ambiguous.';
+var CON_ENQUIRY_CHECK_PROMPT ='You review a raw sales enquiry summary for vagueness or missing commercial detail before it is turned into a sourcing request. Given the enquiry text (and optionally the company name) as JSON, identify up to 3 issues where the text is too vague to act on — e.g. no quantity mentioned, no indication of destination market, a product description too generic to source against. For each issue, phrase a specific, concrete question the operator could send back to the prospect. Respond with ONLY a JSON array (no prose, no markdown fences): [{"issue":"<short description>","question":"<specific question to send>"}]. Respond with an empty array [] if nothing is ambiguous.';
 async function conCheckEnquirySemantic(summary, company) {
   if (!AI.key) return null;
   var payload = { summary: summary };
@@ -8916,7 +9065,7 @@ var AI_SYSTEM_PROMPT = [
   'RFQ supplier comparison (v2.9.56): each Order Request line can record multiple suppliers\' RFQ responses (unit cost, currency, CBM, duty %, DG flag, MOQ, lead time, payment terms, optional linked Contact, notes) via "Compare RFQs" → "+ Add Response". Responses are ranked by landed cost converted to GBP (same rate engine as Quotes, LCL basis) — the nominal cheapest quoted price is not always the landed-cheapest once freight/duty/DG are factored in and currencies are converted. A response with no CBM entered shows a warning next to its landed cost, since its freight component reads as zero rather than unknown. Exactly one response per line can be marked Committed at a time; committing again on a different response replaces the prior choice. Each response can also be individually edited or deleted (v2.9.69, REQ/SPEC-ORD-006) — see below. Converting a Contact\'s Order Request to a Quote ("Create Quote") pre-fills one Quote line per line that has a committed response, carrying over that response\'s supplier, quantity (its Order Request line\'s base qty, if set), and unit cost — converted to the Quote\'s working currency if the response was recorded in a different one — so the operator never has to retype or reconvert either. A committed line\'s new Quote line has no per-line margin override set; it uses the quote\'s own default margin like any manually-added line.',
   'get_suppliers/get_buyers tools exist to resolve a name to an id before emitting create_invoice/create_line_item/create_po action blocks — call one of these first whenever a supplier or buyer name is mentioned but no id is already known from the conversation, and ask a clarifying question rather than guessing if there are zero or multiple ambiguous matches. These tools deliberately do not return contact/email/phone — if the user asks for a supplier\'s or buyer\'s contact details, say that information isn\'t available through these tools and point them to the Suppliers/Buyers tab instead, rather than inventing an answer.',
   'Source traceability & staleness warning (v2.9.58, Phase 1 of a referential-integrity build): a Quote line created via "Create Quote" from a committed RFQ response now records which Order Request line and which specific RFQ response it came from. If the operator later commits a *different* RFQ response on that same Order Request line, re-opening the Quote shows a warning banner ("Source pricing has changed since this Quote was created — review before sending") — the Quote itself is never auto-updated, only flagged. A distinct message appears if the source Order Request has been deleted entirely. Quotes created before this version, or built entirely from manually-added lines, never show this banner — there is nothing to trace them back to. Manually-added lines and AI-proposed Quotes (create_quote action) are unaffected and never carry this traceability.',
-  'Edit and delete RFQ responses (v2.9.69, REQ/SPEC-ORD-006): each response row in "Compare RFQs" now has Edit and Delete buttons alongside Commit/Uncommit. Edit reopens the same "+ Add Response" modal pre-filled with that response\'s values; saving replaces it in place (same position, same count of responses) rather than adding a new one. Delete removes a response outright; if it is the line\'s currently committed response, the operator sees an explicit warning before confirming that this will un-commit the line and may trigger the staleness banner described above on any Quote already converted from it — deleting or editing the specific response a Quote was sourced from re-triggers that same staleness banner, exactly as committing a different response already did.',
+  'Edit and delete RFQ responses (v2.9.69, REQ/SPEC-ORD-006): each response row in "Compare RFQs" now has Edit and Delete buttons alongside Commit/Uncommit. Edit reopens the same "+ Add Response" modal pre-filled with that response\'s values; saving replaces it in place (same position, same count of responses) rather than adding a new one. Delete removes a response outright; if it is the line\'s currently committed response, the operator sees an explicit warning before confirming that this will un-commit the line and may trigger the staleness banner described above on any Quote already converted from it — deleting or editing the specific response a Quote was sourced from re-triggers that same staleness banner, exactly as committing a different response already did. Each response row also has an envelope (✉) button (v2.9.70, REQ/SPEC-AI-GAP-011, only functional if a Claude API key is configured) — the operator pastes a supplier\'s email text, and a single AI call extracts any of cost/currency/MOQ/lead time/payment terms/notes the email explicitly states a new value for, shown as a before/after diff for the operator to Apply or Discard; nothing is applied automatically, and Apply goes through the exact same edit mechanism described above, including the id-rotation/staleness-banner behavior if the response is committed. If asked whether the chat assistant itself can do this from a pasted email, say no — direct the operator to this button on the specific response instead, since that is the only place this capability exists.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
