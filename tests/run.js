@@ -7464,6 +7464,223 @@ test('renderRfqComparison() — flags a response with CBM not entered next to it
   assertContains(mockEl('ord-rfq-L1').innerHTML, 'CBM not entered', 'zero/unset-CBM response is flagged rather than silently looking cheapest');
 });
 
+console.log('\nRFQ Response Edit & Delete (REQ/SPEC-ORD-006)');
+
+test('editRfqResponse() — populates modal fields from the existing response and sets edit mode (AC-2)', function() {
+  resetDB();
+  mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 1.5, dutyPct: 5, dg: true, moq: '500', leadTime: '30 days', paymentTerms: '30% deposit', notes: 'orig notes', contactId: 'C1', ts: '2026-01-01T00:00:00.000Z' }
+  ]});
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.DB.con = [{ id: 'C1', name: 'Jane' }];
+  ctx.editRfqResponse('L1', 'R1');
+  assertEqual(ctx.cRfqOrdId, 'O1', 'cRfqOrdId set');
+  assertEqual(ctx.cRfqLineId, 'L1', 'cRfqLineId set');
+  assertEqual(ctx.cRfqEditId, 'R1', 'cRfqEditId set to the response being edited');
+  assertEqual(mockEl('rfq-title').textContent, 'Edit RFQ Response', 'modal title reflects edit mode');
+  assertEqual(mockEl('rfq-sup').value, 'S1');
+  assertEqual(mockEl('rfq-cost').value, 100);
+  assertEqual(mockEl('rfq-cbm').value, 1.5);
+  assertEqual(mockEl('rfq-dg').checked, true);
+  assertEqual(mockEl('rfq-notes').value, 'orig notes');
+  ctx.cRfqEditId = null;
+});
+
+test('openRfqResponse() — always resets to add mode, even right after an edit was opened (title reset)', function() {
+  resetDB();
+  mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }
+  ]});
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme' }];
+  ctx.editRfqResponse('L1', 'R1');
+  ctx.openRfqResponse('L1');
+  assertEqual(ctx.cRfqEditId, null, 'edit mode cleared by opening the add-response modal');
+  assertEqual(mockEl('rfq-title').textContent, 'RFQ Response', 'title reset to add mode');
+  ctx.cRfqEditId = null;
+});
+
+test('saveRfqResponse() — add mode (cRfqEditId null) unaffected: a second independent response is added, the first untouched (AC-1)', function() {
+  resetDB();
+  var line = mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }
+  ]});
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }, { id: 'S2', name: 'B' }];
+  ctx.cRfqOrdId = 'O1'; ctx.cRfqLineId = 'L1'; ctx.cRfqEditId = null;
+  mockEl('rfq-sup').value = 'S2'; mockEl('rfq-cost').value = '200'; mockEl('rfq-cur').value = 'USD';
+  mockEl('rfq-cbm').value = ''; mockEl('rfq-dutypct').value = ''; mockEl('rfq-dg').checked = false;
+  mockEl('rfq-moq').value = ''; mockEl('rfq-leadtime').value = ''; mockEl('rfq-payterms').value = ''; mockEl('rfq-con').value = ''; mockEl('rfq-notes').value = '';
+  ctx.saveRfqResponse();
+  assertEqual(line.rfqResponses.length, 2, 'a second, independent response is added');
+  assertEqual(line.rfqResponses[0].id, 'R1', 'the first response is untouched');
+  assertEqual(line.rfqResponses[0].cost, 100, 'first response values unchanged');
+  assertEqual(line.rfqResponses[1].cost, 200, 'new response recorded with its own values');
+});
+
+test('saveRfqResponse() — edit mode replaces the entry in place with a new id, not a push (AC-2)', function() {
+  resetDB();
+  var line = mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: 'old', contactId: null, ts: '' }
+  ]});
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  ctx.editRfqResponse('L1', 'R1');
+  mockEl('rfq-cost').value = '150';
+  mockEl('rfq-notes').value = 'updated notes';
+  ctx.saveRfqResponse();
+  assertEqual(line.rfqResponses.length, 1, 'still exactly one entry — no push occurred');
+  assertEqual(line.rfqResponses[0].cost, 150, 'new cost value applied');
+  assertEqual(line.rfqResponses[0].notes, 'updated notes', 'new notes value applied');
+  assert(line.rfqResponses[0].id !== 'R1', 'edited response gets a new id, different from the original (AC-2, §1.2 design)');
+  assertEqual(ctx.cRfqEditId, null, 'edit mode cleared after save');
+});
+
+test('saveRfqResponse() — editing the committed response repoints committedResponseId to the new id (AC-3)', function() {
+  resetDB();
+  var line = mkOrdWithLine({
+    rfqResponses: [{ id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }],
+    committedResponseId: 'R1'
+  });
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  ctx.editRfqResponse('L1', 'R1');
+  mockEl('rfq-cost').value = '120';
+  ctx.saveRfqResponse();
+  var newId = line.rfqResponses[0].id;
+  assertEqual(line.committedResponseId, newId, 'committedResponseId repointed to the edited response\'s new id, preserving committed state');
+});
+
+test('saveRfqResponse() — editing a non-committed response leaves committedResponseId untouched', function() {
+  resetDB();
+  var line = mkOrdWithLine({
+    rfqResponses: [
+      { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' },
+      { id: 'R2', supId: 'S1', cost: 90, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }
+    ],
+    committedResponseId: 'R2'
+  });
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  ctx.editRfqResponse('L1', 'R1');
+  mockEl('rfq-cost').value = '110';
+  ctx.saveRfqResponse();
+  assertEqual(line.committedResponseId, 'R2', 'commit still points at R2, unaffected by editing the uncommitted R1');
+});
+
+test('editing the committed response that a Quote was converted from re-triggers the staleness banner (AC-4)', function() {
+  resetDB();
+  mkOrdWithCommittedResponse();
+  ctx.cQL = [];
+  ctx.ordConvertToQuote('O1');
+  var rid = ctx.cQL[0].rid;
+  mockEl('qf-num').value = 'QTE-0001'; mockEl('qf-client').value = 'Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-mode').value = 'LCL'; mockEl('qf-mkp').value = '15';
+  mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  saveQteSetupIntegLine(rid);
+  ctx.saveQte();
+  var qt = ctx.DB.qt[0];
+  ctx.renderQteSourceDriftWarn(qt);
+  assertEqual(mockEl('qt-drift-warn').innerHTML, '', 'no banner immediately after conversion — still matching');
+  ctx.editRfqResponse('L1', 'R1');
+  mockEl('rfq-cost').value = '150';
+  ctx.saveRfqResponse();
+  ctx.renderQteSourceDriftWarn(qt);
+  assertContains(mockEl('qt-drift-warn').innerHTML, 'Source pricing has changed', 'editing the same committed response the Quote was built from now correctly fires the staleness banner (AC-4)');
+});
+
+test('deleting the committed response a Quote was converted from also fires the staleness banner (AC-5)', function() {
+  resetDB();
+  mkOrdWithCommittedResponse();
+  ctx.cQL = [];
+  ctx.ordConvertToQuote('O1');
+  var rid = ctx.cQL[0].rid;
+  mockEl('qf-num').value = 'QTE-0001'; mockEl('qf-client').value = 'Client'; mockEl('qf-dt').value = '2026-05-01';
+  mockEl('qf-valid').value = ''; mockEl('qf-mode').value = 'LCL'; mockEl('qf-mkp').value = '15';
+  mockEl('qf-st').value = 'Draft'; mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = '';
+  saveQteSetupIntegLine(rid);
+  ctx.saveQte();
+  var qt = ctx.DB.qt[0];
+  var line = ctx.DB.ord[0].lines[0];
+  ctx.confirm = function(){ return true; };
+  ctx.delRfqResponse('L1', 'R1');
+  ctx.confirm = function(){ return false; };
+  assertEqual(line.rfqResponses.length, 0, 'response removed');
+  assertEqual(line.committedResponseId, null, 'committedResponseId nulled (AC-5)');
+  ctx.renderQteSourceDriftWarn(qt);
+  assertContains(mockEl('qt-drift-warn').innerHTML, 'Source pricing has changed', 'deleting the committed response the Quote was built from fires the staleness banner (AC-5)');
+});
+
+test('delRfqResponse() — deleting a non-committed response only removes that entry; committedResponseId unaffected (AC-6)', function() {
+  resetDB();
+  var line = mkOrdWithLine({
+    rfqResponses: [
+      { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' },
+      { id: 'R2', supId: 'S1', cost: 90, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }
+    ],
+    committedResponseId: 'R2'
+  });
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  ctx.confirm = function(){ return true; };
+  ctx.delRfqResponse('L1', 'R1');
+  ctx.confirm = function(){ return false; };
+  assertEqual(line.rfqResponses.length, 1, 'only R1 removed');
+  assertEqual(line.rfqResponses[0].id, 'R2', 'R2 survives');
+  assertEqual(line.committedResponseId, 'R2', 'committedResponseId untouched, still pointing at the other response (AC-6)');
+});
+
+test('delRfqResponse() — cancelling the confirm() dialog deletes nothing', function() {
+  resetDB();
+  var line = mkOrdWithLine({
+    rfqResponses: [{ id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }],
+    committedResponseId: 'R1'
+  });
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  ctx.confirm = function(){ return false; };
+  ctx.delRfqResponse('L1', 'R1');
+  assertEqual(line.rfqResponses.length, 1, 'nothing deleted when confirm() is cancelled');
+  assertEqual(line.committedResponseId, 'R1', 'committedResponseId unchanged when cancelled');
+});
+
+test('delRfqResponse() — confirm() message names the un-commit and staleness-banner consequences for a committed response (AC-8)', function() {
+  resetDB();
+  mkOrdWithLine({
+    rfqResponses: [{ id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }],
+    committedResponseId: 'R1'
+  });
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  var capturedMsg;
+  ctx.confirm = function(msg){ capturedMsg = msg; return false; };
+  ctx.delRfqResponse('L1', 'R1');
+  ctx.confirm = function(){ return false; };
+  assertContains(capturedMsg, 'un-commit', 'confirm message names the un-commit consequence (AC-8)');
+  assertContains(capturedMsg, 'source pricing changed', 'confirm message names the staleness-warning consequence (AC-8)');
+});
+
+test('delRfqResponse() — confirm() message for a non-committed response is the plain delete prompt, no un-commit language', function() {
+  resetDB();
+  mkOrdWithLine({
+    rfqResponses: [{ id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }],
+    committedResponseId: null
+  });
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }];
+  var capturedMsg;
+  ctx.confirm = function(msg){ capturedMsg = msg; return false; };
+  ctx.delRfqResponse('L1', 'R1');
+  ctx.confirm = function(){ return false; };
+  assertEqual(capturedMsg, 'Delete this RFQ response?', 'plain prompt when the response is not committed');
+});
+
+test('renderRfqComparison() — each response row shows Edit and Delete buttons alongside Commit/Uncommit (AC-7)', function() {
+  resetDB();
+  mkOrdWithLine({ rfqResponses: [
+    { id: 'R1', supId: 'S1', cost: 100, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' },
+    { id: 'R2', supId: 'S2', cost: 90, currency: 'USD', cbm: 0, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '' }
+  ]});
+  ctx.DB.sup = [{ id: 'S1', name: 'A' }, { id: 'S2', name: 'B' }];
+  ctx.renderRfqComparison('L1');
+  var html = mockEl('ord-rfq-L1').innerHTML;
+  assertContains(html, "editRfqResponse('L1','R1')", 'row for R1 has an Edit button wired to editRfqResponse');
+  assertContains(html, "delRfqResponse('L1','R1')", 'row for R1 has a Delete button wired to delRfqResponse');
+  assertContains(html, "editRfqResponse('L1','R2')", 'row for R2 has an Edit button wired to editRfqResponse');
+  assertContains(html, "delRfqResponse('L1','R2')", 'row for R2 has a Delete button wired to delRfqResponse');
+});
+
 testAsync('delSup() — warns on RFQ response references and the comparison degrades gracefully after deletion (AC-011)', async function() {
   resetDB();
   var line = mkOrdWithLine({ rfqResponses: [

@@ -2702,6 +2702,7 @@ var cConvertId = null;
 var cConvertOrdId = null;
 var cRfqOrdId = null;
 var cRfqLineId = null;
+var cRfqEditId = null;
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
@@ -3120,6 +3121,8 @@ function openRfqResponse(lineId) {
   if (!EI.ord) return;
   cRfqOrdId = EI.ord;
   cRfqLineId = lineId;
+  cRfqEditId = null;
+  G('rfq-title').textContent = 'RFQ Response';
   G('rfq-sup').innerHTML = '<option value="">— Supplier —</option>' +
     DB.sup.map(function(s){ return '<option value="' + san(s.id) + '">' + san(s.name) + '</option>'; }).join('');
   G('rfq-con').innerHTML = '<option value="">— none —</option>' +
@@ -3138,6 +3141,37 @@ function openRfqResponse(lineId) {
   G('ov-rfq').classList.add('on');
 }
 
+function editRfqResponse(lineId, responseId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+  var resp = (line.rfqResponses || []).find(function(r){ return r.id === responseId; });
+  if (!resp) return;
+  cRfqOrdId = EI.ord;
+  cRfqLineId = lineId;
+  cRfqEditId = responseId;
+  G('rfq-title').textContent = 'Edit RFQ Response';
+  G('rfq-sup').innerHTML = '<option value="">— Supplier —</option>' +
+    DB.sup.map(function(s){ return '<option value="' + san(s.id) + '">' + san(s.name) + '</option>'; }).join('');
+  G('rfq-con').innerHTML = '<option value="">— none —</option>' +
+    DB.con.map(function(c){ return '<option value="' + san(c.id) + '">' + san(c.name) + '</option>'; }).join('');
+  G('rfq-sup').value = resp.supId;
+  G('rfq-cost').value = resp.cost;
+  G('rfq-cur').value = resp.currency;
+  G('rfq-cbm').value = resp.cbm || '';
+  G('rfq-dutypct').value = resp.dutyPct || '';
+  G('rfq-dg').checked = !!resp.dg;
+  G('rfq-moq').value = resp.moq || '';
+  G('rfq-leadtime').value = resp.leadTime || '';
+  G('rfq-payterms').value = resp.paymentTerms || '';
+  G('rfq-con').value = resp.contactId || '';
+  G('rfq-notes').value = resp.notes || '';
+  vClr('rfq-sup'); vClr('rfq-cost');
+  G('ov-rfq').classList.add('on');
+}
+
 function saveRfqResponse() {
   var ord = DB.ord.find(function(o){ return o.id === cRfqOrdId; });
   if (!ord) { closeM('ov-rfq'); return; }
@@ -3149,17 +3183,48 @@ function saveRfqResponse() {
   if (costStr === '' || isNaN(+costStr) || +costStr < 0) { vErr('rfq-cost', 'A valid unit cost is required'); return; }
   vOk('rfq-sup'); vOk('rfq-cost');
   if (!line.rfqResponses) line.rfqResponses = [];
-  line.rfqResponses.push({
+  var newResp = {
     id: uid(), supId: supId, cost: +costStr, currency: G('rfq-cur').value,
     cbm: +G('rfq-cbm').value || 0, dutyPct: +G('rfq-dutypct').value || 0, dg: G('rfq-dg').checked,
     moq: G('rfq-moq').value.trim(), leadTime: G('rfq-leadtime').value.trim(),
     paymentTerms: G('rfq-payterms').value.trim(), notes: G('rfq-notes').value.trim(),
     contactId: G('rfq-con').value || null, ts: new Date().toISOString()
-  });
+  };
+  var wasEditing = !!cRfqEditId;
+  if (wasEditing) {
+    var idx = line.rfqResponses.findIndex(function(r){ return r.id === cRfqEditId; });
+    if (idx > -1) {
+      line.rfqResponses[idx] = newResp;
+      if (line.committedResponseId === cRfqEditId) line.committedResponseId = newResp.id;
+    }
+    cRfqEditId = null;
+  } else {
+    line.rfqResponses.push(newResp);
+  }
   sv(K.ord, DB.ord);
   closeM('ov-rfq');
   renderRfqComparison(cRfqLineId);
-  toast('RFQ response recorded');
+  toast(wasEditing ? 'RFQ response updated' : 'RFQ response recorded');
+}
+
+function delRfqResponse(lineId, responseId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+  var resp = (line.rfqResponses || []).find(function(r){ return r.id === responseId; });
+  if (!resp) return;
+  var isCommitted = line.committedResponseId === responseId;
+  var msg = isCommitted
+    ? 'Delete this RFQ response? It is currently committed — deleting it will un-commit this line, and any Quote already built from it will show a "source pricing changed" warning.'
+    : 'Delete this RFQ response?';
+  if (!confirm(msg)) return;
+  line.rfqResponses = (line.rfqResponses || []).filter(function(r){ return r.id !== responseId; });
+  if (isCommitted) line.committedResponseId = null;
+  sv(K.ord, DB.ord);
+  renderRfqComparison(lineId);
+  toast('RFQ response deleted');
 }
 
 function rfqLandedGBP(r) {
@@ -3217,7 +3282,11 @@ function renderRfqComparison(lineId) {
       '<td>' + san(r.moq||'-') + '</td>' +
       '<td>' + san(r.leadTime||'-') + '</td>' +
       '<td>' + san(r.paymentTerms||'-') + '</td>' +
-      '<td><button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="ordCommitRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">' + (committed ? 'Uncommit' : 'Commit') + '</button></td>' +
+      '<td style="white-space:nowrap;">' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="ordCommitRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">' + (committed ? 'Uncommit' : 'Commit') + '</button> ' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="editRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Edit</button> ' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Del</button>' +
+      '</td>' +
       '</tr>';
   }).join('');
   panel.innerHTML = rfqStalenessWarn(responses) +
