@@ -2288,6 +2288,108 @@ test('processImport co branch: Created At / Last Contacted columns populate on a
   assertEqual(rec.lastContactedAt, '2024-06-01', 'lastContactedAt populated from Last Contacted column, not defaulted to now');
 });
 
+// ── CSV import — multi-line quoted fields (REQ/SPEC-DATA-003) ───
+console.log('\nCSV import — multi-line quoted fields (REQ/SPEC-DATA-003)');
+
+test('parseImportCSV() — a multi-line quoted field with commas on internal lines parses as ONE row, not several (AC-1/AC-6)', function() {
+  var csv = 'Supplier Name,Country,Notes\nJoylife,China,"Address: Room 221,\n2nd Building, Dongguan City,\nGuangdong, China"\n';
+  var parsed = ctx.parseImportCSV(csv);
+  assertEqual(parsed.rows.length, 1, 'exactly one row — the reported corruption produced 5-6');
+  assertEqual(parsed.rows[0]['Supplier Name'], 'Joylife');
+  assertEqual(parsed.rows[0]['Country'], 'China');
+  assert(parsed.rows[0]['Notes'].indexOf('\n') >= 0, 'Notes value retains its embedded newline(s)');
+  assertEqual(parsed.rows[0]['Notes'], 'Address: Room 221,\n2nd Building, Dongguan City,\nGuangdong, China', 'Notes value preserved verbatim');
+});
+
+test('parseImportCSV() — a quoted field with an embedded comma but no newline still parses as one field (AC-2, regression guard)', function() {
+  var csv = 'Supplier Name,Notes\nAcme,"Commercial refrigeration, CE certified"\n';
+  var parsed = ctx.parseImportCSV(csv);
+  assertEqual(parsed.rows.length, 1);
+  assertEqual(parsed.rows[0]['Notes'], 'Commercial refrigeration, CE certified');
+});
+
+test('parseImportCSV() — an escaped quote ("") inside a quoted field becomes one literal quote character (AC-3)', function() {
+  var csv = 'Supplier Name,Notes\nAcme,"Acme ""Best"" Co"\n';
+  var parsed = ctx.parseImportCSV(csv);
+  assertEqual(parsed.rows.length, 1);
+  assertEqual(parsed.rows[0]['Notes'], 'Acme "Best" Co', 'escaped double-quote collapses to one literal quote, field boundary unaffected');
+});
+
+test('parseImportCSV() — CRLF row endings and an embedded CRLF inside a quoted field are both handled correctly (AC-4)', function() {
+  var csv = 'Supplier Name,Notes\r\nAcme,"Line1\r\nLine2"\r\nBeta,Simple\r\n';
+  var parsed = ctx.parseImportCSV(csv);
+  assertEqual(parsed.rows.length, 2, 'CRLF between records still separates rows correctly');
+  assertContains(parsed.rows[0]['Notes'], '\r\n', 'the embedded CRLF inside the quoted field is preserved verbatim, not treated as a row break');
+  assertEqual(parsed.rows[1]['Supplier Name'], 'Beta');
+  assertEqual(parsed.rows[1]['Notes'], 'Simple');
+});
+
+test('parseImportCSV() — a blank physical line between two real data rows is skipped, not turned into a spurious record (AC-5)', function() {
+  var csv = 'Supplier Name,Notes\nAcme,First\n\nBeta,Second\n';
+  var parsed = ctx.parseImportCSV(csv);
+  assertEqual(parsed.rows.length, 2, 'blank line skipped — not 3 rows');
+  assertEqual(parsed.rows[0]['Supplier Name'], 'Acme');
+  assertEqual(parsed.rows[1]['Supplier Name'], 'Beta');
+});
+
+test('parseImportCSV() — an unterminated quote does not throw or hang, and returns a defined result (AC-9)', function() {
+  var csv = 'Supplier Name,Notes\nAcme,"unterminated notes never closes and has a comma, here too';
+  var parsed;
+  var threw = false;
+  try { parsed = ctx.parseImportCSV(csv); } catch (e) { threw = true; }
+  assertEqual(threw, false, 'parser does not throw on malformed input');
+  assert(parsed && Array.isArray(parsed.rows), 'returns a defined { headers, rows } shape');
+  assertEqual(parsed.rows.length, 1, 'the unterminated field is captured as best-effort content, not lost or duplicated');
+});
+
+test('parseImportCSV() — existing numeric thousand-separator and date normalization behavior preserved', function() {
+  var csv = 'Supplier Name,Amount,Date\nAcme,"30,755.80",25/12/2025\n';
+  var parsed = ctx.parseImportCSV(csv);
+  assertEqual(parsed.rows[0]['Amount'], '30755.80', 'thousand separators stripped from a quoted numeric value');
+  assertEqual(parsed.rows[0]['Date'], '2025-12-25', 'DD/MM/YYYY normalized to YYYY-MM-DD');
+});
+
+test('processImport(\'sup\', ...) — a real multi-line Notes field reproduces the reported bug and confirms the fix end-to-end (AC-1/AC-6)', function() {
+  resetDB();
+  var csv = 'Supplier Name,Country,Contact Person,Email,Phone/WeChat,Currency,Notes\n' +
+    '"Joylife Industry (Dongguan) Co.,Ltd","China","Tammy","tammy@joylifetissuepaper.com","+86 180-2829-1935","USD","Address: Room 221,\n2nd Building, No.350 of Taixin Road,\nWanjiang Street, Dongguan City,\nGuangdong, China"\n' +
+    'Acme Foods,USA,John,john@acme.example,+1 555 0100,USD,Standard supplier\n';
+  ctx.processImport('sup', csv);
+  assertEqual(ctx.DB.sup.length, 2, 'exactly 2 real suppliers — not 2 plus a handful of phantom fragments');
+  var joylife = ctx.DB.sup.find(function(s){ return s.name.indexOf('Joylife') === 0; });
+  assert(joylife, 'the Joylife supplier record exists');
+  assertEqual(joylife.country, 'China');
+  assertEqual(joylife.ct, 'Tammy');
+  assertEqual(joylife.email, 'tammy@joylifetissuepaper.com');
+  assert(joylife.notes.indexOf('Room 221') >= 0 && joylife.notes.indexOf('Guangdong') >= 0, 'the full multi-line address survives in notes, not torn apart');
+  var acme = ctx.DB.sup.find(function(s){ return s.name === 'Acme Foods'; });
+  assert(acme, 'the row following the multi-line field also parsed correctly, unaffected by it');
+  assertContains(mockEl('imp-sup-result').textContent, '2 added, 0 updated');
+});
+
+test('processImport(\'sup\', ...) — baseline happy path with no multi-line content (closes a pre-existing zero-coverage gap)', function() {
+  resetDB();
+  var csv = 'Supplier Name,Country,Contact Person,Email,Phone/WeChat,Currency,Notes\nAcme Foods,USA,John,john@acme.example,+1 555 0100,USD,Reliable supplier\n';
+  ctx.processImport('sup', csv);
+  assertEqual(ctx.DB.sup.length, 1);
+  assertEqual(ctx.DB.sup[0].name, 'Acme Foods');
+  assertEqual(ctx.DB.sup[0].country, 'USA');
+  assertEqual(ctx.DB.sup[0].cur, 'USD');
+  // Re-import with the same name (different case) to confirm case-insensitive update-in-place, not a duplicate.
+  var csv2 = 'Supplier Name,Country,Contact Person,Email,Phone/WeChat,Currency,Notes\nACME FOODS,USA,Jane,jane@acme.example,+1 555 0199,USD,Updated contact\n';
+  ctx.processImport('sup', csv2);
+  assertEqual(ctx.DB.sup.length, 1, 're-import by case-insensitive name updates in place, no duplicate');
+  assertEqual(ctx.DB.sup[0].ct, 'Jane');
+});
+
+test('processImport(\'co\', ...) — a multi-line quoted field also parses correctly for a non-Supplier entity (AC-7, cross-entity check)', function() {
+  resetDB();
+  var csv = 'Name,Email,Notes\nJane Buyer,jane@example.com,"Line one,\nLine two, with a comma,\nLine three"\n';
+  ctx.processImport('co', csv);
+  assertEqual(ctx.DB.con.length, 1, 'exactly one contact — the shared parser fix applies uniformly across entities');
+  assert(ctx.DB.con[0].notes.indexOf('\n') >= 0, 'multi-line notes preserved for a non-Supplier entity too');
+});
+
 // ── Quote approval audit trail (SPEC-ORD-003) ───────────────────
 console.log('\nQuote approval audit trail (SPEC-ORD-003)');
 

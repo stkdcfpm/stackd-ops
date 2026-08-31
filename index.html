@@ -8072,26 +8072,39 @@ function bulkUpload(entity, input) {
 }
 
 function parseImportCSV(text) {
-  var lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return { headers: [], rows: [] };
-  var headers = lines[0].split(',').map(function(h){ return h.replace(/^"|"$/g,'').trim(); });
-  var rows = [];
-  for (var i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    // Handle quoted fields with commas
-    var cols = [];
-    var current = '';
-    var inQuote = false;
-    for (var c = 0; c < lines[i].length; c++) {
-      var ch = lines[i][c];
-      if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { cols.push(current.trim()); current = ''; }
+  var t = text.trim();
+  if (!t) return { headers: [], rows: [] };
+  var allRows = [];
+  var row = [];
+  var current = '';
+  var inQuote = false;
+  for (var i = 0; i < t.length; i++) {
+    var ch = t[i];
+    if (inQuote) {
+      if (ch === '"') {
+        if (t[i + 1] === '"') { current += '"'; i++; }
+        else { inQuote = false; }
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') { inQuote = true; }
+      else if (ch === ',') { row.push(current.trim()); current = ''; }
+      else if (ch === '\r') { /* ignore — normalize CRLF row endings to the following \n */ }
+      else if (ch === '\n') { row.push(current.trim()); current = ''; allRows.push(row); row = []; }
       else { current += ch; }
     }
-    cols.push(current.trim());
-    var row = {};
+  }
+  if (current !== '' || row.length > 0) { row.push(current.trim()); allRows.push(row); }
+  allRows = allRows.filter(function(r){ return r.some(function(v){ return v !== ''; }); });
+  if (allRows.length < 2) return { headers: [], rows: [] };
+  var headers = allRows[0].map(function(h){ return h.trim(); });
+  var rows = [];
+  for (var r = 1; r < allRows.length; r++) {
+    var cols = allRows[r];
+    var obj = {};
     headers.forEach(function(h, idx) {
-      var val = (cols[idx]||'').replace(/^"|"$/g,'').trim();
+      var val = (cols[idx]||'').trim();
       // Strip thousand separators from numeric-looking values e.g. "30,755.80" -> "30755.80"
       if (/^[\d,]+(\.\d+)?$/.test(val)) val = val.replace(/,/g,'');
       // Normalise date formats: DD/MM/YYYY -> YYYY-MM-DD
@@ -8104,9 +8117,9 @@ function parseImportCSV(text) {
         var dp = val.split('-');
         val = dp[2] + '-' + dp[1].padStart(2,'0') + '-' + dp[0].padStart(2,'0');
       }
-      row[h] = val;
+      obj[h] = val;
     });
-    rows.push(row);
+    rows.push(obj);
   }
   return { headers: headers, rows: rows };
 }
