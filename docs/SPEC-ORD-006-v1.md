@@ -1,6 +1,6 @@
 # SPEC-ORD-006 — Edit and delete RFQ responses
 
-**Status:** v1 — draft, pending spec-gate review.
+**Status:** v1 — spec-gate PASS, no blocking findings. The highest-risk item (the id-rotation/repoint staleness mechanism) was verified by actually extracting and running the proposed code end-to-end against the real `renderQteSourceDriftWarn()`, not just reasoned about. Three non-blocking advisories, addressed below (see §10).
 **Build baseline:** `main` @ current HEAD, 641/641 tests passing.
 **Implements:** `docs/REQ-ORD-006-v1.md` (REQ-ORD-006a through REQ-ORD-006d, AC-1 through AC-8).
 
@@ -121,6 +121,8 @@ function editRfqResponse(lineId, responseId) {
 
 Same dropdown-population and field-reset shape as `openRfqResponse()`, just pre-filled from `resp` instead of blanked, and setting `cRfqEditId` instead of `null`. Reuses the same `ov-rfq` modal and the same `saveRfqResponse()` Save button — no new modal, no new HTML beyond the two new row buttons in §5.
 
+**Known, accepted edge case (advisory, spec-gate):** `delSup()`'s own accepted design (`tests/run.js:7480`, AC-011) leaves a deleted supplier's `id` in place on any record that referenced it, as a historical record, rather than nulling it. If an RFQ response's original supplier has since been deleted, `G('rfq-sup').value = resp.supId` has no matching `<option>` to select — the dropdown silently shows nothing selected. Editing that response then requires picking a (different, currently-existing) supplier just to change, say, a cost figure. Not required by any AC; not fixed here, since it's the same class of accepted trade-off `delSup()` itself already made, not a new gap this SPEC introduces.
+
 ---
 
 ## 4. `saveRfqResponse()` — branch on edit vs. add (REQ-ORD-006b)
@@ -209,6 +211,8 @@ function delRfqResponse(lineId, responseId) {
   if (!ord) return;
   var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
   if (!line) return;
+  var resp = (line.rfqResponses || []).find(function(r){ return r.id === responseId; });
+  if (!resp) return;
   var isCommitted = line.committedResponseId === responseId;
   var msg = isCommitted
     ? 'Delete this RFQ response? It is currently committed — deleting it will un-commit this line, and any Quote already built from it will show a "source pricing changed" warning.'
@@ -221,6 +225,8 @@ function delRfqResponse(lineId, responseId) {
   toast('RFQ response deleted');
 }
 ```
+
+**Fixed at spec-gate (advisory):** added `var resp = ...; if (!resp) return;` — the original draft would show a confirm dialog and a "deleted" toast for a stale/nonexistent `responseId` with no actual effect. Matches `editRfqResponse()`'s existing existence-guard style (§3) for consistency, even though the only real call sites are buttons bound to live `r.id` values, so the practical risk was low.
 
 Matches the existing `confirm()`-gated delete convention (`delLI()`/`delSup()`, `index.html:5350` onward) rather than a custom modal — consistent with how this codebase already treats similarly low-stakes record deletion. The committed-response branch of the message satisfies REQ-ORD-006 §4's AC-8 (added at requirements-gate) — it names both consequences (un-commit, staleness banner) explicitly, in plain operator-facing language, not just internally.
 
@@ -258,10 +264,11 @@ No other part of `renderRfqComparison()` changes — the empty-state branch (`in
 
 Extends the existing Order Request / RFQ-comparison test coverage — no new mocking mechanism, pure DOM-mock + DB-state assertions throughout, matching this REQ's own §5 (fixed at requirements-gate to cite the correct fixtures):
 
-- **`mkOrdWithLine()`** (`tests/run.js:7313-7325`, REQ-QTE-001 Part B's fixture) — reuse for the response-mutation half of AC-1/AC-2/AC-3/AC-6/AC-7/AC-8: seed an Order Request line with one or two `rfqResponses`, exercise `editRfqResponse()`/`saveRfqResponse()`/`delRfqResponse()` directly (bypassing the DOM open/close, matching how `saveRfqResponse()` is presumably already tested today — check the existing test for it and follow the same call style), assert on the resulting `line.rfqResponses`/`line.committedResponseId` shape.
+- **`mkOrdWithLine()`** (`tests/run.js:7315-7325` — confirmed at spec-gate to be the function itself; the previously-cited `7313` line is a `console.log` section header, not part of the fixture — REQ-QTE-001 Part B's fixture) — reuse for the response-mutation half of AC-1/AC-2/AC-3/AC-6/AC-7/AC-8: seed an Order Request line with one or two `rfqResponses`, exercise `editRfqResponse()`/`saveRfqResponse()`/`delRfqResponse()` directly (bypassing the DOM open/close, matching how `saveRfqResponse()` is presumably already tested today — check the existing test for it and follow the same call style), assert on the resulting `line.rfqResponses`/`line.committedResponseId` shape.
 - **`mkOrdWithCommittedResponse()`/`saveQteSetupIntegLine()`** (`tests/run.js:7712-7735`, REQ/SPEC-INTEG-001 Phase 1's fixture) — reuse for the Quote/staleness half of AC-4/AC-5: the existing fixture already produces a Quote with `sourceRfqResponseId` set from a committed response; edit or delete that same response via this SPEC's new functions, then call `renderQteSourceDriftWarn(q)` (unmodified) and assert the banner element (`qt-drift-warn`) is populated — exactly mirroring however the existing REQ-QTE-001 Part B staleness tests already assert on that same element, for consistency.
 - **AC-8 (confirm-message content):** capture `confirm()`'s argument (matching the exact existing pattern for `delSup()`'s AC-011, `tests/run.js:7467-7481` — a mocked `confirm` that records its message argument, then `assertContains`), verify the committed-response delete path's message names both the un-commit and staleness-warning consequences, and that the non-committed path's message does not (simpler wording, no false alarm).
 - **AC-1 regression check:** confirm that a "+ Add Response" call sequence (with `cRfqEditId` never set) still produces byte-identical `line.rfqResponses` output to what today's pre-this-SPEC tests already assert — if any existing `saveRfqResponse()` test exists, it should need **zero changes** to keep passing, since the unchanged path is untouched logic, just relocated into a named variable (§4).
+- **Test-isolation requirement, added at spec-gate (§10):** `resetDB()` (`tests/run.js:181`) resets `ctx.DB` only — it does not reset module-level UI state like `cRfqOrdId`/`cRfqLineId`/the new `cRfqEditId`. Several existing RFQ tests already set `cRfqOrdId`/`cRfqLineId` by hand rather than going through `openRfqResponse()`. Any new test that calls `editRfqResponse()` without a following `saveRfqResponse()` **must** explicitly reset `ctx.cRfqEditId = null` afterward (or every "add" test must explicitly set it to `null` itself before calling `saveRfqResponse()`) — otherwise a leaked truthy `cRfqEditId` from one test silently reroutes a later, unrelated test's `saveRfqResponse()` call into the edit branch's `idx > -1` check, which finds no match against a freshly-seeded line's response ids and **skips the `push()` entirely**, causing an unrelated test to fail with no expected-value mismatch to explain why. Confirmed to be a real trap by the spec-gate reviewer tracing the exact guard condition — not a hypothetical.
 
 ---
 
@@ -274,3 +281,17 @@ The existing RFQ-comparison description in `AI_SYSTEM_PROMPT` (search for "Compa
 ## 9. `docs/requirements-tracker.md` / `STACKD_CONTEXT.md`/`CLAUDE.md` updates required on completion
 
 Per `REQ-ORD-006` §7 — new tracker row, version-ship housekeeping, `AI_SYSTEM_PROMPT` update per §8 above.
+
+---
+
+## 10. Spec-gate review-resolution log
+
+Independent spec-gate review returned **PASS**, no blocking findings. The highest-risk item — the id-rotation/repoint staleness mechanism (§4) — was verified by the reviewer actually extracting the proposed code into a standalone runnable harness and executing the exact scenario end-to-end against the real, unmodified `renderQteSourceDriftWarn()`, for both the edit path and the delete path, both committed and non-committed — not just reasoned about in prose. Every "before" diff block (§2, §4, §5, §6) was confirmed byte-identical to the real current file. Both cited test fixtures (`mkOrdWithLine()`, `mkOrdWithCommittedResponse()`/`saveQteSetupIntegLine()`) were confirmed real, correctly shaped, and genuinely reusable without building anything from scratch. Three advisories, all addressed:
+
+1. **`delRfqResponse()` had no existence guard** — a stale/nonexistent `responseId` would still show a confirm dialog and a "deleted" toast with no actual effect. **Fixed:** added `var resp = ...; if (!resp) return;`, matching `editRfqResponse()`'s existing guard style.
+2. **Edit UX gap when the response's original supplier was deleted** — `delSup()`'s own accepted design leaves a deleted supplier's id in place on referencing records rather than nulling it, so the edit form's supplier dropdown would show nothing selected in that case. **Addressed:** documented as a known, accepted edge case in §3 — the same trade-off class `delSup()` already made, not a new gap this SPEC introduces, and not required by any AC.
+3. **Test-isolation risk: `cRfqEditId` can leak between tests** — `resetDB()` doesn't reset module-level UI state, and a leaked truthy `cRfqEditId` from one test would silently reroute a later, unrelated test's `saveRfqResponse()` into a no-op edit branch. **Fixed:** added an explicit test-isolation requirement to §7, with the reviewer's traced explanation of exactly how the failure mode manifests, so whoever implements the tests doesn't rediscover it the hard way.
+
+Also corrected a minor citation: `mkOrdWithLine()`'s cited line range included a `console.log` section header rather than the function itself — fixed to the precise function-body range.
+
+Proceeding to implementation.
