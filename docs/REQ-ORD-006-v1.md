@@ -1,6 +1,6 @@
 # REQ-ORD-006 — Edit and delete RFQ responses
 
-**Status:** v1 — pre-review draft.
+**Status:** v1 — requirements-gate CONDITIONAL PASS, no blocking findings. The highest-risk item — the §1.2 staleness-mechanism reasoning — was independently hand-traced against the real code and confirmed sound. Two advisories fixed (see §8).
 **Type:** Small, additive feature closing a real UX gap. No data-shape change to existing records beyond a new (optional, backward-compatible) UI affordance. Touches `index.html` only.
 
 ---
@@ -63,12 +63,13 @@ New function, `confirm()`-gated (matching the existing `delLI()`/`delSup()` patt
 | AC-5 | A response that is the line's `committedResponseId` | It is deleted | The response is removed from `line.rfqResponses`; `line.committedResponseId` becomes `null`; a Quote already converted from it shows the same staleness banner as AC-4, for the same underlying reason |
 | AC-6 | A response that is **not** the line's `committedResponseId` | It is deleted | Only that entry is removed; `line.committedResponseId` (pointing at a different response) is unaffected |
 | AC-7 | The comparison panel for a line with 2+ responses | Rendered | Each row shows Edit and Delete buttons alongside the existing Commit/Uncommit button |
+| AC-8 (new, requirements-gate) | The currently-committed response | Delete is clicked | The `confirm()` message text explicitly names the un-commit and staleness-banner consequences described in REQ-ORD-006c — asserted via a captured-`confirm`-message test, following the existing precedent for this exact assertion style (`delSup()`'s AC-011, `tests/run.js:7467-7481`, `assertContains(capturedMsg, ...)`) |
 
 ---
 
 ## 5. Testing approach
 
-Fully unit-testable in the existing Node harness (`tests/run.js`) — no AI/network dependency, pure DOM-mock + DB-state logic, following the same test style already used for `saveRfqResponse`/`ordCommitRfqResponse`/`renderQteSourceDriftWarn` (search existing tests for these function names for the established fixture pattern — the REQ-QTE-001 Part B fixtures already model a committed-response-to-Quote conversion and should be reused/extended for AC-4/AC-5 rather than built fresh).
+Fully unit-testable in the existing Node harness (`tests/run.js`) — no AI/network dependency, pure DOM-mock + DB-state logic, following the same test style already used for `saveRfqResponse`/`ordCommitRfqResponse`/`renderQteSourceDriftWarn`. **Fixture citation corrected at requirements-gate:** the original draft attributed the committed-response-to-Quote-conversion fixtures to "REQ-QTE-001 Part B" — that REQ's own fixture, `mkOrdWithLine()` (`tests/run.js:7313-7325`), only models the Order-Request-side RFQ comparison (`rfqResponses[]`/`committedResponseId`), with no Quote object and no `sourceRfqResponseId` at all. The fixtures that actually model the full committed-response-to-Quote conversion, and that AC-4/AC-5 need, are `mkOrdWithCommittedResponse()`/`saveQteSetupIntegLine()` (`tests/run.js:7712-7735`), filed under **REQ/SPEC-INTEG-001 Phase 1** (`tests/run.js:7710`) — the same REQ `index.html:4542-4568`'s own code comment attributes `renderQteSourceDriftWarn()` to. Use `mkOrdWithLine()`'s `rfqResponses` shape for the response-mutation half of AC-1/AC-2/AC-3, and `mkOrdWithCommittedResponse()`/`saveQteSetupIntegLine()` for the Quote/staleness half of AC-4/AC-5 — reuse and extend both, don't build fresh fixtures for either half.
 
 ---
 
@@ -84,3 +85,14 @@ Standard requirements-gate → spec-gate → build-gate cycle. Not financial-cal
 - `docs/requirements-tracker.md`: new row.
 - `STACKD_CONTEXT.md`/`CLAUDE.md`: version-ship housekeeping per the standing checklist.
 - `AI_SYSTEM_PROMPT`: review whether the existing RFQ-comparison description needs updating to mention edit/delete are now possible (currently only describes adding/committing responses).
+
+---
+
+## 8. Review-resolution log
+
+**Requirements-gate independent review: CONDITIONAL PASS, no blocking findings.** Every code citation (`openRfqResponse()`, `saveRfqResponse()`, `renderRfqComparison()`, `renderQteSourceDriftWarn()`, the `delLI()`/`delSup()` confirm pattern) verified accurate to the exact line. The core diagnosis (push-only save, blank-only open, no delete function anywhere) confirmed by grep. **§1.2's staleness-mechanism reasoning — the single highest-risk claim in this REQ — was independently hand-traced against the real code with a concrete worked example** (a Quote line frozen at `sourceRfqResponseId:'r1'`, an edit generating new id `'r2'` and repointing `committedResponseId`, correctly producing a `'r2' !== 'r1'` mismatch that fires the existing banner) and confirmed sound — nothing backwards, nothing missing. AC-4/AC-5 were confirmed to be load-bearing exactly as intended: tracing both the in-place-mutation regression and the delete-without-nulling regression by hand through the ACs' own wording shows each would genuinely fail without the correct implementation. Two advisories, both fixed:
+
+1. **Missing AC for the delete-confirm() message content.** REQ-ORD-006c requires the confirm dialog to explicitly name the un-commit/staleness consequences when deleting a committed response, but no AC tested for that text. **Fixed:** added AC-8, citing the exact existing precedent for asserting on captured `confirm()` message text (`delSup()`'s AC-011, `tests/run.js:7467-7481`).
+2. **Fixture citation misattributed.** §5 originally cited "the REQ-QTE-001 Part B fixtures" for the committed-response-to-Quote-conversion test setup AC-4/AC-5 need — that REQ's actual fixture (`mkOrdWithLine()`) only models the Order-Request side, with no Quote/`sourceRfqResponseId` involved at all. The fixtures that actually model the conversion belong to REQ/SPEC-INTEG-001 Phase 1 (`mkOrdWithCommittedResponse()`/`saveQteSetupIntegLine()`, `tests/run.js:7710-7841`), which is also what `index.html:4542-4568`'s own comment attributes `renderQteSourceDriftWarn()` to. **Fixed:** §5 corrected to cite both fixtures precisely, split by which half of the ACs each covers.
+
+Proceeding to spec-gate.
