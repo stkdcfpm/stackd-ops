@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.68</title>
+<title>Stackd Ops v2.9.69</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.68</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.69</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1270,9 +1270,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.68</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.69</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Edit and delete RFQ responses</strong> (REQ/SPEC-ORD-006). User asked how to update a recorded RFQ response when a supplier sends revised pricing, having found none of the "Compare RFQs" row's buttons could change or remove an existing response — only "+ Add Response" existed, so a correction could only ever be recorded as an extra, misleading entry. New Edit and Delete buttons on each response row: Edit reopens the same modal pre-filled with that response's values; Delete removes it outright, with a plain confirm prompt, or (if the response is currently committed) a confirm naming the un-commit and staleness-warning consequences before proceeding. Editing or deleting the response a Quote was already converted from now correctly re-triggers the existing "Source pricing has changed" staleness banner (REQ/SPEC-INTEG-001 Phase 1) — an edit generates a new response id and repoints the line's commitment to it, rather than mutating the response in place, specifically so the existing drift-detection comparison (which only compares ids) can't miss it. Went through requirements-gate (CONDITIONAL PASS, 2 advisories fixed) → spec-gate (PASS, 3 advisories fixed) → build-gate (CONDITIONAL PASS — 1 real finding, this AI assistant's own description of the feature still claimed "no response is ever deleted," now false; fixed below). The core id-rotation/repoint mechanism was independently hand-traced and then verified by mutation testing (reverting the fix reproduces exactly the staleness-banner regression it exists to prevent). 13 new tests. Tests: 654/654 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.68</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Per-quote overhead charge overrides</strong> (REQ/SPEC-QTE-002). User asked why a quote's Origin Charges/Dest Charges/FPM Admin figures couldn't be adjusted or removed — they were global Rate Engine defaults with no per-quote override. Three new optional fields on the Quote form let each of the three be overridden individually per quote (blank = inherit the current Settings default; any typed number, including 0, overrides just that quote and stops tracking future changes to the global default for that field). Every quote saved before this version has no override set, so every existing quote's total is unaffected. Also fixes a related bug this change would otherwise have introduced: the PDF preview's itemized Origin/Dest/Admin breakdown lines now read the same resolved figures as the total shown below them, instead of always reading the raw global Settings value regardless of any override. 11 new tests. Tests: 641/641 pass.</li>
@@ -2702,6 +2711,7 @@ var cConvertId = null;
 var cConvertOrdId = null;
 var cRfqOrdId = null;
 var cRfqLineId = null;
+var cRfqEditId = null;
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
@@ -3120,6 +3130,8 @@ function openRfqResponse(lineId) {
   if (!EI.ord) return;
   cRfqOrdId = EI.ord;
   cRfqLineId = lineId;
+  cRfqEditId = null;
+  G('rfq-title').textContent = 'RFQ Response';
   G('rfq-sup').innerHTML = '<option value="">— Supplier —</option>' +
     DB.sup.map(function(s){ return '<option value="' + san(s.id) + '">' + san(s.name) + '</option>'; }).join('');
   G('rfq-con').innerHTML = '<option value="">— none —</option>' +
@@ -3138,6 +3150,37 @@ function openRfqResponse(lineId) {
   G('ov-rfq').classList.add('on');
 }
 
+function editRfqResponse(lineId, responseId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+  var resp = (line.rfqResponses || []).find(function(r){ return r.id === responseId; });
+  if (!resp) return;
+  cRfqOrdId = EI.ord;
+  cRfqLineId = lineId;
+  cRfqEditId = responseId;
+  G('rfq-title').textContent = 'Edit RFQ Response';
+  G('rfq-sup').innerHTML = '<option value="">— Supplier —</option>' +
+    DB.sup.map(function(s){ return '<option value="' + san(s.id) + '">' + san(s.name) + '</option>'; }).join('');
+  G('rfq-con').innerHTML = '<option value="">— none —</option>' +
+    DB.con.map(function(c){ return '<option value="' + san(c.id) + '">' + san(c.name) + '</option>'; }).join('');
+  G('rfq-sup').value = resp.supId;
+  G('rfq-cost').value = resp.cost;
+  G('rfq-cur').value = resp.currency;
+  G('rfq-cbm').value = resp.cbm || '';
+  G('rfq-dutypct').value = resp.dutyPct || '';
+  G('rfq-dg').checked = !!resp.dg;
+  G('rfq-moq').value = resp.moq || '';
+  G('rfq-leadtime').value = resp.leadTime || '';
+  G('rfq-payterms').value = resp.paymentTerms || '';
+  G('rfq-con').value = resp.contactId || '';
+  G('rfq-notes').value = resp.notes || '';
+  vClr('rfq-sup'); vClr('rfq-cost');
+  G('ov-rfq').classList.add('on');
+}
+
 function saveRfqResponse() {
   var ord = DB.ord.find(function(o){ return o.id === cRfqOrdId; });
   if (!ord) { closeM('ov-rfq'); return; }
@@ -3149,17 +3192,48 @@ function saveRfqResponse() {
   if (costStr === '' || isNaN(+costStr) || +costStr < 0) { vErr('rfq-cost', 'A valid unit cost is required'); return; }
   vOk('rfq-sup'); vOk('rfq-cost');
   if (!line.rfqResponses) line.rfqResponses = [];
-  line.rfqResponses.push({
+  var newResp = {
     id: uid(), supId: supId, cost: +costStr, currency: G('rfq-cur').value,
     cbm: +G('rfq-cbm').value || 0, dutyPct: +G('rfq-dutypct').value || 0, dg: G('rfq-dg').checked,
     moq: G('rfq-moq').value.trim(), leadTime: G('rfq-leadtime').value.trim(),
     paymentTerms: G('rfq-payterms').value.trim(), notes: G('rfq-notes').value.trim(),
     contactId: G('rfq-con').value || null, ts: new Date().toISOString()
-  });
+  };
+  var wasEditing = !!cRfqEditId;
+  if (wasEditing) {
+    var idx = line.rfqResponses.findIndex(function(r){ return r.id === cRfqEditId; });
+    if (idx > -1) {
+      line.rfqResponses[idx] = newResp;
+      if (line.committedResponseId === cRfqEditId) line.committedResponseId = newResp.id;
+    }
+    cRfqEditId = null;
+  } else {
+    line.rfqResponses.push(newResp);
+  }
   sv(K.ord, DB.ord);
   closeM('ov-rfq');
   renderRfqComparison(cRfqLineId);
-  toast('RFQ response recorded');
+  toast(wasEditing ? 'RFQ response updated' : 'RFQ response recorded');
+}
+
+function delRfqResponse(lineId, responseId) {
+  if (!EI.ord) return;
+  var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+  var resp = (line.rfqResponses || []).find(function(r){ return r.id === responseId; });
+  if (!resp) return;
+  var isCommitted = line.committedResponseId === responseId;
+  var msg = isCommitted
+    ? 'Delete this RFQ response? It is currently committed — deleting it will un-commit this line, and any Quote already built from it will show a "source pricing changed" warning.'
+    : 'Delete this RFQ response?';
+  if (!confirm(msg)) return;
+  line.rfqResponses = (line.rfqResponses || []).filter(function(r){ return r.id !== responseId; });
+  if (isCommitted) line.committedResponseId = null;
+  sv(K.ord, DB.ord);
+  renderRfqComparison(lineId);
+  toast('RFQ response deleted');
 }
 
 function rfqLandedGBP(r) {
@@ -3217,7 +3291,11 @@ function renderRfqComparison(lineId) {
       '<td>' + san(r.moq||'-') + '</td>' +
       '<td>' + san(r.leadTime||'-') + '</td>' +
       '<td>' + san(r.paymentTerms||'-') + '</td>' +
-      '<td><button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="ordCommitRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">' + (committed ? 'Uncommit' : 'Commit') + '</button></td>' +
+      '<td style="white-space:nowrap;">' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="ordCommitRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">' + (committed ? 'Uncommit' : 'Commit') + '</button> ' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;" onclick="editRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Edit</button> ' +
+        '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delRfqResponse(\'' + lineId + '\',\'' + r.id + '\')">Del</button>' +
+      '</td>' +
       '</tr>';
   }).join('');
   panel.innerHTML = rfqStalenessWarn(responses) +
@@ -8772,7 +8850,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.68).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.69).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8835,9 +8913,10 @@ var AI_SYSTEM_PROMPT = [
   'Moving an Order Request to Quoted while any line still has qtyStatus "Unknown" shows a warning (does not block the save) — quoting against unresolved quantities is allowed but flagged.',
   'CSV import (v2.9.48): Import Data tab → Order Requests step. Rows sharing a Submission ID column become one Order Request with multiple lines. Contact is matched by email (case-insensitive) or auto-created as a lead-status Contact with source "webform". Re-importing an existing Submission ID only appends genuinely new lines (matched by category+item/spec) — never overwrites a line already touched by an operator.',
   'Per-line gap check (v2.9.50): each Order Request line has a "Check gaps" button. Structural check (instant, no AI) flags any unset packing spec, base UOM, base qty, source country, or qtyStatus still "Unknown". Semantic check (AI-assisted, only runs if a Claude API key is configured) additionally flags ambiguous or inconsistent values (e.g. a vague item spec, an order volume that doesn\'t reconcile with base UOM/qty) and phrases each as a specific question to send the buyer/supplier. Manual trigger only — never runs automatically on save/import. Purely diagnostic: nothing is written to the line, no lineUpdates entry is created, and it does not change the existing Quoted-transition warning behavior. The semantic check\'s API payload is scoped to product/order fields only — never the linked Contact\'s name/email/phone or any lineUpdates history.',
-  'RFQ supplier comparison (v2.9.56): each Order Request line can record multiple suppliers\' RFQ responses (unit cost, currency, CBM, duty %, DG flag, MOQ, lead time, payment terms, optional linked Contact, notes) via "Compare RFQs" → "+ Add Response". Responses are ranked by landed cost converted to GBP (same rate engine as Quotes, LCL basis) — the nominal cheapest quoted price is not always the landed-cheapest once freight/duty/DG are factored in and currencies are converted. A response with no CBM entered shows a warning next to its landed cost, since its freight component reads as zero rather than unknown. Exactly one response per line can be marked Committed at a time; committing again on a different response replaces the prior choice, and no response is ever deleted — all remain visible as a record of what was compared. Converting a Contact\'s Order Request to a Quote ("Create Quote") pre-fills one Quote line per line that has a committed response, carrying over that response\'s supplier, quantity (its Order Request line\'s base qty, if set), and unit cost — converted to the Quote\'s working currency if the response was recorded in a different one — so the operator never has to retype or reconvert either. A committed line\'s new Quote line has no per-line margin override set; it uses the quote\'s own default margin like any manually-added line.',
+  'RFQ supplier comparison (v2.9.56): each Order Request line can record multiple suppliers\' RFQ responses (unit cost, currency, CBM, duty %, DG flag, MOQ, lead time, payment terms, optional linked Contact, notes) via "Compare RFQs" → "+ Add Response". Responses are ranked by landed cost converted to GBP (same rate engine as Quotes, LCL basis) — the nominal cheapest quoted price is not always the landed-cheapest once freight/duty/DG are factored in and currencies are converted. A response with no CBM entered shows a warning next to its landed cost, since its freight component reads as zero rather than unknown. Exactly one response per line can be marked Committed at a time; committing again on a different response replaces the prior choice. Each response can also be individually edited or deleted (v2.9.69, REQ/SPEC-ORD-006) — see below. Converting a Contact\'s Order Request to a Quote ("Create Quote") pre-fills one Quote line per line that has a committed response, carrying over that response\'s supplier, quantity (its Order Request line\'s base qty, if set), and unit cost — converted to the Quote\'s working currency if the response was recorded in a different one — so the operator never has to retype or reconvert either. A committed line\'s new Quote line has no per-line margin override set; it uses the quote\'s own default margin like any manually-added line.',
   'get_suppliers/get_buyers tools exist to resolve a name to an id before emitting create_invoice/create_line_item/create_po action blocks — call one of these first whenever a supplier or buyer name is mentioned but no id is already known from the conversation, and ask a clarifying question rather than guessing if there are zero or multiple ambiguous matches. These tools deliberately do not return contact/email/phone — if the user asks for a supplier\'s or buyer\'s contact details, say that information isn\'t available through these tools and point them to the Suppliers/Buyers tab instead, rather than inventing an answer.',
   'Source traceability & staleness warning (v2.9.58, Phase 1 of a referential-integrity build): a Quote line created via "Create Quote" from a committed RFQ response now records which Order Request line and which specific RFQ response it came from. If the operator later commits a *different* RFQ response on that same Order Request line, re-opening the Quote shows a warning banner ("Source pricing has changed since this Quote was created — review before sending") — the Quote itself is never auto-updated, only flagged. A distinct message appears if the source Order Request has been deleted entirely. Quotes created before this version, or built entirely from manually-added lines, never show this banner — there is nothing to trace them back to. Manually-added lines and AI-proposed Quotes (create_quote action) are unaffected and never carry this traceability.',
+  'Edit and delete RFQ responses (v2.9.69, REQ/SPEC-ORD-006): each response row in "Compare RFQs" now has Edit and Delete buttons alongside Commit/Uncommit. Edit reopens the same "+ Add Response" modal pre-filled with that response\'s values; saving replaces it in place (same position, same count of responses) rather than adding a new one. Delete removes a response outright; if it is the line\'s currently committed response, the operator sees an explicit warning before confirming that this will un-commit the line and may trigger the staleness banner described above on any Quote already converted from it — deleting or editing the specific response a Quote was sourced from re-triggers that same staleness banner, exactly as committing a different response already did.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
