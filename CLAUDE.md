@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used only for Suppliers/Buyers when Cloud Data is configured — REQ/SPEC-CLOUD-001, no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.66**  
-**Test count: 620/620 PASS** (`node tests/run.js`)
+**Current version: v2.9.67**  
+**Test count: 630/630 PASS** (`node tests/run.js`)
 
 ---
 
@@ -26,7 +26,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
-| Branch for new work | `claude/production-sync-restored-b8mpb2` |
+| Branch for new work | `claude/sync-002-batch-requests` |
 
 ---
 
@@ -163,6 +163,7 @@ See `docs/known-gaps.md` for full entries.
 | CUR-GAP-002 | Display currency / Buyer Statement | Buyer Statement (renderStatement()) mixes currencies unconverted — pre-existing, out of scope for v2.9.46's currency toggle |
 | SYNC-GAP-001 | Sync / data integrity | pullAll() merged Sheets rows keyed by display header, never translated back to internal field names — corrupted every pulled record and silently broke delete — Fixed v2.9.47 |
 | CON-GAP-006 | Contacts / reference numbers | CSV/webform-created Contacts never get a CON-#### num — inherited from a pre-existing processImportRecords() gap, not fixed in v2.9.48 (out of scope) |
+| SYNC-GAP-002 | Sync / performance | Fixed — REQ/SPEC-SYNC-002: `syncAll()`/`pullAll()`/`pushAll()` now send one batched request per direction instead of 8-10 sequential ones; falls back transparently to the old per-entity behavior until the user manually redeploys `apps-script/Code.gs` |
 
 ---
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.66</title>
+<title>Stackd Ops v2.9.67</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.66</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.67</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1270,9 +1270,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.66</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.67</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong>Sheets sync performance</strong> (REQ/SPEC-SYNC-002). User-reported: sync took a long time. Two compounding causes, found by direct code read: the sync/pull/push functions each made 8-10 sequential Google Sheets requests, one per data type, waiting for each to finish before starting the next; and each of those requests was itself slow, since the Apps Script backend re-opened the spreadsheet from scratch on every single one. Fix: two new batched actions open the spreadsheet once per sync and process every data type in one request instead of one-at-a-time, each isolated so one data type's failure can't affect the others. Falls back automatically to today's exact behavior until the Apps Script backend is manually redeployed with the update — no disruption either way, just no speed improvement until then. 10 new tests. Tests: 630/630 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.66</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong>Invoice→PO enumeration</strong> (REQ-INTEG-002, sub-phase 2b of the larger Payment Allocation build). Check-first found a dead field, <code>inv.pos[]</code>, written on every invoice save but never once read anywhere in the app — the real, live answer to "which POs belong to this invoice" was instead an ad-hoc filter (<code>po.invId===inv.id||po.invNum===inv.num</code>) independently retyped at 3 call sites (the Accounts page's per-invoice view, and two separate FPM-deposit auto-recovery blocks). <code>inv.pos[]</code> is now the authoritative record: a new <code>getInvoicePOs(inv)</code> helper reads it at all 3 sites, a new <code>backfillInvoicePOs()</code> migration keeps it correct, and <code>delPO()</code> now cleans up a deleted PO's id from any invoice that referenced it (previously left dangling forever, silently, since nothing read the field to notice). Check-first, and three escalating rounds of independent review, found the app links a PO to an invoice through six different mechanisms, not just the one (<code>autoPos()</code>) originally assumed — CSV import, Google Sheets record import, and <code>pullAll()</code>'s bulk Sheets pull can all link a PO to an invoice too, and each now re-syncs <code>inv.pos[]</code> immediately rather than only at the next app boot. The last review round caught a genuine algorithm bug before any code was written: the backfill's original per-invoice matching could assign the same PO to two different invoices at once when a PO's <code>invId</code> and <code>invNum</code> disagreed (exactly what a Sheets re-link produces) — fixed by resolving each PO to a single home invoice, preferring whichever field a re-link actually changes (<code>invNum</code>) over the one it doesn't. Logged, not fixed: <code>PO-GAP-004</code>, a narrow, pre-existing <code>savePO()</code> edge case found along the way (renaming an invoice can silently clear a linked PO's <code>invId</code> on its next save). 11 new tests. Tests: 620/620 pass.</li>
@@ -3944,6 +3953,9 @@ async function sGet(entity) {
   try { return JSON.parse(text); }
   catch(e) { throw new Error('Script returned HTML instead of JSON — check deployment settings'); }
 }
+function isUnknownAction(res) {
+  return !!(res && res.status === 'error' && typeof res.message === 'string' && res.message.indexOf('Unknown action') === 0);
+}
 async function syncEnt(entity, rec) {
   if (!SS.url || !SS.auto) return;
   var ent = (entity === 'inv' && (rec.type === 'credit_note' || rec.type === 'goodwill_credit')) ? 'cn' : entity;
@@ -4019,16 +4031,26 @@ async function syncAll() {
   setSyncStatus('loading');
   try {
     var synEnts = ['sup','li','po','sh','qt','payments','co'];
-    for (var si = 0; si < synEnts.length; si++) {
-      var entKey = synEnts[si] === 'co' ? 'con' : synEnts[si];
-      await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[entKey] || []).map(function(r){ return mapRec(synEnts[si], r); })});
-    }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
     var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; })
                        .map(function(r){ return mapRec('cn', r); });
-    await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
-    if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
+    var entities = synEnts.map(function(ent) {
+      var entKey = ent === 'co' ? 'con' : ent;
+      return { entity: ent, records: (DB[entKey] || []).map(function(r){ return mapRec(ent, r); }) };
+    });
+    entities.push({ entity: 'inv', records: invOnly });
+    if (cnOnly.length) entities.push({ entity: 'cn', records: cnOnly });
+
+    var batchRes = await sPost({ action: 'bulk_upsert_all', entities: entities });
+    if (isUnknownAction(batchRes)) {
+      for (var si = 0; si < synEnts.length; si++) {
+        var entKey = synEnts[si] === 'co' ? 'con' : synEnts[si];
+        await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[entKey] || []).map(function(r){ return mapRec(synEnts[si], r); })});
+      }
+      await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
+      if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
+    }
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
     localStorage.setItem('st_last_sync', new Date().toISOString());
     renderSyncStatus();
@@ -4067,9 +4089,24 @@ async function pullAll() {
   setSyncStatus('loading');
   var failed = [];
 
+  var _simpleEntsForBatch = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+  if (_sb) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'sup'; });
+  var _allPullKeys = ['inv','cn','po'].concat(_simpleEntsForBatch);
+
+  var batched = null;
+  try {
+    var batchRes = await sPost({ action: 'pull_all', entities: _allPullKeys });
+    if (batchRes && batchRes.status === 'ok' && batchRes.results) batched = batchRes.results;
+  } catch (e) { /* network failure on the batched call — fall through to per-entity sGet(), same end state as before batching existed */ }
+
+  async function pulled(entity) {
+    if (batched) return batched[entity] || { status: 'error', message: 'No result for ' + entity };
+    return await sGet(entity);
+  }
+
   // ── Invoices (field-mapping reversed, business-key merge — SYNC-GAP-001) ─
   try {
-    var dInv = await sGet('inv');
+    var dInv = await pulled('inv');
     if (dInv.status === 'ok' && dInv.records && dInv.records.length) {
       var invPulled = dInv.records.map(function(r){ return unmapRec('inv', r); });
       var calcZeroGuard = ['calc_grandTotal','calc_cogs','calc_netProfit','calc_margin','calc_balanceDue'];
@@ -4090,7 +4127,7 @@ async function pullAll() {
 
   // ── Credit notes (merged back into DB.inv) ─────────────────────
   try {
-    var dCn = await sGet('cn');
+    var dCn = await pulled('cn');
     if (dCn.status === 'ok' && dCn.records && dCn.records.length) {
       var cnPulled = dCn.records.map(function(r){ return unmapRec('cn', r); });
       var cnClaim = claimOnceMatcher();
@@ -4112,7 +4149,7 @@ async function pullAll() {
 
   // ── Purchase orders (field-mapping reversed, business-key merge) ─
   try {
-    var dPo = await sGet('po');
+    var dPo = await pulled('po');
     if (dPo.status === 'ok' && dPo.records && dPo.records.length) {
       var poPulled = dPo.records.map(function(r){ return unmapRec('po', r); });
       var poClaim = claimOnceMatcher();
@@ -4142,13 +4179,13 @@ async function pullAll() {
     var eKey = simpleEnts[ei];
     var dbKey = eKey === 'co' ? 'con' : eKey;
     try {
-      var sd = await sGet(eKey);
+      var sd = await pulled(eKey);
       if (sd.status === 'ok' && sd.records && sd.records.length) {
-        var pulled = sd.records.map(function(r){ return unmapRec(eKey, r); });
+        var pulledRecs = sd.records.map(function(r){ return unmapRec(eKey, r); });
         var localArr = DB[dbKey];
         var claim = claimOnceMatcher();
         var matchedLocalIds = {};
-        var merged = pulled.map(function(p) {
+        var merged = pulledRecs.map(function(p) {
           var candidate = idKeyedEnts.indexOf(eKey) > -1
             ? localArr.find(function(r){ return r.id === p.id; })
             : findLocalMatchByBizKey(eKey, localArr, p);
@@ -4214,17 +4251,29 @@ async function pushAll() {
   setSyncStatus('loading');
   try {
     var ents = ['sup','li','po','sh','qt','payments','co'];
-    for (var pi = 0; pi < ents.length; pi++) {
-      var entKey = ents[pi] === 'co' ? 'con' : ents[pi];
-      await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[entKey] || []).map(function(r){ return mapRec(ents[pi], r); })});
-    }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
     var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; })
                        .map(function(r){ return mapRec('cn', r); });
-    await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
-    await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
-    await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
+    var invLines = buildInvLines();
+    var entities = ents.map(function(ent) {
+      var entKey = ent === 'co' ? 'con' : ent;
+      return { entity: ent, records: (DB[entKey] || []).map(function(r){ return mapRec(ent, r); }) };
+    });
+    entities.push({ entity: 'inv', records: invOnly });
+    entities.push({ entity: 'cn', records: cnOnly });
+    entities.push({ entity: 'inv_lines', records: invLines });
+
+    var batchRes = await sPost({ action: 'bulk_upsert_all', entities: entities });
+    if (isUnknownAction(batchRes)) {
+      for (var pi = 0; pi < ents.length; pi++) {
+        var entKey = ents[pi] === 'co' ? 'con' : ents[pi];
+        await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[entKey] || []).map(function(r){ return mapRec(ents[pi], r); })});
+      }
+      await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
+      await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
+      await sPost({action:'bulk_upsert', entity:'inv_lines', records:invLines});
+    }
     setSyncStatus('ok'); toast('Pushed all'); setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) { setSyncStatus('err'); toast('Failed: ' + e.message); }
 }
@@ -8711,7 +8760,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.66).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.67).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
