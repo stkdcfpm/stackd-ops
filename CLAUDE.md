@@ -163,7 +163,8 @@ See `docs/known-gaps.md` for full entries.
 | CUR-GAP-002 | Display currency / Buyer Statement | Buyer Statement (renderStatement()) mixes currencies unconverted — pre-existing, out of scope for v2.9.46's currency toggle |
 | SYNC-GAP-001 | Sync / data integrity | pullAll() merged Sheets rows keyed by display header, never translated back to internal field names — corrupted every pulled record and silently broke delete — Fixed v2.9.47 |
 | CON-GAP-006 | Contacts / reference numbers | CSV/webform-created Contacts never get a CON-#### num — inherited from a pre-existing processImportRecords() gap, not fixed in v2.9.48 (out of scope) |
-| SYNC-GAP-002 | Sync / performance | Fixed — REQ/SPEC-SYNC-002: `syncAll()`/`pullAll()`/`pushAll()` now send one batched request per direction instead of 8-10 sequential ones. Apps Script redeployed 2026-08-31 — both sides live |
+| SYNC-GAP-002 | Sync / performance | Fixed — REQ/SPEC-SYNC-002: `syncAll()`/`pullAll()`/`pushAll()` now send one batched request per direction instead of 8-10 sequential ones. Apps Script redeployed 2026-08-31; whether the live deployment is actually serving the new actions is unconfirmed — see SYNC-GAP-003 |
+| SYNC-GAP-003 | Sync / performance | Open, backlogged — post-redeploy Network-tab evidence was inconsistent/inconclusive; may just be the Apps Script deployment needing to be re-pointed at its latest version, not a code defect |
 
 ---
 
