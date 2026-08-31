@@ -1,6 +1,6 @@
 # SPEC-QTE-002 — Per-quote overhead charge overrides
 
-**Status:** v1 — draft, pending spec-gate review.
+**Status:** v1 — spec-gate CONDITIONAL PASS. One blocking finding, fixed in place (see §12): the `qteSellTotals()` signature change breaks two existing tests that call it directly with the old 4-arg form — the reviewer applied every diff to a scratch copy and reproduced the failure (628/630). §9 now includes the required test-call-site updates. One citation drift also fixed (§8's line-10911 reference).
 **Build baseline:** `main` @ current HEAD, 630/630 tests passing.
 **Implements:** `docs/REQ-QTE-002-v1.md` (REQ-QTE-002a through REQ-QTE-002f, ACs 1-7).
 
@@ -261,7 +261,7 @@ with:
   var sellGBP = totals.sellGBP;
 ```
 
-Then, immediately after the `var qt = { ... };` object literal closes (`index.html:10911`, the line with `approvedAt: ...`), add:
+Then, immediately after the `var qt = { ... };` object literal closes (the closing `};` at `index.html:10911`; the object's last property, `approvedAt: ...`, spans lines 10908-10910), add:
 
 ```js
   if (origOvRaw !== '') qt.originCharges = +origOvRaw;
@@ -277,11 +277,37 @@ A blank field means the property is never added to the freshly-built `qt` object
 
 Extend the existing Quote test coverage — no new mocking mechanism needed, everything here is pure calculation/DOM-mock logic already exercised by the existing `saveQteSetup()`/`makePreviewMock()` helpers.
 
+### 9.0 Mandatory: update the two existing tests that call `qteSellTotals()` directly (blocking finding from spec-gate)
+
+`tests/run.js:907-921` and `tests/run.js:923-933` both call `ctx.qteSellTotals(...)` directly with the **old** 4-arg signature (`lines, lineCalcs, quoteMarkup, qr`) rather than going through `cQte()`/`calcQte()`/`saveQte()`. Once §2's signature change ships, both calls must be updated to the new 5-arg form (`lines, lineCalcs, quoteMarkup, overheadTotal, fxGBPUSD`) or they silently misbehave (`overheadTotal` receives the whole `qr` object, `sellUSD += overheadTotal` string-concatenates instead of adding, `fxGBPUSD` is `undefined` so `sellGBP` becomes `NaN`) — confirmed by the spec-gate reviewer, who applied every other diff in this SPEC to a scratch copy and reproduced exactly this failure (628/630).
+
+**`tests/run.js:915`**, replace:
+```js
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 20, ctx.QR);
+```
+with:
+```js
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 20, ctx.QR.originCharges + ctx.QR.destCharges + ctx.QR.fpmAdmin, ctx.QR.fxGBPUSD);
+```
+(This test's `ctx.QR` has all three overhead fields set to `0`, so the computed total is `0` — behaviorally identical to today, just passed explicitly instead of implicitly via the whole `qr` object.)
+
+**`tests/run.js:928`**, replace:
+```js
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 50, ctx.QR);
+```
+with:
+```js
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 50, ctx.QR.originCharges + ctx.QR.destCharges + ctx.QR.fpmAdmin, ctx.QR.fxGBPUSD);
+```
+(This test's `ctx.QR` overhead fields sum to `675`, matching the test's own existing `assertEqual(totals.overhead, 675, ...)` assertion two lines later — unaffected by this change.)
+
+Neither test's assertions change — only how the pre-existing `ctx.QR`-derived overhead total is passed in, since `qteSellTotals()` itself no longer reaches into a `qr` object for that figure.
+
 - **`qteEffectiveOverhead()` direct unit tests** (mirroring the existing style, if any exists for `qteEffectiveMargin`; otherwise a fresh small block): blank/`undefined`/`null` for all three → returns `qr`'s defaults; `'0'` for one → returns `0` for that one, defaults for the others; a full override on all three → returns exactly those three values and their sum as `.total`.
 - **`cQte()` — override changes total, unset quote doesn't (AC-1, AC-2, AC-4):** two quote fixtures, one with `originCharges: 0` set, one without — assert the overridden one's `.overhead`/`.overheadBreakdown.origin`/`.quotedTotal` reflect the override, the other's reflect `QR.originCharges` unchanged, with both quotes checked in the same test run against the same `QR` (proves no cross-contamination, AC-4).
 - **`cQte()` — global Settings change after a quote has a partial override (AC-3):** a quote with only `destCharges` overridden; change `QR.originCharges`/`QR.fpmAdmin` afterward; assert the quote's `overheadBreakdown.origin`/`.admin` track the new global values while `.dest` stays at the quote's own override.
 - **`saveQte()` — persistence (AC-1, REQ-QTE-002f):** using `saveQteSetup()` plus setting `mockEl('qf-origOv').value = '0'` (others left blank per `mockEl()`'s default `''`) — assert the saved quote has `originCharges === 0` but no `destCharges`/`fpmAdmin` property at all (`'destCharges' in savedQt === false`), confirming blank truly omits the key rather than storing `undefined`.
-- **`saveQte()` — clearing an override (REQ-QTE-002f):** save a quote with an override set, reopen (`editQte`), clear the field, re-save — assert the property is gone from the re-saved record.
+- **`saveQte()` — clearing an override (REQ-QTE-002f):** save a quote with an override set, reopen (`editQte`), clear the field, re-save — assert the property is gone from the re-saved record. Note: no existing test calls `editQte()` directly (every existing Quote test manipulates `EI.qt`/`cQL`/`mockEl(...)` and calls `saveQte()` only) — this is a new, not previously-used, call pattern for this harness. Confirmed safe at spec-gate by tracing `editQte()`'s call chain (`rQLT`, `renderQteRatesWarn`, `renderQteSourceDriftWarn`, `updQtePoBtn`) against the mock DOM — it runs without throwing — but flagging the pattern as new in case it needs adjustment once actually written.
 - **`saveQte()` — existing quotes unaffected (AC-1, AC-5):** confirm an existing `saveQteSetup()`-based test (unmodified) still produces the same `calc_sellUSD`/`calc_sellGBP` as before this REQ, since `mockEl()` defaults every untouched field to `''` automatically — this is a regression-safety check, not new behavioral coverage.
 - **AC-7 (combined overrides):** a quote with `originCharges` overridden to `0` and one line's markup overridden — assert the per-line sell price only reflects that line's own markup (unaffected by the overhead override) and the quote total only reflects the reduced overhead (unaffected by the per-line markup override) — i.e. the two adjust independently, matching `qteSellTotals()`'s summed-after-markup structure.
 - **`prevQteDoc()` — breakdown/total consistency (AC-6):** using `makePreviewMock()` (the existing pattern, `tests/run.js:1313-1319`), call `prevQteDoc()` with a quote carrying `originCharges: 0` while `QR.originCharges` is non-zero (set `ctx.QR.originCharges` to a distinct value in the test, restore after) — assert the captured HTML shows `$0` for Origin Charges (not the `QR` value) via `assertContains`, and that the Sell Price figure matches a hand-computed expectation consistent with that same `$0`, not the un-overridden default — this is the test that would have caught the REQ-QTE-002d bug and must fail if `c.overheadBreakdown.origin` were reverted back to `QR.originCharges` in `prevQteDoc()`.
@@ -297,3 +323,17 @@ Everything in this SPEC is client-side `index.html` logic with no Apps Script/ne
 ## 11. `docs/requirements-tracker.md` / `STACKD_CONTEXT.md`/`CLAUDE.md` updates required on completion
 
 Per `REQ-QTE-002` §7 — new tracker row, and the `QR`/`cQte()` data-model reference in `CLAUDE.md`/`STACKD_CONTEXT.md` updated to mention the new optional per-quote fields (`originCharges`/`destCharges`/`fpmAdmin`) and `cQte()`'s new `overheadBreakdown` return field.
+
+---
+
+## 12. Spec-gate review-resolution log
+
+Independent spec-gate review returned **CONDITIONAL PASS**. The reviewer applied every diff in this SPEC (§1-§8) verbatim to a scratch copy of the real repo and ran the test suite — confirming the diff text matches the real file byte-for-byte, the new `qteEffectiveOverhead()` blank/zero handling is correct throughout, the new-quote placeholder timing is handled correctly (`openQte()` doesn't call `calcQte()`, so the SPEC's explicit `updQteOverheadPlaceholders()` call in `openQte()` is necessary and present), backward compatibility holds (`qt.originCharges === undefined` correctly falls through to `qr.originCharges`), the `prevQteDoc()` fix is correctly placed and referenced, and no 5th consumer of the raw `QR.originCharges`/`.destCharges`/`.fpmAdmin` values was missed. One blocking finding, fixed:
+
+1. **`qteSellTotals()`'s signature change breaks two existing tests that call it directly** (`tests/run.js:915,928`, both bypassing `cQte()`/`calcQte()`/`saveQte()` to call the function with its old 4-arg form). Reproduced by the reviewer: applying every other diff and running the suite gave 628/630, with both failures traced to `overheadTotal` receiving the whole `qr` object instead of a number. **Fixed:** added §9.0, giving the exact updated call for both test sites (passing the pre-existing `ctx.QR`-derived overhead sum and `fxGBPUSD` explicitly) — neither test's assertions change, since the underlying values passed are identical to what the old 4-arg call implicitly used.
+
+One citation drift, fixed: §8's reference to "`index.html:10911`, the line with `approvedAt: ...`" was imprecise — line 10911 is the object literal's closing `};`, while `approvedAt` itself spans lines 10908-10910. The insertion point was already correct; only the parenthetical was corrected.
+
+One wording overclaim, softened: §9's "clearing an override" test bullet is now explicit that calling `editQte()` directly is a new pattern for this test harness (no existing test does so), not an already-used one — confirmed safe by tracing its call chain against the mock DOM, but flagged for attention when actually written.
+
+Proceeding to implementation.
