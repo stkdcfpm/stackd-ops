@@ -2468,6 +2468,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           </select>
         </div>
         <div class="fld"><label>Markup %</label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
+        <div class="fld"><label>Origin Charges Override ($)</label><input type="number" id="qf-origOv" min="0" step="5" oninput="calcQte()"></div>
+        <div class="fld"><label>Dest Charges Override ($)</label><input type="number" id="qf-destOv" min="0" step="5" oninput="calcQte()"></div>
+        <div class="fld"><label>FPM Admin Override ($)</label><input type="number" id="qf-admOv" min="0" step="5" oninput="calcQte()"></div>
         <div class="fld"><label>Currency</label>
           <select id="qf-cur">
             <option value="USD">USD</option><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="BBD">BBD</option>
@@ -10539,15 +10542,22 @@ function qteEffectiveMargin(line, quoteMarkup) {
   return (lm !== undefined && lm !== null && lm !== '') ? +lm : +quoteMarkup;
 }
 
-function qteSellTotals(lines, lineCalcs, quoteMarkup, qr) {
+function qteEffectiveOverhead(originVal, destVal, adminVal, qr) {
+  var eff = function(v, d) { return (v === undefined || v === null || v === '') ? d : +v; };
+  var origin = eff(originVal, qr.originCharges);
+  var dest   = eff(destVal,   qr.destCharges);
+  var admin  = eff(adminVal,  qr.fpmAdmin);
+  return { origin: origin, dest: dest, admin: admin, total: origin + dest + admin };
+}
+
+function qteSellTotals(lines, lineCalcs, quoteMarkup, overheadTotal, fxGBPUSD) {
   var sellUSD = lines.reduce(function(sum, l, i) {
     var m = qteEffectiveMargin(l, quoteMarkup);
     return sum + lineCalcs[i].landed * (1 + m / 100);
   }, 0);
-  var overhead = qr.originCharges + qr.destCharges + qr.fpmAdmin;
-  sellUSD += overhead; // SPEC-QTE-001: overhead is never marked up, added at cost
-  var sellGBP = sellUSD / qr.fxGBPUSD;
-  return { sellUSD: sellUSD, sellGBP: sellGBP, overhead: overhead };
+  sellUSD += overheadTotal; // SPEC-QTE-001: overhead is never marked up, added at cost
+  var sellGBP = sellUSD / fxGBPUSD;
+  return { sellUSD: sellUSD, sellGBP: sellGBP, overhead: overheadTotal };
 }
 
 function cQte(qt) {
@@ -10558,9 +10568,10 @@ function cQte(qt) {
   var lineCalcs = lines.map(function(l){ return cQteLine(l, qr, mode, totalCBM); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
   var markup = +qt.markup || 0;
-  var totals = qteSellTotals(lines, lineCalcs, markup, qr);
+  var overheadEff = qteEffectiveOverhead(qt.originCharges, qt.destCharges, qt.fpmAdmin, qr);
+  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, qr.fxGBPUSD);
   var quotedTotal = totalLanded + totals.overhead;
-  return { totalLanded: totalLanded, overhead: totals.overhead, quotedTotal: quotedTotal, sellUSD: totals.sellUSD, sellGBP: totals.sellGBP, lineCalcs: lineCalcs };
+  return { totalLanded: totalLanded, overhead: totals.overhead, overheadBreakdown: overheadEff, quotedTotal: quotedTotal, sellUSD: totals.sellUSD, sellGBP: totals.sellGBP, lineCalcs: lineCalcs };
 }
 
 function rQte() {
@@ -10611,6 +10622,9 @@ function openQte() {
   G('qf-cur').value = 'USD';
   G('qf-mode').value = 'LCL';
   G('qf-mkp').value = '15';
+  G('qf-origOv').value = '';
+  G('qf-destOv').value = '';
+  G('qf-admOv').value = '';
   G('qf-st').value = 'Draft';
   G('qf-nt').value = '';
   G('qf-approved-by').value = '';
@@ -10621,6 +10635,7 @@ function openQte() {
   updQtePoBtn();
   rQLT();
   renderQteRatesWarn();
+  updQteOverheadPlaceholders();
   G('ov-qt').classList.add('on');
 }
 
@@ -10637,6 +10652,9 @@ function editQte(id) {
   G('qf-cur').value = q.currency || 'USD';
   G('qf-mode').value = q.freightMode || 'LCL';
   G('qf-mkp').value = q.markup !== undefined ? String(q.markup) : '15';
+  G('qf-origOv').value = q.originCharges !== undefined ? String(q.originCharges) : '';
+  G('qf-destOv').value = q.destCharges   !== undefined ? String(q.destCharges)   : '';
+  G('qf-admOv').value  = q.fpmAdmin      !== undefined ? String(q.fpmAdmin)      : '';
   G('qf-st').value = q.status || 'Draft';
   G('qf-nt').value = q.notes || '';
   G('qf-approved-by').value = q.approvedBy || '';
@@ -10760,7 +10778,14 @@ function renderQteLineHistory(rid) {
     + '</tbody></table>';
 }
 
+function updQteOverheadPlaceholders() {
+  if (G('qf-origOv')) G('qf-origOv').placeholder = 'Default: $' + fn(QR.originCharges,0);
+  if (G('qf-destOv')) G('qf-destOv').placeholder = 'Default: $' + fn(QR.destCharges,0);
+  if (G('qf-admOv'))  G('qf-admOv').placeholder  = 'Default: $' + fn(QR.fpmAdmin,0);
+}
+
 function calcQte() {
+  updQteOverheadPlaceholders();
   if (!cQL.length) {
     ['qt-orig','qt-dest','qt-adm','qt-landed','qt-mkp-disp','qt-sell-usd','qt-sell-gbp'].forEach(function(f){ var el=G(f); if(el) el.textContent='-'; });
     return;
@@ -10773,10 +10798,14 @@ function calcQte() {
   });
   var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
-  var totals = qteSellTotals(lines, lineCalcs, markup, QR);
-  if (G('qt-orig'))     G('qt-orig').textContent     = '$' + fn(QR.originCharges,0);
-  if (G('qt-dest'))     G('qt-dest').textContent     = '$' + fn(QR.destCharges,0);
-  if (G('qt-adm'))      G('qt-adm').textContent      = '$' + fn(QR.fpmAdmin,0);
+  var origOvRaw = G('qf-origOv') ? G('qf-origOv').value : '';
+  var destOvRaw = G('qf-destOv') ? G('qf-destOv').value : '';
+  var admOvRaw  = G('qf-admOv')  ? G('qf-admOv').value  : '';
+  var overheadEff = qteEffectiveOverhead(origOvRaw, destOvRaw, admOvRaw, QR);
+  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, QR.fxGBPUSD);
+  if (G('qt-orig'))     G('qt-orig').textContent     = '$' + fn(overheadEff.origin,0) + (overheadEff.origin !== QR.originCharges ? ' (override)' : '');
+  if (G('qt-dest'))     G('qt-dest').textContent     = '$' + fn(overheadEff.dest,0)   + (overheadEff.dest   !== QR.destCharges   ? ' (override)' : '');
+  if (G('qt-adm'))      G('qt-adm').textContent      = '$' + fn(overheadEff.admin,0)  + (overheadEff.admin  !== QR.fpmAdmin     ? ' (override)' : '');
   if (G('qt-landed'))   G('qt-landed').textContent   = '$' + fn(totalLanded,0);
   if (G('qt-mkp-disp')) G('qt-mkp-disp').textContent = markup + '%';
   if (G('qt-sell-usd')) G('qt-sell-usd').textContent = fmt(totals.sellUSD,'USD');
@@ -10881,7 +10910,11 @@ function saveQte() {
     }
     l.priceHistory = history;
   });
-  var totals = qteSellTotals(lines, lineCalcs, markup, QR);
+  var origOvRaw = G('qf-origOv').value;
+  var destOvRaw = G('qf-destOv').value;
+  var admOvRaw  = G('qf-admOv').value;
+  var overheadEff = qteEffectiveOverhead(origOvRaw, destOvRaw, admOvRaw, QR);
+  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, QR.fxGBPUSD);
   var sellUSD = totals.sellUSD;
   var sellGBP = totals.sellGBP;
   var wasAccepted = existQ && existQ.status === 'Accepted';
@@ -10909,6 +10942,9 @@ function saveQte() {
       ? (wasAccepted ? (existQ.approvedAt||new Date().toISOString()) : new Date().toISOString())
       : (existQ ? existQ.approvedAt||'' : '')
   };
+  if (origOvRaw !== '') qt.originCharges = +origOvRaw;
+  if (destOvRaw !== '') qt.destCharges = +destOvRaw;
+  if (admOvRaw  !== '') qt.fpmAdmin = +admOvRaw;
   if (EI.qt) {
     var idx = DB.qt.findIndex(function(x){ return x.id===EI.qt; });
     if (idx >= 0) DB.qt[idx] = qt; else DB.qt.push(qt);
@@ -11256,9 +11292,9 @@ function prevQteDoc(q) {
     + '<tbody>' + linesHtml + '</tbody></table>'
     + '<div style="margin-top:14px;display:flex;justify-content:flex-end;">'
     + '<table style="width:280px;"><tbody>'
-    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(QR.originCharges,0) + '</td></tr>'
-    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Destination Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(QR.destCharges,0) + '</td></tr>'
-    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Admin</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(QR.fpmAdmin,0) + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.origin,0) + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Destination Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.dest,0) + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Admin</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.admin,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#c00;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
     + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (GBP)</td><td style="padding:3px 8px;text-align:right;font-weight:600;">£' + fn(c.sellGBP,0) + '</td></tr>'
     + '</tbody></table></div>'

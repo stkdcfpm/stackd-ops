@@ -912,7 +912,7 @@ test('qteSellTotals: a 0-margin line sells at exactly landed cost; an inheriting
     { cost:500, cbm:0, dg:false, dutyPct:0 }                 // inherits quote markup
   ];
   var lineCalcs = lines.map(function(l){ return ctx.cQteLine(l, ctx.QR, 'LCL', 0); });
-  var totals = ctx.qteSellTotals(lines, lineCalcs, 20, ctx.QR);
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 20, ctx.QR.originCharges + ctx.QR.destCharges + ctx.QR.fpmAdmin, ctx.QR.fxGBPUSD);
   // both lines landed = cost + ins = 500 + 500*0.005 = 502.5 (no freight/duty at cbm=0/dutyPct=0)
   var landed = lineCalcs[0].landed;
   var expected = landed * 1 /* 0% margin */ + landed * 1.20 /* inherits 20% */;
@@ -925,11 +925,161 @@ test('qteSellTotals: overhead is added exactly once, never scaled by any margin'
   ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
   var lines = [{ cost:500, cbm:0, dg:false, dutyPct:0 }];
   var lineCalcs = lines.map(function(l){ return ctx.cQteLine(l, ctx.QR, 'LCL', 0); });
-  var totals = ctx.qteSellTotals(lines, lineCalcs, 50, ctx.QR); // deliberately large markup
+  var totals = ctx.qteSellTotals(lines, lineCalcs, 50, ctx.QR.originCharges + ctx.QR.destCharges + ctx.QR.fpmAdmin, ctx.QR.fxGBPUSD); // deliberately large markup
   assertEqual(totals.overhead, 675, 'overhead = originCharges+destCharges+fpmAdmin, unscaled');
   var expectedSell = lineCalcs[0].landed * 1.50 + 675;
   assert(Math.abs(totals.sellUSD - expectedSell) < 0.01, 'overhead component is not multiplied by (1+markup/100)');
   ctx.QR = savedQR;
+});
+
+// ── REQ-QTE-002 / SPEC-QTE-002 — per-quote overhead charge overrides ────
+test('qteEffectiveOverhead: blank/undefined/null all fall back to qr defaults', () => {
+  var qr = { originCharges: 250, destCharges: 350, fpmAdmin: 75 };
+  var eff = ctx.qteEffectiveOverhead(undefined, null, '', qr);
+  assertEqual(eff.origin, 250, 'undefined falls back to qr.originCharges');
+  assertEqual(eff.dest, 350, 'null falls back to qr.destCharges');
+  assertEqual(eff.admin, 75, 'blank string falls back to qr.fpmAdmin');
+  assertEqual(eff.total, 675, 'total is the sum of the three resolved values');
+});
+
+test('qteEffectiveOverhead: explicit "0" (DOM-input string form) is preserved, not collapsed to inherit', () => {
+  var qr = { originCharges: 250, destCharges: 350, fpmAdmin: 75 };
+  var eff = ctx.qteEffectiveOverhead('0', undefined, undefined, qr);
+  assertEqual(eff.origin, 0, 'explicit zero override is preserved, not treated as blank');
+  assertEqual(eff.dest, 350, 'unset field still falls back to the default');
+  assertEqual(eff.admin, 75, 'unset field still falls back to the default');
+});
+
+test('qteEffectiveOverhead: explicit 0 (numeric form, as stored on a saved quote) is preserved, not collapsed to inherit', () => {
+  // A saved quote stores a real number (saveQte() does `+origOvRaw`), not the DOM-input string —
+  // a naive truthy check (`v ? +v : d`) would silently treat 0 as falsy and fall back to the
+  // default here even though the string-form '0' test above would still pass, since a non-empty
+  // string is always truthy regardless of what it contains. Both forms must be tested separately.
+  var qr = { originCharges: 250, destCharges: 350, fpmAdmin: 75 };
+  var eff = ctx.qteEffectiveOverhead(0, undefined, undefined, qr);
+  assertEqual(eff.origin, 0, 'explicit numeric zero override is preserved, not treated as falsy/blank');
+  assertEqual(eff.dest, 350, 'unset field still falls back to the default');
+  assertEqual(eff.admin, 75, 'unset field still falls back to the default');
+});
+
+test('qteEffectiveOverhead: a full override on all three uses only the overridden values', () => {
+  var qr = { originCharges: 250, destCharges: 350, fpmAdmin: 75 };
+  var eff = ctx.qteEffectiveOverhead(10, 20, 30, qr);
+  assertEqual(eff.origin, 10);
+  assertEqual(eff.dest, 20);
+  assertEqual(eff.admin, 30);
+  assertEqual(eff.total, 60);
+});
+
+test('cQte: an overridden quote reflects its override; an unset quote reflects the global default — no cross-contamination (AC-1, AC-2, AC-4)', () => {
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR, { originCharges: 250, destCharges: 350, fpmAdmin: 75, fxGBPUSD: 1.27 });
+  var qtOverridden = { freightMode:'LCL', markup:0, lines:[{ cost:100, cbm:0, dg:false, dutyPct:0 }], originCharges: 0 };
+  var qtDefault     = { freightMode:'LCL', markup:0, lines:[{ cost:100, cbm:0, dg:false, dutyPct:0 }] };
+  var cOverridden = ctx.cQte(qtOverridden);
+  var cDefault    = ctx.cQte(qtDefault);
+  ctx.QR = savedQR;
+  assertEqual(cOverridden.overheadBreakdown.origin, 0, 'overridden quote uses its own $0 origin charge');
+  assertEqual(cOverridden.overhead, 425, 'overridden quote total overhead reflects the override (0+350+75)');
+  assertEqual(cDefault.overheadBreakdown.origin, 250, 'unset quote still uses the global default');
+  assertEqual(cDefault.overhead, 675, "unset quote's overhead is unaffected by the other quote's override (250+350+75)");
+});
+
+test('cQte: a quote with only one field overridden keeps tracking the global default for the other two (AC-3)', () => {
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR, { originCharges: 250, destCharges: 350, fpmAdmin: 75, fxGBPUSD: 1.27 });
+  var qt = { freightMode:'LCL', markup:0, lines:[{ cost:100, cbm:0, dg:false, dutyPct:0 }], destCharges: 999 };
+  var c1 = ctx.cQte(qt);
+  assertEqual(c1.overheadBreakdown.dest, 999, 'dest override applied');
+  assertEqual(c1.overheadBreakdown.origin, 250, 'origin still tracks the current global default');
+  ctx.QR.originCharges = 500;
+  ctx.QR.fpmAdmin = 10;
+  var c2 = ctx.cQte(qt);
+  ctx.QR = savedQR;
+  assertEqual(c2.overheadBreakdown.origin, 500, 'origin tracks the NEW global default after it changed');
+  assertEqual(c2.overheadBreakdown.admin, 10, 'admin tracks the new global default too');
+  assertEqual(c2.overheadBreakdown.dest, 999, "dest override is unaffected by the global default change");
+});
+
+test('saveQte: an explicit 0 override persists; a blank field omits the property entirely (AC-1, REQ-QTE-002f)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'ov1', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('ov1', 500, 10, 15, '');
+  mockEl('qf-origOv').value = '0';
+  // qf-destOv / qf-admOv left blank (default '')
+  ctx.saveQte();
+  var saved = ctx.DB.qt[0];
+  mockEl('qf-origOv').value = '';
+  assertEqual(saved.originCharges, 0, 'explicit 0 override persisted as 0, not omitted');
+  assert(!('destCharges' in saved), 'blank destCharges field is omitted from the saved record entirely, not stored as undefined');
+  assert(!('fpmAdmin' in saved), 'blank fpmAdmin field is omitted from the saved record entirely, not stored as undefined');
+});
+
+test('saveQte: existing (untouched) Quote tests remain unaffected — no overhead properties on a default save (AC-1, AC-5)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'ov2', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('ov2', 500, 10, 15, '');
+  ctx.saveQte();
+  var saved = ctx.DB.qt[0];
+  assert(!('originCharges' in saved), 'no override fields touched — originCharges absent, exactly like every pre-REQ quote');
+  assert(!('destCharges' in saved), 'no override fields touched — destCharges absent');
+  assert(!('fpmAdmin' in saved), 'no override fields touched — fpmAdmin absent');
+});
+
+test('saveQte: clearing a previously-set override via editQte() removes it on re-save (REQ-QTE-002f)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'ov3', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('ov3', 500, 10, 15, '');
+  mockEl('qf-origOv').value = '100';
+  ctx.saveQte();
+  var qid = ctx.DB.qt[0].id;
+  assertEqual(ctx.DB.qt[0].originCharges, 100, 'override saved first');
+  ctx.editQte(qid);
+  assertEqual(mockEl('qf-origOv').value, '100', 'editQte() loads the saved override back into the field');
+  mockEl('qf-origOv').value = '';
+  ctx.saveQte();
+  mockEl('qf-origOv').value = '';
+  assert(!('originCharges' in ctx.DB.qt[0]), 'clearing the field and re-saving removes the override entirely');
+});
+
+test('saveQte: overhead override and per-line markup override apply independently (AC-7)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'ac7-1', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:500, cbm:2, dg:false, dutyPct:0 }];
+  saveQteSetup('ac7-1', 500, 0, 20, '');
+  mockEl('ql-mkp-ac7-1').value = '5'; // per-line override — NOT the quote's 20%
+  mockEl('qf-origOv').value = '0';    // overhead override: origin -> 0
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR, { originCharges:250, destCharges:350, fpmAdmin:75 });
+  var lineCalc = ctx.cQteLine({ cost:500, cbm:2, dg:false, dutyPct:0 }, ctx.QR, 'LCL', 2);
+  ctx.saveQte();
+  ctx.QR = savedQR;
+  mockEl('qf-origOv').value = '';
+  mockEl('ql-mkp-ac7-1').value = '';
+  var saved = ctx.DB.qt[0];
+  var expectedOverhead = 0 + 350 + 75; // origin overridden to 0
+  var expectedSellUSD = lineCalc.landed * 1.05 + expectedOverhead;
+  assertEqual(saved.originCharges, 0, 'overhead override persisted');
+  assert(Math.abs(saved.calc_sellUSD - expectedSellUSD) < 0.01, "per-line markup override (5%) and overhead override ($0 origin) both apply, independently of each other");
+});
+
+test("prevQteDoc: an overridden quote's itemized breakdown matches its total — no repeat of the pre-fix QR-vs-cQte mismatch (AC-6)", () => {
+  var getHtml = makePreviewMock();
+  resetDB();
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR, { originCharges: 999, destCharges: 350, fpmAdmin: 75 });
+  ctx.prevQteDoc({
+    num: 'QT-OV1', client: 'Override Client', freightMode: 'LCL', dt: '2026-08-31', markup: 0,
+    lines: [{ rid:'r1', supId:'', desc:'Item', qty:1, uom:'pcs', cost:100, cbm:0, dg:false, dutyPct:0 }],
+    originCharges: 0 // overridden to $0 — the global default is $999
+  });
+  ctx.QR = savedQR;
+  var html = getHtml();
+  assertContains(html, 'Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$0.00</td>', 'PDF breakdown shows the overridden $0.00 Origin Charges, not the $999.00 global default');
+  assertNotContains(html, '$999.00', 'PDF breakdown never leaks the un-overridden global default once an override is set');
 });
 
 test('saveQte: a line-level override change creates a new version; an unrelated sibling override does not (AC-003, direction 1)', () => {
