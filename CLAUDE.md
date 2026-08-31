@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used only for Suppliers/Buyers when Cloud Data is configured — REQ/SPEC-CLOUD-001, no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.70**  
-**Test count: 671/671 PASS** (`node tests/run.js`)
+**Current version: v2.9.71**  
+**Test count: 681/681 PASS** (`node tests/run.js`)
 
 ---
 
@@ -26,7 +26,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
-| Branch for new work | `claude/ai-gap-011-rfq-email-parse` |
+| Branch for new work | `claude/csv-import-newline-fix` |
 
 ---
 
@@ -86,6 +86,8 @@ Versioning triggers (on `saveQte()`): cost, dutyPct, or markup changed from last
 **RFQ response edit/delete (v2.9.69, REQ/SPEC-ORD-006):** `editRfqResponse(lineId, responseId)`/`delRfqResponse(lineId, responseId)` let an operator correct or remove a recorded RFQ response on an Order Request line. **Editing an existing response never reuses its `id`** — `saveRfqResponse()`'s edit path (keyed by module-level `cRfqEditId`) writes a fresh `uid()` onto the replacement object and, if the edited response was `line.committedResponseId`, repoints that field to the new id (deleting a committed response nulls it instead). This is deliberate, not an oversight: `renderQteSourceDriftWarn()` (Phase 1 of REQ/SPEC-INTEG-001) detects staleness purely by comparing `ordLine.committedResponseId !== quoteLine.sourceRfqResponseId` — an in-place mutation keeping the same id would leave that comparison silently matching and the staleness banner would never fire for an edited-then-stale Quote. Do not "simplify" the edit path to mutate in place without re-deriving this consequence. `cRfqEditId` is module-level UI state, not part of `DB` — `resetDB()` does not clear it, so tests must reset it explicitly (either directly or by driving a full `saveRfqResponse()` call, which clears it as its last step).
 
 **RFQ email-parse (v2.9.70, REQ/SPEC-AI-GAP-011):** `rfqOpenEmailParse(lineId, responseId)`/`rfqParseUpdateFromEmail(emailText, currentResponse)`/`rfqApplyEmailParse(lineId)` let an operator paste a supplier's email and get an AI-extracted diff of commercial fields to Apply or Discard. `rfqApplyEmailParse()` never persists anything itself — it calls the real `editRfqResponse()`/`saveRfqResponse()` (unmodified) after overwriting only the AI-proposed fields on the pre-filled edit form, so it inherits the id-rotation/`committedResponseId`-repoint/staleness-banner mechanism above automatically. **Cross-line gotcha, do not remove without re-deriving:** the pending-proposal state (`cRfqEmailParseLineId`/`cRfqEmailParseRespId`/`cRfqEmailParseProposed`) is tracked with an explicit `cRfqEmailParseLineId`, unlike `cRfqEditId`'s single flat var — this is required, not defensive-programming excess, because `rOrdLines()` renders every Order Request line's own comparison panel simultaneously (unlike the single global `ov-rfq` modal `cRfqEditId` is paired with), so two different lines can each have a completed, unapplied AI proposal on screen at once. `rfqApplyEmailParse(lineId)` checks `lineId !== cRfqEmailParseLineId` before doing anything, and separately checks `cRfqEditId !== responseId` right after calling `editRfqResponse()` before writing any field — removing either guard was proven live to cause real damage: mutation-testing the first guard away doesn't corrupt data (the second guard still catches it) but does silently wipe out a different, still-legitimate line's pending proposal as collateral damage, breaking that line's own subsequent Apply. All three tracking vars are module-level UI state, not part of `DB` — `resetDB()` does not clear them.
+
+**CSV import parser (v2.9.71, REQ/SPEC-DATA-003):** `parseImportCSV()` parses the entire uploaded CSV text as one character stream with continuously-tracked quote state — a newline is a row separator only when not inside an open quote (`inQuote`). **Do not "simplify" this back to splitting on `\n` first and parsing each line independently** — that was the exact shape of a real, live production bug: a quoted multi-line Notes/Address cell (as Excel/Sheets commonly export) got torn into multiple separate phantom records, each with a real `id`/`SUP-####` number, invisible to `isPhantomRecord()` (which only checks for a missing id). This function is shared by every CSV import type (`sup`/`li`/`inv`/`po`/`ord`/`co`) via `processImport()` — fixing it fixes all six uniformly; do not add per-entity parsing logic. It also supports RFC 4180 escaped quotes (`""` inside a quoted field → one literal `"`), which the pre-v2.9.71 parser never had. One accepted, deliberate divergence: a bare standalone `\r` (not part of `\r\n`, not inside a quote) is silently dropped rather than preserved — judged harmless since no realistic CSV export produces that shape.
 
 ---
 
