@@ -1,6 +1,6 @@
 # SPEC-SYNC-002 — Batch Sheets sync requests into one round trip per direction
 
-**Status:** v1 — draft, pending spec-gate review.
+**Status:** v1 — spec-gate PASS. Independent review confirmed the diffs match the real current code, REQ-SYNC-002e's error isolation holds under a concrete failure walkthrough, and all three client functions fall back correctly when the server doesn't recognize the batched actions. Four advisory (non-blocking) findings, all fixed in place below — see §6.
 **Build baseline:** `main` @ current HEAD, 620/620 tests passing.
 **Implements:** `docs/REQ-SYNC-002-v2.md` (REQ-SYNC-002a through REQ-SYNC-002f).
 
@@ -151,7 +151,7 @@ function logAudit(entity, dedupCount, ss) {
 }
 ```
 
-Every existing call site of `getSheet(entity)` / `getOrCreateSheet(entity)` / `logAudit(entity, dedupCount)` in the file (`handleUpsert`, `handleDelete`, `handlePushEntity`) passes no third/second argument, so `ss` is `undefined` there and each opens the spreadsheet itself exactly as it does today. **Zero behavior change to any existing action.**
+Every existing call site of `getSheet(entity)` / `getOrCreateSheet(entity)` / `logAudit(entity, dedupCount)` in the file (`handleUpsert`, `handleDelete`, `handlePushEntity`, and `handleUpdateShipment`'s `getSheet('sh')` call) passes no third/second argument, so `ss` is `undefined` there and each opens the spreadsheet itself exactly as it does today. **Zero behavior change to any existing action.**
 
 ### 1.5 New handler: `handleBulkUpsertAll` (REQ-SYNC-002a, error isolation per REQ-SYNC-002e)
 
@@ -175,11 +175,11 @@ function handleBulkUpsertAll(payload) {
 
   var results = entities.map(function(e) {
     try {
-      var r = handleBulkUpsert({ entity: e.entity, records: e.records }, ss);
-      r.entity = e.entity;
+      var r = handleBulkUpsert({ entity: e && e.entity, records: e && e.records }, ss);
+      r.entity = e && e.entity;
       return r;
     } catch (err) {
-      return { entity: e.entity, status: 'error', message: err.message };
+      return { entity: e && e.entity, status: 'error', message: err.message };
     }
   });
 
@@ -215,7 +215,7 @@ function handlePullAll(payload) {
     try {
       results[entity] = handlePullEntity({ entity: entity }, ss);
     } catch (err) {
-      results[entity] = { status: 'error', message: err.message };
+      results[entity] = { entity: entity, status: 'error', message: err.message };
     }
   });
 
@@ -323,7 +323,7 @@ Note: `pushAll()`'s `cn` push stays unconditional (not gated by `cnOnly.length`,
 
 ### 2.4 `pullAll()` — batch, with fallback (REQ-SYNC-002c, REQ-SYNC-002d)
 
-Add one `pulled()` helper and swap five `sGet(...)` call sites for `pulled(...)`. Everything else in the function — every line of merge logic — is untouched.
+Add one `pulled()` helper and swap all four `sGet(...)` call sites in the function for `pulled(...)` (`sGet('inv')`, `sGet('cn')`, `sGet('po')`, and the parameterized `sGet(eKey)` inside the `simpleEnts` loop — confirmed by grep to be the complete set, no others exist in `pullAll()`). Everything else in the function — every line of merge logic — is untouched.
 
 At the top of `pullAll()` (`index.html:4065-4068` today), before the `// ── Invoices` comment:
 
@@ -416,3 +416,18 @@ The user must copy the updated `apps-script/Code.gs` into their Apps Script proj
 ## 5. `docs/known-gaps.md` / tracker updates required on completion
 
 Per REQ-SYNC-002 §7 — new `known-gaps.md` entry (two root causes + fix + manual redeploy step), new `requirements-tracker.md` row, `STACKD_CONTEXT.md`/`CLAUDE.md` version-ship housekeeping noting the manual redeploy requirement.
+
+---
+
+## 6. Spec-gate review-resolution log
+
+Independent spec-gate review returned **PASS** — diffs verified accurate against the real current `Code.gs`/`index.html`, REQ-SYNC-002e's isolation confirmed under a concrete failure walkthrough (one entity's mid-write exception correctly isolated, response stays `status:'ok'` with every other entity's result intact), all three client functions' rollout fallback traced and confirmed correct, and the mock-harness extension confirmed to leave all ~14 existing `pullAll integration` tests and the `syncAll()` guard tests unaffected. Four advisory findings, all fixed in place (no blocking bug, so no v2 needed):
+
+1. **`handleBulkUpsertAll`'s catch could itself throw if `e` were ever malformed** (`e.entity` dereferenced unguarded) — not reachable via the app's real client code (the `entities` array is always built from hardcoded keys), but a literal gap in the isolation guarantee as written. **Fixed:** guarded as `e && e.entity` / `e && e.records` at both the call site and the catch block.
+2. **`handlePullAll`'s catch omitted the `entity` field** that AC-7 specifies for a failed entity's result shape. **Fixed:** added `entity: entity` to the caught-error object.
+3. **§1.4 undercounted `getSheet`'s unmodified callers** — omitted `handleUpdateShipment`'s `getSheet('sh')` call. **Fixed:** added to the list; no functional impact, it also passes one argument so defaults exactly as before.
+4. **§2.4 said "five" `sGet()` call sites; the real function has four.** **Fixed:** corrected to "four," with the exact four cited (confirmed complete by grep, no others exist in `pullAll()`).
+
+One informational note, not a finding: the reviewer flagged that `/home/user/getstackdops` (a path it was told to also check) is a stale, unrelated shallow clone with none of this project's `docs/`/`apps-script/`/`tests/` — it correctly used `/workspace/stackd-ops` instead, which is this repo's real, current checkout. No action needed.
+
+Proceeding to implementation.
