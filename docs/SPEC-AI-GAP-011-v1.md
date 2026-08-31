@@ -1,6 +1,6 @@
 # SPEC-AI-GAP-011 — AI-assisted RFQ response update from a pasted supplier email
 
-**Status:** v1 — draft, pending spec-gate.
+**Status:** v1 — spec-gate CONDITIONAL PASS. One blocking finding (cross-line state confusion in `rfqApplyEmailParse()`, §7) fixed in place; 4 advisories (2 citation-range drifts, a `notes`-payload asymmetry risk, an edge-case state-clearing note) addressed. See §13 for the full review-resolution log.
 **Implements:** `docs/REQ-AI-GAP-011-v1.md` (requirements-gate CONDITIONAL PASS, 5 advisories fixed). Dependency confirmed satisfied: `REQ-ORD-006` shipped and merged to `main` in PR #119 (`editRfqResponse()`/`saveRfqResponse()`/`delRfqResponse()` all present and unmodified by this spec).
 **Touches:** `index.html` only (no `Code.gs`, no schema change, no `FIELD_MAPS` entry — matches REQ §3).
 
@@ -33,13 +33,16 @@ var cRfqEditId = null;
 
 **New (insert after line 2714):**
 ```js
+var cRfqEmailParseLineId = null;
 var cRfqEmailParseRespId = null;
 var cRfqEmailParseProposed = null;
 ```
 
 `cRfqEmailParseRespId` tracks which response the open parse panel targets (mirrors `cRfqEditId`). `cRfqEmailParseProposed` holds the last successfully parsed proposal object (the partial `{field: newValue}` object), so the Apply button has something to act on without re-parsing. Neither is persisted to `DB` — per REQ-AI-GAP-011c's explicit scope decision, the proposal is transient front-end state only, gone on navigation/refresh.
 
-**Test-isolation requirement (mirrors the `cRfqEditId` gotcha SPEC-ORD-006 §7 already documented):** `resetDB()` does not touch these two module-level vars. A test that leaves `cRfqEmailParseRespId`/`cRfqEmailParseProposed` set from a prior test could cause `rfqApplyEmailParse()` in a later, unrelated test to silently act on a stale target. Every test exercising the Apply/Discard path must either drive the full open→parse→apply/discard sequence (which clears both vars as its last step, same discipline as `saveRfqResponse()` clearing `cRfqEditId`) or explicitly reset both to `null` in its setup.
+**`cRfqEmailParseLineId` fixes a real cross-line data-corruption path found at spec-gate (v1 blocking finding, see §13).** `cRfqEditId` is safe as a single flat var only because it's paired with a single global modal (`ov-rfq`) that gets *repurposed*, not duplicated, on every open — there is structurally no way for two "edit sessions" to be simultaneously visible and clickable. This feature's UI does not have that property: `rOrdLines()` (`index.html:3038-3057`) renders every Order Request line's own `ord-rfq-<lineId>` comparison panel (and, per §3, its own `ord-rfq-emailparse-<lineId>` sub-panel) simultaneously in the DOM. Two different lines' parse panels can be open and populated with a completed proposal — each showing its own Apply/Discard buttons with that line's `lineId` baked into their `onclick` — at the same time. Without a way to tell "is the state these flat vars hold actually for the line this Apply button belongs to," clicking a stale Apply button left over from an abandoned review on line A, after line B's parse has since overwritten `cRfqEmailParseRespId`/`cRfqEmailParseProposed`, would silently apply line B's proposed values under line A's button — and, per §7's original (now-fixed) design, with no verification of *which* line's data it was, `saveRfqResponse()` could resolve against whatever `cRfqOrdId`/`cRfqLineId` last pointed at, corrupting a third, unrelated line. `cRfqEmailParseLineId` records which line's parse produced the currently-held state, so `rfqApplyEmailParse(lineId)` (§7) can verify the button's own `lineId` argument still matches before doing anything.
+
+**Test-isolation requirement (mirrors the `cRfqEditId` gotcha SPEC-ORD-006 §7 already documented):** `resetDB()` does not touch these three module-level vars. A test that leaves them set from a prior test could cause `rfqApplyEmailParse()` in a later, unrelated test to silently act on a stale target. Every test exercising the Apply/Discard path must either drive the full open→parse→apply/discard sequence (which clears all three vars as its last step, same discipline as `saveRfqResponse()` clearing `cRfqEditId`) or explicitly reset all three to `null` in its setup.
 
 ---
 
@@ -83,7 +86,7 @@ var cRfqEmailParseProposed = null;
     '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;margin-top:4px;" onclick="openRfqResponse(\'' + lineId + '\')">+ Add Response</button>';
 ```
 
-**Deliberate consequence, noted so build-gate doesn't mistake it for a bug:** because `renderRfqComparison()` rebuilds the entire panel (including this new div) on every call — after Commit/Uncommit, after an Edit/Del save, after `+ Add Response` — any open, in-progress email-parse panel is silently wiped (reset to `display:none`, empty) whenever the comparison panel re-renders for an unrelated reason. This is the same "no early exit" characteristic the panel already has for the table itself, and it's the right behavior here: it prevents a stale parse-in-progress UI (referencing a response that may have just been edited/deleted by the very re-render that triggered it) from lingering. `cRfqEmailParseRespId`/`cRfqEmailParseProposed`, however, are **not** cleared by a re-render alone (only by `rfqCloseEmailParse()`/a completed Apply) — see §6's note on why this is harmless.
+**Deliberate consequence, noted so build-gate doesn't mistake it for a bug:** because `renderRfqComparison()` rebuilds the entire panel (including this new div) on every call — after Commit/Uncommit, after an Edit/Del save, after `+ Add Response` — any open, in-progress email-parse panel is silently wiped (reset to `display:none`, empty) whenever *that line's own* comparison panel re-renders for an unrelated reason. This is the same "no early exit" characteristic the panel already has for the table itself, and it's the right behavior here: it prevents a stale parse-in-progress UI (referencing a response that may have just been edited/deleted by the very re-render that triggered it) from lingering. `cRfqEmailParseLineId`/`cRfqEmailParseRespId`/`cRfqEmailParseProposed`, however, are **not** cleared by a re-render alone (only by `rfqCloseEmailParse()`/a completed Apply) — this is why §2/§7/§13 track *which line* the held state belongs to and verify it before acting, rather than assuming a re-render on one line implies anything about another line's still-open panel.
 
 ---
 
@@ -102,6 +105,7 @@ function rfqOpenEmailParse(lineId, responseId) {
   if (!resp) return;
   var panel = G('ord-rfq-emailparse-' + lineId);
   if (!panel) return;
+  cRfqEmailParseLineId = lineId;
   cRfqEmailParseRespId = responseId;
   cRfqEmailParseProposed = null;
   var sup = DB.sup.find(function(s){ return s.id === resp.supId; });
@@ -129,14 +133,19 @@ Existence guards mirror `editRfqResponse()`/`delRfqResponse()`'s exact style (`i
 
 ```js
 function rfqCloseEmailParse(lineId) {
-  cRfqEmailParseRespId = null;
-  cRfqEmailParseProposed = null;
+  if (lineId === cRfqEmailParseLineId) {
+    cRfqEmailParseLineId = null;
+    cRfqEmailParseRespId = null;
+    cRfqEmailParseProposed = null;
+  }
   var panel = G('ord-rfq-emailparse-' + lineId);
   if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
 }
 ```
 
 Serves both **Cancel** (before a parse has run) and **Discard** (after a parse produced a proposal) — both are "abandon whatever's in progress, change nothing" and need no different behavior, matching AC-7's requirement exactly (nothing on the response or panel changes beyond hiding the parse UI).
+
+**The `lineId === cRfqEmailParseLineId` guard before clearing state (added alongside the §7/§13 fix)** exists for the same reason `rfqApplyEmailParse()` needs one: if line A's panel is stale (its parse was superseded by a later parse on line B, so the tracked state now belongs to B), clicking Close/Cancel/Discard on A's stale, still-visible buttons must only tidy up A's own DOM panel — it must not null out B's genuinely-active, in-progress state out from under the operator who is still working on B. The panel-hide/clear on the last two lines runs unconditionally either way, since hiding a stale panel is always safe regardless of which line's state is currently tracked.
 
 ---
 
@@ -193,10 +202,17 @@ function rfqRunEmailParse(lineId) {
 
 ```js
 function rfqApplyEmailParse(lineId) {
+  if (lineId !== cRfqEmailParseLineId) return;
   var responseId = cRfqEmailParseRespId;
   var proposed = cRfqEmailParseProposed;
   if (!responseId || !proposed) return;
   editRfqResponse(lineId, responseId);
+  if (cRfqEditId !== responseId) {
+    cRfqEmailParseLineId = null;
+    cRfqEmailParseRespId = null;
+    cRfqEmailParseProposed = null;
+    return;
+  }
   if (proposed.cost !== undefined) G('rfq-cost').value = proposed.cost;
   if (proposed.currency !== undefined) G('rfq-cur').value = proposed.currency;
   if (proposed.moq !== undefined) G('rfq-moq').value = proposed.moq;
@@ -204,6 +220,7 @@ function rfqApplyEmailParse(lineId) {
   if (proposed.paymentTerms !== undefined) G('rfq-payterms').value = proposed.paymentTerms;
   if (proposed.notes !== undefined) G('rfq-notes').value = proposed.notes;
   saveRfqResponse();
+  cRfqEmailParseLineId = null;
   cRfqEmailParseRespId = null;
   cRfqEmailParseProposed = null;
 }
@@ -211,12 +228,19 @@ function rfqApplyEmailParse(lineId) {
 
 **This is the load-bearing reuse the REQ specifically calls for (§2c: "calls REQ-ORD-006's `editRfqResponse()`/`saveRfqResponse()` edit path with the merged field values").** Walking through why this satisfies AC-6 exactly, not just approximately:
 
-1. `editRfqResponse(lineId, responseId)` (unmodified, `index.html:3153-3163`) opens the edit modal, sets `cRfqEditId = responseId`, and pre-fills every form field — including the six fields the AI proposal might overwrite — from the response's **current** values.
+1. `editRfqResponse(lineId, responseId)` (unmodified, `index.html:3153-3182`) opens the edit modal, sets `cRfqEditId = responseId`, and pre-fills every form field — including the six fields the AI proposal might overwrite — from the response's **current** values.
 2. This function then overwrites only the fields present in `proposed` (the AI found evidence for), leaving every other field exactly as `editRfqResponse()` already set it — this is what "merged field values: old values for anything the AI didn't address, proposed values for what it did" (REQ §2c) means in practice, and it falls out for free from calling the real pre-fill function first rather than constructing a merged object by hand.
-3. `saveRfqResponse()` (unmodified, `index.html:3184-3216`) then runs its real edit path: `wasEditing` is true (since `cRfqEditId` is set), so it replaces the response in place with a **new `uid()`**, repoints `line.committedResponseId` if this was the committed response, persists, and re-renders the comparison panel — identically to a human manually editing the same fields and clicking Save. AC-6's "including REQ-ORD-006's new-id-and-repoint behavior if the response is committed" is therefore not something this function has to reimplement or even know about — it's inherited automatically by calling the real function.
+3. `saveRfqResponse()` (unmodified, `index.html:3184-3217`) then runs its real edit path: `wasEditing` is true (since `cRfqEditId` is set), so it replaces the response in place with a **new `uid()`**, repoints `line.committedResponseId` if this was the committed response, persists, and re-renders the comparison panel — identically to a human manually editing the same fields and clicking Save. AC-6's "including REQ-ORD-006's new-id-and-repoint behavior if the response is committed" is therefore not something this function has to reimplement or even know about — it's inherited automatically by calling the real function.
 4. `renderRfqComparison(cRfqLineId)` (called inside `saveRfqResponse()`) rebuilds the panel, which per §3 already wipes the `ord-rfq-emailparse-<lineId>` div back to hidden/empty — so no separate call to close the parse panel is needed here; the state vars are cleared explicitly for cleanliness (so a stray unrelated later click on a leftover reference can't act on a stale target), but the DOM cleanup is already handled by the re-render.
 
-**No existence guard duplicated here on purpose:** `editRfqResponse()`/`saveRfqResponse()` already carry their own full guard chains (`EI.ord`, ord, line, response existence for the former; ord/line existence for the latter). Re-guarding in this function before delegating to them would be redundant, not defensive — if `responseId` no longer resolves to a real response (e.g. it was deleted by another tab/panel action between parse and Apply, an edge case with no realistic reproduction path in a single-operator, single-tab tool but worth naming), `editRfqResponse()` itself silently returns and the modal never opens; the two `G('rfq-cost')`-style field-sets that follow would then be writing into stale/nonexistent form-field references from a previous open, which `saveRfqResponse()` immediately overwrites into a real state on its own guard (`ord`/`line` lookups fail there too, since `cRfqOrdId`/`cRfqLineId` were never reset by the failed `editRfqResponse()` call and could be stale) — resolving to `saveRfqResponse()`'s own `if (!line) { closeM('ov-rfq'); return; }` early-out. Net effect: a no-op, not a crash or silent corruption. Acceptable for the same reason REQ-ORD-006 accepted its own analogous theoretical race (SPEC-ORD-006's build-gate review, advisory 2) — vanishingly unlikely in this app's actual single-operator usage pattern, and fails safe rather than silently.
+**Two guards, fixing a real blocking finding from spec-gate v1 (§13):** the original v1 draft of this function had no way to detect that the flat `cRfqEmailParseRespId`/`cRfqEmailParseProposed` it reads might belong to a *different* line than the `lineId` the clicked button was actually rendered under — reachable through completely ordinary usage (open a parse on line A, don't Apply/Discard yet, open and complete a parse on line B — line A's now-stale Apply button is still visible and clickable, and without a guard would silently write line B's proposed values under a resolution keyed by whatever `cRfqOrdId`/`cRfqLineId` last pointed at, which is not necessarily line A or line B). Two independent checks close this:
+
+1. **`if (lineId !== cRfqEmailParseLineId) return;`** — the button's own `lineId` argument (baked into its `onclick` at render time, so it's always correct for *that* button, even if stale) is checked against which line's parse most recently populated the shared state. A stale button from an abandoned line's panel fails this check immediately and does nothing — not even opening the edit modal.
+2. **`if (cRfqEditId !== responseId) { ...clear...; return; }`, checked immediately after calling `editRfqResponse()`** — a second, independent line of defense for the narrower case where `lineId` does match but the specific response no longer exists on that line (e.g. deleted by another action between parse and Apply): `editRfqResponse()` only sets `cRfqEditId = responseId` on its own success path, after its own existence guards pass; if it returned early instead, `cRfqEditId` is left at whatever it was before (not necessarily `responseId`), and this check catches that rather than proceeding to write AI-proposed values into whatever the edit modal happened to be showing from a previous, unrelated open. On this path the stale state is explicitly cleared before returning, since it's now known to be unusable.
+
+Both checks are necessary, not redundant: guard 1 catches the realistic, ordinary-usage cross-line scenario spec-gate found; guard 2 catches the narrower same-line-but-response-gone edge case that guard 1 alone wouldn't (a stale button can still correctly name its own line while the specific response underneath it has since vanished).
+
+**Known, accepted minor edge case (spec-gate advisory, §13), not fixed here:** `saveRfqResponse()` has its own field validation (a missing/invalid `cost` shows a form error and leaves `ov-rfq` open rather than saving) — if an AI-proposed value somehow fails that validation, this function still unconditionally clears `cRfqEmailParseLineId`/`cRfqEmailParseRespId`/`cRfqEmailParseProposed` right after the `saveRfqResponse()` call regardless of whether it actually persisted. No data is corrupted (no record is mutated on a validation failure — `saveRfqResponse()`'s own guard prevents that), but the operator loses the parse-review panel's Discard affordance and is left looking at the now-open, still-failing-validation edit modal with no direct path back to "try Apply again" — they'd need to fix the field manually in the open modal or cancel it, then re-paste and re-parse the email from scratch if they want another AI attempt. Not fixed here because `saveRfqResponse()` returns no success/failure signal to its caller today, and adding one would mean modifying a function this spec otherwise leaves at zero modifications (§10) — worth a possible small follow-up if it proves to be a real friction point in practice, not assumed necessary now given how rarely an AI-extracted `cost` would be non-numeric.
 
 ---
 
@@ -274,6 +298,8 @@ async function rfqParseUpdateFromEmail(emailText, currentResponse) {
 
 **Payload shape matches REQ §2b's literal wording exactly** — `currentValues` carries `{cost, currency, moq, leadTime, paymentTerms}`, deliberately **not** `notes`, even though `notes` is one of the six fields the prompt asks the model to extract. This is not an oversight: the REQ's own §2b text lists exactly these five as "the response's current known values... as context," and the diff-review UI (§6 above) never needs the AI to have known the old `notes` value — it reads `resp.notes` directly from the local record for the "old value" side of the diff, independent of what was sent to the model. Preserved as specified rather than "fixed" to look more symmetric.
 
+**Accepted risk, named explicitly rather than silently carried (spec-gate advisory, §13):** the display-independence argument above only addresses what the diff UI shows, not extraction accuracy. Because the model is given no baseline for `notes` (unlike the other five fields, where "changed relative to X" is well-defined), it has no way to distinguish "this email restates a packing/shipping detail already known" from "this email states something genuinely new" — a realistic email mixing pricing and shipping/packing language could cause a spurious "notes changed" proposal more readily than the other five fields would false-positive. This is not fixed here (doing so would mean either contradicting REQ §2b's literal payload spec, or dropping `notes` from the extraction target list, which REQ-AI-GAP-011b's own approved text explicitly includes) — accepted as a known, minor false-positive risk specific to one field, mitigated in practice by the diff-review-before-Apply step (§6/REQ §2c) applying to `notes` exactly like every other field: a spurious proposal is visible in the diff and simply gets Discarded, never silently applied.
+
 ---
 
 ## 9. `AI_SYSTEM_PROMPT` update (REQ-AI-GAP-011d)
@@ -296,7 +322,7 @@ async function rfqParseUpdateFromEmail(emailText, currentResponse) {
 
 ## 10. Explicitly unchanged (confirmed by this spec, not just asserted by the REQ)
 
-- `editRfqResponse()`, `saveRfqResponse()`, `delRfqResponse()` (`index.html:3153-3227`) — zero modifications. Every AC-6 guarantee is inherited by calling these functions exactly as they exist post-REQ-ORD-006, not by re-deriving their behavior.
+- `editRfqResponse()` (`index.html:3153-3182`), `saveRfqResponse()` (`index.html:3184-3217`), `delRfqResponse()` (`index.html:3219-3227`) — zero modifications. Every AC-6 guarantee is inherited by calling these functions exactly as they exist post-REQ-ORD-006, not by re-deriving their behavior.
 - `renderQteSourceDriftWarn()` — zero modifications; this REQ never touches Quotes directly, only RFQ responses, and inherits REQ-ORD-006's staleness-banner behavior transitively through §7's reuse.
 - No `FIELD_MAPS`/Sheets-sync footprint added — `rfqResponses[]` already has none (per REQ-ORD-006/QTE-001 Part B precedent), and this REQ adds no new persisted field, only transient front-end state.
 - `AI_TOOLS` (the chat-assistant tool-call schema array) — unchanged. Confirmed by direct search: no `get_rfq_responses` or similar entry exists anywhere in `index.html`, matching REQ §3's explicit non-goal.
@@ -319,7 +345,9 @@ Follows `SPEC-ORD-006-v1.md §7`'s established pattern and REQ-AI-GAP-011 §5 ex
 - AC-6 (two variants, both required): (a) non-committed response — Apply → response replaced in place with a new id and the proposed fields applied, mirroring `SPEC-ORD-006`'s own "edit mode replaces the entry in place with a new id" test structure exactly; (b) committed response, with a Quote already converted from it via `mkOrdWithCommittedResponse()`/`ordConvertToQuote()`/`saveQte()` — Apply → `committedResponseId` repoints to the new id, and calling `renderQteSourceDriftWarn(qt)` afterward now shows the "Source pricing has changed" banner, mirroring `SPEC-ORD-006`'s own AC-4 mutation-verified test. This is the single highest-value test in this spec: it is the concrete proof that this REQ's Apply path genuinely inherits REQ-ORD-006's staleness mechanism rather than merely being designed to.
 - AC-7: after a successful parse (proposal populated), call `rfqCloseEmailParse()` (Discard) → assert `line.rfqResponses` unchanged and the panel `innerHTML` is empty/hidden; separately, calling `rfqCloseEmailParse()` from the pre-parse state (Cancel) → same assertions, proving one function correctly serves both cases as designed in §5.
 
-**Test-isolation requirement (§2):** every test above must either drive the full flow to its natural clearing point (`rfqApplyEmailParse()` or `rfqCloseEmailParse()`, both of which null both module vars) or explicitly reset `ctx.cRfqEmailParseRespId = null; ctx.cRfqEmailParseProposed = null;` in `resetDB()`-adjacent setup — mirroring the exact discipline `SPEC-ORD-006`'s test plan already established for `cRfqEditId`.
+**Cross-line safety test (required, added at spec-gate — proves the v1 blocking finding is actually fixed, §13):** seed an Order Request with two lines, each with its own response (line A / response R1, line B / response R2). Open and complete a parse on line A (`rfqOpenEmailParse('A','R1')`, then directly set `cRfqEmailParseProposed` to a proposal, bypassing the mocked-AI round trip as in AC-5 above), **without** calling Apply or Discard. Then open and complete a parse on line B (`rfqOpenEmailParse('B','R2')` + a different proposed change) — this overwrites the shared state to point at line B. Now call `rfqApplyEmailParse('A')` (simulating a click on line A's still-rendered, now-stale Apply button) and assert: (a) line A's `rfqResponses` is completely unchanged (the guard fired, nothing was written under A), and (b) line B's `rfqResponses` is also unchanged (the stale click on A must not accidentally apply anything to B either — A's own guard returns before touching B in any way). Then, separately, call `rfqApplyEmailParse('B')` and confirm it succeeds normally, applying B's proposal to B's response — proving the guard blocks only the genuinely-stale case, not legitimate use.
+
+**Test-isolation requirement (§2):** every test above must either drive the full flow to its natural clearing point (`rfqApplyEmailParse()` or `rfqCloseEmailParse()`, both of which null all three module vars) or explicitly reset `ctx.cRfqEmailParseLineId = null; ctx.cRfqEmailParseRespId = null; ctx.cRfqEmailParseProposed = null;` in `resetDB()`-adjacent setup — mirroring the exact discipline `SPEC-ORD-006`'s test plan already established for `cRfqEditId`.
 
 **Layout/UI test:** confirm `renderRfqComparison()`'s row HTML contains the new envelope button wired to `rfqOpenEmailParse('<lineId>','<respId>')` for each response — mirroring `SPEC-ORD-006`'s own AC-7 button-presence test pattern (`tests/run.js`, "each response row shows Edit and Delete buttons..."). Also confirm the shared `ord-rfq-emailparse-<lineId>` div exists in the panel's rendered output (present, `display:none`) so `rfqOpenEmailParse()` has somewhere real to populate.
 
@@ -333,3 +361,19 @@ Per `CLAUDE.md`'s standing checklist and REQ-AI-GAP-011 §7:
 - `STACKD_CONTEXT.md`/`CLAUDE.md`: standard version-ship updates; remove the now-resolved "next step" backlog row for REQ-AI-GAP-011 added in the previous delivery.
 - `AI_SYSTEM_PROMPT`: done in §9 above, as part of this spec's own diff, not deferred to a separate housekeeping pass — matching how REQ-ORD-006 handled its own mandatory prompt update.
 - `docs/user-guide.md`: add a short paragraph to the existing "Comparing supplier quotes (RFQ comparison)" section (`docs/user-guide.md:43-51`) describing the envelope button, mirroring how REQ-ORD-006's own housekeeping extended that same section for Edit/Delete.
+
+---
+
+## 13. Review-resolution log
+
+**Spec-gate independent review (round 1): CONDITIONAL PASS — one blocking finding, fixed below.** The reviewer cloned this branch fresh, confirmed `REQ-ORD-006` is genuinely merged to `main` (PR #119) with `editRfqResponse()`/`saveRfqResponse()`/`delRfqResponse()` present exactly as `SPEC-ORD-006` specified, and confirmed none of this spec's proposed functions/vars exist yet in `index.html` (a genuine pre-implementation draft, not already partially built). The core reuse claim (§7, AC-6) was hand-traced against the real, current code — not just the spec's narrative — and confirmed sound for the single-line, single-response case, with the reviewer additionally finding that `tests/run.js:7566-7585` (from `SPEC-ORD-006`) already proves the underlying `editRfqResponse()`→`saveRfqResponse()`→`renderQteSourceDriftWarn()` sequence works, direct evidence the mechanism this spec leans on is real. The response-shape guard, whitelist filter, async-staleness guard, and layout decision were all independently verified correct. Every REQ-AI-GAP-011 AC (1-7) and every REQ §3 out-of-scope item were confirmed respected.
+
+**Blocking finding (fixed):** `rfqApplyEmailParse()`'s v1 draft tracked which response/proposal was pending in flat module vars (`cRfqEmailParseRespId`/`cRfqEmailParseProposed`) with no record of *which line* they belonged to — safe for `cRfqEditId` only because that var is paired with a single, non-duplicated global modal, a property this feature's per-line-panel UI does not share (multiple lines' parse panels can be open and populated simultaneously, per `rOrdLines()`'s actual rendering, `index.html:3038-3057`). Concrete failure: complete a parse on line A, leave it un-Applied, complete a parse on line B (overwriting the shared state), then click line A's now-stale but still-rendered Apply button — the reviewer traced this through to a genuine cross-line data-corruption path, since `saveRfqResponse()` would resolve against whatever `cRfqOrdId`/`cRfqLineId` last pointed at (not necessarily A or B), potentially mutating a third, unrelated line with a mix of stale form state and B's AI-proposed values. **Fixed:** added `cRfqEmailParseLineId` (§2) recording which line's parse produced the currently-held state, plus two independent guards in `rfqApplyEmailParse()` (§7) — an early `lineId !== cRfqEmailParseLineId` check (catches the realistic cross-line scenario) and a post-`editRfqResponse()` `cRfqEditId !== responseId` check (catches the narrower same-line-response-since-deleted case) — with matching state-clearing added to `rfqOpenEmailParse()`/`rfqCloseEmailParse()` (§4/§5) so the tracked line is always kept current and stale-panel Close/Discard clicks can't clobber a different, genuinely-active line's state. A new required test (§11, "Cross-line safety test") locks in the fix by proving both that the stale-button case is a genuine no-op on both lines, and that the guard doesn't false-positive on legitimate same-line use.
+
+**Four advisories, all addressed:**
+1. **Citation range drift:** `editRfqResponse()` was cited as `index.html:3153-3163` in places that describe behavior (the pre-fill statements) actually located at `3153-3182`. **Fixed:** all citations corrected to `3153-3182`.
+2. **Citation off-by-one:** `saveRfqResponse()` was cited as `index.html:3184-3216`; the function's actual closing brace is at `3217`. **Fixed:** corrected to `3184-3217` throughout.
+3. **`notes` payload-asymmetry risk under-argued:** the original §8 text only established that the diff UI can display the correct old `notes` value regardless of what was sent to the model — it didn't address that the model itself has no baseline to judge "changed" against for `notes` specifically, unlike the other five fields, risking spurious proposals on emails mixing pricing and shipping/packing language. **Fixed:** added an explicit "accepted risk" paragraph to §8 naming this precisely, explaining why it isn't fixed (REQ §2b's literal payload spec would have to be contradicted, or `notes` dropped from the approved extraction target list), and naming the real mitigation already in place (the mandatory diff-review-before-Apply step applies to `notes` exactly like every other field).
+4. **Unconditional state-clearing on a failed `saveRfqResponse()` validation:** if an AI-proposed value fails `saveRfqResponse()`'s own validation, the v1 draft still unconditionally cleared the parse-review state right after the call, losing the Discard affordance with no data actually corrupted. **Fixed:** added an explicit "known, accepted minor edge case" note to §7 naming the exact mechanism and why a full fix (giving `saveRfqResponse()` a success/failure return value) is deferred rather than built now, given it would mean modifying a function this spec otherwise leaves untouched, for a low-likelihood edge case (an AI-extracted `cost` being non-numeric).
+
+Proceeding to implementation.
