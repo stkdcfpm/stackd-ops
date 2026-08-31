@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.67</title>
+<title>Stackd Ops v2.9.68</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.67</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.68</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1270,9 +1270,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.67</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.68</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Per-quote overhead charge overrides</strong> (REQ/SPEC-QTE-002). User asked why a quote's Origin Charges/Dest Charges/FPM Admin figures couldn't be adjusted or removed — they were global Rate Engine defaults with no per-quote override. Three new optional fields on the Quote form let each of the three be overridden individually per quote (blank = inherit the current Settings default; any typed number, including 0, overrides just that quote and stops tracking future changes to the global default for that field). Every quote saved before this version has no override set, so every existing quote's total is unaffected. Also fixes a related bug this change would otherwise have introduced: the PDF preview's itemized Origin/Dest/Admin breakdown lines now read the same resolved figures as the total shown below them, instead of always reading the raw global Settings value regardless of any override. 11 new tests. Tests: 641/641 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.67</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong>Sheets sync performance</strong> (REQ/SPEC-SYNC-002). User-reported: sync took a long time. Two compounding causes, found by direct code read: the sync/pull/push functions each made 8-10 sequential Google Sheets requests, one per data type, waiting for each to finish before starting the next; and each of those requests was itself slow, since the Apps Script backend re-opened the spreadsheet from scratch on every single one. Fix: two new batched actions open the spreadsheet once per sync and process every data type in one request instead of one-at-a-time, each isolated so one data type's failure can't affect the others. Falls back automatically to today's exact behavior until the Apps Script backend is manually redeployed with the update — no disruption either way, just no speed improvement until then. 10 new tests. Tests: 630/630 pass.</li>
@@ -2468,6 +2477,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           </select>
         </div>
         <div class="fld"><label>Markup %</label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
+        <div class="fld"><label>Origin Charges Override ($)</label><input type="number" id="qf-origOv" min="0" step="5" oninput="calcQte()"></div>
+        <div class="fld"><label>Dest Charges Override ($)</label><input type="number" id="qf-destOv" min="0" step="5" oninput="calcQte()"></div>
+        <div class="fld"><label>FPM Admin Override ($)</label><input type="number" id="qf-admOv" min="0" step="5" oninput="calcQte()"></div>
         <div class="fld"><label>Currency</label>
           <select id="qf-cur">
             <option value="USD">USD</option><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="BBD">BBD</option>
@@ -8760,7 +8772,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.67).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.68).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -8797,7 +8809,8 @@ var AI_SYSTEM_PROMPT = [
   'Quotes tab → + New Quote. Format: QTE-001, QTE-002 etc.',
   'Header fields: Client, Date, Valid Until, Freight Mode (LCL / FCL 20GP / FCL 40HQ), Markup %, Currency, Status (Draft / Sent / Accepted / Declined / Expired).',
   'Line items: Product description, Supplier (from catalogue), Qty, UOM, Unit Cost, CBM, DG flag (Y/N), Duty %.',
-  'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX. Override rates per quote if needed.',
+  'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX.',
+  'Overhead charges (Origin Charges, Dest Charges, FPM Admin — v2.9.68, REQ/SPEC-QTE-002): three fixed dollar amounts added to every quote\'s total, unmarked-up (added at cost, never scaled by margin). Global defaults are set in Settings → Rates & FX; each quote can override any of the three individually — three optional fields on the quote form (blank = inherit the current global default, any typed number including 0 = override just this quote). An overridden quote is unaffected by later changes to the global default for that specific field; an un-overridden quote keeps tracking the global default live. Setting a field to 0 removes that charge from just that one quote.',
   'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
   'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
   'Convert to PO: only available when quote status is Accepted. Set the status dropdown to Accepted — the Convert to PO button appears automatically. Clicking it creates one PO per distinct supplier on the quote\'s lines (v2.9.44 — fixes PO-GAP-001, which previously misattributed every line to the first supplier on a multi-supplier quote); the quote modal title then shows a "PO RAISED" badge and the button is hidden. Each PO carries the Quote ID for traceability; PO numbers get a -1/-2 suffix when a quote splits across multiple suppliers.',
@@ -10539,15 +10552,22 @@ function qteEffectiveMargin(line, quoteMarkup) {
   return (lm !== undefined && lm !== null && lm !== '') ? +lm : +quoteMarkup;
 }
 
-function qteSellTotals(lines, lineCalcs, quoteMarkup, qr) {
+function qteEffectiveOverhead(originVal, destVal, adminVal, qr) {
+  var eff = function(v, d) { return (v === undefined || v === null || v === '') ? d : +v; };
+  var origin = eff(originVal, qr.originCharges);
+  var dest   = eff(destVal,   qr.destCharges);
+  var admin  = eff(adminVal,  qr.fpmAdmin);
+  return { origin: origin, dest: dest, admin: admin, total: origin + dest + admin };
+}
+
+function qteSellTotals(lines, lineCalcs, quoteMarkup, overheadTotal, fxGBPUSD) {
   var sellUSD = lines.reduce(function(sum, l, i) {
     var m = qteEffectiveMargin(l, quoteMarkup);
     return sum + lineCalcs[i].landed * (1 + m / 100);
   }, 0);
-  var overhead = qr.originCharges + qr.destCharges + qr.fpmAdmin;
-  sellUSD += overhead; // SPEC-QTE-001: overhead is never marked up, added at cost
-  var sellGBP = sellUSD / qr.fxGBPUSD;
-  return { sellUSD: sellUSD, sellGBP: sellGBP, overhead: overhead };
+  sellUSD += overheadTotal; // SPEC-QTE-001: overhead is never marked up, added at cost
+  var sellGBP = sellUSD / fxGBPUSD;
+  return { sellUSD: sellUSD, sellGBP: sellGBP, overhead: overheadTotal };
 }
 
 function cQte(qt) {
@@ -10558,9 +10578,10 @@ function cQte(qt) {
   var lineCalcs = lines.map(function(l){ return cQteLine(l, qr, mode, totalCBM); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
   var markup = +qt.markup || 0;
-  var totals = qteSellTotals(lines, lineCalcs, markup, qr);
+  var overheadEff = qteEffectiveOverhead(qt.originCharges, qt.destCharges, qt.fpmAdmin, qr);
+  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, qr.fxGBPUSD);
   var quotedTotal = totalLanded + totals.overhead;
-  return { totalLanded: totalLanded, overhead: totals.overhead, quotedTotal: quotedTotal, sellUSD: totals.sellUSD, sellGBP: totals.sellGBP, lineCalcs: lineCalcs };
+  return { totalLanded: totalLanded, overhead: totals.overhead, overheadBreakdown: overheadEff, quotedTotal: quotedTotal, sellUSD: totals.sellUSD, sellGBP: totals.sellGBP, lineCalcs: lineCalcs };
 }
 
 function rQte() {
@@ -10611,6 +10632,9 @@ function openQte() {
   G('qf-cur').value = 'USD';
   G('qf-mode').value = 'LCL';
   G('qf-mkp').value = '15';
+  G('qf-origOv').value = '';
+  G('qf-destOv').value = '';
+  G('qf-admOv').value = '';
   G('qf-st').value = 'Draft';
   G('qf-nt').value = '';
   G('qf-approved-by').value = '';
@@ -10621,6 +10645,7 @@ function openQte() {
   updQtePoBtn();
   rQLT();
   renderQteRatesWarn();
+  updQteOverheadPlaceholders();
   G('ov-qt').classList.add('on');
 }
 
@@ -10637,6 +10662,9 @@ function editQte(id) {
   G('qf-cur').value = q.currency || 'USD';
   G('qf-mode').value = q.freightMode || 'LCL';
   G('qf-mkp').value = q.markup !== undefined ? String(q.markup) : '15';
+  G('qf-origOv').value = q.originCharges !== undefined ? String(q.originCharges) : '';
+  G('qf-destOv').value = q.destCharges   !== undefined ? String(q.destCharges)   : '';
+  G('qf-admOv').value  = q.fpmAdmin      !== undefined ? String(q.fpmAdmin)      : '';
   G('qf-st').value = q.status || 'Draft';
   G('qf-nt').value = q.notes || '';
   G('qf-approved-by').value = q.approvedBy || '';
@@ -10760,7 +10788,14 @@ function renderQteLineHistory(rid) {
     + '</tbody></table>';
 }
 
+function updQteOverheadPlaceholders() {
+  if (G('qf-origOv')) G('qf-origOv').placeholder = 'Default: $' + fn(QR.originCharges,0);
+  if (G('qf-destOv')) G('qf-destOv').placeholder = 'Default: $' + fn(QR.destCharges,0);
+  if (G('qf-admOv'))  G('qf-admOv').placeholder  = 'Default: $' + fn(QR.fpmAdmin,0);
+}
+
 function calcQte() {
+  updQteOverheadPlaceholders();
   if (!cQL.length) {
     ['qt-orig','qt-dest','qt-adm','qt-landed','qt-mkp-disp','qt-sell-usd','qt-sell-gbp'].forEach(function(f){ var el=G(f); if(el) el.textContent='-'; });
     return;
@@ -10773,10 +10808,14 @@ function calcQte() {
   });
   var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
-  var totals = qteSellTotals(lines, lineCalcs, markup, QR);
-  if (G('qt-orig'))     G('qt-orig').textContent     = '$' + fn(QR.originCharges,0);
-  if (G('qt-dest'))     G('qt-dest').textContent     = '$' + fn(QR.destCharges,0);
-  if (G('qt-adm'))      G('qt-adm').textContent      = '$' + fn(QR.fpmAdmin,0);
+  var origOvRaw = G('qf-origOv') ? G('qf-origOv').value : '';
+  var destOvRaw = G('qf-destOv') ? G('qf-destOv').value : '';
+  var admOvRaw  = G('qf-admOv')  ? G('qf-admOv').value  : '';
+  var overheadEff = qteEffectiveOverhead(origOvRaw, destOvRaw, admOvRaw, QR);
+  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, QR.fxGBPUSD);
+  if (G('qt-orig'))     G('qt-orig').textContent     = '$' + fn(overheadEff.origin,0) + (overheadEff.origin !== QR.originCharges ? ' (override)' : '');
+  if (G('qt-dest'))     G('qt-dest').textContent     = '$' + fn(overheadEff.dest,0)   + (overheadEff.dest   !== QR.destCharges   ? ' (override)' : '');
+  if (G('qt-adm'))      G('qt-adm').textContent      = '$' + fn(overheadEff.admin,0)  + (overheadEff.admin  !== QR.fpmAdmin     ? ' (override)' : '');
   if (G('qt-landed'))   G('qt-landed').textContent   = '$' + fn(totalLanded,0);
   if (G('qt-mkp-disp')) G('qt-mkp-disp').textContent = markup + '%';
   if (G('qt-sell-usd')) G('qt-sell-usd').textContent = fmt(totals.sellUSD,'USD');
@@ -10881,7 +10920,11 @@ function saveQte() {
     }
     l.priceHistory = history;
   });
-  var totals = qteSellTotals(lines, lineCalcs, markup, QR);
+  var origOvRaw = G('qf-origOv').value;
+  var destOvRaw = G('qf-destOv').value;
+  var admOvRaw  = G('qf-admOv').value;
+  var overheadEff = qteEffectiveOverhead(origOvRaw, destOvRaw, admOvRaw, QR);
+  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, QR.fxGBPUSD);
   var sellUSD = totals.sellUSD;
   var sellGBP = totals.sellGBP;
   var wasAccepted = existQ && existQ.status === 'Accepted';
@@ -10909,6 +10952,9 @@ function saveQte() {
       ? (wasAccepted ? (existQ.approvedAt||new Date().toISOString()) : new Date().toISOString())
       : (existQ ? existQ.approvedAt||'' : '')
   };
+  if (origOvRaw !== '') qt.originCharges = +origOvRaw;
+  if (destOvRaw !== '') qt.destCharges = +destOvRaw;
+  if (admOvRaw  !== '') qt.fpmAdmin = +admOvRaw;
   if (EI.qt) {
     var idx = DB.qt.findIndex(function(x){ return x.id===EI.qt; });
     if (idx >= 0) DB.qt[idx] = qt; else DB.qt.push(qt);
@@ -11256,9 +11302,9 @@ function prevQteDoc(q) {
     + '<tbody>' + linesHtml + '</tbody></table>'
     + '<div style="margin-top:14px;display:flex;justify-content:flex-end;">'
     + '<table style="width:280px;"><tbody>'
-    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(QR.originCharges,0) + '</td></tr>'
-    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Destination Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(QR.destCharges,0) + '</td></tr>'
-    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Admin</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(QR.fpmAdmin,0) + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.origin,0) + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Destination Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.dest,0) + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Admin</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.admin,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#c00;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
     + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (GBP)</td><td style="padding:3px 8px;text-align:right;font-weight:600;">£' + fn(c.sellGBP,0) + '</td></tr>'
     + '</tbody></table></div>'

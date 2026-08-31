@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used only for Suppliers/Buyers when Cloud Data is configured — REQ/SPEC-CLOUD-001, no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.67**  
-**Test count: 630/630 PASS** (`node tests/run.js`)
+**Current version: v2.9.68**  
+**Test count: 641/641 PASS** (`node tests/run.js`)
 
 ---
 
@@ -26,7 +26,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
-| Branch for new work | `claude/sync-002-batch-requests` |
+| Branch for new work | `claude/qte-002-overhead-override` |
 
 ---
 
@@ -72,11 +72,16 @@ Calculation chain:
 cQteLine(line, qr, freightMode, totalCBM)
   → { freight, dgAmt, ins, duty, landed }
 
+qteEffectiveOverhead(originVal, destVal, adminVal, qr)   // v2.9.68
+  → { origin, dest, admin, total }   // blank/undefined/null inherits qr's default; any value (incl. 0) overrides
+
 cQte(qt)
-  → { totalLanded, overhead, quotedTotal, sellUSD, sellGBP, lineCalcs[] }
+  → { totalLanded, overhead, overheadBreakdown, quotedTotal, sellUSD, sellGBP, lineCalcs[] }
 ```
 
 Versioning triggers (on `saveQte()`): cost, dutyPct, or markup changed from last saved version. First save always creates v1. Each version entry: `{ v, ts, cost, dutyPct, markup, landed, sellPrice, note }`. `sellPrice = landed × (1 + markup/100)`. Stored on `line.priceHistory[]` inside the quote record.
+
+**Per-quote overhead overrides (v2.9.68, REQ/SPEC-QTE-002):** a quote record may optionally carry `originCharges`/`destCharges`/`fpmAdmin` — each independently overrides the corresponding `QR` global default for that one quote only, when present. Absent (the case for every quote saved before v2.9.68) means "inherit the current global default," resolved live on every `cQte()` call — same non-snapshotted-default behavior the rest of `QR` already has. `saveQte()` only sets a property when its form field is non-blank; blank omits the key entirely rather than storing `undefined`, mirroring how per-line `markup` overrides are already persisted.
 
 ---
 

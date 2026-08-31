@@ -1,6 +1,6 @@
 # Requirements Tracker — Stackd Ops
 
-Last updated: 2026-08-31 (REQ-SYNC-002 — batch Sheets sync requests, closes SYNC-GAP-002)
+Last updated: 2026-08-31 (REQ-QTE-002 — per-quote overhead charge overrides)
 
 ---
 
