@@ -45,6 +45,14 @@ const mockSession = { getItem: () => null, setItem: () => {}, removeItem: () => 
 // then delete/reset it afterward. Any entity not present in the map falls back to the old static
 // default ({status:'ok', records:[]}), matching prior test behavior for every existing test.
 let _mockPullResponses = {};
+// REQ-SYNC-002 / SPEC-SYNC-002 mocks for the batched bulk_upsert_all/pull_all actions.
+// _mockPullAllResponse: set to {status:'ok', results:{...}} to test the batched pull path directly.
+// _mockUnknownBatchAction: set true to make bulk_upsert_all/pull_all return the server's
+// existing "Unknown action" reply, to test the client-side fallback (REQ-SYNC-002d).
+// _fetchCallLog: every Sheets-sync call this test made, in order — reset before use.
+let _mockPullAllResponse = null;
+let _mockUnknownBatchAction = false;
+let _fetchCallLog = [];
 // Mock for ordCheckLineGapsSemantic()'s direct Anthropic call (SPEC-ORD-005).
 // Set _mockAnthropic to one of: 'reject' (network error), {status:<non-200>},
 // or {status:200, text:<raw response body text>} before calling the function under test.
@@ -63,6 +71,16 @@ function mockFetch(url, opts) {
   }
   var body = {};
   try { body = JSON.parse((opts && opts.body) || '{}'); } catch (e) {}
+
+  _fetchCallLog.push({ action: body.action, entity: body.entity, entities: body.entities });
+
+  if ((body.action === 'bulk_upsert_all' || body.action === 'pull_all') && _mockUnknownBatchAction) {
+    return Promise.resolve({ text: () => Promise.resolve(JSON.stringify({ status: 'error', message: 'Unknown action: ' + body.action })) });
+  }
+  if (body.action === 'pull_all' && _mockPullAllResponse) {
+    return Promise.resolve({ text: () => Promise.resolve(JSON.stringify(_mockPullAllResponse)) });
+  }
+
   var resp = (body.action === 'pull_entity' && _mockPullResponses[body.entity])
     ? _mockPullResponses[body.entity]
     : { status: 'ok', records: [] };
@@ -1730,6 +1748,130 @@ testAsync('pullAll integration — sup/payments/co still merge correctly by id (
   assertEqual(ctx.DB.payments[0].amount, 150, 'pulled amount adopted');
   assertEqual(ctx.DB.payments[0].invId, 'i1', 'untracked invId survives — closes the v3→v4 gap for payments');
   assertEqual(ctx.DB.payments[0].type, 'buyer_payment', 'untracked type survives');
+});
+
+// ── REQ-SYNC-002 / SPEC-SYNC-002 — batched sync requests ────────
+test('isUnknownAction() — matches the server\'s exact Unknown-action shape only', function() {
+  assert(ctx.isUnknownAction({ status: 'error', message: 'Unknown action: pull_all' }), 'true for the exact server shape');
+  assert(!ctx.isUnknownAction({ status: 'ok', message: 'Unknown action: pull_all' }), 'false when status is ok');
+  assert(!ctx.isUnknownAction({ status: 'error', message: 'Something else went wrong' }), 'false for an unrelated error message');
+  assert(!ctx.isUnknownAction({ status: 'error' }), 'false when message is missing');
+  assert(!ctx.isUnknownAction(null), 'false for null');
+  assert(!ctx.isUnknownAction(undefined), 'false for undefined');
+});
+
+testAsync('syncAll() — batched happy path sends exactly one bulk_upsert_all request', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.inv = [{ id:'i1', num:'INV-001', type:'invoice', lineItems:[] }, { id:'i2', num:'CN-001', type:'credit_note', lineItems:[] }];
+  _fetchCallLog = [];
+  await ctx.syncAll();
+  var batchCalls = _fetchCallLog.filter(function(c){ return c.action === 'bulk_upsert_all'; });
+  assertEqual(batchCalls.length, 1, 'exactly one bulk_upsert_all request sent');
+  var entKeys = batchCalls[0].entities.map(function(e){ return e.entity; });
+  assertEqual(entKeys.join(','), 'sup,li,po,sh,qt,payments,co,inv,cn', 'entities array carries the expected entity keys, cn included since a credit-note row exists');
+  var oldStyleCalls = _fetchCallLog.filter(function(c){ return c.action === 'bulk_upsert'; });
+  assertEqual(oldStyleCalls.length, 0, 'no individual bulk_upsert calls made on the happy path');
+});
+
+testAsync('syncAll() — omits cn from the batch when there are no credit-note rows', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.inv = [{ id:'i1', num:'INV-001', type:'invoice', lineItems:[] }];
+  _fetchCallLog = [];
+  await ctx.syncAll();
+  var entKeys = _fetchCallLog[0].entities.map(function(e){ return e.entity; });
+  assertEqual(entKeys.indexOf('cn'), -1, 'cn omitted from the batched entities array when DB.inv has no credit-note-typed row');
+});
+
+testAsync('syncAll() — falls back to sequential bulk_upsert calls when server does not recognize bulk_upsert_all', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.inv = [{ id:'i1', num:'INV-001', type:'invoice', lineItems:[] }];
+  _fetchCallLog = [];
+  _mockUnknownBatchAction = true;
+  await ctx.syncAll();
+  _mockUnknownBatchAction = false;
+  assertEqual(_fetchCallLog[0].action, 'bulk_upsert_all', 'the batched attempt is still made first');
+  var fallbackCalls = _fetchCallLog.slice(1);
+  assert(fallbackCalls.length >= 8, 'falls back to the individual per-entity bulk_upsert calls (sup,li,po,sh,qt,payments,co,inv at minimum)');
+  assert(fallbackCalls.every(function(c){ return c.action === 'bulk_upsert'; }), 'every fallback call uses the old single-entity action');
+  var fallbackEnts = fallbackCalls.map(function(c){ return c.entity; });
+  assertEqual(fallbackEnts.join(','), 'sup,li,po,sh,qt,payments,co,inv', 'fallback sequence matches the original pre-batching order');
+});
+
+testAsync('pushAll() — batched happy path includes inv_lines in the single bulk_upsert_all request', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec';
+  ctx.DB.inv = [{ id:'i1', num:'INV-001', type:'invoice', lineItems:[{ desc:'Widget', qty:2, up:5, uom:'pcs' }] }];
+  _fetchCallLog = [];
+  await ctx.pushAll();
+  var batchCalls = _fetchCallLog.filter(function(c){ return c.action === 'bulk_upsert_all'; });
+  assertEqual(batchCalls.length, 1, 'exactly one bulk_upsert_all request sent');
+  var entKeys = batchCalls[0].entities.map(function(e){ return e.entity; });
+  assertEqual(entKeys.join(','), 'sup,li,po,sh,qt,payments,co,inv,cn,inv_lines', 'inv_lines included in the batched entities array, cn unconditional as today');
+});
+
+testAsync('pushAll() — falls back to sequential bulk_upsert calls including a trailing inv_lines call', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec';
+  ctx.DB.inv = [{ id:'i1', num:'INV-001', type:'invoice', lineItems:[] }];
+  _fetchCallLog = [];
+  _mockUnknownBatchAction = true;
+  await ctx.pushAll();
+  _mockUnknownBatchAction = false;
+  var fallbackCalls = _fetchCallLog.slice(1);
+  var fallbackEnts = fallbackCalls.map(function(c){ return c.entity; });
+  assertEqual(fallbackEnts.join(','), 'sup,li,po,sh,qt,payments,co,inv,cn,inv_lines', 'fallback sequence matches original pre-batching order, ending in inv_lines');
+});
+
+testAsync('pullAll() — with no batched-results mock set, transparently falls through to per-entity sGet() (existing tests stay valid)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Old Widget', cost:5, price:6, cur:'USD', supId:'s1', priceHistory:[{v:1}], invoiceRefs:[{invId:'i1'}] }];
+  _mockPullResponses = { li: { status:'ok', records: [{ 'SKU':'ABC', 'Description':'New Widget', 'Unit Cost':10, 'Unit Price':12, 'Currency':'USD', 'HS Code':'', 'Supplier':'s1', 'Notes':'' }] } };
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  assertEqual(_fetchCallLog[0].action, 'pull_all', 'the batched pull is attempted first');
+  var pullEntityCalls = _fetchCallLog.filter(function(c){ return c.action === 'pull_entity'; });
+  assert(pullEntityCalls.length > 0, 'falls through to individual pull_entity calls when the batched response carries no results');
+  assertEqual(ctx.DB.li[0].desc, 'New Widget', 'merge outcome identical to the pre-batching fallback path');
+});
+
+testAsync('pullAll() — batched results path produces the same merge outcome as the fallback path for the same data', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Old Widget', cost:5, price:6, cur:'USD', supId:'s1', priceHistory:[{v:1}], invoiceRefs:[{invId:'i1'}] }];
+  _mockPullAllResponse = { status:'ok', results: {
+    li: { status:'ok', records: [{ 'SKU':'ABC', 'Description':'New Widget', 'Unit Cost':10, 'Unit Price':12, 'Currency':'USD', 'HS Code':'', 'Supplier':'s1', 'Notes':'' }] }
+  } };
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  _mockPullAllResponse = null;
+  var pullEntityCalls = _fetchCallLog.filter(function(c){ return c.action === 'pull_entity'; });
+  assertEqual(pullEntityCalls.length, 0, 'no individual pull_entity calls made once the batched response carries results');
+  var li = ctx.DB.li[0];
+  assertEqual(li.id, 'l1', 'local id preserved — identical to the fallback-path test above');
+  assertEqual(li.desc, 'New Widget', 'pulled desc adopted — identical to the fallback-path test above');
+  assertEqual(li.cost, 10, 'pulled cost adopted — identical to the fallback-path test above');
+  assertEqual(li.priceHistory.length, 1, 'untracked priceHistory preserved — identical to the fallback-path test above');
+});
+
+testAsync('pullAll() — an entity missing from the batched results is treated as a per-entity failure, others unaffected', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.sh = [];
+  ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Old Widget', cost:5, price:6, cur:'USD', supId:'s1' }];
+  _mockPullAllResponse = { status:'ok', results: {
+    li: { status:'ok', records: [{ 'SKU':'ABC', 'Description':'New Widget', 'Unit Cost':10, 'Unit Price':12, 'Currency':'USD', 'HS Code':'', 'Supplier':'s1', 'Notes':'' }] }
+    // 'sh' deliberately absent — simulates REQ-SYNC-002e isolation: one entity's server-side failure
+    // must not prevent every other entity's batched result from being used.
+  } };
+  await ctx.pullAll();
+  _mockPullAllResponse = null;
+  assertEqual(ctx.DB.li[0].desc, 'New Widget', 'li still merges correctly even though sh had no batched result');
+  assertEqual(ctx.DB.sh.length, 0, 'sh silently stays as-is when absent from the batch — no crash, no other entity affected');
 });
 
 // ── Invoice quick-add COGS warning (SPEC-INV-001) ───────────────

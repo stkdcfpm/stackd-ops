@@ -61,10 +61,12 @@ function doPost(e) {
 
     if (action === 'ping')                        return respond(pingResponse());
     if (action === 'bulk_upsert')                 return respond(handleBulkUpsert(payload));
+    if (action === 'bulk_upsert_all')             return respond(handleBulkUpsertAll(payload));
     if (action === 'upsert')                      return respond(handleUpsert(payload));
     if (action === 'delete')                      return respond(handleDelete(payload));
     if (action === 'push_entity')                 return respond(handlePushEntity(payload));
     if (action === 'pull_entity')                 return respond(handlePullEntity(payload));
+    if (action === 'pull_all')                    return respond(handlePullAll(payload));
     if (action === 'update_shipment')             return respond(handleUpdateShipment(payload));
     if (action === 'update_requirements_tracker') return respond(handleTrackerUpdate(payload, REQUIREMENTS_TRACKER_ID, 'Requirements Tracker'));
     if (action === 'update_project_tracker')      return respond(handleTrackerUpdate(payload, PROJECT_TRACKER_ID, 'Project Tracker'));
@@ -81,13 +83,13 @@ function doPost(e) {
 // Logs dedup count to Audit tab if any duplicates found.
 // Clears data rows (row 2+) and rewrites with deduplicated records.
 
-function handleBulkUpsert(payload) {
+function handleBulkUpsert(payload, ss) {
   var entity  = payload.entity;
   var records = payload.records;
   if (!entity)              return { status: 'error', message: 'entity is required' };
   if (!Array.isArray(records)) return { status: 'error', message: 'records must be an array' };
 
-  var sheet = getOrCreateSheet(entity);
+  var sheet = getOrCreateSheet(entity, ss);
   if (!sheet) return { status: 'error', message: 'Unknown entity: ' + entity };
 
   // Deduplicate by business key (last-record-wins)
@@ -106,7 +108,7 @@ function handleBulkUpsert(payload) {
       var includedIdx = {};
       Object.keys(seen).forEach(function(k) { includedIdx[seen[k]] = true; });
       records = records.filter(function(_, idx) { return includedIdx[idx]; });
-      logAudit(entity, dedupCount);
+      logAudit(entity, dedupCount, ss);
     }
   }
 
@@ -250,11 +252,11 @@ function handlePushEntity(payload) {
 // ── pull_entity ───────────────────────────────────────────────────
 // Reads all data rows. Returns records array.
 
-function handlePullEntity(payload) {
+function handlePullEntity(payload, ss) {
   var entity = payload.entity;
   if (!entity) return { status: 'error', message: 'entity is required' };
 
-  var sheet = getSheet(entity);
+  var sheet = getSheet(entity, ss);
   if (!sheet) return { status: 'error', message: 'Unknown entity: ' + entity };
 
   var data = sheet.getDataRange().getValues();
@@ -275,6 +277,66 @@ function handlePullEntity(payload) {
     records.push(rec);
   }
   return { status: 'ok', entity: entity, records: records };
+}
+
+// ── bulk_upsert_all ──────────────────────────────────────────────
+// Payload: { action:'bulk_upsert_all', entities: [{entity, records}, ...] }
+// Opens the spreadsheet once, then reuses handleBulkUpsert's exact per-entity
+// logic (dedup / ensureHeaders / clear / rewrite) for each entity in turn.
+// One entity's exception cannot abort the others — REQ-SYNC-002e.
+
+function handleBulkUpsertAll(payload) {
+  var entities = payload.entities;
+  if (!Array.isArray(entities)) return { status: 'error', message: 'entities must be an array' };
+
+  var ss;
+  try {
+    ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  } catch (err) {
+    return { status: 'error', message: 'Could not open spreadsheet: ' + err.message };
+  }
+
+  var results = entities.map(function(e) {
+    try {
+      var r = handleBulkUpsert({ entity: e && e.entity, records: e && e.records }, ss);
+      r.entity = e && e.entity;
+      return r;
+    } catch (err) {
+      return { entity: e && e.entity, status: 'error', message: err.message };
+    }
+  });
+
+  return { status: 'ok', results: results };
+}
+
+// ── pull_all ─────────────────────────────────────────────────────
+// Payload: { action:'pull_all', entities: ['inv','cn','po',...] }
+// Opens the spreadsheet once, then reuses handlePullEntity's exact per-entity
+// read logic for each requested entity key. Results keyed by entity so the
+// client can look each one up directly (index.html REQ-SYNC-002c).
+// One entity's exception cannot abort the others — REQ-SYNC-002e.
+
+function handlePullAll(payload) {
+  var entities = payload.entities;
+  if (!Array.isArray(entities)) return { status: 'error', message: 'entities must be an array' };
+
+  var ss;
+  try {
+    ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  } catch (err) {
+    return { status: 'error', message: 'Could not open spreadsheet: ' + err.message };
+  }
+
+  var results = {};
+  entities.forEach(function(entity) {
+    try {
+      results[entity] = handlePullEntity({ entity: entity }, ss);
+    } catch (err) {
+      results[entity] = { entity: entity, status: 'error', message: err.message };
+    }
+  });
+
+  return { status: 'ok', results: results };
 }
 
 // ── update_shipment ───────────────────────────────────────────────
@@ -375,16 +437,17 @@ function handleTrackerUpdate(payload, sheetId, sheetName) {
 
 // ── Helpers ───────────────────────────────────────────────────────
 
-function getSheet(entity) {
+function getSheet(entity, ss) {
   var name = SHEET_NAMES[entity];
   if (!name) return null;
-  return SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(name);
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
+  return ss.getSheetByName(name);
 }
 
-function getOrCreateSheet(entity) {
+function getOrCreateSheet(entity, ss) {
   var name = SHEET_NAMES[entity];
   if (!name) return null;
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(name);
   if (!sheet) sheet = ss.insertSheet(name);
   return sheet;
@@ -407,9 +470,9 @@ function ensureHeaders(sheet, entity, records) {
   return sheetHeaders;
 }
 
-function logAudit(entity, dedupCount) {
+function logAudit(entity, dedupCount, ss) {
   try {
-    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
     var audit = ss.getSheetByName('Audit');
     if (!audit) {
       audit = ss.insertSheet('Audit');

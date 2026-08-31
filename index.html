@@ -3944,6 +3944,9 @@ async function sGet(entity) {
   try { return JSON.parse(text); }
   catch(e) { throw new Error('Script returned HTML instead of JSON — check deployment settings'); }
 }
+function isUnknownAction(res) {
+  return !!(res && res.status === 'error' && typeof res.message === 'string' && res.message.indexOf('Unknown action') === 0);
+}
 async function syncEnt(entity, rec) {
   if (!SS.url || !SS.auto) return;
   var ent = (entity === 'inv' && (rec.type === 'credit_note' || rec.type === 'goodwill_credit')) ? 'cn' : entity;
@@ -4019,16 +4022,26 @@ async function syncAll() {
   setSyncStatus('loading');
   try {
     var synEnts = ['sup','li','po','sh','qt','payments','co'];
-    for (var si = 0; si < synEnts.length; si++) {
-      var entKey = synEnts[si] === 'co' ? 'con' : synEnts[si];
-      await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[entKey] || []).map(function(r){ return mapRec(synEnts[si], r); })});
-    }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
     var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; })
                        .map(function(r){ return mapRec('cn', r); });
-    await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
-    if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
+    var entities = synEnts.map(function(ent) {
+      var entKey = ent === 'co' ? 'con' : ent;
+      return { entity: ent, records: (DB[entKey] || []).map(function(r){ return mapRec(ent, r); }) };
+    });
+    entities.push({ entity: 'inv', records: invOnly });
+    if (cnOnly.length) entities.push({ entity: 'cn', records: cnOnly });
+
+    var batchRes = await sPost({ action: 'bulk_upsert_all', entities: entities });
+    if (isUnknownAction(batchRes)) {
+      for (var si = 0; si < synEnts.length; si++) {
+        var entKey = synEnts[si] === 'co' ? 'con' : synEnts[si];
+        await sPost({action:'bulk_upsert', entity:synEnts[si], records:(DB[entKey] || []).map(function(r){ return mapRec(synEnts[si], r); })});
+      }
+      await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
+      if (cnOnly.length) await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
+    }
     setSyncStatus('ok'); toast('Full sync complete'); setTimeout(function(){ setSyncStatus('idle'); }, 4000);
     localStorage.setItem('st_last_sync', new Date().toISOString());
     renderSyncStatus();
@@ -4067,9 +4080,24 @@ async function pullAll() {
   setSyncStatus('loading');
   var failed = [];
 
+  var _simpleEntsForBatch = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+  if (_sb) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'sup'; });
+  var _allPullKeys = ['inv','cn','po'].concat(_simpleEntsForBatch);
+
+  var batched = null;
+  try {
+    var batchRes = await sPost({ action: 'pull_all', entities: _allPullKeys });
+    if (batchRes && batchRes.status === 'ok' && batchRes.results) batched = batchRes.results;
+  } catch (e) { /* network failure on the batched call — fall through to per-entity sGet(), same end state as before batching existed */ }
+
+  async function pulled(entity) {
+    if (batched) return batched[entity] || { status: 'error', message: 'No result for ' + entity };
+    return await sGet(entity);
+  }
+
   // ── Invoices (field-mapping reversed, business-key merge — SYNC-GAP-001) ─
   try {
-    var dInv = await sGet('inv');
+    var dInv = await pulled('inv');
     if (dInv.status === 'ok' && dInv.records && dInv.records.length) {
       var invPulled = dInv.records.map(function(r){ return unmapRec('inv', r); });
       var calcZeroGuard = ['calc_grandTotal','calc_cogs','calc_netProfit','calc_margin','calc_balanceDue'];
@@ -4090,7 +4118,7 @@ async function pullAll() {
 
   // ── Credit notes (merged back into DB.inv) ─────────────────────
   try {
-    var dCn = await sGet('cn');
+    var dCn = await pulled('cn');
     if (dCn.status === 'ok' && dCn.records && dCn.records.length) {
       var cnPulled = dCn.records.map(function(r){ return unmapRec('cn', r); });
       var cnClaim = claimOnceMatcher();
@@ -4112,7 +4140,7 @@ async function pullAll() {
 
   // ── Purchase orders (field-mapping reversed, business-key merge) ─
   try {
-    var dPo = await sGet('po');
+    var dPo = await pulled('po');
     if (dPo.status === 'ok' && dPo.records && dPo.records.length) {
       var poPulled = dPo.records.map(function(r){ return unmapRec('po', r); });
       var poClaim = claimOnceMatcher();
@@ -4142,7 +4170,7 @@ async function pullAll() {
     var eKey = simpleEnts[ei];
     var dbKey = eKey === 'co' ? 'con' : eKey;
     try {
-      var sd = await sGet(eKey);
+      var sd = await pulled(eKey);
       if (sd.status === 'ok' && sd.records && sd.records.length) {
         var pulled = sd.records.map(function(r){ return unmapRec(eKey, r); });
         var localArr = DB[dbKey];
@@ -4214,17 +4242,29 @@ async function pushAll() {
   setSyncStatus('loading');
   try {
     var ents = ['sup','li','po','sh','qt','payments','co'];
-    for (var pi = 0; pi < ents.length; pi++) {
-      var entKey = ents[pi] === 'co' ? 'con' : ents[pi];
-      await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[entKey] || []).map(function(r){ return mapRec(ents[pi], r); })});
-    }
     var invOnly = (DB.inv || []).filter(function(r){ return r.type !== 'credit_note' && r.type !== 'goodwill_credit'; })
                        .map(function(r){ return mapRec('inv', Object.assign({}, r, {type: r.type || 'invoice'})); });
     var cnOnly  = (DB.inv || []).filter(function(r){ return r.type === 'credit_note' || r.type === 'goodwill_credit'; })
                        .map(function(r){ return mapRec('cn', r); });
-    await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
-    await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
-    await sPost({action:'bulk_upsert', entity:'inv_lines', records:buildInvLines()});
+    var invLines = buildInvLines();
+    var entities = ents.map(function(ent) {
+      var entKey = ent === 'co' ? 'con' : ent;
+      return { entity: ent, records: (DB[entKey] || []).map(function(r){ return mapRec(ent, r); }) };
+    });
+    entities.push({ entity: 'inv', records: invOnly });
+    entities.push({ entity: 'cn', records: cnOnly });
+    entities.push({ entity: 'inv_lines', records: invLines });
+
+    var batchRes = await sPost({ action: 'bulk_upsert_all', entities: entities });
+    if (isUnknownAction(batchRes)) {
+      for (var pi = 0; pi < ents.length; pi++) {
+        var entKey = ents[pi] === 'co' ? 'con' : ents[pi];
+        await sPost({action:'bulk_upsert', entity:ents[pi], records:(DB[entKey] || []).map(function(r){ return mapRec(ents[pi], r); })});
+      }
+      await sPost({action:'bulk_upsert', entity:'inv', records:invOnly});
+      await sPost({action:'bulk_upsert', entity:'cn', records:cnOnly});
+      await sPost({action:'bulk_upsert', entity:'inv_lines', records:invLines});
+    }
     setSyncStatus('ok'); toast('Pushed all'); setTimeout(function(){ setSyncStatus('idle'); }, 3000);
   } catch(e) { setSyncStatus('err'); toast('Failed: ' + e.message); }
 }
