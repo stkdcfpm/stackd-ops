@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used only for Suppliers/Buyers when Cloud Data is configured — REQ/SPEC-CLOUD-001, no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.68**  
-**Test count: 641/641 PASS** (`node tests/run.js`)
+**Current version: v2.9.69**  
+**Test count: 654/654 PASS** (`node tests/run.js`)
 
 ---
 
@@ -26,7 +26,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
-| Branch for new work | `claude/qte-002-overhead-override` |
+| Branch for new work | `claude/ord-006-rfq-edit-delete` |
 
 ---
 
@@ -82,6 +82,8 @@ cQte(qt)
 Versioning triggers (on `saveQte()`): cost, dutyPct, or markup changed from last saved version. First save always creates v1. Each version entry: `{ v, ts, cost, dutyPct, markup, landed, sellPrice, note }`. `sellPrice = landed × (1 + markup/100)`. Stored on `line.priceHistory[]` inside the quote record.
 
 **Per-quote overhead overrides (v2.9.68, REQ/SPEC-QTE-002):** a quote record may optionally carry `originCharges`/`destCharges`/`fpmAdmin` — each independently overrides the corresponding `QR` global default for that one quote only, when present. Absent (the case for every quote saved before v2.9.68) means "inherit the current global default," resolved live on every `cQte()` call — same non-snapshotted-default behavior the rest of `QR` already has. `saveQte()` only sets a property when its form field is non-blank; blank omits the key entirely rather than storing `undefined`, mirroring how per-line `markup` overrides are already persisted.
+
+**RFQ response edit/delete (v2.9.69, REQ/SPEC-ORD-006):** `editRfqResponse(lineId, responseId)`/`delRfqResponse(lineId, responseId)` let an operator correct or remove a recorded RFQ response on an Order Request line. **Editing an existing response never reuses its `id`** — `saveRfqResponse()`'s edit path (keyed by module-level `cRfqEditId`) writes a fresh `uid()` onto the replacement object and, if the edited response was `line.committedResponseId`, repoints that field to the new id (deleting a committed response nulls it instead). This is deliberate, not an oversight: `renderQteSourceDriftWarn()` (Phase 1 of REQ/SPEC-INTEG-001) detects staleness purely by comparing `ordLine.committedResponseId !== quoteLine.sourceRfqResponseId` — an in-place mutation keeping the same id would leave that comparison silently matching and the staleness banner would never fire for an edited-then-stale Quote. Do not "simplify" the edit path to mutate in place without re-deriving this consequence. `cRfqEditId` is module-level UI state, not part of `DB` — `resetDB()` does not clear it, so tests must reset it explicitly (either directly or by driving a full `saveRfqResponse()` call, which clears it as its last step).
 
 ---
 
