@@ -4172,11 +4172,11 @@ async function pullAll() {
     try {
       var sd = await pulled(eKey);
       if (sd.status === 'ok' && sd.records && sd.records.length) {
-        var pulled = sd.records.map(function(r){ return unmapRec(eKey, r); });
+        var pulledRecs = sd.records.map(function(r){ return unmapRec(eKey, r); });
         var localArr = DB[dbKey];
         var claim = claimOnceMatcher();
         var matchedLocalIds = {};
-        var merged = pulled.map(function(p) {
+        var merged = pulledRecs.map(function(p) {
           var candidate = idKeyedEnts.indexOf(eKey) > -1
             ? localArr.find(function(r){ return r.id === p.id; })
             : findLocalMatchByBizKey(eKey, localArr, p);

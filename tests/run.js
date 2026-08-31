@@ -1866,12 +1866,33 @@ testAsync('pullAll() — an entity missing from the batched results is treated a
   _mockPullAllResponse = { status:'ok', results: {
     li: { status:'ok', records: [{ 'SKU':'ABC', 'Description':'New Widget', 'Unit Cost':10, 'Unit Price':12, 'Currency':'USD', 'HS Code':'', 'Supplier':'s1', 'Notes':'' }] }
     // 'sh' deliberately absent — simulates REQ-SYNC-002e isolation: one entity's server-side failure
-    // must not prevent every other entity's batched result from being used.
+    // must not prevent every other entity's batched result from being used. pulled('sh') hits its own
+    // `batched[entity] || {status:'error',...}` fallback inside pulled() (index.html) — this is the
+    // codepath under test, not a coincidental exception (see the regression test below for that class of bug).
   } };
   await ctx.pullAll();
   _mockPullAllResponse = null;
   assertEqual(ctx.DB.li[0].desc, 'New Widget', 'li still merges correctly even though sh had no batched result');
   assertEqual(ctx.DB.sh.length, 0, 'sh silently stays as-is when absent from the batch — no crash, no other entity affected');
+});
+
+testAsync('pullAll() — multiple simple entities with real records in the same pull all merge correctly (regression test for a `pulled` name collision found at build-gate)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.DB.li  = [{ id:'l1', sku:'ABC', desc:'Old Widget', cost:5, price:6, cur:'USD', supId:'s1' }];
+  ctx.DB.con = [{ id:'c1', name:'Old Name', email:'c1@example.com', enquiries:[] }];
+  _mockPullResponses = {
+    li: { status:'ok', records: [{ 'SKU':'ABC', 'Description':'New Widget', 'Unit Cost':10, 'Unit Price':12, 'Currency':'USD', 'HS Code':'', 'Supplier':'s1', 'Notes':'' }] },
+    co: { status:'ok', records: [{ 'Contact ID':'c1', 'Name':'New Name', 'Email':'c1@example.com', 'Phone':'', 'Company':'', 'Status':'', 'Source':'', 'Enquiry Summary':'', 'Notes':'', 'Created At':'', 'Last Contacted':'', 'GDPR Basis':'' }] }
+  };
+  await ctx.pullAll();
+  _mockPullResponses = {};
+  // li is processed before co in the simpleEnts loop (index.html). A local `pulled` array declared
+  // inside that loop previously shadowed the `pulled()` helper function once li's non-empty records
+  // ran through it, so co (and everything after li) silently threw "pulled is not a function" on
+  // every subsequent iteration. This test fails if that regression reappears.
+  assertEqual(ctx.DB.li[0].desc, 'New Widget', 'li (processed earlier in simpleEnts) merges correctly');
+  assertEqual(ctx.DB.con[0].name, 'New Name', 'co (processed later in simpleEnts, after li) also merges correctly');
 });
 
 // ── Invoice quick-add COGS warning (SPEC-INV-001) ───────────────
