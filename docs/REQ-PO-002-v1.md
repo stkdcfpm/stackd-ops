@@ -1,12 +1,12 @@
 # REQ-PO-002 — Fix `qteToPoConvert()` field-shape mismatch corrupting Quote-converted Purchase Orders
 
-**Status:** v1 — draft, pending requirements-gate.
+**Status:** v1 — requirements-gate round 1 **CONDITIONAL PASS** (2 blocking findings, both fixed in place; see §8 review-resolution log).
 
 ---
 
 ## 1. Business context
 
-This REQ closes **Finding F-01** of `docs/architecture-data-model-v1.md` (merged PR #123), assessed there as CRITICAL and "the single most consequential finding" in that review. It was surfaced during architecture research for the planned cross-platform backend migration, not reported by a user directly — but it is a live, currently-shipping defect on `main` @ v2.9.71, independent of that migration, and should be fixed regardless of when the migration itself is scoped.
+This REQ closes the defect documented at **`docs/architecture-data-model-v1.md` §6.1** (merged PR #123), described there as "the most consequential single finding" in that review (§4.2, line 114) and, in the document's closing synthesis, the first item of the recommended sequencing (§8, item 1: "fix `qteToPoConvert()`'s field-shape bug first, independent of any migration work"). It was surfaced during architecture research for the planned cross-platform backend migration, not reported by a user directly — but it is a live, currently-shipping defect on `main` @ v2.9.71, independent of that migration, and should be fixed regardless of when the migration itself is scoped.
 
 **The defect.** `qteToPoConvert()` (`index.html:11472-11523`) is the function behind the "Convert to PO" button on an Accepted Quote — the application's primary, steered path for turning a won deal into a Purchase Order. It builds each generated Purchase Order object using a different field-naming scheme than every other Purchase Order code path in the application:
 
@@ -18,27 +18,29 @@ This REQ closes **Finding F-01** of `docs/architecture-data-model-v1.md` (merged
 | FPM funding amount | `fpm` | `fpmFunded` |
 | FPM recovered flag | `rec` | `fpmRecovered` |
 
+**The mismatch is not limited to top-level document fields — it goes one level deeper, into every line item too.** Each line item `qteToPoConvert()` produces (`index.html:11505-11507`) is shaped `{rid, liId:'', desc, qty, up, uom, cur}`, but every real-shaped line item (`addPLI()` at `index.html:7273`, `autoPos()` at `index.html:6302`) is shaped `{rid, lid, desc, sku, uom, qty, cost}`. Concretely: the catalogue-link field is named `liId` instead of `lid`; the unit-cost value is stored under `up` instead of `cost`; a per-line `cur` field is written that no real line item ever carries (currency is a document-level concept, held once on the parent PO); and no `sku` key is present at all. This nested mismatch is the actual reason `calcPO()`/`rPO()`'s totals compute to $0 and `renderPoSourceDriftWarn()` never fires even after the top-level `lineItems` key exists — those functions read `li.cost` and `pl.lid`, never `li.up` or `li.liId`. Any fix or migration that renames only the top-level document fields without also reshaping every nested line item will not actually resolve the defect.
+
 **Consequence, confirmed by direct trace, not inference.** A Purchase Order created this way is inserted into `DB.po` successfully — it gets an `id`, a `num`, occupies a slot in the source Quote's `linkedPOIds[]`, and the operator sees a "PO ... created" success toast — but every downstream consumer of a Purchase Order record reads a field name this record does not have:
 
 - `editPO()` initialises its line-item editor from `po.lineItems||[]` (`index.html:7256`) — always empty, so the edit modal opens with **no line items**, and any save through it silently discards the real (mis-shaped) data.
 - `rPO()`'s table row computes its shown total from `po.lineItems` (`index.html:7319`) — shows **$0**.
 - `prevPODoc()`'s print/PDF preview reads `po.lineItems` — the printed document has **no line rows**.
 - `renderPoSourceDriftWarn()` reads `po.lineItems` (`index.html:6332`) — always empty for these records, so it silently never fires, not because there is no drift, but because it is looking at the wrong field.
-- `rPO()`, `editPO()`, and `getPOEffectiveDepInfo()` all default to `'USD'` when `po.cur` is absent (`index.html:7260,7320`), ignoring the Quote's actual currency, silently sitting unread in `po.currency`.
+- `rPO()`, `editPO()`, and `getPOEffectiveDepInfo()` all default to `'USD'` when `po.cur` is absent (`index.html:7260,7320,12029`), ignoring the Quote's actual currency, silently sitting unread in `po.currency`.
 - Dashboard/Accounts FPM-funding totals read `fpmFunded`/`fpmRecovered` — always falsy for these records, so a Quote-converted PO is never credited toward funding totals regardless of intent.
 - The Google Sheets sync field map (`FIELD_MAPS.po`) reads `date`/`cur` — both blank on a converted PO, so it syncs to the shared spreadsheet with empty Date and Currency columns.
 
 The existing unit test for this function (`tests/run.js:1253-1301`) asserts against the buggy shape directly (e.g. `poA.lines.length`), so the test suite is green while the live feature does not work. This is not a new regression — it is present in the code as committed and has been for some time; the architecture review is simply the first time it was traced end-to-end against the real downstream consumers rather than tested only in isolation.
 
-**Why this is scoped as its own REQ, not folded into a larger migration REQ:** it is a correctness defect in the current application, unrelated to where data is eventually stored. `docs/architecture-data-model-v1.md` §9.4 (Phase 0 of the migration roadmap) explicitly calls for this to be fixed "independent of the migration timeline... before any migration work touches Purchase Orders."
+**Why this is scoped as its own REQ, not folded into a larger migration REQ:** it is a correctness defect in the current application, unrelated to where data is eventually stored. `docs/architecture-data-model-v1.md` §6.1 explicitly calls for this to be fixed "before any migration touches Purchase Orders... independent of where the data eventually lives," and §8's synthesis recommends it as the first step of the sequencing, ahead of any migration-specific work.
 
 ---
 
 ## 2. Requirements
 
-**REQ-PO-002a — `qteToPoConvert()` must build Purchase Order objects using the same field names as every other Purchase Order creation path.** Specifically: `lineItems` (not `lines`), `date` (not `dt`), `cur` (not `currency`), `fpmFunded` (not `fpm`), `fpmRecovered` (not `rec`). Each generated line item must use the same shape `addPLI()`/`autoPos()` produce — `{rid, lid, desc, sku, uom, qty, cost}` — mapping the Quote line's `cost` field directly (Quote lines have no `lid` catalogue link, so `lid` is blank, matching how a manually-typed PO line with no catalogue link already behaves).
+**REQ-PO-002a — `qteToPoConvert()` must build Purchase Order objects using the same field names as every other Purchase Order creation path, at both the document level and the line-item level.** Document level: `lineItems` (not `lines`), `date` (not `dt`), `cur` (not `currency`), `fpmFunded` (not `fpm`), `fpmRecovered` (not `rec`). Each generated line item must use the same shape `addPLI()`/`autoPos()` produce — `{rid, lid, desc, sku, uom, qty, cost}` — mapping the Quote line's `desc`/`uom`/`qty`/`cost` fields directly, with `lid: ''` and `sku: ''` (Quote lines have neither a catalogue link nor a SKU, so both are blank, matching how a manually-typed PO line with no catalogue link already behaves), and with **no per-line `cur` field** (currency is a document-level concept in the real shape, held once on the parent PO — the current buggy code writes a redundant, non-existent-elsewhere per-line `cur`, which must be dropped, not renamed).
 
-**REQ-PO-002b — A one-time, idempotent migration must convert any Purchase Order already created with the old (broken) shape.** This follows the codebase's own established pattern for this exact class of problem (`migrateLinkedPOIds()` at `index.html:2824`, `backfillInvoicePOs()` at `index.html:2835`): detect the old shape (a `po.lines` array present with no `po.lineItems`), map every field across, and remove the old, now-redundant keys. Must run at the same points those two sibling migrations already run (application boot, after a Sheets sync pull, after a CSV/Sheets-record import, after a full JSON restore) so that a Purchase Order created on one device is corrected the next time it is loaded on any device, not only on the device that happens to run a future app version first.
+**REQ-PO-002b — A one-time, idempotent migration must convert any Purchase Order already created with the old (broken) shape, at both the document level and the line-item level.** The precedent for this exact class of problem is `backfillInvoicePOs()` (`index.html:2835`), which operates on the same `DB.po` array this fix targets and runs at 5 confirmed call sites: `pullAll()` (`index.html:4469`), the CSV-import Purchase Order branch of `processImport()` (`index.html:8273`), the Sheets-record-import branch of `processImportRecords()` (`index.html:8621`), `doImport()`'s full JSON restore (`index.html:10313`), and `initApp()`'s boot sequence (`index.html:12338`). (`migrateLinkedPOIds()` at `index.html:2824` is a related but *not* equivalent precedent — it operates on `DB.qt`, not `DB.po`, and is wired into only 2 of those 5 points, `doImport()` and `initApp()`; it must not be used as the template for where this migration is called.) The new migration must: detect the old shape (a `po.lines` array present with no `po.lineItems`); at the document level, map `dt→date`, `currency→cur`, `fpm→fpmFunded`, `rec→fpmRecovered`; at the line-item level, map each entry's `liId→lid`, `up→cost`, add `sku:''`, and drop the per-line `cur`; and remove every old, now-redundant key (`lines`, `dt`, `currency`, `fpm`, `rec`, and, within each converted line item, `liId`, `up`, `cur`) so a migrated record is byte-for-byte indistinguishable in shape from one that was always correct. Must run at the same 5 points `backfillInvoicePOs()` already runs, so that a Purchase Order created on one device is corrected the next time it is loaded on any device, not only on the device that happens to run a future app version first.
 
 **REQ-PO-002c — The existing seven `qteToPoConvert()` tests must be updated to assert against the corrected field names**, and must continue to pass with no change to their actual test intent (grouping by supplier, numbering/collision handling, blocking conditions) — this REQ changes field names, not behaviour.
 
@@ -48,7 +50,7 @@ The existing unit test for this function (`tests/run.js:1253-1301`) asserts agai
 
 ## 3. Explicitly out of scope
 
-- **Event-log coverage for `qteToPoConvert()` and `autoPos()`.** Both automatic PO-creation paths write no `logEv()` entry today — a separate, already-identified finding (`docs/architecture-data-model-v1.md` Finding F-04, assessed MEDIUM, not CRITICAL). Adding it here would widen this REQ beyond the one CRITICAL defect it exists to fix. Tracked separately.
+- **Event-log coverage for `qteToPoConvert()` and `autoPos()`.** Both automatic PO-creation paths write no `logEv()` entry today — a separate, already-identified finding (`docs/architecture-data-model-v1.md` §6.4). Adding it here would widen this REQ beyond the field-shape defect it exists to fix. Tracked separately.
 - **A Quote-side drift-detection check for PO-side changes**, or a PO-side check for Quote-side changes after conversion. `renderPoSourceDriftWarn()` today only checks Invoice-sourced drift; extending it to Quote-sourced drift is a design question of its own, not a field-naming bug, and is out of scope here.
 - **`PO-GAP-002`** (historical POs mis-attributed to the wrong supplier before the v2.9.44 fix) — a different, already-logged, already-accepted residual risk, unrelated to field naming.
 - **Retroactively correcting the `notes` field's `'Auto-converted from ' + q.num`** text or any other cosmetic field — unchanged by this REQ.
@@ -58,12 +60,12 @@ The existing unit test for this function (`tests/run.js:1253-1301`) asserts agai
 
 ## 4. Acceptance criteria
 
-- **AC-1:** A Purchase Order created by `qteToPoConvert()` has a `lineItems` array (not `lines`) containing one entry per source Quote line, each shaped `{rid, lid, desc, sku, uom, qty, cost}` with `lid: ''`.
-- **AC-2:** The same Purchase Order has `date` (not `dt`), `cur` (not `currency`), `fpmFunded: 0` (not `fpm`), `fpmRecovered: false` (not `rec`).
-- **AC-3:** Calling the real, unmodified `editPO()` against a `qteToPoConvert()`-created Purchase Order populates its line-item editor (`cPL`) with the correct, non-empty line items — proof the fix is consumable, not just differently shaped.
+- **AC-1:** A Purchase Order created by `qteToPoConvert()` has a `lineItems` array (not `lines`) containing one entry per source Quote line, each shaped exactly `{rid, lid, desc, sku, uom, qty, cost}` with `lid: ''`, `sku: ''`, and **no** `liId`, `up`, or `cur` key present on the line item.
+- **AC-2:** The same Purchase Order has `date` (not `dt`), `cur` (not `currency`), `fpmFunded: 0` (not `fpm`), `fpmRecovered: false` (not `rec`), and no `lines`/`dt`/`currency`/`fpm`/`rec` keys remain.
+- **AC-3:** Calling the real, unmodified `editPO()` against a `qteToPoConvert()`-created Purchase Order populates its line-item editor (`cPL`) with the correct, non-empty line items, and `calcPO()` computes a non-zero total from them — proof the fix is consumable, not just differently shaped.
 - **AC-4:** All seven pre-existing `qteToPoConvert()` tests (draft/sent blocking, Accepted creation, already-linked blocking, multi-supplier grouping, unassigned-supplier grouping, numbering-collision handling) pass unchanged in intent, updated only for the corrected field names.
-- **AC-5:** A new migration function converts an existing, old-shape Purchase Order record (`lines`/`dt`/`currency`/`fpm`/`rec` present, `lineItems` absent) into the corrected shape, is idempotent (running it twice produces the same result as running it once), and does not touch a Purchase Order that already has the correct shape (including an ordinary manually-created or `autoPos()`-created PO that legitimately has no `lines` key at all).
-- **AC-6:** The migration runs at every point `migrateLinkedPOIds()`/`backfillInvoicePOs()` already run (confirmed by matching call sites, not merely asserted).
+- **AC-5:** A new migration function converts an existing, old-shape Purchase Order record — both at the document level (`lines`/`dt`/`currency`/`fpm`/`rec` present, `lineItems` absent) and within every one of its nested line items (`liId`/`up`/a per-line `cur` present, `lid`/`cost`/`sku` absent) — into the corrected shape on both levels; is idempotent (running it twice produces the same result as running it once); and does not touch a Purchase Order that already has the correct shape (including an ordinary manually-created or `autoPos()`-created PO that legitimately has no `lines` key at all).
+- **AC-6:** The migration runs at all 5 points `backfillInvoicePOs()` already runs (`pullAll()`, `processImport()`'s PO branch, `processImportRecords()`'s PO branch, `doImport()`, `initApp()`), confirmed by matching call sites in the diff, not merely asserted in prose.
 - **AC-7:** Zero regressions — full existing suite continues to pass.
 
 ---
@@ -82,13 +84,20 @@ Per `CLAUDE.md`'s standing checklist: this REQ goes through requirements-gate re
 
 ## 7. Tracker / known-gaps updates required on completion
 
-- `docs/known-gaps.md`: add a new entry (proposed ID `PO-GAP-005`, since `PO-GAP-001`–`004` are already in use) documenting this defect and its fix, cross-referencing `docs/architecture-data-model-v1.md` Finding F-01 as the source of discovery.
+- `docs/known-gaps.md`: add a new entry (proposed ID `PO-GAP-005`, since `PO-GAP-001`–`004` are already in use) documenting this defect and its fix, cross-referencing `docs/architecture-data-model-v1.md` §6.1 as the source of discovery.
 - `docs/requirements-tracker.md`: add `REQ-PO-002` to the active requirements table with full gate history.
 - `STACKD_CONTEXT.md`/`CLAUDE.md`: standard version-ship updates.
-- `docs/architecture-data-model-v1.md`: Finding F-01 (§6.1), the Quote §4.2 narrative, and the Table 2.1/Table 6.1 entries that reference this defect as open should be updated to note it is fixed as of the version this REQ ships — a small follow-up edit to that document, not part of this REQ's own gate-reviewed diff.
+- `docs/architecture-data-model-v1.md`: §6.1's description of the defect and its consequences, the Quote paragraph in §4.2 that references it, and the §9.4-equivalent (this REQ's own citation fix above; the document's actual sequencing recommendation lives in §8) should be updated to note the defect is fixed as of the version this REQ ships — a small follow-up edit to that document, not part of this REQ's own gate-reviewed diff.
 
 ---
 
 ## 8. Review-resolution log
 
-(Pending requirements-gate review.)
+**Round 1: CONDITIONAL PASS.** The core diagnosis and the top-level target field names were independently verified correct against the real code (`qteToPoConvert()`, `savePO()`, `autoPos()`, `editPO()`, `rPO()`, `renderPoSourceDriftWarn()`, `prevPODoc()`, `getPOEffectiveDepInfo()`, `FIELD_MAPS.po`, `addPLI()`, and the 7 existing tests all cited and re-traced independently). Two blocking findings, both resolved in place:
+
+- **B-1 — the REQ never stated that each Purchase Order's *nested line items* also need reshaping, only the parent document's own fields.** The reviewer traced that `qteToPoConvert()`'s line items are shaped `{rid, liId:'', desc, qty, up, uom, cur}`, while every real line item is shaped `{rid, lid, desc, sku, uom, qty, cost}` — a second, independent field-naming mismatch one level deeper than the one originally documented. Left unaddressed, a migration written to the REQ as originally worded would rename the parent object's fields correctly while leaving every line item's `up`/`liId`/stray `cur` untouched — `calcPO()`/`rPO()` read `li.cost`, not `li.up`, so migrated historical records would still show $0 totals, the exact symptom the migration exists to fix. **Resolved:** §1's diagnosis, REQ-PO-002a, REQ-PO-002b, and AC-1/AC-5 above now all explicitly name the line-item-level mapping (`liId→lid`, `up→cost`, drop the per-line `cur`, add `sku:''`) alongside the document-level one.
+- **B-2 — the REQ claimed `migrateLinkedPOIds()` and `backfillInvoicePOs()` "already run at the same points," which is false.** `backfillInvoicePOs()` runs at 5 call sites (`pullAll()`, both import branches, `doImport()`, `initApp()`); `migrateLinkedPOIds()` runs at only 2 of those (`doImport()`, `initApp()`) and, separately, operates on `DB.qt` rather than `DB.po`. Since the new migration targets `DB.po`, `backfillInvoicePOs()`'s 5 sites are the correct precedent, not the intersection the original wording implied. **Resolved:** REQ-PO-002b and AC-6 now cite `backfillInvoicePOs()`'s exact 5 sites by line number and explicitly note `migrateLinkedPOIds()` is not an equivalent precedent for wiring purposes.
+
+Advisories also resolved in place: every citation to `docs/architecture-data-model-v1.md` used an ID scheme ("Finding F-01"/"F-04") and section numbers ("§9.4", "Table 2.1/6.1") that do not exist in that document — replaced throughout with the document's real section references (§6.1, §6.4, §4.2 line 114, §8 item 1); AC-1 now explicitly defaults `sku` to `''` rather than leaving it unstated; the `getPOEffectiveDepInfo()` `'USD'`-default citation (`index.html:12029`) was added alongside the two already cited.
+
+**Round 2:** pending re-review of this revision.
