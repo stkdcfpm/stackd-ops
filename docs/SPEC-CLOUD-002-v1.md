@@ -1,6 +1,6 @@
 # SPEC-CLOUD-002 — Extend Cloud Data (Supabase) to Line Item and Contact
 
-**Status:** v1 — drafted against `docs/REQ-CLOUD-002-v1.md` (requirements-gate PASS). Ready for spec-gate.
+**Status:** v1 — spec-gate round 1: CONDITIONAL PASS (4 blocking findings B1-B4, 5 advisories A1-A5), all fixed in place — see §6 review-resolution log. Ready for spec-gate round 2.
 
 ---
 
@@ -13,15 +13,18 @@ REQ-CLOUD-002 deliberately left open *how* to check "has Supplier's migration ac
 
 Option 2 is correct for the property that actually matters here: this check must hold across every device sharing the same Supabase project (that's the entire point of Cloud Data), and a live query against the shared database is authoritative in a way no local flag can be — `st_cloud_migration_ts` (localStorage) is per-browser and would wrongly block a second device that never ran the migration itself but is looking at an already-migrated project.
 
-**Known, accepted limitation** (documented here, not filed as a known-gap — it is a direct, narrow consequence of REQ-CLOUD-002 §3's explicit scope boundary, not a defect): a Supabase project with **zero** Suppliers ever inserted — including one where `migrateSuppliersBuyersToSupabase()` was run against an empty local Supplier list — will report "not complete" and block Line Item/Contact migration indefinitely. This requires a business with no Suppliers at all wanting to migrate Contacts (Line Item is moot here — `vLI()` already requires a valid local `supId`, so a zero-Supplier install cannot have any Line Items to migrate in the first place). Workaround if ever hit: migrate one real Supplier first.
+**Round-1 spec-gate finding (B3), fixed:** the live-only check above was originally shipped as the sole mechanism, with a "known, accepted limitation" note claiming a zero-Supplier install blocking Contact migration forever was narrow. The reviewer correctly rejected that framing on the Contact schema's own terms: `saveCon()`'s `status` values are `lead`/`qualified`-first (`index.html:11428`), `supplierId` is nullable, and `openSupConPicker()` (`index.html:5337-5339`) already assumes a substantial fraction of real Contacts carry no Supplier link at all — a sales/lead-tracking business with zero supplier-side sourcing is a normal shape for this domain model, not an edge case, and such a business would have no escape hatch short of creating a fake Supplier purely to satisfy the gate. The fix combines the live check with the local marker `migrateSuppliersBuyersToSupabase()` already writes unconditionally today (`index.html:5559`, regardless of Supplier count), rather than treating them as mutually exclusive options:
 
 ```js
 async function isSupplierMigrationComplete() {
   if (!_sb) return false;
+  if (localStorage.getItem('st_cloud_migration_ts')) return true;
   var result = await _sb.from('suppliers').select('*').is('deleted_at', null);
   return !!(result.data && result.data.length > 0);
 }
 ```
+
+This closes the zero-Supplier lockout on the device that actually ran the migration (using state that already exists today, no new schema) while leaving the live-query fallback fully intact for the case it was chosen to solve: a second device that never ran the Supplier migration locally, looking at an already-migrated project with real Supplier rows in Supabase. The only remaining residual (a zero-Supplier install *and* a different device that never ran the migration locally) is genuinely narrow, unlike the original unqualified claim.
 
 Insert this new function immediately after `refreshBuyFromSupabase()` closes (`index.html:5459`), before `findDuplicateSupplierNames()`.
 
@@ -135,9 +138,12 @@ Insert immediately after `refreshBuyFromSupabase()` closes (`index.html:5459`), 
 
 `refreshLIFromSupabase()` cannot be a naive full-replace like `refreshSupFromSupabase()`: `invoiceRefs[]` is a local-only reverse index (AC-2 — never migrated to a Supabase column, must carry forward unchanged) that would otherwise be silently wiped on every refresh, not just the first one. It is preserved by keying the *current* in-memory `DB.li` by `id` before replacing:
 
+**Round-1 spec-gate finding (B1), fixed — both functions must refuse to overwrite un-migrated local data.** `_sb` is a single, global, per-install flag (`initSbClient()`, `index.html:5385-5387`) — it goes truthy the moment *any* Cloud Data entity is configured, not per-entity. Wiring these two refreshes unconditionally into `initCloudDataLayer()` (§2.1) means every existing CLOUD-001 adopter (anyone who has ever configured Cloud Data for Supplier/Buyer) would have `refreshLIFromSupabase()`/`refreshConFromSupabase()` fire on their very next reload after this SPEC ships — against the brand-new, still-empty `line_items`/`contacts` tables this SPEC's own migration creates — silently overwriting real local Line Item/Contact data with `[]` before the operator ever touches the new "Migrate Line Items/Contacts to Cloud" buttons (§2.8). Both functions now refuse to replace local data unless either this device has actually run the migration (the local marker, set unconditionally at the *start* of the corresponding migrate function's archive step — see §2.5/§2.6 — before it's ever safe to overwrite), or there's nothing local to lose:
+
 ```js
 async function refreshLIFromSupabase() {
   if (!_sb) return;
+  if (DB.li.length > 0 && !localStorage.getItem('st_li_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
   var result = await _sb.from('line_items').select('*').is('deleted_at', null);
   if (result.error) { toast('Could not load Line Items from Cloud Data.'); return; }
   var oldById = {};
@@ -157,6 +163,7 @@ async function refreshLIFromSupabase() {
 
 async function refreshConFromSupabase() {
   if (!_sb) return;
+  if (DB.con.length > 0 && !localStorage.getItem('st_con_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
   var result = await _sb.from('contacts').select('*').is('deleted_at', null);
   if (result.error) { toast('Could not load Contacts from Cloud Data.'); return; }
   DB.con = result.data.map(function(row){
@@ -173,6 +180,8 @@ async function refreshConFromSupabase() {
 ```
 
 Contact needs no such preservation merge — every one of its 15 fields is migrated (AC-3), there is no local-only supplementary field.
+
+**Why the guard is safe for a second device joining an already-migrated project:** a device that has never held any local Line Items/Contacts (`DB.li.length === 0`/`DB.con.length === 0`, e.g. a fresh browser or a device that only ever used other entities) has nothing to lose, so the guard's `length > 0` condition is false and the refresh proceeds — correctly loading the real Cloud Data. The guard only blocks the one dangerous case: real local data present, with no local record that this device's own copy has ever been reconciled against Supabase for that entity.
 
 ### 2.3 `saveLI()` / `delLI()` (`index.html:5735-5770`) — full replacement
 
@@ -258,6 +267,8 @@ async function delLI(id) {
 
 `saveCon()`'s early duplicate-merge branch (triggered by `confirm()` on a matching email, before the main record is even built) also needs `_sb`-awareness, since it currently persists via a bare `sv(K.co, DB.con)`. Also becomes `async` (it already calls nothing async today, but now needs `ensureSbAuth()`/Supabase calls); `delCon()` likewise becomes `async`. Neither has any existing caller that awaits them — both are invoked as plain `onclick` handlers already, consistent with `saveLI`/`saveSup`'s existing async-handler pattern.
 
+**Round-1 spec-gate finding (A1), fixed:** the merge branch originally mutated `dup.enquiries`/`dup.lastContactedAt` in place before the `await _sb.from(...).update(...)` call. On a Supabase error, the mutation would have been left standing in memory — never persisted (no `sv()` on the `_sb` path) and never rolled back, a failure mode the fully-synchronous original branch never had. The merge payload is now built into local variables (`mergedEnquiries`/`mergedLastContactedAt`) and `dup` is only mutated on the local (non-`_sb`) path, where mutate-then-`sv()` was always inseparable; the `_sb` path never mutates `dup` at all since `refreshConFromSupabase()` replaces `DB.con` wholesale from Supabase immediately after a successful update.
+
 ```js
 async function saveCon() {
   var name   = G('ct-name').value.trim();
@@ -276,15 +287,17 @@ async function saveCon() {
     if (dup) {
       var doMerge = confirm('A contact with this email already exists (' + dup.name + '). Merge this enquiry into the existing record?');
       if (doMerge) {
-        dup.enquiries = dup.enquiries || [];
-        if (enqSummary) dup.enquiries.push({ id: uid(), ts: new Date().toISOString(), summary: enqSummary, source: 'manual' });
-        dup.lastContactedAt = new Date().toISOString();
+        var mergedEnquiries = (dup.enquiries || []).slice();
+        if (enqSummary) mergedEnquiries.push({ id: uid(), ts: new Date().toISOString(), summary: enqSummary, source: 'manual' });
+        var mergedLastContactedAt = new Date().toISOString();
         if (_sb) {
           if (!(await ensureSbAuth())) return;
-          var mergeResult = await _sb.from('contacts').update({ enquiries: dup.enquiries, last_contacted_at: dup.lastContactedAt }).eq('id', dup.id);
+          var mergeResult = await _sb.from('contacts').update({ enquiries: mergedEnquiries, last_contacted_at: mergedLastContactedAt }).eq('id', dup.id);
           if (mergeResult.error) { toast('Merge failed: ' + mergeResult.error.message); return; }
           await refreshConFromSupabase();
         } else {
+          dup.enquiries = mergedEnquiries;
+          dup.lastContactedAt = mergedLastContactedAt;
           sv(K.co, DB.con);
         }
         closeM('ov-con');
@@ -426,6 +439,20 @@ async function migrateLineItemsToSupabase() {
   // REQ-CLOUD-002g: sku is non-unique by design (REQ-CLOUD-002e) — no field exists
   // to pre-flight-scan for conflicts. Documented no-op, not an oversight.
 
+  // Advisory A2 (spec-gate round 1), fixed: line_items.sup_id is NOT NULL + FK-constrained
+  // (§1), so a single local Line Item whose supId never got remapped by
+  // migrateSuppliersBuyersToSupabase()'s sweep (e.g. it pointed at a Supplier deleted
+  // before that migration ran) would otherwise abort the insert loop below mid-batch,
+  // after some rows are already irreversibly inserted (the documented "not
+  // auto-rolled-back" behavior). Check every supId resolves to a real Supabase Supplier
+  // id up front, so a bad reference is caught cleanly with zero inserts made.
+  var knownSupIds = await _sb.from('suppliers').select('*').is('deleted_at', null);
+  if (knownSupIds.error) { toast('Could not verify Supplier links before migrating: ' + knownSupIds.error.message); return; }
+  var knownSupIdSet = {};
+  knownSupIds.data.forEach(function(s){ knownSupIdSet[s.id] = true; });
+  var orphanLI = DB.li.find(function(l){ return !knownSupIdSet[l.supId]; });
+  if (orphanLI) { toast('Migration blocked: Line Item ' + (orphanLI.sku||orphanLI.num) + ' references a Supplier not found in Cloud Data. Fix or reassign its Supplier link before migrating.'); return; }
+
   var backupConfirmed = await showBlockingBackupModal();
   if (!backupConfirmed) return;
 
@@ -517,13 +544,17 @@ Contact needs no own-id remap step (unlike Line Item) — it has no local-only s
 
 ### 2.7 Archive/rollback extensions
 
-`restoreFromMigrationArchive()` (Supplier/Buyer) is left untouched. Two new sibling functions, inserted after it (`index.html:5577`), each independently restorable since Line Item and Contact migrate independently:
+`restoreFromMigrationArchive()` (Supplier/Buyer) is left untouched. Two new sibling functions, inserted after it (`index.html:5577`), each independently restorable since Line Item and Contact migrate independently.
+
+**Advisory A3 (spec-gate round 1), noted:** REQ-CLOUD-002d's literal wording asks for "an extension of `restoreFromMigrationArchive()`." This SPEC deliberately deviates to two sibling functions instead of one combined function, because Line Item and Contact each migrate independently — a combined function would need to handle every partial-archive-present permutation (only Line Item migrated, only Contact, both, neither) inside one control flow, which is materially more complex than three independent, single-purpose restore functions that each do one thing. The intent of REQ-CLOUD-002d (archive-not-delete, restorable, disconnects Cloud Data on restore) is fully met; only the literal "one function" framing is not.
+
+**Advisory A4 (spec-gate round 1), fixed — restore copy now discloses the global-disconnect consequence explicitly.** Restoring just one entity's archive still clears `SS.supabaseUrl`/`SS.supabaseAnonKey` globally (per REQ-CLOUD-002d, reusing `SPEC-CLOUD-001-v4`'s fix), which also drops the live connection for every *other* entity currently on Cloud Data (Suppliers/Buyers, and whichever of Line Item/Contact wasn't the one being restored) — not just the one being restored. The confirm() copy now says so plainly:
 
 ```js
 function restoreLIMigrationArchive() {
   var arch = localStorage.getItem('st_li_pre_migration');
   if (!arch) { toast('No Line Item migration archive available to restore.'); return; }
-  if (!confirm('Restore Line Items to their state immediately before the Supabase migration, and disconnect Cloud Data?\n\nThis does not affect other entities, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect later.')) return;
+  if (!confirm('Restore Line Items to their state immediately before the Supabase migration?\n\nThis does not change Suppliers, Buyers, Contacts, or any document data, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected for ALL entities, not just Line Items — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect any of them afterwards.')) return;
   localStorage.setItem(K.l, arch);
   SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
   sv(K.ss, SS);
@@ -534,7 +565,7 @@ function restoreLIMigrationArchive() {
 function restoreConMigrationArchive() {
   var arch = localStorage.getItem('st_con_pre_migration');
   if (!arch) { toast('No Contact migration archive available to restore.'); return; }
-  if (!confirm('Restore Contacts to their state immediately before the Supabase migration, and disconnect Cloud Data?\n\nThis does not affect other entities, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect later.')) return;
+  if (!confirm('Restore Contacts to their state immediately before the Supabase migration?\n\nThis does not change Suppliers, Buyers, Line Items, or any document data, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected for ALL entities, not just Contacts — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect any of them afterwards.')) return;
   localStorage.setItem(K.co, arch);
   SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
   sv(K.ss, SS);
@@ -544,6 +575,14 @@ function restoreConMigrationArchive() {
 ```
 
 Each disconnects Cloud Data on restore, reusing the exact fix `SPEC-CLOUD-001-v4` proved necessary (REQ-CLOUD-002d) — otherwise the next `initCloudDataLayer()` would silently re-clobber the restore.
+
+**Round-1 spec-gate finding (B4), fixed — the new restore buttons must reappear after a reload, not just inline during the same migration session.** The existing Supplier/Buyer restore button's visibility survives a reload because `rCfg()` (`index.html:9890`, re-run every time the Settings tab renders) re-checks `st_cloud_migration_ts` on every render: `if(G('cfg-sb-restore-btn')) G('cfg-sb-restore-btn').style.display = localStorage.getItem('st_cloud_migration_ts') ? '' : 'none';`. §2.5/§2.6 only set `style.display=''` inline inside the migrate functions themselves (same-session feedback) with no equivalent added to `rCfg()` — so after any reload, both new buttons silently revert to the HTML's default `display:none` and stay hidden even though a valid, restorable archive still exists. Add two equivalent lines to `rCfg()` (`index.html:9890`), immediately after the existing Supplier/Buyer line:
+
+```js
+if(G('cfg-sb-restore-btn')) G('cfg-sb-restore-btn').style.display = localStorage.getItem('st_cloud_migration_ts') ? '' : 'none';
+if(G('cfg-sb-li-restore-btn')) G('cfg-sb-li-restore-btn').style.display = localStorage.getItem('st_li_cloud_migration_ts') ? '' : 'none';
+if(G('cfg-sb-con-restore-btn')) G('cfg-sb-con-restore-btn').style.display = localStorage.getItem('st_con_cloud_migration_ts') ? '' : 'none';
+```
 
 `cleanupExpiredMigrationArchive()` (`index.html:5579-5588`) — extend to also expire the two new archive pairs, each independently timed off its own timestamp key:
 
@@ -591,7 +630,41 @@ Two new cards inserted immediately after the existing "Cloud Data (Suppliers & B
 </div>
 ```
 
-### 2.9 `migrateSuppliersBuyersToSupabase()` — unchanged
+### 2.9 `pullAll()`'s Sheets-sync exclusion (`index.html:4454-4459`)
+
+**Round-1 spec-gate finding (B2), fixed.** Current code:
+
+```js
+var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+// Suppliers are cloud-authoritative once Cloud Data is configured (SPEC-CLOUD-001) — pulling them from
+// Sheets here would race the fire-and-forget Supabase refresh in initCloudDataLayer(), with whichever
+// resolves last silently overwriting DB.sup/localStorage. Excluded entirely when _sb is configured;
+// zero change to this loop when it isn't.
+if (_sb) simpleEnts = simpleEnts.filter(function(e){ return e !== 'sup'; });
+```
+
+Only `'sup'` is excluded. This SPEC introduces the exact same class of concurrent, fire-and-forget, full-replace Supabase refresh for `'li'`/`'co'` (`refreshLIFromSupabase()`/`refreshConFromSupabase()`, §2.2) — left unaddressed, any install with both Sheets sync and Cloud Data configured (a normal transitional state during a phased migration) would have `pullAll()`'s Sheets pull for Line Item/Contact race the new Supabase refreshes for the same two entities.
+
+The existing Supplier exclusion is keyed purely on `_sb` being truthy — not on whether Supplier's own migration has completed — because CLOUD-001 only ever had one entity-group behind that flag. Line Item and Contact are independently migratable, so reusing bare `_sb` truthiness for them would prematurely kill Sheets sync for an entity that hasn't actually moved to Cloud Data yet. Gate the exclusion on the same per-entity local marker the rest of this SPEC uses (`st_li_cloud_migration_ts`/`st_con_cloud_migration_ts`), matching Supplier's own precedent of using a coarse, local, non-live signal for this specific decision (Supplier's exclusion is likewise not live-checked):
+
+```js
+var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+// Suppliers are cloud-authoritative once Cloud Data is configured (SPEC-CLOUD-001) — pulling them from
+// Sheets here would race the fire-and-forget Supabase refresh in initCloudDataLayer(), with whichever
+// resolves last silently overwriting DB.sup/localStorage. Excluded entirely when _sb is configured;
+// zero change to this loop when it isn't.
+if (_sb) simpleEnts = simpleEnts.filter(function(e){ return e !== 'sup'; });
+// Line Item / Contact (SPEC-CLOUD-002): same race, but these migrate independently of
+// Supplier/Buyer and of each other, so exclusion is gated on each entity's own local
+// migration marker rather than bare _sb truthiness — otherwise Sheets sync would stop
+// for an entity that hasn't actually moved to Cloud Data yet.
+if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'li'; });
+if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'co'; });
+```
+
+**Known, accepted residual** (mirroring a limitation already implicitly accepted in the shipped Supplier exclusion): a second device that has never locally run the Line Item/Contact migration will still pull that entity from Sheets even after another device has migrated it to Supabase, until that second device's own migration marker is set (e.g. by visiting the Cloud Data settings after the project is already migrated — out of scope to fully solve here; REQ-CLOUD-002 §3 explicitly excludes building a general migration-status registry).
+
+### 2.10 `migrateSuppliersBuyersToSupabase()` — unchanged
 
 Confirmed no changes are needed to the already-shipped CLOUD-001 function itself; the precondition mechanism (§0) reads Supabase live rather than any marker it would need to write.
 
@@ -604,17 +677,25 @@ Reuses the existing `mockSb()` harness (`tests/run.js:6972-7015`) unchanged — 
 ```js
 // ── CLOUD DATA — Line Item & Contact (SPEC-CLOUD-002) ──
 
-testAsync('isSupplierMigrationComplete — true when Supabase suppliers has rows, false when empty or unconfigured', async function() {
+testAsync('isSupplierMigrationComplete — true when Supabase suppliers has rows, true via local marker even when Supabase is currently empty, false when neither, false when unconfigured', async function() {
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
   ctx._sb = mockSb({ suppliers: { selectData: [{ id: 'u1', name: 'ACME' }] } });
   assertEqual(await ctx.isSupplierMigrationComplete(), true, 'true when rows exist');
   ctx._sb = mockSb({ suppliers: { selectData: [] } });
-  assertEqual(await ctx.isSupplierMigrationComplete(), false, 'false when empty');
+  assertEqual(await ctx.isSupplierMigrationComplete(), false, 'false when empty and no local marker');
+
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = mockSb({ suppliers: { selectData: [] } }); // zero-Supplier edge case (B3 fix)
+  assertEqual(await ctx.isSupplierMigrationComplete(), true, 'true via local marker even though the live table is currently empty');
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+
   ctx._sb = null;
   assertEqual(await ctx.isSupplierMigrationComplete(), false, 'false when Cloud Data not configured');
 });
 
 testAsync('migrateLineItemsToSupabase — blocked when Supplier migration has not completed; no insert made', async function() {
   resetDB();
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
   ctx.DB.li.push({ id: 'l1', num: 'LI-0001', supId: 's1', sku: 'SKU1' });
   ctx._sb = mockSb({ suppliers: { selectData: [] } });
   await ctx.migrateLineItemsToSupabase();
@@ -623,10 +704,25 @@ testAsync('migrateLineItemsToSupabase — blocked when Supplier migration has no
 
 testAsync('migrateContactsToSupabase — blocked when Supplier migration has not completed; no insert made', async function() {
   resetDB();
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
   ctx.DB.con.push({ id: 'c1', num: 'CON-0001', name: 'Alice', email: 'a@x.com', supplierId: null, enquiries: [], gdprBasis: 'legitimate_interests', createdAt: '', lastContactedAt: '', notes: '', role: '', status: 'lead', source: 'manual' });
   ctx._sb = mockSb({ suppliers: { selectData: [] } });
   await ctx.migrateContactsToSupabase();
   assertEqual(ctx.DB.con[0].id, 'c1', 'Contact id unchanged — migration never ran, even though this Contact has no Supplier link');
+});
+
+testAsync('migrateLineItemsToSupabase — blocked when a Line Item\'s supId does not resolve to a known Supabase Supplier; zero inserts made', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', supId: 'stale-local-id' });
+  var sb = mockSb({ suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] }, line_items: { insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid' }, row); } } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migrateLineItemsToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'line_items' && c.op === 'insert'; });
+  assert(!insertCall, 'no insert attempted — the orphaned supId was caught before the insert loop started');
+  assertEqual(ctx.DB.li[0].id, 'l1', 'Line Item unchanged');
+  ctx.showBlockingBackupModal = origShowBackup;
 });
 
 testAsync('migrateLineItemsToSupabase — Supplier already migrated: inserts every field, rewrites Invoice/PO lid refs, checks-but-skips dead Quote.lines[].lid, preserves invoiceRefs across the post-migration refresh', async function() {
@@ -784,6 +880,21 @@ testAsync('saveCon — Cloud Data configured: create calls insert with client-ge
   ctx.confirm = function(){ return false; };
 });
 
+testAsync('saveCon — merge path: on a Supabase update error, the in-memory dup record is never mutated (A1 fix)', async function() {
+  resetDB();
+  var dupRecord = { id: 'dup1', name: 'Existing', email: 'dup@x.com', enquiries: [], lastContactedAt: '' };
+  ctx.DB.con.push(dupRecord);
+  ctx.EI.co = null;
+  mockEl('ct-name').value = 'Someone'; mockEl('ct-email').value = 'dup@x.com'; mockEl('ct-status').value = 'lead';
+  mockEl('ct-enq-summary').value = 'follow up';
+  ctx.confirm = function(){ return true; };
+  ctx._sb = mockSb({ contacts: { updateError: { message: 'network down' } } });
+  await ctx.saveCon();
+  assertEqual(dupRecord.enquiries.length, 0, 'dup.enquiries never mutated when the Supabase update fails');
+  assertEqual(dupRecord.lastContactedAt, '', 'dup.lastContactedAt never mutated when the Supabase update fails');
+  ctx.confirm = function(){ return false; };
+});
+
 testAsync('delCon — Cloud Data configured: soft-delete via update({deleted_at}); local DB.ord contactId and nested rfqResponses[].contactId still nulled', async function() {
   resetDB();
   ctx.DB.ord.push({ id: 'o1', contactId: 'c1', lines: [{ rfqResponses: [{ contactId: 'c1' }] }] });
@@ -830,7 +941,68 @@ test('cleanupExpiredMigrationArchive — Line Item and Contact archives expire i
   assertEqual(ctx.localStorage.getItem('st_li_pre_migration'), null, 'expired Line Item archive removed at day 31');
   assertEqual(ctx.localStorage.getItem('st_con_pre_migration'), '[]', 'Contact archive at day 5 untouched');
 });
+
+testAsync('refreshLIFromSupabase / refreshConFromSupabase — refuse to overwrite real local data when this device has never run the migration (B1 fix); proceed when local data is empty (second-device case)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.DB.li.push({ id: 'local-only-li', sku: 'REAL-LOCAL-SKU' });
+  ctx._sb = mockSb({ line_items: { selectData: [] } }); // brand-new, still-empty table right after this SPEC ships
+  await ctx.refreshLIFromSupabase();
+  assertEqual(ctx.DB.li.length, 1, 'real local Line Item NOT wiped — this device never ran the Line Item migration');
+  assertEqual(ctx.DB.li[0].id, 'local-only-li', 'original record untouched');
+
+  resetDB(); // simulates a fresh/second device: no local Line Items at all
+  ctx._sb = mockSb({ line_items: { selectData: [{ id: 'cloud-li-1', num: 'LI-0001', sku: 'CLOUD-SKU', currency: 'USD', price_history: [] }] } });
+  await ctx.refreshLIFromSupabase();
+  assertEqual(ctx.DB.li.length, 1, 'real Cloud Data correctly loaded — nothing local was at risk');
+  assertEqual(ctx.DB.li[0].id, 'cloud-li-1', 'loaded from Supabase');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.DB.con.push({ id: 'local-only-con', name: 'Real Local Contact' });
+  ctx._sb = mockSb({ contacts: { selectData: [] } });
+  await ctx.refreshConFromSupabase();
+  assertEqual(ctx.DB.con.length, 1, 'real local Contact NOT wiped — this device never ran the Contact migration');
+});
+
+test('rCfg — Line Item and Contact restore buttons reappear after reload based on their own local migration marker (B4 fix)', function() {
+  mockEl('cfg-sb-li-restore-btn'); mockEl('cfg-sb-con-restore-btn'); mockEl('cfg-sb-restore-btn');
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.rCfg();
+  assertEqual(mockEl('cfg-sb-li-restore-btn').style.display, 'none', 'Line Item restore button hidden with no archive');
+  assertEqual(mockEl('cfg-sb-con-restore-btn').style.display, 'none', 'Contact restore button hidden with no archive');
+
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.rCfg();
+  assertEqual(mockEl('cfg-sb-li-restore-btn').style.display, '', 'Line Item restore button visible again after a fresh rCfg() render, simulating a reload');
+  assertEqual(mockEl('cfg-sb-con-restore-btn').style.display, 'none', 'Contact restore button independently still hidden');
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+});
+
+testAsync('pullAll — Sheets pull for li/co excluded once each entity\'s own Cloud Data migration has completed, independently of Supplier\'s exclusion and of each other (B2 fix)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx._sb = mockSb({});
+  var liPulled = false, coPulled = false;
+  var origFetchSheet = ctx.fetchSheetEntity; // stand-in for whatever per-entity Sheets fetch pullAll() calls per simpleEnts entry
+  ctx.fetchSheetEntity = function(key){ if (key === 'li') liPulled = true; if (key === 'co') coPulled = true; return Promise.resolve([]); };
+  await ctx.pullAll();
+  assert(liPulled, 'li still pulled from Sheets — its own migration marker is not set yet');
+  assert(coPulled, 'co still pulled from Sheets — its own migration marker is not set yet');
+
+  liPulled = false; coPulled = false;
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  await ctx.pullAll();
+  assertEqual(liPulled, false, 'li excluded from Sheets pull once its own migration marker is set');
+  assert(coPulled, 'co still pulled — its own marker is independently unset');
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.fetchSheetEntity = origFetchSheet;
+});
 ```
+
+The last test above (`pullAll`) is written against `pullAll()`'s general shape rather than a real, already-named per-entity fetch function — **the implementer must adapt the mock/stand-in (`fetchSheetEntity`) to whatever `pullAll()` actually calls per `simpleEnts` entry** (verify against the live `index.html:4460+` loop body when implementing) while keeping the assertions' intent: `li`/`co` drop out of the Sheets pull once, and only once, their own migration marker is set.
 
 ---
 
@@ -848,18 +1020,36 @@ test('cleanupExpiredMigrationArchive — Line Item and Contact archives expire i
 
 | AC | Implementation | Test |
 |---|---|---|
-| AC-1 | `isSupplierMigrationComplete()` gate in both migrate functions (§0, §2.5, §2.6) | "blocked when Supplier migration has not completed" ×2 |
-| AC-2 | `migrateLineItemsToSupabase()` insert payload, `0002_...sql` (§1, §2.5) | "inserts every field... preserves invoiceRefs" |
+| AC-1 | `isSupplierMigrationComplete()` gate in both migrate functions, live-check + local-marker OR (§0, §2.5, §2.6) | "blocked when Supplier migration has not completed" ×2, `isSupplierMigrationComplete` marker-OR test |
+| AC-2 | `migrateLineItemsToSupabase()` insert payload, `0002_...sql`, pre-flight supId resolution check (§1, §2.5) | "inserts every field... preserves invoiceRefs", "blocked when a Line Item's supId does not resolve..." |
 | AC-3 | `migrateContactsToSupabase()` insert payload (§2.6) | "inserts every field including role/enquiries..." |
 | AC-4 | Quote.lines[].lid checked in the sweep (§2.5) | same test, asserts sweep ran and left it untouched |
 | AC-5 | `_sb` branches return before `syncEnt`/`delEnt` (§2.3, §2.4) | saveLI/delLI/saveCon/delCon `_sb`-configured tests |
 | AC-6 | `showBlockingBackupModal()` reused unchanged (§2.5, §2.6) | inherited from CLOUD-001's existing coverage; no new mechanism introduced |
-| AC-7 | `restoreLIMigrationArchive()`/`restoreConMigrationArchive()`, extended `cleanupExpiredMigrationArchive()` (§2.7) | archive/rollback/cleanup tests |
+| AC-7 | `restoreLIMigrationArchive()`/`restoreConMigrationArchive()`, extended `cleanupExpiredMigrationArchive()`, `rCfg()` button-visibility fix (§2.7) | archive/rollback/cleanup tests, `rCfg` restore-button test |
 | AC-8 | `0002_line_items_contacts.sql` has no `sku` unique index, no Contact uniqueness (§1) | schema reviewed at spec-gate; no runtime test possible (SQL isn't executed by `tests/run.js`) |
-| AC-9 | No changes to Supplier/Buyer code paths (§2.9); full existing suite re-run | full `tests/run.js` run, mutation testing on the new code only |
+| AC-9 | No changes to Supplier/Buyer code paths (§2.10); `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite guard (§2.2); `pullAll()` per-entity Sheets exclusion (§2.9); full existing suite re-run | full `tests/run.js` run, `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite-guard test, `pullAll` exclusion test, mutation testing on the new code only |
 
 ---
 
-## 6. Gate process
+## 6. Review-resolution log
 
-requirements-gate (done, PASS) → **this SPEC → spec-gate** → implementation → self-performed mutation testing → build-gate → PR → CI green → merge, per `CLAUDE.md`'s standing checklist.
+**Round 1: CONDITIONAL PASS — 4 blocking findings (B1-B4), 5 advisories (A1-A5), all fixed in place.** Every code citation in the original v1 draft was independently re-traced against the live `index.html`/`tests/run.js` and confirmed byte-for-byte accurate — the findings below are novel interactions this SPEC's new code creates with other existing subsystems (`initCloudDataLayer()`'s unconditional wiring, `pullAll()`'s Sheets exclusion, `rCfg()`'s button-visibility rendering), not citation drift.
+
+- **B1 — blocking.** `refreshLIFromSupabase()`/`refreshConFromSupabase()`, wired unconditionally into `initCloudDataLayer()`, would silently wipe real local Line Item/Contact data with `[]` for every existing Cloud-Data adopter on their very first reload after this SPEC ships (the new tables are empty until an operator manually migrates). **Fixed:** §2.2 — both functions now refuse to replace local data when real local records exist and this device has never recorded running that entity's own migration.
+- **B2 — blocking.** `pullAll()`'s `simpleEnts` Sheets-sync exclusion (`index.html:4454-4459`) only ever excluded `'sup'`; `'li'`/`'co'` would keep racing the new Supabase refreshes for any install running both Sheets sync and Cloud Data during a phased migration. **Fixed:** §2.9 (new) — per-entity exclusion gated on each entity's own local migration marker.
+- **B3 — blocking.** The original `isSupplierMigrationComplete()` (live-query-only) permanently blocks Contact migration for any business with zero Suppliers ever recorded — not a narrow edge case given Contact's `supplierId` is nullable and a lead-tracking-only business is a normal shape for this domain model, as the reviewer demonstrated by citing the Contact schema's own design (`openSupConPicker()`, `saveCon()`'s status values) against the SPEC's own "narrow" claim. **Fixed:** §0 — combined with the local `st_cloud_migration_ts` marker `migrateSuppliersBuyersToSupabase()` already writes unconditionally today, via OR.
+- **B4 — blocking.** The new restore buttons' visibility was only set inline inside the migrate functions (same-session only); `rCfg()` — which re-renders the existing Supplier/Buyer restore button's visibility on every Settings-tab render, including after a reload — was never extended, so both new buttons would silently stay hidden after any reload even with a valid, restorable archive present. **Fixed:** §2.7 — two equivalent lines added to `rCfg()`.
+- **A1 — advisory.** `saveCon()`'s merge branch mutated `dup.enquiries`/`dup.lastContactedAt` in place before the Supabase call that could fail, leaving an un-persisted, un-rolled-back mutation standing in memory on error. **Fixed:** §2.4 — merge payload built into local variables; `dup` only mutated on the local (non-`_sb`) path, after success.
+- **A2 — advisory.** `line_items.sup_id`'s `NOT NULL` FK constraint means a single local Line Item with a stale/unresolved `supId` would abort `migrateLineItemsToSupabase()`'s insert loop mid-batch, after some rows are already irreversibly inserted. **Fixed:** §2.5 — a pre-flight check verifies every local `supId` resolves to a real Supabase Supplier id before the insert loop starts.
+- **A3 — advisory.** §2.7's two-sibling-function design is a reasonable but unflagged deviation from REQ-CLOUD-002d's literal "an extension of `restoreFromMigrationArchive()`" wording. **Fixed:** §2.7 — the deviation and its rationale are now stated explicitly.
+- **A4 — advisory.** The restore confirm() copy didn't disclose that restoring one entity's archive disconnects Cloud Data globally, dropping the connection for every other Cloud-Data entity too, not just the one being restored. **Fixed:** §2.7 — copy reworded to say so plainly.
+- **A5 — advisory.** Folded into the B3 fix and its writeup above — the "narrow limitation" framing has been replaced with the reviewer's own, better-supported argument.
+
+Confirmed spec-gate-ready: all four blocking findings resolved with concrete diffs and matching new tests; all five advisories resolved in place.
+
+---
+
+## 7. Gate process
+
+requirements-gate (done, PASS) → SPEC v1 → spec-gate round 1 (done, CONDITIONAL PASS, resolved above) → **spec-gate round 2 (recommended, given the number and nature of round-1 findings)** → implementation → self-performed mutation testing → build-gate → PR → CI green → merge, per `CLAUDE.md`'s standing checklist.
