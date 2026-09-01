@@ -1,6 +1,6 @@
 # REQ-PO-002 — Fix `qteToPoConvert()` field-shape mismatch corrupting Quote-converted Purchase Orders
 
-**Status:** v1 — requirements-gate round 1 **CONDITIONAL PASS** (2 blocking findings, both fixed in place; see §8 review-resolution log).
+**Status:** v1 — requirements-gate **PASS** (round 1: CONDITIONAL PASS, 2 blocking findings fixed in place; round 2: CONDITIONAL PASS, 2 non-blocking wording advisories in §7 fixed in place). Ready for SPEC. See §8 review-resolution log.
 
 ---
 
@@ -87,7 +87,7 @@ Per `CLAUDE.md`'s standing checklist: this REQ goes through requirements-gate re
 - `docs/known-gaps.md`: add a new entry (proposed ID `PO-GAP-005`, since `PO-GAP-001`–`004` are already in use) documenting this defect and its fix, cross-referencing `docs/architecture-data-model-v1.md` §6.1 as the source of discovery.
 - `docs/requirements-tracker.md`: add `REQ-PO-002` to the active requirements table with full gate history.
 - `STACKD_CONTEXT.md`/`CLAUDE.md`: standard version-ship updates.
-- `docs/architecture-data-model-v1.md`: §6.1's description of the defect and its consequences, the Quote paragraph in §4.2 that references it, and the §9.4-equivalent (this REQ's own citation fix above; the document's actual sequencing recommendation lives in §8) should be updated to note the defect is fixed as of the version this REQ ships — a small follow-up edit to that document, not part of this REQ's own gate-reviewed diff.
+- `docs/architecture-data-model-v1.md`: §6.1 (the defect description itself) and the `qteToPoConvert()` paragraph in §4.2 (line 114 — the one that describes the defect, not the separate Quote-entity paragraph at line 112) should be updated to note the defect is fixed as of the version this REQ ships. §8's sequencing recommendation (item 1) can stand as-is, since it correctly recommended this fix happen first. All of this is a small follow-up edit to that document, not part of this REQ's own gate-reviewed diff.
 
 ---
 
@@ -100,4 +100,4 @@ Per `CLAUDE.md`'s standing checklist: this REQ goes through requirements-gate re
 
 Advisories also resolved in place: every citation to `docs/architecture-data-model-v1.md` used an ID scheme ("Finding F-01"/"F-04") and section numbers ("§9.4", "Table 2.1/6.1") that do not exist in that document — replaced throughout with the document's real section references (§6.1, §6.4, §4.2 line 114, §8 item 1); AC-1 now explicitly defaults `sku` to `''` rather than leaving it unstated; the `getPOEffectiveDepInfo()` `'USD'`-default citation (`index.html:12029`) was added alongside the two already cited.
 
-**Round 2:** pending re-review of this revision.
+**Round 2: CONDITIONAL PASS, advisories only.** Independently re-verified every fix from round 1 against the real code a second time (line-item shapes, the 5 `backfillInvoicePOs()` call sites, the architecture-doc citations) and found both blocking findings correctly and completely resolved, with no new breakage introduced. Two minor wording advisories in §7 (an unclear self-reference to "§9.4-equivalent," and an ambiguous pointer to "the Quote paragraph in §4.2" when two exist) — both fixed in place above. Confirmed ready for SPEC: every field mapping, the exact migration-detection condition, the removal-key list, and the 5 call sites are specific enough for a SPEC author to write exact diffs without guessing.
