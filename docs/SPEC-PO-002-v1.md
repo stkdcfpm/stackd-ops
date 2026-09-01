@@ -1,6 +1,6 @@
 # SPEC-PO-002 — Fix `qteToPoConvert()` field-shape mismatch corrupting Quote-converted Purchase Orders
 
-**Status:** v1 — draft, pending spec-gate.
+**Status:** v1 — spec-gate **CONDITIONAL PASS**, advisories only (no blocking findings; the reviewer independently applied this SPEC's full diff to a scratch copy and ran the real 681-test suite plus both required mutation tests, reaching 687/687 passing). All 3 advisories fixed in place — see §7 review-resolution log.
 **Implements:** `docs/REQ-PO-002-v1.md` (requirements-gate PASS, round 1 CONDITIONAL PASS with 2 blocking findings fixed in place, round 2 CONDITIONAL PASS with 2 wording advisories fixed in place).
 **Touches:** `index.html` only (no `Code.gs`, no schema change beyond the migration itself, no `FIELD_MAPS` entry — `FIELD_MAPS.po` already correctly names `date`/`cur`, matching REQ §3's explicit non-goal).
 
@@ -185,11 +185,11 @@ test('qteToPoConvert() builds PO with correct field names, not lines/dt/currency
   ctx.EI.qt = 'qt11';
   ctx.qteToPoConvert();
   var po = ctx.DB.po[0];
-  assert(!po.lines, 'no stray lines key');
-  assert(!po.dt, 'no stray dt key');
-  assert(!po.currency, 'no stray currency key');
-  assert(!po.fpm, 'no stray fpm key');
-  assert(!po.rec, 'no stray rec key');
+  assert(!('lines' in po), 'no stray lines key');
+  assert(!('dt' in po), 'no stray dt key');
+  assert(!('currency' in po), 'no stray currency key');
+  assert(!('fpm' in po), 'no stray fpm key');
+  assert(!('rec' in po), 'no stray rec key');
   assertEqual(po.date, ctx.today(), 'date field set (not dt)');
   assertEqual(po.cur, 'EUR', 'cur field carries Quote currency (not currency)');
   assertEqual(po.fpmFunded, 0, 'fpmFunded defaults to 0 (not fpm)');
@@ -238,7 +238,7 @@ test('migrateQtePoShape() converts a legacy (pre-fix) qteToPoConvert()-shaped PO
   }];
   ctx.migrateQtePoShape();
   var po = ctx.DB.po[0];
-  assert(!po.lines && !po.dt && !po.currency && !po.fpm && !po.rec, 'legacy keys removed');
+  assert(!('lines' in po) && !('dt' in po) && !('currency' in po) && !('fpm' in po) && !('rec' in po), 'legacy keys removed');
   assertEqual(po.date, '2026-01-15', 'dt migrated to date');
   assertEqual(po.cur, 'GBP', 'currency migrated to cur');
   assertEqual(po.fpmFunded, 0, 'fpm migrated to fpmFunded');
@@ -278,7 +278,7 @@ test('migrateQtePoShape() does not touch an ordinary autoPos()-created PO with n
 });
 ```
 
-**Mutation-testing requirement for the four `migrateQtePoShape()` tests above:** temporarily revert §2's diff alone (function absent), confirm all four fail (three with "not a function," the fourth trivially since nothing changes), then restore — proving these are exercising real, load-bearing code, not vacuous assertions.
+**Mutation-testing requirement for the four `migrateQtePoShape()` tests above:** temporarily revert §2's diff alone, leaving §3's 5 call sites in place (function called but not defined), confirm all four target tests fail with `migrateQtePoShape is not a function`, then restore. **Expect collateral noise, not a new defect:** with §2 removed but §3 still calling it, every one of the 5 call sites throws a `ReferenceError` the moment it runs — this cascades into roughly two dozen unrelated pre-existing tests (`pullAll()`, `doImport()`, the PO import tests, etc.) failing alongside the 4 intended targets, since they all exercise a function that now calls something undefined. This collateral failure count is the expected, correct signature of this specific mutation (function body removed, call sites intact) — it confirms the wiring in §3 is real and load-bearing, not evidence of an unrelated regression. Restore §2 immediately after confirming the pattern.
 
 **AC-6 (call-site wiring) is verified by direct citation against the diff at build-gate, not by a runtime test** — matching exactly how requirements-gate round 1 itself verified `backfillInvoicePOs()`'s own 5 call sites (by reading source, not by exercising `pullAll()`'s live network path, which would require mocking the Apps Script HTTP layer this REQ does not otherwise touch). The build-gate reviewer should independently re-grep for `migrateQtePoShape()` and confirm exactly 5 call sites, each immediately following an existing `backfillInvoicePOs()` call, per §3 above.
 
@@ -288,7 +288,17 @@ test('migrateQtePoShape() does not touch an ordinary autoPos()-created PO with n
 
 Per `CLAUDE.md`'s standing checklist and REQ-PO-002 §6/§7:
 - Version bump (next: v2.9.72), test count, in-app changelog, `docs/version-history.md`.
-- `docs/known-gaps.md`: add `PO-GAP-005` documenting this defect (fixed), cross-referencing `docs/architecture-data-model-v1.md` §6.1.
+- `docs/known-gaps.md`: add `PO-GAP-005` documenting this defect (fixed), cross-referencing `docs/architecture-data-model-v1.md` §6.1. Per spec-gate advisory 3 (§7 below), also log a new, separate, **open, accepted** entry for the narrow pre-existing edge case spec-gate found: `processImport()`'s CSV Purchase-Order-update branch (`index.html:8256-8270`) replaces a matched existing PO with an entirely new object literal rather than merging, so re-importing a CSV whose PO # column exactly matches an already-existing, program-generated `PO-<quoteNum>...` number would silently destroy that PO's line-item data (`lineItems: existing.lineItems` evaluates to `undefined` on the replacement literal) before `migrateQtePoShape()` ever runs. Predates this REQ, is not introduced or worsened by it, and is out of this REQ's scope to fix.
 - `docs/requirements-tracker.md`: add `REQ-PO-002` to the active requirements table with full gate history.
 - `STACKD_CONTEXT.md`/`CLAUDE.md`: standard version-ship updates.
 - `docs/architecture-data-model-v1.md`: update §6.1 and the `qteToPoConvert()` paragraph in §4.2 (line 114) to note the defect is fixed as of this version — separate, docs-only follow-up commit on this same PR, not part of the gate-reviewed `index.html`/`tests/run.js` diff above.
+
+---
+
+## 7. Review-resolution log
+
+**Spec-gate: CONDITIONAL PASS, advisories only.** The reviewer independently verified every citation and, going beyond reading, applied this SPEC's complete diff (§1-§5) to a scratch copy of `index.html`/`tests/run.js` and ran the project's real test harness — 687/687 passing (681 baseline + 6 new). Both required mutation tests were executed for real, not merely reasoned about: reverting §1 alone reproduced the exact predicted AC-3 failure (`cPL.length`: expected 1, got 0); removing `migrateQtePoShape()`'s body alone (§3's call sites intact) produced the predicted `is not a function` failures on all 4 target tests. A full-file grep confirmed `po.lines`/`po.dt`/`po.currency`/`po.fpm`/`po.rec` are never read anywhere else in the codebase, and that no code path other than `qteToPoConvert()` ever writes a `lines` key onto a `DB.po` record — confirming the migration's detection condition is safe and this fix is isolated. Three non-blocking advisories, all fixed in place:
+
+1. **Weaker-than-necessary "stray key" assertions at the document level** (`!po.fpm` instead of `!('fpm' in po)`, etc.) — inconsistent with the already-strict line-item-level checks in the same tests, and would not catch a hypothetical future regression that left `fpm:0`/`rec:false` behind instead of deleting the key outright. **Fixed:** both the AC-1/AC-2 test (§5) and the migration-conversion test (§5) now use `'key' in obj` presence checks at the document level, matching the line-item-level checks already present.
+2. **The §5 mutation-test instructions for `migrateQtePoShape()` undersold the collateral effect of that specific mutation** — reverting the function body while leaving §3's 5 call sites in place throws in every one of those 5 call paths, cascading into roughly two dozen unrelated pre-existing tests failing alongside the 4 intended targets. **Fixed:** §5 now states this explicitly, so a build-gate reviewer repeating the mutation isn't confused by the collateral failure count into thinking something unrelated broke.
+3. **A narrow, pre-existing, out-of-scope edge case was found**, unrelated to and predating this REQ: `processImport()`'s CSV PO-update branch replaces a matched PO with a fresh object literal rather than merging, which could destroy a legacy PO's line data via a specific number-collision re-import scenario before this REQ's migration ever sees it. **Resolved by disclosure, not by fixing:** logged as a new, separate, open/accepted `known-gaps.md` entry alongside `PO-GAP-005` in §6 above — correctly out of scope for this REQ to fix, per the reviewer's own assessment.
