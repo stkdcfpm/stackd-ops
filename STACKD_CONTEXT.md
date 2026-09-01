@@ -12,7 +12,7 @@
 |-------|-------|
 | Last updated | 31 August 2026 (this update covers REQ-DATA-003, built and tested on branch `claude/csv-import-newline-fix`, PR pending at time of writing — code-level facts confirmed by running `node tests/run.js` on that branch; REQ-AI-GAP-011/v2.9.70 is confirmed merged to `main` via PR #120) |
 | Current version | v2.9.72 |
-| Test count | 681 / 681 passing (confirmed by re-running the suite, not just read from source) |
+| Test count | 687 / 687 passing (confirmed by re-running the suite, not just read from source) |
 | Build branch | main |
 | Deployment | **GitHub Pages**, custom domain `app.getstackdops.com` (see `CNAME`) — live, not pending |
 | CI/CD | GitHub Actions (`qa.yml`) — runs `node tests/run.js` on every push/PR to main |
