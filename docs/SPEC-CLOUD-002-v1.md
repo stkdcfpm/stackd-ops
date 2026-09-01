@@ -1,0 +1,865 @@
+# SPEC-CLOUD-002 — Extend Cloud Data (Supabase) to Line Item and Contact
+
+**Status:** v1 — drafted against `docs/REQ-CLOUD-002-v1.md` (requirements-gate PASS). Ready for spec-gate.
+
+---
+
+## 0. Design decision: the Supplier-migration-completion precondition (REQ-CLOUD-002 §1 point 3)
+
+REQ-CLOUD-002 deliberately left open *how* to check "has Supplier's migration actually completed" (as opposed to merely "`_sb` is truthy"), since no such flag exists anywhere in the codebase today. Two mechanisms were weighed:
+
+1. **A dedicated `migration_markers` Supabase table**, written once by `migrateSuppliersBuyersToSupabase()` on completion, read by the new precondition check. Rejected: it needs a backfill statement to retroactively mark already-migrated production deployments (the marker can't exist before this SPEC ships), it's schema surface the REQ's own §3 explicitly discourages ("a per-entity migration-completed flag as a reusable general mechanism"), and it still needs a live-Supabase-query fallback anyway for the same edge case below — so it adds a table without removing the need for the simpler check.
+2. **A direct, live Supabase query** — `_sb.from('suppliers').select('*').is('deleted_at', null)` (the exact call shape `refreshSupFromSupabase()` already makes) — treating "at least one non-deleted Supplier row exists in Supabase" as proof migration has run. **Chosen.**
+
+Option 2 is correct for the property that actually matters here: this check must hold across every device sharing the same Supabase project (that's the entire point of Cloud Data), and a live query against the shared database is authoritative in a way no local flag can be — `st_cloud_migration_ts` (localStorage) is per-browser and would wrongly block a second device that never ran the migration itself but is looking at an already-migrated project.
+
+**Known, accepted limitation** (documented here, not filed as a known-gap — it is a direct, narrow consequence of REQ-CLOUD-002 §3's explicit scope boundary, not a defect): a Supabase project with **zero** Suppliers ever inserted — including one where `migrateSuppliersBuyersToSupabase()` was run against an empty local Supplier list — will report "not complete" and block Line Item/Contact migration indefinitely. This requires a business with no Suppliers at all wanting to migrate Contacts (Line Item is moot here — `vLI()` already requires a valid local `supId`, so a zero-Supplier install cannot have any Line Items to migrate in the first place). Workaround if ever hit: migrate one real Supplier first.
+
+```js
+async function isSupplierMigrationComplete() {
+  if (!_sb) return false;
+  var result = await _sb.from('suppliers').select('*').is('deleted_at', null);
+  return !!(result.data && result.data.length > 0);
+}
+```
+
+Insert this new function immediately after `refreshBuyFromSupabase()` closes (`index.html:5459`), before `findDuplicateSupplierNames()`.
+
+---
+
+## 1. New SQL migration: `supabase/migrations/0002_line_items_contacts.sql`
+
+Follows `0001_suppliers_buyers.sql`'s exact pattern (uuid PK, soft-delete via `deleted_at`, `authenticated`-only RLS, no delete policy). Two deliberate departures, both required by REQ-CLOUD-002e: **no** unique index on `line_items.sku`, and **no** uniqueness constraint of any kind on `contacts` (email or name) — Contact's dedup stays the existing soft, client-side, edit-time check. `"desc"` is quoted because `DESC` is a reserved SQL keyword.
+
+```sql
+-- SPEC-CLOUD-002: extends the Cloud Data shared-database layer (SPEC-CLOUD-001)
+-- to Line Item and Contact.
+--
+-- Deliberately NOT following 0001's unique-name-index pattern for either table:
+-- line_items.sku is non-unique by design (REQ-CLOUD-002e; docs/data-model.md:37),
+-- and Contact has no hard uniqueness constraint today (soft email dedup only,
+-- CON-GAP-002) which this migration must not silently turn into a hard one.
+
+create table line_items (
+  id             uuid primary key default gen_random_uuid(),
+  num            text not null unique,
+  sku            text,
+  "desc"         text,
+  specs          text,
+  hs             text,
+  sup_id         uuid not null references suppliers(id),
+  uom            text,
+  cost           numeric,
+  price          numeric,
+  currency       text,
+  notes          text,
+  dg             boolean not null default false,
+  dims           jsonb,
+  price_history  jsonb not null default '[]'::jsonb,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  deleted_at     timestamptz
+);
+
+create table contacts (
+  id                 uuid primary key default gen_random_uuid(),
+  num                text not null unique,
+  name               text not null,
+  email              text not null,
+  phone              text,
+  company            text,
+  status             text,
+  source             text,
+  gdpr_basis         text,
+  created_at         timestamptz not null default now(),
+  last_contacted_at  timestamptz,
+  enquiries          jsonb not null default '[]'::jsonb,
+  notes              text,
+  supplier_id        uuid references suppliers(id),
+  role               text,
+  updated_at         timestamptz not null default now(),
+  deleted_at         timestamptz
+);
+
+alter table line_items enable row level security;
+alter table contacts   enable row level security;
+
+create policy "authenticated read" on line_items for select using (auth.role() = 'authenticated');
+create policy "authenticated write" on line_items for insert with check (auth.role() = 'authenticated');
+create policy "authenticated update" on line_items for update using (auth.role() = 'authenticated');
+create policy "authenticated read" on contacts for select using (auth.role() = 'authenticated');
+create policy "authenticated write" on contacts for insert with check (auth.role() = 'authenticated');
+create policy "authenticated update" on contacts for update using (auth.role() = 'authenticated');
+-- deliberately no delete policy on either table — soft-delete only, enforced by omission
+```
+
+`sup_id` on `line_items` is `not null references suppliers(id)`, matching Line Item's unconditional client-side requirement (`vLI()`); `supplier_id` on `contacts` is nullable, matching its optional FK.
+
+---
+
+## 2. `index.html` changes
+
+### 2.1 `initCloudDataLayer()` — wire in the two new refreshes
+
+Current (`index.html:5421-5428`):
+
+```js
+async function initCloudDataLayer() {
+  initSbClient();
+  if (!_sb) return;
+  if (await ensureSbAuth()) {
+    await refreshSupFromSupabase();
+    await refreshBuyFromSupabase();
+  }
+}
+```
+
+New:
+
+```js
+async function initCloudDataLayer() {
+  initSbClient();
+  if (!_sb) return;
+  if (await ensureSbAuth()) {
+    await refreshSupFromSupabase();
+    await refreshBuyFromSupabase();
+    await refreshLIFromSupabase();
+    await refreshConFromSupabase();
+  }
+}
+```
+
+### 2.2 New `refreshLIFromSupabase()` and `refreshConFromSupabase()`
+
+Insert immediately after `refreshBuyFromSupabase()` closes (`index.html:5459`), before the new `isSupplierMigrationComplete()` from §0.
+
+`refreshLIFromSupabase()` cannot be a naive full-replace like `refreshSupFromSupabase()`: `invoiceRefs[]` is a local-only reverse index (AC-2 — never migrated to a Supabase column, must carry forward unchanged) that would otherwise be silently wiped on every refresh, not just the first one. It is preserved by keying the *current* in-memory `DB.li` by `id` before replacing:
+
+```js
+async function refreshLIFromSupabase() {
+  if (!_sb) return;
+  var result = await _sb.from('line_items').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Line Items from Cloud Data.'); return; }
+  var oldById = {};
+  DB.li.forEach(function(l){ oldById[l.id] = l; });
+  DB.li = result.data.map(function(row){
+    var prev = oldById[row.id];
+    return {
+      id: row.id, num: row.num, sku: row.sku, desc: row.desc, specs: row.specs, hs: row.hs,
+      supId: row.sup_id, uom: row.uom, cost: row.cost, price: row.price, cur: row.currency,
+      notes: row.notes, dg: !!row.dg, dims: row.dims || null, priceHistory: row.price_history || [],
+      invoiceRefs: prev ? (prev.invoiceRefs || []) : []
+    };
+  });
+  sv(K.l, DB.li);
+  rLI();
+}
+
+async function refreshConFromSupabase() {
+  if (!_sb) return;
+  var result = await _sb.from('contacts').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Contacts from Cloud Data.'); return; }
+  DB.con = result.data.map(function(row){
+    return {
+      id: row.id, num: row.num, name: row.name, email: row.email, phone: row.phone,
+      company: row.company, status: row.status, source: row.source, gdprBasis: row.gdpr_basis,
+      createdAt: row.created_at, lastContactedAt: row.last_contacted_at || '',
+      enquiries: row.enquiries || [], notes: row.notes, supplierId: row.supplier_id, role: row.role || ''
+    };
+  });
+  sv(K.co, DB.con);
+  rCon();
+}
+```
+
+Contact needs no such preservation merge — every one of its 15 fields is migrated (AC-3), there is no local-only supplementary field.
+
+### 2.3 `saveLI()` / `delLI()` (`index.html:5735-5770`) — full replacement
+
+The price-history-append and dimension-normalization logic must run identically regardless of `_sb`, so it moves ahead of the branch; only the persistence step differs, mirroring `saveSup()`'s exact mutually-exclusive shape.
+
+```js
+async function saveLI() {
+  if (!vLI()) return;
+  var newCost  = +G('lf-c').value||0;
+  var newPrice = +G('lf-p').value||0;
+  var existing = EI.l ? DB.li.find(function(x){ return x.id===EI.l; }) : null;
+  var history  = (existing && existing.priceHistory) ? existing.priceHistory.slice() : [];
+
+  if (!existing) {
+    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Initial catalogue price' });
+  } else if (newCost !== (+existing.cost||0) || newPrice !== (+existing.price||0)) {
+    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Catalogue price updated' });
+  }
+
+  var diml=+G('lf-diml').value||0, dimw=+G('lf-dimw').value||0, dimh=+G('lf-dimh').value||0;
+  var dims=(diml&&dimw&&dimh)?{l:diml,w:dimw,h:dimh}:(existing&&existing.dims)||null;
+  var dg = !!(G('lf-dg')&&G('lf-dg').checked);
+
+  if (_sb) {
+    if (!(await ensureSbAuth())) return;
+    var row = {
+      sku: G('lf-s').value.trim(), "desc": G('lf-d').value.trim(), specs: G('lf-sp').value.trim(),
+      hs: G('lf-hs').value.trim(), sup_id: G('lf-sup').value, uom: G('lf-u').value.trim(),
+      cost: newCost, price: newPrice, currency: G('lf-cur').value, notes: G('lf-nt').value.trim(),
+      dg: dg, dims: dims, price_history: history
+    };
+    var result;
+    if (EI.l) {
+      result = await _sb.from('line_items').update(row).eq('id', EI.l).select().single();
+    } else {
+      row.num = nextRefNum(DB.li, 'LI');
+      result = await _sb.from('line_items').insert(row).select().single();
+    }
+    if (result.error) { toast('Save failed: ' + result.error.message); return; }
+    closeM('ov-li');
+    await refreshLIFromSupabase();
+    audit(EI.l?'UPDATE':'CREATE','li', result.data.id, result.data);
+    toast('Line item saved'); renderOnboarding();
+    return;
+  }
+
+  var li={id:EI.l||uid(),num:existing?existing.num:nextRefNum(DB.li,'LI'),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history,invoiceRefs:existing?(existing.invoiceRefs||[]):[],dims:dims,dg:dg};
+  if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
+  sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li).catch(function(){});
+}
+
+async function delLI(id) {
+  var invRefs = DB.inv.filter(function(inv){
+    return (inv.lineItems||[]).some(function(li){ return li.lid===id; });
+  });
+  var poRefs = DB.po.filter(function(po){
+    return (po.lineItems||[]).some(function(li){ return li.lid===id; });
+  });
+  var warns = [];
+  if (invRefs.length) warns.push(invRefs.length + ' invoice' + (invRefs.length>1?'s':'') + ' (' + invRefs.map(function(i){return i.num||i.id;}).join(', ') + ')');
+  if (poRefs.length)  warns.push(poRefs.length  + ' purchase order' + (poRefs.length>1?'s':'')  + ' (' + poRefs.map(function(p){return p.num||p.id;}).join(', ') + ')');
+  var msg = 'Delete this line item?';
+  if (warns.length) msg += '\n\nWarning: This item is referenced in:\n  ' + warns.join('\n  ') + '\n\nExisting line entries on those documents will be preserved but the catalogue link will be broken.';
+  if (!confirm(msg)) return;
+
+  if (_sb) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('line_items').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    await refreshLIFromSupabase();
+    toast('Deleted');
+    return;
+  }
+
+  var _liSku = (DB.li.find(function(l){return l.id===id;})||{}).sku||id;
+  DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li); rLI(); toast('Deleted'); await delEnt('li',_liSku).catch(function(){});
+}
+```
+
+`_sb` branches never reach `syncEnt('li',...)`/`delEnt('li',...)` (AC-5) — same mutual-exclusivity as Supplier/Buyer.
+
+### 2.4 `saveCon()` / `delCon()` (`index.html:11398-11488`) — full replacement
+
+`saveCon()`'s early duplicate-merge branch (triggered by `confirm()` on a matching email, before the main record is even built) also needs `_sb`-awareness, since it currently persists via a bare `sv(K.co, DB.con)`. Also becomes `async` (it already calls nothing async today, but now needs `ensureSbAuth()`/Supabase calls); `delCon()` likewise becomes `async`. Neither has any existing caller that awaits them — both are invoked as plain `onclick` handlers already, consistent with `saveLI`/`saveSup`'s existing async-handler pattern.
+
+```js
+async function saveCon() {
+  var name   = G('ct-name').value.trim();
+  var email  = G('ct-email').value.trim();
+  var status = G('ct-status').value;
+  if (!name)  { vErr('ct-name',  'Name is required');  return; }
+  if (!email) { vErr('ct-email', 'Email is required'); return; }
+  vOk('ct-name'); vOk('ct-email');
+
+  var enqSummary = G('ct-enq-summary').value.trim();
+
+  if (!EI.co) {
+    var dup = DB.con.find(function(c){
+      return c.email.toLowerCase() === email.toLowerCase();
+    });
+    if (dup) {
+      var doMerge = confirm('A contact with this email already exists (' + dup.name + '). Merge this enquiry into the existing record?');
+      if (doMerge) {
+        dup.enquiries = dup.enquiries || [];
+        if (enqSummary) dup.enquiries.push({ id: uid(), ts: new Date().toISOString(), summary: enqSummary, source: 'manual' });
+        dup.lastContactedAt = new Date().toISOString();
+        if (_sb) {
+          if (!(await ensureSbAuth())) return;
+          var mergeResult = await _sb.from('contacts').update({ enquiries: dup.enquiries, last_contacted_at: dup.lastContactedAt }).eq('id', dup.id);
+          if (mergeResult.error) { toast('Merge failed: ' + mergeResult.error.message); return; }
+          await refreshConFromSupabase();
+        } else {
+          sv(K.co, DB.con);
+        }
+        closeM('ov-con');
+        rCon();
+        toast('Enquiry merged into existing contact');
+        return;
+      }
+      if (!confirm('Create a separate contact record for this email address anyway?')) return;
+    }
+  }
+
+  var gdprBasis = (['lead','qualified'].indexOf(status) >= 0) ? 'pre_contract' : 'legitimate_interests';
+  var existC = EI.co ? DB.con.find(function(x){ return x.id === EI.co; }) : null;
+  var enqs = existC ? ((existC.enquiries || []).slice()) : [];
+  if (enqSummary) enqs.push({ id: uid(), ts: new Date().toISOString(), summary: enqSummary, source: 'manual' });
+
+  var phone = G('ct-phone').value.trim(), company = G('ct-company').value.trim();
+  var source = G('ct-source').value, notes = G('ct-notes').value.trim();
+  var supplierId = G('ct-sup').value || null;
+  var role = supplierId ? 'supplier_contact' : '';
+  var createdAt = existC ? (existC.createdAt || new Date().toISOString()) : new Date().toISOString();
+  var lastContactedAt = enqSummary ? new Date().toISOString() : (existC ? (existC.lastContactedAt || '') : '');
+  var prevStatus = existC ? existC.status : null;
+
+  if (_sb) {
+    if (!(await ensureSbAuth())) return;
+    var row = {
+      name: name, email: email, phone: phone, company: company, status: status, source: source,
+      gdpr_basis: gdprBasis, created_at: createdAt, last_contacted_at: lastContactedAt || null,
+      enquiries: enqs, notes: notes, supplier_id: supplierId, role: role
+    };
+    var result;
+    if (EI.co) {
+      result = await _sb.from('contacts').update(row).eq('id', EI.co).select().single();
+    } else {
+      row.num = nextRefNum(DB.con, 'CON');
+      result = await _sb.from('contacts').insert(row).select().single();
+    }
+    if (result.error) { toast('Save failed: ' + result.error.message); return; }
+    closeM('ov-con');
+    await refreshConFromSupabase();
+    if (prevStatus !== null && prevStatus !== status) {
+      logEv('contact', result.data.id, 'status_changed', 'Status changed to ' + status, 'user');
+    } else if (enqSummary) {
+      logEv('contact', result.data.id, 'note_added', 'Enquiry note added', 'user');
+    } else {
+      logEv('contact', result.data.id, EI.co?'updated':'created', EI.co?'Contact details updated':'Contact created', 'user');
+    }
+    toast('Contact saved');
+    return;
+  }
+
+  var con = {
+    id:              EI.co || uid(),
+    num:             existC ? existC.num : nextRefNum(DB.con, 'CON'),
+    name:            name,
+    email:           email,
+    phone:           phone,
+    company:         company,
+    status:          status,
+    source:          source,
+    gdprBasis:       gdprBasis,
+    createdAt:       createdAt,
+    lastContactedAt: lastContactedAt,
+    enquiries:       enqs,
+    notes:           notes,
+    supplierId:      supplierId,
+    role:            role
+  };
+
+  if (EI.co) {
+    var idx = DB.con.findIndex(function(x){ return x.id === EI.co; });
+    if (idx >= 0) DB.con[idx] = con; else DB.con.push(con);
+    if (prevStatus !== null && prevStatus !== con.status) {
+      logEv('contact', con.id, 'status_changed', 'Status changed to ' + con.status, 'user');
+    } else if (enqSummary) {
+      logEv('contact', con.id, 'note_added', 'Enquiry note added', 'user');
+    } else {
+      logEv('contact', con.id, 'updated', 'Contact details updated', 'user');
+    }
+  } else {
+    DB.con.push(con);
+    logEv('contact', con.id, 'created', 'Contact created', 'user');
+  }
+  sv(K.co, DB.con);
+  syncEnt('co', con).catch(function(){});
+  closeM('ov-con');
+  rCon();
+  toast('Contact saved');
+}
+
+async function delCon(id) {
+  if (!confirm('Delete this contact? This cannot be undone.')) return;
+
+  if (_sb) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('contacts').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    DB.ord.forEach(function(o){
+      if (o.contactId === id) o.contactId = null;
+      (o.lines||[]).forEach(function(l){
+        (l.rfqResponses||[]).forEach(function(r){ if (r.contactId === id) r.contactId = null; });
+      });
+    });
+    sv(K.ord, DB.ord);
+    logEv('contact', id, 'deleted', 'Contact deleted', 'user');
+    await refreshConFromSupabase();
+    toast('Contact deleted');
+    return;
+  }
+
+  DB.con = DB.con.filter(function(c){ return c.id !== id; });
+  DB.ord.forEach(function(o){
+    if (o.contactId === id) o.contactId = null;
+    (o.lines||[]).forEach(function(l){
+      (l.rfqResponses||[]).forEach(function(r){ if (r.contactId === id) r.contactId = null; });
+    });
+  });
+  sv(K.co, DB.con);
+  sv(K.ord, DB.ord);
+  logEv('contact', id, 'deleted', 'Contact deleted', 'user');
+  rCon();
+  toast('Contact deleted');
+}
+```
+
+Note `delCon()`'s local branch never called `delEnt('co', id)` even before this SPEC (verified by direct read of the shipped code) — that pre-existing quirk is preserved unchanged (AC-9: zero regressions), not fixed here since it is out of REQ-CLOUD-002's scope.
+
+### 2.5 `migrateLineItemsToSupabase()` — new function
+
+Insert immediately after `migrateSuppliersBuyersToSupabase()` closes (`index.html:5565`).
+
+```js
+async function migrateLineItemsToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+  if (!(await isSupplierMigrationComplete())) { toast('Migrate Suppliers to Cloud Data first — every Line Item requires a Supplier link.'); return; }
+
+  // REQ-CLOUD-002g: sku is non-unique by design (REQ-CLOUD-002e) — no field exists
+  // to pre-flight-scan for conflicts. Documented no-op, not an oversight.
+
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  var liIdMap = {};
+  for (var i = 0; i < DB.li.length; i++) {
+    var l = DB.li[i];
+    var result = await _sb.from('line_items').insert({
+      num: l.num, sku: l.sku, "desc": l.desc, specs: l.specs, hs: l.hs,
+      sup_id: l.supId, uom: l.uom, cost: l.cost, price: l.price, currency: l.cur,
+      notes: l.notes, dg: !!l.dg, dims: l.dims || null, price_history: l.priceHistory || []
+    }).select().single();
+    if (result.error) { toast('Migration failed on line item ' + (l.sku||l.num) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    liIdMap[l.id] = result.data.id;
+  }
+
+  // REQ-CLOUD-002c: exhaustive external-reference sweep
+  DB.inv.forEach(function(inv){ (inv.lineItems||[]).forEach(function(li){ if (liIdMap[li.lid]) li.lid = liIdMap[li.lid]; }); });
+  DB.po.forEach(function(po){ (po.lineItems||[]).forEach(function(li){ if (liIdMap[li.lid]) li.lid = liIdMap[li.lid]; }); });
+  // Quote.lines[].lid is confirmed dead (never populated by any code path, index.html:8794-8796) —
+  // checked anyway, never skipped, per that comment's own stated convention.
+  DB.qt.forEach(function(q){ (q.lines||[]).forEach(function(ql){ if (liIdMap[ql.lid]) ql.lid = liIdMap[ql.lid]; }); });
+  sv(K.i, DB.inv); sv(K.p, DB.po); sv(K.qt, DB.qt);
+
+  // REQ-CLOUD-002d: archive the true pre-migration snapshot BEFORE remapping DB.li's own ids below
+  localStorage.setItem('st_li_pre_migration', localStorage.getItem(K.l));
+  localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+
+  // Remap DB.li's own ids in place so refreshLIFromSupabase()'s invoiceRefs-preserving
+  // merge (keyed by id) finds a match on the very first post-migration refresh.
+  DB.li.forEach(function(l){ if (liIdMap[l.id]) l.id = liIdMap[l.id]; });
+  sv(K.l, DB.li);
+
+  await refreshLIFromSupabase();
+  if (G('cfg-sb-li-restore-btn')) G('cfg-sb-li-restore-btn').style.display = '';
+  toast('Line Item migration complete. Pre-migration data archived for 30 days.');
+}
+```
+
+### 2.6 `migrateContactsToSupabase()` — new function
+
+Insert immediately after `migrateLineItemsToSupabase()` closes.
+
+```js
+async function migrateContactsToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+  if (!(await isSupplierMigrationComplete())) { toast('Migrate Suppliers to Cloud Data first — Contact migration requires Supplier links to already be resolvable in Cloud Data.'); return; }
+
+  // REQ-CLOUD-002g: no hard uniqueness constraint exists on Contact email/name
+  // (REQ-CLOUD-002e) — no field exists to pre-flight-scan for conflicts.
+  // Documented no-op, same reasoning as Line Item.
+
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  var conIdMap = {};
+  for (var i = 0; i < DB.con.length; i++) {
+    var c = DB.con[i];
+    var result = await _sb.from('contacts').insert({
+      num: c.num, name: c.name, email: c.email, phone: c.phone, company: c.company,
+      status: c.status, source: c.source, gdpr_basis: c.gdprBasis, created_at: c.createdAt,
+      last_contacted_at: c.lastContactedAt || null, enquiries: c.enquiries || [], notes: c.notes,
+      supplier_id: c.supplierId || null, role: c.role || ''
+    }).select().single();
+    if (result.error) { toast('Migration failed on contact ' + c.name + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    conIdMap[c.id] = result.data.id;
+  }
+
+  // REQ-CLOUD-002c: exhaustive external-reference sweep
+  DB.ord.forEach(function(o){
+    if (conIdMap[o.contactId]) o.contactId = conIdMap[o.contactId];
+    (o.lines||[]).forEach(function(l){
+      (l.rfqResponses||[]).forEach(function(r){ if (conIdMap[r.contactId]) r.contactId = conIdMap[r.contactId]; });
+    });
+  });
+  DB.qt.forEach(function(q){ if (conIdMap[q.sourceContactId]) q.sourceContactId = conIdMap[q.sourceContactId]; });
+  sv(K.ord, DB.ord); sv(K.qt, DB.qt);
+
+  localStorage.setItem('st_con_pre_migration', localStorage.getItem(K.co));
+  localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+
+  await refreshConFromSupabase();
+  if (G('cfg-sb-con-restore-btn')) G('cfg-sb-con-restore-btn').style.display = '';
+  toast('Contact migration complete. Pre-migration data archived for 30 days.');
+}
+```
+
+Contact needs no own-id remap step (unlike Line Item) — it has no local-only supplementary field for a subsequent refresh to preserve.
+
+### 2.7 Archive/rollback extensions
+
+`restoreFromMigrationArchive()` (Supplier/Buyer) is left untouched. Two new sibling functions, inserted after it (`index.html:5577`), each independently restorable since Line Item and Contact migrate independently:
+
+```js
+function restoreLIMigrationArchive() {
+  var arch = localStorage.getItem('st_li_pre_migration');
+  if (!arch) { toast('No Line Item migration archive available to restore.'); return; }
+  if (!confirm('Restore Line Items to their state immediately before the Supabase migration, and disconnect Cloud Data?\n\nThis does not affect other entities, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect later.')) return;
+  localStorage.setItem(K.l, arch);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+
+function restoreConMigrationArchive() {
+  var arch = localStorage.getItem('st_con_pre_migration');
+  if (!arch) { toast('No Contact migration archive available to restore.'); return; }
+  if (!confirm('Restore Contacts to their state immediately before the Supabase migration, and disconnect Cloud Data?\n\nThis does not affect other entities, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect later.')) return;
+  localStorage.setItem(K.co, arch);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+```
+
+Each disconnects Cloud Data on restore, reusing the exact fix `SPEC-CLOUD-001-v4` proved necessary (REQ-CLOUD-002d) — otherwise the next `initCloudDataLayer()` would silently re-clobber the restore.
+
+`cleanupExpiredMigrationArchive()` (`index.html:5579-5588`) — extend to also expire the two new archive pairs, each independently timed off its own timestamp key:
+
+```js
+function cleanupExpiredMigrationArchive() {
+  var ts = localStorage.getItem('st_cloud_migration_ts');
+  if (ts && (Date.now() - new Date(ts).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_s_pre_migration');
+    localStorage.removeItem('st_bu_pre_migration');
+    localStorage.removeItem('st_cloud_migration_ts');
+  }
+  var liTs = localStorage.getItem('st_li_cloud_migration_ts');
+  if (liTs && (Date.now() - new Date(liTs).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_li_pre_migration');
+    localStorage.removeItem('st_li_cloud_migration_ts');
+  }
+  var conTs = localStorage.getItem('st_con_cloud_migration_ts');
+  if (conTs && (Date.now() - new Date(conTs).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_con_pre_migration');
+    localStorage.removeItem('st_con_cloud_migration_ts');
+  }
+}
+```
+
+### 2.8 Settings UI (`index.html:766-777`, inside the Cloud Data card)
+
+Two new cards inserted immediately after the existing "Cloud Data (Suppliers & Buyers)" card and before "Accounting Export — Field Mapping Reference":
+
+```html
+<div class="card">
+  <div class="ct">Cloud Data (Line Items)</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn btn-g" onclick="migrateLineItemsToSupabase()">Migrate Line Items to Cloud</button>
+    <button class="btn btn-g" id="cfg-sb-li-restore-btn" style="display:none;" onclick="restoreLIMigrationArchive()">Restore Pre-Migration Line Items</button>
+  </div>
+  <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Requires Suppliers to already be migrated to Cloud Data above — every Line Item requires a Supplier link. Uses the same Supabase connection configured above.</p>
+</div>
+<div class="card">
+  <div class="ct">Cloud Data (Contacts)</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn btn-g" onclick="migrateContactsToSupabase()">Migrate Contacts to Cloud</button>
+    <button class="btn btn-g" id="cfg-sb-con-restore-btn" style="display:none;" onclick="restoreConMigrationArchive()">Restore Pre-Migration Contacts</button>
+  </div>
+  <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Requires Suppliers to already be migrated to Cloud Data above, even for Contacts with no Supplier link (see docs/architecture-data-model-v1.md §1 for why). Uses the same Supabase connection configured above.</p>
+</div>
+```
+
+### 2.9 `migrateSuppliersBuyersToSupabase()` — unchanged
+
+Confirmed no changes are needed to the already-shipped CLOUD-001 function itself; the precondition mechanism (§0) reads Supabase live rather than any marker it would need to write.
+
+---
+
+## 3. Tests (`tests/run.js`)
+
+Reuses the existing `mockSb()` harness (`tests/run.js:6972-7015`) unchanged — every new call shape needed (`select().is()`, `insert().select().single()`, `update().eq().select().single()`, bare `update().eq()`) is already supported, since it was deliberately generalized across the 4 shapes the app uses, not hardcoded to Supplier/Buyer's table names. Insert this block after the existing CLOUD-001 test section (after `tests/run.js:7249` or wherever that section currently ends — locate via the `// ── CLOUD DATA` banner comment and insert after its last test).
+
+```js
+// ── CLOUD DATA — Line Item & Contact (SPEC-CLOUD-002) ──
+
+testAsync('isSupplierMigrationComplete — true when Supabase suppliers has rows, false when empty or unconfigured', async function() {
+  ctx._sb = mockSb({ suppliers: { selectData: [{ id: 'u1', name: 'ACME' }] } });
+  assertEqual(await ctx.isSupplierMigrationComplete(), true, 'true when rows exist');
+  ctx._sb = mockSb({ suppliers: { selectData: [] } });
+  assertEqual(await ctx.isSupplierMigrationComplete(), false, 'false when empty');
+  ctx._sb = null;
+  assertEqual(await ctx.isSupplierMigrationComplete(), false, 'false when Cloud Data not configured');
+});
+
+testAsync('migrateLineItemsToSupabase — blocked when Supplier migration has not completed; no insert made', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', supId: 's1', sku: 'SKU1' });
+  ctx._sb = mockSb({ suppliers: { selectData: [] } });
+  await ctx.migrateLineItemsToSupabase();
+  assertEqual(ctx.DB.li[0].id, 'l1', 'Line Item id unchanged — migration never ran');
+});
+
+testAsync('migrateContactsToSupabase — blocked when Supplier migration has not completed; no insert made', async function() {
+  resetDB();
+  ctx.DB.con.push({ id: 'c1', num: 'CON-0001', name: 'Alice', email: 'a@x.com', supplierId: null, enquiries: [], gdprBasis: 'legitimate_interests', createdAt: '', lastContactedAt: '', notes: '', role: '', status: 'lead', source: 'manual' });
+  ctx._sb = mockSb({ suppliers: { selectData: [] } });
+  await ctx.migrateContactsToSupabase();
+  assertEqual(ctx.DB.con[0].id, 'c1', 'Contact id unchanged — migration never ran, even though this Contact has no Supplier link');
+});
+
+testAsync('migrateLineItemsToSupabase — Supplier already migrated: inserts every field, rewrites Invoice/PO lid refs, checks-but-skips dead Quote.lines[].lid, preserves invoiceRefs across the post-migration refresh', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', supId: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, cur: 'USD', notes: '', priceHistory: [{date:'2026-01-01',cost:1,price:2,invoiceRef:'',notes:'Initial catalogue price'}], invoiceRefs: [{ invId: 'INV-1' }], dims: {l:1,w:1,h:1}, dg: true });
+  ctx.DB.inv.push({ id: 'i1', lineItems: [{ lid: 'l1', qty: 1 }] });
+  ctx.DB.po.push({ id: 'p1', lineItems: [{ lid: 'l1', qty: 1 }] });
+  ctx.DB.qt.push({ id: 'q1', lines: [{ lid: 'l1' }] }); // Quote.lines[].lid is dead — checked anyway per AC-4
+
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    line_items: {
+      insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid' }, row); },
+      selectData: [{ id: 'new-li-uuid', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', sup_id: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, currency: 'USD', notes: '', dg: true, dims: {l:1,w:1,h:1}, price_history: [{date:'2026-01-01',cost:1,price:2,invoiceRef:'',notes:'Initial catalogue price'}] }]
+    }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-li-restore-btn');
+
+  await ctx.migrateLineItemsToSupabase();
+
+  var insertCall = sb._calls.find(function(c){ return c.table === 'line_items' && c.op === 'insert'; });
+  assert(insertCall, 'insert called');
+  assertEqual(insertCall.row.dg, true, 'dg included in insert payload');
+  assertEqual(JSON.stringify(insertCall.row.dims), JSON.stringify({l:1,w:1,h:1}), 'dims included in insert payload');
+  assertEqual(insertCall.row.price_history.length, 1, 'priceHistory included in insert payload');
+  assertEqual(insertCall.row.invoiceRefs, undefined, 'invoiceRefs never sent to Supabase — no such column');
+
+  assertEqual(ctx.DB.inv[0].lineItems[0].lid, 'new-li-uuid', 'Invoice lineItems[].lid remapped');
+  assertEqual(ctx.DB.po[0].lineItems[0].lid, 'new-li-uuid', 'PO lineItems[].lid remapped');
+  assertEqual(ctx.DB.qt[0].lines[0].lid, 'l1', 'dead Quote.lines[].lid left as-is — sweep checked it (no crash) but had nothing real to rewrite');
+
+  assertEqual(ctx.DB.li[0].id, 'new-li-uuid', 'Line Item own id remapped to the Supabase-assigned id');
+  assertEqual(JSON.stringify(ctx.DB.li[0].invoiceRefs), JSON.stringify([{ invId: 'INV-1' }]), 'invoiceRefs preserved across the post-migration refresh, not dropped by the Supabase-sourced replacement');
+
+  var archived = JSON.parse(ctx.localStorage.getItem('st_li_pre_migration'));
+  assertEqual(archived[0].id, 'l1', 'pre-migration archive captured the ORIGINAL local id, not the remapped one');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateContactsToSupabase — Supplier already migrated: inserts every field including role/enquiries, rewrites OrderRequest.contactId, nested RFQResponse.contactId, and Quote.sourceContactId', async function() {
+  resetDB();
+  ctx.DB.con.push({ id: 'c1', num: 'CON-0001', name: 'Alice', email: 'a@x.com', phone: '', company: '', status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: '2026-01-01T00:00:00.000Z', lastContactedAt: '', enquiries: [{id:'e1',ts:'2026-01-01',summary:'hi',source:'manual'}], notes: '', supplierId: 'new-sup-uuid', role: 'supplier_contact' });
+  ctx.DB.ord.push({ id: 'o1', contactId: 'c1', lines: [{ rfqResponses: [{ contactId: 'c1' }] }] });
+  ctx.DB.qt.push({ id: 'q1', sourceContactId: 'c1' });
+
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-con-restore-btn');
+
+  await ctx.migrateContactsToSupabase();
+
+  var insertCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'insert'; });
+  assert(insertCall, 'insert called');
+  assertEqual(insertCall.row.role, 'supplier_contact', 'role included in insert payload');
+  assertEqual(insertCall.row.enquiries.length, 1, 'enquiries included in insert payload');
+  assertEqual(insertCall.row.created_at, '2026-01-01T00:00:00.000Z', 'original createdAt preserved, not overwritten by a DB default');
+
+  assertEqual(ctx.DB.ord[0].contactId, 'new-con-uuid', 'OrderRequest.contactId remapped');
+  assertEqual(ctx.DB.ord[0].lines[0].rfqResponses[0].contactId, 'new-con-uuid', 'nested RFQResponse.contactId remapped');
+  assertEqual(ctx.DB.qt[0].sourceContactId, 'new-con-uuid', 'Quote.sourceContactId remapped');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateContactsToSupabase — a Contact with supplierId:null migrates cleanly once Supplier has completed, supplier_id sent as null', async function() {
+  resetDB();
+  ctx.DB.con.push({ id: 'c2', num: 'CON-0002', name: 'Bob', email: 'b@x.com', phone: '', company: '', status: 'lead', source: 'manual', gdprBasis: 'legitimate_interests', createdAt: '', lastContactedAt: '', enquiries: [], notes: '', supplierId: null, role: '' });
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid-2' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-con-restore-btn');
+  await ctx.migrateContactsToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'insert'; });
+  assertEqual(insertCall.row.supplier_id, null, 'supplier_id sent as null, not undefined or a stale local id');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('saveLI — Cloud Data configured: create calls insert with client-generated num but no client-generated id; update calls update().eq(), never insert; local Sheets sync never called', async function() {
+  resetDB();
+  ctx.EI.l = null;
+  ['lf-s','lf-d','lf-sp','lf-hs','lf-sup','lf-u','lf-c','lf-p','lf-cur','lf-nt','lf-diml','lf-dimw','lf-dimh'].forEach(function(id){ mockEl(id); });
+  mockEl('lf-s').value = 'SKU1'; mockEl('lf-d').value = 'Widget'; mockEl('lf-sup').value = 'new-sup-uuid'; mockEl('lf-cur').value = 'USD';
+  var syncCalled = false;
+  ctx.syncEnt = function(){ syncCalled = true; return Promise.resolve(); };
+  var sb = mockSb({ line_items: { insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid' }, row); } } });
+  ctx._sb = sb;
+  await ctx.saveLI();
+  var insertCall = sb._calls.find(function(c){ return c.op === 'insert'; });
+  assert(insertCall, 'insert was called');
+  assert(insertCall.row.num, 'client-generated num present on insert');
+  assertEqual(insertCall.row.id, undefined, 'no client-generated id sent on insert');
+  assertEqual(syncCalled, false, 'syncEnt never called on the _sb path — mutually exclusive with Sheets sync');
+
+  ctx.EI.l = 'new-li-uuid';
+  var sb2 = mockSb({ line_items: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); } } });
+  ctx._sb = sb2;
+  await ctx.saveLI();
+  var updateCall = sb2._calls.find(function(c){ return c.op === 'update'; });
+  var insertCall2 = sb2._calls.find(function(c){ return c.op === 'insert'; });
+  assert(updateCall, 'update was called on edit path');
+  assert(!insertCall2, 'insert never called on edit path');
+});
+
+testAsync('delLI — Cloud Data configured: soft-delete via update({deleted_at}), never a hard delete, never delEnt', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', sku: 'SKU1' });
+  ctx.confirm = function(){ return true; };
+  var delEntCalled = false;
+  ctx.delEnt = function(){ delEntCalled = true; return Promise.resolve(); };
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.delLI('l1');
+  var updateCall = sb._calls.find(function(c){ return c.op === 'update'; });
+  assert(updateCall, 'update called (soft-delete)');
+  assert(updateCall.row.deleted_at, 'deleted_at timestamp set, not a hard delete');
+  assertEqual(delEntCalled, false, 'delEnt never called on the _sb path');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveCon — Cloud Data configured: create calls insert with client-generated num; update calls update().eq(); duplicate-email merge path updates Supabase and never calls sv(K.co,...) directly', async function() {
+  resetDB();
+  ctx.EI.co = null;
+  ['ct-name','ct-email','ct-status','ct-enq-summary','ct-phone','ct-company','ct-source','ct-notes','ct-sup'].forEach(function(id){ mockEl(id); });
+  mockEl('ct-name').value = 'New Contact'; mockEl('ct-email').value = 'new@x.com'; mockEl('ct-status').value = 'lead';
+  var sb = mockSb({ contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid' }, row); } } });
+  ctx._sb = sb;
+  await ctx.saveCon();
+  var insertCall = sb._calls.find(function(c){ return c.op === 'insert'; });
+  assert(insertCall, 'insert was called');
+  assert(insertCall.row.num, 'client-generated num present on insert');
+
+  resetDB();
+  ctx.DB.con.push({ id: 'dup1', name: 'Existing', email: 'dup@x.com', enquiries: [] });
+  ctx.EI.co = null;
+  mockEl('ct-name').value = 'Someone'; mockEl('ct-email').value = 'dup@x.com'; mockEl('ct-status').value = 'lead';
+  mockEl('ct-enq-summary').value = 'follow up';
+  ctx.confirm = function(){ return true; }; // accept the merge prompt
+  var sb2 = mockSb({});
+  ctx._sb = sb2;
+  await ctx.saveCon();
+  var mergeCall = sb2._calls.find(function(c){ return c.op === 'update'; });
+  assert(mergeCall, 'merge path updates Supabase');
+  assertEqual(mergeCall.row.enquiries.length, 1, 'merged enquiry included in the Supabase update payload');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('delCon — Cloud Data configured: soft-delete via update({deleted_at}); local DB.ord contactId and nested rfqResponses[].contactId still nulled', async function() {
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', contactId: 'c1', lines: [{ rfqResponses: [{ contactId: 'c1' }] }] });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.delCon('c1');
+  var updateCall = sb._calls.find(function(c){ return c.op === 'update'; });
+  assert(updateCall, 'update called (soft-delete)');
+  assert(updateCall.row.deleted_at, 'deleted_at timestamp set, not a hard delete');
+  assertEqual(ctx.DB.ord[0].contactId, null, 'OrderRequest.contactId nulled locally');
+  assertEqual(ctx.DB.ord[0].lines[0].rfqResponses[0].contactId, null, 'nested RFQResponse.contactId nulled locally');
+  ctx.confirm = function(){ return false; };
+});
+
+test('restoreLIMigrationArchive / restoreConMigrationArchive — each restores its own key and clears SS.supabaseUrl/supabaseAnonKey independently', function() {
+  resetDB();
+  ctx.localStorage.setItem('st_li_pre_migration', JSON.stringify([{ id: 'orig-li', sku: 'SKU1' }]));
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  ctx.confirm = function(){ return true; };
+  var origReload = ctx.location.reload; ctx.location.reload = function(){};
+  var origSetTimeout = ctx.setTimeout; ctx.setTimeout = function(fn){ fn(); };
+  ctx.restoreLIMigrationArchive();
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.l))[0].id, 'orig-li', 'st_li restored from archive');
+  assertEqual(ctx.SS.supabaseUrl, '', 'supabaseUrl cleared');
+
+  ctx.localStorage.setItem('st_con_pre_migration', JSON.stringify([{ id: 'orig-con', name: 'Alice' }]));
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  ctx.restoreConMigrationArchive();
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.co))[0].id, 'orig-con', 'st_con restored from archive');
+  assertEqual(ctx.SS.supabaseUrl, '', 'supabaseUrl cleared');
+
+  ctx.location.reload = origReload; ctx.setTimeout = origSetTimeout; ctx.confirm = function(){ return false; };
+});
+
+test('cleanupExpiredMigrationArchive — Line Item and Contact archives expire independently of Supplier/Buyer\'s and of each other', function() {
+  var day31 = new Date(Date.now() - 31*86400000).toISOString();
+  var day5  = new Date(Date.now() - 5*86400000).toISOString();
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', day31);
+  ctx.localStorage.setItem('st_li_pre_migration', '[]');
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', day5);
+  ctx.localStorage.setItem('st_con_pre_migration', '[]');
+  ctx.cleanupExpiredMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_li_pre_migration'), null, 'expired Line Item archive removed at day 31');
+  assertEqual(ctx.localStorage.getItem('st_con_pre_migration'), '[]', 'Contact archive at day 5 untouched');
+});
+```
+
+---
+
+## 4. Documentation / housekeeping (on completion)
+
+- `docs/known-gaps.md`: add `CLOUD-GAP-001` — the pre-existing `expAll()`/`doImport()` Cloud Data connection-wipe bug (REQ-CLOUD-002 §3), confirmed still present, logged as open/accepted, not fixed here.
+- `docs/requirements-tracker.md`: add `REQ-CLOUD-002` with full gate history, alongside `REQ-CLOUD-001`/`REQ-PO-002`.
+- `STACKD_CONTEXT.md` / `CLAUDE.md`: version bump, test-count bump, new Cloud Data entities noted.
+- `docs/architecture-data-model-v1.md`: update §2 ("Entity inventory") to mark Line Item and Contact's storage as Supabase-capable; update §4.1's Line Item/Contact narrative; update §8's sequencing recommendation to mark Phase 1's Line Item/Contact step complete.
+- Version bump: next sequential version after v2.9.72 (implementer confirms the exact number at ship time — three files must move together: `<title>`, the nav button label, `AI_SYSTEM_PROMPT`), plus a new changelog entry, taking care with the `<ul>`/`<div>` nesting gotcha `REQ-PO-002`'s housekeeping already hit once.
+
+---
+
+## 5. Traceability
+
+| AC | Implementation | Test |
+|---|---|---|
+| AC-1 | `isSupplierMigrationComplete()` gate in both migrate functions (§0, §2.5, §2.6) | "blocked when Supplier migration has not completed" ×2 |
+| AC-2 | `migrateLineItemsToSupabase()` insert payload, `0002_...sql` (§1, §2.5) | "inserts every field... preserves invoiceRefs" |
+| AC-3 | `migrateContactsToSupabase()` insert payload (§2.6) | "inserts every field including role/enquiries..." |
+| AC-4 | Quote.lines[].lid checked in the sweep (§2.5) | same test, asserts sweep ran and left it untouched |
+| AC-5 | `_sb` branches return before `syncEnt`/`delEnt` (§2.3, §2.4) | saveLI/delLI/saveCon/delCon `_sb`-configured tests |
+| AC-6 | `showBlockingBackupModal()` reused unchanged (§2.5, §2.6) | inherited from CLOUD-001's existing coverage; no new mechanism introduced |
+| AC-7 | `restoreLIMigrationArchive()`/`restoreConMigrationArchive()`, extended `cleanupExpiredMigrationArchive()` (§2.7) | archive/rollback/cleanup tests |
+| AC-8 | `0002_line_items_contacts.sql` has no `sku` unique index, no Contact uniqueness (§1) | schema reviewed at spec-gate; no runtime test possible (SQL isn't executed by `tests/run.js`) |
+| AC-9 | No changes to Supplier/Buyer code paths (§2.9); full existing suite re-run | full `tests/run.js` run, mutation testing on the new code only |
+
+---
+
+## 6. Gate process
+
+requirements-gate (done, PASS) → **this SPEC → spec-gate** → implementation → self-performed mutation testing → build-gate → PR → CI green → merge, per `CLAUDE.md`'s standing checklist.
