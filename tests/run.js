@@ -1263,8 +1263,8 @@ test('qteToPoConvert splits multi-supplier Quote into one PO per supplier (PO-GA
   assertEqual(ctx.DB.qt[0].linkedPOIds.length, 2, 'linkedPOIds has 2 entries');
   var poA = ctx.DB.po.find(function(p){ return p.supId === 'sA'; });
   var poB = ctx.DB.po.find(function(p){ return p.supId === 'sB'; });
-  assertEqual(poA.lines.length, 2, 'supplier A PO has both its lines');
-  assertEqual(poB.lines.length, 1, 'supplier B PO has only its line');
+  assertEqual(poA.lineItems.length, 2, 'supplier A PO has both its lines');
+  assertEqual(poB.lineItems.length, 1, 'supplier B PO has only its line');
   assertEqual(poA.num, 'PO-QTE-0005-1', 'first-appearance supplier gets -1 suffix');
   assertEqual(poB.num, 'PO-QTE-0005-2', 'second supplier gets -2 suffix');
 });
@@ -1280,7 +1280,7 @@ test('qteToPoConvert groups unassigned-supplier lines into their own PO', () => 
   assertEqual(ctx.DB.po.length, 2, 'unassigned-supplier line gets its own PO');
   var poNone = ctx.DB.po.find(function(p){ return p.supId === ''; });
   assert(poNone, 'a PO with empty supId exists');
-  assertEqual(poNone.lines.length, 1, 'unassigned PO has only the unassigned line');
+  assertEqual(poNone.lineItems.length, 1, 'unassigned PO has only the unassigned line');
 });
 
 test('qteToPoConvert avoids PO number collision with a pre-existing manually-typed PO', () => {
@@ -1298,6 +1298,99 @@ test('qteToPoConvert avoids PO number collision with a pre-existing manually-typ
   assert(nums.indexOf('PO-QTE-0007-1a') > -1, 'collision resolved with letter suffix');
   var uniqueNums = new Set(ctx.DB.po.map(function(p){ return p.num; }));
   assertEqual(uniqueNums.size, ctx.DB.po.length, 'no duplicate PO numbers exist');
+});
+
+test('qteToPoConvert() builds PO with correct field names, not lines/dt/currency/fpm/rec (REQ-PO-002 AC-1, AC-2)', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt11', num:'QTE-0011', status:'Accepted', currency:'EUR', lines:[
+    { rid:'r1', supId:'sA', desc:'Item A', qty:3, cost:12.5, uom:'box' },
+  ] }];
+  ctx.EI.qt = 'qt11';
+  ctx.qteToPoConvert();
+  var po = ctx.DB.po[0];
+  assert(!('lines' in po), 'no stray lines key');
+  assert(!('dt' in po), 'no stray dt key');
+  assert(!('currency' in po), 'no stray currency key');
+  assert(!('fpm' in po), 'no stray fpm key');
+  assert(!('rec' in po), 'no stray rec key');
+  assertEqual(po.date, ctx.today(), 'date field set (not dt)');
+  assertEqual(po.cur, 'EUR', 'cur field carries Quote currency (not currency)');
+  assertEqual(po.fpmFunded, 0, 'fpmFunded defaults to 0 (not fpm)');
+  assertEqual(po.fpmRecovered, false, 'fpmRecovered defaults to false (not rec)');
+  var li = po.lineItems[0];
+  assertEqual(li.lid, '', 'line item lid blank');
+  assertEqual(li.sku, '', 'line item sku blank');
+  assertEqual(li.uom, 'box', 'line item uom carried through');
+  assertEqual(li.qty, 3, 'line item qty carried through');
+  assertEqual(li.cost, 12.5, 'line item cost carried through (not up)');
+  assert(!('liId' in li), 'no stray liId key on line item');
+  assert(!('up' in li), 'no stray up key on line item');
+  assert(!('cur' in li), 'no stray per-line cur key');
+});
+
+test('editPO() correctly loads a qteToPoConvert()-created PO\'s line items (REQ-PO-002 AC-3)', () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'qt12', num:'QTE-0012', status:'Accepted', currency:'USD', lines:[
+    { rid:'r1', supId:'sA', desc:'Item A', qty:4, cost:50, uom:'pcs' },
+  ] }];
+  ctx.EI.qt = 'qt12';
+  ctx.qteToPoConvert();
+  var poId = ctx.DB.po[0].id;
+  ctx.editPO(poId);
+  assertEqual(ctx.cPL.length, 1, 'editPO() populates cPL with the real line item, not an empty array');
+  assertEqual(ctx.cPL[0].cost, 50, 'editPO() reads the correct cost value');
+  ctx.calcPO();
+});
+
+test('migrateQtePoShape() converts a legacy (pre-fix) qteToPoConvert()-shaped PO into the correct shape', () => {
+  resetDB();
+  ctx.DB.po = [{
+    id: 'po-legacy-1', num: 'PO-QTE-0099-1', supId: 'sA',
+    invNum: '', invId: '', dt: '2026-01-15', del: '', currency: 'GBP',
+    dep: 0, fpm: 0, rec: false, oth: 0, paymentTerms: '',
+    notes: 'Auto-converted from QTE-0099', status: 'Draft',
+    lines: [{ rid: 'r1', liId: '', desc: 'Old Item', qty: 2, up: 30, uom: 'pcs', cur: 'GBP' }],
+    quoteId: 'qt-legacy', quoteNum: 'QTE-0099',
+  }];
+  ctx.migrateQtePoShape();
+  var po = ctx.DB.po[0];
+  assert(!('lines' in po) && !('dt' in po) && !('currency' in po) && !('fpm' in po) && !('rec' in po), 'legacy keys removed');
+  assertEqual(po.date, '2026-01-15', 'dt migrated to date');
+  assertEqual(po.cur, 'GBP', 'currency migrated to cur');
+  assertEqual(po.fpmFunded, 0, 'fpm migrated to fpmFunded');
+  assertEqual(po.fpmRecovered, false, 'rec migrated to fpmRecovered');
+  var li = po.lineItems[0];
+  assertEqual(li.lid, '', 'liId migrated to blank lid');
+  assertEqual(li.cost, 30, 'up migrated to cost');
+  assertEqual(li.sku, '', 'sku added');
+  assert(!('liId' in li) && !('up' in li) && !('cur' in li), 'legacy line-item keys removed');
+});
+
+test('migrateQtePoShape() is idempotent — a second run is a no-op', () => {
+  resetDB();
+  ctx.DB.po = [{ id:'po-legacy-2', num:'PO-QTE-0098-1', supId:'sA', dt:'2026-01-01', currency:'USD', fpm:0, rec:false, lines:[{ rid:'r1', liId:'', desc:'X', qty:1, up:10, uom:'pcs', cur:'USD' }] }];
+  ctx.migrateQtePoShape();
+  var afterFirst = JSON.stringify(ctx.DB.po[0]);
+  ctx.migrateQtePoShape();
+  assertEqual(JSON.stringify(ctx.DB.po[0]), afterFirst, 'second run produces byte-identical result');
+});
+
+test('migrateQtePoShape() does not touch a PO that already has the correct shape', () => {
+  resetDB();
+  var correct = { id:'po-correct-1', num:'PO-0001', supId:'sA', invNum:'', invId:'', date:'2026-01-01', del:'', cur:'USD', dep:0, fpmFunded:0, fpmRecovered:false, oth:0, paymentTerms:'', notes:'', status:'Draft', lineItems:[{rid:'r1',lid:'',desc:'X',sku:'',uom:'pcs',qty:1,cost:10}] };
+  ctx.DB.po = [Object.assign({}, correct)];
+  ctx.migrateQtePoShape();
+  assertEqual(JSON.stringify(ctx.DB.po[0]), JSON.stringify(correct), 'already-correct PO is byte-identical after migration runs');
+});
+
+test('migrateQtePoShape() does not touch an ordinary autoPos()-created PO with no lines key at all', () => {
+  resetDB();
+  ctx.DB.inv = [{ id:'inv1', num:'INV0001', date:'2026-01-01', lineItems:[{ lid:'li1', desc:'X', qty:1, up:10 }] }];
+  ctx.DB.li = [{ id:'li1', supId:'sA', sku:'SKU1', cost:10 }];
+  ctx.autoPos(ctx.DB.inv[0]);
+  var before = JSON.stringify(ctx.DB.po[0]);
+  ctx.migrateQtePoShape();
+  assertEqual(JSON.stringify(ctx.DB.po[0]), before, 'autoPos()-created PO is untouched');
 });
 
 test('migrateLinkedPOIds converts legacy scalar to array, once, without data loss', () => {
