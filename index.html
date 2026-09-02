@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.74</title>
+<title>Stackd Ops v2.9.75</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.74</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.75</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -805,6 +805,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Independent of Supplier/Contact migration — Order Request Lines and RFQ Responses stay embedded with the Order Request, so no other entity needs to migrate first. Uses the same Supabase connection configured above.</p>
     </div>
     <div class="card">
+      <div class="ct">Cloud Data (Quotes)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="migrateQteToSupabase()">Migrate Quotes to Cloud</button>
+        <button class="btn btn-g" id="cfg-sb-qt-restore-btn" style="display:none;" onclick="restoreQteMigrationArchive()">Restore Pre-Migration Quotes</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Independent of Supplier/Contact/Order Request migration — Quote lines stay embedded with the Quote, so no other entity needs to migrate first. Uses the same Supabase connection configured above.</p>
+    </div>
+    <div class="card">
       <div class="ct">Accounting Export — Field Mapping Reference</div>
       <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Read-only reference. Gaps indicate data not available in Stackd that the platform expects.</p>
       <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Xero Invoice Import</div>
@@ -1294,9 +1302,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.74</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.75</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Cloud Data (Supabase) extended to Quote</strong> (REQ/SPEC-CLOUD-004), Phase 2 sub-phase 2 of 3 of the cross-platform backend migration's deal-pipeline step (`docs/architecture-data-model-v1.md` §8) — Purchase Order (REQ-CLOUD-005) remains deferred as the final future sub-phase. A new Settings → Cloud Data card lets an operator migrate Quotes independently of Supplier/Contact/Order Request — Quote Lines (including nested price-history and source-traceability fields) stay embedded as a single JSONB column on the parent row, with no migration precondition and a real pre-flight duplicate-number scan (Quote's number, unlike Order Request's, is manually editable). Quote is the first entity in this migration series whose own id is referenced <em>outward</em> by other entities — `Order Request.activeQuoteId`, `PurchaseOrder.quoteId`, `Invoice.linkedQuoteId` — so its migration sweeps outward into those fields (matched via its own id-map, never via `Quote.linkedPOIds[]`, which can carry a stale entry per the separately-logged `PO-GAP-007`) in addition to the usual four-function inward retrofit (`migrateSuppliersBuyersToSupabase()`/`migrateLineItemsToSupabase()`/`migrateContactsToSupabase()`/`migrateOrdToSupabase()`, each now also pushing a touched Quote to Supabase if Quote has already migrated) — five cross-phase retrofit sites in total, the first time this series has needed a push running in both directions. Went through requirements-gate (3 rounds — round 1 found the outward-sweep field list incomplete and the corresponding retrofit missing entirely, plus a self-contradictory SQL type; round 2 and 3 each closed one remaining advisory) → spec-gate (2 rounds — round 1 found that wiring the new refresh function unconditionally into the app's startup sequence broke a pre-existing Order Request test and, through it, a second one; an optional-field mapping that assigned `undefined` inside an object literal without actually omitting the key; four new/updated tests that never reached the code they claimed to exercise; and a documentation self-contradiction about where the new tests should live — all fixed and verified by applying every diff to a scratch copy and re-running the real suite, twice, independently reverting the two riskiest fixes each time to confirm they were genuinely load-bearing; round 2 clean, PASS). 18 new tests. Tests: 752/752 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.74</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Cloud Data (Supabase) extended to Order Request</strong> (REQ/SPEC-CLOUD-003), Phase 2 sub-phase 1 of 3 of the cross-platform backend migration's deal-pipeline step (`docs/architecture-data-model-v1.md` §8) — Quote and Purchase Order are deferred as separate future sub-phases (REQ-CLOUD-004/005), a scoping decision made and disclosed up front. A new Settings → Cloud Data card lets an operator migrate Order Requests independently of Supplier/Contact — Order Request Lines and their nested RFQ Responses stay embedded as a single JSONB column on the parent row rather than being promoted to child tables, since nothing outside the parent ever needs to resolve a nested line/RFQ-response id to a new value; only the parent Order Request's own id is swept, into `Quote.lines[].sourceOrdId`. `contact_id`/`active_quote_id` are plain nullable `text` columns with no FK constraint and no migration precondition, since a linked Contact or Quote may not (or, for Quote, cannot yet) have migrated. Eleven call sites that mutate an existing Order Request now share one `persistOrdChange()` helper instead of a bare `sv()`/`saveAll()` — found via three requirements-gate rounds, the last two of which each caught a real missed site (`saveQte()`'s Quote-conversion mutation, both of `delCon()`'s cascade branches, and `executeDataCleanup()`'s renumbering step). Fixed two confirmed, currently-live bugs discovered during this REQ's own research: the Supplier/Buyer migration's external-reference sweep never rewrote RFQ Response `supId`, and neither that sweep nor the Contact migration's sweep pushed an already-migrated Order Request's fix back to Supabase, only to its local mirror. Went through requirements-gate (3 rounds — round 1 found the mutation-site inventory itself was wrong, round 2 caught the missed data-cleanup site, round 3 clean) → spec-gate (3 rounds, the first two both FAIL — round 1 found the SQL schema typed two reference columns `uuid` when real local ids are never RFC-4122 format, the new refresh function was never wired into the app's startup sequence, and `saveOrd()`'s cloud-update path would have silently discarded caller-supplied lines/status/linked-Quote data in favor of stale values; round 2 found the async conversion this REQ required broke 12 tests in the pre-existing 712-test suite in ways neither gate had checked for, plus a second data-wipe risk in the CSV re-importer; round 3 clean). Implementation itself then surfaced two more defects self-caught by mutation-testing pieces neither gate's own test list covered — a `forEach`-to-`for`-loop conversion in the CSV importer needed every internal early-exit converted from a function-ending `return` to a loop-continuing `continue`, and two of the spec-gate fixes above had shipped with no actual regression test proving them. 22 new tests. Tests: 734/734 pass.</li>
@@ -2672,6 +2689,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div id="sb-dup-list" style="font-size:.55rem;"></div>
       <div style="display:flex;justify-content:flex-end;margin-top:14px;">
         <button class="btn btn-g" onclick="closeM('ov-sb-dup')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov-qt-dup" onclick="if(event.target===this)closeM('ov-qt-dup')">
+  <div class="modal" style="max-width:460px;">
+    <div class="mh"><h2 style="font-size:.75rem;">Migration Blocked — Duplicate Quote Numbers</h2><button class="mx" onclick="closeM('ov-qt-dup')">&#215;</button></div>
+    <div class="mb">
+      <div id="qt-dup-list" style="font-size:.55rem;"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-g" onclick="closeM('ov-qt-dup')">Close</button>
       </div>
     </div>
   </div>
@@ -4447,6 +4476,7 @@ async function pullAll() {
   if (_sb) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'sup'; });
   if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'li'; });
   if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'co'; });
+  if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'qt'; });
   var _allPullKeys = ['inv','cn','po'].concat(_simpleEntsForBatch);
 
   var batched = null;
@@ -4536,6 +4566,7 @@ async function pullAll() {
   // for an entity that hasn't actually moved to Cloud Data yet.
   if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'li'; });
   if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'co'; });
+  if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'qt'; });
   var idKeyedEnts = ['sup', 'payments', 'co'];
   for (var ei = 0; ei < simpleEnts.length; ei++) {
     var eKey = simpleEnts[ei];
@@ -5520,6 +5551,7 @@ async function initCloudDataLayer() {
     await refreshLIFromSupabase();
     await refreshConFromSupabase();
     await refreshOrdFromSupabase();
+    await refreshQteFromSupabase();
   }
 }
 
@@ -5611,6 +5643,50 @@ async function refreshOrdFromSupabase() {
   rOrd();
 }
 
+async function refreshQteFromSupabase() {
+  if (!_sb) return;
+  if (DB.qt.length > 0 && !localStorage.getItem('st_qt_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
+  var result = await _sb.from('quotes').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Quotes from Cloud Data.'); return; }
+  DB.qt = result.data.map(function(row){
+    var q = {
+      id: row.id, num: row.num, client: row.client, dt: row.dt, validUntil: row.valid_until,
+      currency: row.currency, freightMode: row.freight_mode, markup: row.markup, status: row.status,
+      notes: row.notes, lines: row.lines || [], linkedPOIds: row.linked_po_ids || [],
+      sourceContactId: row.source_contact_id || '',
+      calc_totalLanded: row.calc_total_landed, calc_sellUSD: row.calc_sell_usd, calc_sellGBP: row.calc_sell_gbp,
+      approvedBy: row.approved_by || '', approvedReason: row.approved_reason || '', approvedAt: row.approved_at || ''
+    };
+    if (row.origin_charges != null) q.originCharges = row.origin_charges;
+    if (row.dest_charges != null) q.destCharges = row.dest_charges;
+    if (row.fpm_admin != null) q.fpmAdmin = row.fpm_admin;
+    return q;
+  });
+  sv(K.qt, DB.qt);
+  if (!localStorage.getItem('st_qt_cloud_migration_ts')) localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  rQte();
+}
+
+async function persistQteChange(qt, skipRefresh) {
+  if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('quotes').update({
+      num: qt.num, client: qt.client, dt: qt.dt, valid_until: qt.validUntil, currency: qt.currency,
+      freight_mode: qt.freightMode, markup: qt.markup, status: qt.status, notes: qt.notes,
+      lines: qt.lines || [], linked_po_ids: qt.linkedPOIds || [], source_contact_id: qt.sourceContactId || null,
+      calc_total_landed: qt.calc_totalLanded, calc_sell_usd: qt.calc_sellUSD, calc_sell_gbp: qt.calc_sellGBP,
+      approved_by: qt.approvedBy || '', approved_reason: qt.approvedReason || '', approved_at: qt.approvedAt || null,
+      origin_charges: qt.originCharges != null ? qt.originCharges : null,
+      dest_charges: qt.destCharges != null ? qt.destCharges : null,
+      fpm_admin: qt.fpmAdmin != null ? qt.fpmAdmin : null
+    }).eq('id', qt.id);
+    if (result.error) { console.warn('[Stackd] persistQteChange: failed to push Quote update for ' + qt.id, result.error.message); return; }
+    if (!skipRefresh) await refreshQteFromSupabase();
+    return;
+  }
+  sv(K.qt, DB.qt);
+}
+
 async function persistOrdChange(ord, skipRefresh) {
   if (_sb && localStorage.getItem('st_ord_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
@@ -5647,6 +5723,22 @@ function showDuplicateConflictModal(dupes) {
   G('sb-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following supplier names are duplicated (case-insensitive) and would violate the cloud database\'s unique-name constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
     dupes.map(function(g){ return '<li>' + g.map(function(s){ return san(s.name); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
   G('ov-sb-dup').classList.add('on');
+}
+
+function findDuplicateQuoteNums(qt) {
+  var groups = {};
+  qt.forEach(function(q){
+    var key = q.num || '';
+    if (!key) return;
+    (groups[key] = groups[key] || []).push(q);
+  });
+  return Object.keys(groups).map(function(k){ return groups[k]; }).filter(function(g){ return g.length > 1; });
+}
+
+function showQteDupConflictModal(dupes) {
+  G('qt-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following Quote numbers are duplicated (exact match) and would violate the cloud database\'s unique-number constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
+    dupes.map(function(g){ return '<li>' + g.map(function(q){ return san(q.num); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
+  G('ov-qt-dup').classList.add('on');
 }
 
 var _sbMigrationResolve = null;
@@ -5721,7 +5813,8 @@ async function migrateSuppliersBuyersToSupabase() {
   }
 
   // REQ-CLOUD-001i: rewrite every existing local reference field
-  DB.qt.forEach(function(q){ (q.lines||[]).forEach(function(l){ if (supIdMap[l.supId]) l.supId = supIdMap[l.supId]; }); });
+  var touchedQteIdsForSup = {};
+  DB.qt.forEach(function(q){ (q.lines||[]).forEach(function(l){ if (supIdMap[l.supId]) { l.supId = supIdMap[l.supId]; touchedQteIdsForSup[q.id] = true; } }); });
   DB.po.forEach(function(p){ if (supIdMap[p.supId]) p.supId = supIdMap[p.supId]; });
   DB.li.forEach(function(l){ if (supIdMap[l.supId]) l.supId = supIdMap[l.supId]; });
   DB.con.forEach(function(c){ if (c.supplierId && supIdMap[c.supplierId]) c.supplierId = supIdMap[c.supplierId]; });
@@ -5745,6 +5838,15 @@ async function migrateSuppliersBuyersToSupabase() {
       if (touchedOrdIdsForSup[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi], true);
     }
     await refreshOrdFromSupabase();
+  }
+
+  // REQ-CLOUD-004e: same cross-phase fix, for Quote — the sv(K.qt, DB.qt) above only
+  // fixes the local mirror if Quote has already migrated to Supabase.
+  if (Object.keys(touchedQteIdsForSup).length) {
+    for (var qi = 0; qi < DB.qt.length; qi++) {
+      if (touchedQteIdsForSup[DB.qt[qi].id]) await persistQteChange(DB.qt[qi], true);
+    }
+    await refreshQteFromSupabase();
   }
 
   // REQ-CLOUD-001k: archive, don't delete, the pre-migration local arrays
@@ -5798,8 +5900,19 @@ async function migrateLineItemsToSupabase() {
   DB.po.forEach(function(po){ (po.lineItems||[]).forEach(function(li){ if (liIdMap[li.lid]) li.lid = liIdMap[li.lid]; }); });
   // Quote.lines[].lid is confirmed dead (never populated by any code path) —
   // checked anyway, never skipped, per index.html's own stated convention there.
-  DB.qt.forEach(function(q){ (q.lines||[]).forEach(function(ql){ if (liIdMap[ql.lid]) ql.lid = liIdMap[ql.lid]; }); });
+  var touchedQteIdsForLi = {};
+  DB.qt.forEach(function(q){ (q.lines||[]).forEach(function(ql){ if (liIdMap[ql.lid]) { ql.lid = liIdMap[ql.lid]; touchedQteIdsForLi[q.id] = true; } }); });
   sv(K.i, DB.inv); sv(K.p, DB.po); sv(K.qt, DB.qt);
+
+  // REQ-CLOUD-004e: cross-phase fix for Quote, same reasoning as the Supplier/Buyer
+  // retrofit — the touched-set will always be empty in practice today (lid is a
+  // confirmed-dead field), but this loop is safe to run unconditionally regardless.
+  if (Object.keys(touchedQteIdsForLi).length) {
+    for (var qi = 0; qi < DB.qt.length; qi++) {
+      if (touchedQteIdsForLi[DB.qt[qi].id]) await persistQteChange(DB.qt[qi], true);
+    }
+    await refreshQteFromSupabase();
+  }
 
   // REQ-CLOUD-002d: archive the true pre-migration snapshot BEFORE remapping DB.li's own ids below
   localStorage.setItem('st_li_pre_migration', localStorage.getItem(K.l));
@@ -5863,7 +5976,8 @@ async function migrateContactsToSupabase() {
       (l.rfqResponses||[]).forEach(function(r){ if (conIdMap[r.contactId]) { r.contactId = conIdMap[r.contactId]; touchedOrdIdsForCon[o.id] = true; } });
     });
   });
-  DB.qt.forEach(function(q){ if (conIdMap[q.sourceContactId]) q.sourceContactId = conIdMap[q.sourceContactId]; });
+  var touchedQteIdsForCon = {};
+  DB.qt.forEach(function(q){ if (conIdMap[q.sourceContactId]) { q.sourceContactId = conIdMap[q.sourceContactId]; touchedQteIdsForCon[q.id] = true; } });
   sv(K.ord, DB.ord); sv(K.qt, DB.qt);
 
   // REQ-CLOUD-003e: same cross-phase fix as migrateSuppliersBuyersToSupabase() — push
@@ -5873,6 +5987,14 @@ async function migrateContactsToSupabase() {
       if (touchedOrdIdsForCon[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi], true);
     }
     await refreshOrdFromSupabase();
+  }
+
+  // REQ-CLOUD-004e: same cross-phase fix, for Quote.
+  if (Object.keys(touchedQteIdsForCon).length) {
+    for (var qi = 0; qi < DB.qt.length; qi++) {
+      if (touchedQteIdsForCon[DB.qt[qi].id]) await persistQteChange(DB.qt[qi], true);
+    }
+    await refreshQteFromSupabase();
   }
 
   localStorage.setItem('st_con_pre_migration', localStorage.getItem(K.co));
@@ -5913,12 +6035,23 @@ async function migrateOrdToSupabase() {
   // REQ-CLOUD-003d: exhaustive external-reference sweep — only Quote.lines[].sourceOrdId
   // needs rewriting; sourceOrdLineId/sourceRfqResponseId point at nested children that
   // are never remapped (REQ-CLOUD-003 §1.2) — checked anyway, never silently skipped.
+  var touchedQteIdsForOrd = {};
   DB.qt.forEach(function(q){
     (q.lines||[]).forEach(function(l){
-      if (ordIdMap[l.sourceOrdId]) l.sourceOrdId = ordIdMap[l.sourceOrdId];
+      if (ordIdMap[l.sourceOrdId]) { l.sourceOrdId = ordIdMap[l.sourceOrdId]; touchedQteIdsForOrd[q.id] = true; }
     });
   });
   sv(K.qt, DB.qt);
+
+  // REQ-CLOUD-004e: cross-phase fix for Quote — this is the newest of the four retrofitted
+  // sweeps (built alongside REQ-CLOUD-003, before Quote was Cloud-eligible) and the one
+  // whose original author could not have retrofitted at the time.
+  if (Object.keys(touchedQteIdsForOrd).length) {
+    for (var qi = 0; qi < DB.qt.length; qi++) {
+      if (touchedQteIdsForOrd[DB.qt[qi].id]) await persistQteChange(DB.qt[qi], true);
+    }
+    await refreshQteFromSupabase();
+  }
 
   // Archive the true pre-migration snapshot BEFORE remapping DB.ord's own ids below.
   localStorage.setItem('st_ord_pre_migration', localStorage.getItem(K.ord));
@@ -5930,6 +6063,82 @@ async function migrateOrdToSupabase() {
   await refreshOrdFromSupabase();
   if (G('cfg-sb-ord-restore-btn')) G('cfg-sb-ord-restore-btn').style.display = '';
   toast('Order Request migration complete. Pre-migration data archived for 30 days.');
+}
+
+async function migrateQteToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+
+  // REQ-CLOUD-004b: no Supplier/Contact/Order-Request migration-completion precondition —
+  // sourceContactId/lines[].supId/.lid/.sourceOrdId are either nested inside an opaque
+  // jsonb blob no Postgres constraint can reach, or a plain unconstrained text field.
+
+  // REQ-CLOUD-004g: unlike Order Request's ORD-#### (machine-generated only), Quote's num
+  // is manually editable via the Quote Number field with no case-normalization anywhere —
+  // a real pre-flight duplicate scan is required, not a documented no-op.
+  var qteDupes = findDuplicateQuoteNums(DB.qt);
+  if (qteDupes.length) { showQteDupConflictModal(qteDupes); return; }
+
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  var qteIdMap = {};
+  for (var i = 0; i < DB.qt.length; i++) {
+    var q = DB.qt[i];
+    var result = await _sb.from('quotes').insert({
+      num: q.num, client: q.client, dt: q.dt, valid_until: q.validUntil, currency: q.currency,
+      freight_mode: q.freightMode, markup: q.markup, status: q.status, notes: q.notes,
+      lines: q.lines || [], linked_po_ids: q.linkedPOIds || [], source_contact_id: q.sourceContactId || null,
+      calc_total_landed: q.calc_totalLanded, calc_sell_usd: q.calc_sellUSD, calc_sell_gbp: q.calc_sellGBP,
+      approved_by: q.approvedBy || '', approved_reason: q.approvedReason || '', approved_at: q.approvedAt || null,
+      origin_charges: q.originCharges != null ? q.originCharges : null,
+      dest_charges: q.destCharges != null ? q.destCharges : null,
+      fpm_admin: q.fpmAdmin != null ? q.fpmAdmin : null
+    }).select().single();
+    if (result.error) { toast('Migration failed on Quote ' + (q.num||q.id) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    qteIdMap[q.id] = result.data.id;
+  }
+
+  // REQ-CLOUD-004d: outward sweep — every OTHER entity's field that references Quote.id,
+  // matched directly against the id-map, never through Quote.linkedPOIds[] (which can
+  // already contain a dangling id per PO-GAP-007 — matching linkedPOIds[] itself would
+  // not be robust to that; matching PO/Order-Request/Invoice's own fields directly is).
+  DB.po.forEach(function(p){ if (qteIdMap[p.quoteId]) p.quoteId = qteIdMap[p.quoteId]; });
+  DB.inv.forEach(function(inv){ if (qteIdMap[inv.linkedQuoteId]) inv.linkedQuoteId = qteIdMap[inv.linkedQuoteId]; });
+  sv(K.p, DB.po); sv(K.i, DB.inv);
+
+  var touchedOrdIdsForQte = {};
+  DB.ord.forEach(function(o){
+    if (qteIdMap[o.activeQuoteId]) { o.activeQuoteId = qteIdMap[o.activeQuoteId]; touchedOrdIdsForQte[o.id] = true; }
+  });
+  sv(K.ord, DB.ord);
+
+  // Outward cross-phase retrofit (REQ-CLOUD-004e): PurchaseOrder.quoteId/Invoice.linkedQuoteId
+  // above are safe as plain local fixes — neither entity has a Supabase table. Order
+  // Request is different: it already has one (REQ-CLOUD-003), and refreshOrdFromSupabase()
+  // fires from at least eight call sites once Order Request has migrated (an ordinary
+  // saveOrd()/delOrd(), persistOrdChange() itself by default, delCon()'s cascade,
+  // executeDataCleanup(), the other retrofit sweeps) — any of which could run within
+  // seconds of this migration completing. A purely-local activeQuoteId fix left in place
+  // past this point would be silently reverted by whichever fires first. Pushed here,
+  // synchronously, before this function returns.
+  if (Object.keys(touchedOrdIdsForQte).length) {
+    for (var oi = 0; oi < DB.ord.length; oi++) {
+      if (touchedOrdIdsForQte[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi], true);
+    }
+    await refreshOrdFromSupabase();
+  }
+
+  // Archive the true pre-migration snapshot BEFORE remapping DB.qt's own ids below.
+  localStorage.setItem('st_qt_pre_migration', localStorage.getItem(K.qt));
+  localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+
+  DB.qt.forEach(function(q){ if (qteIdMap[q.id]) q.id = qteIdMap[q.id]; });
+  sv(K.qt, DB.qt);
+
+  await refreshQteFromSupabase();
+  if (G('cfg-sb-qt-restore-btn')) G('cfg-sb-qt-restore-btn').style.display = '';
+  toast('Quote migration complete. Pre-migration data archived for 30 days.');
 }
 
 function restoreFromMigrationArchive() {
@@ -5981,6 +6190,18 @@ function restoreOrdMigrationArchive() {
   setTimeout(function(){ location.reload(); }, 1200);
 }
 
+function restoreQteMigrationArchive() {
+  var arch = localStorage.getItem('st_qt_pre_migration');
+  if (!arch) { toast('No Quote migration archive available to restore.'); return; }
+  if (!confirm('Restore Quotes to their state immediately before the Supabase migration?\n\nThis does not change Suppliers, Buyers, Line Items, Contacts, Order Requests, or any other document data, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected for ALL entities, not just Quotes — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect any of them afterwards.')) return;
+  localStorage.setItem(K.qt, arch);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  localStorage.removeItem('st_qt_cloud_migration_ts');
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+
 function cleanupExpiredMigrationArchive() {
   var ts = localStorage.getItem('st_cloud_migration_ts');
   if (ts && (Date.now() - new Date(ts).getTime()) / 86400000 > 30) {
@@ -6002,6 +6223,11 @@ function cleanupExpiredMigrationArchive() {
   if (ordTs && (Date.now() - new Date(ordTs).getTime()) / 86400000 > 30) {
     localStorage.removeItem('st_ord_pre_migration');
     localStorage.removeItem('st_ord_cloud_migration_ts');
+  }
+  var qtTs = localStorage.getItem('st_qt_cloud_migration_ts');
+  if (qtTs && (Date.now() - new Date(qtTs).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_qt_pre_migration');
+    localStorage.removeItem('st_qt_cloud_migration_ts');
   }
 }
 
@@ -9553,7 +9779,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.74).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.75).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -9578,7 +9804,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Suppliers',
   'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes. Each supplier is auto-assigned a SUP-#### reference number on creation (see Reference Numbers above).',
-  'Cloud Data (REQ/SPEC-CLOUD-001/002/003): Settings → Cloud Data lets an operator connect a shared Supabase database. Each of Supplier/Buyer, Line Item, Contact, and Order Request migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Quote and Purchase Order are not yet Cloud-Data-eligible — they, and every other entity, stay local-only regardless of what has migrated. Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s lines and RFQ Responses migrate embedded with their parent record — no separate migration or precondition for them, and they can migrate independently of whether Contact has. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
+  'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004): Settings → Cloud Data lets an operator connect a shared Supabase database. Each of Supplier/Buyer, Line Item, Contact, Order Request, and Quote migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Purchase Order is not yet Cloud-Data-eligible — it, and every other entity, stays local-only regardless of what has migrated. Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them, and each can migrate independently of whether Supplier, Contact, or the other has. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
   '',
   '## Line Items (Product Catalogue)',
   'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox. Each line item is auto-assigned an LI-#### reference number on creation (see Reference Numbers above).',
@@ -10385,6 +10611,7 @@ function rCfg() {
   if(G('cfg-sb-li-restore-btn')) G('cfg-sb-li-restore-btn').style.display = localStorage.getItem('st_li_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-con-restore-btn')) G('cfg-sb-con-restore-btn').style.display = localStorage.getItem('st_con_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-ord-restore-btn')) G('cfg-sb-ord-restore-btn').style.display = localStorage.getItem('st_ord_cloud_migration_ts') ? '' : 'none';
+  if(G('cfg-sb-qt-restore-btn')) G('cfg-sb-qt-restore-btn').style.display = localStorage.getItem('st_qt_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-lang')) G('cfg-lang').value = _lang;
   rCoBrand();
   qteFillRates();
@@ -11741,13 +11968,38 @@ async function saveQte() {
   if (origOvRaw !== '') qt.originCharges = +origOvRaw;
   if (destOvRaw !== '') qt.destCharges = +destOvRaw;
   if (admOvRaw  !== '') qt.fpmAdmin = +admOvRaw;
-  if (EI.qt) {
-    var idx = DB.qt.findIndex(function(x){ return x.id===EI.qt; });
-    if (idx >= 0) DB.qt[idx] = qt; else DB.qt.push(qt);
+
+  if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var qtRow = {
+      num: qt.num, client: qt.client, dt: qt.dt, valid_until: qt.validUntil, currency: qt.currency,
+      freight_mode: qt.freightMode, markup: qt.markup, status: qt.status, notes: qt.notes,
+      lines: qt.lines || [], linked_po_ids: qt.linkedPOIds || [], source_contact_id: qt.sourceContactId || null,
+      calc_total_landed: qt.calc_totalLanded, calc_sell_usd: qt.calc_sellUSD, calc_sell_gbp: qt.calc_sellGBP,
+      approved_by: qt.approvedBy || '', approved_reason: qt.approvedReason || '', approved_at: qt.approvedAt || null,
+      origin_charges: qt.originCharges != null ? qt.originCharges : null,
+      dest_charges: qt.destCharges != null ? qt.destCharges : null,
+      fpm_admin: qt.fpmAdmin != null ? qt.fpmAdmin : null
+    };
+    var qtResult;
+    if (EI.qt) {
+      qtResult = await _sb.from('quotes').update(qtRow).eq('id', EI.qt).select().single();
+    } else {
+      qtResult = await _sb.from('quotes').insert(qtRow).select().single();
+    }
+    if (qtResult.error) { toast('Save failed: ' + qtResult.error.message); return; }
+    qt.id = qtResult.data.id;
+    await refreshQteFromSupabase();
   } else {
-    DB.qt.push(qt);
+    if (EI.qt) {
+      var idx = DB.qt.findIndex(function(x){ return x.id===EI.qt; });
+      if (idx >= 0) DB.qt[idx] = qt; else DB.qt.push(qt);
+    } else {
+      DB.qt.push(qt);
+    }
+    sv(K.qt, DB.qt);
   }
-  sv(K.qt, DB.qt);
+
   if (cConvertId) {
     var convC = DB.con.find(function(x){ return x.id === cConvertId; });
     if (convC && convC.status !== 'converted') {
@@ -11781,8 +12033,15 @@ async function saveQte() {
 async function delQte(id) {
   if (!confirm('Delete this quote?')) return;
   var q = DB.qt.find(function(x){ return x.id === id; });
-  DB.qt = DB.qt.filter(function(x){ return x.id !== id; });
-  sv(K.qt, DB.qt);
+  if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('quotes').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    await refreshQteFromSupabase();
+  } else {
+    DB.qt = DB.qt.filter(function(x){ return x.id !== id; });
+    sv(K.qt, DB.qt);
+  }
   if (q && q.sourceContactId) {
     var relC = DB.con.find(function(x){ return x.id === q.sourceContactId; });
     if (relC && relC.status === 'converted') {
@@ -12077,7 +12336,7 @@ function openConvertToQuote(contactId) {
 
 // ── QUOTES (continued) ─────────────────────────────────────────
 
-function qteToPoConvert() {
+async function qteToPoConvert() {
   var id = EI.qt;
   if (!id) return;
   var q = DB.qt.find(function(x){ return x.id===id; });
@@ -12122,7 +12381,7 @@ function qteToPoConvert() {
 
   sv(K.p, DB.po);
   q.linkedPOIds = newPOIds;
-  sv(K.qt, DB.qt);
+  await persistQteChange(q);
   G('qt-po-btn').style.display = 'none';
   closeM('ov-qt');
   rQte();

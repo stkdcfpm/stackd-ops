@@ -7753,15 +7753,21 @@ testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-
   ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
   var origInitSbClient = ctx.initSbClient;
   ctx.initSbClient = function(){}; // keep the mock _sb below in place instead of overwriting it with a real client
-  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] } });
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] } });
   var origEnsureAuth = ctx.ensureSbAuth;
   ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
   var called = false;
   var origRefreshOrd = ctx.refreshOrdFromSupabase;
   ctx.refreshOrdFromSupabase = function(){ called = true; return Promise.resolve(); };
+  // SPEC-CLOUD-004 spec-gate round-1 B1 finding: initCloudDataLayer() now also calls
+  // refreshQteFromSupabase() after refreshOrdFromSupabase() — stub it too, or the real
+  // function runs unmocked against DB.qt (empty at this point) and permanently sets
+  // st_qt_cloud_migration_ts, corrupting every later test that touches Quote.
+  var origRefreshQte = ctx.refreshQteFromSupabase;
+  ctx.refreshQteFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
 });
 
@@ -8292,6 +8298,401 @@ testAsync('SPEC-CLOUD-003 test-hygiene cleanup — reset _sb and every Order Req
   ctx._sb = null;
   ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
   ctx.localStorage.removeItem('st_ord_pre_migration');
+});
+
+// ── CLOUD DATA — Quote (SPEC-CLOUD-004) ──
+
+testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirrors the REQ-CLOUD-003 round-1 B2 lesson: wire it in from the start)', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){};
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var called = false;
+  var origRefreshQte = ctx.refreshQteFromSupabase;
+  ctx.refreshQteFromSupabase = function(){ called = true; return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(called, 'initCloudDataLayer() calls refreshQteFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshQteFromSupabase = origRefreshQte;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+  ctx._sb = null;
+});
+
+testAsync('refreshQteFromSupabase — refuses to overwrite real local data when this device has never run the migration; proceeds when local data is empty (second-device case); sets its own marker on success; omits originCharges/destCharges/fpmAdmin keys entirely when Supabase returns null for them', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  ctx.DB.qt.push({ id: 'local-only-qt', num: 'QTE-0001', client: 'Local', lines: [] });
+  ctx._sb = mockSb({ quotes: { selectData: [] } });
+  await ctx.refreshQteFromSupabase();
+  assertEqual(ctx.DB.qt.length, 1, 'real local Quote NOT wiped — this device never ran the migration');
+  assertEqual(ctx.DB.qt[0].id, 'local-only-qt', 'original record untouched');
+
+  resetDB();
+  ctx._sb = mockSb({ quotes: { selectData: [{ id: 'cloud-qt-1', num: 'QTE-0001', client: 'Cloud Client', dt: '2026-01-01', valid_until: '', currency: 'USD', freight_mode: 'LCL', markup: 15, status: 'Draft', notes: '', lines: [], linked_po_ids: [], source_contact_id: null, calc_total_landed: 0, calc_sell_usd: 0, calc_sell_gbp: 0, approved_by: '', approved_reason: '', approved_at: null, origin_charges: null, dest_charges: null, fpm_admin: null }] } });
+  await ctx.refreshQteFromSupabase();
+  assertEqual(ctx.DB.qt.length, 1, 'real Cloud Data correctly loaded');
+  assertEqual(ctx.DB.qt[0].id, 'cloud-qt-1', 'loaded from Supabase');
+  assertEqual('originCharges' in ctx.DB.qt[0], false, 'originCharges key omitted entirely, not set to null, when never overridden');
+  assert(!!ctx.localStorage.getItem('st_qt_cloud_migration_ts'), 'marker set even though this device never ran the migration itself');
+});
+
+testAsync('migrateQteToSupabase — inserts every field, preserves nested lines unchanged including nested ids, sweeps PurchaseOrder.quoteId/Invoice.linkedQuoteId locally and Order Request.activeQuoteId via persistOrdChange when Order Request has migrated', async function() {
+  resetDB();
+  ctx.DB.qt.push({
+    id: 'q1', num: 'QTE-0001', client: 'Acme', dt: '2026-01-01', validUntil: '', currency: 'USD',
+    freightMode: 'LCL', markup: 15, status: 'Accepted', notes: '',
+    lines: [{ rid: 'r1', supId: 's1', desc: 'Widget', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0, markup: 15, priceHistory: [] }],
+    linkedPOIds: [], sourceContactId: 'c1', calc_totalLanded: 10, calc_sellUSD: 12, calc_sellGBP: 9,
+    approvedBy: 'Jane', approvedReason: '', approvedAt: '2026-01-01T00:00:00.000Z'
+  });
+  ctx.DB.po.push({ id: 'po1', num: 'PO-QTE-0001-1', supId: 's1', quoteId: 'q1', quoteNum: 'QTE-0001', lineItems: [] });
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV10001', linkedQuoteId: 'q1', linkedQuoteNum: 'QTE-0001', lineItems: [] });
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: null, stage: 'Quoted', activeQuoteId: 'q1', actions: [], outcome: null, lines: [] });
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString()); // Order Request already migrated
+  ctx.localStorage.setItem(ctx.K.qt, JSON.stringify(ctx.DB.qt)); // migrateQteToSupabase() reads localStorage[K.qt] for its archive step, not ctx.DB.qt directly
+
+  var sb = mockSb({
+    quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); },
+      selectData: [{ id: 'new-qte-uuid', num: 'QTE-0001', client: 'Acme', dt: '2026-01-01', valid_until: '', currency: 'USD',
+        freight_mode: 'LCL', markup: 15, status: 'Accepted', notes: '',
+        lines: [{ rid: 'r1', supId: 's1', desc: 'Widget', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0, markup: 15, priceHistory: [] }],
+        linked_po_ids: [], source_contact_id: 'c1', calc_total_landed: 10, calc_sell_usd: 12, calc_sell_gbp: 9,
+        approved_by: 'Jane', approved_reason: '', approved_at: '2026-01-01T00:00:00.000Z',
+        origin_charges: null, dest_charges: null, fpm_admin: null }] },
+    order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'ord1', num: 'ORD-0001', contact_id: null, stage: 'Quoted', actions: [], active_quote_id: 'new-qte-uuid', outcome: null, lines: [] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-qt-restore-btn');
+
+  await ctx.migrateQteToSupabase();
+
+  var insertCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'insert'; });
+  assert(insertCall, 'insert called');
+  assertEqual(JSON.stringify(insertCall.row.lines), JSON.stringify([{ rid: 'r1', supId: 's1', desc: 'Widget', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0, markup: 15, priceHistory: [] }]), 'nested lines inserted unchanged, including the nested supId — no inward remap performed by this function itself');
+
+  assertEqual(ctx.DB.po[0].quoteId, 'new-qte-uuid', 'PurchaseOrder.quoteId remapped to the new Quote id');
+  assertEqual(ctx.DB.po[0].quoteNum, 'QTE-0001', 'PurchaseOrder.quoteNum confirmed unchanged — business key, not an id');
+  assertEqual(ctx.DB.inv[0].linkedQuoteId, 'new-qte-uuid', 'Invoice.linkedQuoteId remapped to the new Quote id');
+  assertEqual(ctx.DB.inv[0].linkedQuoteNum, 'QTE-0001', 'Invoice.linkedQuoteNum confirmed unchanged');
+
+  var ordUpdateCall = sb._calls.find(function(c){ return c.table === 'order_requests' && c.op === 'update'; });
+  assert(ordUpdateCall, 'Order Request activeQuoteId pushed to Supabase, not just fixed locally, since Order Request has already migrated');
+  assertEqual(ordUpdateCall.row.active_quote_id, 'new-qte-uuid', 'the pushed value is the new Quote id');
+  assertEqual(ctx.DB.ord[0].activeQuoteId, 'new-qte-uuid', 'local Order Request mirror also correct after the trailing refresh');
+
+  assertEqual(ctx.DB.qt[0].id, 'new-qte-uuid', 'Quote own id remapped to the Supabase-assigned id');
+  var archived = JSON.parse(ctx.localStorage.getItem('st_qt_pre_migration'));
+  assertEqual(archived[0].id, 'q1', 'pre-migration archive captured the ORIGINAL local id, not the remapped one');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+});
+
+testAsync('migrateQteToSupabase — does NOT push Order Request via persistOrdChange when Order Request has not itself migrated (local-only fix instead)', async function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', client: 'Acme', status: 'Draft', lines: [] });
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: null, stage: 'Quoted', activeQuoteId: 'q1', actions: [], outcome: null, lines: [] });
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  ctx.localStorage.setItem(ctx.K.qt, JSON.stringify(ctx.DB.qt));
+
+  var sb = mockSb({ quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); } } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-qt-restore-btn');
+
+  await ctx.migrateQteToSupabase();
+
+  var ordCall = sb._calls.find(function(c){ return c.table === 'order_requests'; });
+  assert(!ordCall, 'no Supabase call attempted for order_requests — Order Request has not migrated');
+  assertEqual(ctx.DB.ord[0].activeQuoteId, 'new-qte-uuid', 'activeQuoteId still fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateQteToSupabase — blocked by a duplicate Quote num (exact match); does not insert any row', async function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0099', client: 'A', status: 'Draft', lines: [] });
+  ctx.DB.qt.push({ id: 'q2', num: 'QTE-0099', client: 'B', status: 'Draft', lines: [] });
+  var sb = mockSb({ quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); } } });
+  ctx._sb = sb;
+  mockEl('qt-dup-list');
+  await ctx.migrateQteToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'insert'; });
+  assert(!insertCall, 'migration blocked before any insert');
+});
+
+testAsync('migrateQteToSupabase — migration succeeds when neither Supplier, Contact, nor Order Request has ever been Cloud-migrated (no precondition exists for Quote)', async function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', client: 'A', status: 'Draft', lines: [] });
+  ctx.localStorage.setItem(ctx.K.qt, JSON.stringify(ctx.DB.qt));
+  var sb = mockSb({ quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); } } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-qt-restore-btn');
+  await ctx.migrateQteToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'insert'; });
+  assert(insertCall, 'migration succeeded with nothing else ever migrated — no precondition check exists');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateSuppliersBuyersToSupabase — now also rewrites Quote.lines[].supId, and pushes to Supabase if Quote has already migrated', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
+  ctx.DB.qt.push({ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [{ rid: 'r1', supId: 's1' }] });
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+
+  var sb = mockSb({
+    suppliers: { insertImpl: function(row){ return Object.assign({ id: 'new-sup-uuid' }, row); } },
+    quotes: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [{ rid: 'r1', supId: 'new-sup-uuid' }] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-restore-btn');
+
+  await ctx.migrateSuppliersBuyersToSupabase();
+
+  assertEqual(ctx.DB.qt[0].lines[0].supId, 'new-sup-uuid', 'Quote lines[].supId remapped locally');
+  var qteUpdateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
+  assert(qteUpdateCall, 'the rewritten Quote was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+});
+
+testAsync('migrateLineItemsToSupabase — now also rewrites Quote.lines[].lid when non-dead, and pushes to Supabase if Quote has already migrated', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', supId: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, cur: 'USD', notes: '', priceHistory: [], invoiceRefs: [] });
+  ctx.DB.qt.push({ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [{ rid: 'r1', lid: 'l1' }] });
+  ctx.localStorage.setItem(ctx.K.l, JSON.stringify(ctx.DB.li));
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    line_items: { insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid' }, row); } },
+    quotes: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [{ rid: 'r1', lid: 'new-li-uuid' }] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-li-restore-btn');
+
+  await ctx.migrateLineItemsToSupabase();
+
+  assertEqual(ctx.DB.qt[0].lines[0].lid, 'new-li-uuid', 'Quote lines[].lid remapped locally (field is dead in real data today, but the sweep itself is exercised end-to-end)');
+  var qteUpdateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
+  assert(qteUpdateCall, 'the rewritten Quote was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+});
+
+testAsync('migrateContactsToSupabase — now also rewrites Quote.sourceContactId, and pushes to Supabase if Quote has already migrated', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'new-sup-uuid', name: 'ACME' });
+  ctx.DB.con.push({ id: 'c1', num: 'CON-0001', name: 'Alice', email: 'a@x.com', enquiries: [] });
+  ctx.DB.qt.push({ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [], sourceContactId: 'c1' });
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid' }, row); } },
+    quotes: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [], source_contact_id: 'new-con-uuid' }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-con-restore-btn');
+
+  await ctx.migrateContactsToSupabase();
+
+  assertEqual(ctx.DB.qt[0].sourceContactId, 'new-con-uuid', 'Quote.sourceContactId remapped');
+  var qteUpdateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
+  assert(qteUpdateCall, 'the rewritten Quote was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+});
+
+testAsync('migrateOrdToSupabase — pushes Quote to Supabase for its lines[].sourceOrdId sweep if Quote has already migrated', async function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [{ rid: 'r1', sourceOrdId: 'ord1', sourceOrdLineId: 'line1', sourceRfqResponseId: 'rfq1' }] });
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: null, stage: 'Qualifying', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+
+  var sb = mockSb({
+    order_requests: { insertImpl: function(row){ return Object.assign({ id: 'new-ord-uuid' }, row); } },
+    quotes: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [{ rid: 'r1', sourceOrdId: 'new-ord-uuid', sourceOrdLineId: 'line1', sourceRfqResponseId: 'rfq1' }] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-ord-restore-btn');
+
+  await ctx.migrateOrdToSupabase();
+
+  assertEqual(ctx.DB.qt[0].lines[0].sourceOrdId, 'new-ord-uuid', 'sourceOrdId remapped locally');
+  assertEqual(ctx.DB.qt[0].lines[0].sourceOrdLineId, 'line1', 'sourceOrdLineId confirmed unchanged — nested child id never remapped');
+  var qteUpdateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
+  assert(qteUpdateCall, 'the rewritten Quote was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+});
+
+testAsync('saveQte — Cloud Data configured and Quote migrated: create calls insert with no client-generated id and resets qt.id to the real one before the Contact/Order-Request conversion side effects run; update calls update().eq(); local-only behavior unchanged when not migrated', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Test item', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0 }];
+  saveQteSetup('r1', 10, 0, 15, '');
+  ['qf-origOv','qf-destOv','qf-admOv','qf-approved-by','qf-approved-note'].forEach(function(id){ mockEl(id); });
+  var sb = mockSb({ quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  ctx.cConvertOrdId = null;
+  await ctx.saveQte();
+  var insertCall = sb._calls.find(function(c){ return c.op === 'insert'; });
+  assert(insertCall, 'insert was called');
+  assertEqual(insertCall.row.id, undefined, 'no client-generated id sent on insert');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  ctx.cQL = [{ rid: 'r2', supId: '', desc: 'Test item', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0 }];
+  saveQteSetup('r2', 10, 0, 15, '');
+  ['qf-origOv','qf-destOv','qf-admOv','qf-approved-by','qf-approved-note'].forEach(function(id){ mockEl(id); });
+  ctx._sb = null;
+  await ctx.saveQte();
+  assertEqual(ctx.DB.qt.length, 1, 'local-only path still pushes directly to DB.qt, unchanged');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+});
+
+testAsync('saveQte — Cloud Data configured, cConvertOrdId set: activeQuoteId written to Order Request is the real Supabase-assigned Quote id, not the client-generated placeholder', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Test item', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0 }];
+  saveQteSetup('r1', 10, 0, 15, '');
+  ['qf-origOv','qf-destOv','qf-admOv','qf-approved-by','qf-approved-note'].forEach(function(id){ mockEl(id); });
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: null, stage: 'Qualifying', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.cConvertOrdId = 'ord1';
+  var sb = mockSb({
+    quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); }, selectData: [] },
+    order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  await ctx.saveQte();
+  var ordUpdateCall = sb._calls.find(function(c){ return c.table === 'order_requests' && c.op === 'update'; });
+  assert(ordUpdateCall, 'Order Request pushed');
+  assertEqual(ordUpdateCall.row.active_quote_id, 'new-qte-uuid', 'the real Supabase-assigned Quote id was written, not the client-generated uid() placeholder');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+});
+
+testAsync('delQte — Cloud Data configured and Quote migrated: soft-delete via update({deleted_at}); local-only behavior unchanged when not migrated; Contact-side reversion logic still runs after either branch', async function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  // Contact must NOT be Cloud-migrated for this test's own intent (verifying the LOCAL
+  // Contact-reversion branch) — an earlier, pre-existing test in this file's Line Item &
+  // Contact section (the "second-device" self-marking test for refreshConFromSupabase())
+  // leaves st_con_cloud_migration_ts set with no cleanup of its own, so this cannot be
+  // assumed unset without explicitly clearing it here first.
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.DB.con.push({ id: 'c1', name: 'Bob', email: 'b@b.com', status: 'converted', source: 'manual', gdprBasis: 'legitimate_interests', createdAt: '', lastContactedAt: '', notes: '', phone: '', company: '', enquiries: [] });
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', sourceContactId: 'c1', status: 'Draft', lines: [] });
+  var sb = mockSb({ quotes: { selectData: [] } });
+  ctx._sb = sb;
+  await ctx.delQte('q1');
+  var updateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
+  assert(updateCall, 'update called (soft-delete)');
+  assert(updateCall.row.deleted_at, 'deleted_at timestamp set, not a hard delete');
+  assertEqual(ctx.DB.con[0].status, 'qualified', 'Contact-side reversion logic still ran after the cloud branch');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001' });
+  ctx._sb = null;
+  await ctx.delQte('q1');
+  assertEqual(ctx.DB.qt.length, 0, 'local-only path still filters DB.qt directly, unchanged');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('qteToPoConvert — Cloud Data configured and Quote migrated: linkedPOIds update pushed via persistQteChange; local-only behavior unchanged when not migrated; PO creation itself always stays local regardless', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0010', status: 'Accepted', currency: 'USD', lines: [{ rid: 'r1', supId: 'sA', desc: 'Item A', qty: 1, cost: 10, uom: 'pcs' }] });
+  ctx.EI.qt = 'q1';
+  var sb = mockSb({ quotes: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  mockEl('qt-po-btn');
+  await ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po.length, 1, 'PO still created locally — Purchase Order is not Cloud-Data-eligible');
+  var updateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
+  assert(updateCall, 'linkedPOIds update pushed to Supabase via persistQteChange');
+  assertEqual(updateCall.row.linked_po_ids.length, 1, 'the pushed row carries the new linkedPOIds');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.qt.push({ id: 'q2', num: 'QTE-0011', status: 'Accepted', currency: 'USD', lines: [{ rid: 'r1', supId: 'sA', desc: 'Item A', qty: 1, cost: 10, uom: 'pcs' }] });
+  ctx.EI.qt = 'q2';
+  ctx._sb = null;
+  mockEl('qt-po-btn');
+  await ctx.qteToPoConvert();
+  assertEqual(ctx.DB.qt[0].linkedPOIds.length, 1, 'local-only path still updates DB.qt directly, unchanged');
+});
+
+test('cleanupExpiredMigrationArchive — Quote archive expires independently of Supplier/Buyer/Line Item/Contact/Order Request', function() {
+  var day31 = new Date(Date.now() - 31*86400000).toISOString();
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', day31);
+  ctx.localStorage.setItem('st_qt_pre_migration', '[]');
+  ctx.cleanupExpiredMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_qt_pre_migration'), null, 'expired Quote archive removed at day 31');
+});
+
+test('restoreQteMigrationArchive — restores K.qt and clears SS.supabaseUrl/supabaseAnonKey and its own marker', function() {
+  resetDB();
+  ctx.localStorage.setItem('st_qt_pre_migration', JSON.stringify([{ id: 'orig-qte', num: 'QTE-0001' }]));
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  ctx.confirm = function(){ return true; };
+  var origReload = ctx.location.reload; ctx.location.reload = function(){};
+  var origSetTimeout = ctx.setTimeout; ctx.setTimeout = function(fn){ fn(); };
+  ctx.restoreQteMigrationArchive();
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.qt))[0].id, 'orig-qte', 'st_qt restored from archive');
+  assertEqual(ctx.SS.supabaseUrl, '', 'supabaseUrl cleared');
+  assertEqual(ctx.localStorage.getItem('st_qt_cloud_migration_ts'), null, 'own marker cleared on restore');
+  ctx.location.reload = origReload; ctx.setTimeout = origSetTimeout; ctx.confirm = function(){ return false; };
+});
+
+testAsync('pullAll — drops \'qt\' from the batched pull_all request once its own Cloud Data migration marker is set, independently of every other entity\'s exclusion', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  ctx._sb = mockSb({});
+
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assert(_fetchCallLog[0].entities.indexOf('qt') >= 0, 'qt still requested — its own migration marker is not set yet');
+
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assertEqual(_fetchCallLog[0].entities.indexOf('qt'), -1, 'qt excluded from the batched request once its own migration marker is set');
+
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  ctx.SS.url = '';
+  ctx._sb = null;
+});
+
+testAsync('SPEC-CLOUD-004 test-hygiene cleanup — reset _sb and every Quote Cloud Data migration marker this block may have left set, so later unrelated tests are not affected', async function() {
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_pre_migration');
 });
 
 // ── AI Assistant — Invoice/Line Item/Credit Note actions + Supplier/Buyer read tools (SPEC-AI-GAP-002) ──
