@@ -72,18 +72,21 @@ Opening a Supplier's record shows a **Price History** panel aggregating every pr
 
 Buyer records hold contact details, currency, payment terms, and a credit limit. The credit limit is display-only today — it's shown for reference but doesn't block invoice creation if exceeded. See **Cloud Data** below — if it's configured, the same shared-record behavior applies to Buyers as to Suppliers.
 
-## Cloud Data (Suppliers & Buyers)
+## Cloud Data (Supplier & Buyer, Line Item, Contact, Order Request)
 
-By default, all your data — including Suppliers and Buyers — lives only in your own browser. **Cloud Data** (Settings → Cloud Data) is an optional feature that connects Suppliers and Buyers specifically to a shared Supabase database, so a colleague on a different device or browser sees the exact same Supplier/Buyer records as you. Nothing else in the app (Quotes, Invoices, POs, Contacts, etc.) is affected — those always stay local to each browser.
+By default, all your data lives only in your own browser. **Cloud Data** (Settings → Cloud Data) is an optional feature that connects a shared Supabase database, so a colleague on a different device or browser can see the exact same records as you. It is not a single on/off switch — Supplier & Buyer, Line Item, Contact, and Order Request each migrate independently, on their own schedule, via their own "Migrate ... to Cloud" button in the same settings area. Quote and Purchase Order are not yet Cloud-Data-eligible and always stay local, along with every other entity (Invoices, Shipments, Payments, etc.) regardless of what has migrated.
 
-Once Cloud Data is configured:
+Once Cloud Data is configured (a Supabase URL/key entered once, shared by all entities):
 - The first time you load the app, you'll be asked to sign in (an email/password created specifically for this — separate from anything else in the app).
-- Adding, editing, or deleting a Supplier or Buyer now saves to the shared database instead of just your own browser, and a background refresh keeps your view up to date with anyone else's changes.
-- Everything else about the Supplier/Buyer forms works exactly the same as before — same fields, same validation.
+- For each entity that has been migrated, adding/editing/deleting a record now saves to the shared database instead of just your own browser, and a background refresh keeps your view up to date with anyone else's changes.
+- An entity that has **not yet** been migrated keeps working exactly as before — purely local, no sign-in needed for it.
+- Everything about each entity's forms works exactly the same either way — same fields, same validation.
 
-Moving your **existing** local Suppliers/Buyers into Cloud Data is a one-time, explicit action ("Migrate Suppliers/Buyers to Cloud," Settings → Cloud Data) that requires a full backup export first and automatically updates every reference to those records elsewhere in the app (Quotes, POs, Line Items, Contacts, Invoices). It's safe to undo within 30 days via "Restore Pre-Migration Suppliers/Buyers" in the same settings card.
+Moving your **existing** local records into Cloud Data is a one-time, explicit action per entity ("Migrate Suppliers/Buyers to Cloud," "Migrate Line Items to Cloud," "Migrate Contacts to Cloud," "Migrate Order Requests to Cloud" — each its own button, Settings → Cloud Data) that requires a full backup export first and automatically updates every reference to those records elsewhere in the app. It's safe to undo within 30 days via the matching "Restore Pre-Migration ..." button in the same settings card — restoring one entity disconnects Cloud Data entirely (you'll need to reconnect and re-migrate any other entity you want back in the cloud).
 
-One current limitation: the legacy CSV upload and "Import from Google Sheets" paths for Suppliers don't yet know about Cloud Data — avoid using those two specific import methods for Suppliers once Cloud Data is connected (adding a Supplier through the normal form is unaffected and works correctly).
+Line Item migration requires Suppliers to already be migrated first (every Line Item links to a Supplier). Contact migration requires Suppliers to already be migrated too, even for a Contact with no Supplier link. Order Request has no such requirement — it can migrate independently of Supplier or Contact, at any time, since its Line/RFQ-Response data travels embedded with the parent record rather than needing a separate migration step of its own.
+
+One current limitation: the legacy CSV upload and "Import from Google Sheets" paths for Supplier, Line Item, and Contact don't yet know about Cloud Data — avoid using those import methods for those three entities once Cloud Data is connected (adding a record through the normal form, or importing an Order Request CSV, is unaffected and works correctly).
 
 ## Quotes
 
