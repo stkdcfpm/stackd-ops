@@ -1,6 +1,6 @@
 # SPEC-CLOUD-002 — Extend Cloud Data (Supabase) to Line Item and Contact
 
-**Status:** v1 — spec-gate round 1: CONDITIONAL PASS (4 blocking findings B1-B4, 5 advisories A1-A5), all fixed in place — see §6 review-resolution log. Ready for spec-gate round 2.
+**Status:** v1 — spec-gate round 1: CONDITIONAL PASS (4 blocking findings B1-B4, 5 advisories A1-A5), all fixed. Round 2: CONDITIONAL PASS (1 new blocking finding, 2 advisories), all fixed. See §6 review-resolution log. Ready for implementation.
 
 ---
 
@@ -26,7 +26,28 @@ async function isSupplierMigrationComplete() {
 
 This closes the zero-Supplier lockout on the device that actually ran the migration (using state that already exists today, no new schema) while leaving the live-query fallback fully intact for the case it was chosen to solve: a second device that never ran the Supplier migration locally, looking at an already-migrated project with real Supplier rows in Supabase. The only remaining residual (a zero-Supplier install *and* a different device that never ran the migration locally) is genuinely narrow, unlike the original unqualified claim.
 
-Insert this new function immediately after `refreshBuyFromSupabase()` closes (`index.html:5459`), before `findDuplicateSupplierNames()`.
+**Round-2 spec-gate finding (new blocking, fixed): the local marker is not scoped to a Supabase *project* — it can outlive the project it was true for.** `restoreFromMigrationArchive()` (`index.html:5567-5577`) restores Suppliers/Buyers and disconnects Cloud Data, but never removes `st_cloud_migration_ts`; neither it nor `saveSbConfig()` bind the marker to any project identity. Concretely reachable without ever touching the restore button at all: a device migrates Suppliers to project P (marker set), then an operator later reconfigures Cloud Data to a *different*, empty project Q via `saveSbConfig()` (a plausible real scenario — fixing a misconfigured project, moving staging→prod). `isSupplierMigrationComplete()` now returns `true` from the stale marker alone, without ever querying Q. Line Item is incidentally protected by the §2.5 pre-flight `supId`-resolution check (added for A2), which queries the *actually-connected* project and blocks cleanly — but **Contact had no equivalent check**, so a Contact carrying a real (non-null) `supplierId` UUID from project P would be inserted against project Q's `contacts` table, violate its `supplier_id` FK (referencing Q's `suppliers`, which has no row with P's UUID), and abort the migration mid-loop with the same "not auto-rolled-back" partial-write exposure A2 was built to close off for Line Items.
+
+Two fixes, closing both the root cause and the specific failure mode it enables:
+
+1. **`restoreFromMigrationArchive()` now also clears the marker on restore** (`index.html:5567-5577`) — the one already-shipped function this SPEC's own reasoning traces the staleness to:
+
+```js
+function restoreFromMigrationArchive() {
+  var archS = localStorage.getItem('st_s_pre_migration'), archB = localStorage.getItem('st_bu_pre_migration');
+  if (!archS || !archB) { toast('No migration archive available to restore.'); return; }
+  if (!confirm('Restore Suppliers and Buyers to their state immediately before the Supabase migration, and disconnect Cloud Data?\n\nThis does not affect Quotes, POs, Line Items, Invoices, or Contacts, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect later.')) return;
+  localStorage.setItem(K.s, archS);
+  localStorage.setItem(K.bu, archB);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  localStorage.removeItem('st_cloud_migration_ts'); // (new line) the restore undid the migration this marker attests to — a fresh Supplier migration (to this or any other project) must re-earn it
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+```
+
+2. **`migrateContactsToSupabase()` gets the same defense-in-depth pre-flight check A2 gave Line Items** — this is the fix that actually closes the failure regardless of *how* the marker went stale (restore is only one path; a bare reconfiguration via `saveSbConfig()` without ever touching restore is another, and (1) alone cannot catch that one). See §2.6.
 
 ---
 
@@ -505,6 +526,21 @@ async function migrateContactsToSupabase() {
   // (REQ-CLOUD-002e) — no field exists to pre-flight-scan for conflicts.
   // Documented no-op, same reasoning as Line Item.
 
+  // Round-2 spec-gate finding (new blocking, §0), fixed: isSupplierMigrationComplete()'s
+  // local-marker branch can return true from a stale marker left over from a DIFFERENT,
+  // previously-connected Supabase project (e.g. after a plain reconfiguration via
+  // saveSbConfig() that doesn't go through restoreFromMigrationArchive() at all). A Contact
+  // carrying a real supplierId from that other project would otherwise violate contacts'
+  // supplier_id FK against the currently-connected project and abort the loop mid-batch.
+  // Mirrors the Line Item pre-flight check (A2, §2.5) exactly, verified against the
+  // ACTUALLY-CONNECTED project regardless of what the marker claims.
+  var knownSupIdsForCon = await _sb.from('suppliers').select('*').is('deleted_at', null);
+  if (knownSupIdsForCon.error) { toast('Could not verify Supplier links before migrating: ' + knownSupIdsForCon.error.message); return; }
+  var knownSupIdSetForCon = {};
+  knownSupIdsForCon.data.forEach(function(s){ knownSupIdSetForCon[s.id] = true; });
+  var orphanCon = DB.con.find(function(c){ return c.supplierId && !knownSupIdSetForCon[c.supplierId]; });
+  if (orphanCon) { toast('Migration blocked: Contact ' + orphanCon.name + ' references a Supplier not found in Cloud Data. Fix or clear its Supplier link before migrating.'); return; }
+
   var backupConfirmed = await showBlockingBackupModal();
   if (!backupConfirmed) return;
 
@@ -558,6 +594,7 @@ function restoreLIMigrationArchive() {
   localStorage.setItem(K.l, arch);
   SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
   sv(K.ss, SS);
+  localStorage.removeItem('st_li_cloud_migration_ts'); // the restore undid this device's Line Item migration — re-earning it prevents a stale marker from later letting refreshLIFromSupabase() overwrite the just-restored data against a different/reconfigured project
   toast('Restored and disconnected from Cloud Data. Reloading…');
   setTimeout(function(){ location.reload(); }, 1200);
 }
@@ -569,10 +606,13 @@ function restoreConMigrationArchive() {
   localStorage.setItem(K.co, arch);
   SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
   sv(K.ss, SS);
+  localStorage.removeItem('st_con_cloud_migration_ts'); // same reasoning as the Line Item restore above
   toast('Restored and disconnected from Cloud Data. Reloading…');
   setTimeout(function(){ location.reload(); }, 1200);
 }
 ```
+
+**Round-2 spec-gate finding, applied proactively:** the same stale-marker-outliving-its-project reasoning that motivated clearing `st_cloud_migration_ts` in `restoreFromMigrationArchive()` (§0) applies identically here — without clearing `st_li_cloud_migration_ts`/`st_con_cloud_migration_ts` on their own restores, a subsequent reconnect to a different project would have the §2.2 B1 guard see a stale marker and wrongly permit `refreshLIFromSupabase()`/`refreshConFromSupabase()` to overwrite the just-restored real local data. Both restore functions now clear their own marker.
 
 Each disconnects Cloud Data on restore, reusing the exact fix `SPEC-CLOUD-001-v4` proved necessary (REQ-CLOUD-002d) — otherwise the next `initCloudDataLayer()` would silently re-clobber the restore.
 
@@ -630,9 +670,27 @@ Two new cards inserted immediately after the existing "Cloud Data (Suppliers & B
 </div>
 ```
 
-### 2.9 `pullAll()`'s Sheets-sync exclusion (`index.html:4454-4459`)
+### 2.9 `pullAll()`'s Sheets-sync exclusion (`index.html:4375-4377` and `index.html:4454-4459`)
 
-**Round-1 spec-gate finding (B2), fixed.** Current code:
+**Round-1 spec-gate finding (B2), fixed — round 2 found the fix was applied to only one of two parallel arrays.** `pullAll()` contains **two** separate `_sb`-filtered entity lists, confirmed by direct re-read: `_simpleEntsForBatch` (`index.html:4375-4377`), which decides what's *requested* in the batched `pull_all` call, and `simpleEnts` (`index.html:4454-4459`), which decides what's actually *merged* into `DB`. Supplier's existing exclusion filters **both**. The round-1 fix below only touched the second (merge-gating) array — it doesn't reintroduce the overwrite race the fix targets, since the merge loop is what actually writes `DB.li`/`DB.con`, but it left Line Item/Contact being requested from Sheets indefinitely after migration, half of Supplier's own precedent. Both arrays are now extended identically.
+
+`index.html:4375-4377`, current code:
+
+```js
+var _simpleEntsForBatch = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+if (_sb) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'sup'; });
+```
+
+New:
+
+```js
+var _simpleEntsForBatch = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+if (_sb) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'sup'; });
+if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'li'; });
+if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'co'; });
+```
+
+`index.html:4454-4459`, current code:
 
 ```js
 var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
@@ -811,6 +869,49 @@ testAsync('migrateContactsToSupabase — a Contact with supplierId:null migrates
   ctx.showBlockingBackupModal = origShowBackup;
 });
 
+testAsync('migrateContactsToSupabase — blocked when a Contact\'s supplierId does not resolve against the ACTUALLY-CONNECTED project, even if the stale local completion marker says migration is done (round-2 B3 fix)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString()); // stale marker left over from a different, previously-connected project
+  ctx.DB.con.push({ id: 'c3', num: 'CON-0003', name: 'Carol', email: 'c@x.com', phone: '', company: '', status: 'lead', source: 'manual', gdprBasis: 'legitimate_interests', createdAt: '', lastContactedAt: '', enquiries: [], notes: '', supplierId: 'uuid-from-a-different-project', role: 'supplier_contact' });
+  // The currently-connected project's suppliers table has no such Supplier — proves the
+  // pre-flight check queries live state and isn't fooled by the stale marker that just
+  // let isSupplierMigrationComplete() return true.
+  var sb = mockSb({ suppliers: { selectData: [{ id: 'a-completely-different-real-uuid', name: 'Real Local Supplier' }] }, contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid-3' }, row); } } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migrateContactsToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'insert'; });
+  assert(!insertCall, 'no insert attempted — the orphaned supplierId was caught before the insert loop started, despite the stale marker');
+  assertEqual(ctx.DB.con[0].id, 'c3', 'Contact unchanged');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+});
+
+test('restoreFromMigrationArchive / restoreLIMigrationArchive / restoreConMigrationArchive — each clears its own migration-completion marker on restore (round-2 B3 fix)', function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  var origReload = ctx.location.reload; ctx.location.reload = function(){};
+  var origSetTimeout = ctx.setTimeout; ctx.setTimeout = function(fn){ fn(); };
+
+  ctx.localStorage.setItem('st_s_pre_migration', '[]'); ctx.localStorage.setItem('st_bu_pre_migration', '[]');
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.restoreFromMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_cloud_migration_ts'), null, 'st_cloud_migration_ts cleared so a later reconnect to a different project cannot inherit it');
+
+  ctx.localStorage.setItem('st_li_pre_migration', '[]');
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.restoreLIMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_li_cloud_migration_ts'), null, 'st_li_cloud_migration_ts cleared on its own restore');
+
+  ctx.localStorage.setItem('st_con_pre_migration', '[]');
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.restoreConMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_con_cloud_migration_ts'), null, 'st_con_cloud_migration_ts cleared on its own restore');
+
+  ctx.location.reload = origReload; ctx.setTimeout = origSetTimeout; ctx.confirm = function(){ return false; };
+});
+
 testAsync('saveLI — Cloud Data configured: create calls insert with client-generated num but no client-generated id; update calls update().eq(), never insert; local Sheets sync never called', async function() {
   resetDB();
   ctx.EI.l = null;
@@ -980,29 +1081,39 @@ test('rCfg — Line Item and Contact restore buttons reappear after reload based
   ctx.localStorage.removeItem('st_li_cloud_migration_ts');
 });
 
-testAsync('pullAll — Sheets pull for li/co excluded once each entity\'s own Cloud Data migration has completed, independently of Supplier\'s exclusion and of each other (B2 fix)', async function() {
+testAsync('pullAll — li/co dropped from the batched pull_all request once each entity\'s own Cloud Data migration marker is set, independently of Supplier\'s exclusion and of each other (B2 fix)', async function() {
+  // Round-2 spec-gate fix: this test was originally written against a fictional
+  // ctx.fetchSheetEntity stand-in. pullAll()'s real per-entity Sheets fetch is the
+  // closure-local pulled(entity) function (index.html:4385-4388), which cannot be
+  // intercepted from a test. Rewritten against this file's own existing fetch-mock
+  // machinery (_fetchCallLog, set up at tests/run.js:43-88 and already used by the
+  // pull_all/bulk_upsert_all tests around tests/run.js:2010-2099) — _fetchCallLog[0].entities
+  // is exactly the _allPullKeys array pullAll() sends in its batched pull_all request,
+  // which is built from _simpleEntsForBatch (index.html:4375-4377, the array this fix
+  // extends alongside simpleEnts).
   resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
   ctx.localStorage.removeItem('st_li_cloud_migration_ts');
   ctx.localStorage.removeItem('st_con_cloud_migration_ts');
   ctx._sb = mockSb({});
-  var liPulled = false, coPulled = false;
-  var origFetchSheet = ctx.fetchSheetEntity; // stand-in for whatever per-entity Sheets fetch pullAll() calls per simpleEnts entry
-  ctx.fetchSheetEntity = function(key){ if (key === 'li') liPulled = true; if (key === 'co') coPulled = true; return Promise.resolve([]); };
-  await ctx.pullAll();
-  assert(liPulled, 'li still pulled from Sheets — its own migration marker is not set yet');
-  assert(coPulled, 'co still pulled from Sheets — its own migration marker is not set yet');
 
-  liPulled = false; coPulled = false;
-  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  _fetchCallLog = [];
   await ctx.pullAll();
-  assertEqual(liPulled, false, 'li excluded from Sheets pull once its own migration marker is set');
-  assert(coPulled, 'co still pulled — its own marker is independently unset');
+  assert(_fetchCallLog[0].entities.indexOf('li') >= 0, 'li still requested — its own migration marker is not set yet');
+  assert(_fetchCallLog[0].entities.indexOf('co') >= 0, 'co still requested — its own migration marker is not set yet');
+
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assertEqual(_fetchCallLog[0].entities.indexOf('li'), -1, 'li excluded from the batched request once its own migration marker is set');
+  assert(_fetchCallLog[0].entities.indexOf('co') >= 0, 'co still requested — its own marker is independently unset');
+
   ctx.localStorage.removeItem('st_li_cloud_migration_ts');
-  ctx.fetchSheetEntity = origFetchSheet;
+  ctx.SS.url = '';
 });
 ```
 
-The last test above (`pullAll`) is written against `pullAll()`'s general shape rather than a real, already-named per-entity fetch function — **the implementer must adapt the mock/stand-in (`fetchSheetEntity`) to whatever `pullAll()` actually calls per `simpleEnts` entry** (verify against the live `index.html:4460+` loop body when implementing) while keeping the assertions' intent: `li`/`co` drop out of the Sheets pull once, and only once, their own migration marker is set.
+**Round-2 spec-gate note, resolved:** the `pullAll` test above was originally written against a fictional `ctx.fetchSheetEntity` stand-in that could never actually intercept anything real (`pullAll()`'s real per-entity fetch, `pulled()`, is a closure-local function with no external hook). It is now written against this file's own existing `_fetchCallLog` fetch-mock machinery (`tests/run.js:43-88`, already used by the neighboring `pull_all`/`bulk_upsert_all` tests around `tests/run.js:2010-2099`), which directly observes the real `entities` array `pullAll()` sends — no stand-in needed.
 
 ---
 
@@ -1028,7 +1139,7 @@ The last test above (`pullAll`) is written against `pullAll()`'s general shape r
 | AC-6 | `showBlockingBackupModal()` reused unchanged (§2.5, §2.6) | inherited from CLOUD-001's existing coverage; no new mechanism introduced |
 | AC-7 | `restoreLIMigrationArchive()`/`restoreConMigrationArchive()`, extended `cleanupExpiredMigrationArchive()`, `rCfg()` button-visibility fix (§2.7) | archive/rollback/cleanup tests, `rCfg` restore-button test |
 | AC-8 | `0002_line_items_contacts.sql` has no `sku` unique index, no Contact uniqueness (§1) | schema reviewed at spec-gate; no runtime test possible (SQL isn't executed by `tests/run.js`) |
-| AC-9 | No changes to Supplier/Buyer code paths (§2.10); `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite guard (§2.2); `pullAll()` per-entity Sheets exclusion (§2.9); full existing suite re-run | full `tests/run.js` run, `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite-guard test, `pullAll` exclusion test, mutation testing on the new code only |
+| AC-9 | No changes to Supplier/Buyer code paths (§2.10 unchanged; `restoreFromMigrationArchive()` gets one additive line, §0); `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite guard (§2.2); `pullAll()`'s both entity arrays excluded per-entity (§2.9); Contact pre-flight orphan check mirroring Line Item's (§2.6); full existing suite re-run | full `tests/run.js` run, `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite-guard test, `pullAll` exclusion test (both arrays), Contact orphan/stale-marker test, restore-clears-marker test, mutation testing on the new code only |
 
 ---
 
@@ -1046,10 +1157,18 @@ The last test above (`pullAll`) is written against `pullAll()`'s general shape r
 - **A4 — advisory.** The restore confirm() copy didn't disclose that restoring one entity's archive disconnects Cloud Data globally, dropping the connection for every other Cloud-Data entity too, not just the one being restored. **Fixed:** §2.7 — copy reworded to say so plainly.
 - **A5 — advisory.** Folded into the B3 fix and its writeup above — the "narrow limitation" framing has been replaced with the reviewer's own, better-supported argument.
 
-Confirmed spec-gate-ready: all four blocking findings resolved with concrete diffs and matching new tests; all five advisories resolved in place.
+Confirmed round-1-ready: all four blocking findings resolved with concrete diffs and matching new tests; all five advisories resolved in place.
+
+**Round 2: CONDITIONAL PASS — 1 new blocking finding, 2 advisories, all fixed in place.** Independently re-verified every round-1 fix by re-tracing it against the live code a second time: B1's guard correctly unblocks the migration function's own first-ever refresh (marker is set before that call) and correctly proceeds for a fresh second device with no local data; B4's `rCfg()` lines and B2's original `simpleEnts` fix use the exact right keys and insertion point; A1's rewritten `saveCon()` merge branch is byte-for-byte behaviorally equivalent to the original on the local path and never mutates `dup` before a possible Supabase failure; A2's pre-flight reuses the exact existing query shape correctly. One new blocking finding and two advisories, all novel — not re-litigating round 1's resolved items:
+
+- **New blocking — the local completion marker is not scoped to a Supabase project, so it can outlive the project it was true for.** Traced a concrete, standard-UI-reachable path: a device migrates Suppliers to project P (marker set), an operator later reconfigures Cloud Data to a different, empty project Q via `saveSbConfig()` alone (no restore involved) — `isSupplierMigrationComplete()` returns `true` from the stale marker without ever querying Q, and `migrateContactsToSupabase()` had no equivalent of Line Item's A2 pre-flight check to catch the resulting FK violation against Q's `contacts` table, so it would abort mid-batch. **Fixed:** §2.6 — `migrateContactsToSupabase()` now gets its own pre-flight `supId`-resolution check verified against the actually-connected project, mirroring A2 exactly (this is the fix that actually closes the failure regardless of *how* the marker went stale); §0 and §2.7 additionally clear all three completion markers (`st_cloud_migration_ts`, `st_li_cloud_migration_ts`, `st_con_cloud_migration_ts`) on their respective restores, closing the specific staleness path the reviewer traced to demonstrate the bug.
+- **Advisory — the round-1 B2 fix only extended one of `pullAll()`'s two parallel `_sb`-filtered entity arrays.** `_simpleEntsForBatch` (`index.html:4375-4377`, controls what's *requested*) was left unextended while `simpleEnts` (`index.html:4454-4459`, controls what's *merged*) was fixed — didn't reintroduce the overwrite race (the merge array is what actually gates writes), but left Line Item/Contact being requested from Sheets indefinitely post-migration, half of Supplier's own precedent. **Fixed:** §2.9 — both arrays now extended identically.
+- **Advisory — the round-1 `pullAll` test for B2 was written against a fictional, uninterceptable stand-in (`ctx.fetchSheetEntity`), which the SPEC itself had flagged as speculative but not yet corrected.** Traced `pullAll()`'s real per-entity fetch (`pulled()`, a closure-local function) and confirmed the SPEC's own caveat was right to be suspicious, and more literally broken than "needs renaming." **Fixed:** §3 — rewritten against this test file's own existing `_fetchCallLog` fetch-mock machinery, already used by neighboring tests for the same `pull_all` mechanism.
+
+Confirmed spec-gate-ready: every blocking finding across both rounds resolved with concrete diffs and matching new tests; every advisory resolved in place.
 
 ---
 
 ## 7. Gate process
 
-requirements-gate (done, PASS) → SPEC v1 → spec-gate round 1 (done, CONDITIONAL PASS, resolved above) → **spec-gate round 2 (recommended, given the number and nature of round-1 findings)** → implementation → self-performed mutation testing → build-gate → PR → CI green → merge, per `CLAUDE.md`'s standing checklist.
+requirements-gate (done, PASS) → SPEC v1 → spec-gate round 1 (done, CONDITIONAL PASS, resolved) → spec-gate round 2 (done, CONDITIONAL PASS, resolved above) → **implementation** → self-performed mutation testing → build-gate → PR → CI green → merge, per `CLAUDE.md`'s standing checklist.
