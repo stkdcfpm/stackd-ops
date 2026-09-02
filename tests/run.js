@@ -2205,7 +2205,7 @@ function ordCsv(rows) {
   }).join('\n');
 }
 
-test('processImport ord — 3 rows same Submission ID + existing Contact email produce 1 Order Request with 3 lines', function() {
+testAsync('processImport ord — 3 rows same Submission ID + existing Contact email produce 1 Order Request with 3 lines', async function() {
   resetDB();
   ctx.DB.con = [{ id:'c1', name:'Thorpes Produce Inc', email:'buyer@thorpes.example', status:'qualified', enquiries:[] }];
   var csv = ordCsv([
@@ -2213,7 +2213,7 @@ test('processImport ord — 3 rows same Submission ID + existing Contact email p
     { 'Submission ID':'WEB-1', 'Contact Email':'buyer@thorpes.example', 'Category':'Fresh produce', 'Item/Spec':'Melons' },
     { 'Submission ID':'WEB-1', 'Contact Email':'buyer@thorpes.example', 'Category':'Fresh produce', 'Item/Spec':'Berries' }
   ]);
-  ctx.processImport('ord', csv);
+  await ctx.processImport('ord', csv);
   assertEqual(ctx.DB.con.length, 1, 'no new contact created — existing one matched');
   assertEqual(ctx.DB.ord.length, 1, 'one Order Request created');
   assertEqual(ctx.DB.ord[0].contactId, 'c1');
@@ -2232,14 +2232,14 @@ test('processImport ord — unmatched Contact Email auto-creates a new lead Cont
   assertEqual(ctx.DB.ord[0].contactId, ctx.DB.con[0].id);
 });
 
-test('processImport ord — re-import with a 4th row updates existing Order Request to 4 lines, no duplicate record', function() {
+testAsync('processImport ord — re-import with a 4th row updates existing Order Request to 4 lines, no duplicate record', async function() {
   resetDB();
   var csv1 = ordCsv([
     { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Carrot' },
     { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Beetroot' },
     { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Thyme' }
   ]);
-  ctx.processImport('ord', csv1);
+  await ctx.processImport('ord', csv1);
   assertContains(mockEl('imp-ord-result').textContent, '1 added, 0 updated');
 
   var csv2 = ordCsv([
@@ -2248,7 +2248,7 @@ test('processImport ord — re-import with a 4th row updates existing Order Requ
     { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Thyme' },
     { 'Submission ID':'WEB-3', 'Contact Email':'a@b.example', 'Category':'Seeds', 'Item/Spec':'Cabbage' }
   ]);
-  ctx.processImport('ord', csv2);
+  await ctx.processImport('ord', csv2);
   assertEqual(ctx.DB.ord.length, 1, 'still exactly one Order Request');
   assertEqual(ctx.DB.ord[0].lines.length, 4);
   assertContains(mockEl('imp-ord-result').textContent, '0 added, 1 updated', 'closes the v1 spec-gate counting bug — reintroducing it would report 1 added here');
@@ -6189,12 +6189,12 @@ test('ordAdminOverride: rejects without a reason', () => {
   ctx.ordAdminOverride('o2', 'Fulfilled', '');
   assertEqual(ctx.DB.ord[0].stage, 'New', 'stage unchanged without a reason');
 });
-test('ordAdminOverride: persists stage change and logs event with reason', () => {
+testAsync('ordAdminOverride: persists stage change and logs event with reason', async () => {
   resetDB();
   ctx.DB.ord = [{ id:'o3', num:'ORD-0003', contactId:'c1', stage:'New', actions:[] }];
   mockEl('ord-override-confirm').value = 'CONFIRM';
   var before = ctx.DB.events.length;
-  ctx.ordAdminOverride('o3', 'Fulfilled', 'manual correction');
+  await ctx.ordAdminOverride('o3', 'Fulfilled', 'manual correction');
   assertEqual(ctx.DB.ord[0].stage, 'Fulfilled', 'stage force-changed');
   assert(ctx.DB.events.length > before, 'override logged to event log');
   var evt = ctx.DB.events[ctx.DB.events.length - 1];
@@ -6305,30 +6305,30 @@ test('backfillOrderRequests: Contacts with neither enquiries nor a Quote produce
   assertEqual(ctx.DB.ord.length, 0);
 });
 
-test('saveOrd: new record gets num via nextRefNum, edit does not change it', () => {
+testAsync('saveOrd: new record gets num via nextRefNum, edit does not change it', async () => {
   resetDB();
   ctx.DB.con = [{ id:'c1', name:'Test Contact' }];
-  var rec = ctx.saveOrd({ contactId:'c1', stage:'New', description:'test' });
+  var rec = await ctx.saveOrd({ contactId:'c1', stage:'New', description:'test' });
   assert(rec.num, 'new Order Request gets a num');
   var originalNum = rec.num;
-  ctx.saveOrd({ id: rec.id, contactId:'c1', stage:'Qualifying', description:'updated' });
+  await ctx.saveOrd({ id: rec.id, contactId:'c1', stage:'Qualifying', description:'updated' });
   var updated = ctx.DB.ord.find(function(o){ return o.id === rec.id; });
   assertEqual(updated.num, originalNum, 'num must not change on edit');
   assertEqual(updated.description, 'updated', 'edit applies other field changes');
 });
 
-test('saveOrd: rejects a contactId that does not resolve to an existing Contact', () => {
+testAsync('saveOrd: rejects a contactId that does not resolve to an existing Contact', async () => {
   resetDB();
-  var result = ctx.saveOrd({ contactId:'does-not-exist', stage:'New', description:'test' });
+  var result = await ctx.saveOrd({ contactId:'does-not-exist', stage:'New', description:'test' });
   assertEqual(result, false, 'save is rejected');
   assertEqual(ctx.DB.ord.length, 0, 'no record persisted');
 });
 
-test('saveOrd: rejects a non-adjacent stage change via the normal (non-override) path', () => {
+testAsync('saveOrd: rejects a non-adjacent stage change via the normal (non-override) path', async () => {
   resetDB();
   ctx.DB.con = [{ id:'c1', name:'Test Contact' }];
-  var rec = ctx.saveOrd({ contactId:'c1', stage:'New', description:'test' });
-  var result = ctx.saveOrd({ id: rec.id, contactId:'c1', stage:'Fulfilled', description:'test' });
+  var rec = await ctx.saveOrd({ contactId:'c1', stage:'New', description:'test' });
+  var result = await ctx.saveOrd({ id: rec.id, contactId:'c1', stage:'Fulfilled', description:'test' });
   assertEqual(result, false, 'save is rejected for a skipped transition');
   assertEqual(ctx.DB.ord.find(function(o){ return o.id === rec.id; }).stage, 'New', 'stage unchanged');
 });
@@ -6500,12 +6500,12 @@ test('ordConfirmLineUpdate: applies a specific pending entry and marks it confir
   assert(!line.lineUpdates[1].confirmedBy, 'other pending entry still unconfirmed');
 });
 
-test('ordConfirmLineUpdate: no-op (returns false) if the entry is already confirmed', () => {
+testAsync('ordConfirmLineUpdate: no-op (returns false) if the entry is already confirmed', async () => {
   resetDB();
   var ord = { id:'o1', lines:[ _ordLineFixture() ] };
-  ctx.ordLogLineUpdate(ord, 'l1', 'baseUom', 'kg', 'operator', '', 'operator');
+  await ctx.ordLogLineUpdate(ord, 'l1', 'baseUom', 'kg', 'operator', '', 'operator');
   var entryId = ord.lines[0].lineUpdates[0].id;
-  var result = ctx.ordConfirmLineUpdate(ord, 'l1', entryId);
+  var result = await ctx.ordConfirmLineUpdate(ord, 'l1', entryId);
   assertEqual(result, false, 'already-confirmed entry is a no-op');
 });
 
@@ -6531,46 +6531,46 @@ test('qtyStatus independence: setting baseQty does not auto-flip qtyStatus to Co
   assertEqual(ord.lines[0].qtyStatus, 'Unknown', 'qtyStatus must be set explicitly, not auto-derived');
 });
 
-test('Stage-transition warning: moving to Quoted with Unknown-status lines warns but still saves', () => {
+testAsync('Stage-transition warning: moving to Quoted with Unknown-status lines warns but still saves', async () => {
   resetDB();
   ctx.DB.con = [{ id:'c1', name:'Test' }];
   ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'Qualifying', actions:[], lines:[ _ordLineFixture({ qtyStatus:'Unknown' }) ] }];
-  var result = ctx.saveOrd({ id:'o1', contactId:'c1', stage:'Quoted', lines: ctx.DB.ord[0].lines });
+  var result = await ctx.saveOrd({ id:'o1', contactId:'c1', stage:'Quoted', lines: ctx.DB.ord[0].lines });
   assert(result, 'save succeeds despite the warning');
   assertEqual(ctx.DB.ord[0].stage, 'Quoted', 'stage change applied');
 });
 
-test('Stage-transition warning: moving to Quoted with all lines resolved triggers no warning path issue', () => {
+testAsync('Stage-transition warning: moving to Quoted with all lines resolved triggers no warning path issue', async () => {
   resetDB();
   ctx.DB.con = [{ id:'c1', name:'Test' }];
   ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'Qualifying', actions:[], lines:[ _ordLineFixture({ qtyStatus:'Confirmed' }) ] }];
-  var result = ctx.saveOrd({ id:'o1', contactId:'c1', stage:'Quoted', lines: ctx.DB.ord[0].lines });
+  var result = await ctx.saveOrd({ id:'o1', contactId:'c1', stage:'Quoted', lines: ctx.DB.ord[0].lines });
   assert(result, 'save succeeds');
   assertEqual(ctx.DB.ord[0].stage, 'Quoted');
 });
 
-test('Stage-transition warning: does not fire for any other stage transition', () => {
+testAsync('Stage-transition warning: does not fire for any other stage transition', async () => {
   resetDB();
   ctx.DB.con = [{ id:'c1', name:'Test' }];
   ctx.DB.ord = [{ id:'o1', num:'ORD-0001', contactId:'c1', stage:'New', actions:[], lines:[ _ordLineFixture({ qtyStatus:'Unknown' }) ] }];
-  var result = ctx.saveOrd({ id:'o1', contactId:'c1', stage:'Qualifying', lines: ctx.DB.ord[0].lines });
+  var result = await ctx.saveOrd({ id:'o1', contactId:'c1', stage:'Qualifying', lines: ctx.DB.ord[0].lines });
   assert(result, 'New -> Qualifying unaffected by the Quoted-specific warning');
 });
 
-test('New-record edge case: creating directly at stage Quoted with Unknown lines still runs the warning path without error', () => {
+testAsync('New-record edge case: creating directly at stage Quoted with Unknown lines still runs the warning path without error', async () => {
   resetDB();
   ctx.DB.con = [{ id:'c1', name:'Test' }];
-  var result = ctx.saveOrd({ contactId:'c1', stage:'Quoted', lines:[ _ordLineFixture({ qtyStatus:'Unknown' }) ] });
+  var result = await ctx.saveOrd({ contactId:'c1', stage:'Quoted', lines:[ _ordLineFixture({ qtyStatus:'Unknown' }) ] });
   assert(result, 'new record created directly at Quoted succeeds (warning is non-blocking, and existing is null)');
   assertEqual(ctx.DB.ord[0].stage, 'Quoted');
 });
 
-test('Defensive guard: ordLogLineUpdate/ordConfirmLineUpdate return false, do not throw, when ord.lines is absent', () => {
+testAsync('Defensive guard: ordLogLineUpdate/ordConfirmLineUpdate return false, do not throw, when ord.lines is absent', async () => {
   resetDB();
   var ord = { id:'o1' }; // no lines key at all
-  var r1 = ctx.ordLogLineUpdate(ord, 'l1', 'baseUom', 'kg', 'operator', '', 'operator');
+  var r1 = await ctx.ordLogLineUpdate(ord, 'l1', 'baseUom', 'kg', 'operator', '', 'operator');
   assertEqual(r1, false, 'ordLogLineUpdate returns false rather than throwing');
-  var r2 = ctx.ordConfirmLineUpdate(ord, 'l1', 'u1');
+  var r2 = await ctx.ordConfirmLineUpdate(ord, 'l1', 'u1');
   assertEqual(r2, false, 'ordConfirmLineUpdate returns false rather than throwing');
 });
 
@@ -6991,14 +6991,16 @@ function mockSb(config) {
           return Promise.resolve({ data: created, error: null });
         }
         if (pendingOp === 'update') {
-          if (cfg.updateError) return Promise.resolve({ data: null, error: cfg.updateError });
+          var upErr1 = typeof cfg.updateError === 'function' ? cfg.updateError(pendingRow, pendingId) : cfg.updateError;
+          if (upErr1) return Promise.resolve({ data: null, error: upErr1 });
           var updated = cfg.updateImpl ? cfg.updateImpl(pendingRow, pendingId) : Object.assign({ id: pendingId }, pendingRow);
           return Promise.resolve({ data: updated, error: null });
         }
         return Promise.resolve({ data: null, error: null });
       },
       then: function(resolveFn, rejectFn) {
-        var error = (pendingOp === 'update' && cfg.updateError) ? cfg.updateError : null;
+        var upErr2 = typeof cfg.updateError === 'function' ? cfg.updateError(pendingRow, pendingId) : cfg.updateError;
+        var error = (pendingOp === 'update' && upErr2) ? upErr2 : null;
         return Promise.resolve({ error: error }).then(resolveFn, rejectFn);
       }
     };
@@ -7743,6 +7745,553 @@ testAsync('SPEC-CLOUD-002 test-hygiene cleanup — reset _sb and every Cloud Dat
   ctx.localStorage.removeItem('st_con_cloud_migration_ts');
   ctx.localStorage.removeItem('st_li_pre_migration');
   ctx.localStorage.removeItem('st_con_pre_migration');
+});
+
+// ── CLOUD DATA — Order Request (SPEC-CLOUD-003) ──
+
+testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-gate round-1 B2 finding: previously wired for Supplier/Buyer/Line Item/Contact but not Order Request)', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){}; // keep the mock _sb below in place instead of overwriting it with a real client
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var called = false;
+  var origRefreshOrd = ctx.refreshOrdFromSupabase;
+  ctx.refreshOrdFromSupabase = function(){ called = true; return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+});
+
+testAsync('refreshOrdFromSupabase — refuses to overwrite real local data when this device has never run the migration; proceeds when local data is empty (second-device case); sets its own marker on success', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  ctx.DB.ord.push({ id: 'local-only-ord', num: 'ORD-0001', contactId: 'c1', stage: 'New', lines: [] });
+  ctx._sb = mockSb({ order_requests: { selectData: [] } });
+  await ctx.refreshOrdFromSupabase();
+  assertEqual(ctx.DB.ord.length, 1, 'real local Order Request NOT wiped — this device never ran the migration');
+  assertEqual(ctx.DB.ord[0].id, 'local-only-ord', 'original record untouched');
+
+  resetDB(); // simulates a fresh/second device
+  ctx._sb = mockSb({ order_requests: { selectData: [{ id: 'cloud-ord-1', num: 'ORD-0001', contact_id: 'c1', stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }] } });
+  await ctx.refreshOrdFromSupabase();
+  assertEqual(ctx.DB.ord.length, 1, 'real Cloud Data correctly loaded — nothing local was at risk');
+  assertEqual(ctx.DB.ord[0].id, 'cloud-ord-1', 'loaded from Supabase');
+  assert(!!ctx.localStorage.getItem('st_ord_cloud_migration_ts'), 'marker set even though this device never ran the migration itself');
+});
+
+testAsync('migrateOrdToSupabase — inserts every field, preserves nested lines/rfqResponses unchanged including nested ids, rewrites Quote.lines[].sourceOrdId only', async function() {
+  resetDB();
+  ctx.DB.ord.push({
+    id: 'o1', num: 'ORD-0001', contactId: 'c1', stage: 'Qualifying', description: 'Test order',
+    actions: [{ id: 'a1', text: 'Follow up', dueDate: '2026-01-01', done: false, createdAt: '2026-01-01T00:00:00.000Z', completedAt: null }],
+    activeQuoteId: '', outcome: { result: null, reason: '', closedAt: null },
+    lines: [{ id: 'line1', category: 'Widgets', itemSpec: 'Blue widget', orderVolumeQty: '1', orderVolumeUnit: 'container',
+      packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [],
+      rfqResponses: [{ id: 'rfq1', supId: 's1', cost: 10, currency: 'USD', cbm: 1, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '2026-01-01T00:00:00.000Z' }],
+      committedResponseId: 'rfq1' }],
+    createdAt: '2026-01-01T00:00:00.000Z'
+  });
+  ctx.DB.qt.push({ id: 'q1', lines: [{ rid: 'r1', sourceOrdId: 'o1', sourceOrdLineId: 'line1', sourceRfqResponseId: 'rfq1' }] });
+  // migrateOrdToSupabase()'s archive step reads localStorage[K.ord] directly, not ctx.DB.ord,
+  // so this must not be left to whatever an unrelated earlier test happened to leave behind
+  // (spec-gate round-1 B5 finding — same pitfall the migrateLineItemsToSupabase precedent
+  // test's own comment at tests/run.js:7309-7313 warns about).
+  ctx.localStorage.setItem(ctx.K.ord, JSON.stringify(ctx.DB.ord));
+
+  var sb = mockSb({ order_requests: { insertImpl: function(row){ return Object.assign({ id: 'new-ord-uuid' }, row); },
+    selectData: [{ id: 'new-ord-uuid', num: 'ORD-0001', contact_id: 'c1', stage: 'Qualifying', description: 'Test order',
+      actions: [{ id: 'a1', text: 'Follow up', dueDate: '2026-01-01', done: false, createdAt: '2026-01-01T00:00:00.000Z', completedAt: null }],
+      active_quote_id: null, outcome: { result: null, reason: '', closedAt: null },
+      lines: [{ id: 'line1', category: 'Widgets', itemSpec: 'Blue widget', orderVolumeQty: '1', orderVolumeUnit: 'container',
+        packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [],
+        rfqResponses: [{ id: 'rfq1', supId: 's1', cost: 10, currency: 'USD', cbm: 1, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '2026-01-01T00:00:00.000Z' }],
+        committedResponseId: 'rfq1' }] }] } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-ord-restore-btn');
+
+  await ctx.migrateOrdToSupabase();
+
+  var insertCall = sb._calls.find(function(c){ return c.table === 'order_requests' && c.op === 'insert'; });
+  assert(insertCall, 'insert called');
+  assertEqual(JSON.stringify(insertCall.row.lines), JSON.stringify([{ id: 'line1', category: 'Widgets', itemSpec: 'Blue widget', orderVolumeQty: '1', orderVolumeUnit: 'container',
+    packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [],
+    rfqResponses: [{ id: 'rfq1', supId: 's1', cost: 10, currency: 'USD', cbm: 1, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '2026-01-01T00:00:00.000Z' }],
+    committedResponseId: 'rfq1' }]), 'nested lines/rfqResponses inserted unchanged, including nested ids (line1, rfq1) never remapped');
+
+  assertEqual(ctx.DB.qt[0].lines[0].sourceOrdId, 'new-ord-uuid', 'Quote.lines[].sourceOrdId remapped to the new Order Request id');
+  assertEqual(ctx.DB.qt[0].lines[0].sourceOrdLineId, 'line1', 'sourceOrdLineId confirmed unchanged — nested child id never remapped');
+  assertEqual(ctx.DB.qt[0].lines[0].sourceRfqResponseId, 'rfq1', 'sourceRfqResponseId confirmed unchanged — nested child id never remapped');
+
+  assertEqual(ctx.DB.ord[0].id, 'new-ord-uuid', 'Order Request own id remapped to the Supabase-assigned id');
+  var archived = JSON.parse(ctx.localStorage.getItem('st_ord_pre_migration'));
+  assertEqual(archived[0].id, 'o1', 'pre-migration archive captured the ORIGINAL local id, not the remapped one');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateOrdToSupabase — no precondition blocks migration when neither Supplier nor Contact has ever been Cloud-migrated', async function() {
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: 'c1', stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  var sb = mockSb({ order_requests: { insertImpl: function(row){ return Object.assign({ id: 'new-ord-uuid' }, row); } } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-ord-restore-btn');
+  await ctx.migrateOrdToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'order_requests' && c.op === 'insert'; });
+  assert(insertCall, 'migration succeeded with no Supplier/Contact ever migrated — no precondition check exists');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateSuppliersBuyersToSupabase — now also rewrites RFQ Response supId (round-1 bug fix), and pushes to Supabase if Order Request has already migrated', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
+  ctx.DB.ord.push({ id: 'ord-uuid-1', num: 'ORD-0001', contactId: null, stage: 'Qualifying', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'line1', rfqResponses: [{ id: 'rfq1', supId: 's1' }], committedResponseId: null }] });
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString()); // Order Request already migrated
+
+  var sb = mockSb({
+    suppliers: { insertImpl: function(row){ return Object.assign({ id: 'new-sup-uuid' }, row); } },
+    order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'ord-uuid-1', num: 'ORD-0001', contact_id: null, stage: 'Qualifying', actions: [], active_quote_id: null, outcome: null,
+        lines: [{ id: 'line1', rfqResponses: [{ id: 'rfq1', supId: 'new-sup-uuid' }], committedResponseId: null }] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-restore-btn');
+
+  await ctx.migrateSuppliersBuyersToSupabase();
+
+  assertEqual(ctx.DB.ord[0].lines[0].rfqResponses[0].supId, 'new-sup-uuid', 'RFQ Response supId remapped locally');
+  var ordUpdateCall = sb._calls.find(function(c){ return c.table === 'order_requests' && c.op === 'update'; });
+  assert(ordUpdateCall, 'the rewritten Order Request was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+});
+
+testAsync('migrateSuppliersBuyersToSupabase — does NOT push to Supabase when Order Request has not itself migrated (no marker set)', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
+  ctx.DB.ord.push({ id: 'local-ord-1', num: 'ORD-0001', contactId: null, stage: 'Qualifying', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'line1', rfqResponses: [{ id: 'rfq1', supId: 's1' }], committedResponseId: null }] });
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+
+  var sb = mockSb({ suppliers: { insertImpl: function(row){ return Object.assign({ id: 'new-sup-uuid' }, row); } } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-restore-btn');
+
+  await ctx.migrateSuppliersBuyersToSupabase();
+
+  assertEqual(ctx.DB.ord[0].lines[0].rfqResponses[0].supId, 'new-sup-uuid', 'RFQ Response supId still remapped locally');
+  var ordUpdateCall = sb._calls.find(function(c){ return c.table === 'order_requests'; });
+  assert(!ordUpdateCall, 'no Supabase call attempted for order_requests — Order Request has not migrated');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateContactsToSupabase — existing RFQ Response contactId sweep still correct, and now also pushes to Supabase if Order Request has already migrated', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 'new-sup-uuid', name: 'ACME' }); // already-migrated Supplier, satisfies precondition
+  ctx.DB.con.push({ id: 'c1', num: 'CON-0001', name: 'Alice', email: 'a@x.com', enquiries: [] });
+  ctx.DB.ord.push({ id: 'ord-uuid-1', num: 'ORD-0001', contactId: 'c1', stage: 'Qualifying', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'line1', rfqResponses: [{ id: 'rfq1', supId: 's1', contactId: 'c1' }], committedResponseId: null }] });
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString()); // Supplier migration precondition
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString()); // Order Request already migrated
+
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid' }, row); } },
+    order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'ord-uuid-1', num: 'ORD-0001', contact_id: 'new-con-uuid', stage: 'Qualifying', actions: [], active_quote_id: null, outcome: null,
+        lines: [{ id: 'line1', rfqResponses: [{ id: 'rfq1', supId: 's1', contactId: 'new-con-uuid' }], committedResponseId: null }] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-con-restore-btn');
+
+  await ctx.migrateContactsToSupabase();
+
+  assertEqual(ctx.DB.ord[0].contactId, 'new-con-uuid', 'top-level Order Request contactId remapped');
+  assertEqual(ctx.DB.ord[0].lines[0].rfqResponses[0].contactId, 'new-con-uuid', 'nested RFQResponse.contactId remapped — confirms the sweep was already correct');
+  var ordUpdateCall = sb._calls.find(function(c){ return c.table === 'order_requests' && c.op === 'update'; });
+  assert(ordUpdateCall, 'the rewritten Order Request was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+});
+
+testAsync('saveOrd — Cloud Data configured and Order Request migrated: create calls insert with client-generated num but no client-generated id; update calls update().eq(); local-only behavior unchanged when not migrated', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.con.push({ id: 'c1', name: 'Alice' });
+  var sb = mockSb({ order_requests: { insertImpl: function(row){ return Object.assign({ id: 'new-ord-uuid' }, row); },
+    selectData: [{ id: 'new-ord-uuid', num: 'ORD-0001', contact_id: 'c1', stage: 'New', description: 'Test', actions: [], active_quote_id: null, outcome: null, lines: [] }] } });
+  ctx._sb = sb;
+  var saved = await ctx.saveOrd({ contactId: 'c1', stage: 'New', description: 'Test', actions: [], lines: [] });
+  assert(saved, 'save succeeded');
+  assertEqual(saved.id, 'new-ord-uuid', 'returned the actual found record after refresh, not just the bare true sentinel (spec-gate round-1 A2 fix)');
+  var insertCall = sb._calls.find(function(c){ return c.op === 'insert'; });
+  assert(insertCall, 'insert was called');
+  assert(insertCall.row.num, 'client-generated num present on insert');
+  assertEqual(insertCall.row.id, undefined, 'no client-generated id sent on insert');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  ctx.DB.con.push({ id: 'c1', name: 'Alice' });
+  ctx._sb = null;
+  var savedLocal = await ctx.saveOrd({ contactId: 'c1', stage: 'New', description: 'Local test', actions: [], lines: [] });
+  assert(savedLocal, 'local save succeeded');
+  assertEqual(ctx.DB.ord.length, 1, 'local-only path still pushes directly to DB.ord, unchanged');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+});
+
+testAsync('saveOrd — Cloud Data configured, update path: row sent to Supabase reflects the caller-supplied lines, never stale existing.lines (spec-gate round-1 B3 regression guard)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.con.push({ id: 'c1', name: 'Alice' });
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: 'c1', stage: 'New', description: '', actions: [],
+    activeQuoteId: '', outcome: null, lines: [{ id: 'l1', category: 'Old' }] });
+  var sb = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  var newLines = [{ id: 'l1', category: 'Old' }, { id: 'l2', category: 'New' }];
+  await ctx.saveOrd({ id: 'o1', contactId: 'c1', stage: 'New', description: '', actions: [], activeQuoteId: '', outcome: null, lines: newLines });
+  var updateCall = sb._calls.find(function(c){ return c.op === 'update'; });
+  assertEqual(updateCall.row.lines.length, 2, 'caller-supplied newLines pushed to Supabase, not the stale single-line existing.lines');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+});
+
+testAsync('delOrd — Cloud Data configured and Order Request migrated: soft-delete via update({deleted_at}); local-only behavior unchanged when not migrated', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ order_requests: { selectData: [] } });
+  ctx._sb = sb;
+  await ctx.delOrd('o1');
+  var updateCall = sb._calls.find(function(c){ return c.op === 'update'; });
+  assert(updateCall, 'update called (soft-delete)');
+  assert(updateCall.row.deleted_at, 'deleted_at timestamp set, not a hard delete');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001' });
+  ctx._sb = null;
+  await ctx.delOrd('o1');
+  assertEqual(ctx.DB.ord.length, 0, 'local-only path still filters DB.ord directly, unchanged');
+});
+
+testAsync('ordAdminOverride / ordAddLine / saveRfqResponse / delRfqResponse / ordCommitRfqResponse / ordLogLineUpdate / ordConfirmLineUpdate — each persists via persistOrdChange(), Supabase when migrated, local sv() otherwise', async function() {
+  // Spec-gate round-2 New Finding 3: the round-1 version of this test only actually invoked
+  // 3 of the 7 functions named in its own title (and ordCommitRfqResponse only in its LOCAL
+  // form, never cloud). Each function below now gets its own small, independent Order Request
+  // fixture (resetDB() only clears ctx.DB, not localStorage, so the marker set once at the top
+  // survives every resetDB() call below) and its own mockSb() instance with selectData
+  // reflecting that step's expected post-mutation state (spec-gate round-1 B4 finding) — this
+  // test's job is to prove EACH of the 7 cloud-configured call sites reaches
+  // persistOrdChange() and pushes to Supabase, not to re-verify each function's own business
+  // logic, which is already covered by the many pre-existing local-only tests for these
+  // functions elsewhere in this file.
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+
+  // 1. ordAdminOverride
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  var sb1 = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'o1', num: 'ORD-0001', contact_id: null, stage: 'Lost', actions: [], active_quote_id: null, outcome: null, lines: [] }] } });
+  ctx._sb = sb1;
+  mockEl('ord-override-confirm').value = 'CONFIRM';
+  await ctx.ordAdminOverride('o1', 'Lost', 'test reason');
+  assert(sb1._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'ordAdminOverride pushed via persistOrdChange');
+
+  // 2. saveRfqResponse
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'l1', rfqResponses: [], committedResponseId: null, lineUpdates: [] }] });
+  var sb2 = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'o1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null,
+      lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', supId: 's1', cost: 5, currency: 'USD' }], committedResponseId: null, lineUpdates: [] }] }] } });
+  ctx._sb = sb2;
+  ctx.EI.ord = 'o1'; ctx.cRfqOrdId = 'o1'; ctx.cRfqLineId = 'l1'; ctx.cRfqEditId = null;
+  mockEl('rfq-sup').value = 's1'; mockEl('rfq-cost').value = '5'; mockEl('rfq-cur').value = 'USD';
+  mockEl('rfq-cbm').value = '1'; mockEl('rfq-dutypct').value = '0'; mockEl('rfq-dg').checked = false;
+  mockEl('rfq-moq').value = ''; mockEl('rfq-leadtime').value = ''; mockEl('rfq-payterms').value = ''; mockEl('rfq-notes').value = ''; mockEl('rfq-con').value = '';
+  await ctx.saveRfqResponse();
+  assert(sb2._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'saveRfqResponse pushed via persistOrdChange');
+
+  // 3. ordAddLine (rOrdLines() at the end of the real function no-ops safely when
+  // 'of-lines-list' isn't mocked, matching this codebase's established defensive-render
+  // convention — index.html:3111 — so no extra DOM mocking is needed here)
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  var sb3 = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'o1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null,
+      lines: [{ id: 'l2', category: 'Widgets', itemSpec: 'New widget', orderVolumeQty: '2', orderVolumeUnit: 'pallets',
+        packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [],
+        rfqResponses: [], committedResponseId: null }] }] } });
+  ctx._sb = sb3;
+  ctx.EI.ord = 'o1';
+  var promptQueue = ['Widgets', 'New widget', '2', 'pallets'];
+  var origPrompt = ctx.prompt;
+  ctx.prompt = function(){ return promptQueue.shift(); };
+  await ctx.ordAddLine();
+  ctx.prompt = origPrompt;
+  assert(sb3._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'ordAddLine pushed via persistOrdChange');
+
+  // 4. delRfqResponse
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', supId: 's1' }], committedResponseId: null, lineUpdates: [] }] });
+  var sb4 = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'o1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null,
+      lines: [{ id: 'l1', rfqResponses: [], committedResponseId: null, lineUpdates: [] }] }] } });
+  ctx._sb = sb4;
+  ctx.EI.ord = 'o1';
+  ctx.confirm = function(){ return true; };
+  await ctx.delRfqResponse('l1', 'r1');
+  ctx.confirm = function(){ return false; };
+  assert(sb4._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'delRfqResponse pushed via persistOrdChange');
+
+  // 5. ordLogLineUpdate
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'l1', rfqResponses: [], committedResponseId: null, lineUpdates: [] }] });
+  var sb5 = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'o1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null,
+      lines: [{ id: 'l1', rfqResponses: [], committedResponseId: null,
+        lineUpdates: [{ id: 'u1', ts: '2026-01-01T00:00:00.000Z', source: 'ai', field: 'baseUom', oldValue: '', newValue: 'kg', note: '', confirmedBy: null }] }] }] } });
+  ctx._sb = sb5;
+  await ctx.ordLogLineUpdate(ctx.DB.ord[0], 'l1', 'baseUom', 'kg', 'ai', '', null);
+  assert(sb5._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'ordLogLineUpdate pushed via persistOrdChange');
+
+  // 6. ordConfirmLineUpdate
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'l1', rfqResponses: [], committedResponseId: null,
+      lineUpdates: [{ id: 'u1', ts: '2026-01-01T00:00:00.000Z', source: 'ai', field: 'baseUom', oldValue: '', newValue: 'kg', note: '', confirmedBy: null }] }] });
+  var sb6 = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'o1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null,
+      lines: [{ id: 'l1', rfqResponses: [], committedResponseId: null,
+        lineUpdates: [{ id: 'u1', ts: '2026-01-01T00:00:00.000Z', source: 'ai', field: 'baseUom', oldValue: '', newValue: 'kg', note: '', confirmedBy: 'operator' }] }] }] } });
+  ctx._sb = sb6;
+  await ctx.ordConfirmLineUpdate(ctx.DB.ord[0], 'l1', 'u1');
+  assert(sb6._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'ordConfirmLineUpdate pushed via persistOrdChange');
+
+  // 7. ordCommitRfqResponse — cloud path
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', supId: 's1' }], committedResponseId: null, lineUpdates: [] }] });
+  var sb7 = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'o1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null,
+      lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', supId: 's1' }], committedResponseId: 'r1', lineUpdates: [] }] }] } });
+  ctx._sb = sb7;
+  ctx.EI.ord = 'o1';
+  await ctx.ordCommitRfqResponse('l1', 'r1');
+  assert(sb7._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'ordCommitRfqResponse pushed via persistOrdChange (cloud path)');
+
+  // 8. ordCommitRfqResponse — local-only path, demonstrating "local sv() otherwise"
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', supId: 's1' }], committedResponseId: null, lineUpdates: [] }] });
+  ctx._sb = null;
+  ctx.EI.ord = 'o1';
+  await ctx.ordCommitRfqResponse('l1', 'r1');
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.ord))[0].lines[0].committedResponseId, 'r1', 'local-only path still persists via sv(K.ord,...), unchanged');
+});
+
+test('cleanupExpiredMigrationArchive — Order Request archive expires independently of Supplier/Buyer/Line Item/Contact', function() {
+  var day31 = new Date(Date.now() - 31*86400000).toISOString();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', day31);
+  ctx.localStorage.setItem('st_ord_pre_migration', '[]');
+  ctx.cleanupExpiredMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_ord_pre_migration'), null, 'expired Order Request archive removed at day 31');
+});
+
+test('restoreOrdMigrationArchive — restores K.ord and clears SS.supabaseUrl/supabaseAnonKey and its own marker', function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_pre_migration', JSON.stringify([{ id: 'orig-ord', num: 'ORD-0001' }]));
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  ctx.confirm = function(){ return true; };
+  var origReload = ctx.location.reload; ctx.location.reload = function(){};
+  var origSetTimeout = ctx.setTimeout; ctx.setTimeout = function(fn){ fn(); };
+  ctx.restoreOrdMigrationArchive();
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.ord))[0].id, 'orig-ord', 'st_ord restored from archive');
+  assertEqual(ctx.SS.supabaseUrl, '', 'supabaseUrl cleared');
+  assertEqual(ctx.localStorage.getItem('st_ord_cloud_migration_ts'), null, 'own marker cleared on restore');
+  ctx.location.reload = origReload; ctx.setTimeout = origSetTimeout; ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveQte — Order-Request-side convOrd mutation persists via persistOrdChange(), Supabase when Order Request migrated', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: null, stage: 'Qualifying', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.cConvertOrdId = 'ord1';
+  ['qf-client','qf-nt','qf-num','qf-dt','qf-valid','qf-cur'].forEach(function(id){ mockEl(id); });
+  var sb = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.saveQte();
+  var updateCall = sb._calls.find(function(c){ return c.table === 'order_requests' && c.op === 'update'; });
+  assert(updateCall, 'Order Request activeQuoteId/stage pushed to Supabase');
+  assertEqual(updateCall.row.stage, 'Quoted', 'stage transitioned and pushed correctly');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+});
+
+testAsync('delCon — Order-Request cascade (contactId + nested rfqResponses[].contactId) persists via persistOrdChange() for each touched Order Request only', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: 'c1', stage: 'New', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', contactId: 'c1' }], committedResponseId: null }] });
+  ctx.DB.ord.push({ id: 'ord2', num: 'ORD-0002', contactId: 'c2', stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({ contacts: { selectData: [] }, order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [
+      { id: 'ord1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null,
+        lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', contactId: null }], committedResponseId: null }] },
+      { id: 'ord2', num: 'ORD-0002', contact_id: 'c2', stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }
+    ] } });
+  ctx._sb = sb;
+  await ctx.delCon('c1');
+  var ordUpdateCalls = sb._calls.filter(function(c){ return c.table === 'order_requests' && c.op === 'update'; });
+  assertEqual(ordUpdateCalls.length, 1, 'only the touched Order Request (ord1) was pushed, not the untouched one (ord2)');
+  var ordSelectCalls = sb._calls.filter(function(c){ return c.table === 'order_requests' && c.op === 'is'; });
+  assertEqual(ordSelectCalls.length, 1, 'exactly one refresh for the whole cascade, not one per touched record (B6 fix)');
+  assertEqual(ctx.DB.ord[0].contactId, null, 'top-level contactId nulled');
+  assertEqual(ctx.DB.ord[0].lines[0].rfqResponses[0].contactId, null, 'nested rfqResponse contactId nulled');
+  assertEqual(ctx.DB.ord[1].contactId, 'c2', 'untouched Order Request left alone');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('delCon — Order-Request cascade with a partial push failure: one touched Order Request failing to push does not revert another touched Order Request\'s already-applied fix', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: 'c1', stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.DB.ord.push({ id: 'ord3', num: 'ORD-0003', contactId: 'c1', stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({
+    contacts: { selectData: [] },
+    order_requests: {
+      updateError: function(row, id){ return id === 'ord1' ? { message: 'network error' } : null; }, // ord1's push fails, ord3's succeeds
+      selectData: [
+        { id: 'ord1', num: 'ORD-0001', contact_id: 'c1', stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }, // server still has the OLD value — its push genuinely failed
+        { id: 'ord3', num: 'ORD-0003', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }  // server reflects the successful push
+      ]
+    }
+  });
+  ctx._sb = sb;
+  await ctx.delCon('c1');
+  var ordSelectCalls = sb._calls.filter(function(c){ return c.table === 'order_requests' && c.op === 'is'; });
+  assertEqual(ordSelectCalls.length, 1, 'exactly one refresh for the whole cascade, even with a partial failure');
+  assertEqual(ctx.DB.ord[1].contactId, null, 'ord3\'s successful push is NOT reverted just because ord1\'s push, sharing the same refresh, failed');
+  assertEqual(ctx.DB.ord[0].contactId, 'c1', 'ord1 honestly reflects its failed push rather than appearing to have succeeded');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('delCon — Order-Request cascade with TWO successfully-touched Order Requests pushes exactly once, not once per record (skipRefresh batching)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: 'c1', stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.DB.ord.push({ id: 'ord2', num: 'ORD-0002', contactId: 'c1', stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({
+    contacts: { selectData: [] },
+    order_requests: {
+      updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [
+        { id: 'ord1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] },
+        { id: 'ord2', num: 'ORD-0002', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }
+      ]
+    }
+  });
+  ctx._sb = sb;
+  await ctx.delCon('c1');
+  var ordUpdateCalls = sb._calls.filter(function(c){ return c.table === 'order_requests' && c.op === 'update'; });
+  var ordSelectCalls = sb._calls.filter(function(c){ return c.table === 'order_requests' && c.op === 'is'; });
+  assertEqual(ordUpdateCalls.length, 2, 'both touched Order Requests pushed');
+  assertEqual(ordSelectCalls.length, 1, 'exactly one refresh for both successful pushes, not one per record');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('executeDataCleanup — renumbered Order Requests pushed to Supabase when migrated; phantom-filter step needs no equivalent fix', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0099', contactId: null, stage: 'New', createdAt: '2026-01-01T00:00:00.000Z', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  var sb = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'ord1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }] } });
+  ctx._sb = sb;
+  mockEl('data-cleanup-status');
+  await ctx.executeDataCleanup();
+  assertEqual(ctx.DB.ord[0].num, 'ORD-0001', 'renumbered locally');
+  var ordUpdateCall = sb._calls.find(function(c){ return c.table === 'order_requests' && c.op === 'update' && c.row.num === 'ORD-0001'; });
+  assert(ordUpdateCall, 'renumbered Order Request pushed to Supabase');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+});
+
+testAsync('processImport(\'ord\') — sequential await per submission, not a forEach race; saveOrd() already persists per iteration', async function() {
+  resetDB();
+  ctx.DB.con.push({ id: 'existing-con', name: 'Bob', email: 'bob@x.com' });
+  var csv = 'Submission ID,Contact Email,Contact Name,Category,Item/Spec,Order Volume Qty,Order Volume Unit,Qty Status\n' +
+    'sub1,new1@x.com,New One,Widgets,Blue widget,1,container,Unknown\n' +
+    'sub2,new2@x.com,New Two,Gadgets,Red gadget,2,pallets,Unknown\n';
+  ctx._sb = null;
+  await ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.ord.length, 2, 'both submissions processed sequentially, not raced');
+  assert(ctx.DB.ord.every(function(o){ return !!o.num; }), 'every Order Request got a real, sequentially-assigned num — no interleaving corruption');
+});
+
+testAsync('processImport(\'ord\') — every skip path (blank email; no new lines on an existing Order Request; no valid lines on a new one) continues to the next submission rather than aborting the loop', async function() {
+  // Regression guard for the forEach-to-for-loop conversion (SPEC-CLOUD-003 §0.2): every
+  // `return` inside the old per-submission forEach callback had to become `continue` in the
+  // new for loop, or a skip on an EARLY submission would silently abort the whole function
+  // (a for loop's `return` exits processImport() entirely, not just the current iteration).
+  // This exercises all three skip-and-continue sites in one CSV, each followed by a later
+  // submission that must still be processed.
+  resetDB();
+  ctx.DB.ord.push({ id: 'existing-sub2', num: 'ORD-0001', contactId: null, stage: 'New', importBatchId: 'sub2', actions: [], activeQuoteId: '', outcome: null,
+    lines: [{ id: 'l1', category: 'Seeds', itemSpec: 'Carrot', orderVolumeQty: '1', orderVolumeUnit: 'container', packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [], rfqResponses: [], committedResponseId: null }] });
+  var csv = 'Submission ID,Contact Email,Contact Name,Category,Item/Spec,Order Volume Qty,Order Volume Unit,Qty Status\n' +
+    'sub1,,Blank Email,Widgets,Blue widget,1,container,Unknown\n' +
+    'sub2,existing2@x.com,Existing Two,Seeds,Carrot,1,container,Unknown\n' +
+    'sub3,blank3@x.com,Blank Lines,,,,,\n' +
+    'sub4,new4@x.com,New Four,Gadgets,Red gadget,2,pallets,Unknown\n';
+  ctx._sb = null;
+  await ctx.processImport('ord', csv);
+  assertEqual(ctx.DB.ord.length, 2, 'sub1/sub2/sub3 all skipped without aborting — only the pre-existing sub2 record and the new sub4 record exist');
+  assertEqual(ctx.DB.ord.find(function(o){ return o.importBatchId === 'sub2'; }).lines.length, 1, 'sub2 existing Order Request left with its original single line, not duplicated or corrupted');
+  assert(ctx.DB.ord.some(function(o){ return o.importBatchId === 'sub4'; }), 'sub4, the final valid submission after three consecutive skips, was still processed');
+});
+
+testAsync('processImport(\'ord\') — Cloud Data configured, re-importing a new line onto an existing Won Order Request does not wipe its activeQuoteId/outcome (spec-gate round-2 New Finding 2 regression guard)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.con.push({ id: 'c1', name: 'Bob', email: 'bob@x.com' });
+  ctx.DB.ord.push({ id: 'existing-ord', num: 'ORD-0001', contactId: 'c1', stage: 'Won', importBatchId: 'sub1', actions: [],
+    activeQuoteId: 'qte-1', outcome: { result: 'Won', reason: 'x', closedAt: '2026-01-01T00:00:00.000Z' },
+    lines: [{ id: 'l1', category: 'Seeds', itemSpec: 'Carrot', orderVolumeQty: '1', orderVolumeUnit: 'container', packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [] }] });
+  var sb = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  var csv = 'Submission ID,Contact Email,Contact Name,Category,Item/Spec,Order Volume Qty,Order Volume Unit,Qty Status\n' +
+    'sub1,bob@x.com,Bob,Seeds,Beetroot,1,container,Unknown\n';
+  await ctx.processImport('ord', csv);
+  var updateCall = sb._calls.find(function(c){ return c.op === 'update'; });
+  assert(updateCall, 'update called for the matched existing submission');
+  assertEqual(updateCall.row.active_quote_id, 'qte-1', 'activeQuoteId preserved, not silently wiped by the re-import');
+  assertEqual(updateCall.row.outcome.result, 'Won', 'outcome preserved, not reset to defaults by the re-import');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+});
+
+testAsync('SPEC-CLOUD-003 test-hygiene cleanup — reset _sb and every Order Request Cloud Data migration marker this block may have left set, so later unrelated tests are not affected', async function() {
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_ord_pre_migration');
 });
 
 // ── AI Assistant — Invoice/Line Item/Credit Note actions + Supplier/Buyer read tools (SPEC-AI-GAP-002) ──
