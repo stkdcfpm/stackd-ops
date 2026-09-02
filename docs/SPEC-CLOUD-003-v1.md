@@ -1,6 +1,6 @@
 # SPEC-CLOUD-003 — Order Request Cloud Data migration
 
-**Status:** v1 — drafted against `docs/REQ-CLOUD-003-v1.md` (requirements-gate PASS, 3 rounds). Spec-gate round 1: FAIL (6 blocking, 4 advisory), fixed. Round 2: FAIL (3 blocking, 2 advisory), fixed. See §4. Ready for spec-gate round 3.
+**Status:** v1 — drafted against `docs/REQ-CLOUD-003-v1.md` (requirements-gate PASS, 3 rounds). Spec-gate round 1: FAIL (6 blocking, 4 advisory), fixed. Round 2: FAIL (3 blocking, 2 advisory), fixed. Round 3: PASS (0 blocking, 1 advisory), fixed. See §4. Ready for implementation.
 
 ---
 
@@ -1324,6 +1324,12 @@ testAsync('processImport(\'ord\') — sequential await per submission, not a for
   assertEqual(ctx.DB.ord.length, 2, 'both submissions processed sequentially, not raced');
   assert(ctx.DB.ord.every(function(o){ return !!o.num; }), 'every Order Request got a real, sequentially-assigned num — no interleaving corruption');
 });
+
+testAsync('SPEC-CLOUD-003 test-hygiene cleanup — reset _sb and every Order Request Cloud Data migration marker this block may have left set, so later unrelated tests are not affected', async function() {
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_ord_pre_migration');
+});
 ```
 
 ---
@@ -1351,3 +1357,5 @@ The reviewer confirmed the eleven-mutation-site inventory itself had no drift or
 - **New Finding 2** (blocking): round 1's B3 fix (making `saveOrd()`'s cloud-branch `row` source every field from `ord.*` with no `existing.*` fallback) was correct in isolation, but exposed that `processImport('ord')`'s `ordObj` literal never sets `activeQuoteId`/`outcome` at all — meaning `undefined || null`/`undefined || {defaults}` would silently wipe both on a cloud-configured update to an Order Request that has already reached "Quoted" or been marked Won/Lost. Fixed: §2.14's `ordObj` literal gains the same explicit `existingOrd ?` fallback its own `actions` field already uses, matching what `saveOrdFromForm()` already does correctly.
 - **New Finding 3** (blocking): the combined test's title named all 7 non-`saveOrd`/`delOrd` `persistOrdChange()` sites — `ordAdminOverride`/`ordAddLine`/`saveRfqResponse`/`delRfqResponse`/`ordCommitRfqResponse`/`ordLogLineUpdate`/`ordConfirmLineUpdate` — but after round 1's own B4 fix reshaped it into per-step `mockSb()` instances, it only actually invoked 3 of them (and `ordCommitRfqResponse` only in its local form) — leaving 4 of 11 mutation sites with zero cloud-path test coverage, contradicting AC-5. Fixed: the test now has one independent step per function (8 steps total, including both a cloud and a local-only step for `ordCommitRfqResponse`), each with its own minimal fixture and `mockSb()` instance, proving each of the 7 genuinely reaches `persistOrdChange()` and pushes to Supabase.
 - **A5** (§0.1 miscounted which sites call `persistOrdChange()` — `delOrd()` doesn't, it has its own dedicated branch like `saveOrd()`) and **A6** (§2.5's cross-reference to "§2.7" should read "§2.8") — both corrected in place.
+
+**Spec-gate round 3: PASS — 0 blocking, 1 advisory.** All ten round-1 and all five round-2 fixes were independently re-verified against the real current `index.html`/`tests/run.js` and confirmed to genuinely hold up — including a fresh, independent grep sweep that found no thirteenth pre-existing test missed by §2.17's list, and a direct trace of `ordAddLine()`'s real prompt sequence against the new combined test's mocked `prompt()` queue. One advisory: the new §3 test block had no closing test-hygiene cleanup, unlike the established convention immediately preceding it (`tests/run.js:7739`, the SPEC-CLOUD-002 block's own cleanup test) — fixed by adding an equivalent `'SPEC-CLOUD-003 test-hygiene cleanup'` test at the end of §3. This SPEC is ready for implementation.
