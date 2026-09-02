@@ -6455,7 +6455,8 @@ async function saveInv() {
   if (liChanged) {
     if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) {
       for (var hi = 0; hi < liHistoryUpdates.length; hi++) {
-        await _sb.from('line_items').update({ price_history: liHistoryUpdates[hi].priceHistory }).eq('id', liHistoryUpdates[hi].id);
+        var phResult = await _sb.from('line_items').update({ price_history: liHistoryUpdates[hi].priceHistory }).eq('id', liHistoryUpdates[hi].id);
+        if (phResult.error) { console.warn('[Stackd] saveInv: failed to push price history for line item ' + liHistoryUpdates[hi].id, phResult.error.message); }
       }
       await refreshLIFromSupabase();
     } else {
@@ -11556,7 +11557,8 @@ async function saveQte() {
     if (convC && convC.status !== 'converted') {
       if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
         var convResult = await _sb.from('contacts').update({ status: 'converted', last_contacted_at: new Date().toISOString() }).eq('id', convC.id);
-        if (!convResult.error) await refreshConFromSupabase();
+        if (convResult.error) { console.warn('[Stackd] saveQte: failed to push Contact conversion status for ' + convC.id, convResult.error.message); }
+        else { await refreshConFromSupabase(); }
       } else {
         convC.status = 'converted';
         convC.lastContactedAt = new Date().toISOString();
@@ -11590,7 +11592,8 @@ async function delQte(id) {
     if (relC && relC.status === 'converted') {
       if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
         var revertResult = await _sb.from('contacts').update({ status: 'qualified' }).eq('id', relC.id);
-        if (!revertResult.error) await refreshConFromSupabase();
+        if (revertResult.error) { console.warn('[Stackd] delQte: failed to revert Contact status for ' + relC.id, revertResult.error.message); }
+        else { await refreshConFromSupabase(); }
       } else {
         relC.status = 'qualified';
         sv(K.co, DB.con);
