@@ -619,3 +619,23 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Detail:** All four of `get_kpis`' headline aggregates — `invoiceRevenue`, `netProfit`, `outstanding` (each summed from `iCalc(i).grand`/`.np`/`.bal` across `DB.inv`), and `poBalanceDue` (summed via `getPOEffectiveDep(p)` across `DB.po`) — sum raw native-currency amounts across records with no `toDisp()` conversion, the same defect class fixed in `renderAccts()`'s totals bar (REQ-INTEG-002-2a-fix-2) and already handled correctly in `rDash()`'s own KPI tiles. Whenever invoices or POs span more than one currency, whichever operator or integration asks the AI assistant for these figures gets a meaningless mixed-currency number with no indication anything is wrong.
 **Status:** Fixed — v2.9.65 (REQ-CUR-002).
 **Note:** Confirmed pre-existing — `revenue`/`np`/`outstanding` are pure invoice aggregates untouched by any Supplier Payment ledger work; `poBal` used `+p.dep||0` before v2.9.63 and `getPOEffectiveDep(p)` now, but the missing conversion was present both before and after that change. All four figures now convert via `toDisp(amount, itemCur)` before summing, and the tool's JSON response gains an explicit `currency` field (`QR.displayCurrency||'GBP'`) so the AI assistant always has a machine-readable unit for these figures rather than guessing. `avgMargin` needed no code change — proven algebraically to be invariant to the display-currency choice once `revenue`/`np` are consistently converted, since it's a ratio of two sums over the same invoice set.
+
+---
+
+### CLOUD-GAP-001 — `expAll()`/`doImport()` silently disconnects Cloud Data on any JSON backup restore *(Open, accepted)*
+
+**Area:** `expAll()` (full JSON backup export) and `doImport()` (full JSON backup restore).
+**Logged:** v2.9.73 (REQ-CLOUD-002 §3), found during research for extending Cloud Data to Line Item and Contact, confirmed still present.
+**Detail:** `expAll()` never captures `SS.supabaseUrl`/`SS.supabaseAnonKey`, and `doImport()` replaces `SS` wholesale rather than merging it — so restoring any JSON backup silently disconnects Cloud Data, regardless of how many entities are cloud-migrated at the time. Predates and is unrelated to REQ-CLOUD-002's scope (extending Cloud Data to two more entities); becomes more consequential as more entities depend on Cloud Data. Not fixed as part of REQ-CLOUD-002 — recommended as a small, standalone follow-up REQ.
+
+### CLOUD-GAP-002 — `syncAll()`/`pushAll()` have no Cloud-Data exclusion in either direction, for any entity *(Open, accepted)*
+
+**Area:** `syncAll()`/`pushAll()` (the `bulk_upsert_all` push-direction counterpart to `pullAll()`).
+**Logged:** v2.9.73 (REQ/SPEC-CLOUD-002, round-3 spec-gate finding), confirmed pre-existing (includes the Supplier case from SPEC-CLOUD-001) and not worsened by this REQ.
+**Detail:** Unlike `pullAll()` (which now excludes any entity whose own Cloud Data migration marker is set, per REQ-CLOUD-002's fix extending SPEC-CLOUD-001's original Supplier-only exclusion), `syncAll()`/`pushAll()` have no equivalent exclusion for any entity, including Supplier. Once an entity is cloud-migrated, its Cloud-sourced snapshot keeps getting pushed up to Google Sheets on every sync. Wasteful/confusing, not destructive — `pullAll()`'s exclusion means nothing pulls those stale Sheets rows back down, so there is no round-trip corruption loop. Not fixed here; candidate for a future standalone REQ alongside `CLOUD-GAP-001`.
+
+### CLOUD-GAP-003 — `processImport()`'s CSV import branches bypass Cloud Data for Supplier, Line Item, and Contact *(Open, accepted)*
+
+**Area:** `processImport()`'s `'sup'`, `'li'`, `'co'`, and `'ord'`-Contact-creation CSV import branches.
+**Logged:** v2.9.73 (REQ/SPEC-CLOUD-002, round-4 spec-gate finding).
+**Detail:** These CSV import branches build `DB.sup`/`DB.li`/`DB.con` records directly and persist via a bare `sv(K.s,...)`/`sv(K.l,...)`/`sv(K.co,...)`, bypassing every `_sb` branch entirely — an imported record for a cloud-migrated entity is silently local-only until the next Cloud Data refresh discards it. This is the same class of gap as `CLOUD-GAP-001` but a genuinely different code path (`processImport()`'s CSV importer, not `expAll()`/`doImport()`'s full-JSON-backup restore) — not previously logged under any existing gap despite predating REQ-CLOUD-002 for the Supplier case. Not fixed here, since REQ-CLOUD-002 scoped its fixes to UI code paths that mutate already-migrated records (see the five sites plus `saveInv()` fixed in SPEC-CLOUD-002 §2.11/§2.12), not the CSV importer; candidate for a future standalone REQ alongside `CLOUD-GAP-001`/`CLOUD-GAP-002`.

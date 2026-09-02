@@ -7250,6 +7250,501 @@ test('initCloudDataLayer() is fire-and-forget — calling it does not block or t
   assert(afterLineRan, 'code after the call runs immediately — fire-and-forget, never blocks the caller');
 });
 
+// ── CLOUD DATA — Line Item & Contact (SPEC-CLOUD-002) ──
+
+testAsync('isSupplierMigrationComplete — true when Supabase suppliers has rows, true via local marker even when Supabase is currently empty, false when neither, false when unconfigured', async function() {
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+  ctx._sb = mockSb({ suppliers: { selectData: [{ id: 'u1', name: 'ACME' }] } });
+  assertEqual(await ctx.isSupplierMigrationComplete(), true, 'true when rows exist');
+  ctx._sb = mockSb({ suppliers: { selectData: [] } });
+  assertEqual(await ctx.isSupplierMigrationComplete(), false, 'false when empty and no local marker');
+
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = mockSb({ suppliers: { selectData: [] } }); // zero-Supplier edge case (B3 fix)
+  assertEqual(await ctx.isSupplierMigrationComplete(), true, 'true via local marker even though the live table is currently empty');
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+
+  ctx._sb = null;
+  assertEqual(await ctx.isSupplierMigrationComplete(), false, 'false when Cloud Data not configured');
+});
+
+testAsync('migrateLineItemsToSupabase — blocked when Supplier migration has not completed; no insert made', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', supId: 's1', sku: 'SKU1' });
+  ctx._sb = mockSb({ suppliers: { selectData: [] } });
+  await ctx.migrateLineItemsToSupabase();
+  assertEqual(ctx.DB.li[0].id, 'l1', 'Line Item id unchanged — migration never ran');
+});
+
+testAsync('migrateContactsToSupabase — blocked when Supplier migration has not completed; no insert made', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+  ctx.DB.con.push({ id: 'c1', num: 'CON-0001', name: 'Alice', email: 'a@x.com', supplierId: null, enquiries: [], gdprBasis: 'legitimate_interests', createdAt: '', lastContactedAt: '', notes: '', role: '', status: 'lead', source: 'manual' });
+  ctx._sb = mockSb({ suppliers: { selectData: [] } });
+  await ctx.migrateContactsToSupabase();
+  assertEqual(ctx.DB.con[0].id, 'c1', 'Contact id unchanged — migration never ran, even though this Contact has no Supplier link');
+});
+
+testAsync('migrateLineItemsToSupabase — blocked when a Line Item\'s supId does not resolve to a known Supabase Supplier; zero inserts made', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', supId: 'stale-local-id' });
+  var sb = mockSb({ suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] }, line_items: { insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid' }, row); } } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migrateLineItemsToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'line_items' && c.op === 'insert'; });
+  assert(!insertCall, 'no insert attempted — the orphaned supId was caught before the insert loop started');
+  assertEqual(ctx.DB.li[0].id, 'l1', 'Line Item unchanged');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateLineItemsToSupabase — Supplier already migrated: inserts every field, rewrites Invoice/PO lid refs, checks-but-skips dead Quote.lines[].lid, preserves invoiceRefs across the post-migration refresh', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', supId: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, cur: 'USD', notes: '', priceHistory: [{date:'2026-01-01',cost:1,price:2,invoiceRef:'',notes:'Initial catalogue price'}], invoiceRefs: [{ invId: 'INV-1' }], dims: {l:1,w:1,h:1}, dg: true });
+  ctx.DB.inv.push({ id: 'i1', lineItems: [{ lid: 'l1', qty: 1 }] });
+  ctx.DB.po.push({ id: 'p1', lineItems: [{ lid: 'l1', qty: 1 }] });
+  ctx.DB.qt.push({ id: 'q1', lines: [{ desc: 'Widget' }] }); // Quote.lines[].lid is dead — never populated in real data, so no lid key at all here (matching real-world shape); checked anyway per AC-4
+  // Explicitly seed localStorage's K.l entry to match the DB.li fixture above (matching
+  // what sv(K.l,...) would have persisted) — the archive step below reads whatever K.l
+  // currently holds in localStorage, not ctx.DB.li directly, so this must not be left to
+  // whatever an unrelated earlier test happened to leave behind.
+  ctx.localStorage.setItem(ctx.K.l, JSON.stringify(ctx.DB.li));
+
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    line_items: {
+      insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid' }, row); },
+      selectData: [{ id: 'new-li-uuid', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', sup_id: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, currency: 'USD', notes: '', dg: true, dims: {l:1,w:1,h:1}, price_history: [{date:'2026-01-01',cost:1,price:2,invoiceRef:'',notes:'Initial catalogue price'}] }]
+    }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-li-restore-btn');
+
+  await ctx.migrateLineItemsToSupabase();
+
+  var insertCall = sb._calls.find(function(c){ return c.table === 'line_items' && c.op === 'insert'; });
+  assert(insertCall, 'insert called');
+  assertEqual(insertCall.row.dg, true, 'dg included in insert payload');
+  assertEqual(JSON.stringify(insertCall.row.dims), JSON.stringify({l:1,w:1,h:1}), 'dims included in insert payload');
+  assertEqual(insertCall.row.price_history.length, 1, 'priceHistory included in insert payload');
+  assertEqual(insertCall.row.invoiceRefs, undefined, 'invoiceRefs never sent to Supabase — no such column');
+
+  assertEqual(ctx.DB.inv[0].lineItems[0].lid, 'new-li-uuid', 'Invoice lineItems[].lid remapped');
+  assertEqual(ctx.DB.po[0].lineItems[0].lid, 'new-li-uuid', 'PO lineItems[].lid remapped');
+  assertEqual(ctx.DB.qt[0].lines[0].lid, undefined, 'dead Quote.lines[].lid left as-is (never populated in real data) — sweep checked it (no crash) but had nothing real to rewrite');
+
+  assertEqual(ctx.DB.li[0].id, 'new-li-uuid', 'Line Item own id remapped to the Supabase-assigned id');
+  assertEqual(JSON.stringify(ctx.DB.li[0].invoiceRefs), JSON.stringify([{ invId: 'INV-1' }]), 'invoiceRefs preserved across the post-migration refresh, not dropped by the Supabase-sourced replacement');
+
+  var archived = JSON.parse(ctx.localStorage.getItem('st_li_pre_migration'));
+  assertEqual(archived[0].id, 'l1', 'pre-migration archive captured the ORIGINAL local id, not the remapped one');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateContactsToSupabase — Supplier already migrated: inserts every field including role/enquiries, rewrites OrderRequest.contactId, nested RFQResponse.contactId, and Quote.sourceContactId', async function() {
+  resetDB();
+  ctx.DB.con.push({ id: 'c1', num: 'CON-0001', name: 'Alice', email: 'a@x.com', phone: '', company: '', status: 'lead', source: 'manual', gdprBasis: 'pre_contract', createdAt: '2026-01-01T00:00:00.000Z', lastContactedAt: '', enquiries: [{id:'e1',ts:'2026-01-01',summary:'hi',source:'manual'}], notes: '', supplierId: 'new-sup-uuid', role: 'supplier_contact' });
+  ctx.DB.ord.push({ id: 'o1', contactId: 'c1', lines: [{ rfqResponses: [{ contactId: 'c1' }] }] });
+  ctx.DB.qt.push({ id: 'q1', sourceContactId: 'c1' });
+
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-con-restore-btn');
+
+  await ctx.migrateContactsToSupabase();
+
+  var insertCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'insert'; });
+  assert(insertCall, 'insert called');
+  assertEqual(insertCall.row.role, 'supplier_contact', 'role included in insert payload');
+  assertEqual(insertCall.row.enquiries.length, 1, 'enquiries included in insert payload');
+  assertEqual(insertCall.row.created_at, '2026-01-01T00:00:00.000Z', 'original createdAt preserved, not overwritten by a DB default');
+
+  assertEqual(ctx.DB.ord[0].contactId, 'new-con-uuid', 'OrderRequest.contactId remapped');
+  assertEqual(ctx.DB.ord[0].lines[0].rfqResponses[0].contactId, 'new-con-uuid', 'nested RFQResponse.contactId remapped');
+  assertEqual(ctx.DB.qt[0].sourceContactId, 'new-con-uuid', 'Quote.sourceContactId remapped');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateContactsToSupabase — a Contact with supplierId:null migrates cleanly once Supplier has completed, supplier_id sent as null', async function() {
+  resetDB();
+  ctx.DB.con.push({ id: 'c2', num: 'CON-0002', name: 'Bob', email: 'b@x.com', phone: '', company: '', status: 'lead', source: 'manual', gdprBasis: 'legitimate_interests', createdAt: '', lastContactedAt: '', enquiries: [], notes: '', supplierId: null, role: '' });
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid-2' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-con-restore-btn');
+  await ctx.migrateContactsToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'insert'; });
+  assertEqual(insertCall.row.supplier_id, null, 'supplier_id sent as null, not undefined or a stale local id');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
+testAsync('migrateContactsToSupabase — blocked when a Contact\'s supplierId does not resolve against the ACTUALLY-CONNECTED project, even if the stale local completion marker says migration is done (round-2 B3 fix)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString()); // stale marker left over from a different, previously-connected project
+  ctx.DB.con.push({ id: 'c3', num: 'CON-0003', name: 'Carol', email: 'c@x.com', phone: '', company: '', status: 'lead', source: 'manual', gdprBasis: 'legitimate_interests', createdAt: '', lastContactedAt: '', enquiries: [], notes: '', supplierId: 'uuid-from-a-different-project', role: 'supplier_contact' });
+  // The currently-connected project's suppliers table has no such Supplier — proves the
+  // pre-flight check queries live state and isn't fooled by the stale marker that just
+  // let isSupplierMigrationComplete() return true.
+  var sb = mockSb({ suppliers: { selectData: [{ id: 'a-completely-different-real-uuid', name: 'Real Local Supplier' }] }, contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid-3' }, row); } } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migrateContactsToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'insert'; });
+  assert(!insertCall, 'no insert attempted — the orphaned supplierId was caught before the insert loop started, despite the stale marker');
+  assertEqual(ctx.DB.con[0].id, 'c3', 'Contact unchanged');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+});
+
+test('restoreFromMigrationArchive / restoreLIMigrationArchive / restoreConMigrationArchive — each clears its own migration-completion marker on restore (round-2 B3 fix)', function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  var origReload = ctx.location.reload; ctx.location.reload = function(){};
+  var origSetTimeout = ctx.setTimeout; ctx.setTimeout = function(fn){ fn(); };
+
+  ctx.localStorage.setItem('st_s_pre_migration', '[]'); ctx.localStorage.setItem('st_bu_pre_migration', '[]');
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.restoreFromMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_cloud_migration_ts'), null, 'st_cloud_migration_ts cleared so a later reconnect to a different project cannot inherit it');
+
+  ctx.localStorage.setItem('st_li_pre_migration', '[]');
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.restoreLIMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_li_cloud_migration_ts'), null, 'st_li_cloud_migration_ts cleared on its own restore');
+
+  ctx.localStorage.setItem('st_con_pre_migration', '[]');
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.restoreConMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_con_cloud_migration_ts'), null, 'st_con_cloud_migration_ts cleared on its own restore');
+
+  ctx.location.reload = origReload; ctx.setTimeout = origSetTimeout; ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveLI — Cloud Data configured: create calls insert with client-generated num but no client-generated id; update calls update().eq(), never insert; local Sheets sync never called', async function() {
+  resetDB();
+  ctx.EI.l = null;
+  ['lf-s','lf-d','lf-sp','lf-hs','lf-sup','lf-u','lf-c','lf-p','lf-cur','lf-nt','lf-diml','lf-dimw','lf-dimh'].forEach(function(id){ mockEl(id); });
+  mockEl('lf-s').value = 'SKU1'; mockEl('lf-d').value = 'Widget'; mockEl('lf-sup').value = 'new-sup-uuid'; mockEl('lf-cur').value = 'USD';
+  var syncCalled = false;
+  ctx.syncEnt = function(){ syncCalled = true; return Promise.resolve(); };
+  var sb = mockSb({ line_items: { insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid' }, row); } } });
+  ctx._sb = sb;
+  await ctx.saveLI();
+  var insertCall = sb._calls.find(function(c){ return c.op === 'insert'; });
+  assert(insertCall, 'insert was called');
+  assert(insertCall.row.num, 'client-generated num present on insert');
+  assertEqual(insertCall.row.id, undefined, 'no client-generated id sent on insert');
+  assertEqual(syncCalled, false, 'syncEnt never called on the _sb path — mutually exclusive with Sheets sync');
+
+  ctx.EI.l = 'new-li-uuid';
+  var sb2 = mockSb({ line_items: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); } } });
+  ctx._sb = sb2;
+  await ctx.saveLI();
+  var updateCall = sb2._calls.find(function(c){ return c.op === 'update'; });
+  var insertCall2 = sb2._calls.find(function(c){ return c.op === 'insert'; });
+  assert(updateCall, 'update was called on edit path');
+  assert(!insertCall2, 'insert never called on edit path');
+});
+
+testAsync('delLI — Cloud Data configured: soft-delete via update({deleted_at}), never a hard delete, never delEnt', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', sku: 'SKU1' });
+  ctx.confirm = function(){ return true; };
+  var delEntCalled = false;
+  ctx.delEnt = function(){ delEntCalled = true; return Promise.resolve(); };
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.delLI('l1');
+  var updateCall = sb._calls.find(function(c){ return c.op === 'update'; });
+  assert(updateCall, 'update called (soft-delete)');
+  assert(updateCall.row.deleted_at, 'deleted_at timestamp set, not a hard delete');
+  assertEqual(delEntCalled, false, 'delEnt never called on the _sb path');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveCon — Cloud Data configured: create calls insert with client-generated num; update calls update().eq(); duplicate-email merge path updates Supabase and never calls sv(K.co,...) directly', async function() {
+  resetDB();
+  ctx.EI.co = null;
+  ['ct-name','ct-email','ct-status','ct-enq-summary','ct-phone','ct-company','ct-source','ct-notes','ct-sup'].forEach(function(id){ mockEl(id); });
+  mockEl('ct-name').value = 'New Contact'; mockEl('ct-email').value = 'new@x.com'; mockEl('ct-status').value = 'lead';
+  var sb = mockSb({ contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid' }, row); } } });
+  ctx._sb = sb;
+  await ctx.saveCon();
+  var insertCall = sb._calls.find(function(c){ return c.op === 'insert'; });
+  assert(insertCall, 'insert was called');
+  assert(insertCall.row.num, 'client-generated num present on insert');
+
+  resetDB();
+  ctx.DB.con.push({ id: 'dup1', name: 'Existing', email: 'dup@x.com', enquiries: [] });
+  ctx.EI.co = null;
+  mockEl('ct-name').value = 'Someone'; mockEl('ct-email').value = 'dup@x.com'; mockEl('ct-status').value = 'lead';
+  mockEl('ct-enq-summary').value = 'follow up';
+  ctx.confirm = function(){ return true; }; // accept the merge prompt
+  var sb2 = mockSb({});
+  ctx._sb = sb2;
+  await ctx.saveCon();
+  var mergeCall = sb2._calls.find(function(c){ return c.op === 'update'; });
+  assert(mergeCall, 'merge path updates Supabase');
+  assertEqual(mergeCall.row.enquiries.length, 1, 'merged enquiry included in the Supabase update payload');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveCon — merge path: on a Supabase update error, the in-memory dup record is never mutated (A1 fix)', async function() {
+  resetDB();
+  var dupRecord = { id: 'dup1', name: 'Existing', email: 'dup@x.com', enquiries: [], lastContactedAt: '' };
+  ctx.DB.con.push(dupRecord);
+  ctx.EI.co = null;
+  mockEl('ct-name').value = 'Someone'; mockEl('ct-email').value = 'dup@x.com'; mockEl('ct-status').value = 'lead';
+  mockEl('ct-enq-summary').value = 'follow up';
+  ctx.confirm = function(){ return true; };
+  ctx._sb = mockSb({ contacts: { updateError: { message: 'network down' } } });
+  await ctx.saveCon();
+  assertEqual(dupRecord.enquiries.length, 0, 'dup.enquiries never mutated when the Supabase update fails');
+  assertEqual(dupRecord.lastContactedAt, '', 'dup.lastContactedAt never mutated when the Supabase update fails');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('delCon — Cloud Data configured: soft-delete via update({deleted_at}); local DB.ord contactId and nested rfqResponses[].contactId still nulled', async function() {
+  resetDB();
+  ctx.DB.ord.push({ id: 'o1', contactId: 'c1', lines: [{ rfqResponses: [{ contactId: 'c1' }] }] });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.delCon('c1');
+  var updateCall = sb._calls.find(function(c){ return c.op === 'update'; });
+  assert(updateCall, 'update called (soft-delete)');
+  assert(updateCall.row.deleted_at, 'deleted_at timestamp set, not a hard delete');
+  assertEqual(ctx.DB.ord[0].contactId, null, 'OrderRequest.contactId nulled locally');
+  assertEqual(ctx.DB.ord[0].lines[0].rfqResponses[0].contactId, null, 'nested RFQResponse.contactId nulled locally');
+  ctx.confirm = function(){ return false; };
+});
+
+test('restoreLIMigrationArchive / restoreConMigrationArchive — each restores its own key and clears SS.supabaseUrl/supabaseAnonKey independently', function() {
+  resetDB();
+  ctx.localStorage.setItem('st_li_pre_migration', JSON.stringify([{ id: 'orig-li', sku: 'SKU1' }]));
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  ctx.confirm = function(){ return true; };
+  var origReload = ctx.location.reload; ctx.location.reload = function(){};
+  var origSetTimeout = ctx.setTimeout; ctx.setTimeout = function(fn){ fn(); };
+  ctx.restoreLIMigrationArchive();
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.l))[0].id, 'orig-li', 'st_li restored from archive');
+  assertEqual(ctx.SS.supabaseUrl, '', 'supabaseUrl cleared');
+
+  ctx.localStorage.setItem('st_con_pre_migration', JSON.stringify([{ id: 'orig-con', name: 'Alice' }]));
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  ctx.restoreConMigrationArchive();
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.co))[0].id, 'orig-con', 'st_con restored from archive');
+  assertEqual(ctx.SS.supabaseUrl, '', 'supabaseUrl cleared');
+
+  ctx.location.reload = origReload; ctx.setTimeout = origSetTimeout; ctx.confirm = function(){ return false; };
+});
+
+test('cleanupExpiredMigrationArchive — Line Item and Contact archives expire independently of Supplier/Buyer\'s and of each other', function() {
+  var day31 = new Date(Date.now() - 31*86400000).toISOString();
+  var day5  = new Date(Date.now() - 5*86400000).toISOString();
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', day31);
+  ctx.localStorage.setItem('st_li_pre_migration', '[]');
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', day5);
+  ctx.localStorage.setItem('st_con_pre_migration', '[]');
+  ctx.cleanupExpiredMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_li_pre_migration'), null, 'expired Line Item archive removed at day 31');
+  assertEqual(ctx.localStorage.getItem('st_con_pre_migration'), '[]', 'Contact archive at day 5 untouched');
+});
+
+testAsync('refreshLIFromSupabase / refreshConFromSupabase — refuse to overwrite real local data when this device has never run the migration (B1 fix); proceed when local data is empty (second-device case)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.DB.li.push({ id: 'local-only-li', sku: 'REAL-LOCAL-SKU' });
+  ctx._sb = mockSb({ line_items: { selectData: [] } }); // brand-new, still-empty table right after this SPEC ships
+  await ctx.refreshLIFromSupabase();
+  assertEqual(ctx.DB.li.length, 1, 'real local Line Item NOT wiped — this device never ran the Line Item migration');
+  assertEqual(ctx.DB.li[0].id, 'local-only-li', 'original record untouched');
+
+  resetDB(); // simulates a fresh/second device: no local Line Items at all
+  ctx._sb = mockSb({ line_items: { selectData: [{ id: 'cloud-li-1', num: 'LI-0001', sku: 'CLOUD-SKU', currency: 'USD', price_history: [] }] } });
+  await ctx.refreshLIFromSupabase();
+  assertEqual(ctx.DB.li.length, 1, 'real Cloud Data correctly loaded — nothing local was at risk');
+  assertEqual(ctx.DB.li[0].id, 'cloud-li-1', 'loaded from Supabase');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.DB.con.push({ id: 'local-only-con', name: 'Real Local Contact' });
+  ctx._sb = mockSb({ contacts: { selectData: [] } });
+  await ctx.refreshConFromSupabase();
+  assertEqual(ctx.DB.con.length, 1, 'real local Contact NOT wiped — this device never ran the Contact migration');
+});
+
+test('rCfg — Line Item and Contact restore buttons reappear after reload based on their own local migration marker (B4 fix)', function() {
+  mockEl('cfg-sb-li-restore-btn'); mockEl('cfg-sb-con-restore-btn'); mockEl('cfg-sb-restore-btn');
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.rCfg();
+  assertEqual(mockEl('cfg-sb-li-restore-btn').style.display, 'none', 'Line Item restore button hidden with no archive');
+  assertEqual(mockEl('cfg-sb-con-restore-btn').style.display, 'none', 'Contact restore button hidden with no archive');
+
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.rCfg();
+  assertEqual(mockEl('cfg-sb-li-restore-btn').style.display, '', 'Line Item restore button visible again after a fresh rCfg() render, simulating a reload');
+  assertEqual(mockEl('cfg-sb-con-restore-btn').style.display, 'none', 'Contact restore button independently still hidden');
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+});
+
+testAsync('pullAll — li/co dropped from the batched pull_all request once each entity\'s own Cloud Data migration marker is set, independently of Supplier\'s exclusion and of each other (B2 fix)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx._sb = mockSb({});
+
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assert(_fetchCallLog[0].entities.indexOf('li') >= 0, 'li still requested — its own migration marker is not set yet');
+  assert(_fetchCallLog[0].entities.indexOf('co') >= 0, 'co still requested — its own migration marker is not set yet');
+
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assertEqual(_fetchCallLog[0].entities.indexOf('li'), -1, 'li excluded from the batched request once its own migration marker is set');
+  assert(_fetchCallLog[0].entities.indexOf('co') >= 0, 'co still requested — its own marker is independently unset');
+
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.SS.url = '';
+});
+
+testAsync('refreshConFromSupabase / refreshLIFromSupabase — set their own migration marker on a successful refresh even when this device never ran the migration itself (round-3 fix, second-device case)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx._sb = mockSb({ contacts: { selectData: [{ id: 'cloud-con-1', num: 'CON-0001', name: 'Cloud Contact', email: 'c@x.com', enquiries: [] }] } });
+  await ctx.refreshConFromSupabase(); // fresh device, DB.con was empty — guard lets this through
+  assert(!!ctx.localStorage.getItem('st_con_cloud_migration_ts'), 'marker now set even though this device never ran migrateContactsToSupabase() itself');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx._sb = mockSb({ line_items: { selectData: [{ id: 'cloud-li-1', num: 'LI-0001', sku: 'X', currency: 'USD', price_history: [] }] } });
+  await ctx.refreshLIFromSupabase();
+  assert(!!ctx.localStorage.getItem('st_li_cloud_migration_ts'), 'marker now set for Line Item too');
+});
+
+testAsync('unlinkSupCon / openSupConPicker — Cloud Data + Contact migrated: push to Supabase and refresh, never a bare sv(K.co,...); Cloud Data configured but Contact NOT yet migrated: unchanged local-only behavior', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.con.push({ id: 'con-uuid-1', name: 'Alice', supplierId: 'sup-uuid-1', role: 'supplier_contact' });
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.unlinkSupCon('con-uuid-1');
+  var updateCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'update'; });
+  assert(updateCall, 'unlink pushed to Supabase once Contact has migrated');
+  assertEqual(updateCall.row.supplier_id, null, 'supplier_id cleared in the Supabase payload');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts'); // Cloud Data configured for Supplier, but Contact never migrated
+  ctx.DB.con.push({ id: 'local-uid-1', name: 'Bob', supplierId: 'sup-uuid-1', role: 'supplier_contact' });
+  var sb2 = mockSb({});
+  ctx._sb = sb2;
+  await ctx.unlinkSupCon('local-uid-1');
+  var updateCall2 = sb2._calls.find(function(c){ return c.op === 'update'; });
+  assert(!updateCall2, 'no Supabase call attempted — Contact ids on this device are still local uids');
+  assertEqual(ctx.DB.con[0].supplierId, null, 'local unlink still applied directly, not silently dropped');
+});
+
+testAsync('delSup — Cloud Data configured, Contact ALSO migrated: linked contacts unlinked via Supabase update + refresh, not a bare sv(K.co,...)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.sup.push({ id: 'sup-uuid-1', name: 'ACME' });
+  ctx.DB.con.push({ id: 'con-uuid-1', name: 'Alice', supplierId: 'sup-uuid-1', role: 'supplier_contact', enquiries: [] });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({ contacts: { selectData: [] } });
+  ctx._sb = sb;
+  await ctx.delSup('sup-uuid-1');
+  var conUpdateCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'update'; });
+  assert(conUpdateCall, 'linked Contact unlinked via a real Supabase update once Contact has migrated');
+  assertEqual(conUpdateCall.row.supplier_id, null, 'supplier_id cleared in the Supabase payload');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveQte / delQte — Contact status conversion round-trip pushes to Supabase once Contact has migrated', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.con.push({ id: 'con-uuid-1', name: 'Alice', status: 'qualified', enquiries: [] });
+  ctx.cConvertId = 'con-uuid-1';
+  ['qf-client','qf-nt'].forEach(function(id){ mockEl(id); });
+  var sb = mockSb({ contacts: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'con-uuid-1', name: 'Alice', status: 'converted', enquiries: [] }] } });
+  ctx._sb = sb;
+  await ctx.saveQte();
+  var convertCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'update' && c.row.status === 'converted'; });
+  assert(convertCall, 'contact status pushed to Supabase as converted');
+
+  resetDB();
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.con.push({ id: 'con-uuid-1', name: 'Alice', status: 'converted', enquiries: [] });
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE1', sourceContactId: 'con-uuid-1' });
+  ctx.confirm = function(){ return true; };
+  var sb2 = mockSb({ contacts: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'con-uuid-1', name: 'Alice', status: 'qualified', enquiries: [] }] } });
+  ctx._sb = sb2;
+  await ctx.delQte('q1');
+  var revertCall = sb2._calls.find(function(c){ return c.table === 'contacts' && c.op === 'update' && c.row.status === 'qualified'; });
+  assert(revertCall, 'contact status reverted to qualified via Supabase on Quote deletion');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveInv — auto-recorded price history pushes to line_items via Supabase once Line Items have migrated, instead of a bare sv(K.l,...); unmigrated Line Items keep the existing local-only behavior', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.li  = [{ id:'li-uuid-1', num:'LI-0001', sku:'SKU-DEV', desc:'Deviation Test', cost:100, price:150, priceHistory:[], uom:'pcs', cur:'USD' }];
+  ctx.DB.inv = [{ id:'inv-base', num:'INV10001', status:'Draft', lineItems:[], taxRate:0, dep:0, chargesIncluded:true }];
+  ctx.EI.i   = null;
+  ctx.cIL    = [{ rid:'r1', lid:'li-uuid-1', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }]; // 120 ≠ 150
+  ['if-n','if-b','if-ba','if-st','if-dst','if-cid','if-dt','if-ex','if-sd','if-ft','if-wt','if-cbm','if-pk','if-pol','if-pod','if-coo','if-cur','if-tx','if-lf','if-ins','if-leg','if-isp','if-oth','if-dep','if-inco','if-pt','if-terms','inv-sm'].forEach(function(id){ mockEl(id); });
+  mockEl('if-n').value = 'INV10002'; mockEl('if-b').value = 'Test Buyer'; mockEl('if-dst').value = 'Barbados';
+  mockEl('if-dt').value = '2026-05-01'; mockEl('if-cur').value = 'USD'; mockEl('if-tx').value = '0'; mockEl('if-lf').value = '0';
+  mockEl('if-ins').value = '0'; mockEl('if-leg').value = '0'; mockEl('if-isp').value = '0'; mockEl('if-oth').value = '0'; mockEl('if-dep').value = '0';
+  mockEl('if-inco').value = 'CIF'; mockEl('if-pt').value = 'Net 30'; mockEl('if-chi').checked = true; mockEl('inv-sm').value = 'Draft';
+
+  var sb = mockSb({ line_items: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'li-uuid-1', num: 'LI-0001', sku: 'SKU-DEV', price: 150, cost: 100, currency: 'USD', price_history: [{ date: '2026-05-01', cost: 100, price: 120, invoiceRef: 'INV10002', notes: 'Price at time of order' }] }] } });
+  ctx._sb = sb;
+  await ctx.saveInv();
+  var updateCall = sb._calls.find(function(c){ return c.table === 'line_items' && c.op === 'update' && c.row.price_history; });
+  assert(updateCall, 'price history pushed to Supabase rather than only sv(K.l,...)');
+  assertEqual(updateCall.row.price_history[0].price, 120, 'deviated invoice price recorded in the pushed payload');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts'); // Cloud Data configured for Supplier, but Line Items never migrated
+  ctx.DB.li  = [{ id:'li-dev', sku:'SKU-DEV', desc:'Deviation Test', cost:100, price:150, priceHistory:[], uom:'pcs', cur:'USD' }];
+  ctx.DB.inv = [{ id:'inv-base', num:'INV10001', status:'Draft', lineItems:[], taxRate:0, dep:0, chargesIncluded:true }];
+  ctx.EI.i   = null;
+  ctx.cIL    = [{ rid:'r1', lid:'li-dev', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }];
+  var sb2 = mockSb({});
+  ctx._sb = sb2;
+  await ctx.saveInv();
+  var updateCall2 = sb2._calls.find(function(c){ return c.op === 'update'; });
+  assert(!updateCall2, 'no Supabase call attempted — Line Item ids on this device are still local uids');
+  var cat = ctx.DB.li.find(function(x){ return x.id === 'li-dev'; });
+  assert(cat.priceHistory.length > 0, 'local-only behavior unchanged — history still recorded directly, matching the pre-existing test at tests/run.js:575');
+});
+
+testAsync('SPEC-CLOUD-002 test-hygiene cleanup — reset _sb and every Cloud Data migration marker this block may have left set, so later unrelated tests are not affected', async function() {
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_li_pre_migration');
+  ctx.localStorage.removeItem('st_con_pre_migration');
+});
+
 // ── AI Assistant — Invoice/Line Item/Credit Note actions + Supplier/Buyer read tools (SPEC-AI-GAP-002) ──
 
 test("_aiExecTool('get_suppliers') returns only id/num/name/country/currency — no email/phone/contact", function() {
