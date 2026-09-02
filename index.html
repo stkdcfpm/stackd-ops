@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.73</title>
+<title>Stackd Ops v2.9.74</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.73</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.74</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -797,6 +797,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Requires Suppliers to already be migrated to Cloud Data above, even for Contacts with no Supplier link (see docs/architecture-data-model-v1.md for why). Uses the same Supabase connection configured above.</p>
     </div>
     <div class="card">
+      <div class="ct">Cloud Data (Order Requests)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="migrateOrdToSupabase()">Migrate Order Requests to Cloud</button>
+        <button class="btn btn-g" id="cfg-sb-ord-restore-btn" style="display:none;" onclick="restoreOrdMigrationArchive()">Restore Pre-Migration Order Requests</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Independent of Supplier/Contact migration — Order Request Lines and RFQ Responses stay embedded with the Order Request, so no other entity needs to migrate first. Uses the same Supabase connection configured above.</p>
+    </div>
+    <div class="card">
       <div class="ct">Accounting Export — Field Mapping Reference</div>
       <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Read-only reference. Gaps indicate data not available in Stackd that the platform expects.</p>
       <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Xero Invoice Import</div>
@@ -1286,9 +1294,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.73</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.74</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Cloud Data (Supabase) extended to Order Request</strong> (REQ/SPEC-CLOUD-003), Phase 2 sub-phase 1 of 3 of the cross-platform backend migration's deal-pipeline step (`docs/architecture-data-model-v1.md` §8) — Quote and Purchase Order are deferred as separate future sub-phases (REQ-CLOUD-004/005), a scoping decision made and disclosed up front. A new Settings → Cloud Data card lets an operator migrate Order Requests independently of Supplier/Contact — Order Request Lines and their nested RFQ Responses stay embedded as a single JSONB column on the parent row rather than being promoted to child tables, since nothing outside the parent ever needs to resolve a nested line/RFQ-response id to a new value; only the parent Order Request's own id is swept, into `Quote.lines[].sourceOrdId`. `contact_id`/`active_quote_id` are plain nullable `text` columns with no FK constraint and no migration precondition, since a linked Contact or Quote may not (or, for Quote, cannot yet) have migrated. Eleven call sites that mutate an existing Order Request now share one `persistOrdChange()` helper instead of a bare `sv()`/`saveAll()` — found via three requirements-gate rounds, the last two of which each caught a real missed site (`saveQte()`'s Quote-conversion mutation, both of `delCon()`'s cascade branches, and `executeDataCleanup()`'s renumbering step). Fixed two confirmed, currently-live bugs discovered during this REQ's own research: the Supplier/Buyer migration's external-reference sweep never rewrote RFQ Response `supId`, and neither that sweep nor the Contact migration's sweep pushed an already-migrated Order Request's fix back to Supabase, only to its local mirror. Went through requirements-gate (3 rounds — round 1 found the mutation-site inventory itself was wrong, round 2 caught the missed data-cleanup site, round 3 clean) → spec-gate (3 rounds, the first two both FAIL — round 1 found the SQL schema typed two reference columns `uuid` when real local ids are never RFC-4122 format, the new refresh function was never wired into the app's startup sequence, and `saveOrd()`'s cloud-update path would have silently discarded caller-supplied lines/status/linked-Quote data in favor of stale values; round 2 found the async conversion this REQ required broke 12 tests in the pre-existing 712-test suite in ways neither gate had checked for, plus a second data-wipe risk in the CSV re-importer; round 3 clean). Implementation itself then surfaced two more defects self-caught by mutation-testing pieces neither gate's own test list covered — a `forEach`-to-`for`-loop conversion in the CSV importer needed every internal early-exit converted from a function-ending `return` to a loop-continuing `continue`, and two of the spec-gate fixes above had shipped with no actual regression test proving them. 22 new tests. Tests: 734/734 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.73</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Cloud Data (Supabase) extended to Line Item and Contact</strong> (REQ/SPEC-CLOUD-002), Phase 1 of the cross-platform backend migration's second step (`docs/architecture-data-model-v1.md` §8), following the same Supplier/Buyer mechanism SPEC-CLOUD-001 already proved. New Settings → Cloud Data cards let an operator independently migrate Line Items and Contacts to a shared Supabase database once Suppliers have already migrated — required even for Contacts with no Supplier link, since a Contact allowed to migrate ahead of Supplier could later be linked to a still-local Supplier with no way for Supplier's own migration to correct the reference afterward. The Supplier-migration-completion precondition queries the live, currently-connected Supabase project rather than trusting any local flag, so it holds correctly across devices; a pre-flight check on each migration additionally verifies every local Supplier reference actually resolves against that live project before any row is inserted, closing off a cross-project data-integrity failure mode a stale local flag alone could not catch. Both entities' migrations do a full exhaustive external-reference sweep (Invoice/PO line-item references, Order Request/RFQ/Quote contact references, including one confirmed-dead field checked but correctly left alone) and archive pre-migration data for 30-day, disconnect-safe rollback, mirroring the existing Supplier/Buyer pattern exactly. Five existing UI actions that mutate Contact fields outside the normal save path (Supplier-Contact linking/unlinking, a Supplier deletion's Contact cascade, and a Quote's Contact-status conversion/reversion), plus one Line Item price-history auto-recording site, were also made Cloud-Data-aware — each would otherwise have silently discarded a real edit on the very next Cloud refresh once its entity had migrated. Went through requirements-gate (2 rounds, both CONDITIONAL PASS) → 4 rounds of spec-gate (all CONDITIONAL PASS — findings included a data-loss defect in the initial refresh-wiring design that would have wiped every existing Cloud Data adopter's local Line Item/Contact data on their first reload, a Sheets-sync exclusion gap, a cross-project stale-marker gap, and the five-plus-one bypass sites above; all resolved with concrete diffs and matching tests before implementation began). Implemented, then mutation-tested across every safety-critical check (the overwrite guard, both entities' pre-flight resolution checks, the combined precondition check, and the bypass-site fix) — each reverted mutation reproduced exactly its predicted single test failure. Also logged, not fixed: `CLOUD-GAP-001` (a pre-existing `expAll()`/`doImport()` Cloud Data connection-wipe bug), `CLOUD-GAP-002` (`syncAll()`/`pushAll()` never exclude Cloud-sourced entities from the Sheets push direction), `CLOUD-GAP-003` (the CSV importer's Supplier/Line Item/Contact branches bypass Cloud Data the same way the fixed UI sites did). 25 new tests. Tests: 712/712 pass.</li>
@@ -2925,7 +2942,7 @@ function invApprovalActionVisible(inv) {
 function invProgressActionVisible(inv) {
   return !!inv && inv.status === 'Pro-forma' && !!inv.buyerApprovedAt;
 }
-function ordAdminOverride(ordId, newStage, reason) {
+async function ordAdminOverride(ordId, newStage, reason) {
   var confirmEl = G('ord-override-confirm');
   if (!confirmEl || confirmEl.value !== 'CONFIRM') { toast('Type CONFIRM exactly to proceed.', 4000); return; }
   if (!reason || !reason.trim()) { toast('A reason is required.', 4000); return; }
@@ -2933,7 +2950,7 @@ function ordAdminOverride(ordId, newStage, reason) {
   if (!ord) return;
   var oldStage = ord.stage;
   ord.stage = newStage;
-  saveAll();
+  await persistOrdChange(ord);
   logEv('order', ord.id, 'stage_overridden', 'Stage force-changed from ' + oldStage + ' to ' + newStage + ' — reason: ' + reason.trim(), 'operator');
   toast('Order Request stage overridden to ' + newStage);
 }
@@ -2954,7 +2971,7 @@ function ordRealisedMargin(ord) {
   return totals;
 }
 var ORD_LINE_UPDATES_CAP = 200;
-function ordLogLineUpdate(ord, lineId, field, newValue, source, note, confirmedBy) {
+async function ordLogLineUpdate(ord, lineId, field, newValue, source, note, confirmedBy) {
   if (!ord.lines) return false;
   var line = ord.lines.find(function(l){ return l.id === lineId; });
   if (!line) return false;
@@ -2969,10 +2986,10 @@ function ordLogLineUpdate(ord, lineId, field, newValue, source, note, confirmedB
     line.lineUpdates.splice(0, line.lineUpdates.length - ORD_LINE_UPDATES_CAP);
   }
   if (confirmedBy) line[field] = newValue;
-  sv(K.ord, DB.ord);
+  await persistOrdChange(ord);
   return true;
 }
-function ordConfirmLineUpdate(ord, lineId, updateId) {
+async function ordConfirmLineUpdate(ord, lineId, updateId) {
   if (!ord.lines) return false;
   var line = ord.lines.find(function(l){ return l.id === lineId; });
   if (!line || !line.lineUpdates) return false;
@@ -2980,7 +2997,7 @@ function ordConfirmLineUpdate(ord, lineId, updateId) {
   if (!entry || entry.confirmedBy) return false;
   entry.confirmedBy = 'operator';
   line[entry.field] = entry.newValue;
-  sv(K.ord, DB.ord);
+  await persistOrdChange(ord);
   return true;
 }
 function backfillOrderRequests() {
@@ -3026,7 +3043,7 @@ function backfillOrderRequests() {
   });
   if (changed) backfillRefNums();
 }
-function saveOrd(ord) {
+async function saveOrd(ord) {
   var existing = ord.id ? DB.ord.find(function(o){ return o.id === ord.id; }) : null;
   var contactExists = ord.contactId ? DB.con.some(function(c){ return c.id === ord.contactId; }) : false;
   if (!contactExists) { vErr('of-contact', 'Please select a valid contact'); return false; }
@@ -3043,6 +3060,28 @@ function saveOrd(ord) {
       vWarn('of-stage', unresolvedCount + ' line(s) have unresolved quantity — quoting may be premature');
     }
   }
+
+  if (_sb && localStorage.getItem('st_ord_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return false;
+    var row = {
+      contact_id: ord.contactId || null, stage: ord.stage, description: ord.description,
+      actions: ord.actions || [], active_quote_id: ord.activeQuoteId || null,
+      outcome: ord.outcome || { result: null, reason: '', closedAt: null },
+      lines: ord.lines || []
+    };
+    var result;
+    if (existing) {
+      result = await _sb.from('order_requests').update(row).eq('id', existing.id).select().single();
+    } else {
+      row.num = nextRefNum(DB.ord, 'ORD');
+      row.created_at = new Date().toISOString();
+      result = await _sb.from('order_requests').insert(row).select().single();
+    }
+    if (result.error) { toast('Save failed: ' + result.error.message); return false; }
+    await refreshOrdFromSupabase();
+    return DB.ord.find(function(o){ return o.id === result.data.id; }) || true;
+  }
+
   if (existing) {
     Object.assign(existing, ord);
   } else {
@@ -3056,7 +3095,14 @@ function saveOrd(ord) {
   sv(K.ord, DB.ord);
   return existing || ord;
 }
-function delOrd(id) {
+async function delOrd(id) {
+  if (_sb && localStorage.getItem('st_ord_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('order_requests').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    await refreshOrdFromSupabase();
+    return;
+  }
   DB.ord = DB.ord.filter(function(o){ return o.id !== id; });
   sv(K.ord, DB.ord);
 }
@@ -3253,7 +3299,7 @@ function editRfqResponse(lineId, responseId) {
   G('ov-rfq').classList.add('on');
 }
 
-function saveRfqResponse() {
+async function saveRfqResponse() {
   var ord = DB.ord.find(function(o){ return o.id === cRfqOrdId; });
   if (!ord) { closeM('ov-rfq'); return; }
   var line = (ord.lines || []).find(function(l){ return l.id === cRfqLineId; });
@@ -3282,13 +3328,13 @@ function saveRfqResponse() {
   } else {
     line.rfqResponses.push(newResp);
   }
-  sv(K.ord, DB.ord);
+  await persistOrdChange(ord);
   closeM('ov-rfq');
   renderRfqComparison(cRfqLineId);
   toast(wasEditing ? 'RFQ response updated' : 'RFQ response recorded');
 }
 
-function delRfqResponse(lineId, responseId) {
+async function delRfqResponse(lineId, responseId) {
   if (!EI.ord) return;
   var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
   if (!ord) return;
@@ -3303,7 +3349,7 @@ function delRfqResponse(lineId, responseId) {
   if (!confirm(msg)) return;
   line.rfqResponses = (line.rfqResponses || []).filter(function(r){ return r.id !== responseId; });
   if (isCommitted) line.committedResponseId = null;
-  sv(K.ord, DB.ord);
+  await persistOrdChange(ord);
   renderRfqComparison(lineId);
   toast('RFQ response deleted');
 }
@@ -3322,14 +3368,14 @@ function rfqStalenessWarn(responses) {
   return '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;margin-bottom:8px;">&#9888; FX rates are stale — GBP-converted landed costs below may not reflect current rates. Update in Settings &rarr; Rates &amp; FX.</div>';
 }
 
-function ordCommitRfqResponse(lineId, responseId) {
+async function ordCommitRfqResponse(lineId, responseId) {
   if (!EI.ord) return;
   var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
   if (!ord) return;
   var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
   if (!line) return;
   line.committedResponseId = (line.committedResponseId === responseId) ? null : responseId;
-  sv(K.ord, DB.ord);
+  await persistOrdChange(ord);
   renderRfqComparison(lineId);
 }
 
@@ -3575,7 +3621,7 @@ function conCheckEnquiry() {
   });
 }
 
-function ordAddLine() {
+async function ordAddLine() {
   if (!EI.ord) { toast('Save the Order Request first, then add line items.', 4000); return; }
   var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
   if (!ord) return;
@@ -3591,7 +3637,7 @@ function ordAddLine() {
     sourceCountry: '', variantOption: '', lineUpdates: [],
     rfqResponses: [], committedResponseId: null
   });
-  sv(K.ord, DB.ord);
+  await persistOrdChange(ord);
   rOrdLines(ord);
 }
 function ordEditLineField(lineId, field) {
@@ -3678,7 +3724,7 @@ function ordToggleAction(i) {
     renderOrdActions(_ordFormActions);
   }
 }
-function saveOrdFromForm() {
+async function saveOrdFromForm() {
   var existing = EI.ord ? DB.ord.find(function(o){ return o.id === EI.ord; }) : null;
   var ord = {
     id: existing ? existing.id : undefined,
@@ -3690,7 +3736,7 @@ function saveOrdFromForm() {
     outcome: existing ? existing.outcome : { result:null, reason:'', closedAt:null },
     lines: existing ? (existing.lines || []) : []
   };
-  var saved = saveOrd(ord);
+  var saved = await saveOrd(ord);
   if (!saved) return;
   closeM('ov-ord');
   rOrd();
@@ -5473,6 +5519,7 @@ async function initCloudDataLayer() {
     await refreshBuyFromSupabase();
     await refreshLIFromSupabase();
     await refreshConFromSupabase();
+    await refreshOrdFromSupabase();
   }
 }
 
@@ -5544,6 +5591,39 @@ async function refreshConFromSupabase() {
   sv(K.co, DB.con);
   if (!localStorage.getItem('st_con_cloud_migration_ts')) localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
   rCon();
+}
+
+async function refreshOrdFromSupabase() {
+  if (!_sb) return;
+  if (DB.ord.length > 0 && !localStorage.getItem('st_ord_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
+  var result = await _sb.from('order_requests').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Order Requests from Cloud Data.'); return; }
+  DB.ord = result.data.map(function(row){
+    return {
+      id: row.id, num: row.num, contactId: row.contact_id, stage: row.stage, description: row.description,
+      actions: row.actions || [], activeQuoteId: row.active_quote_id || '',
+      outcome: row.outcome || { result: null, reason: '', closedAt: null },
+      lines: row.lines || [], createdAt: row.created_at, importBatchId: row.import_batch_id || undefined
+    };
+  });
+  sv(K.ord, DB.ord);
+  if (!localStorage.getItem('st_ord_cloud_migration_ts')) localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  rOrd();
+}
+
+async function persistOrdChange(ord, skipRefresh) {
+  if (_sb && localStorage.getItem('st_ord_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('order_requests').update({
+      num: ord.num, contact_id: ord.contactId || null, stage: ord.stage, description: ord.description,
+      actions: ord.actions || [], active_quote_id: ord.activeQuoteId || null,
+      outcome: ord.outcome || null, lines: ord.lines || [], import_batch_id: ord.importBatchId || null
+    }).eq('id', ord.id);
+    if (result.error) { console.warn('[Stackd] persistOrdChange: failed to push Order Request update for ' + ord.id, result.error.message); return; }
+    if (!skipRefresh) await refreshOrdFromSupabase();
+    return;
+  }
+  sv(K.ord, DB.ord);
 }
 
 async function isSupplierMigrationComplete() {
@@ -5646,7 +5726,26 @@ async function migrateSuppliersBuyersToSupabase() {
   DB.li.forEach(function(l){ if (supIdMap[l.supId]) l.supId = supIdMap[l.supId]; });
   DB.con.forEach(function(c){ if (c.supplierId && supIdMap[c.supplierId]) c.supplierId = supIdMap[c.supplierId]; });
   DB.inv.forEach(function(inv){ if (buyIdMap[inv.buyerId]) inv.buyerId = buyIdMap[inv.buyerId]; });
-  sv(K.qt, DB.qt); sv(K.p, DB.po); sv(K.l, DB.li); sv(K.co, DB.con); sv(K.i, DB.inv);
+  // REQ-CLOUD-003e: RFQ Response supId was previously missing from this sweep entirely —
+  // a confirmed, currently-live bug (REQ-CLOUD-003 §1.3). Track which Order Requests
+  // actually changed so the push-if-already-migrated step below only touches those.
+  var touchedOrdIdsForSup = {};
+  DB.ord.forEach(function(o){
+    (o.lines||[]).forEach(function(l){
+      (l.rfqResponses||[]).forEach(function(r){ if (supIdMap[r.supId]) { r.supId = supIdMap[r.supId]; touchedOrdIdsForSup[o.id] = true; } });
+    });
+  });
+  sv(K.qt, DB.qt); sv(K.p, DB.po); sv(K.l, DB.li); sv(K.co, DB.con); sv(K.i, DB.inv); sv(K.ord, DB.ord);
+
+  // Cross-phase fix: if Order Request has ITSELF already migrated to Supabase, the
+  // sv(K.ord, DB.ord) above only fixes the local mirror — push each touched record to
+  // the cloud-hosted row too, or the next refreshOrdFromSupabase() silently reverts it.
+  if (Object.keys(touchedOrdIdsForSup).length) {
+    for (var oi = 0; oi < DB.ord.length; oi++) {
+      if (touchedOrdIdsForSup[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi], true);
+    }
+    await refreshOrdFromSupabase();
+  }
 
   // REQ-CLOUD-001k: archive, don't delete, the pre-migration local arrays
   localStorage.setItem('st_s_pre_migration', localStorage.getItem(K.s));
@@ -5757,14 +5856,24 @@ async function migrateContactsToSupabase() {
   }
 
   // REQ-CLOUD-002c: exhaustive external-reference sweep
+  var touchedOrdIdsForCon = {};
   DB.ord.forEach(function(o){
-    if (conIdMap[o.contactId]) o.contactId = conIdMap[o.contactId];
+    if (conIdMap[o.contactId]) { o.contactId = conIdMap[o.contactId]; touchedOrdIdsForCon[o.id] = true; }
     (o.lines||[]).forEach(function(l){
-      (l.rfqResponses||[]).forEach(function(r){ if (conIdMap[r.contactId]) r.contactId = conIdMap[r.contactId]; });
+      (l.rfqResponses||[]).forEach(function(r){ if (conIdMap[r.contactId]) { r.contactId = conIdMap[r.contactId]; touchedOrdIdsForCon[o.id] = true; } });
     });
   });
   DB.qt.forEach(function(q){ if (conIdMap[q.sourceContactId]) q.sourceContactId = conIdMap[q.sourceContactId]; });
   sv(K.ord, DB.ord); sv(K.qt, DB.qt);
+
+  // REQ-CLOUD-003e: same cross-phase fix as migrateSuppliersBuyersToSupabase() — push
+  // to Supabase too if Order Request has already migrated, not just the local mirror.
+  if (Object.keys(touchedOrdIdsForCon).length) {
+    for (var oi = 0; oi < DB.ord.length; oi++) {
+      if (touchedOrdIdsForCon[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi], true);
+    }
+    await refreshOrdFromSupabase();
+  }
 
   localStorage.setItem('st_con_pre_migration', localStorage.getItem(K.co));
   localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
@@ -5772,6 +5881,55 @@ async function migrateContactsToSupabase() {
   await refreshConFromSupabase();
   if (G('cfg-sb-con-restore-btn')) G('cfg-sb-con-restore-btn').style.display = '';
   toast('Contact migration complete. Pre-migration data archived for 30 days.');
+}
+
+async function migrateOrdToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+
+  // REQ-CLOUD-003b: no Supplier- or Contact-migration-completion precondition — supId/
+  // contactId values nested inside RFQ Responses live inside an opaque jsonb blob no
+  // Postgres constraint can reach, so there is nothing to validate against.
+
+  // REQ-CLOUD-003h: ORD-#### numbers are generated by nextRefNum(DB.ord, 'ORD'), which
+  // scans the current max and increments — no duplicate-producing path exists today
+  // outside a genuine concurrent-tab race. Documented no-op, not an oversight.
+
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  var ordIdMap = {};
+  for (var i = 0; i < DB.ord.length; i++) {
+    var o = DB.ord[i];
+    var result = await _sb.from('order_requests').insert({
+      num: o.num, contact_id: o.contactId || null, stage: o.stage, description: o.description,
+      actions: o.actions || [], active_quote_id: o.activeQuoteId || null, outcome: o.outcome || null,
+      lines: o.lines || [], created_at: o.createdAt, import_batch_id: o.importBatchId || null
+    }).select().single();
+    if (result.error) { toast('Migration failed on Order Request ' + (o.num||o.id) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    ordIdMap[o.id] = result.data.id;
+  }
+
+  // REQ-CLOUD-003d: exhaustive external-reference sweep — only Quote.lines[].sourceOrdId
+  // needs rewriting; sourceOrdLineId/sourceRfqResponseId point at nested children that
+  // are never remapped (REQ-CLOUD-003 §1.2) — checked anyway, never silently skipped.
+  DB.qt.forEach(function(q){
+    (q.lines||[]).forEach(function(l){
+      if (ordIdMap[l.sourceOrdId]) l.sourceOrdId = ordIdMap[l.sourceOrdId];
+    });
+  });
+  sv(K.qt, DB.qt);
+
+  // Archive the true pre-migration snapshot BEFORE remapping DB.ord's own ids below.
+  localStorage.setItem('st_ord_pre_migration', localStorage.getItem(K.ord));
+  localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+
+  DB.ord.forEach(function(o){ if (ordIdMap[o.id]) o.id = ordIdMap[o.id]; });
+  sv(K.ord, DB.ord);
+
+  await refreshOrdFromSupabase();
+  if (G('cfg-sb-ord-restore-btn')) G('cfg-sb-ord-restore-btn').style.display = '';
+  toast('Order Request migration complete. Pre-migration data archived for 30 days.');
 }
 
 function restoreFromMigrationArchive() {
@@ -5811,6 +5969,18 @@ function restoreConMigrationArchive() {
   setTimeout(function(){ location.reload(); }, 1200);
 }
 
+function restoreOrdMigrationArchive() {
+  var arch = localStorage.getItem('st_ord_pre_migration');
+  if (!arch) { toast('No Order Request migration archive available to restore.'); return; }
+  if (!confirm('Restore Order Requests to their state immediately before the Supabase migration?\n\nThis does not change Suppliers, Buyers, Line Items, Contacts, or any document data, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected for ALL entities, not just Order Requests — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect any of them afterwards.')) return;
+  localStorage.setItem(K.ord, arch);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  localStorage.removeItem('st_ord_cloud_migration_ts');
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+
 function cleanupExpiredMigrationArchive() {
   var ts = localStorage.getItem('st_cloud_migration_ts');
   if (ts && (Date.now() - new Date(ts).getTime()) / 86400000 > 30) {
@@ -5827,6 +5997,11 @@ function cleanupExpiredMigrationArchive() {
   if (conTs && (Date.now() - new Date(conTs).getTime()) / 86400000 > 30) {
     localStorage.removeItem('st_con_pre_migration');
     localStorage.removeItem('st_con_cloud_migration_ts');
+  }
+  var ordTs = localStorage.getItem('st_ord_cloud_migration_ts');
+  if (ordTs && (Date.now() - new Date(ordTs).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_ord_pre_migration');
+    localStorage.removeItem('st_ord_cloud_migration_ts');
   }
 }
 
@@ -8459,7 +8634,7 @@ function parseImportCSV(text) {
   return { headers: headers, rows: rows };
 }
 
-function processImport(entity, csvText) {
+async function processImport(entity, csvText) {
   var parsed = parseImportCSV(csvText);
   var rows = parsed.rows;
   if (!rows.length) { impLog('No data rows found in ' + entity + ' CSV'); return; }
@@ -8644,12 +8819,13 @@ function processImport(entity, csvText) {
       (bySubmission[sid] = bySubmission[sid] || []).push(r);
     });
 
-    Object.keys(bySubmission).forEach(function(sid) {
+    for (var si = 0; si < Object.keys(bySubmission).length; si++) {
+      var sid = Object.keys(bySubmission)[si];
       var submissionRows = bySubmission[sid];
       var first = submissionRows[0];
       var email = String(first['Contact Email']||'').trim().toLowerCase();
       var name  = String(first['Contact Name']||'').trim();
-      if (!email) { skipped += submissionRows.length; errors.push('Submission ' + sid + ': Contact Email is required, skipped'); return; }
+      if (!email) { skipped += submissionRows.length; errors.push('Submission ' + sid + ': Contact Email is required, skipped'); continue; }
 
       // Contact match-or-create — adapted from processImportRecords()'s existing `co` branch
       var contact = email ? DB.con.find(function(c){ return (c.email||'').toLowerCase()===email; })
@@ -8688,8 +8864,8 @@ function processImport(entity, csvText) {
           lineUpdates: []
         });
       });
-      if (newLines.length === 0 && existingOrd) { return; } // nothing new to add to an existing Order Request — not counted as added or updated
-      if (newLines.length === 0 && !existingOrd) { skipped++; return; } // no valid lines at all for a brand-new submission
+      if (newLines.length === 0 && existingOrd) { continue; } // nothing new to add to an existing Order Request — not counted as added or updated
+      if (newLines.length === 0 && !existingOrd) { skipped++; continue; } // no valid lines at all for a brand-new submission
 
       var ordObj = {
         id: existingOrd ? existingOrd.id : undefined,
@@ -8698,15 +8874,17 @@ function processImport(entity, csvText) {
         description: String(first['Order Description']||'').trim() || (existingOrd ? existingOrd.description : ''),
         importBatchId: sid,
         lines: existingLines.concat(newLines),
-        actions: existingOrd ? existingOrd.actions : []
+        actions: existingOrd ? existingOrd.actions : [],
+        activeQuoteId: existingOrd ? existingOrd.activeQuoteId : '',
+        outcome: existingOrd ? existingOrd.outcome : { result: null, reason: '', closedAt: null }
       };
-      var saved = saveOrd(ordObj);
+      var saved = await saveOrd(ordObj);
       if (saved) {
         if (existingOrd) { updated++; } else { added++; } // branch on existingOrd (captured pre-call), never on saveOrd()'s return value — both success paths return a truthy object
       }
-    });
+    }
 
-    sv(K.co, DB.con); sv(K.ord, DB.ord); rCon(); rOrd(); rDash();
+    sv(K.co, DB.con); rCon(); rOrd(); rDash();
     var msg = 'Order Requests: ' + added + ' added, ' + updated + ' updated, ' + skipped + ' skipped' + (errors.length ? ' | ' + errors.join('; ') : '');
     G('imp-ord-result').textContent = msg; impLog(msg);
   }
@@ -9112,10 +9290,10 @@ async function confirmDataCleanup() {
   closeM('ov-data-cleanup-preview');
   var backupConfirmed = await showDataCleanupBackupModal();
   if (!backupConfirmed) return;
-  executeDataCleanup();
+  await executeDataCleanup();
 }
 
-function executeDataCleanup() {
+async function executeDataCleanup() {
   var removedCounts = {};
   ['sup', 'li', 'inv', 'po', 'qt', 'payments', 'con', 'buy', 'ord', 'sh'].forEach(function(key) {
     var before = DB[key].length;
@@ -9128,9 +9306,11 @@ function executeDataCleanup() {
   });
 
   var renumberedLabels = [];
+  var ordRenumberChanges = [];
   [['sup','SUP'], ['li','LI'], ['buy','BUY'], ['con','CON'], ['ord','ORD']].forEach(function(pair) {
     var key = pair[0], prefix = pair[1];
     var changes = renumberEntitySequentially(DB[key], prefix);
+    if (key === 'ord') ordRenumberChanges = changes;
     if (changes.length) {
       renumberedLabels.push(DATA_CLEANUP_LABELS[key]);
       changes.forEach(function(c) {
@@ -9141,6 +9321,21 @@ function executeDataCleanup() {
 
   var dangling = verifyFkIntegrityAfterCleanup();
   saveAll();
+  // REQ-CLOUD-003 round-2 finding: renumberEntitySequentially(DB.ord,'ORD') touches every
+  // Order Request's num, not just corrupted ones, on every "Clean Up Now" click — push each
+  // renumbered record to Supabase too if Order Request has already migrated, or the fix is
+  // silently reverted by the next refreshOrdFromSupabase(). (The phantom-record filter a few
+  // lines above this needs no equivalent fix — a phantom record has no `id` at all, and a
+  // Postgres-hosted row always has a real gen_random_uuid()-assigned id, so no cloud-sourced
+  // record can ever be phantom; that filter step is a structural no-op for migrated data.)
+  if (ordRenumberChanges.length) {
+    var ordChangedIds = {};
+    ordRenumberChanges.forEach(function(c){ ordChangedIds[c.id] = true; });
+    for (var oi = 0; oi < DB.ord.length; oi++) {
+      if (ordChangedIds[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi], true);
+    }
+    await refreshOrdFromSupabase();
+  }
   renderAll();
 
   var totalRemoved = Object.keys(removedCounts).reduce(function(s, k) { return s + removedCounts[k]; }, 0);
@@ -9358,7 +9553,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.73).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.74).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -9383,7 +9578,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Suppliers',
   'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes. Each supplier is auto-assigned a SUP-#### reference number on creation (see Reference Numbers above).',
-  'Cloud Data (v2.9.5x, REQ/SPEC-CLOUD-001): Settings → Cloud Data lets an operator connect a shared Supabase database for Suppliers and Buyers only — everything else in the app stays local-only. When configured, a colleague on a different device/browser sees the same Supplier/Buyer records, gated by a separate Supabase sign-in (distinct from the app password). Existing local Suppliers/Buyers are moved across via a one-time "Migrate Suppliers/Buyers to Cloud" action, which requires a full backup export first (mandatory, blocking) and archives the pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. If not configured, nothing changes — Suppliers/Buyers behave exactly as before.',
+  'Cloud Data (REQ/SPEC-CLOUD-001/002/003): Settings → Cloud Data lets an operator connect a shared Supabase database. Each of Supplier/Buyer, Line Item, Contact, and Order Request migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Quote and Purchase Order are not yet Cloud-Data-eligible — they, and every other entity, stay local-only regardless of what has migrated. Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s lines and RFQ Responses migrate embedded with their parent record — no separate migration or precondition for them, and they can migrate independently of whether Contact has. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
   '',
   '## Line Items (Product Catalogue)',
   'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox. Each line item is auto-assigned an LI-#### reference number on creation (see Reference Numbers above).',
@@ -10189,6 +10384,7 @@ function rCfg() {
   if(G('cfg-sb-restore-btn')) G('cfg-sb-restore-btn').style.display = localStorage.getItem('st_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-li-restore-btn')) G('cfg-sb-li-restore-btn').style.display = localStorage.getItem('st_li_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-con-restore-btn')) G('cfg-sb-con-restore-btn').style.display = localStorage.getItem('st_con_cloud_migration_ts') ? '' : 'none';
+  if(G('cfg-sb-ord-restore-btn')) G('cfg-sb-ord-restore-btn').style.display = localStorage.getItem('st_ord_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-lang')) G('cfg-lang').value = _lang;
   rCoBrand();
   qteFillRates();
@@ -11573,7 +11769,7 @@ async function saveQte() {
     if (convOrd) {
       convOrd.activeQuoteId = qt.id;
       if (ordCanTransition(convOrd.stage, 'Quoted')) convOrd.stage = 'Quoted';
-      saveAll();
+      await persistOrdChange(convOrd);
     }
     cConvertOrdId = null;
   }
@@ -11834,13 +12030,17 @@ async function delCon(id) {
     if (!(await ensureSbAuth())) return;
     var result = await _sb.from('contacts').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    var touchedOrds = [];
     DB.ord.forEach(function(o){
-      if (o.contactId === id) o.contactId = null;
+      var touched = false;
+      if (o.contactId === id) { o.contactId = null; touched = true; }
       (o.lines||[]).forEach(function(l){
-        (l.rfqResponses||[]).forEach(function(r){ if (r.contactId === id) r.contactId = null; });
+        (l.rfqResponses||[]).forEach(function(r){ if (r.contactId === id) { r.contactId = null; touched = true; } });
       });
+      if (touched) touchedOrds.push(o);
     });
-    sv(K.ord, DB.ord);
+    for (var oi = 0; oi < touchedOrds.length; oi++) { await persistOrdChange(touchedOrds[oi], true); }
+    if (touchedOrds.length) await refreshOrdFromSupabase();
     logEv('contact', id, 'deleted', 'Contact deleted', 'user');
     await refreshConFromSupabase();
     toast('Contact deleted');
@@ -11848,14 +12048,18 @@ async function delCon(id) {
   }
 
   DB.con = DB.con.filter(function(c){ return c.id !== id; });
+  var touchedOrds = [];
   DB.ord.forEach(function(o){
-    if (o.contactId === id) o.contactId = null;
+    var touched = false;
+    if (o.contactId === id) { o.contactId = null; touched = true; }
     (o.lines||[]).forEach(function(l){
-      (l.rfqResponses||[]).forEach(function(r){ if (r.contactId === id) r.contactId = null; });
+      (l.rfqResponses||[]).forEach(function(r){ if (r.contactId === id) { r.contactId = null; touched = true; } });
     });
+    if (touched) touchedOrds.push(o);
   });
+  for (var oi = 0; oi < touchedOrds.length; oi++) { await persistOrdChange(touchedOrds[oi], true); }
+  if (touchedOrds.length) await refreshOrdFromSupabase();
   sv(K.co, DB.con);
-  sv(K.ord, DB.ord);
   logEv('contact', id, 'deleted', 'Contact deleted', 'user');
   rCon();
   toast('Contact deleted');
