@@ -1,6 +1,6 @@
 # SPEC-CLOUD-002 — Extend Cloud Data (Supabase) to Line Item and Contact
 
-**Status:** v1 — spec-gate round 1: CONDITIONAL PASS (4 blocking findings B1-B4, 5 advisories A1-A5), all fixed. Round 2: CONDITIONAL PASS (1 new blocking finding, 2 advisories), all fixed. See §6 review-resolution log. Ready for implementation.
+**Status:** v1 — spec-gate round 1: CONDITIONAL PASS (4 blocking B1-B4, 5 advisories A1-A5), fixed. Round 2: CONDITIONAL PASS (1 new blocking, 2 advisories), fixed. Round 3: CONDITIONAL PASS (1 new blocking + 1 folded-in sibling case, 1 advisory), fixed. See §6 review-resolution log. Ready for implementation.
 
 ---
 
@@ -179,6 +179,12 @@ async function refreshLIFromSupabase() {
     };
   });
   sv(K.l, DB.li);
+  // Round-3 spec-gate fix: a fresh/second device reaching this point (DB.li was empty,
+  // so the guard above let it through) has just loaded real Supabase-shaped Line Items,
+  // but never itself ran migrateLineItemsToSupabase() — so the marker other code reads
+  // to mean "DB.li on THIS device currently holds Supabase ids" (§2.11) would otherwise
+  // stay wrongly absent. Set it here too, once, if not already set.
+  if (!localStorage.getItem('st_li_cloud_migration_ts')) localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
   rLI();
 }
 
@@ -196,6 +202,7 @@ async function refreshConFromSupabase() {
     };
   });
   sv(K.co, DB.con);
+  if (!localStorage.getItem('st_con_cloud_migration_ts')) localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString()); // same reasoning as Line Item above
   rCon();
 }
 ```
@@ -726,6 +733,183 @@ if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) simpleEnts = simpl
 
 Confirmed no changes are needed to the already-shipped CLOUD-001 function itself; the precondition mechanism (§0) reads Supabase live rather than any marker it would need to write.
 
+### 2.11 Round-3 spec-gate finding (blocking), fixed — five existing call sites bypass `saveCon()`/`delCon()` entirely and must be made `_sb`-aware too
+
+The round-3 reviewer traced every direct `DB.con` mutation in the codebase and found five live, everyday UI paths that write Contact fields and persist via a bare `sv(K.co, DB.con)` — never going through `saveCon()`/`delCon()` at all, so none of this SPEC's `_sb` branches (§2.4) ever run for them:
+
+- `unlinkSupCon()` (`index.html:5325-5335`) — the "Unlink" button on a Supplier's contact list.
+- `openSupConPicker()` (`index.html:5336-5355`) — the "+ Link Contact" flow on a Supplier.
+- `delSup()`'s own Contact-nulling cascade (`index.html:5645-5646`, inside its already-shipped `_sb` branch) — nulls `supplierId`/`role` on every Contact linked to a deleted Supplier.
+- `saveQte()`'s Contact-to-Quote conversion (`index.html:11254-11263`) — sets `status`/`lastContactedAt` when a Quote is created from a Contact.
+- `delQte()`'s Contact status revert (`index.html:11278-11292`) — reverts `status` from `converted` back to `qualified` when that Quote is deleted.
+
+Once Contact is migrated, each of these becomes a silent local-only edit: the next `refreshConFromSupabase()` call (from any Contact/Line-Item cloud operation elsewhere, or simply the next page load) replaces `DB.con` wholesale from Supabase and reverts every one of these edits, since none of them were ever written to the `contacts` table. `delSup()`'s case is the sharpest — it already runs inside an `_sb` branch today (correct when Contact was local-only), and becomes wrong the moment Contact is cloud-backed: a dangling reference to a just-deleted Supplier silently reappears on the Contact after the next refresh.
+
+**Why gating on the `st_con_cloud_migration_ts` marker (not bare `_sb`) is correct here, unlike `saveCon()`/`delCon()`:** these five sites reference an *existing* Contact's `id` directly (`c.id`, `lc.id`) rather than creating a new record or resolving one through `EI.co`. Before Contact has actually migrated, that `id` is a local `uid()`-generated string, not a Supabase UUID — a Supabase `.update(...).eq('id', <local-uid>)` call would match zero rows and return `{error: null}` (no error, no effect), so gating on bare `_sb` here would silently no-op the mutation entirely rather than either applying it locally or erroring loudly. `saveCon()`/`delCon()` don't have this problem in the same way (`saveCon()`'s create path never sends a client-generated `id`; its edit path fails loudly via `.single()` if the id doesn't resolve, matching `saveSup()`'s own already-accepted rough edge for the same scenario). The marker is the right signal specifically because it answers "does `DB.con`'s `id` field on *this device* currently hold Supabase UUIDs or local uids" — which is exactly what determines whether a `.eq('id', ...)` call can possibly match anything. §2.2's refresh functions now set this marker on any successful refresh (not just a migration this device itself ran), so it correctly reflects that state for a second device too.
+
+```js
+async function unlinkSupCon(contactId) {
+  var c = DB.con.find(function(x){ return x.id === contactId; }); if (!c) return;
+  var sup = DB.sup.find(function(s){ return s.id === c.supplierId; });
+  if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('contacts').update({ supplier_id: null, role: '' }).eq('id', contactId);
+    if (result.error) { toast('Unlink failed: ' + result.error.message); return; }
+    await refreshConFromSupabase();
+  } else {
+    c.supplierId = null;
+    c.role = '';
+    sv(K.co, DB.con);
+  }
+  logEv('contact', contactId, 'unlinked', 'Unlinked from supplier ' + (sup ? sup.name : '(unknown)'), 'user');
+  renderSupContacts();
+  rCon();
+  toast('Contact unlinked');
+}
+
+async function openSupConPicker() {
+  var eligible = DB.con.filter(function(c){
+    return !c.supplierId || c.supplierId === EI.s;
+  });
+  if (!eligible.length) { toast('No eligible contacts to link.'); return; }
+  var list = eligible.map(function(c, i){ return (i+1) + '. ' + c.name + ' <' + c.email + '>'; }).join('\n');
+  var input = prompt('Link a contact to this supplier.\nEnter the number:\n\n' + list);
+  if (!input) return;
+  var idx = parseInt(input, 10) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= eligible.length) { toast('Invalid selection.'); return; }
+  var c = eligible[idx];
+  if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('contacts').update({ supplier_id: EI.s, role: 'supplier_contact' }).eq('id', c.id);
+    if (result.error) { toast('Link failed: ' + result.error.message); return; }
+    await refreshConFromSupabase();
+  } else {
+    c.supplierId = EI.s;
+    c.role = 'supplier_contact';
+    sv(K.co, DB.con);
+  }
+  var sup = DB.sup.find(function(s){ return s.id === EI.s; });
+  logEv('contact', c.id, 'linked', 'Linked to supplier ' + (sup ? sup.name : '(unknown)'), 'user');
+  renderSupContacts();
+  rCon();
+  toast('Contact linked');
+}
+```
+
+`delSup()`'s existing `_sb` branch (`index.html:5640-5651`) — only its Contact-cascade lines change; the Supplier-side soft-delete above it is untouched:
+
+```js
+  if (_sb) {
+    if (!(await ensureSbAuth())) return;
+    var _delSupR = DB.sup.find(function(s){ return s.id===id; });
+    var result = await _sb.from('suppliers').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    var linkedCons = DB.con.filter(function(c){ return c.supplierId === id; });
+    if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
+      for (var ci = 0; ci < linkedCons.length; ci++) {
+        var conResult = await _sb.from('contacts').update({ supplier_id: null, role: '' }).eq('id', linkedCons[ci].id);
+        if (conResult.error) { console.warn('[Stackd] delSup: failed to unlink contact ' + linkedCons[ci].id + ' from deleted supplier', conResult.error.message); }
+      }
+      if (linkedCons.length) await refreshConFromSupabase();
+    } else {
+      linkedCons.forEach(function(c){ c.supplierId = null; c.role = ''; });
+      sv(K.co, DB.con);
+    }
+    if (_delSupR) logEv('supplier', _delSupR.id, 'deleted', 'Supplier ' + _delSupR.name + ' deleted', 'operator');
+    await refreshSupFromSupabase();
+    toast('Deleted');
+    return;
+  }
+```
+
+`saveQte()`'s Contact-to-Quote conversion (`index.html:11254-11263`):
+
+```js
+  if (cConvertId) {
+    var convC = DB.con.find(function(x){ return x.id === cConvertId; });
+    if (convC && convC.status !== 'converted') {
+      if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
+        var convResult = await _sb.from('contacts').update({ status: 'converted', last_contacted_at: new Date().toISOString() }).eq('id', convC.id);
+        if (!convResult.error) await refreshConFromSupabase();
+      } else {
+        convC.status = 'converted';
+        convC.lastContactedAt = new Date().toISOString();
+        sv(K.co, DB.con);
+      }
+    }
+    logEv('contact', cConvertId, 'converted', 'Quote ' + qt.num + ' created — contact converted', 'system');
+    cConvertId = null;
+  }
+```
+
+`saveQte()` is already `async` (verify at implementation time — it constructs `qt` and calls `sv(K.qt, DB.qt)` earlier in the same function); this addition needs no new `async` declaration.
+
+`delQte()`'s Contact status revert (`index.html:11278-11292`) — `delQte()` itself becomes `async` (currently a plain `function`; its only caller is a plain `onclick`, same pattern as `delCon()`/`delLI()` becoming `async` in §2.3/§2.4):
+
+```js
+async function delQte(id) {
+  if (!confirm('Delete this quote?')) return;
+  var q = DB.qt.find(function(x){ return x.id === id; });
+  DB.qt = DB.qt.filter(function(x){ return x.id !== id; });
+  sv(K.qt, DB.qt);
+  if (q && q.sourceContactId) {
+    var relC = DB.con.find(function(x){ return x.id === q.sourceContactId; });
+    if (relC && relC.status === 'converted') {
+      if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
+        var revertResult = await _sb.from('contacts').update({ status: 'qualified' }).eq('id', relC.id);
+        if (!revertResult.error) await refreshConFromSupabase();
+      } else {
+        relC.status = 'qualified';
+        sv(K.co, DB.con);
+      }
+    }
+  }
+  rQte();
+  toast('Quote deleted');
+}
+```
+
+### 2.12 Round-3 spec-gate finding (blocking), fixed — `saveInv()`'s Line Item price-history auto-recording bypasses `saveLI()`
+
+`saveInv()` (`index.html:6150-6166`) auto-appends a `priceHistory` entry to the matching `DB.li` catalogue record whenever an invoice line's price deviates from the catalogue price, persisting via a bare `sv(K.l, DB.li)`. Unlike the neighboring `invoiceRefs[]` index update in the same function (`index.html:6168-6193`, correctly local-only and preserved by §2.2's merge-by-id), `priceHistory` **is** a migrated Supabase column (AC-2) and gets overwritten wholesale from `row.price_history` on every refresh — so this auto-recorded entry would be silently lost the next time `refreshLIFromSupabase()` runs, once Line Items are migrated. Same fix shape as §2.11, gated on `st_li_cloud_migration_ts` for the same id-shape reason:
+
+```js
+  // Auto-record price history when invoice price deviates from catalogue price
+  var liChanged = false;
+  var liHistoryUpdates = [];
+  cIL.forEach(function(li) {
+    if (!li.lid) return;
+    var cat = DB.li.find(function(x){ return x.id === li.lid; });
+    if (!cat) return;
+    var invoicePrice = +li.up || 0;
+    var catPrice     = +cat.price || 0;
+    if (Math.abs(invoicePrice - catPrice) < 0.001) return; // no deviation
+    var history = cat.priceHistory ? cat.priceHistory.slice() : [];
+    // Skip if already recorded for this invoice ref
+    if (history.some(function(h){ return h.invoiceRef === inv.num && h.price === invoicePrice; })) return;
+    history.push({ date: inv.date || today(), cost: +cat.cost||0, price: invoicePrice, invoiceRef: inv.num, notes: 'Price at time of order' });
+    cat.priceHistory = history;
+    liChanged = true;
+    liHistoryUpdates.push({ id: cat.id, priceHistory: history });
+  });
+  if (liChanged) {
+    if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) {
+      for (var hi = 0; hi < liHistoryUpdates.length; hi++) {
+        await _sb.from('line_items').update({ price_history: liHistoryUpdates[hi].priceHistory }).eq('id', liHistoryUpdates[hi].id);
+      }
+      await refreshLIFromSupabase();
+    } else {
+      sv(K.l, DB.li);
+    }
+  }
+```
+
+The `invoiceRefs[]` block immediately below (`index.html:6168-6193`) is unchanged — it re-`find()`s `cat` from `DB.li` fresh each time it runs, so it correctly operates on the just-refreshed records if the branch above replaced `DB.li` via `refreshLIFromSupabase()`.
+
+### 2.13 Advisory (round-3), noted — `syncAll()`/`pushAll()` have no `_sb`-based exclusion in either direction
+
+`syncAll()`/`pushAll()` (`index.html:4312-4341`, `4534-4563` — the `bulk_upsert_all` push-direction counterpart to `pullAll()`) have no `_sb`-based exclusion at all, for any entity, including the pre-existing Supplier case from CLOUD-001. Once Line Items/Contacts are cloud-migrated, these will keep pushing Cloud-sourced snapshots of them up to Google Sheets on every sync. This is wasteful/confusing, not destructive — `pullAll()`'s exclusion (§2.9, correctly extended by this SPEC) means nothing pulls those stale Sheets rows back down, so there's no round-trip corruption loop. Symmetric with a pre-existing, never-fixed gap on the Supplier side; this SPEC does not make it categorically worse, so it's left as a documented, accepted residual rather than fixed here — a candidate for a future small, standalone REQ alongside `CLOUD-GAP-001`.
+
 ---
 
 ## 3. Tests (`tests/run.js`)
@@ -1111,15 +1295,127 @@ testAsync('pullAll — li/co dropped from the batched pull_all request once each
   ctx.localStorage.removeItem('st_li_cloud_migration_ts');
   ctx.SS.url = '';
 });
-```
 
-**Round-2 spec-gate note, resolved:** the `pullAll` test above was originally written against a fictional `ctx.fetchSheetEntity` stand-in that could never actually intercept anything real (`pullAll()`'s real per-entity fetch, `pulled()`, is a closure-local function with no external hook). It is now written against this file's own existing `_fetchCallLog` fetch-mock machinery (`tests/run.js:43-88`, already used by the neighboring `pull_all`/`bulk_upsert_all` tests around `tests/run.js:2010-2099`), which directly observes the real `entities` array `pullAll()` sends — no stand-in needed.
+testAsync('refreshConFromSupabase / refreshLIFromSupabase — set their own migration marker on a successful refresh even when this device never ran the migration itself (round-3 fix, second-device case)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx._sb = mockSb({ contacts: { selectData: [{ id: 'cloud-con-1', num: 'CON-0001', name: 'Cloud Contact', email: 'c@x.com', enquiries: [] }] } });
+  await ctx.refreshConFromSupabase(); // fresh device, DB.con was empty — guard lets this through
+  assert(!!ctx.localStorage.getItem('st_con_cloud_migration_ts'), 'marker now set even though this device never ran migrateContactsToSupabase() itself');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx._sb = mockSb({ line_items: { selectData: [{ id: 'cloud-li-1', num: 'LI-0001', sku: 'X', currency: 'USD', price_history: [] }] } });
+  await ctx.refreshLIFromSupabase();
+  assert(!!ctx.localStorage.getItem('st_li_cloud_migration_ts'), 'marker now set for Line Item too');
+});
+
+testAsync('unlinkSupCon / openSupConPicker — Cloud Data + Contact migrated: push to Supabase and refresh, never a bare sv(K.co,...); Cloud Data configured but Contact NOT yet migrated: unchanged local-only behavior', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.con.push({ id: 'con-uuid-1', name: 'Alice', supplierId: 'sup-uuid-1', role: 'supplier_contact' });
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.unlinkSupCon('con-uuid-1');
+  var updateCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'update'; });
+  assert(updateCall, 'unlink pushed to Supabase once Contact has migrated');
+  assertEqual(updateCall.row.supplier_id, null, 'supplier_id cleared in the Supabase payload');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts'); // Cloud Data configured for Supplier, but Contact never migrated
+  ctx.DB.con.push({ id: 'local-uid-1', name: 'Bob', supplierId: 'sup-uuid-1', role: 'supplier_contact' });
+  var sb2 = mockSb({});
+  ctx._sb = sb2;
+  await ctx.unlinkSupCon('local-uid-1');
+  var updateCall2 = sb2._calls.find(function(c){ return c.op === 'update'; });
+  assert(!updateCall2, 'no Supabase call attempted — Contact ids on this device are still local uids');
+  assertEqual(ctx.DB.con[0].supplierId, null, 'local unlink still applied directly, not silently dropped');
+});
+
+testAsync('delSup — Cloud Data configured, Contact ALSO migrated: linked contacts unlinked via Supabase update + refresh, not a bare sv(K.co,...)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.sup.push({ id: 'sup-uuid-1', name: 'ACME' });
+  ctx.DB.con.push({ id: 'con-uuid-1', name: 'Alice', supplierId: 'sup-uuid-1', role: 'supplier_contact', enquiries: [] });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({ contacts: { selectData: [] } });
+  ctx._sb = sb;
+  await ctx.delSup('sup-uuid-1');
+  var conUpdateCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'update'; });
+  assert(conUpdateCall, 'linked Contact unlinked via a real Supabase update once Contact has migrated');
+  assertEqual(conUpdateCall.row.supplier_id, null, 'supplier_id cleared in the Supabase payload');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveQte / delQte — Contact status conversion round-trip pushes to Supabase once Contact has migrated', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.con.push({ id: 'con-uuid-1', name: 'Alice', status: 'qualified', enquiries: [] });
+  ctx.cConvertId = 'con-uuid-1';
+  ['qf-client','qf-nt'].forEach(function(id){ mockEl(id); });
+  var sb = mockSb({ contacts: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'con-uuid-1', name: 'Alice', status: 'converted', enquiries: [] }] } });
+  ctx._sb = sb;
+  await ctx.saveQte();
+  var convertCall = sb._calls.find(function(c){ return c.table === 'contacts' && c.op === 'update' && c.row.status === 'converted'; });
+  assert(convertCall, 'contact status pushed to Supabase as converted');
+
+  resetDB();
+  ctx.localStorage.setItem('st_con_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.con.push({ id: 'con-uuid-1', name: 'Alice', status: 'converted', enquiries: [] });
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE1', sourceContactId: 'con-uuid-1' });
+  ctx.confirm = function(){ return true; };
+  var sb2 = mockSb({ contacts: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'con-uuid-1', name: 'Alice', status: 'qualified', enquiries: [] }] } });
+  ctx._sb = sb2;
+  await ctx.delQte('q1');
+  var revertCall = sb2._calls.find(function(c){ return c.table === 'contacts' && c.op === 'update' && c.row.status === 'qualified'; });
+  assert(revertCall, 'contact status reverted to qualified via Supabase on Quote deletion');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveInv — auto-recorded price history pushes to line_items via Supabase once Line Items have migrated, instead of a bare sv(K.l,...); unmigrated Line Items keep the existing local-only behavior', async function() {
+  // Fixture pattern copied from the existing 'saveInv records price history when invoice
+  // price deviates from catalogue' test (tests/run.js:575) — same cIL/mockEl shape, since
+  // this is the same code path with a new _sb branch added ahead of its existing sv(K.l,...).
+  resetDB();
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.li  = [{ id:'li-uuid-1', num:'LI-0001', sku:'SKU-DEV', desc:'Deviation Test', cost:100, price:150, priceHistory:[], uom:'pcs', cur:'USD' }];
+  ctx.DB.inv = [{ id:'inv-base', num:'INV10001', status:'Draft', lineItems:[], taxRate:0, dep:0, chargesIncluded:true }];
+  ctx.EI.i   = null;
+  ctx.cIL    = [{ rid:'r1', lid:'li-uuid-1', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }]; // 120 ≠ 150
+  ['if-n','if-b','if-ba','if-st','if-dst','if-cid','if-dt','if-ex','if-sd','if-ft','if-wt','if-cbm','if-pk','if-pol','if-pod','if-coo','if-cur','if-tx','if-lf','if-ins','if-leg','if-isp','if-oth','if-dep','if-inco','if-pt','if-terms','inv-sm'].forEach(function(id){ mockEl(id); });
+  mockEl('if-n').value = 'INV10002'; mockEl('if-b').value = 'Test Buyer'; mockEl('if-dst').value = 'Barbados';
+  mockEl('if-dt').value = '2026-05-01'; mockEl('if-cur').value = 'USD'; mockEl('if-tx').value = '0'; mockEl('if-lf').value = '0';
+  mockEl('if-ins').value = '0'; mockEl('if-leg').value = '0'; mockEl('if-isp').value = '0'; mockEl('if-oth').value = '0'; mockEl('if-dep').value = '0';
+  mockEl('if-inco').value = 'CIF'; mockEl('if-pt').value = 'Net 30'; mockEl('if-chi').checked = true; mockEl('inv-sm').value = 'Draft';
+
+  var sb = mockSb({ line_items: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'li-uuid-1', num: 'LI-0001', sku: 'SKU-DEV', price: 150, cost: 100, currency: 'USD', price_history: [{ date: '2026-05-01', cost: 100, price: 120, invoiceRef: 'INV10002', notes: 'Price at time of order' }] }] } });
+  ctx._sb = sb;
+  await ctx.saveInv();
+  var updateCall = sb._calls.find(function(c){ return c.table === 'line_items' && c.op === 'update' && c.row.price_history; });
+  assert(updateCall, 'price history pushed to Supabase rather than only sv(K.l,...)');
+  assertEqual(updateCall.row.price_history[0].price, 120, 'deviated invoice price recorded in the pushed payload');
+
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts'); // Cloud Data configured for Supplier, but Line Items never migrated
+  ctx.DB.li  = [{ id:'li-dev', sku:'SKU-DEV', desc:'Deviation Test', cost:100, price:150, priceHistory:[], uom:'pcs', cur:'USD' }];
+  ctx.DB.inv = [{ id:'inv-base', num:'INV10001', status:'Draft', lineItems:[], taxRate:0, dep:0, chargesIncluded:true }];
+  ctx.EI.i   = null;
+  ctx.cIL    = [{ rid:'r1', lid:'li-dev', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }];
+  var sb2 = mockSb({});
+  ctx._sb = sb2;
+  await ctx.saveInv();
+  var updateCall2 = sb2._calls.find(function(c){ return c.op === 'update'; });
+  assert(!updateCall2, 'no Supabase call attempted — Line Item ids on this device are still local uids');
+  var cat = ctx.DB.li.find(function(x){ return x.id === 'li-dev'; });
+  assert(cat.priceHistory.length > 0, 'local-only behavior unchanged — history still recorded directly, matching the pre-existing test at tests/run.js:575');
+});
+```
 
 ---
 
 ## 4. Documentation / housekeeping (on completion)
 
-- `docs/known-gaps.md`: add `CLOUD-GAP-001` — the pre-existing `expAll()`/`doImport()` Cloud Data connection-wipe bug (REQ-CLOUD-002 §3), confirmed still present, logged as open/accepted, not fixed here.
+- `docs/known-gaps.md`: add `CLOUD-GAP-001` — the pre-existing `expAll()`/`doImport()` Cloud Data connection-wipe bug (REQ-CLOUD-002 §3), confirmed still present, logged as open/accepted, not fixed here. Add `CLOUD-GAP-002` — `syncAll()`/`pushAll()` have no `_sb`-based exclusion in either direction, for any entity including Supplier (§2.13), confirmed pre-existing and not worsened by this SPEC, logged as open/accepted.
 - `docs/requirements-tracker.md`: add `REQ-CLOUD-002` with full gate history, alongside `REQ-CLOUD-001`/`REQ-PO-002`.
 - `STACKD_CONTEXT.md` / `CLAUDE.md`: version bump, test-count bump, new Cloud Data entities noted.
 - `docs/architecture-data-model-v1.md`: update §2 ("Entity inventory") to mark Line Item and Contact's storage as Supabase-capable; update §4.1's Line Item/Contact narrative; update §8's sequencing recommendation to mark Phase 1's Line Item/Contact step complete.
@@ -1139,7 +1435,7 @@ testAsync('pullAll — li/co dropped from the batched pull_all request once each
 | AC-6 | `showBlockingBackupModal()` reused unchanged (§2.5, §2.6) | inherited from CLOUD-001's existing coverage; no new mechanism introduced |
 | AC-7 | `restoreLIMigrationArchive()`/`restoreConMigrationArchive()`, extended `cleanupExpiredMigrationArchive()`, `rCfg()` button-visibility fix (§2.7) | archive/rollback/cleanup tests, `rCfg` restore-button test |
 | AC-8 | `0002_line_items_contacts.sql` has no `sku` unique index, no Contact uniqueness (§1) | schema reviewed at spec-gate; no runtime test possible (SQL isn't executed by `tests/run.js`) |
-| AC-9 | No changes to Supplier/Buyer code paths (§2.10 unchanged; `restoreFromMigrationArchive()` gets one additive line, §0); `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite guard (§2.2); `pullAll()`'s both entity arrays excluded per-entity (§2.9); Contact pre-flight orphan check mirroring Line Item's (§2.6); full existing suite re-run | full `tests/run.js` run, `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite-guard test, `pullAll` exclusion test (both arrays), Contact orphan/stale-marker test, restore-clears-marker test, mutation testing on the new code only |
+| AC-9 | No changes to Supplier/Buyer code paths (§2.10 unchanged; `restoreFromMigrationArchive()` gets one additive line, §0); `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite guard + self-marking (§2.2); `pullAll()`'s both entity arrays excluded per-entity (§2.9); Contact pre-flight orphan check mirroring Line Item's (§2.6); `unlinkSupCon`/`openSupConPicker`/`delSup`/`saveQte`/`delQte`/`saveInv` made `_sb`-aware (§2.11, §2.12); full existing suite re-run | full `tests/run.js` run, `refreshLIFromSupabase`/`refreshConFromSupabase` overwrite-guard + self-marking test, `pullAll` exclusion test (both arrays), Contact orphan/stale-marker test, restore-clears-marker test, `unlinkSupCon`/`openSupConPicker`/`delSup`/`saveQte`/`delQte`/`saveInv` `_sb`-aware tests, mutation testing on the new code only |
 
 ---
 
@@ -1165,10 +1461,17 @@ Confirmed round-1-ready: all four blocking findings resolved with concrete diffs
 - **Advisory — the round-1 B2 fix only extended one of `pullAll()`'s two parallel `_sb`-filtered entity arrays.** `_simpleEntsForBatch` (`index.html:4375-4377`, controls what's *requested*) was left unextended while `simpleEnts` (`index.html:4454-4459`, controls what's *merged*) was fixed — didn't reintroduce the overwrite race (the merge array is what actually gates writes), but left Line Item/Contact being requested from Sheets indefinitely post-migration, half of Supplier's own precedent. **Fixed:** §2.9 — both arrays now extended identically.
 - **Advisory — the round-1 `pullAll` test for B2 was written against a fictional, uninterceptable stand-in (`ctx.fetchSheetEntity`), which the SPEC itself had flagged as speculative but not yet corrected.** Traced `pullAll()`'s real per-entity fetch (`pulled()`, a closure-local function) and confirmed the SPEC's own caveat was right to be suspicious, and more literally broken than "needs renaming." **Fixed:** §3 — rewritten against this test file's own existing `_fetchCallLog` fetch-mock machinery, already used by neighboring tests for the same `pull_all` mechanism.
 
-Confirmed spec-gate-ready: every blocking finding across both rounds resolved with concrete diffs and matching new tests; every advisory resolved in place.
+Confirmed round-2-ready: the round-2 finding resolved with a concrete diff and matching new test; both advisories resolved in place.
+
+**Round 3: CONDITIONAL PASS — 1 new blocking finding (with a narrower sibling case folded into the same fix), 1 advisory, all fixed in place.** Confirmed `node tests/run.js` baseline green (687/687) before this SPEC's own code exists. Independently re-verified every round-1 and round-2 fix a further time against the live code: §2.6's Contact pre-flight check is structurally identical to §2.5's Line Item check and correctly lets `supplierId: null` through unconditionally; the marker-staleness closure (§0/§2.7) was traced end-to-end with no unswept reader of either new marker found; `_simpleEntsForBatch`'s fix (§2.9) matches the live file exactly; the rewritten `pullAll` test's `_fetchCallLog[0]` assumption holds in every path it exercises; every round-2 test is well-formed with no localStorage leaks across tests. One new blocking finding, from a "final systemic sanity pass" specifically looking for other code that reads/writes `DB.li`/`DB.con` with local-array assumptions this SPEC's diffs never touched:
+
+- **New blocking — five existing UI code paths write Contact fields directly and persist via a bare `sv(K.co, DB.con)`, entirely bypassing `saveCon()`/`delCon()` and therefore every `_sb` branch this SPEC adds.** `unlinkSupCon()`, `openSupConPicker()`, `delSup()`'s own Contact-nulling cascade (already inside an `_sb` branch today — correct while Contact was local-only, wrong the moment Contact is cloud-backed), `saveQte()`'s Contact-to-Quote conversion, and `delQte()`'s status-revert on Quote deletion all mutate `DB.con` records in place outside the save/delete wrapper. Confirmed via a systematic grep of every non-import `DB.sup.find(...)` site that Supplier has no equivalent side-channel — this is new territory introduced by Contact's optional-FK, cross-referenced-from-elsewhere shape, not a previously-accepted gap. A narrower single-instance sibling exists on the Line Item side: `saveInv()`'s price-history auto-recording mutates a `DB.li` catalogue entry's `priceHistory` via `sv(K.l, DB.li)` alone — unlike the neighboring `invoiceRefs[]` update in the same function, which §2.2's merge-by-id already protects, `priceHistory` **is** a migrated column and would be silently overwritten on the next refresh. **Fixed:** §2.11 (the five Contact sites) and §2.12 (`saveInv()`) — each now branches on `_sb && ` the entity's own completion marker (not bare `_sb`, since these sites reference an existing record's `id` directly, and a local uid can't match a Supabase row before that entity has actually migrated) to either push the change to Supabase and refresh, or fall back to the exact original local-only behavior unchanged. §2.2's refresh functions were additionally extended to set their own marker on any successful refresh (not just a migration this device itself ran), closing the second-device gap this fix would otherwise have reopened.
+- **Advisory — `syncAll()`/`pushAll()` (the push-direction counterpart to `pullAll()`) have no `_sb`-based exclusion at all, for any entity, including the pre-existing Supplier case.** Wasteful/confusing (stale Cloud-sourced snapshots keep getting pushed to Sheets) but not destructive — `pullAll()`'s correctly-extended exclusion means nothing pulls those rows back down, so there's no round-trip corruption loop. Symmetric with an already-existing, never-fixed CLOUD-001-era gap; this SPEC doesn't make it categorically worse. **Noted, not fixed:** §2.13 — logged as `CLOUD-GAP-002` in §4's housekeeping, a candidate for a future standalone REQ.
+
+Confirmed implementation-ready: every blocking finding across all three rounds resolved with concrete diffs and matching new tests; every advisory resolved in place or explicitly logged as an accepted, pre-existing-pattern residual.
 
 ---
 
 ## 7. Gate process
 
-requirements-gate (done, PASS) → SPEC v1 → spec-gate round 1 (done, CONDITIONAL PASS, resolved) → spec-gate round 2 (done, CONDITIONAL PASS, resolved above) → **implementation** → self-performed mutation testing → build-gate → PR → CI green → merge, per `CLAUDE.md`'s standing checklist.
+requirements-gate (done, PASS) → SPEC v1 → spec-gate round 1 (done, CONDITIONAL PASS, resolved) → spec-gate round 2 (done, CONDITIONAL PASS, resolved) → spec-gate round 3 (done, CONDITIONAL PASS, resolved above) → **implementation** → self-performed mutation testing → build-gate → PR → CI green → merge, per `CLAUDE.md`'s standing checklist.
