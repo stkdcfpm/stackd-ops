@@ -1,6 +1,6 @@
 # SPEC-CLOUD-003 — Order Request Cloud Data migration
 
-**Status:** v1 — drafted against `docs/REQ-CLOUD-003-v1.md` (requirements-gate PASS, 3 rounds). Ready for spec-gate.
+**Status:** v1 — drafted against `docs/REQ-CLOUD-003-v1.md` (requirements-gate PASS, 3 rounds). Spec-gate round 1: FAIL (6 blocking, 4 advisory), fixed in place. See §4. Ready for spec-gate round 2.
 
 ---
 
@@ -40,15 +40,23 @@ If `saveOrd()` becomes `async` without also fixing these two callers, `saved` be
 -- migrates, and a real FK constraint here would reject exactly the case
 -- REQ-CLOUD-003's AC-2 requires to work (an install where Contact has never
 -- been Cloud-migrated).
+--
+-- Both columns are `text`, NOT `uuid` (spec-gate round-1 B1 finding): uid()
+-- (index.html:2788) mints local ids like "lz3k9a1x2", never RFC-4122 format,
+-- and every Contact created before Contact's own Cloud migration, plus every
+-- Quote for the entire lifetime of this sub-phase (Quote migration is
+-- REQ-CLOUD-004, still future), carries an id in that shape. A `uuid`-typed
+-- column would reject those values outright with "invalid input syntax for
+-- type uuid" on the very first insert/update that references one.
 
 create table order_requests (
   id               uuid primary key default gen_random_uuid(),
   num              text not null unique,
-  contact_id       uuid,
+  contact_id       text,
   stage            text not null,
   description      text,
   actions          jsonb not null default '[]'::jsonb,
-  active_quote_id  uuid,
+  active_quote_id  text,
   outcome          jsonb,
   lines            jsonb not null default '[]'::jsonb,
   import_batch_id  text,
@@ -99,6 +107,37 @@ async function refreshOrdFromSupabase() {
 
 Reuses the B1 overwrite-guard and self-marking fixes `REQ-CLOUD-002` needed two separate spec-gate rounds to reach — applied here from the start, per `REQ-CLOUD-003`'s own stated intent.
 
+**`initCloudDataLayer()` (`index.html:5468-5477`) must also be extended** — this is the function that actually runs on every page load (`initCloudDataLayer().catch(...)`, fire-and-forget, `index.html:12753`) and is the only automatic trigger for a second device to ever pull Order Request data. Without this wiring, `refreshOrdFromSupabase()` would exist and pass its own unit tests but never run in practice (spec-gate round-1 B2 finding). Current:
+
+```js
+async function initCloudDataLayer() {
+  initSbClient();
+  if (!_sb) return;
+  if (await ensureSbAuth()) {
+    await refreshSupFromSupabase();
+    await refreshBuyFromSupabase();
+    await refreshLIFromSupabase();
+    await refreshConFromSupabase();
+  }
+}
+```
+
+New (one line added, after Contact, matching migration-order precedent):
+
+```js
+async function initCloudDataLayer() {
+  initSbClient();
+  if (!_sb) return;
+  if (await ensureSbAuth()) {
+    await refreshSupFromSupabase();
+    await refreshBuyFromSupabase();
+    await refreshLIFromSupabase();
+    await refreshConFromSupabase();
+    await refreshOrdFromSupabase();
+  }
+}
+```
+
 ### 2.2 New `isSupplierMigrationComplete()`-adjacent function: none needed
 
 Per §0/REQ-CLOUD-003b, Order Request's own migration has no precondition function to write — `migrateOrdToSupabase()` (§2.4) goes straight from auth to the backup gate.
@@ -108,7 +147,7 @@ Per §0/REQ-CLOUD-003b, Order Request's own migration has no precondition functi
 Insert immediately after `refreshOrdFromSupabase()` closes.
 
 ```js
-async function persistOrdChange(ord) {
+async function persistOrdChange(ord, skipRefresh) {
   if (_sb && localStorage.getItem('st_ord_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var result = await _sb.from('order_requests').update({
@@ -117,7 +156,7 @@ async function persistOrdChange(ord) {
       outcome: ord.outcome || null, lines: ord.lines || [], import_batch_id: ord.importBatchId || null
     }).eq('id', ord.id);
     if (result.error) { console.warn('[Stackd] persistOrdChange: failed to push Order Request update for ' + ord.id, result.error.message); return; }
-    await refreshOrdFromSupabase();
+    if (!skipRefresh) await refreshOrdFromSupabase();
     return;
   }
   sv(K.ord, DB.ord);
@@ -125,6 +164,8 @@ async function persistOrdChange(ord) {
 ```
 
 Note the local (non-`_sb`) branch persists the **entire** `DB.ord` array, not just the passed-in `ord` — this is intentional and matches `sv()`'s own existing semantics everywhere else in the codebase (a full-array localStorage write); the `ord` parameter only matters for the Cloud-Data branch, where a single-row `.update()` is used.
+
+**`skipRefresh` (spec-gate round-1 B6 finding):** the four sites that call `persistOrdChange()` inside a loop over multiple touched Order Requests (§2.7, §2.8, §2.12, §2.13) must pass `true` for this and call `refreshOrdFromSupabase()` themselves exactly once, after the loop, instead of once per record. Calling it once per record inside a multi-record loop is a real bug, not just an inefficiency: `refreshOrdFromSupabase()` wholesale-replaces `DB.ord` from a full-table `select('*')`, and any touched record later in the same loop that hasn't been pushed to Supabase *yet* has its already-applied local fix silently overwritten by its still-stale server copy — this happens on every 2-or-more-touched-record cascade, not only on a push failure. Doing all N pushes first and refreshing once afterward guarantees the single refresh reflects every push's true outcome (including an honest reversion of any push that genuinely failed) without clobbering an already-successful sibling push in between. The ten single-record call sites (§2.10, §2.11) are unaffected and call `persistOrdChange(ord)` with `skipRefresh` omitted, as before.
 
 ### 2.4 `saveOrd()` / `delOrd()` — full replacement (`index.html:3029-3062`)
 
@@ -153,10 +194,9 @@ async function saveOrd(ord) {
     if (!(await ensureSbAuth())) return false;
     var row = {
       contact_id: ord.contactId || null, stage: ord.stage, description: ord.description,
-      actions: ord.actions || (existing ? existing.actions : []) || [],
-      active_quote_id: (existing ? existing.activeQuoteId : ord.activeQuoteId) || null,
-      outcome: existing ? existing.outcome : (ord.outcome || { result: null, reason: '', closedAt: null }),
-      lines: existing ? (existing.lines || []) : (ord.lines || [])
+      actions: ord.actions || [], active_quote_id: ord.activeQuoteId || null,
+      outcome: ord.outcome || { result: null, reason: '', closedAt: null },
+      lines: ord.lines || []
     };
     var result;
     if (existing) {
@@ -199,6 +239,8 @@ async function delOrd(id) {
 ```
 
 Both callers of `saveOrd()` only check the return value's truthiness (never a specific field), so returning `DB.ord.find(...) || true` on the Cloud-Data create/update path is a safe, minimal change — see §2.9/§2.10 for why those callers need their own fix regardless (the `await` problem, §0.2).
+
+**`row` is built entirely from `ord.*` for every field (spec-gate round-1 B3 finding):** an earlier draft of this SPEC had `active_quote_id`, `outcome`, and `lines` fall back to `existing.*` whenever `existing` was truthy — this silently discarded whatever the caller actually passed for an update. Concretely, `processImport('ord')`'s update-with-new-lines path (§2.14, `index.html:8664-8703`) builds `ordObj.lines = existingLines.concat(newLines)` specifically to append freshly-imported CSV lines onto an existing Order Request, then calls `saveOrd(ordObj)` — the buggy draft's `lines: existing ? (existing.lines || []) : ...` would have sent the *old* `lines` to Supabase and, since `saveOrd()`'s cloud path never reaches the local `Object.assign(existing, ord)`, would also have dropped the new lines from `DB.ord` in-memory once the trailing `refreshOrdFromSupabase()` reloaded the (also-unchanged) server copy. This is also what `saveLI()`/`saveCon()` actually do — both build their cloud-branch `row` entirely from the current caller-supplied values, never substituting `existing.*` for a field the caller is actively setting — so sourcing every field from `ord.*` here is the correct mirror of that precedent, not a departure from it. Every current caller (`saveOrdFromForm()`, `processImport('ord')`) already constructs `ord.lines`/`ord.activeQuoteId`/`ord.outcome` correctly, falling back to `existing.*` itself when it doesn't intend a change — `saveOrd()` doesn't need to duplicate that fallback logic, and duplicating it is exactly what introduced this bug.
 
 ### 2.5 `migrateOrdToSupabase()` — new function
 
@@ -328,12 +370,13 @@ New:
   // the cloud-hosted row too, or the next refreshOrdFromSupabase() silently reverts it.
   if (Object.keys(touchedOrdIdsForSup).length) {
     for (var oi = 0; oi < DB.ord.length; oi++) {
-      if (touchedOrdIdsForSup[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi]);
+      if (touchedOrdIdsForSup[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi], true);
     }
+    await refreshOrdFromSupabase();
   }
 ```
 
-(`persistOrdChange()` internally no-ops to a local `sv()` when Order Request hasn't migrated, so this loop is safe to run unconditionally — it becomes a real Supabase push only once `st_ord_cloud_migration_ts` is set.)
+(`persistOrdChange()` internally no-ops to a local `sv()` when Order Request hasn't migrated, so this loop is safe to run unconditionally — it becomes a real Supabase push only once `st_ord_cloud_migration_ts` is set. `skipRefresh=true` plus a single trailing `refreshOrdFromSupabase()` avoids the per-iteration-refresh bug described in §2.3's `skipRefresh` note — spec-gate round-1 B6 finding — where refreshing after every touched record can clobber an already-pushed sibling's fix with its still-stale server copy before its own turn in the loop arrives.)
 
 ### 2.8 Retrofit `migrateContactsToSupabase()` — apply the same cross-phase push-awareness to its already-correct sweep
 
@@ -369,10 +412,13 @@ New:
   // to Supabase too if Order Request has already migrated, not just the local mirror.
   if (Object.keys(touchedOrdIdsForCon).length) {
     for (var oi = 0; oi < DB.ord.length; oi++) {
-      if (touchedOrdIdsForCon[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi]);
+      if (touchedOrdIdsForCon[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi], true);
     }
+    await refreshOrdFromSupabase();
   }
 ```
+
+(Same `skipRefresh=true` + single trailing refresh reasoning as §2.7 — spec-gate round-1 B6 finding.)
 
 ### 2.9 `saveOrdFromForm()` — becomes `async`, awaits `saveOrd()`
 
@@ -406,7 +452,7 @@ Its only caller is a bare `onclick="saveOrdFromForm()"` (`index.html:433`), neve
 
 ### 2.10 `ordAdminOverride()` / `ordLogLineUpdate()` / `ordConfirmLineUpdate()` / `ordAddLine()` / `saveRfqResponse()` / `delRfqResponse()` / `ordCommitRfqResponse()` — become `async`, call `persistOrdChange()`
 
-All seven become `async function`; their business logic is unchanged, only the trailing persistence line changes. All seven have only bare `onclick` callers (or, for `ordLogLineUpdate`/`ordConfirmLineUpdate`, callers — `ordSetLineStatus`, `ordEditLineField`-equivalent, `ordConfirmLineUpdateUI`, and the AI action handler at `index.html:9878` — that discard the return value and re-render from the already-synchronously-mutated in-memory object), so none need further changes.
+All seven become `async function`; their business logic is unchanged, only the trailing persistence line changes. (Advisory, spec-gate round-1 A4: once Order Request is Cloud-migrated, these previously-instant local actions now wait on a Supabase round trip before `closeM()`/`toast()`/re-render fires — an inherited trade-off, identical to `saveCon()`'s already-shipped behavior today, not a new one.) All seven have only bare `onclick` callers (or, for `ordLogLineUpdate`/`ordConfirmLineUpdate`, callers — `ordSetLineStatus`, `ordEditLineField`-equivalent, `ordConfirmLineUpdateUI`, and the AI action handler at `index.html:9878` — that discard the return value and re-render from the already-synchronously-mutated in-memory object), so none need further changes.
 
 ```js
 async function ordAdminOverride(ordId, newStage, reason) {
@@ -606,10 +652,11 @@ New (applied identically to both the `_sb` branch, `index.html:11837-11843`, and
       });
       if (touched) touchedOrds.push(o);
     });
-    for (var oi = 0; oi < touchedOrds.length; oi++) { await persistOrdChange(touchedOrds[oi]); }
+    for (var oi = 0; oi < touchedOrds.length; oi++) { await persistOrdChange(touchedOrds[oi], true); }
+    if (touchedOrds.length) await refreshOrdFromSupabase();
 ```
 
-`delCon()` is already `async` — no signature change needed.
+`delCon()` is already `async` — no signature change needed. Same `skipRefresh=true` + single trailing refresh reasoning as §2.7 (spec-gate round-1 B6 finding).
 
 ### 2.13 `executeDataCleanup()`'s renumbering step — pushes to Supabase if Order Request has migrated
 
@@ -671,13 +718,16 @@ async function executeDataCleanup() {
     var ordChangedIds = {};
     ordRenumberChanges.forEach(function(c){ ordChangedIds[c.id] = true; });
     for (var oi = 0; oi < DB.ord.length; oi++) {
-      if (ordChangedIds[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi]);
+      if (ordChangedIds[DB.ord[oi].id]) await persistOrdChange(DB.ord[oi], true);
     }
+    await refreshOrdFromSupabase();
   }
   renderAll();
   ...
 }
 ```
+
+(Same `skipRefresh=true` + single trailing refresh reasoning as §2.7 — spec-gate round-1 B6 finding.)
 
 `confirmDataCleanup()`'s one-line change:
 
@@ -762,10 +812,36 @@ Per REQ-CLOUD-003j — Order Request has no existing footprint in any of them.
 
 ## 3. Tests (`tests/run.js`)
 
-Reuses the existing `mockSb()` harness unchanged. Insert this block after the existing `SPEC-CLOUD-002` test section.
+Reuses the existing `mockSb()` harness with one small, backward-compatible addition (spec-gate round-1 B6 finding): `cfg.updateError` may now be either a static value (existing behavior, unchanged for every current caller) or a function `(row, id) => errorOrNull`, so a test can make one record's push fail while another succeeds within the same `mockSb()` instance. In `tests/run.js:6993-7002`, both places that read `cfg.updateError` become:
+
+```js
+var upErr = typeof cfg.updateError === 'function' ? cfg.updateError(pendingRow, pendingId) : cfg.updateError;
+```
+
+used in place of the bare `cfg.updateError` reference in both the `single()` update branch and the `then()` branch.
+
+Also note (spec-gate round-1 B4/B5 findings): every test below whose code path triggers `refreshOrdFromSupabase()` — directly, via `saveOrd()`/`persistOrdChange()`, or via a migration function's trailing refresh — configures `order_requests.selectData` to reflect the state *after* the mutation under test, exactly as the existing `migrateLineItemsToSupabase` precedent test does (`tests/run.js:7303-7346`); an empty or missing `selectData` would wipe `DB.ord` to `[]` partway through the test. Multi-step tests that call cloud-configured Order Request functions more than once use a fresh `mockSb()` per step (`sb1`, `sb2`, ...) with `selectData` matching that step's expected post-mutation state, mirroring the existing Contact-status precedent at `tests/run.js:7685-7696`. And `migrateOrdToSupabase()`'s archive step reads `localStorage[K.ord]` directly, not `ctx.DB.ord` — every test calling it seeds `ctx.localStorage.setItem(ctx.K.ord, ...)` first, exactly as the `migrateLineItemsToSupabase` precedent test's own explanatory comment (`tests/run.js:7309-7313`) warns is necessary.
+
+Insert this block after the existing `SPEC-CLOUD-002` test section.
 
 ```js
 // ── CLOUD DATA — Order Request (SPEC-CLOUD-003) ──
+
+testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-gate round-1 B2 finding: previously wired for Supplier/Buyer/Line Item/Contact but not Order Request)', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){}; // keep the mock _sb below in place instead of overwriting it with a real client
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var called = false;
+  var origRefreshOrd = ctx.refreshOrdFromSupabase;
+  ctx.refreshOrdFromSupabase = function(){ called = true; return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+});
 
 testAsync('refreshOrdFromSupabase — refuses to overwrite real local data when this device has never run the migration; proceeds when local data is empty (second-device case); sets its own marker on success', async function() {
   resetDB();
@@ -797,8 +873,20 @@ testAsync('migrateOrdToSupabase — inserts every field, preserves nested lines/
     createdAt: '2026-01-01T00:00:00.000Z'
   });
   ctx.DB.qt.push({ id: 'q1', lines: [{ rid: 'r1', sourceOrdId: 'o1', sourceOrdLineId: 'line1', sourceRfqResponseId: 'rfq1' }] });
+  // migrateOrdToSupabase()'s archive step reads localStorage[K.ord] directly, not ctx.DB.ord,
+  // so this must not be left to whatever an unrelated earlier test happened to leave behind
+  // (spec-gate round-1 B5 finding — same pitfall the migrateLineItemsToSupabase precedent
+  // test's own comment at tests/run.js:7309-7313 warns about).
+  ctx.localStorage.setItem(ctx.K.ord, JSON.stringify(ctx.DB.ord));
 
-  var sb = mockSb({ order_requests: { insertImpl: function(row){ return Object.assign({ id: 'new-ord-uuid' }, row); } } });
+  var sb = mockSb({ order_requests: { insertImpl: function(row){ return Object.assign({ id: 'new-ord-uuid' }, row); },
+    selectData: [{ id: 'new-ord-uuid', num: 'ORD-0001', contact_id: 'c1', stage: 'Qualifying', description: 'Test order',
+      actions: [{ id: 'a1', text: 'Follow up', dueDate: '2026-01-01', done: false, createdAt: '2026-01-01T00:00:00.000Z', completedAt: null }],
+      active_quote_id: null, outcome: { result: null, reason: '', closedAt: null },
+      lines: [{ id: 'line1', category: 'Widgets', itemSpec: 'Blue widget', orderVolumeQty: '1', orderVolumeUnit: 'container',
+        packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown', sourceCountry: '', variantOption: '', lineUpdates: [],
+        rfqResponses: [{ id: 'rfq1', supId: 's1', cost: 10, currency: 'USD', cbm: 1, dutyPct: 0, dg: false, moq: '', leadTime: '', paymentTerms: '', notes: '', contactId: null, ts: '2026-01-01T00:00:00.000Z' }],
+        committedResponseId: 'rfq1' }] }] } });
   ctx._sb = sb;
   var origShowBackup = ctx.showBlockingBackupModal;
   ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
@@ -846,7 +934,9 @@ testAsync('migrateSuppliersBuyersToSupabase — now also rewrites RFQ Response s
 
   var sb = mockSb({
     suppliers: { insertImpl: function(row){ return Object.assign({ id: 'new-sup-uuid' }, row); } },
-    order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); } }
+    order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'ord-uuid-1', num: 'ORD-0001', contact_id: null, stage: 'Qualifying', actions: [], active_quote_id: null, outcome: null,
+        lines: [{ id: 'line1', rfqResponses: [{ id: 'rfq1', supId: 'new-sup-uuid' }], committedResponseId: null }] }] }
   });
   ctx._sb = sb;
   var origShowBackup = ctx.showBlockingBackupModal;
@@ -895,7 +985,9 @@ testAsync('migrateContactsToSupabase — existing RFQ Response contactId sweep s
   var sb = mockSb({
     suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
     contacts: { insertImpl: function(row){ return Object.assign({ id: 'new-con-uuid' }, row); } },
-    order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); } }
+    order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'ord-uuid-1', num: 'ORD-0001', contact_id: 'new-con-uuid', stage: 'Qualifying', actions: [], active_quote_id: null, outcome: null,
+        lines: [{ id: 'line1', rfqResponses: [{ id: 'rfq1', supId: 's1', contactId: 'new-con-uuid' }], committedResponseId: null }] }] }
   });
   ctx._sb = sb;
   var origShowBackup = ctx.showBlockingBackupModal;
@@ -917,10 +1009,12 @@ testAsync('saveOrd — Cloud Data configured and Order Request migrated: create 
   resetDB();
   ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
   ctx.DB.con.push({ id: 'c1', name: 'Alice' });
-  var sb = mockSb({ order_requests: { insertImpl: function(row){ return Object.assign({ id: 'new-ord-uuid' }, row); }, selectData: [] } });
+  var sb = mockSb({ order_requests: { insertImpl: function(row){ return Object.assign({ id: 'new-ord-uuid' }, row); },
+    selectData: [{ id: 'new-ord-uuid', num: 'ORD-0001', contact_id: 'c1', stage: 'New', description: 'Test', actions: [], active_quote_id: null, outcome: null, lines: [] }] } });
   ctx._sb = sb;
   var saved = await ctx.saveOrd({ contactId: 'c1', stage: 'New', description: 'Test', actions: [], lines: [] });
   assert(saved, 'save succeeded');
+  assertEqual(saved.id, 'new-ord-uuid', 'returned the actual found record after refresh, not just the bare true sentinel (spec-gate round-1 A2 fix)');
   var insertCall = sb._calls.find(function(c){ return c.op === 'insert'; });
   assert(insertCall, 'insert was called');
   assert(insertCall.row.num, 'client-generated num present on insert');
@@ -955,29 +1049,39 @@ testAsync('delOrd — Cloud Data configured and Order Request migrated: soft-del
 });
 
 testAsync('ordAdminOverride / ordAddLine / saveRfqResponse / delRfqResponse / ordCommitRfqResponse / ordLogLineUpdate / ordConfirmLineUpdate — each persists via persistOrdChange(), Supabase when migrated, local sv() otherwise', async function() {
+  // Each Cloud-Data-configured step below uses its OWN mockSb() instance with selectData
+  // reflecting THAT step's expected post-mutation state (spec-gate round-1 B4 finding) —
+  // a single shared instance with static/empty selectData would have the first step's
+  // trailing refreshOrdFromSupabase() wipe DB.ord before the second step ever runs,
+  // mirroring the existing Contact-status precedent at tests/run.js:7685-7696.
   resetDB();
   ctx.DB.ord.push({ id: 'o1', num: 'ORD-0001', contactId: 'c1', stage: 'New', actions: [], activeQuoteId: '', outcome: null,
     lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', supId: 's1' }], committedResponseId: null, lineUpdates: [] }] });
   ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
-  var sb = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
-  ctx._sb = sb;
+
+  var sb1 = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'o1', num: 'ORD-0001', contact_id: 'c1', stage: 'Lost', actions: [], active_quote_id: null, outcome: null,
+      lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', supId: 's1' }], committedResponseId: null, lineUpdates: [] }] }] } });
+  ctx._sb = sb1;
   mockEl('ord-override-confirm').value = 'CONFIRM';
-
   await ctx.ordAdminOverride('o1', 'Lost', 'test reason');
-  assert(sb._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'ordAdminOverride pushed via persistOrdChange');
+  assert(sb1._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'ordAdminOverride pushed via persistOrdChange');
+  assertEqual(ctx.DB.ord[0].stage, 'Lost', 'stage change reflected after refresh');
 
-  sb._calls.length = 0;
-  var ord = ctx.DB.ord[0];
+  var sb2 = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'o1', num: 'ORD-0001', contact_id: 'c1', stage: 'Lost', actions: [], active_quote_id: null, outcome: null,
+      lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', supId: 's1' }, { id: 'r2', supId: 's1', cost: 5, currency: 'USD' }], committedResponseId: null, lineUpdates: [] }] }] } });
+  ctx._sb = sb2;
   ctx.EI.ord = 'o1';
   ctx.cRfqOrdId = 'o1'; ctx.cRfqLineId = 'l1'; ctx.cRfqEditId = null;
   mockEl('rfq-sup').value = 's1'; mockEl('rfq-cost').value = '5'; mockEl('rfq-cur').value = 'USD';
   mockEl('rfq-cbm').value = '1'; mockEl('rfq-dutypct').value = '0'; mockEl('rfq-dg').checked = false;
   mockEl('rfq-moq').value = ''; mockEl('rfq-leadtime').value = ''; mockEl('rfq-payterms').value = ''; mockEl('rfq-notes').value = ''; mockEl('rfq-con').value = '';
   await ctx.saveRfqResponse();
-  assert(sb._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'saveRfqResponse pushed via persistOrdChange');
+  assert(sb2._calls.some(function(c){ return c.table === 'order_requests' && c.op === 'update'; }), 'saveRfqResponse pushed via persistOrdChange');
+  assertEqual(ctx.DB.ord[0].lines[0].rfqResponses.length, 2, 'new RFQ response reflected after refresh');
 
   ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
-  sb._calls.length = 0;
   ctx._sb = null;
   await ctx.ordCommitRfqResponse('l1', 'r1');
   assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.ord))[0].lines[0].committedResponseId, 'r1', 'local-only path still persists via sv(K.ord,...), unchanged');
@@ -1028,14 +1132,47 @@ testAsync('delCon — Order-Request cascade (contactId + nested rfqResponses[].c
     lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', contactId: 'c1' }], committedResponseId: null }] });
   ctx.DB.ord.push({ id: 'ord2', num: 'ORD-0002', contactId: 'c2', stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
   ctx.confirm = function(){ return true; };
-  var sb = mockSb({ contacts: { selectData: [] }, order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  var sb = mockSb({ contacts: { selectData: [] }, order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [
+      { id: 'ord1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null,
+        lines: [{ id: 'l1', rfqResponses: [{ id: 'r1', contactId: null }], committedResponseId: null }] },
+      { id: 'ord2', num: 'ORD-0002', contact_id: 'c2', stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }
+    ] } });
   ctx._sb = sb;
   await ctx.delCon('c1');
   var ordUpdateCalls = sb._calls.filter(function(c){ return c.table === 'order_requests' && c.op === 'update'; });
   assertEqual(ordUpdateCalls.length, 1, 'only the touched Order Request (ord1) was pushed, not the untouched one (ord2)');
+  var ordSelectCalls = sb._calls.filter(function(c){ return c.table === 'order_requests' && c.op === 'is'; });
+  assertEqual(ordSelectCalls.length, 1, 'exactly one refresh for the whole cascade, not one per touched record (B6 fix)');
   assertEqual(ctx.DB.ord[0].contactId, null, 'top-level contactId nulled');
   assertEqual(ctx.DB.ord[0].lines[0].rfqResponses[0].contactId, null, 'nested rfqResponse contactId nulled');
   assertEqual(ctx.DB.ord[1].contactId, 'c2', 'untouched Order Request left alone');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('delCon — Order-Request cascade with a partial push failure: one touched Order Request failing to push does not revert another touched Order Request\'s already-applied fix', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: 'c1', stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.DB.ord.push({ id: 'ord3', num: 'ORD-0003', contactId: 'c1', stage: 'New', actions: [], activeQuoteId: '', outcome: null, lines: [] });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({
+    contacts: { selectData: [] },
+    order_requests: {
+      updateError: function(row, id){ return id === 'ord1' ? { message: 'network error' } : null; }, // ord1's push fails, ord3's succeeds
+      selectData: [
+        { id: 'ord1', num: 'ORD-0001', contact_id: 'c1', stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }, // server still has the OLD value — its push genuinely failed
+        { id: 'ord3', num: 'ORD-0003', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }  // server reflects the successful push
+      ]
+    }
+  });
+  ctx._sb = sb;
+  await ctx.delCon('c1');
+  var ordSelectCalls = sb._calls.filter(function(c){ return c.table === 'order_requests' && c.op === 'is'; });
+  assertEqual(ordSelectCalls.length, 1, 'exactly one refresh for the whole cascade, even with a partial failure');
+  assertEqual(ctx.DB.ord[1].contactId, null, 'ord3\'s successful push is NOT reverted just because ord1\'s push, sharing the same refresh, failed');
+  assertEqual(ctx.DB.ord[0].contactId, 'c1', 'ord1 honestly reflects its failed push rather than appearing to have succeeded');
   ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
   ctx.confirm = function(){ return false; };
 });
@@ -1044,7 +1181,8 @@ testAsync('executeDataCleanup — renumbered Order Requests pushed to Supabase w
   resetDB();
   ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
   ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0099', contactId: null, stage: 'New', createdAt: '2026-01-01T00:00:00.000Z', actions: [], activeQuoteId: '', outcome: null, lines: [] });
-  var sb = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  var sb = mockSb({ order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+    selectData: [{ id: 'ord1', num: 'ORD-0001', contact_id: null, stage: 'New', actions: [], active_quote_id: null, outcome: null, lines: [] }] } });
   ctx._sb = sb;
   mockEl('data-cleanup-status');
   await ctx.executeDataCleanup();
@@ -1066,3 +1204,22 @@ testAsync('processImport(\'ord\') — sequential await per submission, not a for
   assert(ctx.DB.ord.every(function(o){ return !!o.num; }), 'every Order Request got a real, sequentially-assigned num — no interleaving corruption');
 });
 ```
+
+---
+
+## 4. Review-resolution log
+
+**Spec-gate round 1: FAIL — 6 blocking, 4 advisory.** All fixed in place, in this v1 document (no separate v2 file — matching this project's convention of revising a SPEC/REQ in place rather than forking a new version file for gate-fix rounds).
+
+The reviewer confirmed the eleven-mutation-site inventory itself had no drift or omission from REQ-CLOUD-003's own final, thrice-corrected list — independently re-derived from a fresh search of `index.html`, not a re-check of the SPEC's own claims. All findings were implementation-detail defects in how this SPEC executed the REQ's already-passed decisions, not re-litigations of those decisions:
+
+- **B1** (SQL): `contact_id`/`active_quote_id` were typed `uuid` but real Contact/Quote ids are `uid()`-format strings, never RFC-4122 — would have broken REQ's own AC-2 and every Order Request that ever reaches "Quoted". Fixed: both retyped `text` (§1), matching `import_batch_id`'s existing `text` typing in the same table for the same reason.
+- **B2** (wiring): `refreshOrdFromSupabase()` was fully specified but never wired into `initCloudDataLayer()` — Order Request would never sync automatically on page load or on a second device. Fixed: one line added to `initCloudDataLayer()` (§2.1), after Contact.
+- **B3** (`saveOrd()` data loss): the cloud-branch `row` sourced `active_quote_id`/`outcome`/`lines` from `existing.*` instead of `ord.*`, silently discarding whatever the caller passed — concretely breaking `processImport('ord')`'s update-with-new-lines path, both server-side and locally. Fixed: `row` now built entirely from `ord.*` (§2.4), matching what `saveLI()`/`saveCon()` actually do (verified against their real current code, not assumed).
+- **B4** (broken tests): six new tests configured `order_requests` mocks without `selectData` matching post-mutation state, so an internal `refreshOrdFromSupabase()` mid-test wiped `DB.ord` and later assertions threw or failed. Fixed: all six given `selectData` reflecting the expected post-mutation state; the combined multi-step test (§3) split into per-step `mockSb()` instances (`sb1`/`sb2`) mirroring the existing Contact-status precedent.
+- **B5** (broken archive assertion): the `migrateOrdToSupabase` field-mapping test never seeded `localStorage[K.ord]`, so its archive assertion could read stale leftover data from an unrelated earlier test. Fixed: seeded explicitly, reusing the exact fix pattern (and warning comment) the `migrateLineItemsToSupabase` precedent test already uses for the same pitfall.
+- **B6** (silent revert in multi-record loops): calling `persistOrdChange()` once per touched record inside the four multi-record sites (§2.7/§2.8/§2.12/§2.13) meant an early record's refresh could clobber a not-yet-pushed later record's already-applied local fix with its still-stale server copy — a real bug on any 2+-touched-record cascade, not just a failure case. Fixed: `persistOrdChange()` gained an optional `skipRefresh` parameter (§2.3); all four sites now push every touched record with `skipRefresh=true` and call `refreshOrdFromSupabase()` exactly once afterward. A new partial-failure test (§3, `delCon` cascade) proves one record's failed push no longer reverts a sibling's successful one, and required a small backward-compatible addition to `mockSb()` (functional `updateError`).
+- **A1** (`saveOrd()` field-sourcing asymmetry): resolved as a side effect of the B3 fix — every field is now sourced from `ord.*` uniformly.
+- **A2** (`saveOrd()` create test didn't exercise its own "found" branch): fixed — `selectData` now includes the newly-created row, and the test asserts `saved.id`, not just truthiness.
+- **A3** (`pullAll()`'s harmless `saveAll()` bypass not named alongside REQ §1.4's other accepted exceptions): noted here for completeness, matching this codebase's "checked anyway, never silently skipped" convention — no code change, `pullAll()` has no Order Request footprint (REQ-CLOUD-003 §1.1) so calling `saveAll()` inside it is a no-op for `DB.ord` regardless.
+- **A4** (undocumented UI-latency trade-off): one line added to §2.10's intro acknowledging the inherited (not novel) round-trip delay, matching `saveCon()`'s already-shipped behavior.
