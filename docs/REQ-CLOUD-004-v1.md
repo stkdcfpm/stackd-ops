@@ -1,0 +1,132 @@
+# REQ-CLOUD-004 — Quote Cloud Data migration (Phase 2, sub-phase 2 of 3)
+
+**Status:** v1 — drafted. Ready for requirements-gate.
+
+---
+
+## 0. Scoping (carried over from REQ-CLOUD-003 §0, not re-litigated here)
+
+`docs/architecture-data-model-v1.md` §8 step 4 ("migrate deal-pipeline entities") was split by `REQ-CLOUD-003` into three sequential sub-phases: sub-phase 1 (Order Request) shipped v2.9.74. This REQ is **sub-phase 2 (Quote)**. Sub-phase 3 (Purchase Order) remains future, unbriefed work — not started here, and this REQ does not scope it.
+
+Quote is the natural next sub-phase, not Purchase Order, because Quote is the pivot the deal pipeline actually flows through (Order Request → Quote → PO), and because Order Request's own migration already assumed Quote would migrate independently later — `migrateOrdToSupabase()`'s sweep already rewrites `Quote.lines[].sourceOrdId`, written against a **local** Quote id. Migrating Quote next lets this REQ correct that assumption in the same place it was made, rather than letting a third sub-phase inherit an even older assumption.
+
+## 1. Business context
+
+### 1.1 Why Quote is meaningfully different from Order Request
+
+REQ-CLOUD-003 §1.1 chose Order Request first specifically because it had **zero Sheets-sync footprint** and **nothing referenced its id from outside**. Neither is true of Quote:
+
+- **Quote has real Sheets sync.** `FIELD_MAPS.qt` exists; Quote is one of the six `simpleEnts`/`_simpleEntsForBatch` entities `pullAll()` currently always pulls. Line Item and Contact (`REQ-CLOUD-002`) already established the pattern this REQ must extend to Quote: drop an entity from the Sheets **pull** direction once *that entity's own* local Cloud Data migration marker is set, gated per-entity, not on bare `_sb` truthiness. (The **push** direction, `syncAll()`/`pushAll()`, has no such exclusion for any entity today, including Supplier — logged as `CLOUD-GAP-002`, explicitly not fixed by any prior Cloud Data REQ. This REQ does not fix it either, for the same reason: out of scope, pre-existing, unrelated to transport-layer correctness for reads.)
+- **Quote's own id is referenced from outside.** Order Request's migration only ever needed to sweep a reference *into* Quote (`Quote.lines[].sourceOrdId`) — nothing pointed at Order Request's id from elsewhere that Order Request's own migration needed to fix, because nothing did. Quote is different: `Order Request.activeQuoteId` and `PurchaseOrder.quoteId` both reference `Quote.id` directly. When Quote's own id is remapped to a new Supabase-assigned UUID during its migration, **both** of these external fields must be swept, or every Order Request whose Quote has migrated shows a dangling `activeQuoteId` (breaking `ordRealisedMargin()`, which resolves it), and every PO created via `qteToPoConvert()` shows a dangling `quoteId`. This is genuinely new territory this migration series has not yet had to solve: sweeping *outward*, not just inward.
+- **Quote's `num` is manually editable.** `saveQte()` builds `num: G('qf-num').value.trim() || nextQteNum()` — an operator can type any string into the Quote Number field, unlike Order Request's `ORD-####`, which has no manual-override UI path anywhere. `nextQteNum()` alone (scan-and-increment, unconditionally called only when the field is left blank) cannot be relied on to prevent a Postgres `unique` constraint violation the way REQ-CLOUD-003h relied on `nextRefNum()` for `ORD-####`. This REQ needs the kind of real pre-flight duplicate scan `REQ-CLOUD-001f` built for Supplier name, not a documented no-op.
+
+### 1.2 What stays the same as Order Request
+
+- **Nested-array embedding.** `Quote.lines[]` — including each line's `priceHistory[]`, and the source-traceability fields `sourceOrdId`/`sourceOrdLineId`/`sourceRfqResponseId` a line may carry — stays a single `jsonb` column on the parent Quote row, exactly like `REQ-CLOUD-003`'s decision for `Order Request.lines[]`/nested RFQ Responses. Nothing outside the parent Quote ever needs to resolve a nested line's own id to a new value (lines have no id field at all today — they're identified by `rid`, a client-generated string never referenced from any other entity). The only line-level fields that *do* reference another entity's id (`supId` → Supplier, `lid` → Line Item, `sourceOrdId` → Order Request) are swept in place inside the jsonb blob during Quote's own migration, exactly as RFQ Response's `supId`/`contactId` were swept inside Order Request's jsonb blob.
+- **No migration precondition on Supplier/Contact/Order Request.** `sourceContactId` is a plain nullable field (Contact may not have migrated); `lines[].supId`/`lines[].lid`/`lines[].sourceOrdId` are nested inside an opaque jsonb blob no Postgres constraint can reach. Same reasoning as `REQ-CLOUD-003b`: nothing to validate against, so nothing to gate on.
+- **`persistQteChange(qt, skipRefresh)` shared helper**, mirroring `persistOrdChange(ord, skipRefresh)` exactly, for every mutation site that only ever updates an *existing* Quote.
+- **`saveQte()`/`delQte()` get their own dedicated `_sb`-branches**, not routed through `persistQteChange()`, for the identical reason `saveOrd()`/`delOrd()` did in `REQ-CLOUD-003`: `saveQte()` must handle record *creation* (Postgres-assigned UUID via `insert()`), and `delQte()`'s soft-delete row shape (`deleted_at`) has no equivalent in `persistQteChange()`'s update-only row.
+- **Archive-before-remap, 30-day grace window, disconnect-on-restore, blocking backup gate, soft-delete-only (no delete policy)** — the same 9-step mechanics every prior Cloud Data migration in this codebase has used since `REQ-CLOUD-001`.
+
+### 1.3 `saveQte()`/`delQte()` are lower-risk to convert than `saveOrd()`/`delOrd()` were
+
+Unlike `saveOrd()` — which `REQ-CLOUD-003 §0.2` had to convert from a plain synchronous function to `async`, with a documented ripple effect onto two callers that depended on its synchronous return value — `saveQte()` and `delQte()` are **already** `async` today (since `REQ-CLOUD-002`'s Contact-conversion/reversion side effects). Confirmed by direct search: neither function's return value is ever captured by any caller in `index.html` or `tests/run.js` (both are always called as bare statements, `ctx.saveQte();`/`await ctx.saveQte();` — the return value, always `undefined`, is never read). Adding a genuine Cloud-Data branch inside each therefore introduces **no new ripple effect on any caller's synchronous-return-value assumption**, because there was never one to begin with. The one thing that *does* carry forward from `REQ-CLOUD-003`'s hard-won lesson (§2.17's twelve-test audit): any new code placed *after* a newly-introduced `await` inside either function is still deferred to a microtask a synchronous `test()` (as opposed to `testAsync()`) will not wait for — so every existing synchronous test that calls `saveQte()`/`delQte()` and checks a post-mutation field must be individually re-verified (§1.4 below), not assumed safe just because the function was already `async`.
+
+### 1.4 Mutation-site inventory (Quote-side)
+
+Confirmed exhaustive by direct trace of every `sv(K.qt, DB.qt)` call site and every place that assigns a Quote's own field outside a `.find()`-then-render context:
+
+1. **`saveQte()`** (create + update) — own dedicated `_sb`-branch.
+2. **`delQte()`** — own dedicated `_sb`-branch.
+3. **`qteToPoConvert()`**'s `q.linkedPOIds = newPOIds` assignment — via `persistQteChange()`. This function is currently a plain (non-`async`) function; it becomes `async`. Its only production caller is a bare `onclick="qteToPoConvert()"` (`index.html:2603`) — safe. Its nine existing test call sites (`tests/run.js:1218-1345`) all inspect `DB.po`/`DB.qt[...].linkedPOIds` state that is set *before* the point the new `await` will be introduced (the `q.linkedPOIds = newPOIds` assignment must stay ahead of the new `await persistQteChange(q)` call, mirroring the "mutate first, await second" ordering every prior conversion in this series has relied on) — confirmed none of the nine checks a post-`closeM()`/`toast()`/`rQte()`/`rPO()` render side effect, so no test conversion is anticipated to be needed here, subject to spec-gate re-verification against the real committed function.
+
+**Explicitly confirmed NOT mutation sites, and why** (the equivalent of `REQ-CLOUD-003`'s "checked anyway, never silently skipped" sweep of dead/absent paths):
+- **`delSup()`** never touches `Quote.lines[].supId` — confirmed dangling-reference-on-delete is the existing, accepted Supplier delete policy (architecture doc §8: "warn-and-allow-with-dangling-refs"). Not a mutation site; not fixed here (out of scope, pre-existing).
+- **`delCon()`** never touches `Quote.sourceContactId` — this is the already-logged `CON-GAP-004` (confirmed still open, unfixed). This is a *missing feature*, not an *existing mutation site lacking Cloud-awareness* — the same class of decision `REQ-CLOUD-003 §1.6` made for `delPO()` never cleaning `Quote.linkedPOIds[]` (logged as `PO-GAP-007`, explicitly deferred rather than fixed). Consistent with that precedent, `CON-GAP-004` is not fixed here either — noted, not worsened, not improved by this migration.
+- **`delPO()`** never touches `Quote.linkedPOIds[]` (`PO-GAP-007`, already logged, deferred to `REQ-CLOUD-005`) — unaffected by this REQ; Purchase Order is not Cloud-Data-eligible yet regardless.
+- **`executeDataCleanup()`**'s phantom-record filter includes `'qt'` in its entity list, but — identical reasoning to `REQ-CLOUD-003`'s already-accepted analysis for Order Request — a phantom record has no `id` at all, and a Postgres-hosted row always has a real `gen_random_uuid()`-assigned id, so no cloud-sourced Quote can ever be phantom. Structural no-op for migrated data; the function's own trailing `saveAll()` already covers the local-only case unchanged. **Quote's `num` is also confirmed absent from `executeDataCleanup()`'s renumbering pairs list** (`[['sup','SUP'], ['li','LI'], ['buy','BUY'], ['con','CON'], ['ord','ORD']]`) — Quote numbers are deliberately never renumbered, same as Invoice/PO/Credit-Note, per the architecture doc's already-documented ref-number-scheme split. No retrofit needed here, unlike `REQ-CLOUD-003`'s round-2 finding for `DB.ord`.
+- **`create_quote` AI action** only pre-fills the Quote form (`handleAIAction()`, `index.html:9980`) — never calls `saveQte()` directly. Already covered once `saveQte()` itself is Cloud-aware.
+
+### 1.5 External-reference sweep — both directions
+
+**Inward** (Quote's own migration must rewrite these fields on ITS OWN row, using already-shipped id-maps from entities that may or may not have migrated yet): `sourceContactId` (→ Contact, if migrated — no-op text field either way, since it's not FK-constrained); `lines[].supId` (→ Supplier); `lines[].lid` (→ Line Item, confirmed dead field, checked anyway); `lines[].sourceOrdId` (→ Order Request, already migratable since `REQ-CLOUD-003`).
+
+**Outward** (every *other* entity's field that references `Quote.id`, which must be rewritten once Quote's own id changes during its migration): `Order Request.activeQuoteId` (confirmed the only field `ordRealisedMargin()` resolves it through); `PurchaseOrder.quoteId` (confirmed set only by `qteToPoConvert()`, at `index.html:12116`; `PurchaseOrder.quoteNum` is a business-key string, unaffected by an id remap, no sweep needed for it).
+
+### 1.6 Cross-phase retrofit — four existing sweep functions, not two
+
+`REQ-CLOUD-003 §1.3` needed to retrofit two migration functions (`migrateSuppliersBuyersToSupabase()`, `migrateContactsToSupabase()`) with "push to Supabase if Order Request has already migrated" cross-phase awareness, because those two functions' sweeps happened to be the only ones touching an Order-Request-owned field. Quote is referenced by **four** existing migration sweeps, all of which need the identical retrofit — track which Quotes were actually touched, then push each touched one via `persistQteChange()` if Quote itself has already migrated by the time that sweep runs:
+
+1. **`migrateSuppliersBuyersToSupabase()`** — its existing sweep already rewrites `Quote.lines[].supId` (`index.html:5738`, present since `REQ-CLOUD-001`). Needs touched-tracking + cross-phase push added.
+2. **`migrateLineItemsToSupabase()`** — its existing sweep already rewrites `Quote.lines[].lid` (`index.html:5802`, present since `REQ-CLOUD-002`, and already documented as checking a confirmed-dead field "anyway, never silently skipped"). Needs touched-tracking + cross-phase push added, for the same never-skip-a-check reason, even though the dead field means the touched-set will always be empty in practice today.
+3. **`migrateContactsToSupabase()`** — its existing sweep already rewrites `Quote.sourceContactId` (`index.html:5867`, present since `REQ-CLOUD-002`). Needs touched-tracking + cross-phase push added.
+4. **`migrateOrdToSupabase()`** — its existing sweep already rewrites `Quote.lines[].sourceOrdId` (`index.html:5921`, present since `REQ-CLOUD-003`, built before Quote was Cloud-eligible and therefore correctly assumed a bare `sv(K.qt, DB.qt)` was always sufficient). Needs touched-tracking + cross-phase push added — this is the newest of the four sweeps and the one `REQ-CLOUD-003`'s own author could not have retrofitted at the time, since Quote wasn't a Cloud Data entity yet.
+
+None of these four retrofits are needed in the reverse direction (Quote's own migration pushing to an *already-migrated* Order Request/Contact/Line Item/Supplier) — that direction is `persistOrdChange()`'s/the equivalent Contact-side helper's job, already correct and unaffected by this REQ, since Quote's migration only ever writes to `Order Request.activeQuoteId`/`PurchaseOrder.quoteId`, both already covered by `persistOrdChange()`'s existing update path and PO's local-only `sv(K.p, DB.po)` respectively.
+
+## 2. Requirements
+
+**REQ-CLOUD-004a — New `quotes` Supabase table.** Columns mirror every field `saveQte()` currently persists: `id uuid primary key default gen_random_uuid()`, `num text not null unique`, `client text`, `dt date`/`text` (match existing storage format — confirmed a plain `YYYY-MM-DD` string, not a JS Date), `valid_until text`, `currency text`, `freight_mode text`, `markup numeric`, `status text not null`, `notes text`, `lines jsonb not null default '[]'::jsonb`, `linked_po_ids jsonb not null default '[]'::jsonb`, `source_contact_id text` (plain nullable, no FK — REQ-CLOUD-004b), `calc_total_landed numeric`, `calc_sell_usd numeric`, `calc_sell_gbp numeric`, `approved_by text`, `approved_reason text`, `approved_at timestamptz`, `origin_charges numeric`, `dest_charges numeric`, `fpm_admin numeric`, `created_at timestamptz not null default now()`, `updated_at timestamptz not null default now()`, `deleted_at timestamptz`. RLS enabled, `authenticated` read/insert/update policies, no delete policy — mirroring every prior migration's SQL shape exactly.
+
+**REQ-CLOUD-004b — No FK constraint on `source_contact_id`; no migration precondition.** Plain nullable `text` column (not `uuid` — a not-yet-migrated Contact's id is never RFC-4122 format, the exact `REQ-CLOUD-003` round-1 B1 lesson). `migrateQteToSupabase()` requires no Supplier/Contact/Order-Request migration-completion precondition of its own.
+
+**REQ-CLOUD-004c — `persistQteChange(qt, skipRefresh)` shared helper**, mirroring `persistOrdChange()`'s shape and `skipRefresh` semantics exactly (§1.2). Used by `qteToPoConvert()` and by the four retrofit sweeps' cross-phase push loops (§1.6). Not used by `saveQte()`/`delQte()` (§1.2/1.3).
+
+**REQ-CLOUD-004d — Exhaustive external-reference sweep, both directions (§1.5).** Quote's own migration rewrites `sourceContactId`/`lines[].supId`/`lines[].lid`/`lines[].sourceOrdId` on its own rows using already-established id-maps where available, and separately sweeps `Order Request.activeQuoteId` and `PurchaseOrder.quoteId` to Quote's newly-assigned ids. `PurchaseOrder.quoteNum` explicitly confirmed to need no sweep (business key, not an id).
+
+**REQ-CLOUD-004e — Four-function cross-phase retrofit (§1.6).** `migrateSuppliersBuyersToSupabase()`, `migrateLineItemsToSupabase()`, `migrateContactsToSupabase()`, and `migrateOrdToSupabase()` each gain touched-Quote tracking and a "push via `persistQteChange()` if Quote has already migrated" step, mirroring `REQ-CLOUD-003`'s retrofit pattern.
+
+**REQ-CLOUD-004f — `pullAll()` Sheets-pull exclusion for `'qt'`.** Both `_simpleEntsForBatch` (`index.html:4446-4449`) and `simpleEnts` (`index.html:4527-4538`) gain a `st_qt_cloud_migration_ts`-gated exclusion line, mirroring the existing Line Item/Contact pattern exactly. No change to `syncAll()`/`pushAll()` (`CLOUD-GAP-002`, out of scope, pre-existing, unimproved and unworsened by this REQ).
+
+**REQ-CLOUD-004g — Real pre-flight duplicate-`num` scan.** Unlike Order Request's documented no-op (`REQ-CLOUD-003h`), Quote's `num` is manually editable via `G('qf-num').value`, so `migrateQteToSupabase()` needs a genuine pre-flight scan for duplicate `num` values among the local Quotes about to migrate (case-sensitive exact match — `num` is a free-text field with no case-normalization anywhere in `saveQte()`, unlike Supplier's `name`), blocking the migration with a clear, actionable message if any are found, mirroring `findDuplicateSupplierNames()`'s shape and blocking-modal pattern (`REQ-CLOUD-001f`).
+
+**REQ-CLOUD-004h — `saveQte()`/`delQte()` own dedicated `_sb`-branches (§1.2/1.3).** Not routed through `persistQteChange()`. Both functions remain `async` (no signature change) — confirmed via §1.3 that no caller depends on either's return value, so no ripple-effect fix is anticipated to be needed for any caller, though this must still be re-verified against the real, current pre-existing test suite at spec-gate (mirroring `REQ-CLOUD-003 §2.17`'s audit, not merely assumed from this REQ's own analysis).
+
+**REQ-CLOUD-004i — `qteToPoConvert()` becomes `async`, routes its `linkedPOIds` update through `persistQteChange()` (§1.4, mutation site 3).** The PO-creation portion of this function (`DB.po.push(po)`, `sv(K.p, DB.po)`) is explicitly unchanged — Purchase Order is not Cloud-Data-eligible in this REQ.
+
+**REQ-CLOUD-004j — Archive/rollback/Settings UI**, mirroring the established pattern exactly: `restoreQteMigrationArchive()`, a fourth-turned-fifth independently-timed block in `cleanupExpiredMigrationArchive()`, a restore-button visibility line in `rCfg()`, and a new "Cloud Data (Quotes)" Settings card with its own migrate/restore buttons. Marker/archive key prefix: `st_qt_` (`st_qt_cloud_migration_ts`, `st_qt_pre_migration`), matching the existing `st_li_`/`st_con_`/`st_ord_` naming convention (not `st_qte_` — `qt` is this codebase's own established two-letter key for Quote everywhere else, e.g. `K.qt`, `DB.qt`).
+
+**REQ-CLOUD-004k — No changes needed to `executeDataCleanup()`'s renumbering pairs list, `delSup()`, `delCon()`, or `delPO()`** (§1.4's "explicitly confirmed not mutation sites" list) — each checked and confirmed out of scope, not newly introduced or worsened by this REQ.
+
+**REQ-CLOUD-004l — `AI_SYSTEM_PROMPT`'s Cloud Data description gets a further update.** The description corrected in `REQ-CLOUD-003` (`index.html:9581`) enumerated Supplier/Buyer, Line Item, Contact, and Order Request as the Cloud-Data-eligible entities; this REQ adds Quote to that list, and updates `docs/user-guide.md`'s equivalent Cloud Data section (rewritten in the same delivery) the same way — closing off the exact class of staleness `REQ-CLOUD-003 §1.` already found once and fixed, before it recurs a second time.
+
+## 3. Explicitly out of scope
+
+- Purchase Order Cloud Data migration (`REQ-CLOUD-005`, future, unbriefed).
+- `PO-GAP-007` (`delPO()` never cleans `Quote.linkedPOIds[]`) — already logged, already deferred to `REQ-CLOUD-005` by `REQ-CLOUD-003 §1.6`; unaffected by this REQ, since Quote-side reads of a stale `linkedPOIds` entry are already guarded (`ordRealisedMargin()`-equivalent PO-resolution reads use `.find()` and tolerate a miss).
+- `CON-GAP-004` (`delCon()` never touches `Quote.sourceContactId`) — a missing feature, not a Cloud-Data-awareness gap on an existing mutation site (§1.4); not fixed here, consistent with `PO-GAP-007`'s precedent.
+- `CLOUD-GAP-002` (`syncAll()`/`pushAll()` have no Cloud-Data exclusion in the push direction, for any entity) — pre-existing, unrelated to this REQ's pull-direction fix (`REQ-CLOUD-004f`), not worsened or improved.
+- Quote's own numbering scheme (`nextQteNum()`, `QTE-####`) is not unified with `nextRefNum()` — that is the architecture doc §8's separately-flagged "missing/incompatible ref-number schemes" item, not something any single entity's Cloud Data migration REQ has attempted to fix for its own entity (Order Request's `ORD-####` was likewise left exactly as-is by `REQ-CLOUD-003`).
+- Making Quote's individual `saveQte()`/`delQte()` call `syncEnt()`/`delEnt()` per-record (the architecture doc's already-noted "only synced simple entity whose individual save/delete doesn't push to Sheets immediately" quirk) — pre-existing behavior, orthogonal to Cloud Data transport, not touched here.
+
+## 4. Acceptance criteria
+
+- **AC-1.** New `quotes` table matches REQ-CLOUD-004a's field list exactly; `source_contact_id` is `text`, not `uuid`, not FK-constrained.
+- **AC-2.** `migrateQteToSupabase()` succeeds with zero prior Supplier/Contact/Order-Request migration on the install (no precondition check exists).
+- **AC-3.** `migrateQteToSupabase()` blocks with a clear message when two or more local Quotes about to migrate share an identical `num` (exact string match); does not insert any row when blocked.
+- **AC-4.** After migration, `Order Request.activeQuoteId` and `PurchaseOrder.quoteId` both correctly resolve to the migrated Quote's new Supabase-assigned id for every Order Request/PO that referenced it beforehand; `PurchaseOrder.quoteNum` is confirmed unchanged.
+- **AC-5.** Each of the four retrofitted sweep functions (`migrateSuppliersBuyersToSupabase()`, `migrateLineItemsToSupabase()`, `migrateContactsToSupabase()`, `migrateOrdToSupabase()`) pushes a touched Quote to Supabase when Quote has already migrated, and does not attempt any Supabase call for `'quotes'` when it has not.
+- **AC-6.** `pullAll()` excludes `'qt'` from both the batched pull-entity list and the simple-entities merge loop once `st_qt_cloud_migration_ts` is set; unaffected when unset.
+- **AC-7.** `saveQte()`'s Cloud-configured create path sends no client-generated `id`; its update path uses `.update(...).eq('id', ...)`; the local-only path is unchanged from current behavior.
+- **AC-8.** `delQte()`'s Cloud-configured path soft-deletes via `deleted_at`; the local-only path is unchanged, including the Contact-status-reversion side effect for a `sourceContactId` that was `converted`.
+- **AC-9.** `qteToPoConvert()`'s existing PO-shape/multi-supplier-grouping/number-collision behavior (`REQ-PO-002`) is unchanged; its Quote-side `linkedPOIds` update pushes to Supabase when Quote has migrated, to local storage otherwise.
+- **AC-10.** Every pre-existing test that calls `saveQte`, `delQte`, or `qteToPoConvert` directly and synchronously is individually re-verified against the real, final diff — not assumed safe from this REQ's own analysis — and converted to `testAsync`/`await` if it inspects a return value or post-`await` state, mirroring `REQ-CLOUD-003 §2.17`'s audit methodology exactly.
+
+## 5. Testing approach
+
+Mirrors `REQ-CLOUD-003 §5` — extend `mockSb()` usage to a `quotes` table; new tests for the migration function's field-mapping/nested-structure preservation/duplicate-`num` block/both-direction sweep correctness; the four retrofits' touched-tracking in both the "Quote already migrated" and "not migrated" cases; `saveQte()`/`delQte()`/`qteToPoConvert()`'s cloud-vs-local branching; archive/restore/cleanup-expiry; and a full audit of the pre-existing test suite's direct calls to the three converted/newly-cloud-aware functions (AC-10).
+
+## 6. Gate process
+
+Requirements-gate (this document) → SPEC-CLOUD-004 → spec-gate → implementation → self-directed mutation testing → build-gate → PR, mirroring `REQ-CLOUD-003`'s process exactly, including this document's own review-resolution log in §8 once requirements-gate rounds run.
+
+## 7. Tracker/known-gaps updates anticipated on ship
+
+- `docs/requirements-tracker.md` — new `REQ-CLOUD-004` row.
+- `docs/known-gaps.md` — no new gap anticipated; `PO-GAP-007`/`CON-GAP-004`/`CLOUD-GAP-002` confirmed unaffected (§3), to be re-confirmed at implementation time.
+- `docs/architecture-data-model-v1.md` — §2 entity inventory (Quote's Cloud Data column), §4.2 narrative, §8 sequencing (Phase 2 sub-phase 2 marked complete).
+- `STACKD_CONTEXT.md`/`CLAUDE.md` — version/test-count bump, Cloud Data gotcha note extended with the outward-sweep and manual-`num` lessons if implementation surfaces anything not already anticipated here.
+
+## 8. Review-resolution log
+
+*(Populated once requirements-gate rounds run.)*
