@@ -1,6 +1,6 @@
 # SPEC-CLOUD-004 — Quote Cloud Data migration
 
-**Status:** v1 — drafted against `docs/REQ-CLOUD-004-v1.md` (requirements-gate PASS, 3 rounds + 1 pre-SPEC self-caught clarification). Ready for spec-gate.
+**Status:** v1 — drafted against `docs/REQ-CLOUD-004-v1.md` (requirements-gate PASS, 3 rounds + 1 pre-SPEC self-caught clarification). Spec-gate round 1: CONDITIONAL PASS (7 blocking, 7 advisory) — every diff in §1-§2 was applied to a scratch copy of `index.html`/`tests/run.js` and the full suite run to verify; all 7 blocking findings and all 7 advisory findings fixed in place below (see §4). Verified: 752/752 tests pass (734 baseline + 18 new); the B1 and B2 fixes were each independently confirmed load-bearing by reverting them and observing the predicted failure reappear. Ready for spec-gate round 2.
 
 ---
 
@@ -19,7 +19,9 @@
 
 ## 0.1 A design decision this SPEC must add: `refreshQteFromSupabase()` must exist and be wired into `initCloudDataLayer()`
 
-The REQ specifies `persistQteChange()` "mirroring `persistOrdChange()` exactly" (§1.2) — but `persistOrdChange()`'s own body calls `refreshOrdFromSupabase()` internally when `!skipRefresh` (`index.html:5623`), and `saveOrd()`'s cloud branch calls it after insert/update, and `migrateOrdToSupabase()` calls it at the end. For `persistQteChange()` to genuinely mirror that shape, a `refreshQteFromSupabase()` function must exist for it (and `saveQte()`'s new cloud branch, and `migrateQteToSupabase()`) to call. The REQ does not name this function as its own line item — an omission this SPEC corrects before it could repeat `REQ-CLOUD-003`'s own round-1 B2 lesson (a refresh function that exists but is never wired into `initCloudDataLayer()`, so it passes its own unit tests but never runs in practice). §2.1 below adds `refreshQteFromSupabase()`, mirroring `refreshOrdFromSupabase()`'s B1-overwrite-guard-and-self-marking shape exactly, applied here from the start — and wires it into `initCloudDataLayer()` in the same diff, not as an afterthought.
+The REQ specifies `persistQteChange()` "mirroring `persistOrdChange()` exactly" (§1.2) — but `persistOrdChange()`'s own body calls `refreshOrdFromSupabase()` internally when `!skipRefresh` (`index.html:5623`), and `saveOrd()`'s cloud branch calls it after insert/update, and `migrateOrdToSupabase()` calls it at the end. For `persistQteChange()` to genuinely mirror that shape, a `refreshQteFromSupabase()` function must exist for it (and `saveQte()`'s new cloud branch, and `migrateQteToSupabase()`) to call. The REQ does not name this function as its own line item — an omission this SPEC corrects before it could repeat `REQ-CLOUD-003`'s own round-1 B2 lesson (a refresh function that exists but is never wired into `initCloudDataLayer()`, so it passes its own unit tests but never runs in practice). §2.1 below adds `refreshQteFromSupabase()`, mirroring `refreshOrdFromSupabase()`'s overwrite-guard-and-self-marking shape exactly, applied here from the start — and wires it into `initCloudDataLayer()` in the same diff, not as an afterthought.
+
+**Spec-gate round-1 B1 finding — a required companion retrofit of one pre-existing test.** Wiring a fifth unconditional refresh call into `initCloudDataLayer()` is not cost-free against the existing suite: the pre-existing CLOUD-003 test `'initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-gate round-1 B2 finding...)'` (`tests/run.js:7752`) configures `_sb` and stubs `ctx.refreshOrdFromSupabase`, but predates Quote's existence and does not know to stub `ctx.refreshQteFromSupabase` too. Left as-is, the real `refreshQteFromSupabase()` runs unmocked against `DB.qt` (empty at that point in the suite) and permanently sets `st_qt_cloud_migration_ts` in the shared test `localStorage` — which then silently corrupts a later, unrelated, already-shipped test (`migrateOrdToSupabase`'s own round-trip test) into taking the wrong branch. Verified empirically: applying every other diff in this SPEC without this one retrofit reproduces exactly that downstream failure; adding the retrofit and nothing else fixes it. §3 below applies this retrofit as the first item in the new test block, before any new CLOUD-004 test is added.
 
 ## 0.2 A design decision this SPEC must add: the pre-flight duplicate-`num` scan needs its own modal, not `ov-sb-dup`
 
@@ -106,17 +108,18 @@ async function refreshQteFromSupabase() {
   var result = await _sb.from('quotes').select('*').is('deleted_at', null);
   if (result.error) { toast('Could not load Quotes from Cloud Data.'); return; }
   DB.qt = result.data.map(function(row){
-    return {
+    var q = {
       id: row.id, num: row.num, client: row.client, dt: row.dt, validUntil: row.valid_until,
       currency: row.currency, freightMode: row.freight_mode, markup: row.markup, status: row.status,
       notes: row.notes, lines: row.lines || [], linkedPOIds: row.linked_po_ids || [],
       sourceContactId: row.source_contact_id || '',
       calc_totalLanded: row.calc_total_landed, calc_sellUSD: row.calc_sell_usd, calc_sellGBP: row.calc_sell_gbp,
-      approvedBy: row.approved_by || '', approvedReason: row.approved_reason || '', approvedAt: row.approved_at || '',
-      originCharges: row.origin_charges != null ? row.origin_charges : undefined,
-      destCharges: row.dest_charges != null ? row.dest_charges : undefined,
-      fpmAdmin: row.fpm_admin != null ? row.fpm_admin : undefined
+      approvedBy: row.approved_by || '', approvedReason: row.approved_reason || '', approvedAt: row.approved_at || ''
     };
+    if (row.origin_charges != null) q.originCharges = row.origin_charges;
+    if (row.dest_charges != null) q.destCharges = row.dest_charges;
+    if (row.fpm_admin != null) q.fpmAdmin = row.fpm_admin;
+    return q;
   });
   sv(K.qt, DB.qt);
   if (!localStorage.getItem('st_qt_cloud_migration_ts')) localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
@@ -124,7 +127,7 @@ async function refreshQteFromSupabase() {
 }
 ```
 
-`originCharges`/`destCharges`/`fpmAdmin` map through `!= null ? ... : undefined` rather than a bare `row.origin_charges` pass-through, because `saveQte()` only ever sets these three keys conditionally (`if (origOvRaw !== '') qt.originCharges = ...`, `index.html:11741-11743`) — a Quote that never had an override set carries no key at all locally, not an explicit `null`; this preserves that shape across a Cloud round-trip rather than introducing three always-present `null` keys no local-only Quote ever had.
+`originCharges`/`destCharges`/`fpmAdmin` are added to the mapped object only `if (row.origin_charges != null)` etc., rather than assigned unconditionally via `!= null ? val : undefined` — **spec-gate round-1 B2 finding**: assigning `undefined` inside an object literal still creates the key (`'originCharges' in obj` is `true` even when the value is `undefined`), so the original phrasing did not actually achieve the key-omission it claimed. Building the object without the three keys and conditionally adding them afterward is what actually omits them. This matters because `saveQte()` only ever sets these three keys conditionally (`if (origOvRaw !== '') qt.originCharges = ...`, `index.html:11741-11743`) — a Quote that never had an override set carries no key at all locally, not an explicit `null`; this preserves that shape across a Cloud round-trip rather than introducing three always-present `null`/`undefined` keys no local-only Quote ever had.
 
 `initCloudDataLayer()` (`index.html:5514-5524`) gains one line, after Order Request (matching migration-order precedent):
 
@@ -247,6 +250,8 @@ New:
   toast('Quote ' + qt.num + ' saved');
 }
 ```
+
+**Spec-gate round-1 A7 advisory (acknowledged, not changed):** the cloud branch's `await refreshQteFromSupabase()` already calls `rQte()` internally, and the shared tail below still calls `rQte()` again unconditionally — a harmless double-render specific to the cloud path only. Left as-is rather than threading a skip-render flag through `refreshQteFromSupabase()` just for this cosmetic optimization; the local branch still needs its own `rQte()` call, so the tail can't simply be removed.
 
 `qt.id` is reset to the real Postgres-assigned id (`qtResult.data.id`) immediately after a successful cloud insert/update, **before** the `cConvertOrdId` block runs — that block sets `convOrd.activeQuoteId = qt.id` (`index.html:11770`), which must be the final, real id, not the client-generated `uid()` `qt.id` was constructed with at `index.html:11719` (`id: EI.qt || uid()`). `qtRow` never includes an `id` key, so a create always lets Postgres assign a fresh UUID regardless of what local placeholder `qt.id` already held — the same "no client-generated id sent on insert" invariant every prior `save*()` cloud branch in this codebase already enforces. `saveQte()` itself is already `async` (`REQ-CLOUD-002`) — no signature change, and (per REQ-CLOUD-004 §1.3) no caller anywhere reads its return value, so this branch needs no return-value contract of its own.
 
@@ -509,7 +514,7 @@ function restoreQteMigrationArchive() {
 }
 ```
 
-`cleanupExpiredMigrationArchive()` (`index.html:5984-6006`) — extend with a fifth independently-timed block:
+`cleanupExpiredMigrationArchive()` (`index.html:5984-6006`) — extend with a fifth independently-timed block, inserted immediately after the existing Order Request block (`index.html:6001-6004`) closes, before the function's own closing `}`:
 
 ```js
   var qtTs = localStorage.getItem('st_qt_cloud_migration_ts');
@@ -519,7 +524,7 @@ function restoreQteMigrationArchive() {
   }
 ```
 
-`rCfg()` (`index.html:10385-10388`) — add a fifth restore-button visibility line, immediately after the Order Request one:
+`rCfg()` (`index.html:10561-10564`, the four existing `cfg-sb-*-restore-btn` visibility lines) — add a fifth restore-button visibility line, immediately after the Order Request one (`index.html:10564`), before the `cfg-lang` line that follows it:
 
 ```js
   if(G('cfg-sb-qt-restore-btn')) G('cfg-sb-qt-restore-btn').style.display = localStorage.getItem('st_qt_cloud_migration_ts') ? '' : 'none';
@@ -807,7 +812,25 @@ New:
 'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004): Settings → Cloud Data lets an operator connect a shared Supabase database. Each of Supplier/Buyer, Line Item, Contact, Order Request, and Quote migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Purchase Order is not yet Cloud-Data-eligible — it, and every other entity, stays local-only regardless of what has migrated. Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them, and each can migrate independently of whether Supplier, Contact, or the other has. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
 ```
 
-`docs/user-guide.md`'s Cloud Data section (rewritten most recently in `REQ-CLOUD-003`) gets the identical update — Quote added to the list of independently-migratable entities, Purchase Order named as the sole remaining non-eligible one.
+`docs/user-guide.md`'s Cloud Data section (rewritten most recently in `REQ-CLOUD-003`) gets the identical update — Quote added to the list of independently-migratable entities, Purchase Order named as the sole remaining non-eligible one. Exact diff (spec-gate round-1 A6 advisory — the heading and both paragraphs at `docs/user-guide.md:75-85`):
+
+Current:
+
+```
+## Cloud Data (Supplier & Buyer, Line Item, Contact, Order Request)
+
+By default, all your data lives only in your own browser. **Cloud Data** (Settings → Cloud Data) is an optional feature that connects a shared Supabase database, so a colleague on a different device or browser can see the exact same records as you. It is not a single on/off switch — Supplier & Buyer, Line Item, Contact, and Order Request each migrate independently, on their own schedule, via their own "Migrate ... to Cloud" button in the same settings area. Quote and Purchase Order are not yet Cloud-Data-eligible and always stay local, along with every other entity (Invoices, Shipments, Payments, etc.) regardless of what has migrated.
+```
+
+New:
+
+```
+## Cloud Data (Supplier & Buyer, Line Item, Contact, Order Request, Quote)
+
+By default, all your data lives only in your own browser. **Cloud Data** (Settings → Cloud Data) is an optional feature that connects a shared Supabase database, so a colleague on a different device or browser can see the exact same records as you. It is not a single on/off switch — Supplier & Buyer, Line Item, Contact, Order Request, and Quote each migrate independently, on their own schedule, via their own "Migrate ... to Cloud" button in the same settings area. Purchase Order is not yet Cloud-Data-eligible and always stays local, along with every other entity (Invoices, Shipments, Payments, etc.) regardless of what has migrated.
+```
+
+Line 85's list of "Migrate ... to Cloud" button names similarly gains "Migrate Quotes to Cloud" alongside the existing four.
 
 ### 2.16 No changes needed
 
@@ -817,7 +840,63 @@ Confirmed by `REQ-CLOUD-004` §1.4/§3: `delSup()`, `delCon()` (`CON-GAP-004`, d
 
 ## 3. Tests (`tests/run.js`)
 
-Reuses the existing `mockSb()` harness unchanged (already fully generic per-table). Insert this block after the existing `SPEC-CLOUD-003` test section, before its own test-hygiene cleanup test... actually, insert immediately **before** the `'SPEC-CLOUD-003 test-hygiene cleanup'` test, extending that block's own cleanup to also cover Quote's marker, rather than duplicating a second cleanup test — see the final test below.
+Reuses the existing `mockSb()` harness unchanged (already fully generic per-table). **Spec-gate round-1 B7 finding:** the original draft of this section gave two contradictory placement instructions (insert before the CLOUD-003 cleanup test vs. insert as a dedicated block after it) — corrected here to match this file's own real, established precedent: `SPEC-CLOUD-003`'s own test section was itself appended *after* `SPEC-CLOUD-002`'s cleanup test (`tests/run.js:7748`, immediately following the `'…Line Item…Contact…'` cleanup test), not inserted before it. This SPEC's block follows the identical convention.
+
+### 3.0 Required companion retrofit of a pre-existing CLOUD-003 test (spec-gate round-1 B1 finding — §0.1)
+
+Before inserting any new test, retrofit the pre-existing test `'initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-gate round-1 B2 finding...)'` (`tests/run.js:7752`) in place — do not duplicate it. Add `quotes: { selectData: [] }` to its `_sb` mock config, and stub `ctx.refreshQteFromSupabase` alongside the existing `ctx.refreshOrdFromSupabase` stub, restoring both afterward:
+
+Current (`tests/run.js:7752-7766`):
+
+```js
+testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-gate round-1 B2 finding: previously wired for Supplier/Buyer/Line Item/Contact but not Order Request)', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){}; // keep the mock _sb below in place instead of overwriting it with a real client
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var called = false;
+  var origRefreshOrd = ctx.refreshOrdFromSupabase;
+  ctx.refreshOrdFromSupabase = function(){ called = true; return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+});
+```
+
+New:
+
+```js
+testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-gate round-1 B2 finding: previously wired for Supplier/Buyer/Line Item/Contact but not Order Request)', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){}; // keep the mock _sb below in place instead of overwriting it with a real client
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var called = false;
+  var origRefreshOrd = ctx.refreshOrdFromSupabase;
+  ctx.refreshOrdFromSupabase = function(){ called = true; return Promise.resolve(); };
+  // SPEC-CLOUD-004 spec-gate round-1 B1 finding: initCloudDataLayer() now also calls
+  // refreshQteFromSupabase() after refreshOrdFromSupabase() — stub it too, or the real
+  // function runs unmocked against DB.qt (empty at this point) and permanently sets
+  // st_qt_cloud_migration_ts, corrupting every later test that touches Quote.
+  var origRefreshQte = ctx.refreshQteFromSupabase;
+  ctx.refreshQteFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+});
+```
+
+Verified empirically: without this retrofit, applying every other diff in this SPEC breaks this test itself (self-marks `st_qt_cloud_migration_ts` on the unmocked `quotes` table) and, downstream, the pre-existing `migrateOrdToSupabase` round-trip test (which then wrongly believes Quote has already migrated). With the retrofit and nothing else changed, both pass.
+
+### 3.1 New test block
+
+Insert this entire block (ending with its own dedicated cleanup test, §3.1's final test) immediately **after** the existing `'SPEC-CLOUD-003 test-hygiene cleanup'` test (`tests/run.js:8291-8295`) — the same convention `SPEC-CLOUD-003`'s own block followed relative to `SPEC-CLOUD-002`'s cleanup test.
 
 ```js
 // ── CLOUD DATA — Quote (SPEC-CLOUD-004) ──
@@ -836,6 +915,7 @@ testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirro
   assert(called, 'initCloudDataLayer() calls refreshQteFromSupabase()');
   ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshQteFromSupabase = origRefreshQte;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+  ctx._sb = null; // spec-gate round-1 A4 advisory: reset explicitly, matching every other test in this block
 });
 
 testAsync('refreshQteFromSupabase — refuses to overwrite real local data when this device has never run the migration; proceeds when local data is empty (second-device case); sets its own marker on success; omits originCharges/destCharges/fpmAdmin keys entirely when Supabase returns null for them', async function() {
@@ -872,7 +952,16 @@ testAsync('migrateQteToSupabase — inserts every field, preserves nested lines 
   ctx.localStorage.setItem(ctx.K.qt, JSON.stringify(ctx.DB.qt)); // migrateQteToSupabase() reads localStorage[K.qt] for its archive step, not ctx.DB.qt directly
 
   var sb = mockSb({
-    quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); } },
+    quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); },
+      // spec-gate round-1 B3 finding: migrateQteToSupabase() calls refreshQteFromSupabase()
+      // at its own tail — with no selectData configured here, that call defaults to an
+      // empty result and wipes DB.qt to [] before this test's own assertions run below.
+      selectData: [{ id: 'new-qte-uuid', num: 'QTE-0001', client: 'Acme', dt: '2026-01-01', valid_until: '', currency: 'USD',
+        freight_mode: 'LCL', markup: 15, status: 'Accepted', notes: '',
+        lines: [{ rid: 'r1', supId: 's1', desc: 'Widget', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0, markup: 15, priceHistory: [] }],
+        linked_po_ids: [], source_contact_id: 'c1', calc_total_landed: 10, calc_sell_usd: 12, calc_sell_gbp: 9,
+        approved_by: 'Jane', approved_reason: '', approved_at: '2026-01-01T00:00:00.000Z',
+        origin_charges: null, dest_charges: null, fpm_admin: null }] },
     order_requests: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
       selectData: [{ id: 'ord1', num: 'ORD-0001', contact_id: null, stage: 'Quoted', actions: [], active_quote_id: 'new-qte-uuid', outcome: null, lines: [] }] }
   });
@@ -937,7 +1026,7 @@ testAsync('migrateQteToSupabase — blocked by a duplicate Quote num (exact matc
   assert(!insertCall, 'migration blocked before any insert');
 });
 
-testAsync('migrateQteToSupabase — no precondition blocks migration when neither Supplier, Contact, nor Order Request has ever been Cloud-migrated', async function() {
+testAsync('migrateQteToSupabase — migration succeeds when neither Supplier, Contact, nor Order Request has ever been Cloud-migrated (no precondition exists for Quote)', async function() {
   resetDB();
   ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', client: 'A', status: 'Draft', lines: [] });
   ctx.localStorage.setItem(ctx.K.qt, JSON.stringify(ctx.DB.qt));
@@ -971,6 +1060,33 @@ testAsync('migrateSuppliersBuyersToSupabase — now also rewrites Quote.lines[].
   await ctx.migrateSuppliersBuyersToSupabase();
 
   assertEqual(ctx.DB.qt[0].lines[0].supId, 'new-sup-uuid', 'Quote lines[].supId remapped locally');
+  var qteUpdateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
+  assert(qteUpdateCall, 'the rewritten Quote was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+});
+
+testAsync('migrateLineItemsToSupabase — now also rewrites Quote.lines[].lid when non-dead, and pushes to Supabase if Quote has already migrated (spec-gate round-1 B6 finding — AC-5 names this retrofit but no test previously exercised it)', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', supId: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, cur: 'USD', notes: '', priceHistory: [], invoiceRefs: [] });
+  ctx.DB.qt.push({ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [{ rid: 'r1', lid: 'l1' }] });
+  ctx.localStorage.setItem(ctx.K.l, JSON.stringify(ctx.DB.li));
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    line_items: { insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid' }, row); } },
+    quotes: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
+      selectData: [{ id: 'qte-uuid-1', num: 'QTE-0001', status: 'Draft', lines: [{ rid: 'r1', lid: 'new-li-uuid' }] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-li-restore-btn');
+
+  await ctx.migrateLineItemsToSupabase();
+
+  assertEqual(ctx.DB.qt[0].lines[0].lid, 'new-li-uuid', 'Quote lines[].lid remapped locally (field is dead in real data today, but the sweep itself is exercised end-to-end)');
   var qteUpdateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
   assert(qteUpdateCall, 'the rewritten Quote was pushed to Supabase, not just fixed locally');
   ctx.showBlockingBackupModal = origShowBackup;
@@ -1035,8 +1151,14 @@ testAsync('migrateOrdToSupabase — pushes Quote to Supabase for its lines[].sou
 testAsync('saveQte — Cloud Data configured and Quote migrated: create calls insert with no client-generated id and resets qt.id to the real one before the Contact/Order-Request conversion side effects run; update calls update().eq(); local-only behavior unchanged when not migrated', async function() {
   resetDB();
   ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
-  ['qf-mode','qf-mkp','qf-cur','qf-st','qf-nt','qf-num','qf-client','qf-dt','qf-valid','qf-origOv','qf-destOv','qf-admOv','qf-approved-by','qf-approved-note'].forEach(function(id){ mockEl(id); });
-  ctx.cQL = [];
+  // spec-gate round-1 B4 finding: saveQte()'s first line is `if (!vQte()) return;`, which
+  // requires a non-empty client/date and at least one real line — an empty ctx.cQL plus
+  // bare mockEl() (leaving qf-client/qf-dt at '') never reaches any code under test here.
+  // saveQteSetup() (tests/run.js:751) is this file's own established helper for exactly
+  // this: it mocks every qf-*/ql-*-<rid> field a real save needs.
+  ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Test item', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0 }];
+  saveQteSetup('r1', 10, 0, 15, '');
+  ['qf-origOv','qf-destOv','qf-admOv','qf-approved-by','qf-approved-note'].forEach(function(id){ mockEl(id); });
   var sb = mockSb({ quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); }, selectData: [] } });
   ctx._sb = sb;
   ctx.cConvertOrdId = null;
@@ -1047,8 +1169,9 @@ testAsync('saveQte — Cloud Data configured and Quote migrated: create calls in
 
   resetDB();
   ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
-  ['qf-mode','qf-mkp','qf-cur','qf-st','qf-nt','qf-num','qf-client','qf-dt','qf-valid','qf-origOv','qf-destOv','qf-admOv','qf-approved-by','qf-approved-note'].forEach(function(id){ mockEl(id); });
-  ctx.cQL = [];
+  ctx.cQL = [{ rid: 'r2', supId: '', desc: 'Test item', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0 }];
+  saveQteSetup('r2', 10, 0, 15, '');
+  ['qf-origOv','qf-destOv','qf-admOv','qf-approved-by','qf-approved-note'].forEach(function(id){ mockEl(id); });
   ctx._sb = null;
   await ctx.saveQte();
   assertEqual(ctx.DB.qt.length, 1, 'local-only path still pushes directly to DB.qt, unchanged');
@@ -1058,8 +1181,14 @@ testAsync('saveQte — Cloud Data configured and Quote migrated: create calls in
 testAsync('saveQte — Cloud Data configured, cConvertOrdId set: activeQuoteId written to Order Request is the real Supabase-assigned Quote id, not the client-generated placeholder', async function() {
   resetDB();
   ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
-  ['qf-mode','qf-mkp','qf-cur','qf-st','qf-nt','qf-num','qf-client','qf-dt','qf-valid','qf-origOv','qf-destOv','qf-admOv','qf-approved-by','qf-approved-note'].forEach(function(id){ mockEl(id); });
-  ctx.cQL = [];
+  // spec-gate round-1 B4/B1-adjacent finding: persistOrdChange()'s own cloud branch is
+  // gated on st_ord_cloud_migration_ts too — without setting it here, convOrd's update
+  // silently takes the LOCAL branch instead and no order_requests update call is ever
+  // made, so the very thing this test claims to verify would never be exercised.
+  ctx.localStorage.setItem('st_ord_cloud_migration_ts', new Date().toISOString());
+  ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Test item', qty: 1, uom: 'pcs', cost: 10, cbm: 1, dg: false, dutyPct: 0 }];
+  saveQteSetup('r1', 10, 0, 15, '');
+  ['qf-origOv','qf-destOv','qf-admOv','qf-approved-by','qf-approved-note'].forEach(function(id){ mockEl(id); });
   ctx.DB.ord.push({ id: 'ord1', num: 'ORD-0001', contactId: null, stage: 'Qualifying', actions: [], activeQuoteId: '', outcome: null, lines: [] });
   ctx.cConvertOrdId = 'ord1';
   var sb = mockSb({
@@ -1072,11 +1201,25 @@ testAsync('saveQte — Cloud Data configured, cConvertOrdId set: activeQuoteId w
   assert(ordUpdateCall, 'Order Request pushed');
   assertEqual(ordUpdateCall.row.active_quote_id, 'new-qte-uuid', 'the real Supabase-assigned Quote id was written, not the client-generated uid() placeholder');
   ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_ord_cloud_migration_ts');
 });
 
 testAsync('delQte — Cloud Data configured and Quote migrated: soft-delete via update({deleted_at}); local-only behavior unchanged when not migrated; Contact-side reversion logic still runs after either branch', async function() {
   resetDB();
+  // spec-gate round-1 B5 finding: delQte()'s first line is `if (!confirm(...)) return;` —
+  // every confirm-gated test in this file (e.g. tests/run.js:3817, :7697) sets ctx.confirm
+  // to a true-returning stub first; without it here, ctx.confirm is left false by whatever
+  // earlier testAsync test last touched it, and delQte() returns before doing anything.
+  ctx.confirm = function(){ return true; };
   ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  // Contact must NOT be Cloud-migrated for this test's own intent (verifying the LOCAL
+  // Contact-reversion branch) — the pre-existing "second-device" self-marking test for
+  // refreshConFromSupabase() (tests/run.js:7630-7642, Line Item & Contact section) leaves
+  // st_con_cloud_migration_ts set with no cleanup of its own, so this cannot be assumed
+  // unset without explicitly clearing it here first — confirmed empirically: without this
+  // line, delQte()'s Contact-reversion branch wrongly takes the Cloud path against an
+  // unconfigured contacts table, calls the real refreshConFromSupabase(), and wipes DB.con.
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
   ctx.DB.con.push({ id: 'c1', name: 'Bob', email: 'b@b.com', status: 'converted', source: 'manual', gdprBasis: 'legitimate_interests', createdAt: '', lastContactedAt: '', notes: '', phone: '', company: '', enquiries: [] });
   ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', sourceContactId: 'c1', status: 'Draft', lines: [] });
   var sb = mockSb({ quotes: { selectData: [] } });
@@ -1093,6 +1236,7 @@ testAsync('delQte — Cloud Data configured and Quote migrated: soft-delete via 
   ctx._sb = null;
   await ctx.delQte('q1');
   assertEqual(ctx.DB.qt.length, 0, 'local-only path still filters DB.qt directly, unchanged');
+  ctx.confirm = function(){ return false; }; // restore this file's own default
 });
 
 testAsync('qteToPoConvert — Cloud Data configured and Quote migrated: linkedPOIds update pushed via persistQteChange; local-only behavior unchanged when not migrated; PO creation itself always stays local regardless', async function() {
@@ -1142,20 +1286,29 @@ test('restoreQteMigrationArchive — restores K.qt and clears SS.supabaseUrl/sup
   ctx.location.reload = origReload; ctx.setTimeout = origSetTimeout; ctx.confirm = function(){ return false; };
 });
 
-test('pullAll — drops \'qt\' from the batched pull_all request once its own Cloud Data migration marker is set, independently of every other entity\'s exclusion', function() {
+testAsync('pullAll — drops \'qt\' from the batched pull_all request once its own Cloud Data migration marker is set, independently of every other entity\'s exclusion', async function() {
+  // spec-gate round-1 A3 advisory: converted to this file's own established idiom — the
+  // precedent li/co exclusion test (tests/run.js:7608) uses testAsync + await ctx.pullAll()
+  // + the existing _fetchCallLog mock-fetch harness, rather than a hand-rolled sPost
+  // override fired without awaiting pullAll() itself. More robust against any future
+  // reordering of pullAll()'s internals.
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  ctx._sb = mockSb({});
+
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assert(_fetchCallLog[0].entities.indexOf('qt') >= 0, 'qt still requested — its own migration marker is not set yet');
+
   ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
-  ctx._sb = { from: function(){ return { select: function(){ return this; }, is: function(){ return Promise.resolve({ data: [], error: null }); } }; } };
-  var capturedEntities = null;
-  var origSPost = ctx.sPost;
-  ctx.sPost = function(payload){ capturedEntities = payload.entities; return Promise.resolve({ status: 'ok', results: {} }); };
-  ctx.SS.url = 'https://mock.example/exec';
-  ctx.pullAll().catch(function(){});
-  ctx.sPost = origSPost;
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assertEqual(_fetchCallLog[0].entities.indexOf('qt'), -1, 'qt excluded from the batched request once its own migration marker is set');
+
   ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
   ctx.SS.url = '';
   ctx._sb = null;
-  assert(capturedEntities, 'sPost was called with an entity list');
-  assert(capturedEntities.indexOf('qt') === -1, 'qt excluded from the batched pull once its own marker is set');
 });
 
 testAsync('SPEC-CLOUD-004 test-hygiene cleanup — reset _sb and every Quote Cloud Data migration marker this block may have left set, so later unrelated tests are not affected', async function() {
@@ -1166,3 +1319,23 @@ testAsync('SPEC-CLOUD-004 test-hygiene cleanup — reset _sb and every Quote Clo
 ```
 
 This SPEC's own tests handle their own cleanup with the final test above — do not merge it into the existing `SPEC-CLOUD-003 test-hygiene cleanup` test, which stays scoped to its own five `st_ord_*`/entity keys, mirroring how each prior SPEC's block ends with its own dedicated cleanup test rather than extending an earlier one.
+
+---
+
+## 4. Spec-gate round-1 review-resolution log
+
+Round 1 (dispatched against this SPEC's initial draft) came back **CONDITIONAL PASS** with the following findings, each verified by actually applying every diff to a scratch copy of the real codebase and running the full test suite (not by static reading alone):
+
+- **B1** — `refreshQteFromSupabase()` wired unconditionally into `initCloudDataLayer()` breaks a pre-existing CLOUD-003 test and, downstream, a second one. Fixed: retrofitted the pre-existing test to also stub `refreshQteFromSupabase()` (§3.0, new). Verified: reverting this retrofit alone (with every other fix applied) reproduces the exact downstream failure the reviewer found; re-applying it fixes both.
+- **B2** — `refreshQteFromSupabase()`'s `originCharges`/`destCharges`/`fpmAdmin` mapping used `!= null ? val : undefined` inside an object literal, which does not omit the key. Fixed: build the object without the three keys, add them conditionally (§2.1). Verified: reverting this fix alone reproduces the test's own failure.
+- **B3** — the primary `migrateQteToSupabase()` test's `quotes` mock had no `selectData`, so the function's own trailing `refreshQteFromSupabase()` call wiped `DB.qt` before assertions ran. Fixed: added a `selectData` row matching the inserted/remapped state (§3.1).
+- **B4** — both new `saveQte()` cloud-branch tests never satisfied `vQte()` (empty `cQL`, unfilled `qf-client`/`qf-dt`), so `saveQte()` returned before reaching any code under test. Fixed: both tests now use this file's own `saveQteSetup()` helper plus a real `cQL` line (§3.1).
+- **B5** — both `delQte()` scenarios never set `ctx.confirm`, so `delQte()` returned before doing anything. Fixed: added `ctx.confirm = function(){ return true; };` (§3.1). While fixing this, found and fixed a second, related issue in the same test: a pre-existing, unrelated CLOUD-002/003-era test leaves `st_con_cloud_migration_ts` set with no cleanup of its own, which would otherwise make this test's Contact-reversion assertion flaky depending on file-wide test order — this test now explicitly clears that marker itself before running, rather than assuming it unset.
+- **B6** — `migrateLineItemsToSupabase()`'s Quote retrofit (AC-5) had a code diff (§2.10) but no test. Fixed: added a dedicated test exercising the `lines[].lid` sweep end-to-end (§3.1).
+- **B7** — the SPEC gave two directly contradictory instructions for where to insert the new test block and whether to merge or duplicate the cleanup test. Fixed: corrected to match this file's own real precedent (`SPEC-CLOUD-003`'s block was itself appended *after* `SPEC-CLOUD-002`'s cleanup test, not inserted before it) — restructured as §3.0 (a required retrofit of one pre-existing test) followed by §3.1 (the new block, appended after `SPEC-CLOUD-003 test-hygiene cleanup`, ending with its own dedicated cleanup test).
+- **A1/A2** (citation precision) — fixed: corrected `rCfg()`'s citation to its real current lines and added the missing line-anchor for `cleanupExpiredMigrationArchive()`'s new block (§2.8).
+- **A3** (pullAll test idiom) — fixed: converted to this file's own established `testAsync` + `await` + `_fetchCallLog` pattern (§3.1), matching the precedent li/co exclusion test instead of a hand-rolled, unawaited `sPost` override.
+- **A4** (dangling `ctx._sb`) — fixed: the wiring test now resets `ctx._sb = null` at its end (§3.1).
+- **A5** (confusing test title) — fixed: retitled to state the actual (positive) outcome directly (§3.1).
+- **A6** (`user-guide.md` diff not given) — fixed: exact before/after text added (§2.15).
+- **A7** (redundant render in `saveQte`'s cloud branch) — acknowledged, not changed: genuinely harmless, and avoiding it would require threading a skip-render flag through `refreshQteFromSupabase()` for a purely cosmetic optimization (§2.3).
