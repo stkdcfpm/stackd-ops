@@ -1,6 +1,6 @@
 # SPEC-CLOUD-004 — Quote Cloud Data migration
 
-**Status:** v1 — drafted against `docs/REQ-CLOUD-004-v1.md` (requirements-gate PASS, 3 rounds + 1 pre-SPEC self-caught clarification). Spec-gate round 1: CONDITIONAL PASS (7 blocking, 7 advisory) — every diff in §1-§2 was applied to a scratch copy of `index.html`/`tests/run.js` and the full suite run to verify; all 7 blocking findings and all 7 advisory findings fixed in place below (see §4). Verified: 752/752 tests pass (734 baseline + 18 new); the B1 and B2 fixes were each independently confirmed load-bearing by reverting them and observing the predicted failure reappear. Ready for spec-gate round 2.
+**Status:** v1 — drafted against `docs/REQ-CLOUD-004-v1.md` (requirements-gate PASS, 3 rounds + 1 pre-SPEC self-caught clarification). Spec-gate round 1: CONDITIONAL PASS (7 blocking, 7 advisory), all fixed (see §4). Spec-gate round 2 (independent re-verification): **PASS** (0 blocking, 2 advisory — one a citation slip in round 1's own fix, fixed; one a false-positive checked against the document text and not applied — see §5). Verified independently in both rounds: 752/752 tests pass (734 baseline + 18 new) against every diff applied to a scratch copy of the real codebase; the B1 and B2 fixes were independently re-confirmed load-bearing in round 2 by reverting each and observing the exact predicted failure reappear. Ready for implementation.
 
 ---
 
@@ -524,7 +524,7 @@ function restoreQteMigrationArchive() {
   }
 ```
 
-`rCfg()` (`index.html:10561-10564`, the four existing `cfg-sb-*-restore-btn` visibility lines) — add a fifth restore-button visibility line, immediately after the Order Request one (`index.html:10564`), before the `cfg-lang` line that follows it:
+`rCfg()` (`index.html:10384-10387`, the four existing `cfg-sb-*-restore-btn` visibility lines) — add a fifth restore-button visibility line, immediately after the Order Request one (`index.html:10387`), before the `cfg-lang` line that follows it:
 
 ```js
   if(G('cfg-sb-qt-restore-btn')) G('cfg-sb-qt-restore-btn').style.display = localStorage.getItem('st_qt_cloud_migration_ts') ? '' : 'none';
@@ -1339,3 +1339,12 @@ Round 1 (dispatched against this SPEC's initial draft) came back **CONDITIONAL P
 - **A5** (confusing test title) — fixed: retitled to state the actual (positive) outcome directly (§3.1).
 - **A6** (`user-guide.md` diff not given) — fixed: exact before/after text added (§2.15).
 - **A7** (redundant render in `saveQte`'s cloud branch) — acknowledged, not changed: genuinely harmless, and avoiding it would require threading a skip-render flag through `refreshQteFromSupabase()` for a purely cosmetic optimization (§2.3).
+
+## 5. Spec-gate round-2 review-resolution log
+
+Round 2 (an independent re-verification, not a fresh read) applied every diff in §1/§2/§3.0/§3.1 to a scratch copy of the real codebase again, confirmed 752/752 with zero pre-existing-test regressions, and independently re-reverted the B1 and B2 fixes one at a time to re-confirm their load-bearing-ness (rather than trusting round 1's own claim) — both reproduced the exact predicted single failure. Verdict: **PASS**, with two advisory findings:
+
+- **New A1** — the round-1 fix to §2.8's `rCfg()` citation was itself wrong: it cited `index.html:10561-10564`, a line range that was only correct measured against a scratch copy already carrying this SPEC's own earlier insertions (which push everything after them down by ~180 lines) — not against the real, current, unmodified `index.html`, where the four existing `cfg-sb-*-restore-btn` lines are actually at `10384-10387`. Fixed: corrected to `10384-10387` in §2.8.
+- **New A2** — flagged the `restoreQteMigrationArchive` test in §3.1 as using a non-`async` `testAsync(...)` callback, inconsistent with every other `testAsync` in the file. Checked directly against the SPEC text: this test is in fact declared with the plain, synchronous `test(...)` — not `testAsync(...)` — exactly matching the precedent `restoreOrdMigrationArchive`/`restoreLIMigrationArchive`/`restoreConMigrationArchive` tests (all three also use `test(...)`, since the functions under test are themselves synchronous). No change made — the finding does not hold up against the actual document text.
+
+Ready for implementation.
