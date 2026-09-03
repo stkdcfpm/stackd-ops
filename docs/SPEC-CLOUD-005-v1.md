@@ -515,7 +515,7 @@ function showPoDupConflictModal(dupes) {
 
 Case-sensitive exact match, mirroring `findDuplicateQuoteNums()` — `savePO()`/`vPO()` apply no case-normalization to `num` anywhere (`REQ-CLOUD-005c`).
 
-New modal HTML, inserted immediately after the existing `ov-qt-dup` modal closes (`index.html:2703`):
+New modal HTML, inserted immediately after the existing `ov-qt-dup` modal closes (`index.html:2707`):
 
 ```html
 <div class="ov" id="ov-po-dup" onclick="if(event.target===this)closeM('ov-po-dup')">
@@ -1083,7 +1083,7 @@ New:
 
 Both sites need `savePayment()`/`saveInv()`'s surrounding function to be `async` for the new `await persistPOChange(...)` calls — `saveInv()` already is; `savePayment()`'s own signature change is shown explicitly above (`REQ-CLOUD-005` AC-13). No test-suite call site awaits `savePayment()`'s return value today (checked against every existing call site — see §3.0/§3.1's own test retrofits), so the signature change does not, by itself, require any pre-existing test to add an `await` it didn't already have; the async-conversion safety reasoning is identical to `autoPos()`'s in §2.5.
 
-**Ordering note (spec-gate advisory A1):** `savePayment()`'s only production call site, `addPaymentFromForm()` (`index.html:13146-13175`), calls it fire-and-forget (`savePayment(pm);`, no `await`) and then immediately calls `renderPaymentsTab(invId)` synchronously. This stays correct after `savePayment()` becomes `async`: every `DB.po`/`DB.inv` mutation in the FPM-recovery block runs synchronously, before the function's first real `await`, so `renderPaymentsTab()` always sees the post-recovery in-memory state regardless of how long the trailing Supabase push takes. The only effect of not awaiting is that the Cloud Data push (and the trailing `refreshPOFromSupabase()`) completes in the background after `addPaymentFromForm()` has already returned — matching how every other fire-and-forget `syncEnt()`/`persist*Change()` call in the app already behaves, and not something this SPEC changes.
+**Ordering note (spec-gate advisory A1):** `savePayment()`'s only production call site, `addPaymentFromForm()` (`index.html:12812-12844`), calls it fire-and-forget (`savePayment(pm);`, no `await`) and then immediately calls `renderPaymentsTab(invId)` synchronously. This stays correct after `savePayment()` becomes `async`: every `DB.po`/`DB.inv` mutation in the FPM-recovery block runs synchronously, before the function's first real `await`, so `renderPaymentsTab()` always sees the post-recovery in-memory state regardless of how long the trailing Supabase push takes. The only effect of not awaiting is that the Cloud Data push (and the trailing `refreshPOFromSupabase()`) completes in the background after `addPaymentFromForm()` has already returned — matching how every other fire-and-forget `syncEnt()`/`persist*Change()` call in the app already behaves, and not something this SPEC changes.
 
 ### 2.15 Settings UI (`index.html:806-810`, inside the Cloud Data card group)
 
@@ -1203,7 +1203,64 @@ testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirro
 });
 ```
 
-The companion retrofit of `tests/run.js:7752` (`'initCloudDataLayer — now also calls refreshOrdFromSupabase()...'`) is identical in shape: add `purchase_orders: { selectData: [] }` to its `_sb` mock config, stub `ctx.refreshPOFromSupabase` alongside its existing stubs, restore it afterward.
+The companion retrofit of `tests/run.js:7752-7772` (`'initCloudDataLayer — now also calls refreshOrdFromSupabase()...'`) is identical in shape — shown here as an explicit diff, not left to inference from the sibling retrofit above, per spec-gate round-3's rigor note.
+
+Current:
+
+```js
+testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-gate round-1 B2 finding: previously wired for Supplier/Buyer/Line Item/Contact but not Order Request)', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){}; // keep the mock _sb below in place instead of overwriting it with a real client
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var called = false;
+  var origRefreshOrd = ctx.refreshOrdFromSupabase;
+  ctx.refreshOrdFromSupabase = function(){ called = true; return Promise.resolve(); };
+  // SPEC-CLOUD-004 spec-gate round-1 B1 finding: initCloudDataLayer() now also calls
+  // refreshQteFromSupabase() after refreshOrdFromSupabase() — stub it too, or the real
+  // function runs unmocked against DB.qt (empty at this point) and permanently sets
+  // st_qt_cloud_migration_ts, corrupting every later test that touches Quote.
+  var origRefreshQte = ctx.refreshQteFromSupabase;
+  ctx.refreshQteFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+});
+```
+
+New:
+
+```js
+testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-gate round-1 B2 finding: previously wired for Supplier/Buyer/Line Item/Contact but not Order Request)', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){}; // keep the mock _sb below in place instead of overwriting it with a real client
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var called = false;
+  var origRefreshOrd = ctx.refreshOrdFromSupabase;
+  ctx.refreshOrdFromSupabase = function(){ called = true; return Promise.resolve(); };
+  // SPEC-CLOUD-004 spec-gate round-1 B1 finding: initCloudDataLayer() now also calls
+  // refreshQteFromSupabase() after refreshOrdFromSupabase() — stub it too, or the real
+  // function runs unmocked against DB.qt (empty at this point) and permanently sets
+  // st_qt_cloud_migration_ts, corrupting every later test that touches Quote.
+  var origRefreshQte = ctx.refreshQteFromSupabase;
+  ctx.refreshQteFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-005 spec-gate round-1 B2 finding: initCloudDataLayer() now also calls
+  // refreshPOFromSupabase() after refreshQteFromSupabase() — stub it too, for the same
+  // self-marking-contamination reason as refreshQteFromSupabase() above.
+  var origRefreshPO = ctx.refreshPOFromSupabase;
+  ctx.refreshPOFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+});
+```
 
 **Considered and not taken (spec-gate advisory A2):** both retrofitted tests stub only the refresh function each SPEC in this series actually added at the time (`refreshOrdFromSupabase`/`refreshQteFromSupabase`, now `refreshPOFromSupabase`), not every refresh function that exists. Defensively stubbing `refreshLIFromSupabase()`/`refreshConFromSupabase()` here too would guard against a *future* SPEC repeating this same contamination class one call further down `initCloudDataLayer()`'s sequence — but that guard belongs in whichever future SPEC adds the next `await`, exactly as this SPEC added its own guard for `refreshPOFromSupabase()` rather than pre-emptively guarding for entities not yet wired in. Left unchanged to avoid a test asserting behavior no code path yet exercises.
 
