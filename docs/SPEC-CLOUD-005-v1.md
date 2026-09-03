@@ -880,6 +880,37 @@ New:
 
 ### 2.13 `pullAll()` — exclude `'po'` once migrated
 
+This needs **two** changes, not one — a spec-gate round-2 finding (B9 was not actually fixed by the try-block guard alone). `'po'` is requested from the server two different ways: it is hardcoded into the array of entities the single batched `pull_all` request asks for, *and* (only if that batched request fails) `pulled('po')` falls back to a per-entity `sGet('po')` call. The try-block guard below stops the client from ever *merging* pulled `'po'` results locally, but does nothing to stop the client from *requesting* `'po'` in the batched call in the first place — the request payload itself must also exclude it, matching the exact pattern `_simpleEntsForBatch` already uses for `sup`/`li`/`co`/`qt`.
+
+**Change 1 — exclude `'po'` from the batched request's entity list** (`index.html:4475-4480`):
+
+Current:
+
+```js
+  var _simpleEntsForBatch = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+  if (_sb) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'sup'; });
+  if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'li'; });
+  if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'co'; });
+  if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'qt'; });
+  var _allPullKeys = ['inv','cn','po'].concat(_simpleEntsForBatch);
+```
+
+New:
+
+```js
+  var _simpleEntsForBatch = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
+  if (_sb) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'sup'; });
+  if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'li'; });
+  if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'co'; });
+  if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'qt'; });
+  var _allPullKeys = ['inv','cn','po'].concat(_simpleEntsForBatch);
+  if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) _allPullKeys = _allPullKeys.filter(function(e){ return e !== 'po'; });
+```
+
+`'po'` sits in the `['inv','cn','po']` prefix rather than in `_simpleEntsForBatch` itself (unlike `sup`/`li`/`co`/`qt`), so it needs its own filter line applied to `_allPullKeys` after the concat, rather than joining the `_simpleEntsForBatch` filter chain above it.
+
+**Change 2 — keep the existing per-entity guard, as defense-in-depth against the `sGet()` fallback path** (`index.html:4536-4554`):
+
 Current (`index.html:4536-4554`):
 
 ```js
@@ -904,7 +935,7 @@ Current (`index.html:4536-4554`):
   } catch(e) { failed.push('po'); console.warn('[Stackd] pullAll: po failed —', e.message); }
 ```
 
-New — one guard added, matching the shape of this block's own existing per-entity `try` structure rather than a `simpleEnts`-style array filter:
+New — one guard added around the existing `try` block, matching the shape of this block's own per-entity structure rather than a `simpleEnts`-style array filter (this is in addition to, not instead of, Change 1's array filter above — both are required):
 
 ```js
   // ── Purchase orders (field-mapping reversed, business-key merge) ─
@@ -940,7 +971,7 @@ No change to `syncAll()`/`pushAll()` (`CLOUD-GAP-002`, pre-existing, out of scop
 
 ### 2.14 The two FPM-funded-deposit auto-recovery sites — route through `persistPOChange()`
 
-**Site 1 — `saveInv()`** (`index.html:6923-6929`):
+**Site 1 — `saveInv()`** (`index.html:6922-6929`):
 
 Current:
 
@@ -990,7 +1021,23 @@ New:
     }
 ```
 
-**Site 2 — `savePayment()`** (`index.html:12708-12722`):
+**Site 2 — `savePayment()`** (`index.html:12710-12722`):
+
+`savePayment()`'s own enclosing function signature must change first — it is a plain synchronous function today, and `await persistPOChange(...)`/`await refreshPOFromSupabase()` below are syntax errors inside a non-`async` function (a literal application of the diff below without this signature change first collapses the entire single-`<script>`-block app, and with it the whole test suite, since the file fails to parse past this point):
+
+Current (`index.html:12680`):
+
+```js
+function savePayment(payment) {
+```
+
+New:
+
+```js
+async function savePayment(payment) {
+```
+
+With that signature change in place, the FPM-recovery block itself changes as follows.
 
 Current:
 
@@ -1034,7 +1081,7 @@ New:
       }
 ```
 
-Both sites need `savePayment()`/`saveInv()`'s surrounding function to already be (or become) `async` for the new `await persistPOChange(...)` calls — `saveInv()` is already `async`; confirm `savePayment()`'s own async status and every direct test-suite call site at implementation time (`REQ-CLOUD-005` AC-13).
+Both sites need `savePayment()`/`saveInv()`'s surrounding function to be `async` for the new `await persistPOChange(...)` calls — `saveInv()` already is; `savePayment()`'s own signature change is shown explicitly above (`REQ-CLOUD-005` AC-13). No test-suite call site awaits `savePayment()`'s return value today (checked against every existing call site — see §3.0/§3.1's own test retrofits), so the signature change does not, by itself, require any pre-existing test to add an `await` it didn't already have; the async-conversion safety reasoning is identical to `autoPos()`'s in §2.5.
 
 **Ordering note (spec-gate advisory A1):** `savePayment()`'s only production call site, `addPaymentFromForm()` (`index.html:13146-13175`), calls it fire-and-forget (`savePayment(pm);`, no `await`) and then immediately calls `renderPaymentsTab(invId)` synchronously. This stays correct after `savePayment()` becomes `async`: every `DB.po`/`DB.inv` mutation in the FPM-recovery block runs synchronously, before the function's first real `await`, so `renderPaymentsTab()` always sees the post-recovery in-memory state regardless of how long the trailing Supabase push takes. The only effect of not awaiting is that the Cloud Data push (and the trailing `refreshPOFromSupabase()`) completes in the background after `addPaymentFromForm()` has already returned — matching how every other fire-and-forget `syncEnt()`/`persist*Change()` call in the app already behaves, and not something this SPEC changes.
 
@@ -1067,7 +1114,31 @@ New:
 'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004/005): Settings → Cloud Data lets an operator connect a shared Supabase database. Each of Supplier/Buyer, Line Item, Contact, Order Request, Quote, and Purchase Order migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Every deal-pipeline and master-data entity is now Cloud-Data-eligible; only Invoice, Credit Note, Shipment, and the Payment ledgers remain local-only, regardless of what has migrated. Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them; Purchase Order requires Suppliers to have migrated first (every Purchase Order requires a Supplier link). Each entity can migrate independently of the others except where a precondition is stated. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
 ```
 
-`docs/user-guide.md`'s Cloud Data section (rewritten most recently in `REQ-CLOUD-004`) gets the identical update — Purchase Order added to the list of independently-migratable entities, with its Supplier precondition named, and Invoice/Credit Note/Shipment/Payment-ledgers named as the entities remaining non-eligible.
+`docs/user-guide.md`'s Cloud Data section (rewritten most recently in `REQ-CLOUD-004`) gets the equivalent update, at two spots:
+
+Current (`docs/user-guide.md:75`):
+
+```
+## Cloud Data (Supplier & Buyer, Line Item, Contact, Order Request, Quote)
+```
+
+New:
+
+```
+## Cloud Data (Supplier & Buyer, Line Item, Contact, Order Request, Quote, Purchase Order)
+```
+
+Current (`docs/user-guide.md:77`):
+
+```
+By default, all your data lives only in your own browser. **Cloud Data** (Settings → Cloud Data) is an optional feature that connects a shared Supabase database, so a colleague on a different device or browser can see the exact same records as you. It is not a single on/off switch — Supplier & Buyer, Line Item, Contact, Order Request, and Quote each migrate independently, on their own schedule, via their own "Migrate ... to Cloud" button in the same settings area. Purchase Order is not yet Cloud-Data-eligible and always stays local, along with every other entity (Invoices, Shipments, Payments, etc.) regardless of what has migrated.
+```
+
+New:
+
+```
+By default, all your data lives only in your own browser. **Cloud Data** (Settings → Cloud Data) is an optional feature that connects a shared Supabase database, so a colleague on a different device or browser can see the exact same records as you. It is not a single on/off switch — Supplier & Buyer, Line Item, Contact, Order Request, Quote, and Purchase Order each migrate independently, on their own schedule, via their own "Migrate ... to Cloud" button in the same settings area (Purchase Order requires Suppliers to have migrated first, since every Purchase Order requires a Supplier link). Invoices, Shipments, Payments, and Credit Notes are not yet Cloud-Data-eligible and always stay local, regardless of what has migrated.
+```
 
 ### 2.17 No changes needed
 
@@ -1135,6 +1206,34 @@ testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirro
 The companion retrofit of `tests/run.js:7752` (`'initCloudDataLayer — now also calls refreshOrdFromSupabase()...'`) is identical in shape: add `purchase_orders: { selectData: [] }` to its `_sb` mock config, stub `ctx.refreshPOFromSupabase` alongside its existing stubs, restore it afterward.
 
 **Considered and not taken (spec-gate advisory A2):** both retrofitted tests stub only the refresh function each SPEC in this series actually added at the time (`refreshOrdFromSupabase`/`refreshQteFromSupabase`, now `refreshPOFromSupabase`), not every refresh function that exists. Defensively stubbing `refreshLIFromSupabase()`/`refreshConFromSupabase()` here too would guard against a *future* SPEC repeating this same contamination class one call further down `initCloudDataLayer()`'s sequence — but that guard belongs in whichever future SPEC adds the next `await`, exactly as this SPEC added its own guard for `refreshPOFromSupabase()` rather than pre-emptively guarding for entities not yet wired in. Left unchanged to avoid a test asserting behavior no code path yet exercises.
+
+### 3.0b A second required companion retrofit — a pre-existing test's title/assertion is now factually wrong (spec-gate round-2 B10 finding)
+
+`tests/run.js:8625-8647` (`'qteToPoConvert — Cloud Data configured and Quote migrated: linkedPOIds update pushed via persistQteChange; local-only behavior unchanged when not migrated; PO creation itself always stays local regardless'`) predates this SPEC. It never sets `st_po_cloud_migration_ts`, so it legitimately exercises only the Quote-migrated-but-Purchase-Order-not-migrated case, and it still passes unmodified after §2.6's changes — but its title and its assertion message at line 8634 (`'PO still created locally — Purchase Order is not Cloud-Data-eligible'`) assert a blanket claim ("always... regardless", "is not Cloud-Data-eligible") that §2.6 makes false: Purchase Order creation via `qteToPoConvert()` now has a real Cloud Data branch, exercised by §3.1's own `'qteToPoConvert — Cloud Data configured and Purchase Order migrated...'` test. Retitle and correct the message in place — do not duplicate the test or change its assertions/setup, since the scenario it actually exercises (PO not migrated) is unchanged and still correctly local-only.
+
+Current (`tests/run.js:8625`):
+
+```js
+testAsync('qteToPoConvert — Cloud Data configured and Quote migrated: linkedPOIds update pushed via persistQteChange; local-only behavior unchanged when not migrated; PO creation itself always stays local regardless', async function() {
+```
+
+Current (`tests/run.js:8634`):
+
+```js
+  assertEqual(ctx.DB.po.length, 1, 'PO still created locally — Purchase Order is not Cloud-Data-eligible');
+```
+
+New (`tests/run.js:8625`):
+
+```js
+testAsync('qteToPoConvert — Cloud Data configured and Quote migrated (Purchase Order itself NOT migrated): linkedPOIds update pushed via persistQteChange; PO creation itself stays local since Purchase Order has not migrated (SPEC-CLOUD-005 retitled — Purchase Order is now Cloud-eligible in its own right; see the dedicated qteToPoConvert tests in the SPEC-CLOUD-005 block for the migrated-PO case)', async function() {
+```
+
+New (`tests/run.js:8634`):
+
+```js
+  assertEqual(ctx.DB.po.length, 1, 'PO still created locally — Purchase Order itself has not migrated in this scenario');
+```
 
 ### 3.1 New test block
 
