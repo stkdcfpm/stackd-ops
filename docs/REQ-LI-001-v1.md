@@ -105,7 +105,7 @@ At `index.html:8498` (`prevInvDoc()`) and `8637` (`prevPODoc()`), change `fn(li.
 
 ## 5. Testing approach
 
-Following this codebase's established pattern (`tests/run.js`): add explicit new tests for AC-1 (3-decimal accept, 4-decimal reject, both `lf-c` and `lf-p`) and AC-2 (one regression test per each of the other 11 shared-`RX.currency` fields, including `pf-oth`, confirming each still rejects a 3-decimal value) — the AC-2 tests are the ones that actually prove `RX.currency` itself was left untouched, not just an inspection claim. Add a display-formatting test per AC-3/AC-4 site (5 in AC-3, 5 in AC-4 — corrected per requirements-gate round 2, which found this figure stale at "4 and 4") asserting the exact rendered string for a known 3-decimal cost/price value. Full existing suite must remain green (currently 712/712 per the last shipped REQ).
+Following this codebase's established pattern (`tests/run.js`): add explicit new tests for AC-1 (3-decimal accept, 4-decimal reject, both `lf-c` and `lf-p`) and AC-2 (one regression test per each of the other 11 shared-`RX.currency` fields, including `pf-oth`, confirming each still rejects a 3-decimal value) — the AC-2 tests are the ones that actually prove `RX.currency` itself was left untouched, not just an inspection claim. Add a display-formatting test per AC-3/AC-4 site (5 in AC-3, 5 in AC-4 — corrected per requirements-gate round 2, which found this figure stale at "4 and 4") asserting the exact rendered string for a known 3-decimal cost/price value. Full existing suite must remain green (currently 775/775 as of `main`@`6935caf`, checked at SPEC time — the 712/712 figure in an earlier draft was stale).
 
 ## 6. Gate process
 
