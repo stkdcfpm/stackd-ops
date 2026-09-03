@@ -10952,6 +10952,9 @@ test('AC-5: 3-decimal cost/price produces a materially different margin than 2-d
   mockEl('lf-c').value = '0.13'; mockEl('lf-p').value = '0.15'; mockEl('lf-cur').value = 'USD'; // 0.125 rounded to 2dp
   ctx.liMgn();
   const roundedMargin = mockEl('lmp').textContent;
+  mockEl('lf-c').value = ''; mockEl('lf-p').value = ''; mockEl('lf-cur').value = ''; // mockElements is module-level
+    // and never reset between tests — restore to blank so a later-running testAsync() test that
+    // assumes these fields start empty isn't broken by this test's leftover values (build-gate finding)
 
   assertEqual(preciseMargin, '16.7%', 'margin computed from full 3-decimal cost');
   assertEqual(roundedMargin, '13.3%', 'margin computed from 2-decimal-rounded cost differs materially');
@@ -10962,6 +10965,19 @@ test('AC-6: lf-c/lf-p step attribute is 0.001', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
   assertContains(html, 'id="lf-c" placeholder="0.00" step="0.001"', 'lf-c step is 0.001');
   assertContains(html, 'id="lf-p" placeholder="0.00" step="0.001"', 'lf-p step is 0.001');
+});
+
+// AC-7 (regression): fmt()'s own call-count is unchanged from SPEC's stated
+// baseline — a direct guard against a future edit silently converting one of
+// fmt()'s other 87 call sites to fmtN() (or vice versa) without updating §3's
+// "other 87 call sites" claim (promised by SPEC-LI-001-v1 §4, added per
+// build-gate review finding).
+test('AC-7: fmt() call-count unchanged (87 other call sites + 1 definition); fmtN() has exactly 5 call sites + 1 definition', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const fmtCount  = (html.match(/fmt\(/g)  || []).length;
+  const fmtNCount = (html.match(/fmtN\(/g) || []).length;
+  assertEqual(fmtCount, 88, 'fmt( occurs 88 times total (87 call sites + 1 definition)');
+  assertEqual(fmtNCount, 6, 'fmtN( occurs 6 times total (5 call sites + 1 definition)');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────

@@ -241,9 +241,9 @@ Mirrors REQ §5's test plan exactly:
 - **AC-4** (5 tests, one per site): `fn(...,3)`'s exact rendered string at each of the 5 sites in §2.4-2.8 for a known 3-decimal value.
 - **AC-5** (1 test): a 3-decimal cost/price pair fed through `liMgn()` produces a margin percentage that differs measurably from the same pair rounded to 2 decimals first — proving the added precision actually improves margin accuracy, not just display.
 - **AC-6** (1 test, HTML-level): `lf-c`/`lf-p`'s `step` attribute reads `"0.001"`.
-- **AC-7** (regression, folded into AC-2's 11 tests plus a `fmt()` call-count sanity check): no other field's validation/display/step attribute changes.
+- **AC-7** (1 test, plus regression coverage folded into AC-2's 11 tests): a `fmt()`/`fmtN()` call-count assertion (88/6 respectively) directly guards against a future edit silently converting a site between the two without updating this SPEC's site counts; AC-2's 11 tests separately prove no validation field regressed.
 
-Expected new-test count: 4+11+5+5+1+1 = 27. Full suite expected: 775+27 = **802/802**.
+Expected new-test count: 4+11+5+5+1+1+1 = 28 (corrected post-build-gate review — an earlier draft omitted the AC-7 call-count test it had itself promised). Full suite expected: 775+28 = **803/803**.
 
 ---
 
