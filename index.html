@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.75</title>
+<title>Stackd Ops v2.9.76</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.75</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.76</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -813,6 +813,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Independent of Supplier/Contact/Order Request migration — Quote lines stay embedded with the Quote, so no other entity needs to migrate first. Uses the same Supabase connection configured above.</p>
     </div>
     <div class="card">
+      <div class="ct">Cloud Data (Purchase Orders)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="migratePOToSupabase()">Migrate Purchase Orders to Cloud</button>
+        <button class="btn btn-g" id="cfg-sb-po-restore-btn" style="display:none;" onclick="restorePOMigrationArchive()">Restore Pre-Migration Purchase Orders</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Requires Suppliers to already be migrated to Cloud Data above (every Purchase Order requires a Supplier link). Uses the same Supabase connection configured above.</p>
+    </div>
+    <div class="card">
       <div class="ct">Accounting Export — Field Mapping Reference</div>
       <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Read-only reference. Gaps indicate data not available in Stackd that the platform expects.</p>
       <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Xero Invoice Import</div>
@@ -1302,9 +1310,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.75</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.76</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Cloud Data (Supabase) extended to Purchase Order</strong> (REQ/SPEC-CLOUD-005), Phase 2 sub-phase 3 of 3 — the final sub-phase of the cross-platform backend migration's deal-pipeline step (`docs/architecture-data-model-v1.md` §8), completing Phase 2. Purchase Order is the first entity in this series built from three different creation paths (`savePO()`, `autoPos()` — the entity's actual primary/majority path, confirmed against real usage — and `qteToPoConvert()`) rather than one save function, so each gained its own dedicated Cloud Data branch, with `autoPos()`/`qteToPoConvert()` sharing a "one call creates multiple POs, grouped by distinct Supplier" shape. Migration requires a combined precondition never needed together before — Supplier-migration-completion plus a live pre-flight `supId`-resolution check (Line-Item-style), and a genuine pre-flight duplicate-`num` scan (Quote-style, since PO numbers are manually editable) — and its own id is referenced outward by an array field, `Quote.linkedPOIds[]`, requiring per-element `.map()` remapping rather than scalar rewriting. Closes `PO-GAP-007`: `delPO()` now sweeps a deleted PO's id out of every Quote's `linkedPOIds[]` (previously left dangling forever), shipping unconditionally regardless of Purchase Order's own migration state since the underlying bug is delete-time cleanup, not migration-gated. Two FPM-funded-deposit auto-recovery sites outside the normal save path (`saveInv()`, `savePayment()`) now route through a shared `persistPOChange()` helper, mirroring `persistOrdChange()`/`persistQteChange()`. Went through requirements-gate (3 rounds — round 1 found 5 blocking/5 advisory including a completely missing `autoPos()` mutation site despite being the primary creation path; round 2 corrected an over-generalized attribution; round 3 clean) → spec-gate (3 rounds — round 1 <strong>FAIL</strong>, 10 blocking/5 advisory including a literal syntax error, `await` inside a non-async `savePayment()`, that would have broken the entire single-&lt;script&gt;-block app; round 2 <strong>FAIL</strong>, 3 blocking — an independent reviewer applying every diff literally, not trusting the prior round's own "all fixed" claims, found the `pullAll()` exclusion fix, the `savePayment()` async signature, and a stale pre-existing test title were each still unaddressed in the actual document despite being claimed fixed; round 3 clean PASS). Every round's fixes were verified against a scratch copy of the real codebase, re-running the full suite, not just re-reading the SPEC. Implementation then mutation-tested across every safety-critical piece — the outward array sweep, the PO-GAP-007 fix, both multi-PO-creation paths, both FPM-recovery pushes, and the `pullAll()` exclusion — each reverted mutation reproduced exactly its predicted test failure. Phase 2 (the deal pipeline: Order Request, Quote, Purchase Order) is now fully Cloud-Data-eligible; Phase 3 (Invoice, Credit Note, Shipment, Payment ledgers) remains explicitly future, unscoped work. 23 new tests. Tests: 775/775 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.75</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Cloud Data (Supabase) extended to Quote</strong> (REQ/SPEC-CLOUD-004), Phase 2 sub-phase 2 of 3 of the cross-platform backend migration's deal-pipeline step (`docs/architecture-data-model-v1.md` §8) — Purchase Order (REQ-CLOUD-005) remains deferred as the final future sub-phase. A new Settings → Cloud Data card lets an operator migrate Quotes independently of Supplier/Contact/Order Request — Quote Lines (including nested price-history and source-traceability fields) stay embedded as a single JSONB column on the parent row, with no migration precondition and a real pre-flight duplicate-number scan (Quote's number, unlike Order Request's, is manually editable). Quote is the first entity in this migration series whose own id is referenced <em>outward</em> by other entities — `Order Request.activeQuoteId`, `PurchaseOrder.quoteId`, `Invoice.linkedQuoteId` — so its migration sweeps outward into those fields (matched via its own id-map, never via `Quote.linkedPOIds[]`, which can carry a stale entry per the separately-logged `PO-GAP-007`) in addition to the usual four-function inward retrofit (`migrateSuppliersBuyersToSupabase()`/`migrateLineItemsToSupabase()`/`migrateContactsToSupabase()`/`migrateOrdToSupabase()`, each now also pushing a touched Quote to Supabase if Quote has already migrated) — five cross-phase retrofit sites in total, the first time this series has needed a push running in both directions. Went through requirements-gate (3 rounds — round 1 found the outward-sweep field list incomplete and the corresponding retrofit missing entirely, plus a self-contradictory SQL type; round 2 and 3 each closed one remaining advisory) → spec-gate (2 rounds — round 1 found that wiring the new refresh function unconditionally into the app's startup sequence broke a pre-existing Order Request test and, through it, a second one; an optional-field mapping that assigned `undefined` inside an object literal without actually omitting the key; four new/updated tests that never reached the code they claimed to exercise; and a documentation self-contradiction about where the new tests should live — all fixed and verified by applying every diff to a scratch copy and re-running the real suite, twice, independently reverting the two riskiest fixes each time to confirm they were genuinely load-bearing; round 2 clean, PASS). 18 new tests. Tests: 752/752 pass.</li>
@@ -2701,6 +2718,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div id="qt-dup-list" style="font-size:.55rem;"></div>
       <div style="display:flex;justify-content:flex-end;margin-top:14px;">
         <button class="btn btn-g" onclick="closeM('ov-qt-dup')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov-po-dup" onclick="if(event.target===this)closeM('ov-po-dup')">
+  <div class="modal" style="max-width:460px;">
+    <div class="mh"><h2 style="font-size:.75rem;">Migration Blocked — Duplicate Purchase Order Numbers</h2><button class="mx" onclick="closeM('ov-po-dup')">&#215;</button></div>
+    <div class="mb">
+      <div id="po-dup-list" style="font-size:.55rem;"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-g" onclick="closeM('ov-po-dup')">Close</button>
       </div>
     </div>
   </div>
@@ -4478,6 +4507,7 @@ async function pullAll() {
   if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'co'; });
   if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'qt'; });
   var _allPullKeys = ['inv','cn','po'].concat(_simpleEntsForBatch);
+  if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) _allPullKeys = _allPullKeys.filter(function(e){ return e !== 'po'; });
 
   var batched = null;
   try {
@@ -4534,6 +4564,13 @@ async function pullAll() {
   } catch(e) { failed.push('cn'); console.warn('[Stackd] pullAll: cn failed —', e.message); }
 
   // ── Purchase orders (field-mapping reversed, business-key merge) ─
+  // REQ-CLOUD-005j: once migrated, Purchase Order is cloud-authoritative — pulling it
+  // from Sheets here would race the fire-and-forget Supabase refresh, with whichever
+  // resolves last silently overwriting DB.po/localStorage. Excluded entirely once its
+  // own local completion marker is set, mirroring the reasoning behind Supplier's
+  // bare-_sb exclusion just below this block, but gated on PO's own marker rather than
+  // bare _sb truthiness, since Purchase Order (unlike Supplier) migrates independently.
+  if (!(_sb && localStorage.getItem('st_po_cloud_migration_ts'))) {
   try {
     var dPo = await pulled('po');
     if (dPo.status === 'ok' && dPo.records && dPo.records.length) {
@@ -4552,6 +4589,7 @@ async function pullAll() {
       DB.po = mergedPo.concat(poLocalOnly);
     }
   } catch(e) { failed.push('po'); console.warn('[Stackd] pullAll: po failed —', e.message); }
+  }
 
   // ── Simple entities (Sheets wins; local-only records preserved; untracked fields survive — SYNC-GAP-001) ─
   var simpleEnts = ['sup', 'li', 'payments', 'sh', 'qt', 'co'];
@@ -5552,6 +5590,7 @@ async function initCloudDataLayer() {
     await refreshConFromSupabase();
     await refreshOrdFromSupabase();
     await refreshQteFromSupabase();
+    await refreshPOFromSupabase();
   }
 }
 
@@ -5667,6 +5706,47 @@ async function refreshQteFromSupabase() {
   rQte();
 }
 
+async function refreshPOFromSupabase() {
+  if (!_sb) return;
+  if (DB.po.length > 0 && !localStorage.getItem('st_po_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
+  var result = await _sb.from('purchase_orders').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Purchase Orders from Cloud Data.'); return; }
+  DB.po = result.data.map(function(row){
+    var po = {
+      id: row.id, num: row.num, supId: row.sup_id || '', invNum: row.inv_num || '', invId: row.inv_id || '',
+      date: row.date, del: row.del || '', cur: row.cur, paymentTerms: row.payment_terms || '',
+      lineItems: row.line_items || [], dep: row.dep, fpmFunded: row.fpm_funded, fpmRecovered: !!row.fpm_recovered,
+      oth: row.oth, notes: row.notes || '', status: row.status
+    };
+    if (row.upd_at != null) po.updAt = row.upd_at;
+    if (row.cre_at != null) po.creAt = row.cre_at;
+    if (row.quote_id != null) po.quoteId = row.quote_id;
+    if (row.quote_num != null) po.quoteNum = row.quote_num;
+    return po;
+  });
+  sv(K.p, DB.po);
+  if (!localStorage.getItem('st_po_cloud_migration_ts')) localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  rPO();
+}
+
+async function persistPOChange(po, skipRefresh) {
+  if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('purchase_orders').update({
+      num: po.num, sup_id: po.supId || null, inv_num: po.invNum || null, inv_id: po.invId || null,
+      date: po.date, del: po.del || null, cur: po.cur, payment_terms: po.paymentTerms || null,
+      line_items: po.lineItems || [], dep: po.dep, fpm_funded: po.fpmFunded, fpm_recovered: !!po.fpmRecovered,
+      oth: po.oth, notes: po.notes || null, status: po.status,
+      upd_at: po.updAt != null ? po.updAt : null, cre_at: po.creAt != null ? po.creAt : null,
+      quote_id: po.quoteId != null ? po.quoteId : null, quote_num: po.quoteNum != null ? po.quoteNum : null
+    }).eq('id', po.id);
+    if (result.error) { console.warn('[Stackd] persistPOChange: failed to push Purchase Order update for ' + po.id, result.error.message); return; }
+    if (!skipRefresh) await refreshPOFromSupabase();
+    return;
+  }
+  sv(K.p, DB.po);
+}
+
 async function persistQteChange(qt, skipRefresh) {
   if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
@@ -5735,10 +5815,26 @@ function findDuplicateQuoteNums(qt) {
   return Object.keys(groups).map(function(k){ return groups[k]; }).filter(function(g){ return g.length > 1; });
 }
 
+function findDuplicatePONums(po) {
+  var groups = {};
+  po.forEach(function(p){
+    var key = p.num || '';
+    if (!key) return;
+    (groups[key] = groups[key] || []).push(p);
+  });
+  return Object.keys(groups).map(function(k){ return groups[k]; }).filter(function(g){ return g.length > 1; });
+}
+
 function showQteDupConflictModal(dupes) {
   G('qt-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following Quote numbers are duplicated (exact match) and would violate the cloud database\'s unique-number constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
     dupes.map(function(g){ return '<li>' + g.map(function(q){ return san(q.num); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
   G('ov-qt-dup').classList.add('on');
+}
+
+function showPoDupConflictModal(dupes) {
+  G('po-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following Purchase Order numbers are duplicated (exact match) and would violate the cloud database\'s unique-number constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
+    dupes.map(function(g){ return '<li>' + g.map(function(p){ return san(p.num); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
+  G('ov-po-dup').classList.add('on');
 }
 
 var _sbMigrationResolve = null;
@@ -5815,7 +5911,8 @@ async function migrateSuppliersBuyersToSupabase() {
   // REQ-CLOUD-001i: rewrite every existing local reference field
   var touchedQteIdsForSup = {};
   DB.qt.forEach(function(q){ (q.lines||[]).forEach(function(l){ if (supIdMap[l.supId]) { l.supId = supIdMap[l.supId]; touchedQteIdsForSup[q.id] = true; } }); });
-  DB.po.forEach(function(p){ if (supIdMap[p.supId]) p.supId = supIdMap[p.supId]; });
+  var touchedPoIdsForSup = {};
+  DB.po.forEach(function(p){ if (supIdMap[p.supId]) { p.supId = supIdMap[p.supId]; touchedPoIdsForSup[p.id] = true; } });
   DB.li.forEach(function(l){ if (supIdMap[l.supId]) l.supId = supIdMap[l.supId]; });
   DB.con.forEach(function(c){ if (c.supplierId && supIdMap[c.supplierId]) c.supplierId = supIdMap[c.supplierId]; });
   DB.inv.forEach(function(inv){ if (buyIdMap[inv.buyerId]) inv.buyerId = buyIdMap[inv.buyerId]; });
@@ -5847,6 +5944,14 @@ async function migrateSuppliersBuyersToSupabase() {
       if (touchedQteIdsForSup[DB.qt[qi].id]) await persistQteChange(DB.qt[qi], true);
     }
     await refreshQteFromSupabase();
+  }
+
+  // REQ-CLOUD-005i: same cross-phase fix, for Purchase Order.
+  if (Object.keys(touchedPoIdsForSup).length) {
+    for (var pi = 0; pi < DB.po.length; pi++) {
+      if (touchedPoIdsForSup[DB.po[pi].id]) await persistPOChange(DB.po[pi], true);
+    }
+    await refreshPOFromSupabase();
   }
 
   // REQ-CLOUD-001k: archive, don't delete, the pre-migration local arrays
@@ -5897,7 +6002,13 @@ async function migrateLineItemsToSupabase() {
 
   // REQ-CLOUD-002c: exhaustive external-reference sweep
   DB.inv.forEach(function(inv){ (inv.lineItems||[]).forEach(function(li){ if (liIdMap[li.lid]) li.lid = liIdMap[li.lid]; }); });
-  DB.po.forEach(function(po){ (po.lineItems||[]).forEach(function(li){ if (liIdMap[li.lid]) li.lid = liIdMap[li.lid]; }); });
+  // Purchase Order.lineItems[].lid is a genuinely live field (REQ-CLOUD-005 §1.6,
+  // §1.1e) — autoPos() populates it directly from the source Line Item's real id, and
+  // verifyFkIntegrityAfterCleanup()/delLI()'s dangling-reference warning both already
+  // depend on it. Unlike Quote's equivalent field, this touched-set will not generally
+  // be empty in practice.
+  var touchedPoIdsForLi = {};
+  DB.po.forEach(function(po){ (po.lineItems||[]).forEach(function(li){ if (liIdMap[li.lid]) { li.lid = liIdMap[li.lid]; touchedPoIdsForLi[po.id] = true; } }); });
   // Quote.lines[].lid is confirmed dead (never populated by any code path) —
   // checked anyway, never skipped, per index.html's own stated convention there.
   var touchedQteIdsForLi = {};
@@ -5912,6 +6023,15 @@ async function migrateLineItemsToSupabase() {
       if (touchedQteIdsForLi[DB.qt[qi].id]) await persistQteChange(DB.qt[qi], true);
     }
     await refreshQteFromSupabase();
+  }
+
+  // REQ-CLOUD-005i: same cross-phase fix, for Purchase Order — this touched-set is
+  // expected to be non-empty in real usage, unlike Quote's.
+  if (Object.keys(touchedPoIdsForLi).length) {
+    for (var pi = 0; pi < DB.po.length; pi++) {
+      if (touchedPoIdsForLi[DB.po[pi].id]) await persistPOChange(DB.po[pi], true);
+    }
+    await refreshPOFromSupabase();
   }
 
   // REQ-CLOUD-002d: archive the true pre-migration snapshot BEFORE remapping DB.li's own ids below
@@ -6103,9 +6223,22 @@ async function migrateQteToSupabase() {
   // matched directly against the id-map, never through Quote.linkedPOIds[] (which can
   // already contain a dangling id per PO-GAP-007 — matching linkedPOIds[] itself would
   // not be robust to that; matching PO/Order-Request/Invoice's own fields directly is).
-  DB.po.forEach(function(p){ if (qteIdMap[p.quoteId]) p.quoteId = qteIdMap[p.quoteId]; });
+  var touchedPoIdsForQte = {};
+  DB.po.forEach(function(p){ if (qteIdMap[p.quoteId]) { p.quoteId = qteIdMap[p.quoteId]; touchedPoIdsForQte[p.id] = true; } });
   DB.inv.forEach(function(inv){ if (qteIdMap[inv.linkedQuoteId]) inv.linkedQuoteId = qteIdMap[inv.linkedQuoteId]; });
   sv(K.p, DB.po); sv(K.i, DB.inv);
+
+  // REQ-CLOUD-005i: cross-phase fix for Purchase Order — REQ-CLOUD-004 shipped this
+  // sweep as a plain local fix because Purchase Order had no Supabase table at the
+  // time ("PurchaseOrder.quoteId/Invoice.linkedQuoteId ... are safe as plain local
+  // fixes — neither entity has a Supabase table," SPEC-CLOUD-004 §2.7). That is now
+  // half false: Invoice still isn't Cloud-eligible, but Purchase Order is.
+  if (Object.keys(touchedPoIdsForQte).length) {
+    for (var pi = 0; pi < DB.po.length; pi++) {
+      if (touchedPoIdsForQte[DB.po[pi].id]) await persistPOChange(DB.po[pi], true);
+    }
+    await refreshPOFromSupabase();
+  }
 
   var touchedOrdIdsForQte = {};
   DB.ord.forEach(function(o){
@@ -6113,8 +6246,9 @@ async function migrateQteToSupabase() {
   });
   sv(K.ord, DB.ord);
 
-  // Outward cross-phase retrofit (REQ-CLOUD-004e): PurchaseOrder.quoteId/Invoice.linkedQuoteId
-  // above are safe as plain local fixes — neither entity has a Supabase table. Order
+  // Outward cross-phase retrofit (REQ-CLOUD-004e): Invoice.linkedQuoteId above is safe
+  // as a plain local fix — it has no Supabase table. PurchaseOrder.quoteId no longer
+  // is (see the REQ-CLOUD-005i retrofit just above this sweep). Order
   // Request is different: it already has one (REQ-CLOUD-003), and refreshOrdFromSupabase()
   // fires from at least eight call sites once Order Request has migrated (an ordinary
   // saveOrd()/delOrd(), persistOrdChange() itself by default, delCon()'s cascade,
@@ -6139,6 +6273,97 @@ async function migrateQteToSupabase() {
   await refreshQteFromSupabase();
   if (G('cfg-sb-qt-restore-btn')) G('cfg-sb-qt-restore-btn').style.display = '';
   toast('Quote migration complete. Pre-migration data archived for 30 days.');
+}
+
+async function migratePOToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+
+  // REQ-CLOUD-005b: Supplier must have completed its own migration first, checked
+  // against the live, connected project — mirrors migrateLineItemsToSupabase()'s
+  // precondition, since every Purchase Order's supId is expected to resolve to a
+  // real Supplier (though qteToPoConvert() can leave it blank — see the orphan
+  // check immediately below, which treats a blank supId as unresolvable too).
+  if (!(await isSupplierMigrationComplete())) { toast('Migrate Suppliers to Cloud Data first — every Purchase Order requires a Supplier link.'); return; }
+
+  var knownSupIds = await _sb.from('suppliers').select('*').is('deleted_at', null);
+  if (knownSupIds.error) { toast('Could not verify Supplier links before migrating: ' + knownSupIds.error.message); return; }
+  var knownSupIdSet = {};
+  knownSupIds.data.forEach(function(s){ knownSupIdSet[s.id] = true; });
+  var orphanPO = DB.po.find(function(p){ return !knownSupIdSet[p.supId]; });
+  if (orphanPO) { toast('Migration blocked: Purchase Order ' + (orphanPO.num||orphanPO.id) + ' references a Supplier not found in Cloud Data (or has none at all). Fix or reassign its Supplier link before migrating.'); return; }
+
+  // REQ-CLOUD-005c: unlike Order Request's ORD-#### (machine-generated only), Purchase
+  // Order's num is manually editable via the PO Number field with no case-normalization
+  // anywhere — a real pre-flight duplicate scan is required, not a documented no-op.
+  var poDupes = findDuplicatePONums(DB.po);
+  if (poDupes.length) { showPoDupConflictModal(poDupes); return; }
+
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  var poIdMap = {};
+  for (var i = 0; i < DB.po.length; i++) {
+    var p = DB.po[i];
+    var result = await _sb.from('purchase_orders').insert({
+      num: p.num, sup_id: p.supId || null, inv_num: p.invNum || null, inv_id: p.invId || null,
+      date: p.date, del: p.del || null, cur: p.cur, payment_terms: p.paymentTerms || null,
+      line_items: p.lineItems || [], dep: p.dep, fpm_funded: p.fpmFunded, fpm_recovered: !!p.fpmRecovered,
+      oth: p.oth, notes: p.notes || null, status: p.status,
+      upd_at: p.updAt != null ? p.updAt : null, cre_at: p.creAt != null ? p.creAt : null,
+      quote_id: p.quoteId != null ? p.quoteId : null, quote_num: p.quoteNum != null ? p.quoteNum : null
+    }).select().single();
+    if (result.error) { toast('Migration failed on Purchase Order ' + (p.num||p.id) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    poIdMap[p.id] = result.data.id;
+  }
+
+  // REQ-CLOUD-005h: outward sweep — Quote.linkedPOIds[] is an array, not a scalar;
+  // rewrite each matching element in place via the id-map, never via any other field
+  // as the join key. Invoice.pos[] gets the same array-element treatment but stays a
+  // plain local fix — Invoice is not Cloud-eligible. DB.supPayments[].poId likewise
+  // stays local-only; .poNum is an immutable historical snapshot, confirmed unused for
+  // lookup anywhere, and is left untouched.
+  var touchedQteIdsForPo = {};
+  DB.qt.forEach(function(q){
+    if (q.linkedPOIds && q.linkedPOIds.length) {
+      var newIds = q.linkedPOIds.map(function(pid){ return poIdMap[pid] || pid; });
+      if (JSON.stringify(newIds) !== JSON.stringify(q.linkedPOIds)) { q.linkedPOIds = newIds; touchedQteIdsForPo[q.id] = true; }
+    }
+  });
+  sv(K.qt, DB.qt);
+
+  DB.inv.forEach(function(inv){
+    if (inv.pos && inv.pos.length) { inv.pos = inv.pos.map(function(pid){ return poIdMap[pid] || pid; }); }
+  });
+  sv(K.i, DB.inv);
+
+  DB.supPayments.forEach(function(pm){ if (poIdMap[pm.poId]) pm.poId = poIdMap[pm.poId]; });
+  sv(K.spm, DB.supPayments);
+
+  // Outward cross-phase retrofit (REQ-CLOUD-005i): the mirror image of
+  // migrateQteToSupabase()'s own outward retrofit onto Order Request in
+  // SPEC-CLOUD-004. Quote already has a Supabase table (REQ-CLOUD-004) and
+  // refreshQteFromSupabase() fires from many call sites once Quote has migrated — a
+  // purely-local linkedPOIds[] fix left in place past this point would be silently
+  // reverted by whichever fires first. Pushed here, synchronously, before this
+  // function returns.
+  if (Object.keys(touchedQteIdsForPo).length) {
+    for (var qi = 0; qi < DB.qt.length; qi++) {
+      if (touchedQteIdsForPo[DB.qt[qi].id]) await persistQteChange(DB.qt[qi], true);
+    }
+    await refreshQteFromSupabase();
+  }
+
+  // Archive the true pre-migration snapshot BEFORE remapping DB.po's own ids below.
+  localStorage.setItem('st_po_pre_migration', localStorage.getItem(K.p));
+  localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+
+  DB.po.forEach(function(p){ if (poIdMap[p.id]) p.id = poIdMap[p.id]; });
+  sv(K.p, DB.po);
+
+  await refreshPOFromSupabase();
+  if (G('cfg-sb-po-restore-btn')) G('cfg-sb-po-restore-btn').style.display = '';
+  toast('Purchase Order migration complete. Pre-migration data archived for 30 days.');
 }
 
 function restoreFromMigrationArchive() {
@@ -6202,6 +6427,18 @@ function restoreQteMigrationArchive() {
   setTimeout(function(){ location.reload(); }, 1200);
 }
 
+function restorePOMigrationArchive() {
+  var arch = localStorage.getItem('st_po_pre_migration');
+  if (!arch) { toast('No Purchase Order migration archive available to restore.'); return; }
+  if (!confirm('Restore Purchase Orders to their state immediately before the Supabase migration?\n\nThis does not change Suppliers, Buyers, Line Items, Contacts, Order Requests, Quotes, or any other document data, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected for ALL entities, not just Purchase Orders — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect any of them afterwards.')) return;
+  localStorage.setItem(K.p, arch);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  localStorage.removeItem('st_po_cloud_migration_ts');
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+
 function cleanupExpiredMigrationArchive() {
   var ts = localStorage.getItem('st_cloud_migration_ts');
   if (ts && (Date.now() - new Date(ts).getTime()) / 86400000 > 30) {
@@ -6228,6 +6465,11 @@ function cleanupExpiredMigrationArchive() {
   if (qtTs && (Date.now() - new Date(qtTs).getTime()) / 86400000 > 30) {
     localStorage.removeItem('st_qt_pre_migration');
     localStorage.removeItem('st_qt_cloud_migration_ts');
+  }
+  var poTs = localStorage.getItem('st_po_cloud_migration_ts');
+  if (poTs && (Date.now() - new Date(poTs).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_po_pre_migration');
+    localStorage.removeItem('st_po_cloud_migration_ts');
   }
 }
 
@@ -6921,16 +7163,26 @@ async function saveInv() {
   // Auto-recover FPM-funded deposits when invoice is marked Paid
   if (inv.status === 'Paid') {
     var recovered = false;
+    var _touchedPoIdsForFpm1 = [];
     getInvoicePOs(inv).forEach(function(po) {
       if (po.fpmFunded > 0 && !po.fpmRecovered) {
         po.fpmRecovered = true;
         po.updAt = new Date().toISOString();
         recovered = true;
+        _touchedPoIdsForFpm1.push(po.id);
         syncEnt('po', po).catch(function(){});
       }
     });
     if (recovered) {
-      sv(K.p, DB.po);
+      if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) {
+        for (var fi1 = 0; fi1 < _touchedPoIdsForFpm1.length; fi1++) {
+          var _fpmPo1 = DB.po.find(function(x){ return x.id === _touchedPoIdsForFpm1[fi1]; });
+          if (_fpmPo1) await persistPOChange(_fpmPo1, true);
+        }
+        await refreshPOFromSupabase();
+      } else {
+        sv(K.p, DB.po);
+      }
       toast('FPM-funded deposits marked as recovered ✓');
     }
   }
@@ -7022,7 +7274,7 @@ function saveInvProgress() {
   rInv();
 }
 
-function autoPos(inv) {
+async function autoPos(inv) {
   var sm = {};
   (inv.lineItems||[]).forEach(function(li){
     var r=DB.li.find(function(x){return x.id===li.lid;});
@@ -7030,15 +7282,39 @@ function autoPos(inv) {
   });
   var cnt=Object.keys(sm).length; if(!cnt) return;
   var idx=0;
+  var newPos = [];
   Object.entries(sm).forEach(function(entry){
     var supId=entry[0], lis=entry[1];
     var po={id:uid(),num:'PO-'+(inv.num||Date.now().toString(36))+'-'+(idx+1),supId:supId,invId:inv.id,invNum:inv.num,date:inv.date||today(),del:'',cur:'USD',lineItems:lis,dep:0,oth:0,notes:'',status:'Draft',creAt:new Date().toISOString()};
-    DB.po.push(po);
-    var ii=DB.inv.findIndex(function(x){return x.id===inv.id;});
-    if(ii>-1){DB.inv[ii].pos=DB.inv[ii].pos||[];DB.inv[ii].pos.push(po.id);}
+    newPos.push(po);
     idx++;
   });
-  sv(K.p,DB.po); sv(K.i,DB.inv); rPO();
+
+  if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) { return; }
+    for (var i = 0; i < newPos.length; i++) {
+      var poRow = {
+        num: newPos[i].num, sup_id: newPos[i].supId, inv_num: newPos[i].invNum, inv_id: newPos[i].invId,
+        date: newPos[i].date, del: newPos[i].del || null, cur: newPos[i].cur, line_items: newPos[i].lineItems,
+        dep: newPos[i].dep, oth: newPos[i].oth, notes: newPos[i].notes || null, status: newPos[i].status,
+        cre_at: newPos[i].creAt
+      };
+      var result = await _sb.from('purchase_orders').insert(poRow).select().single();
+      if (result.error) { toast('Auto-generated PO failed to save to Cloud Data: ' + result.error.message); return; }
+      newPos[i].id = result.data.id;
+    }
+    await refreshPOFromSupabase();
+  } else {
+    newPos.forEach(function(po){ DB.po.push(po); });
+    sv(K.p,DB.po);
+  }
+
+  var ii=DB.inv.findIndex(function(x){return x.id===inv.id;});
+  if(ii>-1){
+    DB.inv[ii].pos=DB.inv[ii].pos||[];
+    newPos.forEach(function(po){ DB.inv[ii].pos.push(po.id); });
+  }
+  sv(K.i,DB.inv); rPO();
   toast(cnt+' PO'+(cnt!==1?'s':'')+' auto-generated');
 }
 
@@ -8032,8 +8308,30 @@ async function savePO() {
   var linkedInv = DB.inv.find(function(i){ return i.num === invNumVal; });
   var _poOldStatus = EI.p ? ((DB.po.find(function(x){return x.id===EI.p;})||{}).status || null) : null;
   var po={id:EI.p||uid(),num:G('pf-n').value.trim(),supId:G('pf-sup').value,invNum:invNumVal,invId:linkedInv?linkedInv.id:'',date:G('pf-dt').value,del:G('pf-del').value,cur:G('pf-cur').value,paymentTerms:G('pf-pt').value.trim(),lineItems:cPL,dep:+G('pf-dep').value||0,fpmFunded:+G('pf-fpm').value||0,fpmRecovered:G('pf-rec').checked,oth:+G('pf-oth').value||0,notes:G('pf-nt').value.trim(),status:G('po-sm').value,updAt:new Date().toISOString()};
-  if(EI.p){var i=DB.po.findIndex(function(x){return x.id===EI.p;});if(i>-1)DB.po[i]=po;}else DB.po.push(po);
-  sv(K.p,DB.po); closeM('ov-po'); rPO(); rDash(); audit(EI.p?'UPDATE':'CREATE','po',po.id,po);
+
+  if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var poRow = {
+      num: po.num, sup_id: po.supId || null, inv_num: po.invNum || null, inv_id: po.invId || null,
+      date: po.date, del: po.del || null, cur: po.cur, payment_terms: po.paymentTerms || null,
+      line_items: po.lineItems || [], dep: po.dep, fpm_funded: po.fpmFunded, fpm_recovered: po.fpmRecovered,
+      oth: po.oth, notes: po.notes || null, status: po.status, upd_at: po.updAt
+    };
+    var poResult;
+    if (EI.p) {
+      poResult = await _sb.from('purchase_orders').update(poRow).eq('id', EI.p).select().single();
+    } else {
+      poResult = await _sb.from('purchase_orders').insert(poRow).select().single();
+    }
+    if (poResult.error) { toast('Save failed: ' + poResult.error.message); return; }
+    po.id = poResult.data.id;
+    await refreshPOFromSupabase();
+  } else {
+    if(EI.p){var i=DB.po.findIndex(function(x){return x.id===EI.p;});if(i>-1)DB.po[i]=po;}else DB.po.push(po);
+    sv(K.p,DB.po);
+  }
+
+  closeM('ov-po'); rPO(); rDash(); audit(EI.p?'UPDATE':'CREATE','po',po.id,po);
   if (!EI.p) { logEv('po', po.id, 'created', 'PO ' + po.num + ' created', 'operator'); }
   else if (_poOldStatus !== null && _poOldStatus !== po.status) { logEv('po', po.id, 'status_changed', 'Status: ' + _poOldStatus + ' → ' + po.status, 'operator'); }
   toast('PO saved'); await syncEnt('po',po).catch(function(){});
@@ -8067,7 +8365,17 @@ async function delPO(id) {
   if(!confirm('Delete?')) return;
   var _poRec = DB.po.find(function(p){return p.id===id;});
   var _poNum = (_poRec||{}).num||id;
-  DB.po=DB.po.filter(function(p){return p.id!==id;});
+
+  if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('purchase_orders').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    await refreshPOFromSupabase();
+  } else {
+    DB.po=DB.po.filter(function(p){return p.id!==id;});
+    sv(K.p,DB.po);
+  }
+
   var _posChanged = false;
   DB.inv.forEach(function(i){
     if (i.pos && i.pos.length) {
@@ -8075,8 +8383,29 @@ async function delPO(id) {
       if (idx > -1) { i.pos.splice(idx,1); _posChanged = true; }
     }
   });
+  if (_posChanged) sv(K.i,DB.inv);
+
+  // PO-GAP-007 fix (REQ-CLOUD-005f): delPO() never cleaned a deleted PO's id out of the
+  // source Quote's linkedPOIds[] — ships unconditionally here, independent of whether
+  // Purchase Order itself has migrated, since the underlying bug (a plain array never
+  // cleaned up) exists regardless of Cloud Data state.
+  var touchedQteIdsForPoDel = {};
+  DB.qt.forEach(function(q){
+    if (q.linkedPOIds && q.linkedPOIds.indexOf(id) > -1) {
+      q.linkedPOIds = q.linkedPOIds.filter(function(pid){ return pid !== id; });
+      touchedQteIdsForPoDel[q.id] = true;
+    }
+  });
+  if (Object.keys(touchedQteIdsForPoDel).length) {
+    sv(K.qt, DB.qt);
+    for (var qi = 0; qi < DB.qt.length; qi++) {
+      if (touchedQteIdsForPoDel[DB.qt[qi].id]) await persistQteChange(DB.qt[qi], true);
+    }
+    await refreshQteFromSupabase();
+  }
+
   if (_poRec) logEv('po', _poRec.id, 'deleted', 'PO ' + _poNum + ' deleted', 'operator');
-  sv(K.p,DB.po); if (_posChanged) sv(K.i,DB.inv); rPO(); rDash(); toast('Deleted'); await delEnt('po',_poNum).catch(function(){});
+  rPO(); rDash(); toast('Deleted'); await delEnt('po',_poNum).catch(function(){});
 }
 
 // ── PRINT PREVIEWS ─────────────────────────────────────────────
@@ -9779,7 +10108,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.75).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.76).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -9804,7 +10133,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Suppliers',
   'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes. Each supplier is auto-assigned a SUP-#### reference number on creation (see Reference Numbers above).',
-  'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004): Settings → Cloud Data lets an operator connect a shared Supabase database. Each of Supplier/Buyer, Line Item, Contact, Order Request, and Quote migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Purchase Order is not yet Cloud-Data-eligible — it, and every other entity, stays local-only regardless of what has migrated. Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them, and each can migrate independently of whether Supplier, Contact, or the other has. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
+  'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004/005): Settings → Cloud Data lets an operator connect a shared Supabase database. Each of Supplier/Buyer, Line Item, Contact, Order Request, Quote, and Purchase Order migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Every deal-pipeline and master-data entity is now Cloud-Data-eligible; only Invoice, Credit Note, Shipment, and the Payment ledgers remain local-only, regardless of what has migrated. Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them; Purchase Order requires Suppliers to have migrated first (every Purchase Order requires a Supplier link). Each entity can migrate independently of the others except where a precondition is stated. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
   '',
   '## Line Items (Product Catalogue)',
   'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox. Each line item is auto-assigned an LI-#### reference number on creation (see Reference Numbers above).',
@@ -10612,6 +10941,7 @@ function rCfg() {
   if(G('cfg-sb-con-restore-btn')) G('cfg-sb-con-restore-btn').style.display = localStorage.getItem('st_con_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-ord-restore-btn')) G('cfg-sb-ord-restore-btn').style.display = localStorage.getItem('st_ord_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-qt-restore-btn')) G('cfg-sb-qt-restore-btn').style.display = localStorage.getItem('st_qt_cloud_migration_ts') ? '' : 'none';
+  if(G('cfg-sb-po-restore-btn')) G('cfg-sb-po-restore-btn').style.display = localStorage.getItem('st_po_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-lang')) G('cfg-lang').value = _lang;
   rCoBrand();
   qteFillRates();
@@ -12354,6 +12684,7 @@ async function qteToPoConvert() {
 
   var newPOIds = [];
   var poNums = [];
+  var newPOs = [];
   order.forEach(function(supId, i){
     var lines = groups[supId];
     var poNum = 'PO-' + q.num + (order.length > 1 ? '-' + (i + 1) : '');
@@ -12374,12 +12705,31 @@ async function qteToPoConvert() {
       }),
       quoteId: id, quoteNum: q.num
     };
-    DB.po.push(po);
-    newPOIds.push(po.id);
+    newPOs.push(po);
     poNums.push(poNum);
   });
 
-  sv(K.p, DB.po);
+  if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    for (var pi = 0; pi < newPOs.length; pi++) {
+      var poRow = {
+        num: newPOs[pi].num, sup_id: newPOs[pi].supId, inv_num: newPOs[pi].invNum || null, inv_id: newPOs[pi].invId || null,
+        date: newPOs[pi].date, del: newPOs[pi].del || null, cur: newPOs[pi].cur, payment_terms: newPOs[pi].paymentTerms || null,
+        line_items: newPOs[pi].lineItems, dep: newPOs[pi].dep, fpm_funded: newPOs[pi].fpmFunded, fpm_recovered: newPOs[pi].fpmRecovered,
+        oth: newPOs[pi].oth, notes: newPOs[pi].notes, status: newPOs[pi].status,
+        quote_id: newPOs[pi].quoteId, quote_num: newPOs[pi].quoteNum
+      };
+      var poResult = await _sb.from('purchase_orders').insert(poRow).select().single();
+      if (poResult.error) { toast('Save failed: ' + poResult.error.message); return; }
+      newPOs[pi].id = poResult.data.id;
+    }
+    await refreshPOFromSupabase();
+  } else {
+    newPOs.forEach(function(po){ DB.po.push(po); });
+    sv(K.p, DB.po);
+  }
+  newPOs.forEach(function(po){ newPOIds.push(po.id); });
+
   q.linkedPOIds = newPOIds;
   await persistQteChange(q);
   G('qt-po-btn').style.display = 'none';
@@ -12677,7 +13027,7 @@ function getInvTotalPaid(invId) {
   return getInvPayments(invId).reduce(function(s,p){ return s + (+p.amount||0); }, 0);
 }
 
-function savePayment(payment) {
+async function savePayment(payment) {
   var existing = DB.payments.findIndex(function(p){ return p.id === payment.id; });
   if (existing >= 0) { DB.payments[existing] = payment; }
   else { DB.payments.push(payment); }
@@ -12709,15 +13059,25 @@ function savePayment(payment) {
     // Auto-recover FPM deposits if now Paid
     if (inv.status === 'Paid' && prevStatus !== 'Paid') {
       var recovered = false;
+      var _touchedPoIdsForFpm2 = [];
       getInvoicePOs(inv).forEach(function(po) {
         if (+po.fpmFunded > 0 && !po.fpmRecovered) {
           po.fpmRecovered = true;
           po.updAt = new Date().toISOString();
           recovered = true;
+          _touchedPoIdsForFpm2.push(po.id);
           syncEnt('po', po).catch(function(){});
         }
       });
-      sv(K.p, DB.po);
+      if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) {
+        for (var fi2 = 0; fi2 < _touchedPoIdsForFpm2.length; fi2++) {
+          var _fpmPo2 = DB.po.find(function(x){ return x.id === _touchedPoIdsForFpm2[fi2]; });
+          if (_fpmPo2) await persistPOChange(_fpmPo2, true);
+        }
+        await refreshPOFromSupabase();
+      } else {
+        sv(K.p, DB.po);
+      }
       if (recovered) toast('\u2713 Invoice marked Paid — FPM deposits auto-recovered');
       else toast('\u2713 Invoice marked Paid');
     }

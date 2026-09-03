@@ -1,6 +1,6 @@
 # SPEC-CLOUD-005 — Purchase Order Cloud Data migration
 
-**Status:** v1 — drafted against `docs/REQ-CLOUD-005-v1.md` (requirements-gate PASS, 3 rounds). Ready for spec-gate.
+**Status:** v1 — drafted against `docs/REQ-CLOUD-005-v1.md` (requirements-gate PASS, 3 rounds). Spec-gate PASS (3 rounds — round 1 FAIL 10 blocking/5 advisory, round 2 FAIL 3 blocking, round 3 clean PASS with 2 advisories fixed in place). Ready for implementation.
 
 ---
 
