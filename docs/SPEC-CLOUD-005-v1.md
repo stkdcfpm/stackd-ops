@@ -23,7 +23,7 @@ Mirroring `persistOrdChange()`/`persistQteChange()`'s own shape, `persistPOChang
 
 ## 0.2 A design decision this SPEC must add: the pre-flight duplicate-`num` scan needs its own third modal
 
-`REQ-CLOUD-005c` requires a real pre-flight duplicate scan, raising (but not resolving) the question of generalizing the by-now-three-times-duplicated modal pattern. Per `REQ-CLOUD-005` §3, that generalization is explicitly out of scope for this migration. §2.6 below adds a third parallel, dedicated `ov-po-dup`/`po-dup-list` modal and a `findDuplicatePONums()`/`showPoDupConflictModal()` pair, structurally identical to the Supplier and Quote pairs, never modifying either existing modal or its functions.
+`REQ-CLOUD-005c` requires a real pre-flight duplicate scan, raising (but not resolving) the question of generalizing the by-now-three-times-duplicated modal pattern. Per `REQ-CLOUD-005` §3, that generalization is explicitly out of scope for this migration. §2.7 below adds a third parallel, dedicated `ov-po-dup`/`po-dup-list` modal and a `findDuplicatePONums()`/`showPoDupConflictModal()` pair, structurally identical to the Supplier and Quote pairs, never modifying either existing modal or its functions.
 
 ---
 
@@ -91,7 +91,7 @@ create policy "authenticated update" on purchase_orders for update using (auth.r
 -- deliberately no delete policy — soft-delete only, enforced by omission
 ```
 
-`num text not null unique` matches every prior entity's ref-number convention, even though Purchase Order's `num` is manually editable — `REQ-CLOUD-005c`'s pre-flight scan (§2.6) is what keeps a migration from ever hitting this constraint.
+`num text not null unique` matches every prior entity's ref-number convention, even though Purchase Order's `num` is manually editable — `REQ-CLOUD-005c`'s pre-flight scan (§2.7) is what keeps a migration from ever hitting this constraint.
 
 ---
 
@@ -170,7 +170,7 @@ async function persistPOChange(po, skipRefresh) {
 }
 ```
 
-The local (non-`_sb`) branch persists the entire `DB.po` array, matching `sv()`'s own semantics everywhere else. `skipRefresh` is used exactly as `persistOrdChange()`/`persistQteChange()`'s: the four multi-record retrofit loops (§2.9-§2.12) pass `true` and call `refreshPOFromSupabase()` themselves once, after their own loop.
+The local (non-`_sb`) branch persists the entire `DB.po` array, matching `sv()`'s own semantics everywhere else. `skipRefresh` is used exactly as `persistOrdChange()`/`persistQteChange()`'s: all five call sites that loop over multiple touched Purchase Orders before refreshing once — the three inward-retrofit loops (§2.10-§2.12) and the two FPM-funded-deposit auto-recovery sites (§2.14) — pass `true` and call `refreshPOFromSupabase()` themselves once, after their own loop.
 
 ### 2.3 `savePO()` — cloud-aware create/update branch (`index.html:8029-8040`)
 
@@ -383,7 +383,115 @@ async function autoPos(inv) {
 
 Every generated PO's real Supabase id is assigned onto `newPos[i].id` before `Invoice.pos[]` is built — the same "assign every real id before the dependent write" ordering `REQ-CLOUD-005g` requires, applied here to `autoPos()` specifically. `autoPos()` becomes `async`; its only caller, `saveInv()`'s `if(!EI.i) autoPos(inv);` (`index.html:6920`), is a bare, unawaited statement already inside an `async` function and does not use `autoPos()`'s return value — confirm at implementation time that no test-suite call site does either.
 
-### 2.6 Pre-flight duplicate-`num` scan — new `findDuplicatePONums()`/`showPoDupConflictModal()`, new modal (§0.2)
+**Known race, accepted (spec-gate advisory A3):** because `saveInv()` never awaits `autoPos(inv)`, the Cloud Data path introduces a real window — absent from the local-only path, which has no `await` and so runs to completion synchronously in one tick — between `saveInv()` returning (toast shown, modal closed, invoice visibly "saved") and `autoPos()` actually finishing its Supabase insert loop and writing the real ids into `Invoice.pos[]`. During that window `getInvoicePOs(inv)` returns no rows for the brand-new invoice. This is not a regression: the local-only path already had a (much shorter, same-tick) version of this gap, and `REQ-CLOUD-005` does not ask for `saveInv()` to be restructured to await its own auto-PO side effect. Left as a known, accepted limitation, consistent with how this series has treated equivalent fire-and-forget creation paths elsewhere.
+
+### 2.6 `qteToPoConvert()` — cloud-aware multi-PO creation branch (`index.html:12339-12390`)
+
+Current (only the PO-creation and persistence portion is shown; the signature, the guard clauses, and the Supplier-grouping loop above it, `index.html:12339-12358`, are unchanged):
+
+```js
+  var newPOIds = [];
+  var poNums = [];
+  order.forEach(function(supId, i){
+    var lines = groups[supId];
+    var poNum = 'PO-' + q.num + (order.length > 1 ? '-' + (i + 1) : '');
+    var suffix = '';
+    var attempt = 0;
+    while (DB.po.some(function(p){ return p.num === poNum + suffix; })) {
+      attempt++;
+      suffix = String.fromCharCode(97 + attempt - 1);
+    }
+    poNum = poNum + suffix;
+    var po = {
+      id: uid(), num: poNum, supId: supId,
+      invNum: '', invId: '', date: today(), del: '', cur: q.currency||'USD',
+      dep: 0, fpmFunded: 0, fpmRecovered: false, oth: 0, paymentTerms: '',
+      notes: 'Auto-converted from ' + q.num, status: 'Draft',
+      lineItems: lines.map(function(l){
+        return { rid:uid(), lid:'', desc:l.desc, sku:'', uom:l.uom||'pcs', qty:l.qty||1, cost:l.cost };
+      }),
+      quoteId: id, quoteNum: q.num
+    };
+    DB.po.push(po);
+    newPOIds.push(po.id);
+    poNums.push(poNum);
+  });
+
+  sv(K.p, DB.po);
+  q.linkedPOIds = newPOIds;
+  await persistQteChange(q);
+  G('qt-po-btn').style.display = 'none';
+  closeM('ov-qt');
+  rQte();
+  rPO();
+  toast('PO' + (poNums.length > 1 ? 's ' : ' ') + poNums.join(', ') + ' created from ' + q.num);
+}
+```
+
+New:
+
+```js
+  var newPOIds = [];
+  var poNums = [];
+  var newPOs = [];
+  order.forEach(function(supId, i){
+    var lines = groups[supId];
+    var poNum = 'PO-' + q.num + (order.length > 1 ? '-' + (i + 1) : '');
+    var suffix = '';
+    var attempt = 0;
+    while (DB.po.some(function(p){ return p.num === poNum + suffix; })) {
+      attempt++;
+      suffix = String.fromCharCode(97 + attempt - 1);
+    }
+    poNum = poNum + suffix;
+    var po = {
+      id: uid(), num: poNum, supId: supId,
+      invNum: '', invId: '', date: today(), del: '', cur: q.currency||'USD',
+      dep: 0, fpmFunded: 0, fpmRecovered: false, oth: 0, paymentTerms: '',
+      notes: 'Auto-converted from ' + q.num, status: 'Draft',
+      lineItems: lines.map(function(l){
+        return { rid:uid(), lid:'', desc:l.desc, sku:'', uom:l.uom||'pcs', qty:l.qty||1, cost:l.cost };
+      }),
+      quoteId: id, quoteNum: q.num
+    };
+    newPOs.push(po);
+    poNums.push(poNum);
+  });
+
+  if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    for (var pi = 0; pi < newPOs.length; pi++) {
+      var poRow = {
+        num: newPOs[pi].num, sup_id: newPOs[pi].supId, inv_num: newPOs[pi].invNum || null, inv_id: newPOs[pi].invId || null,
+        date: newPOs[pi].date, del: newPOs[pi].del || null, cur: newPOs[pi].cur, payment_terms: newPOs[pi].paymentTerms || null,
+        line_items: newPOs[pi].lineItems, dep: newPOs[pi].dep, fpm_funded: newPOs[pi].fpmFunded, fpm_recovered: newPOs[pi].fpmRecovered,
+        oth: newPOs[pi].oth, notes: newPOs[pi].notes, status: newPOs[pi].status,
+        quote_id: newPOs[pi].quoteId, quote_num: newPOs[pi].quoteNum
+      };
+      var poResult = await _sb.from('purchase_orders').insert(poRow).select().single();
+      if (poResult.error) { toast('Save failed: ' + poResult.error.message); return; }
+      newPOs[pi].id = poResult.data.id;
+    }
+    await refreshPOFromSupabase();
+  } else {
+    newPOs.forEach(function(po){ DB.po.push(po); });
+    sv(K.p, DB.po);
+  }
+  newPOs.forEach(function(po){ newPOIds.push(po.id); });
+
+  q.linkedPOIds = newPOIds;
+  await persistQteChange(q);
+  G('qt-po-btn').style.display = 'none';
+  closeM('ov-qt');
+  rQte();
+  rPO();
+  toast('PO' + (poNums.length > 1 ? 's ' : ' ') + poNums.join(', ') + ' created from ' + q.num);
+}
+```
+
+Every generated PO's real Supabase id is assigned onto `newPOs[pi].id` — and, in turn, into `newPOIds` — before `q.linkedPOIds = newPOIds` runs, which itself runs before `persistQteChange(q)` is called: the same "assign every real id before the dependent write" ordering as `autoPos()` (§2.5) and `saveQte()`'s own precedent from `REQ-CLOUD-004`, applied here to the `q.linkedPOIds`/`persistQteChange()` dependent write specifically. The Supplier-grouping/PO-numbering logic above this excerpt (`index.html:12339-12358`) is untouched — only the point where a PO becomes real (`DB.po.push(po)` inside the loop, in the current code) moves to after every insert has resolved.
+
+### 2.7 Pre-flight duplicate-`num` scan — new `findDuplicatePONums()`/`showPoDupConflictModal()`, new modal (§0.2)
 
 Insert `findDuplicatePONums()` immediately after `findDuplicateQuoteNums()` closes (`index.html:5736`); insert `showPoDupConflictModal()` immediately after `showQteDupConflictModal()` closes (`index.html:5743`).
 
@@ -425,7 +533,7 @@ New modal HTML, inserted immediately after the existing `ov-qt-dup` modal closes
 
 Structurally identical to `ov-qt-dup` — a new, dedicated modal rather than modifying either existing one (per `REQ-CLOUD-005` §3, generalizing the pattern is out of scope here).
 
-### 2.7 `migratePOToSupabase()` — new function
+### 2.8 `migratePOToSupabase()` — new function
 
 Insert immediately after `migrateQteToSupabase()` closes (`index.html:6142`).
 
@@ -524,7 +632,7 @@ async function migratePOToSupabase() {
 
 The `orphanPO` pre-flight check treats a blank `supId` (possible via `qteToPoConvert()`, per `REQ-CLOUD-005` §1.1e/§2a) as unresolvable — `knownSupIdSet['']` is never `true`, so this falls out of the existing lookup with no special-case code needed.
 
-### 2.8 Archive/rollback extensions
+### 2.9 Archive/rollback extensions
 
 `restorePOMigrationArchive()` — new, inserted after `restoreQteMigrationArchive()` closes (`index.html:6201`).
 
@@ -558,7 +666,7 @@ function restorePOMigrationArchive() {
   if(G('cfg-sb-po-restore-btn')) G('cfg-sb-po-restore-btn').style.display = localStorage.getItem('st_po_cloud_migration_ts') ? '' : 'none';
 ```
 
-### 2.9 Retrofit `migrateSuppliersBuyersToSupabase()` — add Purchase Order touched-tracking and cross-phase push
+### 2.10 Retrofit `migrateSuppliersBuyersToSupabase()` — add Purchase Order touched-tracking and cross-phase push
 
 Current sweep (`index.html:5811-5842`):
 
@@ -651,7 +759,7 @@ New — one changed line, one new tracking map, one new push block:
   }
 ```
 
-### 2.10 Retrofit `migrateLineItemsToSupabase()` — add Purchase Order touched-tracking and cross-phase push
+### 2.11 Retrofit `migrateLineItemsToSupabase()` — add Purchase Order touched-tracking and cross-phase push
 
 Current sweep (`index.html:5896-5904`):
 
@@ -714,7 +822,7 @@ New:
   }
 ```
 
-### 2.11 Retrofit `migrateQteToSupabase()` — add Purchase Order touched-tracking and cross-phase push
+### 2.12 Retrofit `migrateQteToSupabase()` — add Purchase Order touched-tracking and cross-phase push
 
 Current sweep (`index.html:6099-6103`):
 
@@ -770,7 +878,7 @@ New:
 
 (The remainder of that comment, about Order Request's own retrofit, is unchanged — only the opening clause naming Purchase Order is corrected.)
 
-### 2.12 `pullAll()` — exclude `'po'` once migrated
+### 2.13 `pullAll()` — exclude `'po'` once migrated
 
 Current (`index.html:4536-4554`):
 
@@ -830,7 +938,7 @@ New — one guard added, matching the shape of this block's own existing per-ent
 
 No change to `syncAll()`/`pushAll()` (`CLOUD-GAP-002`, pre-existing, out of scope).
 
-### 2.13 The two FPM-funded-deposit auto-recovery sites — route through `persistPOChange()`
+### 2.14 The two FPM-funded-deposit auto-recovery sites — route through `persistPOChange()`
 
 **Site 1 — `saveInv()`** (`index.html:6923-6929`):
 
@@ -928,7 +1036,9 @@ New:
 
 Both sites need `savePayment()`/`saveInv()`'s surrounding function to already be (or become) `async` for the new `await persistPOChange(...)` calls — `saveInv()` is already `async`; confirm `savePayment()`'s own async status and every direct test-suite call site at implementation time (`REQ-CLOUD-005` AC-13).
 
-### 2.14 Settings UI (`index.html:806-810`, inside the Cloud Data card group)
+**Ordering note (spec-gate advisory A1):** `savePayment()`'s only production call site, `addPaymentFromForm()` (`index.html:13146-13175`), calls it fire-and-forget (`savePayment(pm);`, no `await`) and then immediately calls `renderPaymentsTab(invId)` synchronously. This stays correct after `savePayment()` becomes `async`: every `DB.po`/`DB.inv` mutation in the FPM-recovery block runs synchronously, before the function's first real `await`, so `renderPaymentsTab()` always sees the post-recovery in-memory state regardless of how long the trailing Supabase push takes. The only effect of not awaiting is that the Cloud Data push (and the trailing `refreshPOFromSupabase()`) completes in the background after `addPaymentFromForm()` has already returned — matching how every other fire-and-forget `syncEnt()`/`persist*Change()` call in the app already behaves, and not something this SPEC changes.
+
+### 2.15 Settings UI (`index.html:806-810`, inside the Cloud Data card group)
 
 New card inserted immediately after the existing "Cloud Data (Quotes)" card:
 
@@ -943,7 +1053,7 @@ New card inserted immediately after the existing "Cloud Data (Quotes)" card:
 </div>
 ```
 
-### 2.15 `AI_SYSTEM_PROMPT` and `docs/user-guide.md` — Cloud Data description updated
+### 2.16 `AI_SYSTEM_PROMPT` and `docs/user-guide.md` — Cloud Data description updated
 
 Current (`index.html:9807`):
 
@@ -959,7 +1069,7 @@ New:
 
 `docs/user-guide.md`'s Cloud Data section (rewritten most recently in `REQ-CLOUD-004`) gets the identical update — Purchase Order added to the list of independently-migratable entities, with its Supplier precondition named, and Invoice/Credit Note/Shipment/Payment-ledgers named as the entities remaining non-eligible.
 
-### 2.16 No changes needed
+### 2.17 No changes needed
 
 Confirmed by `REQ-CLOUD-005` §1.4/§3: `delSup()` (already confirmed warn-and-allow, leaves `PO.supId` dangling by design, unaffected), `delCon()` (no Contact field on Purchase Order to dangle), `migrateQtePoShape()`/`backfillInvoicePOs()` (both confirmed structurally unable to affect or be affected by a cloud-hosted record), `executeDataCleanup()`'s renumbering pairs list and phantom filter (Purchase Order's `num` confirmed absent from the renumbering list, same as Invoice/Quote/Credit-Note; phantom filter is a structural no-op for migrated data, identical reasoning to every prior REQ in this series), `migrateContactsToSupabase()`/`migrateOrdToSupabase()` (independently confirmed, twice, to contain zero `DB.po` references), the CSV-import branches in `processImport()`/`processImportRecords()` (both logged under `CLOUD-GAP-003`, not fixed — see `docs/known-gaps.md` update at ship time), and `PO-GAP-006` (pre-existing, unrelated to this migration). No change to `syncAll()`/`pushAll()` (`CLOUD-GAP-002`).
 
@@ -1022,6 +1132,10 @@ testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirro
 });
 ```
 
+The companion retrofit of `tests/run.js:7752` (`'initCloudDataLayer — now also calls refreshOrdFromSupabase()...'`) is identical in shape: add `purchase_orders: { selectData: [] }` to its `_sb` mock config, stub `ctx.refreshPOFromSupabase` alongside its existing stubs, restore it afterward.
+
+**Considered and not taken (spec-gate advisory A2):** both retrofitted tests stub only the refresh function each SPEC in this series actually added at the time (`refreshOrdFromSupabase`/`refreshQteFromSupabase`, now `refreshPOFromSupabase`), not every refresh function that exists. Defensively stubbing `refreshLIFromSupabase()`/`refreshConFromSupabase()` here too would guard against a *future* SPEC repeating this same contamination class one call further down `initCloudDataLayer()`'s sequence — but that guard belongs in whichever future SPEC adds the next `await`, exactly as this SPEC added its own guard for `refreshPOFromSupabase()` rather than pre-emptively guarding for entities not yet wired in. Left unchanged to avoid a test asserting behavior no code path yet exercises.
+
 ### 3.1 New test block
 
 Insert this entire block (ending with its own dedicated cleanup test) immediately **after** the existing `'SPEC-CLOUD-004 test-hygiene cleanup'` test (`tests/run.js:8692-8696`) — the same convention `SPEC-CLOUD-004`'s own block followed relative to `SPEC-CLOUD-003`'s cleanup test.
@@ -1067,7 +1181,7 @@ testAsync('refreshPOFromSupabase — refuses to overwrite real local data when t
   assert(!!ctx.localStorage.getItem('st_po_cloud_migration_ts'), 'marker set even though this device never ran the migration itself');
 });
 
-testAsync('migratePOToSupabase — inserts every field, preserves nested lineItems unchanged including nested ids, sweeps Quote.linkedPOIds[]/Invoice.pos[]/supPayments.poId locally and pushes the touched Quote via persistQteChange when Quote has migrated', async function() {
+testAsync('migratePOToSupabase — inserts every field, preserves nested lineItems unchanged including nested ids, sweeps Quote.linkedPOIds[] (multi-element)/Invoice.pos[]/supPayments.poId locally and pushes the touched Quote via persistQteChange when Quote has migrated (spec-gate B3/B4/B8 fix: post-migration selectData + multi-PO-id case)', async function() {
   resetDB();
   ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
   ctx.DB.po.push({
@@ -1075,17 +1189,28 @@ testAsync('migratePOToSupabase — inserts every field, preserves nested lineIte
     paymentTerms: '', lineItems: [{ rid: 'r1', lid: '', desc: 'Widget', sku: '', uom: 'pcs', qty: 1, cost: 10 }],
     dep: 0, fpmFunded: 0, fpmRecovered: false, oth: 0, notes: '', status: 'Draft', updAt: '2026-01-01T00:00:00.000Z'
   });
-  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', status: 'Accepted', lines: [], linkedPOIds: ['p1'] });
-  ctx.DB.inv.push({ id: 'inv1', num: 'INV10001', pos: ['p1'], lineItems: [] });
+  ctx.DB.po.push({
+    id: 'p2', num: 'PO-0002', supId: 's1', invNum: '', invId: '', date: '2026-01-02', del: '', cur: 'USD',
+    paymentTerms: '', lineItems: [], dep: 0, fpmFunded: 0, fpmRecovered: false, oth: 0, notes: '', status: 'Draft', updAt: '2026-01-02T00:00:00.000Z'
+  });
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', status: 'Accepted', lines: [], linkedPOIds: ['p1', 'p2'] });
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV10001', pos: ['p1', 'p2'], lineItems: [] });
   ctx.DB.supPayments.push({ id: 'pm1', poId: 'p1', poNum: 'PO-0001', amount: 100, currency: 'USD' });
   ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString()); // Quote already migrated
   ctx.localStorage.setItem(ctx.K.p, JSON.stringify(ctx.DB.po)); // migratePOToSupabase() reads localStorage[K.p] for its archive step, not ctx.DB.po directly
 
+  var insertCount = 0;
   var sb = mockSb({
     suppliers: { selectData: [{ id: 's1', name: 'ACME' }] },
-    purchase_orders: { insertImpl: function(row){ return Object.assign({ id: 'new-po-uuid' }, row); } },
+    purchase_orders: {
+      insertImpl: function(row){ insertCount++; return Object.assign({ id: 'new-po-uuid-' + insertCount }, row); },
+      selectData: [
+        { id: 'new-po-uuid-1', num: 'PO-0001', sup_id: 's1', inv_num: '', inv_id: '', date: '2026-01-01', del: '', cur: 'USD', payment_terms: '', line_items: [{ rid: 'r1', lid: '', desc: 'Widget', sku: '', uom: 'pcs', qty: 1, cost: 10 }], dep: 0, fpm_funded: 0, fpm_recovered: false, oth: 0, notes: '', status: 'Draft', upd_at: '2026-01-01T00:00:00.000Z', cre_at: null, quote_id: null, quote_num: null },
+        { id: 'new-po-uuid-2', num: 'PO-0002', sup_id: 's1', inv_num: '', inv_id: '', date: '2026-01-02', del: '', cur: 'USD', payment_terms: '', line_items: [], dep: 0, fpm_funded: 0, fpm_recovered: false, oth: 0, notes: '', status: 'Draft', upd_at: '2026-01-02T00:00:00.000Z', cre_at: null, quote_id: null, quote_num: null }
+      ]
+    },
     quotes: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); },
-      selectData: [{ id: 'q1', num: 'QTE-0001', status: 'Accepted', lines: [], linked_po_ids: ['new-po-uuid'] }] }
+      selectData: [{ id: 'q1', num: 'QTE-0001', status: 'Accepted', lines: [], linked_po_ids: ['new-po-uuid-1', 'new-po-uuid-2'] }] }
   });
   ctx._sb = sb;
   var origShowBackup = ctx.showBlockingBackupModal;
@@ -1094,21 +1219,25 @@ testAsync('migratePOToSupabase — inserts every field, preserves nested lineIte
 
   await ctx.migratePOToSupabase();
 
-  var insertCall = sb._calls.find(function(c){ return c.table === 'purchase_orders' && c.op === 'insert'; });
-  assert(insertCall, 'insert called');
-  assertEqual(JSON.stringify(insertCall.row.line_items), JSON.stringify([{ rid: 'r1', lid: '', desc: 'Widget', sku: '', uom: 'pcs', qty: 1, cost: 10 }]), 'nested lineItems inserted unchanged');
+  var insertCalls = sb._calls.filter(function(c){ return c.table === 'purchase_orders' && c.op === 'insert'; });
+  assertEqual(insertCalls.length, 2, 'both Purchase Orders inserted');
+  assertEqual(JSON.stringify(insertCalls[0].row.line_items), JSON.stringify([{ rid: 'r1', lid: '', desc: 'Widget', sku: '', uom: 'pcs', qty: 1, cost: 10 }]), 'nested lineItems inserted unchanged');
 
-  assertEqual(ctx.DB.qt[0].linkedPOIds[0], 'new-po-uuid', 'Quote.linkedPOIds[] element remapped to the new Purchase Order id');
-  assertEqual(ctx.DB.inv[0].pos[0], 'new-po-uuid', 'Invoice.pos[] element remapped');
-  assertEqual(ctx.DB.supPayments[0].poId, 'new-po-uuid', 'supPayments.poId remapped');
+  assertEqual(ctx.DB.qt[0].linkedPOIds[0], 'new-po-uuid-1', 'Quote.linkedPOIds[] first element remapped to the new Purchase Order id');
+  assertEqual(ctx.DB.qt[0].linkedPOIds[1], 'new-po-uuid-2', 'Quote.linkedPOIds[] second element remapped correctly, not collapsed/misordered (B8 multi-id coverage)');
+  assertEqual(ctx.DB.inv[0].pos[0], 'new-po-uuid-1', 'Invoice.pos[] first element remapped');
+  assertEqual(ctx.DB.inv[0].pos[1], 'new-po-uuid-2', 'Invoice.pos[] second element remapped');
+  assertEqual(ctx.DB.supPayments[0].poId, 'new-po-uuid-1', 'supPayments.poId remapped');
   assertEqual(ctx.DB.supPayments[0].poNum, 'PO-0001', 'supPayments.poNum confirmed unchanged — immutable historical snapshot');
 
   var qteUpdateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
   assert(qteUpdateCall, 'Quote.linkedPOIds[] pushed to Supabase, not just fixed locally, since Quote has already migrated');
-  assertEqual(qteUpdateCall.row.linked_po_ids[0], 'new-po-uuid', 'the pushed value is the new Purchase Order id');
-  assertEqual(ctx.DB.qt[0].linkedPOIds[0], 'new-po-uuid', 'local Quote mirror also correct after the trailing refresh');
+  assertEqual(qteUpdateCall.row.linked_po_ids[0], 'new-po-uuid-1', 'the pushed value contains the first new Purchase Order id');
+  assertEqual(qteUpdateCall.row.linked_po_ids[1], 'new-po-uuid-2', 'the pushed value contains the second new Purchase Order id');
+  assertEqual(ctx.DB.qt[0].linkedPOIds[0], 'new-po-uuid-1', 'local Quote mirror also correct after the trailing refresh');
 
-  assertEqual(ctx.DB.po[0].id, 'new-po-uuid', 'Purchase Order own id remapped to the Supabase-assigned id');
+  assertEqual(ctx.DB.po[0].id, 'new-po-uuid-1', 'first Purchase Order own id remapped to the Supabase-assigned id');
+  assertEqual(ctx.DB.po[1].id, 'new-po-uuid-2', 'second Purchase Order own id remapped to the Supabase-assigned id');
   var archived = JSON.parse(ctx.localStorage.getItem('st_po_pre_migration'));
   assertEqual(archived[0].id, 'p1', 'pre-migration archive captured the ORIGINAL local id, not the remapped one');
   ctx.showBlockingBackupModal = origShowBackup;
@@ -1125,7 +1254,7 @@ testAsync('migratePOToSupabase — does NOT push Quote via persistQteChange when
 
   var sb = mockSb({
     suppliers: { selectData: [{ id: 's1', name: 'ACME' }] },
-    purchase_orders: { insertImpl: function(row){ return Object.assign({ id: 'new-po-uuid' }, row); } }
+    purchase_orders: { insertImpl: function(row){ return Object.assign({ id: 'new-po-uuid' }, row); }, selectData: [{ id: 'new-po-uuid', num: 'PO-0001', sup_id: 's1', status: 'Draft', line_items: [] }] }
   });
   ctx._sb = sb;
   var origShowBackup = ctx.showBlockingBackupModal;
@@ -1202,6 +1331,28 @@ testAsync('migrateSuppliersBuyersToSupabase — now also rewrites Purchase Order
   ctx.localStorage.removeItem('st_po_cloud_migration_ts');
 });
 
+testAsync('migrateSuppliersBuyersToSupabase — Purchase Order not migrated: supId still rewritten locally only, no push to Supabase for purchase_orders (spec-gate B7 fix)', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
+  ctx.DB.po.push({ id: 'po-uuid-2', num: 'PO-0002', supId: 's1', status: 'Draft', lineItems: [] });
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+
+  var sb = mockSb({
+    suppliers: { insertImpl: function(row){ return Object.assign({ id: 'new-sup-uuid-2' }, row); } }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-restore-btn');
+
+  await ctx.migrateSuppliersBuyersToSupabase();
+
+  assertEqual(ctx.DB.po[0].supId, 'new-sup-uuid-2', 'Purchase Order supId still remapped locally even though Purchase Order itself has not migrated');
+  var poCall = sb._calls.find(function(c){ return c.table === 'purchase_orders'; });
+  assert(!poCall, 'no Supabase call attempted for purchase_orders — Purchase Order has not migrated');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
 testAsync('migrateLineItemsToSupabase — now also rewrites Purchase Order.lineItems[].lid, and pushes to Supabase if Purchase Order has already migrated (this field is genuinely live, unlike Quote\'s equivalent)', async function() {
   resetDB();
   ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', supId: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, cur: 'USD', notes: '', priceHistory: [], invoiceRefs: [] });
@@ -1229,6 +1380,30 @@ testAsync('migrateLineItemsToSupabase — now also rewrites Purchase Order.lineI
   ctx.localStorage.removeItem('st_po_cloud_migration_ts');
 });
 
+testAsync('migrateLineItemsToSupabase — Purchase Order not migrated: lineItems[].lid still rewritten locally only, no push to Supabase for purchase_orders (spec-gate B7 fix)', async function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', supId: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, cur: 'USD', notes: '', priceHistory: [], invoiceRefs: [] });
+  ctx.DB.po.push({ id: 'po-uuid-2', num: 'PO-0002', supId: 'new-sup-uuid', status: 'Draft', lineItems: [{ rid: 'r1', lid: 'l1' }] });
+  ctx.localStorage.setItem(ctx.K.l, JSON.stringify(ctx.DB.li));
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] },
+    line_items: { insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid-2' }, row); } }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-li-restore-btn');
+
+  await ctx.migrateLineItemsToSupabase();
+
+  assertEqual(ctx.DB.po[0].lineItems[0].lid, 'new-li-uuid-2', 'Purchase Order lineItems[].lid still remapped locally even though Purchase Order itself has not migrated');
+  var poCall = sb._calls.find(function(c){ return c.table === 'purchase_orders'; });
+  assert(!poCall, 'no Supabase call attempted for purchase_orders — Purchase Order has not migrated');
+  ctx.showBlockingBackupModal = origShowBackup;
+});
+
 testAsync('migrateQteToSupabase — now also rewrites Purchase Order.quoteId, and pushes to Supabase if Purchase Order has already migrated', async function() {
   resetDB();
   ctx.DB.po.push({ id: 'po-uuid-1', num: 'PO-0001', supId: 's1', status: 'Draft', lineItems: [], quoteId: 'q1' });
@@ -1252,6 +1427,30 @@ testAsync('migrateQteToSupabase — now also rewrites Purchase Order.quoteId, an
   assert(poUpdateCall, 'the rewritten Purchase Order was pushed to Supabase, not just fixed locally');
   ctx.showBlockingBackupModal = origShowBackup;
   ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); // migrateQteToSupabase() self-marks its own completion — must not leak into later PO tests (recurring self-marking-contamination class)
+});
+
+testAsync('migrateQteToSupabase — Purchase Order not migrated: quoteId still rewritten locally only, no push to Supabase for purchase_orders (spec-gate B7 fix)', async function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-uuid-2', num: 'PO-0002', supId: 's1', status: 'Draft', lineItems: [], quoteId: 'q1' });
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', status: 'Accepted', lines: [], linkedPOIds: [] });
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+
+  var sb = mockSb({
+    quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid-2' }, row); } }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-qt-restore-btn');
+
+  await ctx.migrateQteToSupabase();
+
+  assertEqual(ctx.DB.po[0].quoteId, 'new-qte-uuid-2', 'Purchase Order.quoteId still remapped locally even though Purchase Order itself has not migrated');
+  var poCall = sb._calls.find(function(c){ return c.table === 'purchase_orders'; });
+  assert(!poCall, 'no Supabase call attempted for purchase_orders — Purchase Order has not migrated');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); // migrateQteToSupabase() self-marks its own completion — must not leak into later PO tests (recurring self-marking-contamination class)
 });
 
 testAsync('savePO — Cloud Data configured and Purchase Order migrated: create calls insert with no client-generated id and resets po.id to the real one; update calls update().eq(); local-only behavior unchanged when not migrated', async function() {
@@ -1362,13 +1561,12 @@ testAsync('qteToPoConvert — Cloud Data configured and Purchase Order migrated:
   assertEqual(ctx.DB.qt[0].linkedPOIds.length, 1, 'q.linkedPOIds still updated locally');
 });
 
-testAsync('saveInv — FPM-funded-deposit auto-recovery pushes the touched Purchase Order via persistPOChange when Purchase Order has already migrated', async function() {
+testAsync('saveInv — FPM-funded-deposit auto-recovery pushes the touched Purchase Order via persistPOChange when Purchase Order has already migrated (spec-gate B5 fix: setupInvForm() so vInv() actually validates)', async function() {
   resetDB();
   ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
   ctx.DB.po.push({ id: 'p1', num: 'PO-0001', supId: 's1', status: 'Draft', lineItems: [], fpmFunded: 500, fpmRecovered: false });
-  ctx.DB.inv.push({ id: 'inv1', num: 'INV10001', pos: ['p1'], lineItems: [], calc_grandTotal: 0 });
-  ['if-n','if-b','if-ba','if-st','if-dst','if-cid','if-dt','if-ex','if-sd','if-ft','if-wt','if-cbm','if-pk','if-pol','if-pod','if-coo','if-inco','if-cur','if-lf','if-ins','if-leg','if-isp','if-oth','if-dep','if-pt','if-terms'].forEach(function(id){ mockEl(id); });
-  mockEl('if-n').value = 'INV10001'; mockEl('if-cur').value = 'USD';
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV10001', pos: ['p1'], lineItems: [], calc_grandTotal: '1000', status: 'Sent' });
+  setupInvForm('INV10001');
   mockEl('inv-sm').value = 'Paid';
   ctx.EI.i = 'inv1';
   ctx.cIL = [];
@@ -1381,17 +1579,38 @@ testAsync('saveInv — FPM-funded-deposit auto-recovery pushes the touched Purch
   ctx.localStorage.removeItem('st_po_cloud_migration_ts');
 });
 
-test('pullAll — drops \'po\' from its business-key-matched pull once its own Cloud Data migration marker is set, independently of every other entity\'s exclusion', function() {
+testAsync('savePayment — FPM-funded-deposit auto-recovery pushes the touched Purchase Order via persistPOChange when Purchase Order has already migrated (spec-gate B6 fix: Site 2, inside savePayment() itself, distinct from saveInv()\'s Site 1)', async function() {
+  resetDB();
   ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
-  ctx._sb = mockSb({});
-  var _pulledCalled = false;
-  var origPulled = ctx.pulled;
-  ctx.pulled = function(entity){ if (entity === 'po') _pulledCalled = true; return origPulled ? origPulled(entity) : Promise.resolve({ status: 'ok', records: [] }); };
-  ctx.pullAll().catch(function(){});
-  ctx.pulled = origPulled;
+  ctx.DB.po.push({ id: 'p1', num: 'PO-0001', supId: 's1', status: 'Draft', lineItems: [], fpmFunded: 500, fpmRecovered: false });
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV10001', status: 'Sent', cur: 'USD', dep: 0, lineItems: [{ qty: 1, up: 1000 }], calc_grandTotal: '1000', pos: ['p1'] });
+  var sb = mockSb({ purchase_orders: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.savePayment({ id: 'pay-po6-1', invId: 'inv1', invNum: 'INV10001', amount: 1000, date: '2026-01-01', method: 'Bank Transfer' });
+  var updateCall = sb._calls.find(function(c){ return c.table === 'purchase_orders' && c.op === 'update'; });
+  assert(updateCall, "the FPM-recovered Purchase Order was pushed to Supabase via persistPOChange from savePayment()'s own FPM-recovery site");
+  assertEqual(updateCall.row.fpm_recovered, true, 'fpm_recovered pushed as true');
   ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('pullAll — drops \'po\' from the batched pull_all request once its own Cloud Data migration marker is set, independently of every other entity\'s exclusion (spec-gate B9 fix: real _fetchCallLog/SS.url pattern, not the vacuous ctx.pulled mock)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+  ctx._sb = mockSb({});
+
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assert(_fetchCallLog[0].entities.indexOf('po') >= 0, 'po still requested — its own migration marker is not set yet');
+
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assertEqual(_fetchCallLog[0].entities.indexOf('po'), -1, 'po excluded from the batched request once its own migration marker is set');
+
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+  ctx.SS.url = '';
   ctx._sb = null;
-  assert(!_pulledCalled, 'pulled(\'po\') never called once the migration marker is set');
 });
 
 test('cleanupExpiredMigrationArchive — Purchase Order archive expires independently of every other entity', function() {
