@@ -72,9 +72,9 @@ Opening a Supplier's record shows a **Price History** panel aggregating every pr
 
 Buyer records hold contact details, currency, payment terms, and a credit limit. The credit limit is display-only today — it's shown for reference but doesn't block invoice creation if exceeded. See **Cloud Data** below — if it's configured, the same shared-record behavior applies to Buyers as to Suppliers.
 
-## Cloud Data (Supplier & Buyer, Line Item, Contact, Order Request, Quote)
+## Cloud Data (Supplier & Buyer, Line Item, Contact, Order Request, Quote, Purchase Order)
 
-By default, all your data lives only in your own browser. **Cloud Data** (Settings → Cloud Data) is an optional feature that connects a shared Supabase database, so a colleague on a different device or browser can see the exact same records as you. It is not a single on/off switch — Supplier & Buyer, Line Item, Contact, Order Request, and Quote each migrate independently, on their own schedule, via their own "Migrate ... to Cloud" button in the same settings area. Purchase Order is not yet Cloud-Data-eligible and always stays local, along with every other entity (Invoices, Shipments, Payments, etc.) regardless of what has migrated.
+By default, all your data lives only in your own browser. **Cloud Data** (Settings → Cloud Data) is an optional feature that connects a shared Supabase database, so a colleague on a different device or browser can see the exact same records as you. It is not a single on/off switch — Supplier & Buyer, Line Item, Contact, Order Request, Quote, and Purchase Order each migrate independently, on their own schedule, via their own "Migrate ... to Cloud" button in the same settings area (Purchase Order requires Suppliers to have migrated first, since every Purchase Order requires a Supplier link). Invoices, Shipments, Payments, and Credit Notes are not yet Cloud-Data-eligible and always stay local, regardless of what has migrated.
 
 Once Cloud Data is configured (a Supabase URL/key entered once, shared by all entities):
 - The first time you load the app, you'll be asked to sign in (an email/password created specifically for this — separate from anything else in the app).
