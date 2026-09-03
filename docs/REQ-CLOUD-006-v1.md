@@ -1,6 +1,6 @@
 # REQ-CLOUD-006 (Phase 3, sub-phase 1 of 3) — Extend Cloud Data to Invoice and Credit Note
 
-**Status:** v1 — drafted. Requirements-gate round 1: CONDITIONAL PASS (3 blocking, 4 advisory), fixed. See §8.
+**Status:** v1 — drafted. Requirements-gate round 1: CONDITIONAL PASS (3 blocking, 4 advisory), fixed. Round 2: CONDITIONAL PASS (1 blocking — round 1's own CSV-import fix still overstated a nonexistent precedent; 1 advisory — a mutation-site count off-by-one; 1 candidate finding investigated and found to be a false positive), fixed. See §8.
 **Scope:** Phase 3 sub-phase 1 of 3 of the cross-platform backend migration's fulfillment/financial step (`docs/architecture-data-model-v1.md` §8, point 5), following REQ/SPEC-CLOUD-001 through 005's already-proven mechanism. Sub-phase 2 (Shipment) and sub-phase 3 (Buyer Payment, Supplier Payment) are separate, later REQs — deliberately sequenced last since they are the exact ledgers `REQ-INTEG-002` (2c/2d) is actively reshaping; see §0.
 **Build baseline:** `main` @ `c4242e2`, 803/803 tests passing (includes `REQ-LI-001`, shipped since this REQ's check-first pass began; unrelated to Invoice/Cloud Data, no re-verification needed against it).
 
@@ -28,7 +28,7 @@ Credit Notes can be created two ways, and they produce genuinely different shape
 
 Neither asymmetry (the format-check gap, the shape divergence) blocks this migration — both paths already write into the one array this REQ migrates as a whole — but the migration's pre-flight duplicate-number scan (§2, REQ-CLOUD-006c) must scan the *whole* `DB.inv` array regardless of `type`, matching what `vInv()`'s/`saveCN()`'s own checks already do, and the fixed asymmetry itself is logged, not fixed, as `CN-GAP-001` (§3).
 
-### 1.3 Every `DB.inv` mutation site (24 found; the most of any entity in this series)
+### 1.3 Every `DB.inv` mutation site (23 found; the most of any entity in this series)
 
 | Site | Lines | Local-only today? | Needs Cloud Data branch |
 |---|---|---|---|
@@ -40,8 +40,8 @@ Neither asymmetry (the format-check gap, the shape divergence) blocks this migra
 | `saveCN()` | `9995-10048` | create/update, also mutates a *different* invoice's `calc_balanceDue` in place (`10032-10044`) | ✓ own create-or-update branch, plus `persistInvChange()` for the side-mutated invoice |
 | `savePayment()` | `13039-13057` | mutates `dep`/`status`/`updAt` | ✓ via `persistInvChange()` |
 | `deletePayment(id)` | `13091-13110`ish | mutates `dep` (never re-derives `status` — pre-existing, unrelated to this REQ; see `REQ-INTEG-002-2c` §1.3) | ✓ via `persistInvChange()` |
-| `processImport()` CSV, `entity==='inv'` | `9246-9294` | create/update | out of scope — deferred, logged as `CLOUD-GAP-003` (corrected, §2 REQ-CLOUD-006l — no PO precedent for CSV Cloud Data support actually exists) |
-| `processImportRecords()`, `entity==='inv'` | `9567-9632` | create/update, independently-coded duplicate of the above | out of scope — same, second `CLOUD-GAP-003` instance |
+| `processImport()` CSV, `entity==='inv'` | `9246-9294` | create/update | out of scope — deferred, to be logged as a new `CLOUD-GAP-003` instance at ship time (corrected, §2 REQ-CLOUD-006l — no PO precedent for CSV Cloud Data support, or even for PO's own instance actually being logged, exists) |
+| `processImportRecords()`, `entity==='inv'` | `9567-9632` | create/update, independently-coded duplicate of the above | out of scope — same, second new `CLOUD-GAP-003` instance |
 | `pullAll()` Invoice block | `4523-4542` | unconditional merge, **no Cloud Data exclusion gate exists today** | ✓ new gate (§2, REQ-CLOUD-006i) |
 | `pullAll()` Credit Note block | `4544-4564` | unconditional merge, same gap | ✓ same gate |
 | `migrateSuppliersBuyersToSupabase()` | `5918-5928` | sweeps `inv.buyerId`, local-only | ✓ retrofit: also push touched Invoice if migrated |
@@ -128,7 +128,7 @@ Every outward reference except the self-referential one already has a real Supab
 
 **REQ-CLOUD-006k — Settings → Cloud Data UI card** for Invoice/Credit Note, matching the existing per-entity card pattern (migrate button, restore-from-archive button, 30-day archive/rollback).
 
-**REQ-CLOUD-006l — CSV import stays local-only, deferred (corrected — requirements-gate round 1 found the cited precedent doesn't exist).** An earlier draft of this REQ claimed `processImport()`/`processImportRecords()`'s `'inv'` branches would gain a Cloud Data path "mirroring how PO's own CSV import was handled in `REQ-CLOUD-005`" — but PO's own CSV import was never given Cloud Data handling at all: `docs/REQ-CLOUD-005-v1.md` §3 explicitly put it out of scope and logged both of PO's CSV branches under `CLOUD-GAP-003`, and neither contains any `_sb` reference today (confirmed live, `processImport()`'s `'po'` branch and `processImportRecords()`'s `'po'` branch). This REQ follows the same established precedent rather than inventing a new one: `processImport()`'s and `processImportRecords()`'s `'inv'` branches (`9246-9294`, `9567-9632`) stay local-only, unchanged, and are logged as two more instances of `CLOUD-GAP-003`'s exact defect class at ship time (§3) — not built here, matching the decision already made for every other entity's CSV import path in this series.
+**REQ-CLOUD-006l — CSV import stays local-only, deferred (corrected — requirements-gate round 1 found the cited precedent doesn't exist; round 2 found the corrected version still overstated it).** An earlier draft of this REQ claimed `processImport()`/`processImportRecords()`'s `'inv'` branches would gain a Cloud Data path "mirroring how PO's own CSV import was handled in `REQ-CLOUD-005`" — but PO's own CSV import was never given Cloud Data handling at all: `docs/REQ-CLOUD-005-v1.md` §3 explicitly put it out of scope. Round 1's fix corrected this to "logged both of PO's CSV branches under `CLOUD-GAP-003`" — **but that is also inaccurate**: `docs/known-gaps.md`'s actual `CLOUD-GAP-003` entry is titled "`processImport()`'s CSV import branches bypass Cloud Data for Supplier, Line Item, and Contact" and its own **Area** line names only `'sup'`/`'li'`/`'co'`/`'ord'`-Contact — Purchase Order is not mentioned anywhere in `known-gaps.md` under any gap number. `REQ-CLOUD-005-v1.md` §3 only *committed to* logging PO's CSV bypass under `CLOUD-GAP-003` at ship time; its own §7 ship-time checklist never actually did so, and it was never entered. `processImport()`'s and `processImportRecords()`'s `'inv'` branches (`9246-9294`, `9567-9632`) stay local-only, unchanged, matching the *actual* (not the falsely-cited) precedent — every entity's CSV import path in this series is local-only until each gets its own dedicated fix. At ship time (§7), this REQ's own `known-gaps.md` update both adds the two new Invoice/CN instances **and** the still-missing Purchase Order instance to `CLOUD-GAP-003`, broadening its title/scope to cover all four entity families (Supplier/Line Item/Contact/Purchase-Order) rather than compounding the same "committed to log, never logged" gap a second time.
 
 ---
 
@@ -138,7 +138,7 @@ Every outward reference except the self-referential one already has a real Supab
 - **`CN-GAP-001`** (new, logged from §1.2): `saveCN()`'s dedicated modal enforces no number-format regex, unlike `saveInv()`'s CN sub-mode — a pre-existing validation asymmetry between the two CN creation paths, unrelated to Cloud Data, not fixed here.
 - **`INV-GAP-002`** (new, logged from §1.6): `delInv()` leaves `PO.invId/invNum`, other CNs' `linkedInvId`, and `DB.payments[].invId` dangling on delete, and CN create/edit never calls `logEv()` while `delInv()` mislabels a CN deletion as an "Invoice" in the log — four related, pre-existing gaps, none created by this REQ, large enough to warrant a dedicated future REQ rather than folding into a migration REQ.
 - **`CLOUD-GAP-002`** (push-side sync has no Cloud-Data exclusion for any entity) — pre-existing, unaffected by this REQ, same as every prior sub-phase.
-- **CSV import Cloud Data support for Invoice/Credit Note** (corrected, requirements-gate round 1 — §2 REQ-CLOUD-006l): both `processImport()`'s and `processImportRecords()`'s `'inv'` branches stay local-only, matching the identical decision already made for Purchase Order's own CSV import — logged as two new instances of `CLOUD-GAP-003`, not built here.
+- **CSV import Cloud Data support for Invoice/Credit Note** (corrected, requirements-gate rounds 1-2 — §2 REQ-CLOUD-006l): both `processImport()`'s and `processImportRecords()`'s `'inv'` branches stay local-only, matching the same local-only status Purchase Order's own CSV import already has (never fixed, and — contrary to an earlier draft's claim — never actually logged either) — this REQ's own ship-time `known-gaps.md` update (§7) newly logs both the two Invoice/CN instances and the still-missing Purchase Order instance under `CLOUD-GAP-003`, not built here.
 - **Correcting `docs/architecture-data-model-v1.md`'s stale "wrong Sheets tab" claim** (§1.1) — a documentation fix, tracked in §7, not a code change.
 - **Any change to `REQ-INTEG-002-2c`'s `getInvPayments()` matching logic** — this REQ only rewrites `DB.payments[].invId` *values*; it does not touch the matching function itself (§0).
 - **The `v3.0.0` multi-tenant rebuild** (`docs/v3-architect-handoff.md`) — a separate, unscoped future initiative; this REQ's schema is expected to need redesign for tenant isolation later, an accepted tradeoff already priced into every prior Cloud Data sub-phase (§0).
@@ -178,7 +178,7 @@ Standard pipeline: this REQ → independent requirements-gate review (Agent) →
 ## 7. Tracker updates (at ship time)
 
 - `docs/requirements-tracker.md` — new `REQ-CLOUD-006` row.
-- `docs/known-gaps.md` — new `CN-GAP-001` and `INV-GAP-002` entries (§3); two new instances logged under existing `CLOUD-GAP-003` (Invoice CSV import, both branches, corrected per §2 REQ-CLOUD-006l); correct §6.6's now-stale "wrong Sheets tab" claim in `docs/architecture-data-model-v1.md` to reflect §1.1's finding.
+- `docs/known-gaps.md` — new `CN-GAP-001` and `INV-GAP-002` entries (§3); `CLOUD-GAP-003` updated to add the two new Invoice/CN CSV-import instances *and* the still-missing Purchase Order instance (corrected per §2 REQ-CLOUD-006l, requirements-gate round 2 — `REQ-CLOUD-005` committed to logging PO's instance but never actually did), broadening its title/Area line to cover all four entity families; correct §6.6's now-stale "wrong Sheets tab" claim in `docs/architecture-data-model-v1.md` to reflect §1.1's finding.
 - `docs/version-history.md`/`STACKD_CONTEXT.md`/`CLAUDE.md` — version bump, test count, a note on Invoice/CN joining Cloud Data and the four-entity precondition.
 - `docs/user-guide.md` — Settings → Cloud Data section updated for the new Invoice/Credit Note card.
 
@@ -198,5 +198,18 @@ Advisory (fixed in place, didn't block the verdict):
 - AC-4's insertion-order clause tests a property the two-pass design guarantees structurally regardless of implementation correctness — left in place since it's not wrong, just non-discriminating; the load-bearing clause (a genuinely dangling `linkedInvId`) was already present.
 - REQ-CLOUD-006k (Settings UI card) has no dedicated AC — matches an identical, pre-existing gap in the already-shipped `REQ-CLOUD-005` (005k also has none), an inherited series pattern rather than new to this REQ; left as-is.
 - The REQ never explicitly stated the AI-assistant dispatch path (`_aiExecTool`, `create_invoice`/`create_credit_note`) needs no Cloud Data handling, despite `REQ-CLOUD-003`'s own round-1 history being burned by exactly this class of gap. Fixed by adding an explicit statement to §1.6, confirming (not assuming) the underlying fact was already fine.
+
+Ready for SPEC, pending independent re-verification in a future round if one is dispatched.
+
+**Round 2: CONDITIONAL PASS — 1 new blocking finding, 1 advisory, fixed in place; 1 candidate finding investigated and rejected as a false positive.** Round 1's consolidated 13-site `persistInvChange()` list (finding b) was independently re-verified site-by-site against the live code and holds up completely — every site's line range, "mutates existing rather than creates" property, and non-duplication was confirmed. The `a` through `l` lettering (with `h` explicitly marked removed/folded into `e`) was confirmed coherent with no dangling references.
+
+New blocking:
+- **Round 1's own CSV-import fix (finding a) replaced one false precedent with another.** Round 1 corrected "mirrors how PO's own CSV import was handled" to "logged both of PO's CSV branches under `CLOUD-GAP-003`" — but `docs/known-gaps.md`'s actual `CLOUD-GAP-003` entry only covers Supplier/Line Item/Contact; Purchase Order is not mentioned in it or under any other gap number. `REQ-CLOUD-005-v1.md` §3 only *committed to* logging PO's instance at ship time; its own §7 checklist never carried that through. Fixed by correcting the claim a second time (this REQ's own local-only decision for Invoice/CN was never in question, only the false "already logged" premise) and by having this REQ's own §7 ship-time update add both the two new Invoice/CN instances *and* the still-missing PO instance to `CLOUD-GAP-003`, closing the gap this REQ's own drafting process surfaced rather than repeating it a third time.
+
+Advisory (fixed in place, didn't block the verdict):
+- §1.3's header claimed "24 found" against a table of 23 rows — corrected to 23.
+
+Investigated and rejected as a false positive:
+- The round-2 review candidate-flagged REQ-CLOUD-006i's line citations (`4510-4511`, `4574`) as off-by-one, proposing `4509-4510`/`4573` instead. Independently re-verified via `grep -n` directly against `index.html`: the existing citations (`4510-4511` for the `_allPullKeys` declaration+filter pair, `4574` for the per-block guard) are exactly correct as originally written — the review's own proposed correction was itself off by one. No change made.
 
 Ready for SPEC, pending independent re-verification in a future round if one is dispatched.
