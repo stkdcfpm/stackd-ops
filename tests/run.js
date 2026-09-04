@@ -4718,6 +4718,343 @@ test('expAll()/doImport() round-trip supPayments (AC-13)', function() {
   assertEqual(ctx.DB.supPayments[0].poId, 'po-8');
 });
 
+// ── REQ-INTEG-002 (2c): Buyer payment tranches ────────────────────────────────
+console.log('\nBuyer payment tranches (REQ-INTEG-002 2c)');
+
+// -- getInvPayments(inv) matching rule (AC-3c) --
+
+test('getInvPayments(inv) — invId resolving to the current invoice wins even when invNum is stale (AC-3c scenario 1)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-1', num: 'INV-2C-1-RENAMED', cur: 'USD', dep: 0, lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-1', invId: 'inv-2c-1', invNum: 'INV-2C-1-OLD', date: '2026-01-01', amount: 500 });
+  var payments = ctx.getInvPayments(ctx.DB.inv[0]);
+  assertEqual(payments.length, 1, 'matched via resolving invId despite a stale invNum');
+});
+
+test('getInvPayments(inv) — dangling/blank invId falls back to invNum (AC-3c scenario 2, round 7)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-2', num: 'INV-2C-2', cur: 'USD', dep: 0, lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-2', invId: 'stale-deleted-id', invNum: 'INV-2C-2', date: '2026-01-01', amount: 250 });
+  var payments = ctx.getInvPayments(ctx.DB.inv[0]);
+  assertEqual(payments.length, 1, 'invId does not resolve to any current invoice — falls back to invNum');
+});
+
+test('getInvPayments(inv) — invId resolves to Invoice A while invNum happens to resolve to a different Invoice B: matched to A only, never B (AC-3c scenario 3, round 8)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-3a', num: 'INV-2C-3A', cur: 'USD', dep: 0, lineItems: [] });
+  ctx.DB.inv.push({ id: 'inv-2c-3b', num: 'INV-2C-3B', cur: 'USD', dep: 0, lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-3', invId: 'inv-2c-3a', invNum: 'INV-2C-3B', date: '2026-01-01', amount: 100 });
+  var invA = ctx.DB.inv[0], invB = ctx.DB.inv[1];
+  assertEqual(ctx.getInvPayments(invA).length, 1, 'matched to A via invId');
+  assertEqual(ctx.getInvPayments(invB).length, 0, 'never also matched to B via the invNum collision');
+});
+
+test('getInvPayments(inv) — invoice renamed, then a different invoice takes the vacated number: payment stays on the original invoice, never reassigned (AC-3c scenario 4, rounds 9-10)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-4a', num: 'INV100-RENAMED', cur: 'USD', dep: 0, lineItems: [] }); // was INV100, renamed away
+  ctx.DB.inv.push({ id: 'inv-2c-4b', num: 'INV100', cur: 'USD', dep: 0, lineItems: [] });          // a different invoice now owns INV100
+  ctx.DB.payments.push({ id: 'pm-2c-4', invId: 'inv-2c-4a', invNum: 'INV100', date: '2026-01-01', amount: 750 });
+  var invA = ctx.DB.inv[0], invB = ctx.DB.inv[1];
+  assertEqual(ctx.getInvPayments(invA).length, 1, 'still counted by A, the invoice its invId actually names');
+  assertEqual(ctx.getInvPayments(invB).length, 0, 'never silently reassigned to B, which merely reused the freed-up number');
+});
+
+test('getInvPayments(inv) — both invId and invNum blank: matches nothing, no crash (round 11)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-5', num: 'INV-2C-5', cur: 'USD', dep: 0, lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-5', invId: '', invNum: '', date: '2026-01-01', amount: 50 });
+  assertEqual(ctx.getInvPayments(ctx.DB.inv[0]).length, 0, 'a payment with both fields blank matches no invoice');
+});
+
+// -- getInvTotalPaidNative(inv) (AC-3, AC-3a, AC-3b) --
+
+test('getInvTotalPaidNative(inv) — same-currency payments sum raw, immune to FX rate mutation (AC-3)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-6', num: 'INV-2C-6', cur: 'USD', dep: 0, lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-6a', invId: 'inv-2c-6', invNum: 'INV-2C-6', date: '2026-01-01', amount: 100, currency: 'USD' });
+  ctx.QR.fxGBPUSD = 0.01; // deliberately wrong — must have zero effect on the same-currency path
+  assertEqual(ctx.getInvTotalPaidNative(ctx.DB.inv[0]), 100, 'exact raw sum, FX untouched');
+});
+
+test('getInvTotalPaidNative(inv) — cross-currency payment converts via ITS OWN locked rate, not live QR (AC-3)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-7', num: 'INV-2C-7', cur: 'USD', dep: 0, lineItems: [] });
+  var ratesUsed = { fxGBPUSD: 1.25, fxGBPRMB: 9.0, fxGBPBBD: 2.5 };
+  ctx.DB.payments.push({ id: 'pm-2c-7a', invId: 'inv-2c-7', invNum: 'INV-2C-7', date: '2026-01-01', amount: 50, currency: 'USD' });
+  ctx.DB.payments.push({ id: 'pm-2c-7b', invId: 'inv-2c-7', invNum: 'INV-2C-7', date: '2026-01-02', amount: 900, currency: 'RMB', rateLock: { gbpEquiv: 100, ratesUsed: ratesUsed } });
+  var expected = 50 + ctx.fromGBPLocked(100, 'USD', ratesUsed);
+  ctx.QR.fxGBPUSD = 999; ctx.QR.fxGBPRMB = 999; // deliberately wrong live rates
+  assertApprox(ctx.getInvTotalPaidNative(ctx.DB.inv[0]), expected, 'cross-currency leg uses the record\'s own locked rates');
+});
+
+test('getInvTotalPaidNative(inv) — legacy record with no currency field defaults to the invoice\'s own currency, not USD (AC-3a, B1)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-8', num: 'INV-2C-8', cur: 'GBP', dep: 0, lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-8', invId: 'inv-2c-8', invNum: 'INV-2C-8', date: '2026-01-01', amount: 1000 }); // no currency field at all
+  assertEqual(ctx.getInvTotalPaidNative(ctx.DB.inv[0]), 1000, 'legacy record read as GBP (inv.cur), summed raw — not defaulted to USD and wrongly pivoted');
+});
+
+test('getInvTotalPaidNative(inv) — EUR invoice never pivots: legacy (no currency) and new (currency=inv.cur) payments both sum raw and agree (AC-3b, AC-2a)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-9', num: 'INV-2C-9', cur: 'EUR', dep: 0, lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-9a', invId: 'inv-2c-9', invNum: 'INV-2C-9', date: '2026-01-01', amount: 300 }); // legacy, no currency
+  ctx.DB.payments.push({ id: 'pm-2c-9b', invId: 'inv-2c-9', invNum: 'INV-2C-9', date: '2026-01-02', amount: 200, currency: 'EUR' }); // new, per AC-2a
+  assertEqual(ctx.getInvTotalPaidNative(ctx.DB.inv[0]), 500, 'both records share the same effective currency (EUR) by construction — raw sum, fromGBPLocked() never reached');
+});
+
+// -- getInvEffectiveDepInfo(inv) (AC-4) --
+
+test('getInvEffectiveDepInfo(inv) — zero payment records falls back to legacy inv.dep (AC-4)', function() {
+  resetDB();
+  var inv = { id: 'inv-2c-10', num: 'INV-2C-10', cur: 'USD', dep: 4200, lineItems: [] };
+  ctx.DB.inv.push(inv);
+  var info = ctx.getInvEffectiveDepInfo(inv);
+  assertEqual(info.value, 4200, 'raw inv.dep returned unchanged');
+  assertEqual(info.source, 'legacy-no-records');
+});
+
+test('getInvEffectiveDepInfo(inv) — unsupported invoice currency (EUR/NGN/GHS) with payment records falls back to legacy inv.dep (AC-4)', function() {
+  resetDB();
+  var inv = { id: 'inv-2c-11', num: 'INV-2C-11', cur: 'NGN', dep: 900, lineItems: [] };
+  ctx.DB.inv.push(inv);
+  ctx.DB.payments.push({ id: 'pm-2c-11', invId: 'inv-2c-11', invNum: 'INV-2C-11', date: '2026-01-01', amount: 100, currency: 'NGN' });
+  var info = ctx.getInvEffectiveDepInfo(inv);
+  assertEqual(info.value, 900, 'legacy inv.dep returned — never a mislabeled/wrongly-pivoted figure');
+  assertEqual(info.source, 'legacy-unsupported-currency');
+});
+
+test('getInvEffectiveDepInfo(inv) — supported currency with payment records reconciles from the ledger (AC-4)', function() {
+  resetDB();
+  var inv = { id: 'inv-2c-12', num: 'INV-2C-12', cur: 'USD', dep: 999, lineItems: [] };
+  ctx.DB.inv.push(inv);
+  ctx.DB.payments.push({ id: 'pm-2c-12', invId: 'inv-2c-12', invNum: 'INV-2C-12', date: '2026-01-01', amount: 250, currency: 'USD' });
+  var info = ctx.getInvEffectiveDepInfo(inv);
+  assertEqual(info.value, 250, 'reconciled ledger total, not the stale raw inv.dep');
+  assertEqual(info.source, 'ledger');
+});
+
+// -- Consumer sites (AC-5) --
+
+test('cInv(inv) — dep resolves via getInvEffectiveDepInfo(), not the old raw currency-blind sum (AC-5)', function() {
+  resetDB();
+  var inv = { id: 'inv-2c-13', num: 'INV-2C-13', cur: 'GBP', dep: 999, lineItems: [{qty:1,up:1000}], taxRate: 0, chargesIncluded: true };
+  ctx.DB.inv.push(inv);
+  ctx.DB.payments.push({ id: 'pm-2c-13', invId: 'inv-2c-13', invNum: 'INV-2C-13', date: '2026-01-01', amount: 250, currency: 'GBP' });
+  assertEqual(ctx.cInv(inv).dep, 250, 'reconciled ledger total, not the stale raw inv.dep');
+});
+
+test('editInv() — dep field displays getInvEffectiveDepInfo(inv).value, not the removed getInvTotalPaid() (AC-5)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-14', num: 'INV-2C-14', buyer: 'Test Buyer', status: 'Draft', type: 'invoice', cur: 'GBP',
+    date: '2026-01-01', dep: 999, taxRate: 0, chargesIncluded: true,
+    lineItems: [{ desc: 'Widget', sku: '', uom: 'pcs', qty: 1, up: 1000 }] });
+  ctx.DB.payments.push({ id: 'pm-2c-14', invId: 'inv-2c-14', invNum: 'INV-2C-14', date: '2026-01-01', amount: 400, currency: 'GBP' });
+  ctx.editInv('inv-2c-14');
+  assertEqual(mockEl('if-dep').value, '400.00', 'dep field shows the reconciled ledger total, not the stale raw inv.dep');
+});
+
+test('renderStatement() — per-invoice Payments column reads getInvEffectiveDepInfo(inv).value (AC-5)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-15', num: 'INV-2C-15', buyer: 'Stmt Buyer', status: 'Sent', type: 'invoice', cur: 'USD',
+    date: '2026-01-01', dep: 0, taxRate: 0, chargesIncluded: true, calc_grandTotal: '1000',
+    lineItems: [{ qty: 1, up: 1000 }] });
+  ctx.DB.payments.push({ id: 'pm-2c-15', invId: 'inv-2c-15', invNum: 'INV-2C-15', date: '2026-01-01', amount: 600, currency: 'USD' });
+  ctx.renderStatement('Stmt Buyer');
+  assertContains(mockEl('stmt-body').innerHTML, '$600', 'statement shows the reconciled ledger total for the invoice\'s Payments column (fmt() is zero-decimal, corrected spec-gate round 1)');
+});
+
+test('saveCN() — linkedInv.calc_balanceDue is computed from getInvEffectiveDepInfo(), not a raw currency-blind sum (AC-5)', function() {
+  resetDB();
+  ctx.DB.inv = [
+    { id: 'inv-2c-16', num: 'INV-2C-16', buyer: 'CN Buyer', status: 'Sent', type: 'invoice', cur: 'USD',
+      calc_grandTotal: '5000', calc_balanceDue: '5000' }
+  ];
+  ctx.DB.payments = [{ id: 'pm-2c-16', invId: 'inv-2c-16', invNum: 'INV-2C-16', date: '2026-01-01', amount: 1000, currency: 'USD' }];
+  mockEl('cnf-n').value = 'CN-2C-16';
+  mockEl('cnf-amount').value = '300';
+  mockEl('cnf-type').value = 'credit_note';
+  mockEl('cnf-linked').value = 'INV-2C-16';
+  mockEl('cnf-b').value = '';
+  mockEl('cnf-cur').value = 'USD';
+  mockEl('cnf-dt').value = '2026-01-01';
+  mockEl('cn-sm').value = 'CN Applied';
+  mockEl('cnf-reason').value = '';
+  mockEl('cnf-nt').value = '';
+  ctx.EI.cn = null;
+  ctx.saveCN();
+  var linkedInv = ctx.DB.inv.find(function(i){ return i.num === 'INV-2C-16'; });
+  assertEqual(linkedInv.calc_balanceDue, '3700.00', 'balanceDue = 5000 - 1000 (ledger, not a raw payments sum) - 300 (credit)');
+});
+
+// -- vPay() / addPaymentFromForm() (AC-1, AC-2, AC-2a) --
+
+test('vPay() blocks without a purpose, mirroring vSupPay() (AC-1)', function() {
+  assertEqual(ctx.vPay('2026-01-01', 100, null, ''), false, 'vPay returns false with no purpose');
+  assertEqual(ctx.vPay('2026-01-01', 100, null, 'Deposit'), true, 'vPay returns true once purpose is set');
+});
+
+test('addPaymentFromForm() blocks the save entirely without a purpose (AC-1)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-17', num: 'INV-2C-17', cur: 'USD', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  mockEl('pm-date').value = '2026-01-01'; mockEl('pm-amount').value = '100'; mockEl('pm-cur').value = 'USD';
+  mockEl('pm-purpose').value = ''; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = ''; mockEl('pm-notes').value = '';
+  ctx.addPaymentFromForm('inv-2c-17');
+  assertEqual(ctx.DB.payments.length, 0, 'vPay() blocks the save — no purpose selected');
+});
+
+test('addPaymentFromForm() creates a record with purpose/currency/rateLock (AC-1, AC-2)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-18', num: 'INV-2C-18', cur: 'GBP', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  mockEl('pm-date').value = '2026-01-01'; mockEl('pm-amount').value = '400'; mockEl('pm-cur').value = 'GBP';
+  mockEl('pm-purpose').value = 'Deposit'; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = 'REF-18'; mockEl('pm-notes').value = '';
+  ctx.addPaymentFromForm('inv-2c-18');
+  assertEqual(ctx.DB.payments.length, 1, 'one record created');
+  var pm = ctx.DB.payments[0];
+  assertEqual(pm.purpose, 'Deposit');
+  assertEqual(pm.currency, 'GBP');
+  assert(!!pm.rateLock, 'rateLock present for a supported-currency payment');
+  assertEqual(pm.rateLock.currency, 'GBP');
+});
+
+test('addPaymentFromForm() on an unsupported-currency invoice (EUR/NGN/GHS): currency forced to inv.cur, no rateLock generated (AC-2a)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-19', num: 'INV-2C-19', cur: 'EUR', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  mockEl('pm-date').value = '2026-01-01'; mockEl('pm-amount').value = '300'; mockEl('pm-cur').value = 'USD'; // even if a stale/disabled value is read
+  mockEl('pm-purpose').value = 'Balance'; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = ''; mockEl('pm-notes').value = '';
+  ctx.addPaymentFromForm('inv-2c-19');
+  var pm = ctx.DB.payments[0];
+  assertEqual(pm.currency, 'EUR', 'currency forced to inv.cur itself, never a substitute from the 4-option list');
+  assert(!pm.rateLock, 'no rateLock generated — nothing to lock a rate for');
+});
+
+test('addPaymentFromForm() legacy-plus-new payment on the same EUR invoice share the identical currency value and reconcile correctly (AC-2a)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-20', num: 'INV-2C-20', cur: 'EUR', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-20-legacy', invId: 'inv-2c-20', invNum: 'INV-2C-20', date: '2026-01-01', amount: 200 }); // legacy, no currency
+  mockEl('pm-date').value = '2026-01-02'; mockEl('pm-amount').value = '150'; mockEl('pm-cur').value = 'USD';
+  mockEl('pm-purpose').value = 'Balance'; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = ''; mockEl('pm-notes').value = '';
+  ctx.addPaymentFromForm('inv-2c-20');
+  var inv = ctx.DB.inv[0];
+  assertEqual(ctx.getInvTotalPaidNative(inv), 350, 'legacy (defaults to inv.cur) and new (forced to inv.cur) payments combine correctly');
+  assertEqual(inv.dep, 350, 'inv.dep reflects the correct combined raw sum after save');
+});
+
+test('savePayment()/deletePayment() on a EUR invoice: raw sum survives a full save-then-delete cycle, never mis-pivoted (AC-3b)', function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  ctx.DB.inv.push({ id: 'inv-2c-21', num: 'INV-2C-21', cur: 'EUR', dep: 0, status: 'Sent', calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-21-legacy', invId: 'inv-2c-21', invNum: 'INV-2C-21', date: '2026-01-01', amount: 400 }); // legacy
+  ctx.savePayment({ id: 'pm-2c-21-new', invId: 'inv-2c-21', invNum: 'INV-2C-21', date: '2026-01-02', amount: 300, currency: 'EUR' });
+  var inv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2c-21'; });
+  assertEqual(inv.dep, 700, 'combined raw sum after save — no mis-pivot');
+  ctx.deletePayment('pm-2c-21-new');
+  assertEqual(inv.dep, 400, 'combined raw sum after delete — still correct, no mis-pivot');
+});
+
+// -- deletePayment() status re-derivation (AC-6) --
+
+test('deletePayment() — Paid invoice reverts to Partially Paid once the recomputed total drops below grand total (AC-6)', function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  ctx.DB.inv.push({ id: 'inv-2c-22', num: 'INV-2C-22', cur: 'USD', dep: 1000, status: 'Paid', calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-22a', invId: 'inv-2c-22', invNum: 'INV-2C-22', date: '2026-01-01', amount: 600, currency: 'USD' });
+  ctx.DB.payments.push({ id: 'pm-2c-22b', invId: 'inv-2c-22', invNum: 'INV-2C-22', date: '2026-01-02', amount: 400, currency: 'USD' });
+  ctx.deletePayment('pm-2c-22b');
+  var inv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2c-22'; });
+  assertEqual(inv.status, 'Partially Paid', 'status re-derives down from Paid');
+  assertEqual(inv.dep, 600, 'dep reflects the remaining payment only');
+});
+
+test('deletePayment() — Paid invoice reverts all the way to Sent once its only payment is deleted (AC-6)', function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  ctx.DB.inv.push({ id: 'inv-2c-23', num: 'INV-2C-23', cur: 'USD', dep: 1000, status: 'Paid', calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-23', invId: 'inv-2c-23', invNum: 'INV-2C-23', date: '2026-01-01', amount: 1000, currency: 'USD' });
+  ctx.deletePayment('pm-2c-23');
+  var inv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2c-23'; });
+  assertEqual(inv.status, 'Sent', 'status reverts to Sent, the last pre-Partially-Paid status in STATUS_ORDER');
+  assertEqual(inv.dep, 0, 'dep reflects zero remaining payments');
+});
+
+test('deletePayment() — Draft/Pro-forma/Cancelled invoice status is left completely untouched (AC-6)', function() {
+  resetDB();
+  ctx.confirm = function(){ return true; };
+  ['Draft', 'Pro-forma', 'Cancelled'].forEach(function(status, i) {
+    var invId = 'inv-2c-24-' + i, pmId = 'pm-2c-24-' + i;
+    ctx.DB.inv.push({ id: invId, num: 'INV-2C-24-' + i, cur: 'USD', dep: 100, status: status, calc_grandTotal: '1000', lineItems: [] });
+    ctx.DB.payments.push({ id: pmId, invId: invId, invNum: 'INV-2C-24-' + i, date: '2026-01-01', amount: 100, currency: 'USD' });
+    ctx.deletePayment(pmId);
+    var inv = ctx.DB.inv.find(function(x){ return x.id === invId; });
+    assertEqual(inv.status, status, 'status ' + status + ' is never auto-derived by this logic');
+  });
+});
+
+// -- renderPaymentsTab() (AC-8, AC-8a) --
+
+test('renderPaymentsTab() — Purpose column always renders; Currency/GBP-equivalent columns hidden when every payment shares the invoice\'s own currency (AC-8)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-25', num: 'INV-2C-25', cur: 'USD', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-25', invId: 'inv-2c-25', invNum: 'INV-2C-25', date: '2026-01-01', amount: 200, currency: 'USD', purpose: 'Deposit' });
+  ctx.renderPaymentsTab('inv-2c-25');
+  var html = mockEl('payments-tab').innerHTML;
+  assertContains(html, '<th>Purpose</th>', 'Purpose column always present');
+  assertNotContains(html, '<th>Currency</th>', 'Currency column hidden — every payment matches the invoice\'s own currency');
+});
+
+test('renderPaymentsTab() — EUR invoice never shows the Currency/GBP-equivalent column pair, even after recording a payment (AC-8)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-26', num: 'INV-2C-26', cur: 'EUR', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-26', invId: 'inv-2c-26', invNum: 'INV-2C-26', date: '2026-01-01', amount: 300, currency: 'EUR', purpose: 'Balance' });
+  ctx.renderPaymentsTab('inv-2c-26');
+  assertNotContains(mockEl('payments-tab').innerHTML, '<th>Currency</th>', 'never shown — every payment\'s resolved currency is inv.cur itself, never differing');
+});
+
+test('renderPaymentsTab() — legacy (no currency/rateLock) row and a genuine cross-currency row coexist on a supported-currency invoice without crashing (AC-8a)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-27', num: 'INV-2C-27', cur: 'USD', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-2c-27-legacy', invId: 'inv-2c-27', invNum: 'INV-2C-27', date: '2026-01-01', amount: 500 }); // legacy: no currency, no rateLock
+  ctx.DB.payments.push({ id: 'pm-2c-27-gbp', invId: 'inv-2c-27', invNum: 'INV-2C-27', date: '2026-01-02', amount: 100, currency: 'GBP',
+    rateLock: { gbpEquiv: 100, ratesUsed: { fxGBPUSD: 1.25, fxGBPRMB: 9.0, fxGBPBBD: 2.5 } } });
+  var result; try { ctx.renderPaymentsTab('inv-2c-27'); result = 'ok'; } catch (e) { result = e.message; }
+  assertEqual(result, 'ok', 'renders without error for a legacy+cross-currency mix');
+  var html = mockEl('payments-tab').innerHTML;
+  assertContains(html, '<th>Currency</th>', 'Currency/GBP columns appear — the GBP row differs from the invoice\'s own currency');
+  assertContains(html, '£100', 'locked rateLock.gbpEquiv shown for the cross-currency row, not a live-recomputed value (fmt() is zero-decimal, corrected spec-gate round 1)');
+});
+
+// -- Exports / AI tool (AC-9) --
+
+test('acctPmtCSV() — Currency column reads pm.currency (fallback inv.cur for a legacy record), gains a Purpose column (AC-9)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-28', num: 'INV-2C-28', cur: 'USD', buyer: 'X' });
+  var csv = ctx.acctPmtCSV([
+    { id: 'pm-a', invId: 'inv-2c-28', date: '2026-01-01', amount: 100, method: 'Bank Transfer', reference: '', notes: '', currency: 'GBP', purpose: 'Deposit' },
+    { id: 'pm-b', invId: 'inv-2c-28', date: '2026-01-02', amount: 50,  method: 'Bank Transfer', reference: '', notes: '' } // legacy, no currency/purpose
+  ]);
+  assertContains(csv, 'Purpose', 'header gains a Purpose column');
+  assertContains(csv, 'GBP', 'a payment-level currency wins over the invoice\'s own (USD)');
+  assertContains(csv, 'Deposit', 'purpose value present');
+});
+
+test('acctFACSV() — Currency column reads pm.currency (fallback inv.cur), gains a Purpose column (AC-9)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-29', num: 'INV-2C-29', cur: 'USD', buyer: 'Y' });
+  var csv = ctx.acctFACSV([
+    { id: 'pm-c', invId: 'inv-2c-29', date: '2026-01-01', amount: 75, method: 'Cash', reference: '', notes: '', currency: 'BBD', purpose: 'Other' }
+  ]);
+  assertContains(csv, 'Purpose', 'header gains a Purpose column');
+  assertContains(csv, 'BBD', 'payment-level currency used');
+});
+
+test('_aiExecTool(\'get_payments\') includes purpose/currency in its per-payment field list (AC-9)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-2c-30', num: 'INV-2C-30', cur: 'USD', buyer: 'Z' });
+  ctx.DB.payments.push({ id: 'pm-2c-30', invId: 'inv-2c-30', invNum: 'INV-2C-30', date: '2026-01-01', amount: 500, method: 'Bank Transfer', currency: 'GBP', purpose: 'Deposit' });
+  var result = JSON.parse(ctx._aiExecTool('get_payments', {}));
+  assertEqual(result[0].purpose, 'Deposit');
+  assertEqual(result[0].currency, 'GBP');
+});
+
 // ── REQ-INTEG-002-2a-fix: Reconcile PO.dep display with the Supplier Payment ledger ──
 
 test('fromGBPLocked() — converts using the passed-in rate table, each supported currency', function() {
@@ -10972,12 +11309,12 @@ test('AC-6: lf-c/lf-p step attribute is 0.001', () => {
 // fmt()'s other 87 call sites to fmtN() (or vice versa) without updating §3's
 // "other 87 call sites" claim (promised by SPEC-LI-001-v1 §4, added per
 // build-gate review finding).
-test('AC-7: fmt() call-count unchanged (87 other call sites + 1 definition); fmtN() has exactly 5 call sites + 1 definition', () => {
+test('AC-7: fmt() call-count reflects REQ-INTEG-002-2c\'s own new, legitimate call site (88 other call sites + 1 definition); fmtN() unaffected, still exactly 5 call sites + 1 definition', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
   const fmtCount  = (html.match(/fmt\(/g)  || []).length;
   const fmtNCount = (html.match(/fmtN\(/g) || []).length;
-  assertEqual(fmtCount, 88, 'fmt( occurs 88 times total (87 call sites + 1 definition)');
-  assertEqual(fmtNCount, 6, 'fmtN( occurs 6 times total (5 call sites + 1 definition)');
+  assertEqual(fmtCount, 89, 'fmt( occurs 89 times total (88 call sites + 1 definition) — up 1 from REQ-LI-001\'s 88, this REQ\'s own new renderPaymentsTab() Currency/GBP-equivalent column');
+  assertEqual(fmtNCount, 6, 'fmtN( occurs 6 times total (5 call sites + 1 definition) — untouched by this REQ');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
