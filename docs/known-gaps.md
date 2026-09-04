@@ -433,6 +433,16 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 ---
 
+### PROC-GAP-003 — NGN/GHS have the identical unlogged FX-conversion gap as EUR (`PROC-GAP-002`)
+
+**Area:** Shared currency-conversion mechanism (`toGBP()`, `fromGBP()`), used by Invoices, Purchase Orders, and both Payment ledgers.
+**Logged:** v2.9.77 (REQ-INTEG-002-2c, found during requirements-gate research into the Invoice currency dropdown's full option list).
+**Detail:** The Invoice currency dropdown (`if-cur`, `index.html:1150`) offers six options — USD/GBP/EUR/BBD/NGN/GHS — but `toGBP()`/`fromGBP()` only have branches for USD/RMB-or-CNY/BBD (identical to `PROC-GAP-002`'s own description for EUR). An NGN or GHS amount passed to either function silently falls through to the final `return n;` — treated as numerically equal to GBP, with no rate applied. This is the same defect class as `PROC-GAP-002`, just against two more currencies that were never previously named in this gap log.
+**Status:** Open — Backlog, not scheduled. Same disposition as `PROC-GAP-002`: REQ-INTEG-002-2c explicitly guards against it rather than fixing it — `pm-cur` (the buyer-payment currency select) never offers NGN/GHS as options, and an NGN/GHS invoice's own payments are forced to carry `inv.cur` itself (never a substitute currency), so the gap is never silently triggered by anything this REQ ships; it is inherited, unfixed, from the pre-existing `toGBP()`/`fromGBP()` mechanism.
+**Note:** Fixing this (like `PROC-GAP-002`) means extending the shared FX mechanism used everywhere — out of scope for a buyer-payments REQ. Revisit alongside `PROC-GAP-002` if/when EUR/NGN/GHS-denominated transactions become operationally significant enough to justify the shared-mechanism change.
+
+---
+
 ### ACCT-GAP-001 — `renderAccts()`'s per-invoice/per-supplier view sums mix currencies without conversion
 
 **Area:** Accounts tab (`renderAccts()`) — per-invoice view's "Sup. Dep. Paid"/"Sup. Bal. Due" columns, and per-supplier view's "Dep. Paid"/"Bal. Due" columns.
