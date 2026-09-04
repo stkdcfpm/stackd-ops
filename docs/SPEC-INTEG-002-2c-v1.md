@@ -1,6 +1,6 @@
 # SPEC-INTEG-002-2c — Buyer payment tranches
 
-**Status:** v1 — drafted, ready for spec-gate review. Implements `docs/REQ-INTEG-002-2c-v1.md` (requirements-gate: 11 rounds, round 11 **PASS**, clean). Structural/depth template: `docs/SPEC-INTEG-002-2b-v4.md` (the immediately-prior sub-phase, explicitly cited by the REQ as its own precedent for the `invId`/`invNum`-preference pattern).
+**Status:** v1. Implements `docs/REQ-INTEG-002-2c-v1.md` (requirements-gate: 11 rounds, round 11 **PASS**, clean). Structural/depth template: `docs/SPEC-INTEG-002-2b-v4.md` (the immediately-prior sub-phase, explicitly cited by the REQ as its own precedent for the `invId`/`invNum`-preference pattern). **Spec-gate round 1: CONDITIONAL PASS — 1 blocking, 2 advisory, fixed in place.** The reviewer actually applied all 12 code diffs and all 31 §13 tests to a scratch worktree and ran the real suite (baseline 775/775 → 775/775 after code diffs alone, zero regressions → 806/806 after fixing the 2 failing tests below). Blocking: 2 of the 31 new tests (`renderStatement()` AC-5, `renderPaymentsTab()` AC-8a) asserted a hardcoded `.toFixed(2)`-style substring (`'600.00'`/`'100.00'`) the pre-existing zero-decimal `fmt()` helper can never produce — fixed to `'$600'`/`'£100'` in §13; confirmed by the reviewer's own experiment that this alone (no code-diff change) yields 806/806. Advisory: §17's test-count self-inconsistency ("29"/"804/804" vs. §13's actual 31 tests) corrected to 31/806/806; the tracker row-append-vs-new-row judgment call (§15) confirmed and settled in the SPEC's favor. Every code diff, all 6 `getInvPayments(inv)` regression scenarios, all citations, and all doc-file diffs were independently verified clean. Ready for implementation.
 **Build baseline:** `claude/integ-002-2c-buyer-payments` @ `e0dcd2c`, 775/775 tests passing. Every code citation in this SPEC was independently re-verified against this exact commit (see the note at the end of each section; no citation drift found — see the "Citation accuracy" summary at the end of this document).
 
 ---
@@ -885,7 +885,7 @@ test('renderStatement() — per-invoice Payments column reads getInvEffectiveDep
     lineItems: [{ qty: 1, up: 1000 }] });
   ctx.DB.payments.push({ id: 'pm-2c-15', invId: 'inv-2c-15', invNum: 'INV-2C-15', date: '2026-01-01', amount: 600, currency: 'USD' });
   ctx.renderStatement('Stmt Buyer');
-  assertContains(mockEl('stmt-body').innerHTML, '600.00', 'statement shows the reconciled ledger total for the invoice\'s Payments column');
+  assertContains(mockEl('stmt-body').innerHTML, '$600', 'statement shows the reconciled ledger total for the invoice\'s Payments column (fmt() is zero-decimal, corrected spec-gate round 1)');
 });
 
 test('saveCN() — linkedInv.calc_balanceDue is computed from getInvEffectiveDepInfo(), not a raw currency-blind sum (AC-5)', function() {
@@ -1044,7 +1044,7 @@ test('renderPaymentsTab() — legacy (no currency/rateLock) row and a genuine cr
   assertEqual(result, 'ok', 'renders without error for a legacy+cross-currency mix');
   var html = mockEl('payments-tab').innerHTML;
   assertContains(html, '<th>Currency</th>', 'Currency/GBP columns appear — the GBP row differs from the invoice\'s own currency');
-  assertContains(html, '100.00', 'locked rateLock.gbpEquiv shown for the cross-currency row, not a live-recomputed value');
+  assertContains(html, '£100', 'locked rateLock.gbpEquiv shown for the cross-currency row, not a live-recomputed value (fmt() is zero-decimal, corrected spec-gate round 1)');
 });
 
 // -- Exports / AI tool (AC-9) --
@@ -1121,7 +1121,7 @@ becomes:
 
 ## 15. `docs/requirements-tracker.md` — tracker update
 
-**Judgment call flagged for spec-gate — a real discrepancy, not a stylistic choice:** REQ §7 literally says *"docs/requirements-tracker.md — new `REQ-INTEG-002 (2c)` row."* But the tracker's own **established, demonstrated practice** for this exact multi-sub-phase initiative is the opposite: sub-phases 2a, its two fix-forwards, and 2b were all appended as new paragraphs inside the **same single row**, `| REQ-INTEG-002 (Sub-phase 2a) | ... |` (`docs/requirements-tracker.md:29`) — its "Build" cell already reads "...**Sub-phase 2b (v2.9.66, REQ-INTEG-002-2b, Invoice→PO enumeration fix):** ..." appended after the 2a/fix/fix-2 narrative, and its "PR" cell already reads "#100 (2a); #102 (fix); #105 (fix-2); #110 (2b)". Creating a brand-new row for 2c would break that established pattern and scatter one initiative's history across multiple rows. **This SPEC follows the demonstrated row-append convention, not the REQ's literal "new row" phrasing** — recommend spec-gate confirm this choice explicitly.
+**Judgment call flagged for spec-gate — a real discrepancy, not a stylistic choice:** REQ §7 literally says *"docs/requirements-tracker.md — new `REQ-INTEG-002 (2c)` row."* But the tracker's own **established, demonstrated practice** for this exact multi-sub-phase initiative is the opposite: sub-phases 2a, its two fix-forwards, and 2b were all appended as new paragraphs inside the **same single row**, `| REQ-INTEG-002 (Sub-phase 2a) | ... |` (`docs/requirements-tracker.md:29`) — its "Build" cell already reads "...**Sub-phase 2b (v2.9.66, REQ-INTEG-002-2b, Invoice→PO enumeration fix):** ..." appended after the 2a/fix/fix-2 narrative, and its "PR" cell already reads "#100 (2a); #102 (fix); #105 (fix-2); #110 (2b)". Creating a brand-new row for 2c would break that established pattern and scatter one initiative's history across multiple rows. **This SPEC follows the demonstrated row-append convention, not the REQ's literal "new row" phrasing — confirmed and accepted at spec-gate round 1**, which independently re-verified the tracker's row-29 structure directly and concluded a new row would fragment one initiative's already-established one-row history against demonstrated practice, while REQ §7's "new row" phrasing reads as generic ship-time guidance rather than a considered override. Settled; not open for build-gate to revisit.
 
 Current (`docs/requirements-tracker.md:29`, only the tail of the Build/PR cells is shown — the full row is one very long line):
 ```
@@ -1173,7 +1173,7 @@ becomes:
 **Current version: v[NEXT]**  
 **Test count: [775+N]/[775+N] PASS** (`node tests/run.js`)
 ```
-where `N` is the actual number of new tests once the SPEC's test list (§13) is applied and any spec-gate/build-gate corrections are folded in — this SPEC's own draft test list (§13) contains 29 new tests, so `N=29`/`804/804` if applied verbatim, but per this repo's own established practice this figure is finalized only once the real suite is run (never asserted in a SPEC without having executed it).
+where `N` is the actual number of new tests once the SPEC's test list (§13) is applied and any spec-gate/build-gate corrections are folded in — this SPEC's own test list (§13) contains 31 new tests. Spec-gate round 1 applied all 12 code diffs and all 31 tests verbatim against the real suite (baseline 775/775): 2 of the 31 failed on a hardcoded `.toFixed(2)`-style expected substring that the pre-existing zero-decimal `fmt()` helper can never produce (fixed in place in §13, see the Status line); with those two one-line assertion fixes applied, `N=31`/`806/806`, confirmed by actually running the suite, not asserted from the SPEC alone.
 
 `STACKD_CONTEXT.md`'s "Version history" section header (`STACKD_CONTEXT.md:148`, `## Version history (v2.9.32 → v2.9.76 — everything shipped since this file was last updated)`) and its per-version table also need a new row mirroring the `v2.9.76` row's own shape (`STACKD_CONTEXT.md:152` area) — left as a ship-time prose task per this file's own stated update discipline ("Updated by Claude Code on every version delivery"), not spelled out here to avoid duplicating the version-history.md content twice.
 
