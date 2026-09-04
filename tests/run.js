@@ -11100,6 +11100,223 @@ test('processImportRecords() — record-based import update preserves approval/l
   assertEqual(inv.linkedQuoteNum, 'QT-1');
 });
 
+// ── REQ/SPEC-LI-001 — Line Item unit cost/price 3-decimal precision ──
+console.log('\nREQ/SPEC-LI-001 — Line Item 3-decimal cost/price precision');
+
+// AC-1: lf-c/lf-p accept up to 3 decimals, still reject a 4th, on both the
+// submit path (vLI()/saveLI()) and the on-blur path (vBlurCurrency).
+test('AC-1: lf-c accepts a 3-decimal unit cost', () => {
+  resetDB();
+  ctx.DB.sup = [{ id: 'sup-li1', name: 'LI Supplier' }];
+  ctx.EI.l = null;
+  mockEl('lf-s').value = 'SKU-3DP'; mockEl('lf-d').value = 'Widget'; mockEl('lf-sp').value = '';
+  mockEl('lf-hs').value = ''; mockEl('lf-sup').value = 'sup-li1'; mockEl('lf-u').value = 'pcs';
+  mockEl('lf-c').value = '0.125'; mockEl('lf-p').value = '0.20'; mockEl('lf-cur').value = 'USD'; mockEl('lf-nt').value = '';
+
+  ctx.saveLI();
+
+  assertEqual(ctx.DB.li.length, 1, 'line item saved with a 3-decimal cost');
+  assertEqual(ctx.DB.li[0].cost, 0.125, 'cost stored at full 3-decimal precision');
+  ctx.vBlurCurrency('lf-c', 'Unit cost', ctx.RX.currency3, '3');
+  assertEqual(mockEl('lf-c').style.borderBottomColor, 'var(--gn)', 'on-blur: 3-decimal cost does not error');
+});
+
+test('AC-1: lf-c rejects a 4-decimal unit cost', () => {
+  resetDB();
+  ctx.DB.sup = [{ id: 'sup-li2', name: 'LI Supplier' }];
+  ctx.EI.l = null;
+  mockEl('lf-s').value = 'SKU-4DR'; mockEl('lf-d').value = 'Widget'; mockEl('lf-sp').value = '';
+  mockEl('lf-hs').value = ''; mockEl('lf-sup').value = 'sup-li2'; mockEl('lf-u').value = 'pcs';
+  mockEl('lf-c').value = '0.1255'; mockEl('lf-p').value = '0.20'; mockEl('lf-cur').value = 'USD'; mockEl('lf-nt').value = '';
+
+  ctx.saveLI();
+
+  assertEqual(ctx.DB.li.length, 0, 'save blocked — 4-decimal cost rejected');
+  assertContains(mockEl('ve-lf-c').textContent, 'at most 3 decimal places', 'submit error names the new 3-decimal cap');
+  ctx.vBlurCurrency('lf-c', 'Unit cost', ctx.RX.currency3, '3');
+  assertEqual(mockEl('lf-c').style.borderBottomColor, '#f87171', 'on-blur: 4-decimal cost still errors');
+});
+
+test('AC-1: lf-p accepts a 3-decimal unit price', () => {
+  resetDB();
+  ctx.DB.sup = [{ id: 'sup-li3', name: 'LI Supplier' }];
+  ctx.EI.l = null;
+  mockEl('lf-s').value = 'SKU-3DP2'; mockEl('lf-d').value = 'Widget'; mockEl('lf-sp').value = '';
+  mockEl('lf-hs').value = ''; mockEl('lf-sup').value = 'sup-li3'; mockEl('lf-u').value = 'pcs';
+  mockEl('lf-c').value = '0.10'; mockEl('lf-p').value = '0.125'; mockEl('lf-cur').value = 'USD'; mockEl('lf-nt').value = '';
+
+  ctx.saveLI();
+
+  assertEqual(ctx.DB.li.length, 1, 'line item saved with a 3-decimal price');
+  assertEqual(ctx.DB.li[0].price, 0.125, 'price stored at full 3-decimal precision');
+  ctx.vBlurCurrency('lf-p', 'Unit price', ctx.RX.currency3, '3');
+  assertEqual(mockEl('lf-p').style.borderBottomColor, 'var(--gn)', 'on-blur: 3-decimal price does not error');
+});
+
+test('AC-1: lf-p rejects a 4-decimal unit price', () => {
+  resetDB();
+  ctx.DB.sup = [{ id: 'sup-li4', name: 'LI Supplier' }];
+  ctx.EI.l = null;
+  mockEl('lf-s').value = 'SKU-4DR2'; mockEl('lf-d').value = 'Widget'; mockEl('lf-sp').value = '';
+  mockEl('lf-hs').value = ''; mockEl('lf-sup').value = 'sup-li4'; mockEl('lf-u').value = 'pcs';
+  mockEl('lf-c').value = '0.10'; mockEl('lf-p').value = '0.1255'; mockEl('lf-cur').value = 'USD'; mockEl('lf-nt').value = '';
+
+  ctx.saveLI();
+
+  assertEqual(ctx.DB.li.length, 0, 'save blocked — 4-decimal price rejected');
+  assertContains(mockEl('ve-lf-p').textContent, 'at most 3 decimal places', 'submit error names the new 3-decimal cap');
+  ctx.vBlurCurrency('lf-p', 'Unit price', ctx.RX.currency3, '3');
+  assertEqual(mockEl('lf-p').style.borderBottomColor, '#f87171', 'on-blur: 4-decimal price still errors');
+});
+
+// AC-2: every other field sharing RX.currency still rejects a 3-decimal
+// value — regression proof that RX.currency itself was left untouched.
+['if-dep', 'if-lf', 'if-ins', 'if-leg', 'if-isp', 'if-oth', 'pf-dep', 'pf-fpm', 'pf-oth'].forEach(function(field) {
+  test('AC-2: ' + field + ' still rejects a 3-decimal value (RX.currency untouched)', () => {
+    mockEl(field).value = '10.125';
+    ctx.vBlurCurrency(field, 'Amount');
+    assertEqual(mockEl(field).style.borderBottomColor, '#f87171', field + ' still capped at 2 decimals');
+    mockEl(field).value = ''; // mockElements is module-level and never reset between tests —
+                              // restore to blank so later tests (e.g. savePO/vInv) that assume
+                              // this field starts empty aren't broken by this test's leftover value
+  });
+});
+
+test('AC-2: pm-amount (vPay) still rejects a 3-decimal value', () => {
+  const ok = ctx.vPay('2026-01-01', 10.125, 'inv-x');
+  assertEqual(ok, false, 'vPay rejects a 3-decimal payment amount');
+});
+
+test('AC-2: spm-amount (vSupPay) still rejects a 3-decimal value', () => {
+  const ok = ctx.vSupPay('2026-01-01', 10.125, 'Deposit');
+  assertEqual(ok, false, 'vSupPay rejects a 3-decimal payment amount');
+});
+
+// AC-3: the 5 fmt()→fmtN() display sites show 3-decimal cost/price.
+test('AC-3: Line Items Library main table shows 3-decimal cost', () => {
+  resetDB();
+  ctx.DB.li = [{ id: 'li-d1', desc: 'Precision Item', cost: 0.125, price: 0.20, cur: 'USD', uom: 'pcs' }];
+  ctx.rLI();
+  assertContains(mockEl('li-tb').innerHTML, 'USD 0.125', 'main table cost column shows 3 decimals');
+});
+
+test('AC-3: Line Items Library main table shows 3-decimal price', () => {
+  resetDB();
+  ctx.DB.li = [{ id: 'li-d2', desc: 'Precision Item', cost: 0.10, price: 0.125, cur: 'USD', uom: 'pcs' }];
+  ctx.rLI();
+  assertContains(mockEl('li-tb').innerHTML, 'USD 0.125', 'main table price column shows 3 decimals');
+});
+
+test('AC-3: price-history sub-table shows 3-decimal cost', () => {
+  resetDB();
+  ctx.DB.li = [{ id: 'li-d3', desc: 'Precision Item', cost: 0.10, price: 0.20, cur: 'USD', uom: 'pcs',
+    priceHistory: [{ date: '2026-01-01', cost: 0.125, price: 0.20, invoiceRef: '', notes: '' }] }];
+  ctx.rLI();
+  assertContains(mockEl('li-tb').innerHTML, 'USD 0.125', 'price-history sub-table cost shows 3 decimals');
+});
+
+test('AC-3: price-history sub-table shows 3-decimal price', () => {
+  resetDB();
+  ctx.DB.li = [{ id: 'li-d4', desc: 'Precision Item', cost: 0.10, price: 0.20, cur: 'USD', uom: 'pcs',
+    priceHistory: [{ date: '2026-01-01', cost: 0.10, price: 0.125, invoiceRef: '', notes: '' }] }];
+  ctx.rLI();
+  assertContains(mockEl('li-tb').innerHTML, 'USD 0.125', 'price-history sub-table price shows 3 decimals');
+});
+
+test('AC-3: "Import from Library" picker shows 3-decimal price', () => {
+  resetDB();
+  ctx.DB.li = [{ id: 'li-d5', desc: 'Precision Item', cost: 0.10, price: 0.125, cur: 'USD', uom: 'pcs', supId: '' }];
+  ctx.cIL = [];
+  ctx.openPicker();
+  assertContains(mockEl('pick-list').innerHTML, 'USD 0.125', 'picker subtitle shows 3-decimal price');
+});
+
+// AC-4: the 5 fn(...,3) display sites show 3-decimal cost/price.
+test('AC-4: Invoice PDF line-item table shows 3-decimal unit price', () => {
+  const getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevInvDoc({ num: 'INV-3DP', cur: 'USD', taxRate: 0, lineItems: [
+    { rid: 'r1', lid: '', desc: 'Precision Item', uom: 'pcs', qty: 1, up: 0.125 }
+  ]});
+  assertContains(getHtml(), '0.125', 'Invoice PDF shows 3-decimal unit price');
+});
+
+test('AC-4: PO PDF line-item table shows 3-decimal unit cost', () => {
+  const getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevPODoc({ num: 'PO-3DP', cur: 'USD', lineItems: [
+    { rid: 'r1', lid: '', sku: 'SKU1', desc: 'Precision Item', uom: 'each', qty: 1, cost: 0.125 }
+  ]});
+  assertContains(getHtml(), '0.125', 'PO PDF shows 3-decimal unit cost');
+});
+
+test('AC-4: Quote PDF line-item table shows 3-decimal cost', () => {
+  const getHtml = makePreviewMock();
+  resetDB();
+  ctx.prevQteDoc({ num: 'QT-3DP', client: 'Test Client', freightMode: 'LCL', dt: '2026-05-06', markup: 15,
+    lines: [{ rid: 'r1', supId: '', desc: 'Precision Item', qty: 1, uom: 'pcs', cost: 0.125, cbm: 0.1, dg: false, dutyPct: 0 }]
+  });
+  assertContains(getHtml(), '0.125', 'Quote PDF shows 3-decimal cost (not rounded to 2 by the fn(...,0) falsy-zero bug)');
+});
+
+test('AC-4: Quote line version-history panel shows 3-decimal cost', () => {
+  resetDB();
+  ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Precision Item', qty: 1, uom: 'pcs', cost: 0.125, cbm: 0.1, dg: false, dutyPct: 0,
+    priceHistory: [{ v: 1, ts: '2026-01-01T00:00:00.000Z', cost: 0.125, dutyPct: 0, markup: 0, landed: 0, sellPrice: 0, note: '' }] }];
+  ctx.renderQteLineHistory('r1');
+  assertContains(mockEl('ql-hist-r1').innerHTML, '0.125', 'version-history panel shows 3-decimal cost');
+});
+
+test('AC-4: Supplier Price History table shows 3-decimal price', () => {
+  resetDB();
+  ctx.EI.s = 'sup-ph1';
+  // getSupplierPriceHistory() maps a line-item-sourced point's displayed "price" from
+  // h.cost, not h.price (index.html:5391-5395) — this table shows what the supplier was
+  // paid, i.e. the buyer-side cost, so the 3-decimal value under test belongs on `cost`.
+  ctx.DB.li = [{ id: 'li-ph1', desc: 'Precision Item', supId: 'sup-ph1', cur: 'USD',
+    priceHistory: [{ date: '2026-01-01', cost: 0.125, price: 0.20, invoiceRef: '', notes: '' }] }];
+  ctx.renderSupPriceHistory();
+  assertContains(mockEl('sup-price-list').innerHTML, '0.125', 'Supplier Price History shows 3-decimal price');
+  ctx.EI.s = null;
+});
+
+// AC-5: added precision produces a materially more accurate margin %.
+test('AC-5: 3-decimal cost/price produces a materially different margin than 2-decimal-rounded values', () => {
+  mockEl('lf-c').value = '0.125'; mockEl('lf-p').value = '0.15'; mockEl('lf-cur').value = 'USD';
+  ctx.liMgn();
+  const preciseMargin = mockEl('lmp').textContent;
+
+  mockEl('lf-c').value = '0.13'; mockEl('lf-p').value = '0.15'; mockEl('lf-cur').value = 'USD'; // 0.125 rounded to 2dp
+  ctx.liMgn();
+  const roundedMargin = mockEl('lmp').textContent;
+  mockEl('lf-c').value = ''; mockEl('lf-p').value = ''; mockEl('lf-cur').value = ''; // mockElements is module-level
+    // and never reset between tests — restore to blank so a later-running testAsync() test that
+    // assumes these fields start empty isn't broken by this test's leftover values (build-gate finding)
+
+  assertEqual(preciseMargin, '16.7%', 'margin computed from full 3-decimal cost');
+  assertEqual(roundedMargin, '13.3%', 'margin computed from 2-decimal-rounded cost differs materially');
+});
+
+// AC-6: input step attribute matches the new precision.
+test('AC-6: lf-c/lf-p step attribute is 0.001', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assertContains(html, 'id="lf-c" placeholder="0.00" step="0.001"', 'lf-c step is 0.001');
+  assertContains(html, 'id="lf-p" placeholder="0.00" step="0.001"', 'lf-p step is 0.001');
+});
+
+// AC-7 (regression): fmt()'s own call-count is unchanged from SPEC's stated
+// baseline — a direct guard against a future edit silently converting one of
+// fmt()'s other 87 call sites to fmtN() (or vice versa) without updating §3's
+// "other 87 call sites" claim (promised by SPEC-LI-001-v1 §4, added per
+// build-gate review finding).
+test('AC-7: fmt() call-count unchanged (87 other call sites + 1 definition); fmtN() has exactly 5 call sites + 1 definition', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const fmtCount  = (html.match(/fmt\(/g)  || []).length;
+  const fmtNCount = (html.match(/fmtN\(/g) || []).length;
+  assertEqual(fmtCount, 88, 'fmt( occurs 88 times total (87 call sites + 1 definition)');
+  assertEqual(fmtNCount, 6, 'fmtN( occurs 6 times total (5 call sites + 1 definition)');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
