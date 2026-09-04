@@ -11309,12 +11309,12 @@ test('AC-6: lf-c/lf-p step attribute is 0.001', () => {
 // fmt()'s other 87 call sites to fmtN() (or vice versa) without updating §3's
 // "other 87 call sites" claim (promised by SPEC-LI-001-v1 §4, added per
 // build-gate review finding).
-test('AC-7: fmt() call-count unchanged (87 other call sites + 1 definition); fmtN() has exactly 5 call sites + 1 definition', () => {
+test('AC-7: fmt() call-count reflects REQ-INTEG-002-2c\'s own new, legitimate call site (88 other call sites + 1 definition); fmtN() unaffected, still exactly 5 call sites + 1 definition', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
   const fmtCount  = (html.match(/fmt\(/g)  || []).length;
   const fmtNCount = (html.match(/fmtN\(/g) || []).length;
-  assertEqual(fmtCount, 88, 'fmt( occurs 88 times total (87 call sites + 1 definition)');
-  assertEqual(fmtNCount, 6, 'fmtN( occurs 6 times total (5 call sites + 1 definition)');
+  assertEqual(fmtCount, 89, 'fmt( occurs 89 times total (88 call sites + 1 definition) — up 1 from REQ-LI-001\'s 88, this REQ\'s own new renderPaymentsTab() Currency/GBP-equivalent column');
+  assertEqual(fmtNCount, 6, 'fmtN( occurs 6 times total (5 call sites + 1 definition) — untouched by this REQ');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
