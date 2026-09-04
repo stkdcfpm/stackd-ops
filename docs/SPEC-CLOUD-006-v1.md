@@ -1,6 +1,6 @@
 # SPEC-CLOUD-006 — Invoice and Credit Note Cloud Data migration
 
-**Status:** v1 — **complete**, drafted against `docs/REQ-CLOUD-006-v1.md` (requirements-gate PASS, 8 rounds — see that document's own §8 for the full log, including its own citation-accuracy saga). This document was drafted in two passes across two sessions (the first cut off by an infrastructure rate-limit error partway through §2.5, not a content problem); the second pass continued from §2.6 through §4 without revisiting or contradicting anything §0-§2.5 had already established. Ready for spec-gate review. Every citation below was re-verified directly against `/tmp/cloud-006-wt/index.html`/`tests/run.js`/the named `docs/*.md` files at commit `124dc23` (this worktree, this branch) — none had drifted from the REQ's own (already twice-independently-re-verified) citations; see the drafting agent's final report for the specific citations spot-checked and any drift found.
+**Status:** v1 — **complete**, drafted against `docs/REQ-CLOUD-006-v1.md` (requirements-gate PASS, 8 rounds — see that document's own §8 for the full log, including its own citation-accuracy saga). This document was drafted in two passes across two sessions (the first cut off by an infrastructure rate-limit error partway through §2.5, not a content problem); the second pass continued from §2.6 through §4 without revisiting or contradicting anything §0-§2.5 had already established. Every citation below was re-verified directly against `/tmp/cloud-006-wt/index.html`/`tests/run.js`/the named `docs/*.md` files at commit `124dc23` (this worktree, this branch) — none had drifted from the REQ's own (already twice-independently-re-verified) citations; see the drafting agent's final report for the specific citations spot-checked and any drift found. **Spec-gate round 1: CONDITIONAL PASS/FAIL — 3 blocking, fixed in place.** The reviewer actually applied every diff in stages and ran the real suite: baseline 803/803 → 800/803 after §2's code diffs alone (3 pre-existing tests broke exactly as §0.1 predicted, resolved once §3.0's 3 required retrofits were applied, back to 803/803) → 832/835 after adding §3.1's ~30 new tests, 3 failures. One was a real implementation bug: `saveCN()`'s cloud-aware branch (§2.7) set `cn.id` from the Supabase insert/update but never committed `cn` into `DB.inv` at all (only the local/non-cloud branch did) — a cloud-saved CN was invisible to its own balance-due self-reference and to `rInv()` until an unrelated refresh happened to run; fixed by relocating the `DB.inv[idx]=cn`/`DB.inv.push(cn)` commit to run unconditionally after the cloud branch, mirroring `saveInv()`'s own already-correct pattern. The other two were test-authoring bugs, not implementation bugs: the `saveInv()` AC-5 test left `cIL` empty, so `vInv()`'s own pre-existing empty-line-item guard blocked the save before it ever reached the Cloud Data branch under test — fixed by giving it a real line item, matching every other creation-path test's convention; the `autoPos()` call-site-#3 test set only Invoice's own migration marker, but `autoPos()`'s PO-creation branch (shipped by `REQ-CLOUD-005`, unmodified here) is gated on PO's own separate marker — fixed by setting both. With all three fixes applied: **835/835 PASS**, confirmed by the reviewer directly. Everything else — the 4th-bug-class hunt (none found), the `cnLinkedIdMap` ordering trap (confirmed correct), all async-conversion claims, all 13 call sites, every doc diff, the SQL migration's column coverage, and ~20 further citation spot-checks — verified clean. Ready for a confirmatory round 2, then implementation.
 
 ---
 
@@ -1156,13 +1156,19 @@ async function saveCN() {
       : await _sb.from('invoices').insert(cnRow).select().single();
     if (cnResult.error) { toast('Save failed: ' + cnResult.error.message); return; }
     cn.id = cnResult.data.id;
+  }
+  // Commit cn into DB.inv unconditionally, cloud-aware or not (fixed, spec-gate round 1
+  // blocking finding 1 — an earlier draft only ran this inside an else/local-only branch,
+  // leaving a cloud-saved CN entirely absent from DB.inv: invisible to its own
+  // balance-due self-reference below unless status happens to trigger a later
+  // refreshInvFromSupabase(), and to rInv() immediately after the "Credit note saved"
+  // toast. Mirrors saveInv()'s own already-correct unconditional-commit-in-both-branches
+  // pattern, §0.6/§2.6.
+  if (EI.cn) {
+    var idx = DB.inv.findIndex(function(x){ return x.id===EI.cn; });
+    if (idx > -1) DB.inv[idx] = cn; else DB.inv.push(cn);
   } else {
-    if (EI.cn) {
-      var idx = DB.inv.findIndex(function(x){ return x.id===EI.cn; });
-      if (idx > -1) DB.inv[idx] = cn; else DB.inv.push(cn);
-    } else {
-      DB.inv.push(cn);
-    }
+    DB.inv.push(cn);
   }
 
   // Goodwill credit → payments ledger entry
@@ -2599,7 +2605,13 @@ testAsync('migrateInvToSupabase — a Sheets-sync-originated CN with blank/absen
 testAsync('saveInv — cloud-aware create/update when Invoice has migrated (insert with no client-generated id, id reassigned in place); local-only behavior unchanged when not migrated (AC-5)', async function() {
   resetDB();
   setupInvForm('INV30001');
-  ctx.EI.i = null; ctx.cIL = [];
+  ctx.EI.i = null;
+  // Fixed, spec-gate round 1 blocking finding 2: an earlier draft left cIL empty, but
+  // vInv() blocks a NEW invoice save with no line items (and EI.i null, so it can't fall
+  // back to an existing calc_grandTotal>0 record either) -- saveInv() never even reaches
+  // this test's Cloud Data branch without at least one real line item, matching every
+  // other creation-path test's own convention (e.g. tests/run.js:2146).
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:0 }];
   ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
   var sb = mockSb({ invoices: { insertImpl: function(row){ return Object.assign({ id: 'real-inv-uuid' }, row); }, selectData: [] } });
   ctx._sb = sb;
@@ -2616,7 +2628,8 @@ testAsync('saveInv — cloud-aware create/update when Invoice has migrated (inse
 
   resetDB();
   setupInvForm('INV30002');
-  ctx.EI.i = null; ctx.cIL = [];
+  ctx.EI.i = null;
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:0 }];
   ctx._sb = null;
   await ctx.saveInv();
   assertEqual(ctx.DB.inv.length, 1, 'local-only path unaffected when Invoice has not migrated');
@@ -2771,6 +2784,12 @@ testAsync('autoPos — pushes the invoice\'s new pos[] via persistInvChange when
   ctx.DB.li.push({ id: 'li1', desc: 'Widget', uom: 'pcs', supId: 's1', cost: 5, price: 10, priceHistory: [] });
   ctx.DB.inv.push({ id: 'inv1', num: 'INV62001', status: 'Draft', pos: [], lineItems: [{ rid: 'r1', lid: 'li1', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }] });
   ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  // Fixed, spec-gate round 1 blocking finding 3: an earlier draft set only Invoice's own
+  // migration marker, but autoPos()'s PO-creation branch (shipped by REQ-CLOUD-005,
+  // unmodified here) is gated on PO's OWN st_po_cloud_migration_ts marker, not Invoice's
+  // -- without it, autoPos() creates the auto-generated PO locally via uid(), and pos[]
+  // ends up containing a random local id instead of the asserted 'new-po-uuid'.
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
   var sb = mockSb({
     invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] },
     purchase_orders: { insertImpl: function(row){ return Object.assign({ id: 'new-po-uuid' }, row); }, selectData: [] }
@@ -2781,6 +2800,7 @@ testAsync('autoPos — pushes the invoice\'s new pos[] via persistInvChange when
   assert(upd, 'invoice pos[] pushed to Supabase via persistInvChange');
   assertEqual(JSON.stringify(upd.row.pos), JSON.stringify(['new-po-uuid']), 'pos[] contains the real Supabase PO id');
   ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
 
   resetDB();
   ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
