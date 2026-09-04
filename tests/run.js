@@ -9923,6 +9923,40 @@ testAsync('migrateInvToSupabase — sweeps PO.invId outward via invNum-first/inv
   ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
 });
 
+testAsync('migrateInvToSupabase — a PO whose invId and invNum genuinely DISAGREE (both present, resolving to different real invoices) resolves via invNum, not the stale invId — the true precedence-order discriminator (build-time addition, mutation-test regression guard: AC-6a\'s own stale-invId fixture never resolves to any record under either ordering, so it cannot actually discriminate the ordering itself)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.inv.push({ id: 'inv-correct', num: 'INV60001', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  ctx.DB.inv.push({ id: 'inv-wrong', num: 'INV60002', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  // invNum correctly names INV60001; invId is stale but still resolves to a DIFFERENT
+  // real invoice (inv-wrong/INV60002) — unlike AC-6a's own test (a stale invId that
+  // resolves to no record at all), this is the genuinely order-discriminating shape:
+  // an invId-first implementation would silently push the WRONG invoice's new id.
+  ctx.DB.po.push({ id: 'po-divergent', num: 'PO-0002', supId: 's1', invId: 'inv-wrong', invNum: 'INV60001', status: 'Draft', lineItems: [] });
+  var byOldNum = {};
+  var sb = mockSb({
+    buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] },
+    purchase_orders: { selectData: [{ id: 'po-divergent', num: 'PO-0002', sup_id: 's1', inv_id: 'inv-wrong', inv_num: 'INV60001', status: 'Draft', line_items: [] }] },
+    invoices: { insertImpl: function(row){ var id = 'uuid-' + row.num; byOldNum[row.num] = id; return Object.assign({ id: id }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-inv-restore-btn');
+  var origRefreshInv = ctx.refreshInvFromSupabase; ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.migrateInvToSupabase();
+  var poUpdateCall = sb._calls.find(function(c){ return c.table === 'purchase_orders' && c.op === 'update'; });
+  assert(poUpdateCall, 'the PO was pushed to Supabase via persistPOChange');
+  assertEqual(poUpdateCall.row.inv_id, byOldNum['INV60001'], 'resolved via invNum (the correct target) — NOT via the stale invId, which points at a different real invoice');
+  ctx.refreshInvFromSupabase = origRefreshInv;
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
 testAsync('migrateInvToSupabase — sweeps DB.payments[].invId locally via invNum-first/invId-fallback, including a self-referencing goodwill-credit entry and a Sheets-sync payment with blank invId but correct invNum (AC-7/AC-7a)', async function() {
   resetDB();
   ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
@@ -9955,6 +9989,38 @@ testAsync('migrateInvToSupabase — sweeps DB.payments[].invId locally via invNu
   assertEqual(ctx.DB.payments.find(function(p){return p.id==='pm2';}).invId, byOldNum['CN50002'], 'self-referencing goodwill-credit payment invId rewritten to the credit\'s OWN new Supabase id, not skipped for lacking a cross-reference shape');
   assertEqual(ctx.DB.payments.find(function(p){return p.id==='pm3';}).invId, byOldNum['INV50001'], 'a payment with blank invId but correct invNum is still resolved via the invNum-first fallback, not skipped for lacking a resolvable invId');
 
+  ctx.refreshInvFromSupabase = origRefresh;
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('migrateInvToSupabase — a payment whose invId and invNum genuinely DISAGREE (both present, resolving to different real invoices) resolves via invNum, not the stale invId — the true precedence-order discriminator (build-time addition, mutation-test regression guard: AC-7a\'s own fixtures only cover a blank/already-correct invId, neither of which discriminates the ordering itself)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.inv.push({ id: 'inv-correct', num: 'INV70001', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  ctx.DB.inv.push({ id: 'inv-wrong', num: 'INV70002', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  // invNum correctly names INV70001; invId is stale but still resolves to a DIFFERENT
+  // real invoice (inv-wrong/INV70002) — unlike AC-7a's own fixtures (blank invId, or an
+  // already-consistent pair), this is the genuinely order-discriminating shape: an
+  // invId-first implementation would silently rewrite invId to the WRONG invoice.
+  ctx.DB.payments.push({ id: 'pm-divergent', invId: 'inv-wrong', invNum: 'INV70001', amount: 75, method: 'Bank Transfer', date: '2026-01-03' });
+  var byOldNum = {};
+  var sb = mockSb({
+    buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] },
+    invoices: { insertImpl: function(row){ var id = 'uuid-' + row.num; byOldNum[row.num] = id; return Object.assign({ id: id }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-inv-restore-btn');
+  var origRefresh = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.migrateInvToSupabase();
+  assertEqual(ctx.DB.payments.find(function(p){return p.id==='pm-divergent';}).invId, byOldNum['INV70001'], 'resolved via invNum (the correct target) — NOT via the stale invId, which points at a different real invoice');
   ctx.refreshInvFromSupabase = origRefresh;
   ctx.showBlockingBackupModal = origShowBackup;
   ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
