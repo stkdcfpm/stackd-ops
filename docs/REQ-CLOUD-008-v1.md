@@ -1,0 +1,288 @@
+# REQ-CLOUD-008 (Phase 3, sub-phase 3 of 3) — Extend Cloud Data to Buyer Payment and Supplier Payment
+
+**Status:** v1 — drafted, not yet requirements-gated. This is the final sub-phase of the cross-platform backend migration (`docs/architecture-data-model-v1.md` §8); once it ships, every entity named in that document's migration roadmap is Cloud-Data-eligible.
+**Scope:** Phase 3 sub-phase 3 of 3 of the cross-platform backend migration's fulfillment/financial step (`docs/architecture-data-model-v1.md` §8, point 5), following REQ/SPEC-CLOUD-001 through 006's already-proven mechanism, and following `REQ-INTEG-002-2c`'s completed reshaping of the Buyer Payment ledger's own shape and matching logic.
+**Build baseline:** `main` @ `948c2ef`, 867/867 tests passing (`main` with everything through `REQ-CLOUD-006` and `REQ-INTEG-002-2c` merged in). All line citations below are verified directly against this exact commit's `index.html` (14,402 lines).
+
+---
+
+## 0. Scoping
+
+### 0.1 Why this REQ exists now, and the open question that must be answered before it proceeds
+
+`docs/REQ-CLOUD-006-v1.md` §0 explicitly deferred both payment ledgers to "sub-phase 3, not started here... deliberately, because `REQ-INTEG-002` sub-phases 2c (in requirements-gate review as of this REQ's drafting) and 2d (unscoped) are actively changing the Buyer Payment ledger's own shape and matching logic; migrating that ledger to Cloud Data before its shape settles would mean re-touching the migration once 2c/2d land."
+
+**2c has since shipped** (merged to `main`, v2.9.79, `docs/REQ-INTEG-002-2c-v1.md`/`docs/SPEC-INTEG-002-2c-v1.md`, 11 requirements-gate rounds). It gave Buyer Payment records a `purpose` field, a `currency`/`rateLock` pair mirroring Supplier Payment's own, two new reconciliation functions (`getInvTotalPaidNative(inv)`/`getInvEffectiveDepInfo(inv)`), a hardened `getInvPayments(inv)` matching rule, and a `deletePayment()` status-reversal fix. This REQ reads and builds on that shipped shape throughout — it does not redesign it (§1.4 explains exactly how the migration's own reference-resolution logic relates to, and in one specific respect deliberately diverges from, 2c's own settled design).
+
+**2d ("full allocation link") has not shipped and has no REQ file.** `docs/REQ-INTEG-002-2c-v1.md` §0 describes it only as "a full allocation link... the next, still-unscoped step in the Payment Allocation build" — tying a specific buyer payment to a specific PO/line item, the actual cross-entity allocation work `Invoice.pos[]` (made authoritative in `REQ-INTEG-002-2b`) exists to eventually support. Nothing about 2d's scope, design, or timeline is known.
+
+**This is a genuine, unresolved tradeoff, not a decision this REQ makes for the requirements-gate reviewer or the user:**
+
+- **The case for proceeding now:** 2d, whenever it lands, will almost certainly add *new fields* to `DB.payments`/`DB.supPayments` records (an allocation link of some kind — likely a PO id or line-item id on the buyer-payment side, mirroring the existing `invId`/`poId` shape) — it will not, on any currently-visible evidence, change the *fields this REQ's own schema is built from* (`id`/`invId`/`invNum`/`date`/`amount`/`method`/`purpose`/`currency`/`rateLock`/`reference`/`notes`/`type`/`creAt`, per §1.3's exhaustive shape audit). Every prior Cloud Data migration in this series has already absorbed a schema addition after the fact with a plain `alter table ... add column` migration (the pattern this codebase already uses — see `0001`-`0006`, none of which needed to be re-cut when a later REQ added a field to their entity). Waiting for 2d, with no scope or timeline, risks waiting indefinitely for a moving target that may never materially conflict with this REQ's schema at all.
+- **The case for waiting:** if 2d's allocation link turns out to need a genuinely different *shape* — e.g., splitting one payment across multiple POs/line items (`docs/architecture-data-model-v1.md` §6.7: "neither ledger supports splitting one payment across multiple parents" — a real, named limitation 2d could plausibly address), which would mean a payment stops being representable as one flat row referencing one invoice/PO — then this REQ's schema (one row per payment, one `inv_id`/`po_id` column) would need re-cutting, not just extending, the exact "re-touching the migration once 2c/2d land" cost `REQ-CLOUD-006` §0 originally cited as the reason to wait.
+
+**Recommendation:** proceed now. The specific risk `REQ-CLOUD-006` §0 was guarding against — 2c actively rewriting the ledger's matching logic and field shape while a migration REQ was being drafted against it — is resolved; 2c is shipped and stable. The residual risk (2d changing the row *shape*, not just adding a field) is speculative against a completely unscoped future REQ, and this series has an established, cheap mechanism (an additive column migration) for the far more likely outcome (a new field). Waiting for an unscoped, undated REQ is itself a cost — the fulfillment/financial step of the migration stays permanently unfinished, and every other entity's own Cloud Data precedent has already absorbed later field additions without a redo. **This recommendation needs the user's or requirements-gate reviewer's explicit confirmation before this REQ proceeds to SPEC** — it is not asserted as self-evidently correct.
+
+### 0.2 One REQ, two tables — not two REQs, and not one shared table
+
+Buyer Payment (`DB.payments`) and Supplier Payment (`DB.supPayments`) are two independent local arrays with no cross-references between them (confirmed, §1.3) — structurally, they could be two separate REQs. But every prior REQ in this series that named this sub-phase has grouped them together as one pair ("sub-phase 3: Buyer Payment, Supplier Payment"), and the codebase's own precedent for two independent, differently-shaped entities migrating together in one REQ is `REQ-CLOUD-002` (Line Item + Contact — one migration file, `0002_line_items_contacts.sql`, but **two separate tables and two separate migration functions**, `migrateLineItemsToSupabase()`/`migrateContactsToSupabase()`, each with its own precondition, marker, and Settings button). `REQ-CLOUD-001`'s combined `migrateSuppliersBuyersToSupabase()` (one function for both Supplier and Buyer) is the *exception*, not the rule — Buyer's migration completion is deliberately piggybacked on Supplier's own marker only because both were the very first entities migrated, before this series established per-entity independence as its own design principle (`isSupplierMigrationComplete()`'s own code comment: "Buyer shares Supplier's own migration event").
+
+Buyer Payment and Supplier Payment do **not** share that special-case justification — they have different preconditions (Invoice vs. Purchase Order, §1.8), can complete migration at genuinely different times on genuinely different schedules, and have materially different Sheets-sync footprints today (§1.7). **Recommendation: one REQ, one SQL migration file (`supabase/migrations/0007_payments.sql`), two tables (`buyer_payments`, `supplier_payments`), two independent migration functions, two independent completion markers, two independent Settings buttons** — mirroring `REQ-CLOUD-002`'s Line-Item-and-Contact precedent exactly, not `REQ-CLOUD-001`'s Supplier-and-Buyer exception.
+
+### 0.3 What's genuinely novel about this REQ, relative to every prior entity in this series
+
+Both ledgers share a property no prior entity in this series has had: **the entity each one references outward already completed its own, separate, prior migration** (Invoice via `REQ-CLOUD-006`; Purchase Order via `REQ-CLOUD-005`) — rather than migrating in the same batch (Quote/PO's mutual references, Invoice/CN's self-reference) or not yet being Cloud-eligible at all (every "local-only fix" sweep in `REQ-CLOUD-003` through `006`). This has two consequences, both confirmed by direct code reading in §1:
+
+- **No id-remapping is needed at insert time for either ledger's own outward reference.** Every prior entity's migration function built a fresh `idMap` and rewrote *something* using it during its own insert pass (PO's own outward sweep into `Quote.linkedPOIds[]`, Invoice's two-pass self-referential remap, etc.). Here, `p.invId`/`p.poId` are *already* real, final Supabase ids by the time this REQ's own precondition (§1.8) is satisfiable — Invoice's and PO's own migrations already rewrote them, via sweeps that already exist and already shipped (§1.6). There is nothing to remap; the values are carried through as-is.
+- **Neither ledger's own id is referenced by anything else** (§1.5, confirmed by exhaustive grep) — so, uniquely among every entity in this series so far, **this REQ requires no outward sweep at all.**
+
+Together these make this REQ's own migration functions structurally simpler than any prior entity's (closer to Contact's single-precondition, no-sweep shape than to Purchase Order's or Invoice's multi-sweep shape) — but they introduce one piece of genuinely new territory instead: **resolving whether a payment's stored reference is still trustworthy is a distinct question from remapping it**, and the two ledgers turn out to need different answers, both already settled by existing, shipped code rather than needing new design (§1.4).
+
+---
+
+## 1. Business context
+
+### 1.1 Every `DB.payments`/`DB.supPayments` mutation site
+
+**`DB.payments` (Buyer Payment) — four sites, no shared retrofit-only helper needed (a first for this series — see below):**
+
+| Site | Lines | Shape today |
+|---|---|---|
+| `savePayment(payment)` | `13662-13726` | Already `async`. Upserts by id (`findIndex`, `13663-13665`); the only site building a "normal" payment record, called from `addPaymentFromForm()` (`13856-13908`, itself synchronous and fire-and-forget on `savePayment()` — an already-established, safe pattern, `CLAUDE.md`: "Async save functions... mutate DB synchronously before any `await`"). Also mutates `inv.dep`/`inv.status` on the linked Invoice via `persistInvChange()` (already Cloud-aware, unaffected by this REQ) and, conditionally, a linked PO's `fpmRecovered` via `persistPOChange()` (ditto). |
+| `deletePayment(id)` | `13728-13768` | Already `async`. Filters the record out by id (`13733`), then re-derives `inv.dep`/`inv.status` via `persistInvChange()` (unaffected by this REQ, already Cloud-aware since `REQ-CLOUD-006`/`REQ-INTEG-002-2c`). |
+| `saveInv()`'s goodwill-credit push | `7582-7587` | **Not** a call to `savePayment()`. `if (inv.type==='goodwill_credit' && inv.cnAmount)`: filters out any existing record matching `p.invId===inv.id && p.method==='Goodwill Credit'` (`7584`), then pushes a **freshly-`uid()`'d** replacement (`7585`) and does a bare `sv(K.pm, DB.payments)` (`7586`) — unconditional, runs regardless of Invoice's own Cloud Data state. The pushed object has no `purpose`/`currency`/`rateLock`/`type`/`creAt` at all, and uses `ref` (not `reference`) — a materially different, narrower shape than `addPaymentFromForm()`'s, confirmed by `REQ-INTEG-002-2c` §1.1 (still unfixed, out of scope there and here — §3). |
+| `saveCN()`'s goodwill-credit push | `10586-10591` | Structurally identical to the `saveInv()` site: filters by `p.invId!==cn.id` (`10588`, i.e. removes *all* prior entries for this CN, not just ones matching a method), pushes a fresh `uid()`'d record (`10589`), bare `sv(K.pm, DB.payments)` (`10590`). Same narrow shape (no `purpose`/`currency`/`rateLock`/`type`/`creAt`, uses `ref`). |
+
+No other code anywhere pushes to, splices, or reassigns `DB.payments` (confirmed by the exhaustive `DB\.payments` grep this REQ's own research ran against the full file — the only other occurrences are `saveAll()`'s bare `sv()`, the demo-seed/clear-demo pair (`4985-5098`, local-only by design, `_demo`-gated), a read in `executeDataCleanup()`'s phantom filter (§1.9), and read-only reporting/export functions).
+
+**Novel property, unlike every prior entity's mutation-site inventory:** there is no site anywhere that mutates an *already-existing* `DB.payments` record's fields in place other than `savePayment()`'s own upsert (which already handles create-or-update in one function, mirroring `saveLI()`/`saveCon()`'s shape) — the two goodwill-credit sites are delete-then-recreate, not in-place edits, and nothing external ever "touches" a payment record the way `delPO()`/`backfillInvoicePOs()`/`advMergeBuyers()` etc. touch an existing Invoice. **This REQ therefore needs no shared `persistXChange(x, skipRefresh)` helper at all** — every mutation site above gets its own dedicated Cloud Data branch, matching the shape `saveLI()`/`saveCon()`/`saveOrd()`/`saveQte()`/`savePO()`/`saveInv()`/`saveCN()` already use for their own create-or-update paths, with no separate "retrofit an external touch-point" category this time.
+
+**`DB.supPayments` (Supplier Payment) — two sites, currently synchronous, both need `async` conversion:**
+
+| Site | Lines | Shape today |
+|---|---|---|
+| `saveSupPayment(payment)` | `13994-14001` | **Not `async`.** Upserts by id (`findIndex`, `13995-13997`), bare `sv(K.spm, DB.supPayments)` (`13998`). Called from `addSupPaymentFromForm(poId)` (`14070-14101`), itself synchronous. |
+| `deleteSupPayment(id)` | `14003-14013` | **Not `async`.** Filters by id (`14008`), bare `sv(K.spm, DB.supPayments)` (`14009`). |
+
+No goodwill-credit-style secondary creation path exists for Supplier Payment — `addSupPaymentFromForm()` is the *only* creation path (confirmed by the same exhaustive grep; the only other `DB.supPayments` touches are `saveAll()`'s bare `sv()`, `migratePOToSupabase()`'s existing local sweep of `.poId` — §1.6 — and the JSON backup/restore pair, §1.9). Converting both functions to `async` is this REQ's own instance of the sync-to-async conversion `CLAUDE.md` documents as risky by inspection alone: *"audit the test suite's own direct calls to that function too... a synchronous `test()` (as opposed to `testAsync()`) will never wait for"* code after the first `await`. This REQ's own test-suite audit (§4, AC) must trace every direct `saveSupPayment()`/`deleteSupPayment()` call site in `tests/run.js`, not just production callers.
+
+### 1.2 `FIELD_MAPS` — confirmed, direct evidence for the Num/id-omission bug class, and one confirmed *absence* of it
+
+`FIELD_MAPS` (`4425-4435`) has an entry for `payments` (`4431`: `{ id, invNum, date, amount, cur, method, notes }` — mapped to Sheets header names) but **no entry for `supPayments` at all.** This single fact underlies most of §1.4/§1.7 below:
+
+- **`FIELD_MAPS.payments` maps `invNum` but never `invId`** (`4431`) — the exact shape of the bug class `REQ-CLOUD-005`/`006` found three times (`PO.invId`/`invNum`, `DB.payments[].invId`, CN's `linkedInvId`/`linkedInvNum`), all fixed with the same "Num-field-first exact match, id-field fallback only when Num is blank/doesn't resolve" pattern *for the specific problem of remapping a stored id after the referenced entity's own id changes under migration*. This REQ's own reference-resolution design (§1.4) must reckon with this same root cause directly — and, after checking the current, already-shipped code, arrives at a more specific answer than blindly reapplying that pattern (see below).
+- **No `FIELD_MAPS.supPayments` exists, because Supplier Payment has no Sheets footprint of any kind** — confirmed independently by `docs/architecture-data-model-v1.md` §6.9 ("Supplier Payment has zero Sheets sync footprint on either side — confirmed absent from client `FIELD_MAPS`/`pushAll()`/`pullAll()` and from the Apps Script `HEADERS`/`BIZ_KEYS`... the single biggest cross-device data-loss exposure among the fulfillment/financial entities today") and by this REQ's own direct grep (§1.7). Because Supplier Payment's `poId` is *never* written or read by any Sheets round-trip, it cannot suffer the `invId`/`invNum`-divergence mechanism at all — there is no code path that can hand it a payment record with a resolvable `poNum` but a missing `poId`. This is confirmed independently by `migratePOToSupabase()`'s own existing code comment (`6545-6546`): *"`.poNum` is an immutable historical snapshot, confirmed unused for lookup anywhere."*
+
+### 1.3 Full local record shapes (exhaustive, cross-checked against every push site in §1.1)
+
+**Buyer Payment (`DB.payments[]`)** — fields observed across `addPaymentFromForm()` (`13882-13896`), the two goodwill-credit pushes (`7585`, `10589`), and the demo seed (`5000`):
+
+`id`, `invId`, `invNum`, `date`, `amount`, `method`, `purpose` (added by `REQ-INTEG-002-2c`; absent on legacy pre-2c records and on both goodwill pushes), `currency` (ditto), `rateLock` (object: `amount`/`currency`/`gbpEquiv`/`ratesUsed`/`ts`, `4908-4914`; ditto — `null` when the invoice's currency isn't in `PO_DEP_RECONCILE_CURS`, per `REQ-INTEG-002-2c` §2b/AC-2a), `reference` (goodwill pushes instead set `ref` — a different key, never read by `renderPaymentsTab()`/`acctPmtCSV()`/`acctFACSV()`, which all read `reference` only, `13819`/`11748`/`11813` — a pre-existing, already-logged-as-not-fixed cosmetic quirk, `REQ-INTEG-002-2c` §3; not fixed here either), `notes`, `type` (`'buyer_payment'`; absent on both goodwill pushes), `creAt` (absent on both goodwill pushes), `_demo` (demo-seed only, `5000`, excluded from Cloud Data per this series' unbroken precedent).
+
+**Supplier Payment (`DB.supPayments[]`)** — fields observed across `addSupPaymentFromForm()` (`14082-14096`), the only creation path:
+
+`id`, `poId`, `poNum`, `date`, `amount`, `currency` (always present — `saveSupPayment()`'s call is unconditional, no legacy-record gap exists since this field was born currency-aware in `REQ-INTEG-002-2a`, per `getInvTotalPaidNative()`'s own code comment, `13629-13631`), `purpose` (always present — required by `vSupPay()`, `13988-13990`), `method`, `reference`, `notes`, `rateLock` (always present, unconditionally computed via `lockFxRate(amount, currency)`, `14093` — **note, not fixed here:** unlike Buyer Payment post-`REQ-INTEG-002-2c`, Supplier Payment has no EUR/NGN/GHS gate on this call; a Supplier Payment against a EUR-denominated PO (`pf-cur` offers EUR, `2375`) always locks a rate anyway via `PO_DEP_RECONCILE_CURS`'s existing safe-fallback design in `getPOTotalPaidNative()`/`getPOEffectiveDepInfo()` — this is `PROC-GAP-002`'s existing, already-logged, already-accepted disposition, not a new risk this REQ surfaces or must fix), `type` (`'supplier_payment'`, always present), `creAt` (always present). No `_demo` seed record exists for this ledger at all (confirmed — no `demo-spm` or equivalent anywhere).
+
+Neither shape has a `num`/reference-number field of any kind — **no pre-flight duplicate-number scan is needed for either ledger**, unlike every entity in this series with a manually-entered document number (Quote, Purchase Order, Invoice/CN).
+
+### 1.4 Outward references and how each one actually resolves — the load-bearing finding of this REQ
+
+**Buyer Payment → Invoice, via `invId`/`invNum`.** The live, current, `REQ-INTEG-002-2c`-shipped resolution rule is `getInvPayments(inv)` itself (`13600-13606`):
+
+```js
+function getInvPayments(inv) {
+  return DB.payments.filter(function(p){
+    var idResolves = p.invId && DB.inv.some(function(i){ return i.id === p.invId; });
+    if (idResolves) return p.invId === inv.id;
+    return p.invNum === inv.num;
+  }).sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+}
+```
+
+This is **`invId`-primary, `invNum`-fallback-only-when-`invId`-doesn't-resolve** — the *opposite* precedence from the "Num-field-first" pattern `REQ-CLOUD-005`/`006` established for `PO.invId`/`invNum`, `DB.payments[].invId` (as swept by `migrateInvToSupabase()`, §1.6), and CN's `linkedInvId`/`linkedInvNum`. This is not an oversight to correct — `docs/REQ-INTEG-002-2c-v1.md` §2c spent four requirements-gate rounds (7 through 10) on exactly this question and arrived at the inverted rule for a reason specific to payments, not PO/CN: *"For a PO, `invNum` is the field a genuine re-link deliberately rewrites... `invNum` is causally primary there... For a payment, there is no re-link feature at all... `invId` is set once, at the exact moment an operator opens a specific invoice's Payments tab and records a payment against it — a direct, unambiguous expression of operator intent... `invNum` is merely a denormalized copy... and it is the only one of the two fields that can be silently invalidated later by an action entirely unrelated to the payment itself — an invoice rename."*
+
+**This REQ's own reference-resolution logic (used for the informational pre-flight scan, §2c, and nowhere else — see below) must reuse `getInvPayments(inv)`'s settled `invId`-primary rule, inverted in direction (given a payment, find its invoice, rather than given an invoice, find its payments) — not the older Num-first pattern.** Applying the Num-first pattern here instead — the pattern named in this REQ's own brief as "the exact fix pattern... [to] be built into any reference-sweep design here from the start" — would be a real, silent regression against `getInvPayments(inv)`'s own already-fixed causal-primacy reasoning: it would resolve some payments to a *different* invoice than every other consumer of `getInvPayments()`/`getInvTotalPaidNative()`/`getInvEffectiveDepInfo()` already resolves them to, for the exact rename/reuse scenarios `REQ-INTEG-002-2c` rounds 9-10 spent real effort proving unsafe. The Num-first pattern remains correct and unchanged for the *different* problem it was built to solve — `migrateInvToSupabase()`'s own existing sweep of `DB.payments[].invId` (§1.6), a one-time id-remapping event triggered by Invoice's *own* migration, not by this REQ.
+
+**Consequence for the schema and the insert itself:** because Invoice already completed its own, separate, prior migration (§0.3), every `DB.payments[]` record's `invId` value, if it resolves at all, already resolves to a real, final Supabase invoice id — `migrateInvToSupabase()`'s own sweep (§1.6) already rewrote it during Invoice's migration event. There is nothing for *this* migration to remap. `inv_id`/`inv_num` are carried through as plain text, verbatim, exactly as `migratePOToSupabase()` already does for `DB.supPayments[].poId` today (§1.6) — the only question this REQ's own pre-flight step needs to answer is *informational*: how many payments' references don't currently resolve to anything (§2c), not *how to fix* any of them.
+
+**Supplier Payment → Purchase Order, via `poId` only.** `getPOPayments(poId)` (`13910-13913`) takes a bare id, not a PO object, and matches `p.poId===poId` with **no `poNum` fallback of any kind**:
+
+```js
+function getPOPayments(poId) {
+  return DB.supPayments.filter(function(p){ return p.poId === poId; })
+    .sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+}
+```
+
+This asymmetry with `getInvPayments(inv)` is not a gap this REQ needs to close — it is *safe as-is*, for the same reason `migratePOToSupabase()`'s own code comment already gives (`6545-6546`): `poNum` is "confirmed unused for lookup anywhere," and — per §1.2 — Supplier Payment's total absence from any Sheets round-trip means the specific mechanism that can hand a record a correct `Num` but a missing/stale `Id` (`pullAll()`'s id-keyed simple-entity merge, `4646-4691` — `'payments'` is one of `idKeyedEnts`, `4660`, matched by `p.id` at `4672-4673`; a genuinely-new-to-this-device pulled record with no local match returns `mergePulledWithLocal()`'s pulled-only shape verbatim, `4676`, which — per `unmapRec()`/`FIELD_MAPS.payments`, `4431` — carries only `id`/`invNum`/`date`/`amount`/`cur`/`method`/`notes`, never `invId`) structurally cannot occur here. `getPOPayments()` needs no `REQ-INTEG-002-2c`-style hardening, and this REQ's own pre-flight resolution for Supplier Payment is a bare `poId` match, nothing more.
+
+**One further, previously-unflagged observation surfaced by this citation check (not this REQ's to fix, logged for completeness):** `FIELD_MAPS.payments` (`4431`) maps the internal key `cur` to the Sheets header `'Currency'`, not `currency` — the actual field name every currency-aware function on this ledger reads (`p.currency`, per `REQ-INTEG-002-2c`, confirmed throughout §1.3/§1.4 above). A payment pulled fresh from Sheets therefore carries its currency value under a key (`cur`) that `getInvTotalPaidNative()`/`renderPaymentsTab()`/`addPaymentFromForm()` never read — it is silently invisible to the currency-aware ledger `REQ-INTEG-002-2c` built, on top of that same record already lacking `invId`/`purpose`/`rateLock`/`type`/`creAt` entirely. This is a real, live, currently-unlogged gap in `FIELD_MAPS.payments` itself — but it is a Sheets-mapping defect predating this REQ, orthogonal to Cloud Data migration, and not fixed here (§3 — logged as a new finding for `docs/known-gaps.md` at ship time alongside §6.9/§6.10, not resolved).
+
+### 1.5 Inward references — confirmed none
+
+No code anywhere references a `DB.payments[]` or `DB.supPayments[]` record's own `id` except within its own array (upsert-by-id, delete-by-id, `logEv()`/`audit()` tagging) — confirmed by exhaustive grep for `paymentId`/`pmId`/`supPaymentId`/`payment.id` and by direct reading of every function found. `verifyFkIntegrityAfterCleanup()` (`10339-10373`), the codebase's own dangling-reference auditor, does not check either ledger at all — consistent with there being nothing that could dangle *toward* a payment record. **Neither ledger's own migration needs an outward sweep of any kind** — the first time this has been true for any entity in this series (§0.3).
+
+### 1.6 Existing local-only sweeps that already touch these ledgers, and the cross-phase retrofit question
+
+Two functions already mutate these ledgers today, as local-only fixes, because the *other* entity's migration already needed to keep the reference current:
+
+- **`migrateInvToSupabase()`** (`REQ-CLOUD-006g`, `6754-6768`): sweeps `DB.payments[].invId`, resolved `invNum`-first/`invId`-fallback (the *correct* precedence for that function's own specific purpose — remapping a payment to follow Invoice's own changing ids during Invoice's migration event, §1.4), local-only (`sv(K.pm, DB.payments)`, `6768`) since Buyer Payment wasn't Cloud-eligible when this sweep was written.
+- **`migratePOToSupabase()`** (`REQ-CLOUD-005h`, `6540-6546`/`6565-6566`): sweeps `DB.supPayments[].poId`, bare-key match, local-only (`sv(K.spm, DB.supPayments)`, `6566`).
+
+**Does either sweep need retrofitting into a cross-phase push, now that its target ledger is Cloud-eligible?** In the *ordinary* case, no: this REQ's own precondition (§1.8) requires Invoice's/PO's migration to already be *complete* before Buyer/Supplier Payment can begin migrating, so by the time either sweep could theoretically need to push a payment record, that payment record cannot yet exist in Supabase — the sweep runs strictly before the payment ledger's own migration is even reachable. This is the inverse of every prior cross-phase retrofit in this series (which existed because there was *no* ordering guarantee between the swept-into entity and the entity doing the sweeping — Supplier and PO, for instance, can migrate in either order relative to each other).
+
+**However, one compound scenario makes the retrofit non-vacuous:** both `restoreFromMigrationArchive()`-style rollback functions (`6786-6797` for Supplier/Buyer, and the equivalent for every other entity) disconnect Cloud Data *entirely* on restore, but only clear *that one entity's own* completion marker (`6794`: `localStorage.removeItem('st_cloud_migration_ts')`, Supplier/Buyer's own). If an operator later restores Invoice's pre-migration archive (clearing `st_inv_cloud_migration_ts`, disconnecting Cloud Data project-wide) after Buyer Payment has *also* already migrated (its own marker, `st_pmt_cloud_migration_ts`, is untouched by Invoice's restore), then reconnects and re-migrates Invoice again, `migrateInvToSupabase()`'s sweep runs a second time, potentially against payment records that now genuinely live in a Cloud-eligible ledger. **Recommendation: add the retrofit to both sweeps anyway** (touched-record tracking, plus a push via each ledger's own new persist path when that ledger's marker is set) — it is cheap, consistent with this series' established "always retrofit an existing local sweep once its target becomes Cloud-eligible" precedent, and closes this compound rollback-and-remigrate scenario proactively rather than asserting it can never occur. This mirrors the exact same class of already-accepted, already-unresolved cross-project staleness risk every prior retrofit in this series shares (e.g., `migrateSuppliersBuyersToSupabase()`'s own retrofit push to PO/Invoice would have the identical staleness exposure if Supplier were restored-and-remigrated into a *different* Supabase project after PO had already migrated) — not a new problem this REQ introduces or must uniquely solve.
+
+### 1.7 Sheets/`pullAll()` — genuinely asymmetric between the two ledgers
+
+**Buyer Payment (`'payments'`) has real, live Sheets sync today**, in the id-keyed "simple entity" group: `_simpleEntsForBatch`/`_allPullKeys` (`4547-4554`), `simpleEnts` (`4647`), `idKeyedEnts` (`4660`), and the full-batch entity list (`4737`) all include `'payments'`. This is the exact same pull mechanism Supplier/Line Item/Contact/Quote already exclude once their own migration completes (two parallel one-line array filters — see REQ-CLOUD-008h for the exact shape and why both are needed) — Buyer Payment needs the identical treatment once `st_pmt_cloud_migration_ts` is set. **No per-record push exists for Buyer Payment** — `savePayment()`'s own trailing comment (`13725`) already states *"Payments not synced to Sheets yet — handled in v3.0.0"* — so there is no `syncEnt()`/`delEnt()` call to retire or keep for any of this REQ's four mutation sites; only the bulk `pullAll()` gate needs a change.
+
+**Supplier Payment (`'supPayments'`/`'spm'`) has zero Sheets footprint of any kind** — confirmed by grep (no occurrence of `'spm'` or `supPayments` anywhere near `syncEnt`/`delEnt`/`pullAll`/`FIELD_MAPS`) and independently by `docs/architecture-data-model-v1.md` §6.9 (quoted in full, §1.2). **`pullAll()` needs no change at all for Supplier Payment** — there is no pull to exclude. Fixing the underlying zero-Sheets-footprint gap (§6.9) is a separate, larger Sheets-sync initiative, not a Cloud Data migration task — out of scope here (§3), though this REQ's own ship-time doc update formally logs §6.9 (and the related §6.10) into `docs/known-gaps.md`, since neither currently has a gap number despite being confirmed, named findings sitting in `docs/architecture-data-model-v1.md` since that document's original research pass.
+
+### 1.8 Migration precondition — one genuinely new helper function needed
+
+Both preconditions are single-entity (neither ledger has a `buyerId`/`supId` field of its own — only a transitive dependency through Invoice/PO, both of which already required Buyer's/Supplier's own migration to be complete as *their own* precondition, `REQ-CLOUD-006a`/`REQ-CLOUD-005b` — so no separate Buyer/Supplier check is needed here, it is already transitively guaranteed):
+
+- **Buyer Payment requires Invoice's migration to be complete.** No `isInvMigrationComplete()` function exists anywhere in the codebase today (confirmed — the only four `is*MigrationComplete()` functions are `isSupplierMigrationComplete()`/`isLineItemMigrationComplete()`/`isQteMigrationComplete()`/`isPOMigrationComplete()`, `5940-5964`; Invoice's own migration, `REQ-CLOUD-006`, never needed to check *itself*, since nothing depended on Invoice's completion until now). **This REQ must add a genuinely new `isInvMigrationComplete()`**, mirroring the existing four exactly: `!_sb ? false : localStorage.getItem('st_inv_cloud_migration_ts') ? true : (a live `_sb.from('invoices').select('*').is('deleted_at', null)` check with `.data.length > 0`)`.
+- **Supplier Payment requires Purchase Order's migration to be complete.** `isPOMigrationComplete()` (`5959-5964`) already exists and is reused verbatim — no new helper needed on this side.
+
+### 1.9 Confirmed **not** mutation/retrofit sites, verified directly, not assumed
+
+- **`executeDataCleanup()`'s phantom-record filter** (`10382-10392`) includes `'payments'` in its sweep list (`10384`) but **not** `'supPayments'` (absent from that array entirely — `DATA_CLEANUP_LABELS`/`DATA_CLEANUP_ENTITY_TYPE`, `10286-10287`, likewise omit it). For `'payments'`, this needs no change: `isPhantomRecord()` (`2948-2953`) only ever checks `!rec.id`, and a Postgres-hosted row always has a real `gen_random_uuid()`-assigned id — the same structural-no-op reasoning `REQ-CLOUD-005`'s own `CLAUDE.md` note already established for every migrated entity. `'supPayments'` needs no change either, for the more basic reason that it was never included in this cleanup pass at all, migrated or not — a pre-existing, unrelated gap (a corrupted/id-less supplier-payment record could never be caught by this tool), not created or worsened by this REQ, not fixed here.
+- **The AI-assistant dispatch path.** `_aiExecTool('get_payments')` (`11292-11308`) is read-only (confirmed: filters and maps `DB.payments`, never writes). **No `get_sup_payments`/equivalent tool exists at all** for Supplier Payment — confirmed by grep of every `AI_TOOLS`/`_aiExecTool` name (`get_invoices`/`get_payments`/`get_kpis`/`get_pos`/`get_suppliers`/`get_buyers`, plus the `create_*` write tools, none of which touch either payment ledger). Neither ledger needs any Cloud Data-specific handling on this path.
+- **CSV import.** `TEMPLATES` (`9605`) has entries for `sup`/`li`/`inv`/`po`/`ord`/`co` only — **no `payments`/`supPayments` template exists, and neither `processImport()` (`9723`) nor `processImportRecords()` (`10057`) has a branch for either entity.** There is nothing to bypass Cloud Data, so unlike every prior entity in this series, **this REQ does not add a new `CLOUD-GAP-003` instance** — confirmed by direct reading, not assumed from the general pattern.
+- **Export/reporting functions** (`acctPmtCSV`/`acctPmtJSON`/`acctFACSV`, `11741-11817`; `renderPaymentsTab()`/`renderPOPaymentsTab()`, `13770-13854`/`14015-14068`) are read-only and format-agnostic with respect to whether an id is a local `uid()` string or a Supabase UUID — both are just strings to these functions. No changes needed for either ledger.
+- **Backup/restore.** `expAll()`/`doImport()` already include `payments`/`supPayments` verbatim (`11899`/`11959` for `supPayments`; the equivalent existing lines for `payments`) — orthogonal to Cloud Data migration, unaffected, matching the already-accepted `CLOUD-GAP-001` precedent for every prior entity.
+
+---
+
+## 2. Requirements
+
+**REQ-CLOUD-008a — Two new tables, one migration file.** New `supabase/migrations/0007_payments.sql`, containing:
+
+`buyer_payments` — mirroring the RLS/soft-delete shape of `0001`-`0006`:
+
+| Local field | Column | Type | Notes |
+|---|---|---|---|
+| `id` | `id` | `uuid` (PK, `gen_random_uuid()`) | |
+| `invId` | `inv_id` | `text` | not FK-constrained (Invoice already migrated, but this column stays plain `text` matching every other cross-reference column in this series, per `0006`'s own stated rationale — see §1.4); carried through verbatim, never remapped at insert time |
+| `invNum` | `inv_num` | `text` | business-key mirror; also carried through verbatim |
+| `date` | `date` | `text` | matches every prior entity's `<input type="date">.value` convention |
+| `amount` | `amount` | `numeric` | |
+| `method` | `method` | `text` | |
+| `purpose` | `purpose` | `text` | nullable — absent on pre-`REQ-INTEG-002-2c` legacy records and on both goodwill-credit pushes |
+| `currency` | `currency` | `text` | nullable, same caveat |
+| `rateLock` | `rate_lock` | `jsonb` | nullable, same caveat; `null` (not omitted) for an unsupported-currency payment per `REQ-INTEG-002-2c` AC-2a |
+| `reference` | `reference` | `text` | nullable; the two goodwill-credit pushes use a *different* local key (`ref`, not `reference`) and never populate this column — see next row |
+| *(goodwill-only)* `ref` | `ref` | `text` | nullable; preserves the goodwill pushes' own field verbatim rather than silently merging it into `reference` or dropping it — matches this ledger's own already-accepted `reference`/`ref` display quirk (§1.3), not fixed here |
+| `notes` | `notes` | `text` | |
+| `type` | `type` | `text` | nullable — absent on both goodwill-credit pushes |
+| `creAt` | `cre_at` | `timestamptz` | nullable — absent on both goodwill-credit pushes |
+| `_demo` | *(excluded)* | — | local-only demo-data marker, matching every prior entity's precedent |
+
+`supplier_payments`:
+
+| Local field | Column | Type | Notes |
+|---|---|---|---|
+| `id` | `id` | `uuid` (PK, `gen_random_uuid()`) | |
+| `poId` | `po_id` | `text` | not FK-constrained; carried through verbatim |
+| `poNum` | `po_num` | `text` | confirmed unused for lookup anywhere (`6545-6546`) — carried through as an immutable historical snapshot, never re-resolved |
+| `date` | `date` | `text` | |
+| `amount` | `amount` | `numeric` | |
+| `currency` | `currency` | `text not null` | always present — no legacy-record gap on this ledger (§1.3) |
+| `purpose` | `purpose` | `text not null` | always present, required by `vSupPay()` |
+| `method` | `method` | `text` | |
+| `reference` | `reference` | `text` | |
+| `notes` | `notes` | `text` | |
+| `rateLock` | `rate_lock` | `jsonb` | always present |
+| `type` | `type` | `text not null` | always `'supplier_payment'` |
+| `creAt` | `cre_at` | `timestamptz not null` | always present |
+
+Both tables get standard `created_at`/`updated_at`/`deleted_at` Postgres-managed columns, `enable row level security`, `authenticated read`/`insert`/`update` policies, and **no delete policy** (soft-delete-only, enforced by omission) — matching every prior migration in this series exactly.
+
+**REQ-CLOUD-008b — Two independent migration preconditions.** `migratePmtToSupabase()` refuses to run unless `isInvMigrationComplete()` (§1.8, new) returns true. `migrateSupPmtToSupabase()` refuses to run unless `isPOMigrationComplete()` (existing, `5959-5964`) returns true. Neither function checks the other, and neither checks Buyer/Supplier directly (already transitively guaranteed, §1.8).
+
+**REQ-CLOUD-008c — Non-blocking informational pre-flight orphan scan, per ledger, using each ledger's own already-correct resolution rule (not a blind reapplication of the Num-first pattern — see §1.4).** Before inserting: `migratePmtToSupabase()` counts every `DB.payments[]` record whose home invoice does not resolve under `getInvPayments(inv)`'s own settled `invId`-primary/`invNum`-fallback rule (inverted direction — given a payment, does *any* current `DB.inv` record satisfy it), and `migrateSupPmtToSupabase()` counts every `DB.supPayments[]` record whose `poId` does not resolve against the live, connected Purchase Order table. Neither count blocks the migration — both ledgers already tolerate a dangling reference today as an accepted, pre-existing state (`INV-GAP-002`'s `delInv()` never cleans `DB.payments[].invId`; `docs/architecture-data-model-v1.md` §6.10, `delPO()` never cleans `DB.supPayments[].poId`) — but is surfaced in the pre-migration confirmation modal so an operator can review it before proceeding, mirroring how CN's own genuinely-dangling `linkedInvId` case (`REQ-CLOUD-006b`) is "left `null` and logged, not treated as a blocking error."
+
+**REQ-CLOUD-008d — No duplicate-reference-number pre-flight scan.** Neither ledger has a `num` field (§1.3) — confirmed, not assumed; this REQ adds no such scan for either table.
+
+**REQ-CLOUD-008e — Four Cloud Data branches for Buyer Payment, no shared persist helper (§1.1).**
+1. `savePayment()` gains its own dedicated create-or-update `_sb`-branch, mirroring `saveLI()`/`saveCon()`'s shape — resolve the real Supabase id onto the local record on create, `.update(...).eq('id',...)` on a subsequent edit of the same record.
+2. `deletePayment()` gains its own dedicated soft-delete branch.
+3. `saveInv()`'s goodwill-credit push (`7582-7587`) gains its own dedicated branch mirroring its own local delete-then-recreate shape: when Buyer Payment has migrated, soft-delete any existing `buyer_payments` row matching the same predicate the local filter uses (`inv_id = <resolved Supabase invoice id> and method = 'Goodwill Credit'`), then insert the fresh replacement row, assigning the returned id onto the local record — not a bare upsert, since the local logic itself is delete-then-recreate, not edit-in-place.
+4. `saveCN()`'s goodwill-credit push (`10586-10591`) gains the identical treatment, matched on `inv_id = <resolved Supabase id for the CN>` only (mirroring its own local filter, which removes *all* prior entries for that CN id, not just ones matching a method).
+
+**REQ-CLOUD-008f — Two Cloud Data branches for Supplier Payment, plus the required `async` conversion (§1.1).**
+1. `saveSupPayment()` is converted to `async` and gains its own dedicated create-or-update `_sb`-branch, identical shape to REQ-CLOUD-008e item 1.
+2. `deleteSupPayment()` is converted to `async` and gains its own dedicated soft-delete branch.
+
+**REQ-CLOUD-008g — `refreshPmtFromSupabase()`/`refreshSupPmtFromSupabase()`**, each with the standard non-destructive-overwrite guard (refuse to overwrite real local data unless this device has migrated or there is nothing local to lose, mirroring every prior entity's refresh function exactly, e.g. `refreshPOFromSupabase()`'s `5762`), wired into `initCloudDataLayer()` (`5633-5646`) immediately after the existing `await refreshInvFromSupabase();` call. **This wiring must retrofit `tests/run.js`'s one existing `initCloudDataLayer()` test's `_sb` mock/stub list in the same change** — per `CLAUDE.md`'s own documented "self-marking test contamination" bug class, confirmed to have already recurred four times across this series (`REQ-CLOUD-003`/`SPEC-CLOUD-004`/`SPEC-CLOUD-005` round-1 findings, and once inside `SPEC-CLOUD-005`'s own implementation) — every pre-existing test that mocks `_sb` and calls `initCloudDataLayer()` must be checked and, if needed, retrofitted before this REQ's implementation is considered complete, not discovered later via a downstream test failure.
+
+**REQ-CLOUD-008h — `pullAll()` exclusion for `'payments'` only, two parallel one-line filters (not PO's/Invoice's differently-shaped two-mechanism pattern — see below).** Confirmed by direct reading that `'li'`/`'co'`/`'qt'` (the entities Buyer Payment's own exclusion must mirror, since all four sit in the same shared processing loop) are *each already* filtered out of **two separate arrays**, not one: `_simpleEntsForBatch` (`4547`, filtered at `4549-4551` — the list sent to the server as the batched pull request, `4558`) and, independently, `simpleEnts` (`4647`, filtered at `4657-4659` — the list the client-side merge loop, `4661-4691`, actually iterates). Both matter: `pulled(entity)` (`4562-4565`) serves a *batched* result when the batch call succeeded, but falls back to a **direct, unfiltered `sGet(entity)`** call per entity when it did not (`4560`'s own comment: "fall through to per-entity `sGet()`, same end state as before batching existed") — so filtering only `simpleEnts` (skipping the *processing* of a fetched `'payments'` result) would still leave the network-fallback path fetching-and-therefore-merging a stale Sheets-pulled payment on any batch-call failure, while filtering only `_simpleEntsForBatch` (skipping the *request*) would leave the merge loop trying to process a result that's simply absent, relying on that failure path rather than a deliberate exclusion. This is the *same underlying* "must exclude at both the request stage and the processing stage" principle `REQ-CLOUD-005`'s spec-gate round 2 already caught being half-implemented for Purchase Order's differently-shaped standalone block — applied here to the shared `simpleEnts` group's own two-array shape instead. `'payments'` gains the identical one-line filter, gated on `st_pmt_cloud_migration_ts`, in both places, immediately alongside the existing `sup`/`li`/`co`/`qt` filters. **No `pullAll()` change of any kind for Supplier Payment** — confirmed, §1.7, it has no pull to exclude.
+
+**REQ-CLOUD-008i — Cross-phase retrofit (recommended as defense-in-depth, per §1.6's rollback-and-remigrate analysis, not because the ordinary case requires it).** `migrateInvToSupabase()`'s existing `DB.payments[].invId` sweep (`6754-6768`) gains touched-record tracking plus a push via a new persist path when `st_pmt_cloud_migration_ts` is set; `migratePOToSupabase()`'s existing `DB.supPayments[].poId` sweep (`6565-6566`) gains the identical treatment gated on `st_spm_cloud_migration_ts`. Confirm at SPEC time whether the reviewer agrees this compound scenario justifies the added code, given it shares the same already-accepted cross-project staleness risk as every prior retrofit in this series (§1.6) rather than introducing a new one.
+
+**REQ-CLOUD-008j — Settings → Cloud Data UI**, two new cards (one per ledger), each with its own migrate button, restore-from-archive button, and 30-day archive/rollback affordance, matching the existing per-entity card pattern exactly. No dedicated acceptance criterion required, matching `REQ-CLOUD-005k`'s own precedent (no prior REQ in this series tests this UI layer directly).
+
+**REQ-CLOUD-008k — Archive-before-remap, 30-day grace window, disconnect-on-restore, blocking backup gate, soft-delete-only** — the same mechanics every prior Cloud Data migration in this series has used, with two fully independent marker pairs: `st_pmt_cloud_migration_ts`/`st_pmt_pre_migration` for Buyer Payment, `st_spm_cloud_migration_ts`/`st_spm_pre_migration` for Supplier Payment.
+
+**REQ-CLOUD-008l — `AI_SYSTEM_PROMPT` and `docs/user-guide.md`** updated to name Buyer Payment and Supplier Payment as Cloud-Data-eligible — the final two entities named in `docs/architecture-data-model-v1.md` §8's entire migration roadmap. No entity anywhere in that roadmap remains un-migrated after this REQ ships.
+
+**REQ-CLOUD-008m — Documentation currency fix, folded into this REQ's own ship-time update rather than deferred a second time.** `docs/architecture-data-model-v1.md` §2's entity table and §8's sequencing item 5 were never updated when `REQ-CLOUD-006` shipped Invoice/Credit Note (confirmed — §2's table still lists Invoice/CN as "out of scope" for Cloud Data, and §8 item 5 still describes "Migrate fulfillment/financial entities last" as fully future work with no sub-phase breakdown, despite Invoice/CN having shipped in v2.9.79). This REQ's own ship-time update corrects both the pre-existing staleness (Invoice/CN's actual shipped status) and adds Buyer Payment/Supplier Payment's own new rows/status, rather than compounding the same drift a second time the way `REQ-CLOUD-006`'s own ship-time checklist apparently did for `REQ-CLOUD-005`'s PO-CSV-import logging commitment (`docs/REQ-CLOUD-006-v1.md` §2, REQ-CLOUD-006l).
+
+---
+
+## 3. Out of scope
+
+- **2d (full allocation link)** — separate, unscoped future work; §0.1's recommendation is to proceed without waiting for it, pending explicit confirmation.
+- **Fixing `docs/architecture-data-model-v1.md` §6.9** (Supplier Payment's zero Sheets-sync footprint) — a real, named, significant gap, but a Sheets-sync initiative, not a Cloud Data migration task. This REQ's own ship-time update formally logs it (and §6.10) into `docs/known-gaps.md` for the first time (neither currently has a gap number), cross-referenced to this REQ's own research, but does not fix either.
+- **Fixing `docs/architecture-data-model-v1.md` §6.10** (deleting a PO orphans its Supplier Payments, UI-unreachable) — same disposition: logged, not fixed. Not worsened by this REQ — Cloud Data migration only remaps ids that already exist; it does not change `delPO()`'s own delete behavior.
+- **Fixing `FIELD_MAPS.payments`'s `cur`/`currency` key mismatch** (§1.7) — a real, previously-unflagged Sheets-mapping defect found during this REQ's own citation-verification pass, orthogonal to Cloud Data migration; logged as a new finding at ship time, not fixed here.
+- **`PROC-GAP-002`/`PROC-GAP-003`** (EUR/NGN/GHS excluded from `toGBP()`/`fromGBP()`) — pre-existing, unrelated to Cloud Data specifically; Supplier Payment's own unconditional `lockFxRate()` call against a EUR-denominated PO (§1.3) is an existing instance of this already-logged gap, not a new one, and not fixed here.
+- **Giving `saveInv()`'s/`saveCN()`'s goodwill-credit `DB.payments` pushes a `purpose`/`currency`/`type`/`reference` (unifying `ref`)** — an already-declined fix (`REQ-INTEG-002-2c` §3), not revisited by a Cloud Data migration REQ.
+- **A `CLOUD-GAP-003` instance for either ledger's CSV import** — confirmed, §1.9, neither ledger has a CSV import branch to bypass; no new gap logged.
+- **Splitting one payment across multiple parents** (`docs/architecture-data-model-v1.md` §6.7) — a real, named limitation, but a shape change belonging to 2d if it is ever built, not this migration.
+- **Per-record `syncEnt()`/`delEnt()` for either ledger** — Buyer Payment has none today (`13725`, deferred to "v3.0.0") and gains none here; Supplier Payment has no Sheets footprint at all (§1.7) and gains none here. Bulk `pullAll()`/`pushAll()` behavior for Buyer Payment is addressed only on the pull side (REQ-CLOUD-008h), matching `CLOUD-GAP-002`'s existing, accepted, unfixed scope for the push side.
+
+---
+
+## 4. Acceptance criteria
+
+- **AC-1.** `supabase/migrations/0007_payments.sql` matches REQ-CLOUD-008a's column lists exactly for both `buyer_payments` and `supplier_payments`; `_demo` absent from `buyer_payments`; `inv_id`/`po_id` both `text`, not FK-constrained; `buyer_payments.currency`/`purpose`/`rate_lock`/`type`/`cre_at` all independently nullable, `supplier_payments`' equivalents all `not null`.
+- **AC-2.** `migratePmtToSupabase()` refuses to run unless `isInvMigrationComplete()` returns true; `migrateSupPmtToSupabase()` refuses to run unless `isPOMigrationComplete()` returns true — each demonstrated independently, and demonstrated that neither function's precondition is satisfied by the *other* target entity's migration alone.
+- **AC-3.** The orphan-scan (REQ-CLOUD-008c) correctly counts a Buyer Payment record whose `invId` is blank/dangling but whose `invNum` resolves (not orphaned, per `getInvPayments()`'s fallback), a record whose `invId` resolves to a real invoice regardless of a stale/mismatched `invNum` (not orphaned, per `getInvPayments()`'s `invId`-primacy — the discriminating case that would come out wrong under the older Num-first pattern), and a record where neither resolves to anything (genuinely orphaned) — all three demonstrated, and none blocks the migration. A parallel case for Supplier Payment (`poId` resolves vs. doesn't) is also demonstrated, non-blocking.
+- **AC-4.** A Cloud-configured `savePayment()` create inserts with no client-generated id, resolves the real Supabase id onto the local record, and calls `.update(...).eq('id',...)` on a subsequent edit; local-only behavior is unchanged when Buyer Payment has not migrated. The identical shape is demonstrated for `saveSupPayment()` (post-`async`-conversion) and Supplier Payment.
+- **AC-5.** A Cloud-configured `deletePayment()`/`deleteSupPayment()` each soft-delete via `update({deleted_at:...})`, not a hard delete; local-only behavior unchanged when not migrated.
+- **AC-6.** `saveInv()`'s and `saveCN()`'s goodwill-credit pushes, when Buyer Payment has migrated, correctly soft-delete the prior matching Cloud row (if any) and insert the fresh replacement, assigning a real Supabase id onto the local record — demonstrated for both call sites, including the case where no prior matching row exists yet (first goodwill credit on a given invoice/CN).
+- **AC-7.** `refreshPmtFromSupabase()`/`refreshSupPmtFromSupabase()` each refuse to overwrite real local data absent a completed migration or existing local data; both are wired into `initCloudDataLayer()`; the pre-existing `initCloudDataLayer()` test in `tests/run.js` is confirmed correctly retrofitted (stubs both new refresh calls) and does not silently self-mark either new migration marker as a side effect of an unrelated test.
+- **AC-8.** `pullAll()` drops `'payments'` from its id-keyed pull path once `st_pmt_cloud_migration_ts` is set; a direct test confirms `'supPayments'`/`'spm'` never appears in any `pullAll()`-related array before or after this REQ (i.e., this REQ adds no new pull path for Supplier Payment by mistake).
+- **AC-9 (conditional on REQ-CLOUD-008i's own confirmation at SPEC time).** If the cross-phase retrofit is built: `migrateInvToSupabase()`'s and `migratePOToSupabase()`'s existing sweeps push a touched payment record when that ledger has already migrated, and remain local-only otherwise — both cases tested for each sweep.
+- **AC-10.** Full pre-existing-test-suite audit: every direct test-suite call site of `savePayment()`/`deletePayment()`/`saveSupPayment()`/`deleteSupPayment()` traced and confirmed safe against this REQ's `async` conversion of the latter two, per `CLAUDE.md`'s own documented risk pattern (a synchronous `test()` will not wait for code after a newly-introduced `await`).
+
+---
+
+## 5. Testing approach
+
+Closer in shape to `REQ-CLOUD-002`'s own two-independent-entities-one-migration-file test coverage (two independent precondition/migration/refresh test groups, no shared retrofit tests to write since neither ledger needs a `persistXChange()` helper) than to `REQ-CLOUD-005`'s/`006`'s own multi-sweep, multi-retrofit shape. `mockSb()` (already fully generic per-table, confirmed by five prior REQs' own testing-approach sections) needs no changes for either new table. The one genuinely novel test shape in this series is AC-3's discriminating orphan-scan case (a payment whose `invId` and `invNum` resolve to *different* invoices) — this needs its own dedicated fixture, since it is specifically designed to come out differently under the (incorrect, rejected) Num-first pattern than under the (correct, adopted) `invId`-primary pattern, and a test that can't discriminate between the two would not actually prove this REQ's own §1.4 finding.
+
+---
+
+## 6. Gate process
+
+Follows the same rigorous SDLC pipeline as every prior REQ/SPEC in this series: REQ → independent requirements-gate review (Agent) → SPEC (exact diffs) → independent spec-gate review (Agent, applies diffs to a scratch copy, runs the real test suite) → implementation → self-directed mutation testing → independent build-gate review (Agent) → PR → CI green → merge → verify main consistent. **Before requirements-gate begins, §0.1's proceed-now-vs.-wait-for-2d question needs an explicit answer from the user or the requirements-gate reviewer** — this REQ's own recommendation (proceed now) is stated, not assumed accepted.
+
+---
+
+## 7. Tracker updates (at ship time)
+
+- `docs/requirements-tracker.md` — new `REQ-CLOUD-008` row, closing out the entire Phase 3/cross-platform-migration tracker sequence.
+- `docs/known-gaps.md` — three new entries: `docs/architecture-data-model-v1.md` §6.9 (Supplier Payment zero Sheets footprint), §6.10 (PO delete orphans Supplier Payments), and the new `FIELD_MAPS.payments` `cur`/`currency` key-mismatch finding (§1.7) — cross-referenced to this REQ's own research; none fixed.
+- `docs/version-history.md`/`STACKD_CONTEXT.md`/`CLAUDE.md` — new version entry; a new Cloud Data gotcha note on the `getInvPayments()`-vs-Num-first resolution distinction (§1.4), since it is exactly the kind of subtle, easy-to-miss precedent-misapplication this file exists to prevent for future entrants.
+- `docs/architecture-data-model-v1.md` §2/§8 — corrected for Invoice/CN's already-shipped status (REQ-CLOUD-008m) and updated to mark the entire migration roadmap complete.
+- `CLAUDE.md` — version/test-count bump.
+
+---
+
+## 8. Review-resolution log
+
+*(Empty — this is v1, pre-requirements-gate.)*
