@@ -5,10 +5,10 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 # Stackd Ops — Claude Code Context
 
 ## What this project is
-Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used for Supplier/Buyer, Line Item, Contact, Order Request, Quote, and Purchase Order when Cloud Data is configured — REQ/SPEC-CLOUD-001, extended to Line Item/Contact by REQ/SPEC-CLOUD-002, to Order Request by REQ/SPEC-CLOUD-003, to Quote by REQ/SPEC-CLOUD-004, and to Purchase Order by REQ/SPEC-CLOUD-005 — completing Phase 2 of the cross-platform backend migration; no CDN, no auto-update). Deployed via GitHub Pages.
+Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used for Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, and Credit Note when Cloud Data is configured — REQ/SPEC-CLOUD-001, extended to Line Item/Contact by REQ/SPEC-CLOUD-002, to Order Request by REQ/SPEC-CLOUD-003, to Quote by REQ/SPEC-CLOUD-004, to Purchase Order by REQ/SPEC-CLOUD-005 (completing Phase 2), and to Invoice/Credit Note by REQ/SPEC-CLOUD-006 (Phase 3 sub-phase 1 of 3) — of the cross-platform backend migration; no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.78**  
-**Test count: 834/834 PASS** (`node tests/run.js`)
+**Current version: v2.9.79**  
+**Test count: 867/867 PASS** (`node tests/run.js`)
 
 ---
 

@@ -40,7 +40,7 @@ Adding any new top-level entity today means manually touching seven separate pla
 | Quote | `DB.qt` | `QTE-####` (own counter, not `nextRefNum`) | **✗ not covered** | ✓ (**full-sync only, no per-save push**) | out of scope | **✗ none** | ✓ |
 | Purchase Order | `DB.po` | 3 incompatible schemes, none via `nextRefNum` | **✗ not covered** | ✓ (full per-record incl. delete) | out of scope | ✓ (never imports line items) | ✓ |
 | Invoice | `DB.inv` | free text, format-checked only | **✗ not covered** | ✓ | out of scope | ✓ | ✓ |
-| Credit Note | inside `DB.inv`, `type` flag | free text, shares Invoice's number space | **✗ not covered** | ✓ (**wrong tab on live-save**) | out of scope | **✗ none** | ✓ |
+| Credit Note | inside `DB.inv`, `type` flag | free text, shares Invoice's number space | **✗ not covered** | ✓ | out of scope | **✗ none** | ✓ |
 | Shipment | `DB.sh` | free text, no format check | **✗ not covered** | ✓ | out of scope | **✗ none** | ✓ (partial fields only) |
 | Buyer Payment | `DB.payments` | none | n/a | bulk only, no per-save push | out of scope | **✗ none** | ✗ |
 | Supplier Payment | `DB.supPayments` | none | n/a | **✗ none at all** | out of scope | **✗ none** | ✗ |
@@ -174,7 +174,7 @@ Two edges are drawn deliberately "wrong" above to make a point: the Quote→PO e
 
 **6.5 Shipments have zero audit trail of any kind** (no `logEv()`, no `audit()`) on create, edit, or delete — confirmed by exhaustive grep, not inference.
 
-**6.6 Credit Notes: three distinct issues.** Zero `logEv()` on create/edit; deletions are mislabeled in the event log as "Invoice ... deleted"; live single-record Sheets sync targets the wrong entity (`inv` instead of `cn`) while bulk sync and delete both correctly use `cn`.
+**6.6 Credit Notes: two distinct issues, not three (corrected by REQ-CLOUD-006 §1.1 — the third, a claimed "wrong Sheets tab" on live single-record sync, is not reproducible on current code).** Zero `logEv()` on create/edit; deletions are mislabeled in the event log as "Invoice ... deleted". `syncEnt(entity, rec)` (`index.html:4372-4377`) normalizes internally — `var ent = (entity === 'inv' && (rec.type === 'credit_note' || rec.type === 'goodwill_credit')) ? 'cn' : entity;` — so both `saveInv()`'s call (`syncEnt('inv',inv)`) and `saveCN()`'s call (`syncEnt('inv', cn)`) already resolve correctly regardless of the literal string passed, confirmed via `git blame` to predate this document's own original claim; `delInv()` also already routes delete correctly (`delEnt(_isCnDel ? 'cn' : 'inv', ...)`). Both remaining gaps are logged, not fixed, as `INV-GAP-002` (`docs/known-gaps.md`).
 
 **6.7 Payment Allocation is a stalled, two-of-N-phase initiative**, not a finished system — no link exists between Supplier Payments and Invoices, or Buyer Payments and POs, and neither ledger supports splitting one payment across multiple parents.
 
