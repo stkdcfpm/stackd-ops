@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.76</title>
+<title>Stackd Ops v2.9.77</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.76</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.77</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1310,9 +1310,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.76</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.77</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Buyer payment tranches</strong> (REQ/SPEC-INTEG-002-2c), sub-phase 2c of the Payment Allocation build (2a Supplier ledger → 2b Invoice→PO enumeration fix → <strong>2c, this version</strong> → 2d full allocation link, still unscoped). Check-first found buyer payments already support multiple partial payments per invoice — this predates 2a — so "tranches" closes the real parity gaps against the now-more-mature Supplier Payment ledger instead: buyer payment records gain a required `purpose` field (`Deposit`/`Balance`/`Other`, mirroring `vSupPay()`) and `currency`/`rateLock` fields (reusing `lockFxRate()` verbatim), with a legacy-record currency default of `inv.cur` — not `'USD'` — since years of real pre-this-REQ production records across every invoice currency have no `currency` field at all. New `getInvTotalPaidNative(inv)`/`getInvEffectiveDepInfo(inv)` mirror the PO-side pair, built on a rewritten, now-shared `getInvPayments(inv)` — requirements-gate ran 11 rounds, the last four (7-10) each correcting a real defect in this matching rule's `invId`/`invNum` field-preference order, concluding a payment's `invId` is the more trustworthy field (unlike `REQ-INTEG-002-2b`'s PO-side precedent) since neither field is ever re-edited after a payment is created and only `invNum` can be silently invalidated later by an unrelated invoice rename. Six currency-blind/matching-inconsistent read sites (`cInv()`, `editInv()`, `renderStatement()`, `prevStmtPdf()`, `saveCN()`'s balance-due recompute, `renderPaymentsTab()`'s summary box) now share one correct reconciliation path. Also fixes a confirmed-live bug: `deletePayment()` never reversed `inv.status`, permanently stranding a corrected invoice at `Paid`/`Partially Paid` — now re-derives status narrowly, only when the current status is one this same logic could have produced. `renderPaymentsTab()` gains a Purpose column (always) and a Currency/GBP-equivalent column pair (only when a row's resolved currency differs from the invoice's own). Logs `PROC-GAP-003` (NGN/GHS share EUR's pre-existing, unlogged `toGBP()`/`fromGBP()` gap) — guarded against, not fixed. Spec-gate: 2 rounds (round 1 <strong>CONDITIONAL PASS</strong> — 1 blocking, 2 advisory, fixed in place; round 2 independent re-verification from scratch, clean PASS). Implementation then mutation-tested: reverting `getInvPayments(inv)`'s `invId`-authoritative rule to the old bare-`invId`-equality behavior (dropping the `invNum` fallback entirely) reproduced exactly its predicted single test failure — the "dangling/blank invId falls back to invNum" AC-3c-scenario-2 test, the only one of the five AC-3c tests that actually exercises that fallback path — then the revert was undone and 806/806 reconfirmed. 31 new tests. Tests: 806/806 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.76</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Cloud Data (Supabase) extended to Purchase Order</strong> (REQ/SPEC-CLOUD-005), Phase 2 sub-phase 3 of 3 — the final sub-phase of the cross-platform backend migration's deal-pipeline step (`docs/architecture-data-model-v1.md` §8), completing Phase 2. Purchase Order is the first entity in this series built from three different creation paths (`savePO()`, `autoPos()` — the entity's actual primary/majority path, confirmed against real usage — and `qteToPoConvert()`) rather than one save function, so each gained its own dedicated Cloud Data branch, with `autoPos()`/`qteToPoConvert()` sharing a "one call creates multiple POs, grouped by distinct Supplier" shape. Migration requires a combined precondition never needed together before — Supplier-migration-completion plus a live pre-flight `supId`-resolution check (Line-Item-style), and a genuine pre-flight duplicate-`num` scan (Quote-style, since PO numbers are manually editable) — and its own id is referenced outward by an array field, `Quote.linkedPOIds[]`, requiring per-element `.map()` remapping rather than scalar rewriting. Closes `PO-GAP-007`: `delPO()` now sweeps a deleted PO's id out of every Quote's `linkedPOIds[]` (previously left dangling forever), shipping unconditionally regardless of Purchase Order's own migration state since the underlying bug is delete-time cleanup, not migration-gated. Two FPM-funded-deposit auto-recovery sites outside the normal save path (`saveInv()`, `savePayment()`) now route through a shared `persistPOChange()` helper, mirroring `persistOrdChange()`/`persistQteChange()`. Went through requirements-gate (3 rounds — round 1 found 5 blocking/5 advisory including a completely missing `autoPos()` mutation site despite being the primary creation path; round 2 corrected an over-generalized attribution; round 3 clean) → spec-gate (3 rounds — round 1 <strong>FAIL</strong>, 10 blocking/5 advisory including a literal syntax error, `await` inside a non-async `savePayment()`, that would have broken the entire single-&lt;script&gt;-block app; round 2 <strong>FAIL</strong>, 3 blocking — an independent reviewer applying every diff literally, not trusting the prior round's own "all fixed" claims, found the `pullAll()` exclusion fix, the `savePayment()` async signature, and a stale pre-existing test title were each still unaddressed in the actual document despite being claimed fixed; round 3 clean PASS). Every round's fixes were verified against a scratch copy of the real codebase, re-running the full suite, not just re-reading the SPEC. Implementation then mutation-tested across every safety-critical piece — the outward array sweep, the PO-GAP-007 fix, both multi-PO-creation paths, both FPM-recovery pushes, and the `pullAll()` exclusion — each reverted mutation reproduced exactly its predicted test failure. Phase 2 (the deal pipeline: Order Request, Quote, Purchase Order) is now fully Cloud-Data-eligible; Phase 3 (Invoice, Credit Note, Shipment, Payment ledgers) remains explicitly future, unscoped work. 23 new tests. Tests: 775/775 pass.</li>
@@ -4760,12 +4769,10 @@ function cInv(inv) {
   var lf = +inv.lf||0, ins = +inv.ins||0, leg = +inv.leg||0, isp = +inv.isp||0, oth = +inv.oth||0;
   var chgs = lf + ins + leg + isp + oth;
   var tx = +inv.taxRate || 0;
-  // Use payment ledger total if payments exist, else use stored dep
-  var ledgerTotal = DB.payments
-    ? DB.payments.filter(function(p){ return p.invId === inv.id; })
-        .reduce(function(s,p){ return s+(+p.amount||0); }, 0)
-    : 0;
-  var dep = ledgerTotal > 0 ? Math.round(ledgerTotal*100)/100 : (+inv.dep||0);
+  // Use the reconciled payment ledger total if payments exist, else the stored dep —
+  // single point of truth shared with editInv()/renderStatement()/prevStmtPdf()/
+  // saveCN()/renderPaymentsTab() (REQ-INTEG-002-2c §2c-c/AC-5).
+  var dep = getInvEffectiveDepInfo(inv).value;
 
   // Calculate from live line items if present
   var liT = lis.reduce(function(s,li){ return s + (+li.qty||0) * (+li.up||0); }, 0);
@@ -6819,7 +6826,7 @@ function editInv(id) {
   if (depNote) depNote.style.display = pmCount > 0 ? 'block' : 'none';
   if (pmCount > 0) {
     var depField = G('if-dep');
-    if (depField) { depField.value = getInvTotalPaid(inv.id).toFixed(2); depField.readOnly = true; depField.style.opacity = '0.6'; }
+    if (depField) { depField.value = getInvEffectiveDepInfo(inv).value.toFixed(2); depField.readOnly = true; depField.style.opacity = '0.6'; }
   } else {
     var depField = G('if-dep');
     if (depField) { depField.readOnly = false; depField.style.opacity = '1'; }
@@ -8096,8 +8103,7 @@ function renderStatement(buyer) {
   var totalGrand = 0, totalPaid = 0, totalCredits = 0;
   var invRows = invRecs.map(function(inv) {
     var c = iCalc(inv);
-    var paid = DB.payments.filter(function(p){ return p.invId===inv.id||p.invNum===inv.num; })
-                          .reduce(function(s,p){ return s+(+p.amount||0); }, 0);
+    var paid = getInvEffectiveDepInfo(inv).value;
     var credits = DB.inv.filter(function(cn){ return isCnRec(cn) && cn.linkedInvNum===inv.num && cn.status==='CN Applied'; })
                         .reduce(function(s,cn){ return s+Math.abs(+cn.cnAmount||0); }, 0);
     var balDue = c.bal;
@@ -8163,7 +8169,7 @@ function prevStmtPdf() {
   var totalGrand=0, totalPaid=0, totalCredits=0;
   var invRows = invRecs.map(function(inv){
     var c=iCalc(inv);
-    var paid=DB.payments.filter(function(p){return p.invId===inv.id||p.invNum===inv.num;}).reduce(function(s,p){return s+(+p.amount||0);},0);
+    var paid=getInvEffectiveDepInfo(inv).value;
     var credits=DB.inv.filter(function(cn){return isCnRec(cn)&&cn.linkedInvNum===inv.num&&cn.status==='CN Applied';}).reduce(function(s,cn){return s+Math.abs(+cn.cnAmount||0);},0);
     var balDue=c.bal;
     totalGrand+=c.grand; totalPaid+=paid; totalCredits+=credits;
@@ -9043,7 +9049,7 @@ function vShp() {
   return vFormOk('ov-shp');
 }
 
-function vPay(date, amount, invId) {
+function vPay(date, amount, invId, purpose) {
   var dateEl = G('pm-date'), amtEl = G('pm-amount');
   if (!amount || +amount <= 0) {
     if (amtEl) { amtEl.style.borderBottomColor='#f87171'; amtEl.focus(); }
@@ -9066,6 +9072,9 @@ function vPay(date, amount, invId) {
     toast('⚠ Payment date is before invoice date (' + inv.date + ') — please confirm');
   }
   if (dateEl) dateEl.style.borderBottomColor='var(--gn)';
+  if (!purpose) {
+    toast('⚠ Purpose is required'); return false;
+  }
   return true;
 }
 
@@ -10036,9 +10045,7 @@ async function saveCN() {
       var totalCredits = DB.inv
         .filter(function(x){ return (x.type === 'credit_note' || x.type === 'goodwill_credit') && x.linkedInvNum === cn.linkedInvNum && x.status === 'CN Applied'; })
         .reduce(function(sum, c){ return sum + Math.abs(parseFloat(c.cnAmount||0)); }, 0);
-      var totalPayments = DB.payments
-        .filter(function(p){ return p.invId === linkedInv.id || p.invNum === linkedInv.num; })
-        .reduce(function(sum, p){ return sum + parseFloat(p.amount||0); }, 0);
+      var totalPayments = getInvEffectiveDepInfo(linkedInv).value;
       linkedInv.calc_balanceDue = (parseFloat(linkedInv.calc_grandTotal||0) - totalPayments - totalCredits).toFixed(2);
     }
   }
@@ -10108,7 +10115,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.76).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.77).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -10651,7 +10658,7 @@ var AI_TOOLS = [
   },
   {
     name: 'get_payments',
-    description: 'Query payment ledger entries. Filter by buyer name, invoice number, or date range. Returns payment date, amount, method, and reference.',
+    description: 'Query payment ledger entries. Filter by buyer name, invoice number, or date range. Returns payment date, amount, method, reference, purpose, and currency.',
     input_schema: {
       type: 'object',
       properties: {
@@ -10735,7 +10742,9 @@ function _aiExecTool(name, inp) {
         return true;
       });
       return JSON.stringify(pmts.map(function(p) {
-        return { invNum: p.invNum, date: p.date, amount: +p.amount, method: p.method, reference: p.reference };
+        var linkedInv = DB.inv.find(function(i){ return i.id===p.invId||i.num===p.invNum; });
+        return { invNum: p.invNum, date: p.date, amount: +p.amount, method: p.method, reference: p.reference,
+                 purpose: p.purpose || '', currency: p.currency || (linkedInv ? linkedInv.cur : '') };
       }));
     }
     if (name === 'get_kpis') {
@@ -11170,14 +11179,14 @@ function acctInvCSV(invoices) {
 }
 
 function acctPmtCSV(payments) {
-  var h = ['Payment ID','Invoice #','Date','Amount','Method','Reference','Notes','Currency'];
+  var h = ['Payment ID','Invoice #','Date','Amount','Method','Reference','Notes','Currency','Purpose'];
   var rows = [csvRow(h)];
   payments.forEach(function(pm) {
     var inv = DB.inv.find(function(i) { return i.id === pm.invId; });
     rows.push(csvRow([
       pm.id || '', inv ? inv.num : (pm.invId || ''), pm.date || '',
       +(pm.amount || 0), pm.method || '', pm.reference || '', pm.notes || '',
-      inv ? inv.cur : ''
+      pm.currency || (inv ? inv.cur : ''), pm.purpose || ''
     ]));
   });
   return '﻿' + rows.join('\n');
@@ -11233,15 +11242,15 @@ function acctQBCSV(invoices) {
 }
 
 function acctFACSV(payments) {
-  var h = ['Date','Payee','Description','Net Amount','Tax Rate','Currency','Reference'];
+  var h = ['Date','Payee','Description','Net Amount','Tax Rate','Currency','Reference','Purpose'];
   var rows = [csvRow(h)];
   payments.forEach(function(pm) {
     var inv = DB.inv.find(function(i) { return i.id === pm.invId; });
     rows.push(csvRow([
       pm.date || '', inv ? inv.buyer : '',
       pm.notes || pm.method || '',
-      +(pm.amount || 0), '', inv ? inv.cur : '',
-      pm.reference || ''
+      +(pm.amount || 0), '', pm.currency || (inv ? inv.cur : ''),
+      pm.reference || '', pm.purpose || ''
     ]));
   });
   return '﻿' + rows.join('\n');
@@ -13018,13 +13027,66 @@ var PAYMENT_METHODS = ['Bank Transfer','Wire Transfer','Cash','Cheque','PayPal/S
 
 // ── PAYMENT FUNCTIONS ──────────────────────────────────────────
 
-function getInvPayments(invId) {
-  return DB.payments.filter(function(p){ return p.invId === invId; })
-    .sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+function getInvPayments(inv) {
+  return DB.payments.filter(function(p){
+    var idResolves = p.invId && DB.inv.some(function(i){ return i.id === p.invId; });
+    if (idResolves) return p.invId === inv.id;
+    return p.invNum === inv.num;
+  }).sort(function(a,b){ return a.date < b.date ? -1 : 1; });
 }
 
-function getInvTotalPaid(invId) {
-  return getInvPayments(invId).reduce(function(s,p){ return s + (+p.amount||0); }, 0);
+// Currencies getInvTotalPaidNative()/getInvEffectiveDepInfo() below can safely reconcile
+// an invoice's ledger against. Reuses the PO-side allow-list as-is (REQ §1.2) — an
+// invoice in any OTHER currency (today, EUR/NGN/GHS via if-cur) falls back to the legacy
+// inv.dep figure rather than risk a silently wrong/mislabeled conversion.
+//
+// Sums an invoice's linked buyer payment records DENOMINATED IN THE INVOICE'S OWN
+// CURRENCY (inv.cur), not GBP. Unlike getPOTotalPaidNative(), the unsupported-currency
+// gate lives INSIDE this function (not only in getInvEffectiveDepInfo() below) because
+// savePayment()/deletePayment() call this function directly, bypassing the outer gate —
+// see REQ §2c-c / round-3 finding B3-follow-up-2.
+function getInvTotalPaidNative(inv) {
+  var invCur = (inv.cur || 'USD').toUpperCase();
+  if (invCur === 'CNY') invCur = 'RMB';
+  var supported = PO_DEP_RECONCILE_CURS.indexOf(invCur) !== -1;
+  return getInvPayments(inv).reduce(function(sum, p) {
+    if (!supported) {
+      // Unsupported invoice currency (EUR/NGN/GHS): every payment against it carries
+      // this same currency by construction (REQ §2c-b/AC-2a) — sum raw, never pivot.
+      return sum + (+p.amount || 0);
+    }
+    // Legacy record with no currency field at all: read as paid in the invoice's own
+    // currency (REQ §1.2/B1) — NEVER defaulted to 'USD' like getPOTotalPaidNative()
+    // does, since DB.supPayments was always currency-aware but DB.payments has years
+    // of real pre-this-REQ records with no currency field, in every invoice currency.
+    var pCur = (p.currency || invCur).toUpperCase();
+    if (pCur === 'CNY') pCur = 'RMB';
+    if (pCur === invCur) {
+      return sum + (+p.amount || 0);
+    }
+    var gbp = (p.rateLock && p.rateLock.gbpEquiv) || 0;
+    var ratesUsed = (p.rateLock && p.rateLock.ratesUsed) || {};
+    return sum + fromGBPLocked(gbp, inv.cur, ratesUsed);
+  }, 0);
+}
+
+// Single point of truth for "what should this invoice's paid-to-date figure show."
+// Returns { value, source } — mirrors getPOEffectiveDepInfo()'s contract exactly.
+//   'ledger'                      — reconciled from DB.payments via getInvTotalPaidNative()
+//   'legacy-no-records'           — no payment records exist yet; raw inv.dep
+//   'legacy-unsupported-currency' — records exist, but inv.cur isn't in PO_DEP_RECONCILE_CURS; raw inv.dep
+// Never mutates inv.dep. Safe to call from any read-only render context.
+function getInvEffectiveDepInfo(inv) {
+  var payments = getInvPayments(inv);
+  if (!payments.length) {
+    return { value: +inv.dep || 0, source: 'legacy-no-records' };
+  }
+  var invCur = (inv.cur || 'USD').toUpperCase();
+  if (invCur === 'CNY') invCur = 'RMB';
+  if (PO_DEP_RECONCILE_CURS.indexOf(invCur) === -1) {
+    return { value: +inv.dep || 0, source: 'legacy-unsupported-currency' };
+  }
+  return { value: getInvTotalPaidNative(inv), source: 'ledger' };
 }
 
 async function savePayment(payment) {
@@ -13038,7 +13100,7 @@ async function savePayment(payment) {
   // Update invoice dep field to match total paid
   var inv = DB.inv.find(function(i){ return i.id === payment.invId; });
   if (inv) {
-    var totalPaid = getInvTotalPaid(inv.id);
+    var totalPaid = getInvTotalPaidNative(inv);
     inv.dep = totalPaid;
     inv.updAt = new Date().toISOString();
 
@@ -13100,8 +13162,25 @@ function deletePayment(id) {
   // Recalculate invoice dep
   var inv = DB.inv.find(function(i){ return i.id === pm.invId; });
   if (inv) {
-    inv.dep = getInvTotalPaid(inv.id);
+    var totalPaid = getInvTotalPaidNative(inv);
+    inv.dep = totalPaid;
     inv.updAt = new Date().toISOString();
+
+    // Re-derive inv.status, narrowly — only when the CURRENT status is one this exact
+    // auto-status logic (savePayment()'s own, mirrored here) could itself have produced.
+    // Never touch Draft/Pro-forma/Sent/Cancelled (REQ §1.3/§2c-d, AC-6).
+    if (inv.status === 'Partially Paid' || inv.status === 'Paid') {
+      var grand = Math.round((+inv.calc_grandTotal || cInv(inv).grand) * 100) / 100;
+      var paid  = Math.round(totalPaid * 100) / 100;
+      if (paid >= grand && grand > 0) {
+        inv.status = 'Paid';
+      } else if (paid > 0 && paid < grand) {
+        inv.status = 'Partially Paid';
+      } else {
+        inv.status = 'Sent';
+      }
+    }
+
     sv(K.i, DB.inv);
     syncEnt('inv', inv).catch(function(){});
     rInv(); rDash();
@@ -13112,12 +13191,23 @@ function deletePayment(id) {
 function renderPaymentsTab(invId) {
   var container = G('payments-tab');
   if (!container) return;
-  var payments = getInvPayments(invId);
   var inv = DB.inv.find(function(i){ return i.id === invId; });
+  var payments = getInvPayments(inv || { id: invId, num: '' });
   var grand = inv ? (+inv.calc_grandTotal || cInv(inv).grand) : 0;
-  var totalPaid = payments.reduce(function(s,p){ return s+(+p.amount||0); }, 0);
+  var totalPaid = inv ? getInvEffectiveDepInfo(inv).value : 0;
   var balance = grand - totalPaid;
   var cur = inv ? inv.cur : 'USD';
+
+  // Currency/GBP-equivalent columns appear only when at least one row's resolved
+  // effective currency (pm.currency||inv.cur) differs from the invoice's own \u2014 an
+  // all-same-currency invoice's table stays as uncluttered as it is today (REQ \u00a72c-e.3).
+  var showCurCols = inv ? payments.some(function(pm){ return (pm.currency || cur) !== cur; }) : false;
+
+  var invCurUC = (cur || 'USD').toUpperCase();
+  var pmCurOpts = ['USD','GBP','RMB','BBD'];
+  var pmCurDefault = pmCurOpts.indexOf(invCurUC) !== -1 ? invCurUC : pmCurOpts[0];
+  var pmCurNorm = invCurUC === 'CNY' ? 'RMB' : invCurUC;
+  var pmCurUnsupported = PO_DEP_RECONCILE_CURS.indexOf(pmCurNorm) === -1;
 
   var html = '<div style="margin-bottom:12px;display:flex;gap:16px;padding:10px 12px;background:var(--bg);">' +
     '<div><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);">Invoice Total</div>' +
@@ -13132,12 +13222,20 @@ function renderPaymentsTab(invId) {
 
   if (payments.length) {
     html += '<table class="tbl"><thead><tr>' +
-      '<th>Date</th><th>Amount</th><th>Method</th><th>Reference</th><th>Notes</th><th></th>' +
+      '<th>Date</th><th>Amount</th><th>Purpose</th>' +
+      (showCurCols ? '<th>Currency</th><th>GBP Equiv.</th>' : '') +
+      '<th>Method</th><th>Reference</th><th>Notes</th><th></th>' +
       '</tr></thead><tbody>';
     payments.forEach(function(pm) {
+      var pmCur = pm.currency || cur;
       html += '<tr>' +
         '<td style="white-space:nowrap;">' + san(pm.date||'-') + '</td>' +
-        '<td class="num" style="color:var(--gn);font-weight:600;">' + fmt(pm.amount,cur) + '</td>' +
+        '<td class="num" style="color:var(--gn);font-weight:600;">' + fmt(pm.amount,pmCur) + '</td>' +
+        '<td>' + san(pm.purpose||'-') + '</td>' +
+        (showCurCols ? (
+          '<td>' + san(pmCur) + '</td>' +
+          '<td class="num" style="color:var(--m);">' + fmt((pm.rateLock&&pm.rateLock.gbpEquiv)||toGBP(pm.amount,pmCur),'GBP') + '</td>'
+        ) : '') +
         '<td>' + san(pm.method||'-') + '</td>' +
         '<td style="font-size:.54rem;color:var(--m);">' + san(pm.reference||'-') + '</td>' +
         '<td style="font-size:.54rem;color:var(--m);">' + san(pm.notes||'-') + '</td>' +
@@ -13159,6 +13257,13 @@ function renderPaymentsTab(invId) {
     PAYMENT_METHODS.map(function(m){ return '<option>' + m + '</option>'; }).join('') +
     '</select></div>' +
     '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">' +
+    '<div class="fld"><label>Currency</label><select id="pm-cur"' + (pmCurUnsupported ? ' disabled' : '') + '>' +
+    pmCurOpts.map(function(c){ return '<option' + (c===pmCurDefault?' selected':'') + '>' + c + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="fld"><label>Purpose</label><select id="pm-purpose"><option value="">Select...</option><option>Deposit</option><option>Balance</option><option>Other</option></select></div>' +
+    '<div></div>' +
+    '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">' +
     '<div class="fld"><label>Reference / Transaction ID</label><input type="text" id="pm-ref" placeholder="Bank ref, transaction ID..."></div>' +
     '<div class="fld"><label>Notes</label><input type="text" id="pm-notes" placeholder="Optional notes..."></div>' +
@@ -13173,12 +13278,28 @@ function addPaymentFromForm(invId) {
   var date = G('pm-date') ? G('pm-date').value : today();
   var amount = G('pm-amount') ? +G('pm-amount').value : 0;
   var method = G('pm-method') ? G('pm-method').value : 'Bank Transfer';
+  var purpose = G('pm-purpose') ? G('pm-purpose').value : '';
   var ref = G('pm-ref') ? G('pm-ref').value.trim() : '';
   var notes = G('pm-notes') ? G('pm-notes').value.trim() : '';
 
-  if (!vPay(date, amount, invId)) return;
+  if (!vPay(date, amount, invId, purpose)) return;
 
   var inv = DB.inv.find(function(i){ return i.id === invId; });
+  var invCurUC = (inv && inv.cur || 'USD').toUpperCase();
+  var invCurNorm = invCurUC === 'CNY' ? 'RMB' : invCurUC;
+  var curSupported = PO_DEP_RECONCILE_CURS.indexOf(invCurNorm) !== -1;
+  var currency, rateLock;
+  if (curSupported) {
+    currency = G('pm-cur') ? G('pm-cur').value : invCurUC;
+    rateLock = lockFxRate(amount, currency);
+  } else {
+    // Invoice currency isn't one lockFxRate()/toGBP() can meaningfully pivot (EUR/NGN/GHS)
+    // \u2014 every payment against it carries inv.cur itself, true by construction, never a
+    // substitute currency from the pm-cur list (REQ \u00a72c-b, AC-2a).
+    currency = inv ? inv.cur : 'USD';
+    rateLock = null;
+  }
+
   var pm = {
     id: uid(),
     invId: invId,
@@ -13186,6 +13307,9 @@ function addPaymentFromForm(invId) {
     date: date,
     amount: amount,
     method: method,
+    purpose: purpose,
+    currency: currency,
+    rateLock: rateLock,
     reference: ref,
     notes: notes,
     type: 'buyer_payment',
@@ -13199,8 +13323,9 @@ function addPaymentFromForm(invId) {
   if (G('pm-amount')) G('pm-amount').value = '';
   if (G('pm-ref')) G('pm-ref').value = '';
   if (G('pm-notes')) G('pm-notes').value = '';
+  if (G('pm-purpose')) G('pm-purpose').value = '';
 
-  toast('\u2713 Payment of ' + fmt(amount, inv ? inv.cur : 'USD') + ' recorded');
+  toast('\u2713 Payment of ' + fmt(amount, currency) + ' recorded');
 }
 
 function getPOPayments(poId) {
