@@ -115,6 +115,25 @@ Note: the saved-record preview path (`prevInvId()`, the table's PDF eye-icon but
 **Regression tests added:** `tests/run.js` — (1) `prevInvDoc` unit test with `status` passed directly: Pro-forma renders `PRO-FORMA INVOICE`, non-Pro-forma does not; (2) `prevInv()` integration test exercising the actual modal form-field path that was broken, confirming the live preview button now also renders the heading correctly.
 **Follow-up worth considering (not done):** Pro-forma invoices commonly carry different legal wording ("This is not a demand for payment") and sometimes different totals language ("Estimated Total" vs "Balance Due"). Not changed in this fix — scope was limited to the reported document-identity defect. Revisit if a customer-facing distinction beyond the heading is required.
 
+### INV-GAP-002 — `delInv()` leaves dangling references on delete; Credit Note create/edit is never logged *(Open, accepted)*
+**Area:** `delInv()` (`index.html:8230-8244`); `saveCN()`/`saveInv()`'s CN sub-mode (no `logEv()` call on CN create or edit, unlike Invoice's own G-05 lifecycle logging).
+**Logged:** REQ-CLOUD-006 (2026-09), found during check-first for extending Cloud Data to Invoice and Credit Note.
+**Detail:** Four related, pre-existing gaps, none created by this REQ:
+1. `delInv()` never cleans a deleted invoice's id out of `PO.invId`/`PO.invNum`, out of other Credit Notes' `linkedInvId`, or out of `DB.payments[].invId` — all three are left dangling, pointing at an id that no longer resolves to any record.
+2. `saveCN()` and `saveInv()`'s CN sub-mode never call `logEv()` on Credit Note create or edit — a CN's Activity tab shows no create/edit history at all, unlike an ordinary Invoice's G-05 lifecycle log.
+3. `delInv()` mislabels a Credit Note deletion as `"Invoice ... deleted"` in the event log (`index.html:8242`, unconditional — never checks `_isCnDel` for the log message text, even though it correctly routes the Sheets delete call via `_isCnDel ? 'cn' : 'inv'` two lines later).
+**Decision:** Not fixed — `delPO()`'s equivalent `PO-GAP-007` cleanup was folded into `REQ-CLOUD-005f` as a single-array-element case; this gap touches three separate reference kinds (a scalar PO field pair, another CN's `linkedInvId`, and a payments-ledger array), each needing its own cleanup design, large enough to warrant its own future REQ rather than folding into a migration REQ. Not worsened by REQ-CLOUD-006 — Cloud Data migration only remaps ids that already exist; it does not change what `delInv()` cleans up afterward.
+
+---
+
+## Credit Notes
+
+### CN-GAP-001 — `saveCN()`'s dedicated modal enforces no Credit Note number format, unlike `saveInv()`'s CN sub-mode *(Open, accepted)*
+**Area:** `vCN()` (`index.html:9985-9997`) vs. `vInv()`'s `RX.invNum` check (`index.html:8969`).
+**Logged:** REQ-CLOUD-006 (2026-09), found during check-first — two independent creation paths for Credit Notes produce materially different record shapes (see `docs/architecture-data-model-v1.md` §6.6 for the related Sheets-sync/logging findings).
+**Detail:** A Credit Note can be created two ways: typing a `CN####...`-prefixed number inside the ordinary Invoice modal (format-checked via `vInv()`'s `RX.invNum` regex), or via the dedicated `saveCN()`/`ov-cn` modal, whose own `vCN()` validator checks only that a number is non-empty — no format regex at all. A Credit Note created through the dedicated modal can therefore carry a number that would never pass validation through the Invoice-modal path.
+**Decision:** Not fixed — a pre-existing validation asymmetry between the two CN creation paths, unrelated to Cloud Data. Neither path is blocked by, nor blocks, this REQ's migration (`migrateInvToSupabase()`'s own duplicate-`num` pre-flight scan, REQ-CLOUD-006c, catches a collision either path could produce, regardless of format). Logged for visibility; revisit if the two creation paths are ever unified.
+
 ---
 
 ## Quote Engine
@@ -650,8 +669,8 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Logged:** v2.9.73 (REQ/SPEC-CLOUD-002, round-3 spec-gate finding), confirmed pre-existing (includes the Supplier case from SPEC-CLOUD-001) and not worsened by this REQ.
 **Detail:** Unlike `pullAll()` (which now excludes any entity whose own Cloud Data migration marker is set, per REQ-CLOUD-002's fix extending SPEC-CLOUD-001's original Supplier-only exclusion), `syncAll()`/`pushAll()` have no equivalent exclusion for any entity, including Supplier. Once an entity is cloud-migrated, its Cloud-sourced snapshot keeps getting pushed up to Google Sheets on every sync. Wasteful/confusing, not destructive — `pullAll()`'s exclusion means nothing pulls those stale Sheets rows back down, so there is no round-trip corruption loop. Not fixed here; candidate for a future standalone REQ alongside `CLOUD-GAP-001`.
 
-### CLOUD-GAP-003 — `processImport()`'s CSV import branches bypass Cloud Data for Supplier, Line Item, and Contact *(Open, accepted)*
+### CLOUD-GAP-003 — `processImport()`'s CSV import branches bypass Cloud Data for Supplier, Line Item, Contact, Purchase Order, Invoice, and Credit Note *(Open, accepted)*
 
-**Area:** `processImport()`'s `'sup'`, `'li'`, `'co'`, and `'ord'`-Contact-creation CSV import branches.
-**Logged:** v2.9.73 (REQ/SPEC-CLOUD-002, round-4 spec-gate finding).
-**Detail:** These CSV import branches build `DB.sup`/`DB.li`/`DB.con` records directly and persist via a bare `sv(K.s,...)`/`sv(K.l,...)`/`sv(K.co,...)`, bypassing every `_sb` branch entirely — an imported record for a cloud-migrated entity is silently local-only until the next Cloud Data refresh discards it. This is the same class of gap as `CLOUD-GAP-001` but a genuinely different code path (`processImport()`'s CSV importer, not `expAll()`/`doImport()`'s full-JSON-backup restore) — not previously logged under any existing gap despite predating REQ-CLOUD-002 for the Supplier case. Not fixed here, since REQ-CLOUD-002 scoped its fixes to UI code paths that mutate already-migrated records (see the five sites plus `saveInv()` fixed in SPEC-CLOUD-002 §2.11/§2.12), not the CSV importer; candidate for a future standalone REQ alongside `CLOUD-GAP-001`/`CLOUD-GAP-002`.
+**Area:** `processImport()`'s/`processImportRecords()`'s `'sup'`, `'li'`, `'co'`, `'ord'`-Contact-creation, `'po'`, and `'inv'` (Invoice and Credit Note together — one CSV entity, per REQ-CLOUD-006 §0) CSV/Sheets-record import branches.
+**Logged:** v2.9.73 (REQ/SPEC-CLOUD-002, round-4 spec-gate finding); broadened to Purchase Order and Invoice/Credit Note by REQ-CLOUD-006 (2026-09) — Purchase Order's own instance was committed to being logged here at REQ-CLOUD-005's ship time (`docs/REQ-CLOUD-005-v1.md` §3) but never actually was, a gap REQ-CLOUD-006's own drafting process found and closes here rather than compounding a third time.
+**Detail:** These CSV/Sheets-record import branches build `DB.sup`/`DB.li`/`DB.con`/`DB.po`/`DB.inv` records directly and persist via a bare `sv(K.s,...)`/`sv(K.l,...)`/`sv(K.co,...)`/`sv(K.p,...)`/`sv(K.i,...)`, bypassing every `_sb` branch entirely — an imported record for a cloud-migrated entity is silently local-only until the next Cloud Data refresh discards it. This is the same class of gap as `CLOUD-GAP-001` but a genuinely different code path (the CSV/Sheets-record importer, not `expAll()`/`doImport()`'s full-JSON-backup restore). Not fixed for any of the six entity families — each entity's own REQ/SPEC in this series has scoped its fixes to UI code paths that mutate already-migrated records, not the CSV/Sheets-record importer; candidate for a future standalone REQ covering all six at once, alongside `CLOUD-GAP-001`/`CLOUD-GAP-002`.

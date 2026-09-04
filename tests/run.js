@@ -8090,7 +8090,7 @@ testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-
   ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
   var origInitSbClient = ctx.initSbClient;
   ctx.initSbClient = function(){}; // keep the mock _sb below in place instead of overwriting it with a real client
-  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] } });
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] } });
   var origEnsureAuth = ctx.ensureSbAuth;
   ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
   var called = false;
@@ -8107,9 +8107,15 @@ testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-
   // DB.po (empty at this point) and permanently sets st_po_cloud_migration_ts.
   var origRefreshPO = ctx.refreshPOFromSupabase;
   ctx.refreshPOFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-006: initCloudDataLayer() now also calls refreshInvFromSupabase() after
+  // refreshPOFromSupabase() — stub it too, or the real function runs unmocked against
+  // DB.inv (empty at this point) and permanently sets st_inv_cloud_migration_ts,
+  // corrupting every later test that touches Invoice/CN.
+  var origRefreshInv = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
 });
 
@@ -8648,7 +8654,7 @@ testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirro
   ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
   var origInitSbClient = ctx.initSbClient;
   ctx.initSbClient = function(){};
-  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] } });
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] } });
   var origEnsureAuth = ctx.ensureSbAuth;
   ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
   var called = false;
@@ -8661,9 +8667,14 @@ testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirro
   // st_po_cloud_migration_ts, corrupting every later test that touches PO.
   var origRefreshPO = ctx.refreshPOFromSupabase;
   ctx.refreshPOFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-006: initCloudDataLayer() now also calls refreshInvFromSupabase() after
+  // refreshPOFromSupabase() — stub it too, for the same self-marking-contamination
+  // reason as refreshPOFromSupabase() above.
+  var origRefreshInv = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshQteFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
   ctx._sb = null;
 });
@@ -9050,15 +9061,20 @@ testAsync('initCloudDataLayer — now also calls refreshPOFromSupabase()', async
   ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
   var origInitSbClient = ctx.initSbClient;
   ctx.initSbClient = function(){};
-  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] } });
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] } });
   var origEnsureAuth = ctx.ensureSbAuth;
   ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
   var called = false;
   var origRefreshPO = ctx.refreshPOFromSupabase;
   ctx.refreshPOFromSupabase = function(){ called = true; return Promise.resolve(); };
+  // SPEC-CLOUD-006: initCloudDataLayer() now also calls refreshInvFromSupabase() after
+  // refreshPOFromSupabase() — stub it too, or the real function runs unmocked against
+  // DB.inv (empty at this point) and permanently sets st_inv_cloud_migration_ts.
+  var origRefreshInv = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshPOFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshPOFromSupabase = origRefreshPO;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
   ctx._sb = null;
 });
@@ -9543,6 +9559,823 @@ testAsync('SPEC-CLOUD-005 test-hygiene cleanup — reset _sb and every Purchase 
   ctx._sb = null;
   ctx.localStorage.removeItem('st_po_cloud_migration_ts');
   ctx.localStorage.removeItem('st_po_pre_migration');
+});
+
+// ── CLOUD DATA — Invoice and Credit Note (SPEC-CLOUD-006) ──
+
+testAsync('initCloudDataLayer — now also calls refreshInvFromSupabase()', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){};
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var called = false;
+  var origRefreshInv = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ called = true; return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(called, 'initCloudDataLayer() calls refreshInvFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshInvFromSupabase = origRefreshInv;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+  ctx._sb = null;
+});
+
+testAsync('refreshInvFromSupabase — refuses to overwrite real local data when this device has never run the migration; proceeds when local data is empty (second-device case); sets its own marker on success; builds separate Invoice/CN shapes; omits updAt/editHistory/calc_* keys entirely when Supabase returns null for them (AC-11)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx.DB.inv.push({ id: 'local-only-inv', num: 'INV75001', status: 'Draft', lineItems: [] });
+  ctx._sb = mockSb({ invoices: { selectData: [] } });
+  await ctx.refreshInvFromSupabase();
+  assertEqual(ctx.DB.inv.length, 1, 'real local Invoice NOT wiped — this device never ran the migration');
+  assertEqual(ctx.DB.inv[0].id, 'local-only-inv', 'original record untouched');
+
+  resetDB();
+  ctx._sb = mockSb({ invoices: { selectData: [
+    { id: 'cloud-inv-1', num: 'INV75002', type: 'invoice', buyer_id: 'b1', buyer: 'Acme', cur: 'USD', date: '2026-01-01', status: 'Draft', line_items: [], pos: [], upd_at: null, edit_history: null, calc_grand_total: null },
+    { id: 'cloud-cn-1', num: 'CN75002', type: 'credit_note', buyer: 'Acme', cur: 'USD', date: '2026-01-01', status: 'Draft', cn_amount: -10, linked_inv_num: 'INV75002', linked_inv_id: 'cloud-inv-1', line_items: [] }
+  ] } });
+  await ctx.refreshInvFromSupabase();
+  assertEqual(ctx.DB.inv.length, 2, 'both the Invoice and Credit Note rows loaded');
+  var inv = ctx.DB.inv.find(function(x){ return x.num === 'INV75002'; });
+  var cn = ctx.DB.inv.find(function(x){ return x.num === 'CN75002'; });
+  assertEqual(inv.buyerId, 'b1', 'Invoice shape built with buyerId');
+  assertEqual('pos' in cn, false, 'a CN record never gains an Invoice-only key like pos[]');
+  assertEqual(cn.linkedInvId, 'cloud-inv-1', 'CN shape correctly carries linkedInvId');
+  assertEqual('updAt' in inv, false, 'updAt key omitted entirely, not set to null, when Supabase has none');
+  assertEqual('editHistory' in inv, false, 'editHistory key omitted entirely');
+  assertEqual('calc_grandTotal' in inv, false, 'calc_grandTotal key omitted entirely');
+  assert(!!ctx.localStorage.getItem('st_inv_cloud_migration_ts'), 'marker set even though this device never ran the migration itself');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migrateInvToSupabase — blocked unless Buyer, Line Item, Quote, and Purchase Order have each completed their own migration (AC-1)', async function() {
+  resetDB();
+  ctx._sb = mockSb({});
+  var origToast = ctx.toast, toasted = '';
+  ctx.toast = function(m){ toasted = m; };
+  ctx.localStorage.removeItem('st_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+
+  await ctx.migrateInvToSupabase();
+  assert(/Suppliers\/Buyers/.test(toasted), 'blocked on missing Buyer (shared Supplier/Buyer marker): ' + toasted);
+
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  toasted = '';
+  await ctx.migrateInvToSupabase();
+  assert(/Line Items/.test(toasted), 'blocked on missing Line Item: ' + toasted);
+
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  toasted = '';
+  await ctx.migrateInvToSupabase();
+  assert(/Quotes/.test(toasted), 'blocked on missing Quote: ' + toasted);
+
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  toasted = '';
+  await ctx.migrateInvToSupabase();
+  assert(/Purchase Orders/.test(toasted), 'blocked on missing Purchase Order: ' + toasted);
+
+  ctx.toast = origToast;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('migrateInvToSupabase — the four live pre-flight FK checks each block migration on an unresolvable reference: buyerId, lineItems[].lid, linkedQuoteId, pos[] (AC-2)', async function() {
+  var origToast = ctx.toast, toasted = '';
+  ctx.toast = function(m){ toasted = m; };
+  function setAllMarkers() {
+    ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+    ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+    ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+    ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  }
+
+  resetDB(); setAllMarkers();
+  ctx.DB.inv.push({ id: 'i1', num: 'INV80001', buyerId: 'ghost-buyer', lineItems: [], pos: [], status: 'Draft' });
+  ctx._sb = mockSb({ buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] } });
+  toasted = '';
+  await ctx.migrateInvToSupabase();
+  assert(/Buyer not found/.test(toasted), 'blocked on unresolvable buyerId: ' + toasted);
+
+  resetDB(); setAllMarkers();
+  ctx.DB.inv.push({ id: 'i2', num: 'INV80002', buyerId: '', lineItems: [{ lid: 'ghost-li' }], pos: [], status: 'Draft' });
+  ctx._sb = mockSb({ buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] } });
+  toasted = '';
+  await ctx.migrateInvToSupabase();
+  assert(/Line Item not found/.test(toasted), 'blocked on unresolvable lineItems[].lid: ' + toasted);
+
+  resetDB(); setAllMarkers();
+  ctx.DB.inv.push({ id: 'i3', num: 'INV80003', buyerId: '', lineItems: [], linkedQuoteId: 'ghost-qte', pos: [], status: 'Draft' });
+  ctx._sb = mockSb({ buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] } });
+  toasted = '';
+  await ctx.migrateInvToSupabase();
+  assert(/Quote not found/.test(toasted), 'blocked on unresolvable linkedQuoteId: ' + toasted);
+
+  resetDB(); setAllMarkers();
+  ctx.DB.inv.push({ id: 'i4', num: 'INV80004', buyerId: '', lineItems: [], pos: ['ghost-po'], status: 'Draft' });
+  ctx._sb = mockSb({ buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] } });
+  toasted = '';
+  await ctx.migrateInvToSupabase();
+  assert(/Purchase Order not found/.test(toasted), 'blocked on unresolvable pos[] element: ' + toasted);
+
+  ctx.toast = origToast;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('migrateInvToSupabase — blocked by a duplicate num spanning an Invoice and a Credit Note sharing one number, not just two Invoices (AC-3)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.inv.push({ id: 'i1', num: 'DUPE0001', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Draft' });
+  ctx.DB.inv.push({ id: 'c1', num: 'DUPE0001', type: 'credit_note', lineItems: [], status: 'Draft' });
+  var sb = mockSb({ buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { insertImpl: function(row){ return Object.assign({ id: 'x' }, row); } } });
+  ctx._sb = sb;
+  await ctx.migrateInvToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'insert'; });
+  assert(!insertCall, 'migration blocked before any insert — the duplicate spans an Invoice and a CN');
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('migrateInvToSupabase — two-pass self-referential remap resolves a CN linkedInvNum/linkedInvId to its linked invoice\'s new id, both insertion orders; a genuinely dangling reference is left alone, not blocking (AC-4)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV10001', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' }); // invoice BEFORE its CN
+  ctx.DB.inv.push({ id: 'cn1', num: 'CN10001', type: 'credit_note', linkedInvNum: 'INV10001', linkedInvId: 'inv1', lineItems: [], status: 'Draft', cnAmount: -10 });
+  ctx.DB.inv.push({ id: 'cn2', num: 'CN10002', type: 'credit_note', linkedInvNum: 'INV10002', linkedInvId: 'inv2', lineItems: [], status: 'Draft', cnAmount: -20 }); // CN BEFORE its invoice
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV10002', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  ctx.DB.inv.push({ id: 'cn3', num: 'CN10003', type: 'credit_note', linkedInvNum: 'GHOST9999', linkedInvId: 'ghost-id', lineItems: [], status: 'Draft', cnAmount: -5 }); // genuinely dangling
+
+  var byOldNum = {};
+  var sb = mockSb({
+    buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] },
+    invoices: { insertImpl: function(row){ var id = 'uuid-' + row.num; byOldNum[row.num] = id; return Object.assign({ id: id }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-inv-restore-btn');
+  var origRefresh = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+
+  await ctx.migrateInvToSupabase();
+
+  var pass2UpdateCalls = sb._calls.filter(function(c){ return c.table === 'invoices' && c.op === 'update' && c.row && ('linked_inv_id' in c.row); });
+  assertEqual(pass2UpdateCalls.length, 2, 'exactly 2 CNs (the resolvable ones) had their linked_inv_id pushed — the dangling one was not');
+  var pushedIds = pass2UpdateCalls.map(function(c){ return c.row.linked_inv_id; });
+  assert(pushedIds.indexOf(byOldNum['INV10001']) > -1, 'CN10001 (appears after its invoice) resolved to INV10001\'s real new id');
+  assert(pushedIds.indexOf(byOldNum['INV10002']) > -1, 'CN10002 (appears before its invoice) also resolved correctly, regardless of insertion order');
+
+  ctx.refreshInvFromSupabase = origRefresh;
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('migrateInvToSupabase — a CN whose linkedInvId points at another CN (not a true Invoice) is still resolved correctly by the type-agnostic remap (AC-4a)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.inv.push({ id: 'cnA', num: 'CN20001', type: 'credit_note', lineItems: [], status: 'Draft' });
+  ctx.DB.inv.push({ id: 'cnB', num: 'CN20002', type: 'credit_note', linkedInvNum: 'CN20001', linkedInvId: 'cnA', lineItems: [], status: 'Draft' });
+  var byOldNum = {};
+  var sb = mockSb({
+    buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] },
+    invoices: { insertImpl: function(row){ var id = 'uuid-' + row.num; byOldNum[row.num] = id; return Object.assign({ id: id }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-inv-restore-btn');
+  var origRefresh = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.migrateInvToSupabase();
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update' && c.row && ('linked_inv_id' in c.row); });
+  assert(upd, 'CN20002\'s linked_inv_id was pushed');
+  assertEqual(upd.row.linked_inv_id, byOldNum['CN20001'], 'CN20002 correctly resolves to CN20001\'s new id — another CN, not a true Invoice — via the type-agnostic invIdMap');
+  ctx.refreshInvFromSupabase = origRefresh;
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('migrateInvToSupabase — a Sheets-sync-originated CN with blank/absent linkedInvId but correct linkedInvNum is still resolved via the linkedInvNum-first fallback (AC-4b)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.inv.push({ id: 'inv9', num: 'INV19999', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  // simulates pullAll()'s mergePulledWithLocal() genuinely-new-record path (REQ-CLOUD-006 §1.6):
+  // linkedInvId entirely absent as an own key, linkedInvNum correctly populated.
+  ctx.DB.inv.push({ id: 'cn9', num: 'CN19999', type: 'credit_note', linkedInvNum: 'INV19999', lineItems: [], status: 'Draft' });
+  var byOldNum = {};
+  var sb = mockSb({
+    buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] },
+    invoices: { insertImpl: function(row){ var id = 'uuid-' + row.num; byOldNum[row.num] = id; return Object.assign({ id: id }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-inv-restore-btn');
+  var origRefresh = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.migrateInvToSupabase();
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update' && c.row && ('linked_inv_id' in c.row); });
+  assert(upd, 'CN19999\'s linked_inv_id was pushed despite having no linkedInvId locally');
+  assertEqual(upd.row.linked_inv_id, byOldNum['INV19999'], 'resolved via linkedInvNum, not silently left blank for lacking a resolvable linkedInvId');
+  ctx.refreshInvFromSupabase = origRefresh;
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('migrateInvToSupabase — a CN whose linkedInvNum and linkedInvId genuinely DISAGREE (both present, pointing at different invoices) resolves via linkedInvNum, not the stale linkedInvId — the true precedence-order discriminator (build-time addition, mutation-test regression guard for AC-4b\'s own linkedInvNum-first precedence)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.inv.push({ id: 'inv-correct', num: 'INV29001', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  ctx.DB.inv.push({ id: 'inv-stale', num: 'INV29002', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  // linkedInvNum correctly names INV29001; linkedInvId is stale, still resolving to a
+  // DIFFERENT real invoice (inv-stale/INV29002) — unlike AC-4b's own test (blank/absent
+  // linkedInvId), this is the genuinely order-discriminating shape: a linkedInvId-first
+  // implementation would silently resolve to the WRONG invoice instead of falling through.
+  ctx.DB.inv.push({ id: 'cn-divergent', num: 'CN29003', type: 'credit_note', linkedInvNum: 'INV29001', linkedInvId: 'inv-stale', lineItems: [], status: 'Draft' });
+  var byOldNum = {};
+  var sb = mockSb({
+    buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] },
+    invoices: { insertImpl: function(row){ var id = 'uuid-' + row.num; byOldNum[row.num] = id; return Object.assign({ id: id }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-inv-restore-btn');
+  var origRefresh = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.migrateInvToSupabase();
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update' && c.row && ('linked_inv_id' in c.row); });
+  assert(upd, 'CN29003\'s linked_inv_id was pushed');
+  assertEqual(upd.row.linked_inv_id, byOldNum['INV29001'], 'resolved via linkedInvNum (the correct target) — NOT via the stale linkedInvId, which points at a different real invoice');
+  ctx.refreshInvFromSupabase = origRefresh;
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('saveInv — cloud-aware create/update when Invoice has migrated (insert with no client-generated id, id reassigned in place); local-only behavior unchanged when not migrated (AC-5)', async function() {
+  resetDB();
+  setupInvForm('INV30001');
+  ctx.EI.i = null;
+  // Fixed, spec-gate round 1 blocking finding 2: an earlier draft left cIL empty, but
+  // vInv() blocks a NEW invoice save with no line items (and EI.i null, so it can't fall
+  // back to an existing calc_grandTotal>0 record either) -- saveInv() never even reaches
+  // this test's Cloud Data branch without at least one real line item, matching every
+  // other creation-path test's own convention (e.g. tests/run.js:2146).
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:0 }];
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { insertImpl: function(row){ return Object.assign({ id: 'real-inv-uuid' }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  var origRefresh = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.saveInv();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'insert'; });
+  assert(insertCall, 'create routes through Supabase insert when Invoice has migrated');
+  assert(!('id' in insertCall.row), 'no client-generated id sent on insert — Postgres assigns it');
+  var savedInv = ctx.DB.inv.find(function(x){ return x.num === 'INV30001'; });
+  assertEqual(savedInv.id, 'real-inv-uuid', 'inv.id reassigned to the real Postgres id in place');
+  ctx.refreshInvFromSupabase = origRefresh;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  setupInvForm('INV30002');
+  ctx.EI.i = null;
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:0 }];
+  ctx._sb = null;
+  await ctx.saveInv();
+  assertEqual(ctx.DB.inv.length, 1, 'local-only path unaffected when Invoice has not migrated');
+  assert(ctx.DB.inv[0].id !== 'real-inv-uuid', 'a plain client-generated id is used locally, not a Postgres one');
+});
+
+testAsync('saveCN — cloud-aware create/update when Invoice has migrated (insert with no client-generated id; a goodwill-credit payment references the REAL id, not the placeholder); local-only behavior unchanged when not migrated (AC-5)', async function() {
+  resetDB();
+  mockEl('cnf-n').value = 'CN30001'; mockEl('cnf-amount').value = '50'; mockEl('cnf-type').value = 'goodwill_credit';
+  mockEl('cnf-b').value = 'Acme Buyer'; mockEl('cnf-cur').value = 'USD'; mockEl('cnf-dt').value = '2026-01-01';
+  mockEl('cn-sm').value = 'Draft'; mockEl('cnf-reason').value = 'Damaged goods'; mockEl('cnf-nt').value = '';
+  ctx.EI.cn = null;
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { insertImpl: function(row){ return Object.assign({ id: 'real-cn-uuid' }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.saveCN();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'insert'; });
+  assert(insertCall, 'create routes through Supabase insert when Invoice has migrated');
+  var goodwillPay = ctx.DB.payments.find(function(p){ return p.method === 'Goodwill Credit' && p.invNum === 'CN30001'; });
+  assert(goodwillPay, 'goodwill payment ledger entry created');
+  assertEqual(goodwillPay.invId, 'real-cn-uuid', 'goodwill payment references the REAL Postgres id, not the client-generated placeholder cn.id started with');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  mockEl('cnf-n').value = 'CN30002'; mockEl('cnf-amount').value = '50'; mockEl('cnf-type').value = 'credit_note';
+  mockEl('cnf-b').value = 'Acme Buyer'; mockEl('cnf-cur').value = 'USD'; mockEl('cnf-dt').value = '2026-01-01';
+  mockEl('cn-sm').value = 'Draft'; mockEl('cnf-reason').value = ''; mockEl('cnf-nt').value = ''; mockEl('cnf-linked').value = 'INV0001';
+  ctx.EI.cn = null;
+  ctx._sb = null;
+  await ctx.saveCN();
+  assertEqual(ctx.DB.inv.length, 1, 'local-only path unaffected when Invoice has not migrated');
+});
+
+testAsync('migrateInvToSupabase — sweeps PO.invId outward via invNum-first/invId-fallback and pushes each touched PO via persistPOChange; demonstrated for a PO whose invId/invNum disagree (PO-GAP-004 shape) (AC-6/AC-6a)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.inv.push({ id: 'inv-old-1', num: 'INV40001', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  // stale invId, correct invNum — PO-GAP-004's documented divergence shape
+  ctx.DB.po.push({ id: 'po1', num: 'PO-0001', supId: 's1', invId: 'some-other-stale-id', invNum: 'INV40001', status: 'Draft', lineItems: [] });
+  var sb = mockSb({
+    buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] },
+    purchase_orders: { selectData: [{ id: 'po1', num: 'PO-0001', sup_id: 's1', inv_id: 'some-other-stale-id', inv_num: 'INV40001', status: 'Draft', line_items: [] }] },
+    invoices: { insertImpl: function(row){ return Object.assign({ id: 'new-inv-uuid' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-inv-restore-btn');
+  var origRefreshInv = ctx.refreshInvFromSupabase; ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.migrateInvToSupabase();
+  var poUpdateCall = sb._calls.find(function(c){ return c.table === 'purchase_orders' && c.op === 'update'; });
+  assert(poUpdateCall, 'the PO was pushed to Supabase via persistPOChange');
+  assertEqual(poUpdateCall.row.inv_id, 'new-inv-uuid', 'PO\'s stale invId corrected via the invNum match, not silently skipped for having a stale invId');
+  ctx.refreshInvFromSupabase = origRefreshInv;
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('migrateInvToSupabase — sweeps DB.payments[].invId locally via invNum-first/invId-fallback, including a self-referencing goodwill-credit entry and a Sheets-sync payment with blank invId but correct invNum (AC-7/AC-7a)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx.DB.inv.push({ id: 'inv-a', num: 'INV50001', type: 'invoice', buyerId: '', lineItems: [], pos: [], status: 'Sent' });
+  ctx.DB.inv.push({ id: 'gw-b', num: 'CN50002', type: 'goodwill_credit', lineItems: [], status: 'Draft', cnAmount: -30 });
+  ctx.DB.payments.push({ id: 'pm1', invId: 'inv-a', invNum: 'INV50001', amount: 100, method: 'Bank Transfer', date: '2026-01-01' });
+  // self-referencing goodwill-credit payment: invId === the credit's OWN old DB.inv id
+  ctx.DB.payments.push({ id: 'pm2', invId: 'gw-b', invNum: 'CN50002', amount: 30, method: 'Goodwill Credit', date: '2026-01-01' });
+  // Sheets-sync-originated payment: blank invId, correct invNum (pullAll()'s genuinely-new-record path)
+  ctx.DB.payments.push({ id: 'pm3', invId: '', invNum: 'INV50001', amount: 50, method: 'Bank Transfer', date: '2026-01-02' });
+
+  var byOldNum = {};
+  var sb = mockSb({
+    buyers: { selectData: [] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] },
+    invoices: { insertImpl: function(row){ var id = 'uuid-' + row.num; byOldNum[row.num] = id; return Object.assign({ id: id }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-inv-restore-btn');
+  var origRefresh = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+
+  await ctx.migrateInvToSupabase();
+
+  assertEqual(ctx.DB.payments.find(function(p){return p.id==='pm1';}).invId, byOldNum['INV50001'], 'ordinary payment invId rewritten to the new Supabase invoice id');
+  assertEqual(ctx.DB.payments.find(function(p){return p.id==='pm2';}).invId, byOldNum['CN50002'], 'self-referencing goodwill-credit payment invId rewritten to the credit\'s OWN new Supabase id, not skipped for lacking a cross-reference shape');
+  assertEqual(ctx.DB.payments.find(function(p){return p.id==='pm3';}).invId, byOldNum['INV50001'], 'a payment with blank invId but correct invNum is still resolved via the invNum-first fallback, not skipped for lacking a resolvable invId');
+
+  ctx.refreshInvFromSupabase = origRefresh;
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_cloud_migration_ts'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('saveInvApprove — pushes the approved invoice via persistInvChange when Invoice has migrated; local-only behavior unchanged when not migrated (AC-8, call site #1)', async function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV60001', status: 'Sent', lineItems: [] });
+  ctx._apprInvId = 'inv1';
+  mockEl('ia-method').value = 'Bank Transfer'; mockEl('ia-by').value = 'Jane'; mockEl('ia-note').value = '';
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.saveInvApprove();
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'approval pushed to Supabase via persistInvChange');
+  assertEqual(upd.row.buyer_approved_by, 'Jane', 'approval fields included in the pushed row');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV60002', status: 'Sent', lineItems: [] });
+  ctx._apprInvId = 'inv2';
+  mockEl('ia-method').value = 'Bank Transfer'; mockEl('ia-by').value = 'Jane'; mockEl('ia-note').value = '';
+  ctx._sb = null;
+  await ctx.saveInvApprove();
+  assertEqual(ctx.DB.inv[0].buyerApprovedBy, 'Jane', 'local-only behavior unchanged when Invoice has not migrated');
+});
+
+testAsync('saveInvProgress — pushes the progressed invoice via persistInvChange when Invoice has migrated; local-only behavior unchanged when not migrated (AC-8, call site #2)', async function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', client: 'Acme', status: 'Accepted', lines: [] });
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV61001', status: 'Draft', lineItems: [] });
+  ctx._progInvId = 'inv1';
+  mockEl('ip-qt').value = 'q1';
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.saveInvProgress();
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'progress-to-invoicing pushed to Supabase via persistInvChange');
+  assertEqual(upd.row.linked_quote_id, 'q1', 'linkedQuoteId included in the pushed row');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.qt.push({ id: 'q2', num: 'QTE-0002', client: 'Acme', status: 'Accepted', lines: [] });
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV61002', status: 'Draft', lineItems: [] });
+  ctx._progInvId = 'inv2';
+  mockEl('ip-qt').value = 'q2';
+  ctx._sb = null;
+  await ctx.saveInvProgress();
+  assertEqual(ctx.DB.inv[0].linkedQuoteId, 'q2', 'local-only behavior unchanged when Invoice has not migrated');
+});
+
+testAsync('autoPos — pushes the invoice\'s new pos[] via persistInvChange when Invoice has migrated; local-only behavior unchanged when not migrated (AC-8, call site #3)', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
+  ctx.DB.li.push({ id: 'li1', desc: 'Widget', uom: 'pcs', supId: 's1', cost: 5, price: 10, priceHistory: [] });
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV62001', status: 'Draft', pos: [], lineItems: [{ rid: 'r1', lid: 'li1', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }] });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  // Fixed, spec-gate round 1 blocking finding 3: an earlier draft set only Invoice's own
+  // migration marker, but autoPos()'s PO-creation branch (shipped by REQ-CLOUD-005,
+  // unmodified here) is gated on PO's OWN st_po_cloud_migration_ts marker, not Invoice's
+  // -- without it, autoPos() creates the auto-generated PO locally via uid(), and pos[]
+  // ends up containing a random local id instead of the asserted 'new-po-uuid'.
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({
+    invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] },
+    purchase_orders: { insertImpl: function(row){ return Object.assign({ id: 'new-po-uuid' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  await ctx.autoPos(ctx.DB.inv[0]);
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'invoice pos[] pushed to Supabase via persistInvChange');
+  assertEqual(JSON.stringify(upd.row.pos), JSON.stringify(['new-po-uuid']), 'pos[] contains the real Supabase PO id');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
+  ctx.DB.li.push({ id: 'li1', desc: 'Widget', uom: 'pcs', supId: 's1', cost: 5, price: 10, priceHistory: [] });
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV62002', status: 'Draft', pos: [], lineItems: [{ rid: 'r1', lid: 'li1', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }] });
+  ctx._sb = null;
+  await ctx.autoPos(ctx.DB.inv[0]);
+  assertEqual(ctx.DB.inv[0].pos.length, 1, 'local-only behavior unchanged when Invoice has not migrated');
+});
+
+testAsync('savePayment — pushes the invoice\'s updated dep/status via persistInvChange when Invoice has migrated; local-only behavior unchanged when not migrated (AC-8, call site #4)', async function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV63001', status: 'Sent', cur: 'USD', dep: 0, lineItems: [{ qty: 1, up: 100 }], calc_grandTotal: '100' });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.savePayment({ id: 'pm1', invId: 'inv1', invNum: 'INV63001', amount: 100, date: '2026-01-01', method: 'Bank Transfer' });
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'invoice dep/status pushed to Supabase via persistInvChange');
+  assertEqual(upd.row.status, 'Paid', 'auto-status included in the pushed row');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV63002', status: 'Sent', cur: 'USD', dep: 0, lineItems: [{ qty: 1, up: 100 }], calc_grandTotal: '100' });
+  ctx._sb = null;
+  await ctx.savePayment({ id: 'pm2', invId: 'inv2', invNum: 'INV63002', amount: 100, date: '2026-01-01', method: 'Bank Transfer' });
+  assertEqual(ctx.DB.inv[0].status, 'Paid', 'local-only behavior unchanged when Invoice has not migrated');
+});
+
+testAsync('deletePayment — pushes the invoice\'s recalculated dep via persistInvChange when Invoice has migrated; local-only behavior unchanged when not migrated (AC-8, call site #5)', async function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV64001', status: 'Paid', dep: 100, lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm1', invId: 'inv1', invNum: 'INV64001', amount: 100, method: 'Bank Transfer', date: '2026-01-01' });
+  ctx.confirm = function(){ return true; };
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.deletePayment('pm1');
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'invoice dep recalculation pushed to Supabase via persistInvChange');
+  assertEqual(upd.row.dep, 0, 'dep recalculated to 0 after the payment was deleted');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV64002', status: 'Paid', dep: 100, lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm2', invId: 'inv2', invNum: 'INV64002', amount: 100, method: 'Bank Transfer', date: '2026-01-01' });
+  ctx._sb = null;
+  await ctx.deletePayment('pm2');
+  assertEqual(ctx.DB.inv[0].dep, 0, 'local-only behavior unchanged when Invoice has not migrated');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('advMergeBuyers — pushes every reassigned invoice via persistInvChange (looped, skipRefresh) plus one trailing refresh, when Invoice has migrated; local-only behavior unchanged when not migrated (AC-8, call site #6)', async function() {
+  resetDB();
+  ctx.DB.buy.push({ id: 'b1', name: 'Old Buyer Ltd' });
+  ctx.DB.buy.push({ id: 'b2', name: 'New Buyer Ltd' });
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV65001', buyer: 'Old Buyer Ltd', buyerId: 'b1', lineItems: [] });
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV65002', buyer: 'Old Buyer Ltd', buyerId: 'b1', lineItems: [] });
+  mockEl('adv-merge-from').value = 'Old Buyer Ltd'; mockEl('adv-merge-to').value = 'New Buyer Ltd'; mockEl('adv-merge-confirm').value = 'CONFIRM';
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  var origRefresh = ctx.refreshInvFromSupabase, refreshCalled = 0;
+  ctx.refreshInvFromSupabase = function(){ refreshCalled++; return Promise.resolve(); };
+  await ctx.advMergeBuyers();
+  var updates = sb._calls.filter(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assertEqual(updates.length, 2, 'both reassigned invoices pushed to Supabase');
+  assertEqual(refreshCalled, 1, 'exactly one trailing refresh, not one per invoice');
+  ctx.refreshInvFromSupabase = origRefresh;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.buy.push({ id: 'b1', name: 'Old Buyer Ltd' });
+  ctx.DB.buy.push({ id: 'b2', name: 'New Buyer Ltd' });
+  ctx.DB.inv.push({ id: 'inv3', num: 'INV65003', buyer: 'Old Buyer Ltd', buyerId: 'b1', lineItems: [] });
+  mockEl('adv-merge-from').value = 'Old Buyer Ltd'; mockEl('adv-merge-to').value = 'New Buyer Ltd'; mockEl('adv-merge-confirm').value = 'CONFIRM';
+  ctx._sb = null;
+  await ctx.advMergeBuyers();
+  assertEqual(ctx.DB.inv[0].buyerId, 'b2', 'local-only behavior unchanged when Invoice has not migrated');
+});
+
+testAsync('delPO — pushes each Invoice whose pos[] just lost the deleted PO\'s id via persistInvChange when Invoice has migrated; local-only behavior unchanged when not migrated (AC-8, call site #7)', async function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po1', num: 'PO-0001', supId: 's1', status: 'Draft', lineItems: [] });
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV66001', pos: ['po1'], lineItems: [] });
+  ctx.confirm = function(){ return true; };
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+  var sb = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.delPO('po1');
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'invoice pos[] pushed to Supabase via persistInvChange');
+  assertEqual(JSON.stringify(upd.row.pos), JSON.stringify([]), 'the deleted PO id removed from pos[]');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.po.push({ id: 'po2', num: 'PO-0002', supId: 's1', status: 'Draft', lineItems: [] });
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV66002', pos: ['po2'], lineItems: [] });
+  ctx._sb = null;
+  await ctx.delPO('po2');
+  assertEqual(ctx.DB.inv[0].pos.length, 0, 'local-only behavior unchanged when Invoice has not migrated');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('backfillInvoicePOs — pushes each CHANGED invoice via persistInvChange when Invoice has migrated; the existing unconditional saveAll() local persistence is unaffected when not migrated (AC-8, call site #8)', async function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po1', num: 'PO-0001', supId: 's1', invNum: 'INV67001', invId: '', status: 'Draft', lineItems: [] });
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV67001', pos: [], lineItems: [] });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.backfillInvoicePOs();
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'the changed invoice was pushed to Supabase via persistInvChange');
+  assertEqual(JSON.stringify(upd.row.pos), JSON.stringify(['po1']), 'pos[] rebuilt to include the matching PO');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.po.push({ id: 'po2', num: 'PO-0002', supId: 's1', invNum: 'INV67002', invId: '', status: 'Draft', lineItems: [] });
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV67002', pos: [], lineItems: [] });
+  ctx._sb = null;
+  await ctx.backfillInvoicePOs();
+  assertEqual(ctx.DB.inv[0].pos.length, 1, 'local saveAll() persistence unaffected when Invoice has not migrated');
+});
+
+testAsync('saveCN — pushes the DIFFERENT, side-mutated linked invoice\'s recalculated calc_balanceDue via persistInvChange when Invoice has migrated, distinct from saveCN\'s own create-or-update branch; local-only behavior unchanged when not migrated (AC-8, call site #9)', async function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV68001', status: 'Sent', calc_grandTotal: '100', lineItems: [] });
+  mockEl('cnf-n').value = 'CN68001'; mockEl('cnf-amount').value = '20'; mockEl('cnf-type').value = 'credit_note';
+  mockEl('cnf-b').value = 'Acme Buyer'; mockEl('cnf-cur').value = 'USD'; mockEl('cnf-dt').value = '2026-01-01';
+  mockEl('cn-sm').value = 'CN Applied'; mockEl('cnf-reason').value = ''; mockEl('cnf-nt').value = ''; mockEl('cnf-linked').value = 'INV68001';
+  ctx.EI.cn = null;
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { insertImpl: function(row){ return Object.assign({ id: 'real-cn-uuid' }, row); }, updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.saveCN();
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'the side-mutated linked invoice was pushed via persistInvChange');
+  assertEqual(upd.row.calc_balance_due, '80.00', 'the recalculated calc_balanceDue was included in the pushed row');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv2', num: 'INV68002', status: 'Sent', calc_grandTotal: '100', lineItems: [] });
+  mockEl('cnf-n').value = 'CN68002'; mockEl('cnf-amount').value = '20'; mockEl('cnf-type').value = 'credit_note';
+  mockEl('cnf-b').value = 'Acme Buyer'; mockEl('cnf-cur').value = 'USD'; mockEl('cnf-dt').value = '2026-01-01';
+  mockEl('cn-sm').value = 'CN Applied'; mockEl('cnf-reason').value = ''; mockEl('cnf-nt').value = ''; mockEl('cnf-linked').value = 'INV68002';
+  ctx.EI.cn = null;
+  ctx._sb = null;
+  await ctx.saveCN();
+  assertEqual(ctx.DB.inv[0].calc_balanceDue, '80.00', 'local-only behavior unchanged when Invoice has not migrated');
+});
+
+testAsync('migrateSuppliersBuyersToSupabase — now also rewrites Invoice.buyerId, and pushes to Supabase if Invoice has already migrated (AC-8, call site #10)', async function() {
+  resetDB();
+  ctx.DB.buy.push({ id: 'bu1', num: 'BUY-0001', name: 'Acme Buyer' });
+  ctx.DB.inv.push({ id: 'inv-uuid-1', num: 'INV69001', buyerId: 'bu1', lineItems: [], pos: [] });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({
+    buyers: { insertImpl: function(row){ return Object.assign({ id: 'new-buy-uuid' }, row); } },
+    invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'inv-uuid-1', num: 'INV69001', type: 'invoice', buyer_id: 'new-buy-uuid', status: 'Draft', line_items: [], pos: [] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-restore-btn');
+  await ctx.migrateSuppliersBuyersToSupabase();
+  assertEqual(ctx.DB.inv[0].buyerId, 'new-buy-uuid', 'Invoice buyerId remapped locally');
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'the rewritten Invoice was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migrateLineItemsToSupabase — now also rewrites Invoice.lineItems[].lid, and pushes to Supabase if Invoice has already migrated (AC-8, call site #11)', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
+  ctx.DB.li.push({ id: 'li1', num: 'LI-0001', sku: 'W1', desc: 'Widget', supId: 's1', uom: 'pcs', cost: 5, price: 10, priceHistory: [] });
+  ctx.DB.inv.push({ id: 'inv-uuid-2', num: 'INV70001', lineItems: [{ rid: 'r1', lid: 'li1', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [] });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 's1', name: 'ACME' }] },
+    line_items: { insertImpl: function(row){ return Object.assign({ id: 'new-li-uuid' }, row); } },
+    invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'inv-uuid-2', num: 'INV70001', type: 'invoice', line_items: [{ rid: 'r1', lid: 'new-li-uuid', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-li-restore-btn');
+  await ctx.migrateLineItemsToSupabase();
+  assertEqual(ctx.DB.inv[0].lineItems[0].lid, 'new-li-uuid', 'Invoice lineItems[].lid remapped locally');
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'the rewritten Invoice was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migrateQteToSupabase — now also rewrites Invoice.linkedQuoteId, and pushes to Supabase if Invoice has already migrated — corrects the now-stale "Invoice has no Supabase table" comment (AC-8, call site #12)', async function() {
+  resetDB();
+  ctx.DB.qt.push({ id: 'q1', num: 'QTE-0001', client: 'Acme', status: 'Accepted', lines: [] });
+  ctx.DB.inv.push({ id: 'inv-uuid-3', num: 'INV71001', linkedQuoteId: 'q1', lineItems: [], pos: [] });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({
+    quotes: { insertImpl: function(row){ return Object.assign({ id: 'new-qte-uuid' }, row); } },
+    invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'inv-uuid-3', num: 'INV71001', type: 'invoice', linked_quote_id: 'new-qte-uuid', line_items: [], pos: [] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-qt-restore-btn');
+  await ctx.migrateQteToSupabase();
+  assertEqual(ctx.DB.inv[0].linkedQuoteId, 'new-qte-uuid', 'Invoice linkedQuoteId remapped locally');
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'the rewritten Invoice was pushed to Supabase, not just fixed locally, now that Invoice has its own table');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migratePOToSupabase — now also pushes a touched Invoice.pos[] to Supabase if Invoice has already migrated (AC-8, call site #13)', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
+  ctx.DB.po.push({ id: 'po1', num: 'PO-0001', supId: 's1', status: 'Draft', lineItems: [] });
+  ctx.DB.inv.push({ id: 'inv-uuid-4', num: 'INV72001', pos: ['po1'], lineItems: [] });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 's1', name: 'ACME' }] },
+    purchase_orders: { insertImpl: function(row){ return Object.assign({ id: 'new-po-uuid' }, row); } },
+    invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [{ id: 'inv-uuid-4', num: 'INV72001', type: 'invoice', pos: ['new-po-uuid'], line_items: [] }] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-po-restore-btn');
+  await ctx.migratePOToSupabase();
+  assertEqual(JSON.stringify(ctx.DB.inv[0].pos), JSON.stringify(['new-po-uuid']), 'Invoice.pos[] element remapped locally');
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'the rewritten Invoice was pushed to Supabase, not just fixed locally');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migratePOToSupabase — does NOT push an Invoice whose pos[] resolves to the identical id set (no actual change), even though Invoice has migrated (§2.17 change-detection guard)', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', num: 'SUP-0001', name: 'ACME' });
+  ctx.DB.po.push({ id: 'po1', num: 'PO-0001', supId: 's1', status: 'Draft', lineItems: [] });
+  // an Invoice referencing a PO NOT in THIS migration batch — poIdMap[pid] is undefined,
+  // so .map(pid => poIdMap[pid]||pid) returns an array identical to the original.
+  ctx.DB.inv.push({ id: 'inv-uuid-5', num: 'INV72002', pos: ['already-migrated-po-id'], lineItems: [] });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 's1', name: 'ACME' }] },
+    purchase_orders: { insertImpl: function(row){ return Object.assign({ id: 'new-po-uuid' }, row); } },
+    invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-po-restore-btn');
+  await ctx.migratePOToSupabase();
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(!upd, 'no Supabase push for an invoice whose pos[] did not actually change — the JSON.stringify change-detection guard works');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+test('unlockInv/canTransitionStatus — confirmed to need no Cloud-Data-specific handling: unlockInv() only mutates in-memory _unlockedInvIds/_invEditSnapshot, never DB.inv directly, regardless of _sb/migration state (AC-9)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv1', num: 'INV73001', status: 'Paid', lineItems: [], calc_grandTotal: '100', dep: '100', taxRate: '0', lf: '0' });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = mockSb({});
+  mockEl('adv-unlock-num').value = 'INV73001';
+  mockEl('adv-unlock-reason').value = 'Correcting a typo';
+  mockEl('adv-unlock-confirm').value = 'CONFIRM';
+  var before = JSON.stringify(ctx.DB.inv);
+  ctx.unlockInv();
+  assertEqual(JSON.stringify(ctx.DB.inv), before, 'unlockInv() never mutates DB.inv directly, Cloud-configured or not');
+  assert(ctx._unlockedInvIds['inv1'], '_unlockedInvIds is purely session-only in-memory state');
+  assert(typeof ctx.canTransitionStatus('Draft', 'Sent') === 'boolean', 'canTransitionStatus() is a pure function with no Cloud Data dependency');
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx._invEditSnapshot = null;
+  delete ctx._unlockedInvIds['inv1'];
+});
+
+testAsync('pullAll — drops both \'inv\' and \'cn\' from the batched pull_all request once the shared Invoice/CN Cloud Data migration marker is set (AC-10)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://mock.example/exec'; ctx.SS.auto = false; ctx.SS.pol = false;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx._sb = mockSb({});
+
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assert(_fetchCallLog[0].entities.indexOf('inv') >= 0, 'inv still requested — the shared migration marker is not set yet');
+  assert(_fetchCallLog[0].entities.indexOf('cn') >= 0, 'cn still requested — same reason');
+
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assertEqual(_fetchCallLog[0].entities.indexOf('inv'), -1, 'inv excluded from the batched request once the shared marker is set');
+  assertEqual(_fetchCallLog[0].entities.indexOf('cn'), -1, 'cn excluded too — one shared marker, both entities');
+
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx.SS.url = '';
+  ctx._sb = null;
+});
+
+test('processImportRecords() — CSV import for entity "inv" remains local-only, unaffected by Invoice Cloud Data migration state (REQ-CLOUD-006l, AC-12)', function() {
+  resetDB();
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = mockSb({});
+  ctx.processImportRecords('inv', [{ 'Invoice #': 'INV74001', 'Buyer': 'Acme' }], function(){});
+  assert(ctx.DB.inv.some(function(x){ return x.num === 'INV74001'; }), 'CSV-imported invoice still lands in local DB.inv exactly as before, migrated or not');
+  assert(!ctx._sb._calls.some(function(c){ return c.table === 'invoices'; }), 'no Supabase call attempted — CSV import bypasses Cloud Data entirely, matching today\'s exact behavior');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx._sb = null;
+});
+
+test('cleanupExpiredMigrationArchive — Invoice/Credit Note archive expires independently of every other entity', function() {
+  var day31 = new Date(Date.now() - 31*86400000).toISOString();
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', day31);
+  ctx.localStorage.setItem('st_inv_pre_migration', '[]');
+  ctx.cleanupExpiredMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_inv_pre_migration'), null, 'expired Invoice/Credit Note archive removed at day 31');
+});
+
+test('restoreInvMigrationArchive — restores K.i and clears SS.supabaseUrl/supabaseAnonKey and its own marker', function() {
+  resetDB();
+  ctx.localStorage.setItem('st_inv_pre_migration', JSON.stringify([{ id: 'orig-inv', num: 'INV76001' }]));
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  ctx.confirm = function(){ return true; };
+  var origReload = ctx.location.reload; ctx.location.reload = function(){};
+  var origSetTimeout = ctx.setTimeout; ctx.setTimeout = function(fn){ fn(); };
+  ctx.restoreInvMigrationArchive();
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.i))[0].id, 'orig-inv', 'K.i restored from archive');
+  assertEqual(ctx.SS.supabaseUrl, '', 'supabaseUrl cleared');
+  assertEqual(ctx.localStorage.getItem('st_inv_cloud_migration_ts'), null, 'own marker cleared on restore');
+  ctx.location.reload = origReload; ctx.setTimeout = origSetTimeout; ctx.confirm = function(){ return false; };
+});
+
+testAsync('SPEC-CLOUD-006 test-hygiene cleanup — reset _sb and every Invoice/Credit Note Cloud Data migration marker this block may have left set, so later unrelated tests are not affected', async function() {
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_inv_pre_migration');
 });
 
 // ── AI Assistant — Invoice/Line Item/Credit Note actions + Supplier/Buyer read tools (SPEC-AI-GAP-002) ──

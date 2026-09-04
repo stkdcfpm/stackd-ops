@@ -821,6 +821,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Requires Suppliers to already be migrated to Cloud Data above (every Purchase Order requires a Supplier link). Uses the same Supabase connection configured above.</p>
     </div>
     <div class="card">
+      <div class="ct">Cloud Data (Invoices &amp; Credit Notes)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="migrateInvToSupabase()">Migrate Invoices &amp; Credit Notes to Cloud</button>
+        <button class="btn btn-g" id="cfg-sb-inv-restore-btn" style="display:none;" onclick="restoreInvMigrationArchive()">Restore Pre-Migration Invoices &amp; Credit Notes</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Requires Buyers, Line Items, Quotes, and Purchase Orders to already be migrated to Cloud Data above (every Invoice requires each of these links). Uses the same Supabase connection configured above.</p>
+    </div>
+    <div class="card">
       <div class="ct">Accounting Export — Field Mapping Reference</div>
       <p style="font-size:.5rem;color:var(--m);margin-bottom:10px;">Read-only reference. Gaps indicate data not available in Stackd that the platform expects.</p>
       <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;">Xero Invoice Import</div>
@@ -2744,6 +2752,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<div class="ov" id="ov-inv-dup" onclick="if(event.target===this)closeM('ov-inv-dup')">
+  <div class="modal" style="max-width:460px;">
+    <div class="mh"><h2 style="font-size:.75rem;">Migration Blocked — Duplicate Invoice/Credit Note Numbers</h2><button class="mx" onclick="closeM('ov-inv-dup')">&#215;</button></div>
+    <div class="mb">
+      <div id="inv-dup-list" style="font-size:.55rem;"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-g" onclick="closeM('ov-inv-dup')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="ov" id="ov-data-cleanup-preview" onclick="if(event.target===this)closeM('ov-data-cleanup-preview')">
   <div class="modal" style="max-width:520px;">
     <div class="mh"><h2 style="font-size:.75rem;">Data Integrity Scan</h2><button class="mx" onclick="closeM('ov-data-cleanup-preview')">&#215;</button></div>
@@ -2950,7 +2970,7 @@ function migrateLinkedPOIds() {
   });
   if (changed) saveAll();
 }
-function backfillInvoicePOs() {
+async function backfillInvoicePOs() {
   var posByInv = {};
   DB.po.forEach(function(po) {
     var home = po.invNum ? DB.inv.find(function(i){ return i.num === po.invNum; }) : null;
@@ -2960,6 +2980,7 @@ function backfillInvoicePOs() {
     posByInv[home.id].push(po.id);
   });
   var changed = false;
+  var touchedInvIdsForBackfill = {};
   DB.inv.forEach(function(inv) {
     var live = posByInv[inv.id] || [];
     var current = inv.pos || [];
@@ -2967,9 +2988,21 @@ function backfillInvoicePOs() {
     if (!same) {
       inv.pos = live;
       changed = true;
+      touchedInvIdsForBackfill[inv.id] = true;
     }
   });
   if (changed) saveAll();
+
+  // REQ-CLOUD-006e (call site #8): push each CHANGED invoice, if Invoice has migrated.
+  // Additive to the unconditional saveAll() above — safe even when not migrated, since
+  // persistInvChange()'s own local-branch fallback (sv(K.i,DB.inv)) and
+  // refreshInvFromSupabase()'s own guards both no-op harmlessly in that case.
+  if (Object.keys(touchedInvIdsForBackfill).length) {
+    for (var bi = 0; bi < DB.inv.length; bi++) {
+      if (touchedInvIdsForBackfill[DB.inv[bi].id]) await persistInvChange(DB.inv[bi], true);
+    }
+    await refreshInvFromSupabase();
+  }
 }
 function migrateQtePoShape() {
   var changed = false;
@@ -4518,6 +4551,7 @@ async function pullAll() {
   if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'qt'; });
   var _allPullKeys = ['inv','cn','po'].concat(_simpleEntsForBatch);
   if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) _allPullKeys = _allPullKeys.filter(function(e){ return e !== 'po'; });
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) _allPullKeys = _allPullKeys.filter(function(e){ return e !== 'inv' && e !== 'cn'; });
 
   var batched = null;
   try {
@@ -4531,6 +4565,13 @@ async function pullAll() {
   }
 
   // ── Invoices (field-mapping reversed, business-key merge — SYNC-GAP-001) ─
+  // REQ-CLOUD-006i: once migrated, Invoice/Credit Note are cloud-authoritative —
+  // pulling either from Sheets here would race the fire-and-forget Supabase refresh,
+  // with whichever resolves last silently overwriting DB.inv/localStorage. Both blocks
+  // share ONE guard, gated on Invoice's own migration marker, since Invoice and Credit
+  // Note migrate together as a single event (REQ-CLOUD-006 §0) — mirrors the reasoning
+  // behind Purchase Order's own single-entity guard just below this pair.
+  if (!(_sb && localStorage.getItem('st_inv_cloud_migration_ts'))) {
   try {
     var dInv = await pulled('inv');
     if (dInv.status === 'ok' && dInv.records && dInv.records.length) {
@@ -4572,6 +4613,7 @@ async function pullAll() {
       }).concat(mergedCn);
     }
   } catch(e) { failed.push('cn'); console.warn('[Stackd] pullAll: cn failed —', e.message); }
+  }
 
   // ── Purchase orders (field-mapping reversed, business-key merge) ─
   // REQ-CLOUD-005j: once migrated, Purchase Order is cloud-authoritative — pulling it
@@ -5599,6 +5641,7 @@ async function initCloudDataLayer() {
     await refreshOrdFromSupabase();
     await refreshQteFromSupabase();
     await refreshPOFromSupabase();
+    await refreshInvFromSupabase();
   }
 }
 
@@ -5737,6 +5780,110 @@ async function refreshPOFromSupabase() {
   rPO();
 }
 
+async function refreshInvFromSupabase() {
+  if (!_sb) return;
+  if (DB.inv.length > 0 && !localStorage.getItem('st_inv_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
+  var result = await _sb.from('invoices').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Invoices from Cloud Data.'); return; }
+  DB.inv = result.data.map(function(row){
+    var isCnRow = row.type === 'credit_note' || row.type === 'goodwill_credit';
+    var rec;
+    if (isCnRow) {
+      // Credit Note shape — only the fields saveCN()'s own object literal ever sets
+      // locally. Never gains buyerId/shipTo/etc. — those are Invoice-only keys a real
+      // CN record never had before migration either.
+      rec = {
+        id: row.id, num: row.num, type: row.type,
+        buyer: row.buyer || '', buyerAddr: row.buyer_addr || '',
+        cur: row.cur, date: row.date, status: row.status,
+        cnAmount: row.cn_amount, cnReason: row.cn_reason || '',
+        linkedInvNum: row.linked_inv_num || '', linkedInvId: row.linked_inv_id || '',
+        notes: row.notes || '', lineItems: row.line_items || [],
+        taxRate: row.tax_rate || 0, lf: row.lf || 0, ins: row.ins || 0, dep: row.dep || 0
+      };
+    } else {
+      // Invoice shape — every field saveInv()'s own object literal sets.
+      rec = {
+        id: row.id, num: row.num, buyerId: row.buyer_id || '', buyer: row.buyer || '',
+        buyerAddr: row.buyer_addr || '', shipTo: row.ship_to || '', dst: row.dst || '', custId: row.cust_id || '',
+        date: row.date, expiry: row.expiry || '', shipDate: row.ship_date || '',
+        ft: row.ft || '', wt: row.wt || '', cbm: row.cbm || '', pk: row.pk || '',
+        pol: row.pol || '', pod: row.pod || '', coo: row.coo || '',
+        cur: row.cur, taxRate: row.tax_rate || 0,
+        lf: row.lf || 0, ins: row.ins || 0, leg: row.leg || 0, isp: row.isp || 0, oth: row.oth || 0, dep: row.dep || 0,
+        incoterm: row.incoterm || '', paymentTerms: row.payment_terms || '', terms: row.terms || '',
+        chargesIncluded: row.charges_included !== false, status: row.status,
+        lineItems: row.line_items || [], pos: row.pos || [],
+        buyerApprovedAt: row.buyer_approved_at || '', buyerApprovedBy: row.buyer_approved_by || '',
+        approvalMethod: row.approval_method || '', approvalNote: row.approval_note || '',
+        linkedQuoteId: row.linked_quote_id || '', linkedQuoteNum: row.linked_quote_num || '',
+        type: row.type || 'invoice',
+        linkedInvNum: row.linked_inv_num || '', linkedInvId: row.linked_inv_id || ''
+      };
+      if (row.notes != null) rec.notes = row.notes; // rare: only a CSV-imported invoice ever carries this
+    }
+    if (row.upd_at != null) rec.updAt = row.upd_at;
+    if (row.edit_history != null) rec.editHistory = row.edit_history;
+    if (!isCnRow) {
+      if (row.calc_grand_total  != null) rec.calc_grandTotal  = String(row.calc_grand_total);
+      if (row.calc_cogs         != null) rec.calc_cogs        = String(row.calc_cogs);
+      if (row.calc_gross_profit != null) rec.calc_grossProfit = String(row.calc_gross_profit);
+      if (row.calc_net_profit   != null) rec.calc_netProfit   = String(row.calc_net_profit);
+      if (row.calc_margin       != null) rec.calc_margin      = String(row.calc_margin);
+      if (row.calc_balance_due  != null) rec.calc_balanceDue  = String(row.calc_balance_due);
+      if (row.calc_li_total     != null) rec.calc_liTotal     = String(row.calc_li_total);
+      if (row.calc_tax_amt      != null) rec.calc_taxAmt      = String(row.calc_tax_amt);
+    }
+    return rec;
+  });
+  sv(K.i, DB.inv);
+  if (!localStorage.getItem('st_inv_cloud_migration_ts')) localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  rInv(); rDash();
+}
+
+async function persistInvChange(inv, skipRefresh) {
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var isCnRec = inv.type === 'credit_note' || inv.type === 'goodwill_credit';
+    var row = isCnRec ? {
+      num: inv.num, type: inv.type, buyer: inv.buyer || null, buyer_addr: inv.buyerAddr || null,
+      cur: inv.cur, date: inv.date, status: inv.status,
+      cn_amount: inv.cnAmount != null ? inv.cnAmount : null, cn_reason: inv.cnReason || null,
+      linked_inv_num: inv.linkedInvNum || null, linked_inv_id: inv.linkedInvId || null,
+      notes: inv.notes || null, line_items: inv.lineItems || [],
+      tax_rate: inv.taxRate, lf: inv.lf, ins: inv.ins, dep: inv.dep
+    } : {
+      num: inv.num, type: inv.type || 'invoice', buyer_id: inv.buyerId || null, buyer: inv.buyer || null,
+      buyer_addr: inv.buyerAddr || null, ship_to: inv.shipTo || null, dst: inv.dst || null, cust_id: inv.custId || null,
+      date: inv.date, expiry: inv.expiry || null, ship_date: inv.shipDate || null,
+      ft: inv.ft || null, wt: inv.wt || null, cbm: inv.cbm || null, pk: inv.pk || null,
+      pol: inv.pol || null, pod: inv.pod || null, coo: inv.coo || null,
+      cur: inv.cur, tax_rate: inv.taxRate, lf: inv.lf, ins: inv.ins, leg: inv.leg, isp: inv.isp, oth: inv.oth, dep: inv.dep,
+      incoterm: inv.incoterm || null, payment_terms: inv.paymentTerms || null, terms: inv.terms || null,
+      charges_included: inv.chargesIncluded !== undefined ? !!inv.chargesIncluded : null,
+      status: inv.status, line_items: inv.lineItems || [], pos: inv.pos || [],
+      buyer_approved_at: inv.buyerApprovedAt || null, buyer_approved_by: inv.buyerApprovedBy || null,
+      approval_method: inv.approvalMethod || null, approval_note: inv.approvalNote || null,
+      linked_quote_id: inv.linkedQuoteId || null, linked_quote_num: inv.linkedQuoteNum || null,
+      notes: inv.notes || null, edit_history: inv.editHistory || null,
+      calc_grand_total: inv.calc_grandTotal != null ? inv.calc_grandTotal : null,
+      calc_cogs: inv.calc_cogs != null ? inv.calc_cogs : null,
+      calc_gross_profit: inv.calc_grossProfit != null ? inv.calc_grossProfit : null,
+      calc_net_profit: inv.calc_netProfit != null ? inv.calc_netProfit : null,
+      calc_margin: inv.calc_margin != null ? inv.calc_margin : null,
+      calc_balance_due: inv.calc_balanceDue != null ? inv.calc_balanceDue : null,
+      calc_li_total: inv.calc_liTotal != null ? inv.calc_liTotal : null,
+      calc_tax_amt: inv.calc_taxAmt != null ? inv.calc_taxAmt : null
+    };
+    row.upd_at = inv.updAt != null ? inv.updAt : null;
+    var result = await _sb.from('invoices').update(row).eq('id', inv.id);
+    if (result.error) { console.warn('[Stackd] persistInvChange: failed to push Invoice/CN update for ' + inv.id, result.error.message); return; }
+    if (!skipRefresh) await refreshInvFromSupabase();
+    return;
+  }
+  sv(K.i, DB.inv);
+}
+
 async function persistPOChange(po, skipRefresh) {
   if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
@@ -5797,6 +5944,25 @@ async function isSupplierMigrationComplete() {
   return !!(result.data && result.data.length > 0);
 }
 
+async function isLineItemMigrationComplete() {
+  if (!_sb) return false;
+  if (localStorage.getItem('st_li_cloud_migration_ts')) return true;
+  var result = await _sb.from('line_items').select('*').is('deleted_at', null);
+  return !!(result.data && result.data.length > 0);
+}
+async function isQteMigrationComplete() {
+  if (!_sb) return false;
+  if (localStorage.getItem('st_qt_cloud_migration_ts')) return true;
+  var result = await _sb.from('quotes').select('*').is('deleted_at', null);
+  return !!(result.data && result.data.length > 0);
+}
+async function isPOMigrationComplete() {
+  if (!_sb) return false;
+  if (localStorage.getItem('st_po_cloud_migration_ts')) return true;
+  var result = await _sb.from('purchase_orders').select('*').is('deleted_at', null);
+  return !!(result.data && result.data.length > 0);
+}
+
 function findDuplicateSupplierNames(sup) {
   var groups = {};
   sup.forEach(function(s){
@@ -5833,6 +5999,16 @@ function findDuplicatePONums(po) {
   return Object.keys(groups).map(function(k){ return groups[k]; }).filter(function(g){ return g.length > 1; });
 }
 
+function findDuplicateInvNums(inv) {
+  var groups = {};
+  inv.forEach(function(r){
+    var key = r.num || '';
+    if (!key) return;
+    (groups[key] = groups[key] || []).push(r);
+  });
+  return Object.keys(groups).map(function(k){ return groups[k]; }).filter(function(g){ return g.length > 1; });
+}
+
 function showQteDupConflictModal(dupes) {
   G('qt-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following Quote numbers are duplicated (exact match) and would violate the cloud database\'s unique-number constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
     dupes.map(function(g){ return '<li>' + g.map(function(q){ return san(q.num); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
@@ -5843,6 +6019,12 @@ function showPoDupConflictModal(dupes) {
   G('po-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following Purchase Order numbers are duplicated (exact match) and would violate the cloud database\'s unique-number constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
     dupes.map(function(g){ return '<li>' + g.map(function(p){ return san(p.num); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
   G('ov-po-dup').classList.add('on');
+}
+
+function showInvDupConflictModal(dupes) {
+  G('inv-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following Invoice/Credit Note numbers are duplicated (exact match) and would violate the cloud database\'s unique-number constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
+    dupes.map(function(g){ return '<li>' + g.map(function(r){ return san(r.num); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
+  G('ov-inv-dup').classList.add('on');
 }
 
 var _sbMigrationResolve = null;
@@ -5923,7 +6105,8 @@ async function migrateSuppliersBuyersToSupabase() {
   DB.po.forEach(function(p){ if (supIdMap[p.supId]) { p.supId = supIdMap[p.supId]; touchedPoIdsForSup[p.id] = true; } });
   DB.li.forEach(function(l){ if (supIdMap[l.supId]) l.supId = supIdMap[l.supId]; });
   DB.con.forEach(function(c){ if (c.supplierId && supIdMap[c.supplierId]) c.supplierId = supIdMap[c.supplierId]; });
-  DB.inv.forEach(function(inv){ if (buyIdMap[inv.buyerId]) inv.buyerId = buyIdMap[inv.buyerId]; });
+  var touchedInvIdsForBuy = {};
+  DB.inv.forEach(function(inv){ if (buyIdMap[inv.buyerId]) { inv.buyerId = buyIdMap[inv.buyerId]; touchedInvIdsForBuy[inv.id] = true; } });
   // REQ-CLOUD-003e: RFQ Response supId was previously missing from this sweep entirely —
   // a confirmed, currently-live bug (REQ-CLOUD-003 §1.3). Track which Order Requests
   // actually changed so the push-if-already-migrated step below only touches those.
@@ -5960,6 +6143,14 @@ async function migrateSuppliersBuyersToSupabase() {
       if (touchedPoIdsForSup[DB.po[pi].id]) await persistPOChange(DB.po[pi], true);
     }
     await refreshPOFromSupabase();
+  }
+
+  // REQ-CLOUD-006e (call site #10): same cross-phase fix, for Invoice.
+  if (Object.keys(touchedInvIdsForBuy).length) {
+    for (var ivi5 = 0; ivi5 < DB.inv.length; ivi5++) {
+      if (touchedInvIdsForBuy[DB.inv[ivi5].id]) await persistInvChange(DB.inv[ivi5], true);
+    }
+    await refreshInvFromSupabase();
   }
 
   // REQ-CLOUD-001k: archive, don't delete, the pre-migration local arrays
@@ -6009,7 +6200,8 @@ async function migrateLineItemsToSupabase() {
   }
 
   // REQ-CLOUD-002c: exhaustive external-reference sweep
-  DB.inv.forEach(function(inv){ (inv.lineItems||[]).forEach(function(li){ if (liIdMap[li.lid]) li.lid = liIdMap[li.lid]; }); });
+  var touchedInvIdsForLi = {};
+  DB.inv.forEach(function(inv){ (inv.lineItems||[]).forEach(function(li){ if (liIdMap[li.lid]) { li.lid = liIdMap[li.lid]; touchedInvIdsForLi[inv.id] = true; } }); });
   // Purchase Order.lineItems[].lid is a genuinely live field (REQ-CLOUD-005 §1.6,
   // §1.1e) — autoPos() populates it directly from the source Line Item's real id, and
   // verifyFkIntegrityAfterCleanup()/delLI()'s dangling-reference warning both already
@@ -6040,6 +6232,14 @@ async function migrateLineItemsToSupabase() {
       if (touchedPoIdsForLi[DB.po[pi].id]) await persistPOChange(DB.po[pi], true);
     }
     await refreshPOFromSupabase();
+  }
+
+  // REQ-CLOUD-006e (call site #11): same cross-phase fix, for Invoice.
+  if (Object.keys(touchedInvIdsForLi).length) {
+    for (var ivi6 = 0; ivi6 < DB.inv.length; ivi6++) {
+      if (touchedInvIdsForLi[DB.inv[ivi6].id]) await persistInvChange(DB.inv[ivi6], true);
+    }
+    await refreshInvFromSupabase();
   }
 
   // REQ-CLOUD-002d: archive the true pre-migration snapshot BEFORE remapping DB.li's own ids below
@@ -6233,7 +6433,8 @@ async function migrateQteToSupabase() {
   // not be robust to that; matching PO/Order-Request/Invoice's own fields directly is).
   var touchedPoIdsForQte = {};
   DB.po.forEach(function(p){ if (qteIdMap[p.quoteId]) { p.quoteId = qteIdMap[p.quoteId]; touchedPoIdsForQte[p.id] = true; } });
-  DB.inv.forEach(function(inv){ if (qteIdMap[inv.linkedQuoteId]) inv.linkedQuoteId = qteIdMap[inv.linkedQuoteId]; });
+  var touchedInvIdsForQte = {};
+  DB.inv.forEach(function(inv){ if (qteIdMap[inv.linkedQuoteId]) { inv.linkedQuoteId = qteIdMap[inv.linkedQuoteId]; touchedInvIdsForQte[inv.id] = true; } });
   sv(K.p, DB.po); sv(K.i, DB.inv);
 
   // REQ-CLOUD-005i: cross-phase fix for Purchase Order — REQ-CLOUD-004 shipped this
@@ -6248,15 +6449,26 @@ async function migrateQteToSupabase() {
     await refreshPOFromSupabase();
   }
 
+  // REQ-CLOUD-006e (call site #12): cross-phase fix for Invoice — REQ-CLOUD-006 makes
+  // the OTHER half of the comment above false too; Invoice.linkedQuoteId is no longer
+  // "safe as a plain local fix" either, once Invoice has migrated.
+  if (Object.keys(touchedInvIdsForQte).length) {
+    for (var ivi7 = 0; ivi7 < DB.inv.length; ivi7++) {
+      if (touchedInvIdsForQte[DB.inv[ivi7].id]) await persistInvChange(DB.inv[ivi7], true);
+    }
+    await refreshInvFromSupabase();
+  }
+
   var touchedOrdIdsForQte = {};
   DB.ord.forEach(function(o){
     if (qteIdMap[o.activeQuoteId]) { o.activeQuoteId = qteIdMap[o.activeQuoteId]; touchedOrdIdsForQte[o.id] = true; }
   });
   sv(K.ord, DB.ord);
 
-  // Outward cross-phase retrofit (REQ-CLOUD-004e): Invoice.linkedQuoteId above is safe
-  // as a plain local fix — it has no Supabase table. PurchaseOrder.quoteId no longer
-  // is (see the REQ-CLOUD-005i retrofit just above this sweep). Order
+  // Outward cross-phase retrofit (REQ-CLOUD-004e): neither Invoice.linkedQuoteId nor
+  // PurchaseOrder.quoteId above is a "safe as a plain local fix" case any longer —
+  // Purchase Order gained a Supabase table in REQ-CLOUD-005 (retrofit just above this
+  // sweep) and Invoice gained one in REQ-CLOUD-006 (retrofit just above THAT). Order
   // Request is different: it already has one (REQ-CLOUD-003), and refreshOrdFromSupabase()
   // fires from at least eight call sites once Order Request has migrated (an ordinary
   // saveOrd()/delOrd(), persistOrdChange() itself by default, delCon()'s cascade,
@@ -6327,8 +6539,9 @@ async function migratePOToSupabase() {
 
   // REQ-CLOUD-005h: outward sweep — Quote.linkedPOIds[] is an array, not a scalar;
   // rewrite each matching element in place via the id-map, never via any other field
-  // as the join key. Invoice.pos[] gets the same array-element treatment but stays a
-  // plain local fix — Invoice is not Cloud-eligible. DB.supPayments[].poId likewise
+  // as the join key. Invoice.pos[] gets the same array-element treatment (REQ-CLOUD-006e
+  // call site #13, corrected — Invoice is now Cloud-eligible too, so this sweep also
+  // pushes each touched invoice back to Supabase, below). DB.supPayments[].poId likewise
   // stays local-only; .poNum is an immutable historical snapshot, confirmed unused for
   // lookup anywhere, and is left untouched.
   var touchedQteIdsForPo = {};
@@ -6340,8 +6553,12 @@ async function migratePOToSupabase() {
   });
   sv(K.qt, DB.qt);
 
+  var touchedInvIdsForPo = {};
   DB.inv.forEach(function(inv){
-    if (inv.pos && inv.pos.length) { inv.pos = inv.pos.map(function(pid){ return poIdMap[pid] || pid; }); }
+    if (inv.pos && inv.pos.length) {
+      var newPos = inv.pos.map(function(pid){ return poIdMap[pid] || pid; });
+      if (JSON.stringify(newPos) !== JSON.stringify(inv.pos)) { inv.pos = newPos; touchedInvIdsForPo[inv.id] = true; }
+    }
   });
   sv(K.i, DB.inv);
 
@@ -6362,6 +6579,14 @@ async function migratePOToSupabase() {
     await refreshQteFromSupabase();
   }
 
+  // REQ-CLOUD-006e (call site #13): same cross-phase fix, for Invoice.
+  if (Object.keys(touchedInvIdsForPo).length) {
+    for (var ivi8 = 0; ivi8 < DB.inv.length; ivi8++) {
+      if (touchedInvIdsForPo[DB.inv[ivi8].id]) await persistInvChange(DB.inv[ivi8], true);
+    }
+    await refreshInvFromSupabase();
+  }
+
   // Archive the true pre-migration snapshot BEFORE remapping DB.po's own ids below.
   localStorage.setItem('st_po_pre_migration', localStorage.getItem(K.p));
   localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
@@ -6372,6 +6597,190 @@ async function migratePOToSupabase() {
   await refreshPOFromSupabase();
   if (G('cfg-sb-po-restore-btn')) G('cfg-sb-po-restore-btn').style.display = '';
   toast('Purchase Order migration complete. Pre-migration data archived for 30 days.');
+}
+
+async function migrateInvToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+
+  // REQ-CLOUD-006a: four-entity precondition, each verified live against the
+  // currently-connected project — Buyer shares Supplier's own migration event
+  // (see isSupplierMigrationComplete()'s own note on why it is the correct,
+  // only-possible check for "Buyer").
+  if (!(await isSupplierMigrationComplete())) { toast('Migrate Suppliers/Buyers to Cloud Data first — every Invoice requires a Buyer link.'); return; }
+  if (!(await isLineItemMigrationComplete())) { toast('Migrate Line Items to Cloud Data first — Invoice line items reference Line Items.'); return; }
+  if (!(await isQteMigrationComplete()))      { toast('Migrate Quotes to Cloud Data first — an Invoice can link to a Quote.'); return; }
+  if (!(await isPOMigrationComplete()))       { toast('Migrate Purchase Orders to Cloud Data first — Invoice tracks its linked Purchase Orders.'); return; }
+
+  // REQ-CLOUD-006b(1): four live pre-flight FK checks against the now-confirmed-
+  // migrated tables — mirrors migrateLineItemsToSupabase()'s/migratePOToSupabase()'s
+  // own knownXIdSet pattern. Any unresolvable reference blocks the whole migration
+  // with a clear per-record message before any row is inserted.
+  var knownBuyIds = await _sb.from('buyers').select('*').is('deleted_at', null);
+  if (knownBuyIds.error) { toast('Could not verify Buyer links before migrating: ' + knownBuyIds.error.message); return; }
+  var knownBuyIdSet = {}; knownBuyIds.data.forEach(function(b){ knownBuyIdSet[b.id] = true; });
+
+  var knownLIIds = await _sb.from('line_items').select('*').is('deleted_at', null);
+  if (knownLIIds.error) { toast('Could not verify Line Item links before migrating: ' + knownLIIds.error.message); return; }
+  var knownLIIdSet = {}; knownLIIds.data.forEach(function(l){ knownLIIdSet[l.id] = true; });
+
+  var knownQteIds = await _sb.from('quotes').select('*').is('deleted_at', null);
+  if (knownQteIds.error) { toast('Could not verify Quote links before migrating: ' + knownQteIds.error.message); return; }
+  var knownQteIdSet = {}; knownQteIds.data.forEach(function(q){ knownQteIdSet[q.id] = true; });
+
+  var knownPOIds = await _sb.from('purchase_orders').select('*').is('deleted_at', null);
+  if (knownPOIds.error) { toast('Could not verify Purchase Order links before migrating: ' + knownPOIds.error.message); return; }
+  var knownPOIdSet = {}; knownPOIds.data.forEach(function(p){ knownPOIdSet[p.id] = true; });
+
+  var badBuyerInv = DB.inv.find(function(r){ return r.buyerId && !knownBuyIdSet[r.buyerId]; });
+  if (badBuyerInv) { toast('Migration blocked: Invoice ' + (badBuyerInv.num||badBuyerInv.id) + ' references a Buyer not found in Cloud Data. Fix or reassign its Buyer link before migrating.'); return; }
+
+  var badLiRec = null, badLiId = null;
+  DB.inv.forEach(function(r){
+    if (badLiRec) return;
+    (r.lineItems||[]).forEach(function(li){ if (li.lid && !knownLIIdSet[li.lid]) { badLiRec = r; badLiId = li.lid; } });
+  });
+  if (badLiRec) { toast('Migration blocked: ' + (badLiRec.num||badLiRec.id) + ' references a Line Item not found in Cloud Data (' + badLiId + '). Fix or reassign it before migrating.'); return; }
+
+  var badQteInv = DB.inv.find(function(r){ return r.linkedQuoteId && !knownQteIdSet[r.linkedQuoteId]; });
+  if (badQteInv) { toast('Migration blocked: Invoice ' + (badQteInv.num||badQteInv.id) + ' references a Quote not found in Cloud Data. Fix or clear its linked Quote before migrating.'); return; }
+
+  var badPoRec = null, badPoId = null;
+  DB.inv.forEach(function(r){
+    if (badPoRec) return;
+    (r.pos||[]).forEach(function(pid){ if (pid && !knownPOIdSet[pid]) { badPoRec = r; badPoId = pid; } });
+  });
+  if (badPoRec) { toast('Migration blocked: ' + (badPoRec.num||badPoRec.id) + ' references a Purchase Order not found in Cloud Data (' + badPoId + '). Fix or clear it before migrating.'); return; }
+
+  // REQ-CLOUD-006c: pre-flight duplicate-num scan across the WHOLE DB.inv array —
+  // Invoice and Credit Note together, matching vInv()'s/saveCN()'s own checks.
+  var invDupes = findDuplicateInvNums(DB.inv);
+  if (invDupes.length) { showInvDupConflictModal(invDupes); return; }
+
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  // REQ-CLOUD-006b(2): two-pass insert. Pass 1 inserts every DB.inv record (Invoice
+  // and CN alike) with linked_inv_id deferred to null, building invIdMap from each
+  // insert's returned row.
+  var invIdMap = {};
+  for (var i = 0; i < DB.inv.length; i++) {
+    var r = DB.inv[i];
+    var isCnRec = r.type === 'credit_note' || r.type === 'goodwill_credit';
+    var row = isCnRec ? {
+      num: r.num, type: r.type, buyer: r.buyer || null, buyer_addr: r.buyerAddr || null,
+      cur: r.cur || null, date: r.date || null, status: r.status,
+      cn_amount: r.cnAmount != null ? r.cnAmount : null, cn_reason: r.cnReason || null,
+      linked_inv_num: r.linkedInvNum || null, linked_inv_id: null, // pass 2 fills this in
+      notes: r.notes || null, line_items: r.lineItems || [],
+      tax_rate: r.taxRate, lf: r.lf, ins: r.ins, dep: r.dep
+    } : {
+      num: r.num, type: r.type || 'invoice', buyer_id: r.buyerId || null, buyer: r.buyer || null,
+      buyer_addr: r.buyerAddr || null, ship_to: r.shipTo || null, dst: r.dst || null, cust_id: r.custId || null,
+      date: r.date || null, expiry: r.expiry || null, ship_date: r.shipDate || null,
+      ft: r.ft || null, wt: r.wt || null, cbm: r.cbm || null, pk: r.pk || null,
+      pol: r.pol || null, pod: r.pod || null, coo: r.coo || null,
+      cur: r.cur || null, tax_rate: r.taxRate, lf: r.lf, ins: r.ins, leg: r.leg, isp: r.isp, oth: r.oth, dep: r.dep,
+      incoterm: r.incoterm || null, payment_terms: r.paymentTerms || null, terms: r.terms || null,
+      charges_included: r.chargesIncluded !== undefined ? !!r.chargesIncluded : null,
+      status: r.status, line_items: r.lineItems || [], pos: r.pos || [],
+      buyer_approved_at: r.buyerApprovedAt || null, buyer_approved_by: r.buyerApprovedBy || null,
+      approval_method: r.approvalMethod || null, approval_note: r.approvalNote || null,
+      linked_quote_id: r.linkedQuoteId || null, linked_quote_num: r.linkedQuoteNum || null,
+      linked_inv_num: null, linked_inv_id: null, // a true Invoice never carries these locally
+      notes: r.notes || null, edit_history: r.editHistory || null,
+      calc_grand_total: r.calc_grandTotal != null ? r.calc_grandTotal : null,
+      calc_cogs: r.calc_cogs != null ? r.calc_cogs : null,
+      calc_gross_profit: r.calc_grossProfit != null ? r.calc_grossProfit : null,
+      calc_net_profit: r.calc_netProfit != null ? r.calc_netProfit : null,
+      calc_margin: r.calc_margin != null ? r.calc_margin : null,
+      calc_balance_due: r.calc_balanceDue != null ? r.calc_balanceDue : null,
+      calc_li_total: r.calc_liTotal != null ? r.calc_liTotal : null,
+      calc_tax_amt: r.calc_taxAmt != null ? r.calc_taxAmt : null
+    };
+    row.upd_at = r.updAt != null ? r.updAt : null;
+    var result = await _sb.from('invoices').insert(row).select().single();
+    if (result.error) { toast('Migration failed on ' + (isCnRec ? 'Credit Note ' : 'Invoice ') + (r.num||r.id) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    invIdMap[r.id] = result.data.id;
+  }
+
+  // Pass 2: resolve each CN's linked invoice, linkedInvNum-first with linkedInvId-
+  // fallback (REQ-CLOUD-006b, corrected requirements-gate round 7), against DB.inv
+  // itself — still keyed by the OLD local ids at this point; the local id remap
+  // happens further below, after both passes and both outward/inward sweeps. Also
+  // records each resolved CN's new linked_inv_id in cnLinkedIdMap, keyed by the
+  // CN's OWN old id, so the final local remap loop below can apply it BEFORE that
+  // same loop overwrites r.id — applying it after would silently break for a CN
+  // whose linked invoice appears earlier in DB.inv and has therefore already had
+  // ITS OWN .id remapped to the new value by the time this CN's turn comes, making
+  // a linkedInvId-fallback lookup (`x.id === r.linkedInvId`) fail to match an id
+  // that was true only in the pre-remap id space.
+  var cnLinkedIdMap = {};
+  var danglingLinkedInv = [];
+  for (var j = 0; j < DB.inv.length; j++) {
+    var cn = DB.inv[j];
+    var isCnRow = cn.type === 'credit_note' || cn.type === 'goodwill_credit';
+    if (!isCnRow) continue;
+    if (!cn.linkedInvNum && !cn.linkedInvId) continue;
+    var target = null;
+    if (cn.linkedInvNum) target = DB.inv.find(function(x){ return x.num === cn.linkedInvNum; });
+    if (!target && cn.linkedInvId) target = DB.inv.find(function(x){ return x.id === cn.linkedInvId; });
+    if (!target || !invIdMap[target.id]) { danglingLinkedInv.push(cn.num||cn.id); continue; }
+    cnLinkedIdMap[cn.id] = invIdMap[target.id];
+    var upd = await _sb.from('invoices').update({ linked_inv_id: invIdMap[target.id] }).eq('id', invIdMap[cn.id]);
+    if (upd.error) { console.warn('[Stackd] migrateInvToSupabase: failed to set linked_inv_id for ' + cn.num, upd.error.message); }
+  }
+  if (danglingLinkedInv.length) console.warn('[Stackd] migrateInvToSupabase: ' + danglingLinkedInv.length + ' Credit Note(s) had a linked-invoice reference that resolved to no migrating record (INV-GAP-002, pre-existing, not fixed here) — left null: ' + danglingLinkedInv.join(', '));
+
+  // REQ-CLOUD-006f: outward retrofit into Purchase Order — invNum-first, invId-
+  // fallback, the identical precedence backfillInvoicePOs() already established
+  // for this exact divergence risk (PO-GAP-004).
+  var touchedPoIdsForInv = [];
+  DB.po.forEach(function(po){
+    var home = po.invNum ? DB.inv.find(function(x){ return x.num === po.invNum; }) : null;
+    if (!home && po.invId) home = DB.inv.find(function(x){ return x.id === po.invId; });
+    if (!home || !invIdMap[home.id]) return;
+    var newInvId = invIdMap[home.id];
+    if (po.invId !== newInvId) { po.invId = newInvId; touchedPoIdsForInv.push(po.id); }
+  });
+  if (touchedPoIdsForInv.length) {
+    sv(K.p, DB.po);
+    for (var pi = 0; pi < DB.po.length; pi++) {
+      if (touchedPoIdsForInv.indexOf(DB.po[pi].id) > -1) await persistPOChange(DB.po[pi], true);
+    }
+    await refreshPOFromSupabase();
+  }
+
+  // REQ-CLOUD-006g: local-only inward sweep of DB.payments[].invId — invNum-first,
+  // invId-fallback, identical precedence. No Supabase push — Buyer Payment isn't
+  // Cloud-eligible yet (Phase 3 sub-phase 3). Also covers self-referencing
+  // goodwill-credit DB.payments[] entries automatically (§1.6 of the REQ), since
+  // those always carry a correct invId/invNum pair at creation and resolve via
+  // either path identically.
+  var paymentsChanged = false;
+  DB.payments.forEach(function(p){
+    var home = p.invNum ? DB.inv.find(function(x){ return x.num === p.invNum; }) : null;
+    if (!home && p.invId) home = DB.inv.find(function(x){ return x.id === p.invId; });
+    if (!home || !invIdMap[home.id]) return;
+    var newInvId = invIdMap[home.id];
+    if (p.invId !== newInvId) { p.invId = newInvId; paymentsChanged = true; }
+  });
+  if (paymentsChanged) sv(K.pm, DB.payments);
+
+  // Archive the true pre-migration snapshot BEFORE remapping DB.inv's own ids below.
+  localStorage.setItem('st_inv_pre_migration', localStorage.getItem(K.i));
+  localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+
+  DB.inv.forEach(function(r){
+    var isCnRow = r.type === 'credit_note' || r.type === 'goodwill_credit';
+    if (isCnRow && cnLinkedIdMap[r.id] !== undefined) { r.linkedInvId = cnLinkedIdMap[r.id]; }
+    if (invIdMap[r.id]) r.id = invIdMap[r.id];
+  });
+  sv(K.i, DB.inv);
+
+  await refreshInvFromSupabase();
+  if (G('cfg-sb-inv-restore-btn')) G('cfg-sb-inv-restore-btn').style.display = '';
+  toast('Invoice/Credit Note migration complete. Pre-migration data archived for 30 days.');
 }
 
 function restoreFromMigrationArchive() {
@@ -6447,6 +6856,18 @@ function restorePOMigrationArchive() {
   setTimeout(function(){ location.reload(); }, 1200);
 }
 
+function restoreInvMigrationArchive() {
+  var arch = localStorage.getItem('st_inv_pre_migration');
+  if (!arch) { toast('No Invoice/Credit Note migration archive available to restore.'); return; }
+  if (!confirm('Restore Invoices and Credit Notes to their state immediately before the Supabase migration?\n\nThis does not change Suppliers, Buyers, Line Items, Contacts, Order Requests, Quotes, Purchase Orders, or any other document data, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected for ALL entities, not just Invoices/Credit Notes — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect any of them afterwards.')) return;
+  localStorage.setItem(K.i, arch);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  localStorage.removeItem('st_inv_cloud_migration_ts');
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+
 function cleanupExpiredMigrationArchive() {
   var ts = localStorage.getItem('st_cloud_migration_ts');
   if (ts && (Date.now() - new Date(ts).getTime()) / 86400000 > 30) {
@@ -6478,6 +6899,11 @@ function cleanupExpiredMigrationArchive() {
   if (poTs && (Date.now() - new Date(poTs).getTime()) / 86400000 > 30) {
     localStorage.removeItem('st_po_pre_migration');
     localStorage.removeItem('st_po_cloud_migration_ts');
+  }
+  var invTs = localStorage.getItem('st_inv_cloud_migration_ts');
+  if (invTs && (Date.now() - new Date(invTs).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_inv_pre_migration');
+    localStorage.removeItem('st_inv_cloud_migration_ts');
   }
 }
 
@@ -7079,6 +7505,80 @@ async function saveInv() {
     }
   }
   else DB.inv.push(inv);
+
+  // G-06: write edit delta before closeM() clears _invEditSnapshot. RELOCATED here
+  // (REQ-CLOUD-006d, §0.6) — was originally after the goodwill-credit/price-history/
+  // invoiceRefs blocks below; moved ahead of the new Cloud Data push so a G-06 edit is
+  // included in the very row pushed to Supabase. Safe to move: only reads inv.id/
+  // inv.lineItems/inv[status|buyer|calc_grandTotal|dep|taxRate|lf], all already
+  // finalized above, and only fires when _invEditSnapshot.invId===inv.id — true only
+  // for an existing invoice, whose id never changes regardless of Cloud Data state.
+  if (_invEditSnapshot && _invEditSnapshot.invId === inv.id) {
+    var _snap = _invEditSnapshot;
+    var _changes = [];
+    ['status','buyer','calc_grandTotal','dep','taxRate','lf'].forEach(function(f) {
+      var oldV = String(_snap[f] || '0');
+      var newV = String(inv[f]  || '0');
+      if (oldV !== newV) _changes.push({ field: f, from: oldV, to: newV });
+    });
+    var newLiCount = (inv.lineItems||[]).length;
+    var newLiTotal = (inv.lineItems||[]).reduce(function(s,li){ return s+(+li.qty||0)*(+li.up||0); }, 0);
+    if (newLiCount !== _snap.liCount) _changes.push({ field:'lineItems.count', from:String(_snap.liCount), to:String(newLiCount) });
+    if (Math.abs(newLiTotal - _snap.liTotal) > 0.001) _changes.push({ field:'lineItems.total', from:_snap.liTotal.toFixed(2), to:newLiTotal.toFixed(2) });
+    if (!inv.editHistory) inv.editHistory = [];
+    inv.editHistory.push({ ts: new Date().toISOString(), reason: _snap.reason, actor: 'operator', changes: _changes });
+    logEv('invoice', inv.id, 'edited', _changes.length + ' field(s) changed — see invoice editHistory' + (_changes.length > 0 ? ' (' + _changes.map(function(c){ return c.field; }).join(', ') + ')' : ''), 'operator');
+    _invEditSnapshot = null;
+  }
+
+  // REQ-CLOUD-006d: cloud-aware create-or-update. inv (and DB.inv's own entry — the
+  // SAME object reference, per the local commit above) is already fully built with
+  // every local-only preservation/approval-clearing/G-06 edit-history rule applied.
+  // inv.id is reassigned to the real Postgres id IN PLACE, mutating the object DB.inv
+  // already holds by reference — so every synchronous use of inv below (the goodwill-
+  // credit payments push, price history, the fire-and-forget autoPos(inv) call, and
+  // the FPM-recovery block's getInvoicePOs(inv)) keeps working unmodified.
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var isCnInv = inv.type === 'credit_note' || inv.type === 'goodwill_credit';
+    var invRow = isCnInv ? {
+      num: inv.num, type: inv.type, buyer: inv.buyer || null, buyer_addr: inv.buyerAddr || null,
+      cur: inv.cur, date: inv.date, status: inv.status,
+      cn_amount: inv.cnAmount != null ? inv.cnAmount : null, cn_reason: inv.cnReason || null,
+      linked_inv_num: inv.linkedInvNum || null, linked_inv_id: inv.linkedInvId || null,
+      notes: inv.notes || null, line_items: inv.lineItems || [],
+      tax_rate: inv.taxRate, lf: inv.lf, ins: inv.ins, dep: inv.dep, upd_at: inv.updAt || null
+    } : {
+      num: inv.num, type: inv.type || 'invoice', buyer_id: inv.buyerId || null, buyer: inv.buyer || null,
+      buyer_addr: inv.buyerAddr || null, ship_to: inv.shipTo || null, dst: inv.dst || null, cust_id: inv.custId || null,
+      date: inv.date, expiry: inv.expiry || null, ship_date: inv.shipDate || null,
+      ft: inv.ft || null, wt: inv.wt || null, cbm: inv.cbm || null, pk: inv.pk || null,
+      pol: inv.pol || null, pod: inv.pod || null, coo: inv.coo || null,
+      cur: inv.cur, tax_rate: inv.taxRate, lf: inv.lf, ins: inv.ins, leg: inv.leg, isp: inv.isp, oth: inv.oth, dep: inv.dep,
+      incoterm: inv.incoterm || null, payment_terms: inv.paymentTerms || null, terms: inv.terms || null,
+      charges_included: inv.chargesIncluded !== undefined ? !!inv.chargesIncluded : null,
+      status: inv.status, line_items: inv.lineItems || [], pos: inv.pos || [],
+      buyer_approved_at: inv.buyerApprovedAt || null, buyer_approved_by: inv.buyerApprovedBy || null,
+      approval_method: inv.approvalMethod || null, approval_note: inv.approvalNote || null,
+      linked_quote_id: inv.linkedQuoteId || null, linked_quote_num: inv.linkedQuoteNum || null,
+      edit_history: inv.editHistory || null,
+      calc_grand_total: inv.calc_grandTotal != null ? inv.calc_grandTotal : null,
+      calc_cogs: inv.calc_cogs != null ? inv.calc_cogs : null,
+      calc_gross_profit: inv.calc_grossProfit != null ? inv.calc_grossProfit : null,
+      calc_net_profit: inv.calc_netProfit != null ? inv.calc_netProfit : null,
+      calc_margin: inv.calc_margin != null ? inv.calc_margin : null,
+      calc_balance_due: inv.calc_balanceDue != null ? inv.calc_balanceDue : null,
+      calc_li_total: inv.calc_liTotal != null ? inv.calc_liTotal : null,
+      calc_tax_amt: inv.calc_taxAmt != null ? inv.calc_taxAmt : null,
+      upd_at: inv.updAt || null
+    };
+    var invResult = EI.i
+      ? await _sb.from('invoices').update(invRow).eq('id', EI.i).select().single()
+      : await _sb.from('invoices').insert(invRow).select().single();
+    if (invResult.error) { toast('Save failed: ' + invResult.error.message); return; }
+    inv.id = invResult.data.id;
+  }
+
   // Goodwill credit: maintain a payments ledger entry (remove stale, add current)
   if (inv.type === 'goodwill_credit' && inv.cnAmount) {
     DB.payments = DB.payments.filter(function(p){ return !(p.invId===inv.id && p.method==='Goodwill Credit'); });
@@ -7142,25 +7642,8 @@ async function saveInv() {
     if (refsChanged) sv(K.l, DB.li);
   }
 
-  // G-06: write edit delta before closeM() clears _invEditSnapshot
-  if (_invEditSnapshot && _invEditSnapshot.invId === inv.id) {
-    var _snap = _invEditSnapshot;
-    var _changes = [];
-    ['status','buyer','calc_grandTotal','dep','taxRate','lf'].forEach(function(f) {
-      var oldV = String(_snap[f] || '0');
-      var newV = String(inv[f]  || '0');
-      if (oldV !== newV) _changes.push({ field: f, from: oldV, to: newV });
-    });
-    var newLiCount = (inv.lineItems||[]).length;
-    var newLiTotal = (inv.lineItems||[]).reduce(function(s,li){ return s+(+li.qty||0)*(+li.up||0); }, 0);
-    if (newLiCount !== _snap.liCount) _changes.push({ field:'lineItems.count', from:String(_snap.liCount), to:String(newLiCount) });
-    if (Math.abs(newLiTotal - _snap.liTotal) > 0.001) _changes.push({ field:'lineItems.total', from:_snap.liTotal.toFixed(2), to:newLiTotal.toFixed(2) });
-    if (!inv.editHistory) inv.editHistory = [];
-    inv.editHistory.push({ ts: new Date().toISOString(), reason: _snap.reason, actor: 'operator', changes: _changes });
-    logEv('invoice', inv.id, 'edited', _changes.length + ' field(s) changed — see invoice editHistory' + (_changes.length > 0 ? ' (' + _changes.map(function(c){ return c.field; }).join(', ') + ')' : ''), 'operator');
-    _invEditSnapshot = null;
-  }
-  sv(K.i,DB.inv); closeM('ov-inv'); rInv(); rDash();
+  if (!(_sb && localStorage.getItem('st_inv_cloud_migration_ts'))) sv(K.i,DB.inv);
+  closeM('ov-inv'); rInv(); rDash();
   // G-05: log invoice lifecycle events
   if (!EI.i) { logEv('invoice', inv.id, 'created', 'Invoice ' + inv.num + ' created', 'operator'); }
   else if (_invOldStatus !== null && _invOldStatus !== inv.status) { logEv('invoice', inv.id, 'status_changed', 'Status: ' + _invOldStatus + ' → ' + inv.status, 'operator'); }
@@ -7194,6 +7677,7 @@ async function saveInv() {
       toast('FPM-funded deposits marked as recovered ✓');
     }
   }
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) await refreshInvFromSupabase();
 }
 
 var _apprInvId = null;
@@ -7224,7 +7708,7 @@ function openInvApprove(id) {
   G('ov-inv-approve').classList.add('on');
 }
 
-function saveInvApprove() {
+async function saveInvApprove() {
   if (!vInvApprove()) return;
   var inv = DB.inv.find(function(x){ return x.id === _apprInvId; });
   if (!inv) return;
@@ -7233,7 +7717,11 @@ function saveInvApprove() {
   inv.approvalMethod = G('ia-method').value;
   inv.approvalNote = G('ia-note').value.trim();
   inv.updAt = new Date().toISOString();
-  sv(K.i, DB.inv);
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+    await persistInvChange(inv, false);
+  } else {
+    sv(K.i, DB.inv);
+  }
   logEv('invoice', inv.id, 'buyer_approved', 'Buyer approval recorded — ' + inv.approvalMethod + ' (by ' + inv.buyerApprovedBy + ')', 'operator');
   audit('UPDATE', 'invoice', inv.id, inv);
   closeM('ov-inv-approve');
@@ -7266,7 +7754,7 @@ function openInvProgress(id) {
   G('ov-inv-progress').classList.add('on');
 }
 
-function saveInvProgress() {
+async function saveInvProgress() {
   var inv = DB.inv.find(function(x){ return x.id === _progInvId; });
   if (!inv) return;
   var qId = G('ip-qt').value;
@@ -7274,7 +7762,11 @@ function saveInvProgress() {
   inv.linkedQuoteId = q ? q.id : '';
   inv.linkedQuoteNum = q ? q.num : '';
   inv.updAt = new Date().toISOString();
-  sv(K.i, DB.inv);
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+    await persistInvChange(inv, false);
+  } else {
+    sv(K.i, DB.inv);
+  }
   logEv('invoice', inv.id, 'progressed_to_invoicing', q ? ('Progressed to invoicing — linked Quote ' + q.num) : 'Progressed to invoicing — no Quote linked', 'operator');
   audit('UPDATE', 'invoice', inv.id, inv);
   closeM('ov-inv-progress');
@@ -7322,7 +7814,12 @@ async function autoPos(inv) {
     DB.inv[ii].pos=DB.inv[ii].pos||[];
     newPos.forEach(function(po){ DB.inv[ii].pos.push(po.id); });
   }
-  sv(K.i,DB.inv); rPO();
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts') && ii>-1) {
+    await persistInvChange(DB.inv[ii], false);
+  } else {
+    sv(K.i,DB.inv);
+  }
+  rPO();
   toast(cnt+' PO'+(cnt!==1?'s':'')+' auto-generated');
 }
 
@@ -8237,7 +8734,17 @@ async function delInv(id) {
   if(!confirm('Delete this invoice?')) return;
   var _delRec = DB.inv.find(function(i){ return i.id===id; });
   var _isCnDel = _delRec && (_delRec.type==='credit_note' || _delRec.type==='goodwill_credit');
-  DB.inv=DB.inv.filter(function(i){return i.id!==id;});
+
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('invoices').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    await refreshInvFromSupabase();
+  } else {
+    DB.inv=DB.inv.filter(function(i){return i.id!==id;});
+    sv(K.i,DB.inv);
+  }
+
   var libRefsChanged = false;
   DB.li.forEach(function(cat) {
     if (!cat.invoiceRefs) return;
@@ -8246,7 +8753,7 @@ async function delInv(id) {
     if (cat.invoiceRefs.length !== before) libRefsChanged = true;
   });
   if (_delRec) logEv('invoice', _delRec.id, 'deleted', 'Invoice ' + (_delRec.num||id) + ' deleted', 'operator');
-  sv(K.i,DB.inv); if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt(_isCnDel ? 'cn' : 'inv', _delRec ? _delRec.num : id).catch(function(){});
+  if (libRefsChanged) sv(K.l,DB.li); rInv(); rDash(); toast('Deleted'); await delEnt(_isCnDel ? 'cn' : 'inv', _delRec ? _delRec.num : id).catch(function(){});
 }
 
 // ── PO MODAL & TABLE ───────────────────────────────────────────
@@ -8384,13 +8891,24 @@ async function delPO(id) {
   }
 
   var _posChanged = false;
+  var touchedInvIdsForPoDel = {};
   DB.inv.forEach(function(i){
     if (i.pos && i.pos.length) {
       var idx = i.pos.indexOf(id);
-      if (idx > -1) { i.pos.splice(idx,1); _posChanged = true; }
+      if (idx > -1) { i.pos.splice(idx,1); _posChanged = true; touchedInvIdsForPoDel[i.id] = true; }
     }
   });
   if (_posChanged) sv(K.i,DB.inv);
+
+  // REQ-CLOUD-006e (call site #7): push each Invoice whose pos[] just lost this PO's
+  // id, if Invoice has migrated — the mirror image of this same function's own
+  // Quote.linkedPOIds[] retrofit immediately below (REQ-CLOUD-005f/PO-GAP-007).
+  if (Object.keys(touchedInvIdsForPoDel).length) {
+    for (var ivi = 0; ivi < DB.inv.length; ivi++) {
+      if (touchedInvIdsForPoDel[DB.inv[ivi].id]) await persistInvChange(DB.inv[ivi], true);
+    }
+    await refreshInvFromSupabase();
+  }
 
   // PO-GAP-007 fix (REQ-CLOUD-005f): delPO() never cleaned a deleted PO's id out of the
   // source Quote's linkedPOIds[] — ships unconditionally here, independent of whether
@@ -10030,17 +10548,46 @@ async function saveCN() {
     taxRate: 0, lf: 0, ins: 0, dep: 0,
     updAt: new Date().toISOString()
   };
-  // Goodwill credit → payments ledger entry
-  if (type === 'goodwill_credit') {
-    DB.payments = DB.payments.filter(function(p){ return p.invId !== cn.id; });
-    DB.payments.push({ id: uid(), invId: cn.id, invNum: cn.num, date: cn.date||today(), amount: amt, method: 'Goodwill Credit', ref: cn.cnReason||'Goodwill credit', notes: '' });
-    sv(K.pm, DB.payments);
+  // REQ-CLOUD-006d: cloud-aware create-or-update — RELOCATED here, ahead of the
+  // goodwill-credit payments push below, so that push sees cn's final, real Postgres
+  // id rather than the client-generated uid() it started with (the identical ordering
+  // fix saveInv() needs — §0.6/§2.6 — applied here without any G-06-equivalent
+  // complication, since saveCN() has no edit-history mechanism of its own).
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var cnRow = {
+      num: cn.num, type: cn.type, buyer: cn.buyer || null, buyer_addr: cn.buyerAddr || null,
+      cur: cn.cur, date: cn.date, status: cn.status,
+      cn_amount: cn.cnAmount != null ? cn.cnAmount : null, cn_reason: cn.cnReason || null,
+      linked_inv_num: cn.linkedInvNum || null, linked_inv_id: cn.linkedInvId || null,
+      notes: cn.notes || null, line_items: cn.lineItems || [],
+      tax_rate: cn.taxRate, lf: cn.lf, ins: cn.ins, dep: cn.dep, upd_at: cn.updAt || null
+    };
+    var cnResult = EI.cn
+      ? await _sb.from('invoices').update(cnRow).eq('id', EI.cn).select().single()
+      : await _sb.from('invoices').insert(cnRow).select().single();
+    if (cnResult.error) { toast('Save failed: ' + cnResult.error.message); return; }
+    cn.id = cnResult.data.id;
   }
+  // Commit cn into DB.inv unconditionally, cloud-aware or not (fixed, spec-gate round 1
+  // blocking finding 1 — an earlier draft only ran this inside an else/local-only branch,
+  // leaving a cloud-saved CN entirely absent from DB.inv: invisible to its own
+  // balance-due self-reference below unless status happens to trigger a later
+  // refreshInvFromSupabase(), and to rInv() immediately after the "Credit note saved"
+  // toast. Mirrors saveInv()'s own already-correct unconditional-commit-in-both-branches
+  // pattern, §0.6/§2.6.
   if (EI.cn) {
     var idx = DB.inv.findIndex(function(x){ return x.id===EI.cn; });
     if (idx > -1) DB.inv[idx] = cn; else DB.inv.push(cn);
   } else {
     DB.inv.push(cn);
+  }
+
+  // Goodwill credit → payments ledger entry
+  if (type === 'goodwill_credit') {
+    DB.payments = DB.payments.filter(function(p){ return p.invId !== cn.id; });
+    DB.payments.push({ id: uid(), invId: cn.id, invNum: cn.num, date: cn.date||today(), amount: amt, method: 'Goodwill Credit', ref: cn.cnReason||'Goodwill credit', notes: '' });
+    sv(K.pm, DB.payments);
   }
   // When a CN is Applied and linked to an invoice, recalculate that invoice's balance due
   if (cn.status === 'CN Applied' && cn.linkedInvNum) {
@@ -10051,9 +10598,17 @@ async function saveCN() {
         .reduce(function(sum, c){ return sum + Math.abs(parseFloat(c.cnAmount||0)); }, 0);
       var totalPayments = getInvEffectiveDepInfo(linkedInv).value;
       linkedInv.calc_balanceDue = (parseFloat(linkedInv.calc_grandTotal||0) - totalPayments - totalCredits).toFixed(2);
+      // REQ-CLOUD-006e (call site #9): push the side-mutated linkedInv — a DIFFERENT
+      // invoice from cn itself — if Invoice has migrated. Not part of a loop (only one
+      // invoice can ever be linkedInvNum's target), so no skipRefresh batching needed.
+      if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+        await persistInvChange(linkedInv, false);
+      }
     }
   }
-  sv(K.i, DB.inv); closeM('ov-cn'); rInv(); rDash();
+
+  if (!(_sb && localStorage.getItem('st_inv_cloud_migration_ts'))) sv(K.i, DB.inv);
+  closeM('ov-cn'); rInv(); rDash();
   audit(EI.cn?'UPDATE':'CREATE','cn',cn.id,cn); toast('Credit note saved');
   await syncEnt('inv', cn).catch(function(){});
 }
@@ -10955,6 +11510,7 @@ function rCfg() {
   if(G('cfg-sb-ord-restore-btn')) G('cfg-sb-ord-restore-btn').style.display = localStorage.getItem('st_ord_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-qt-restore-btn')) G('cfg-sb-qt-restore-btn').style.display = localStorage.getItem('st_qt_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-po-restore-btn')) G('cfg-sb-po-restore-btn').style.display = localStorage.getItem('st_po_cloud_migration_ts') ? '' : 'none';
+  if(G('cfg-sb-inv-restore-btn')) G('cfg-sb-inv-restore-btn').style.display = localStorage.getItem('st_inv_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-lang')) G('cfg-lang').value = _lang;
   rCoBrand();
   qteFillRates();
@@ -11775,7 +12331,7 @@ function advMergePreview() {
   el.style.color = affected.length ? 'var(--m)' : 'var(--cr)';
 }
 
-function advMergeBuyers() {
+async function advMergeBuyers() {
   var fromName = (G('adv-merge-from')||{}).value || '';
   var toName   = (G('adv-merge-to')||{}).value   || '';
   var confirm  = (G('adv-merge-confirm')||{}).value || '';
@@ -11788,12 +12344,22 @@ function advMergeBuyers() {
   var toBuy   = DB.buy.find(function(b){ return b.name === toName; });
   if (!toBuy) { st.textContent = 'Target buyer not found in Buyers list — please create it first.'; st.style.color = 'var(--cr)'; return; }
   var count = 0;
+  var touchedInvIdsForMerge = {};
   DB.inv.forEach(function(inv){
     var match = inv.buyer === fromName || (fromBuy && inv.buyerId === fromBuy.id);
-    if (match) { inv.buyer = toBuy.name; inv.buyerId = toBuy.id; count++; }
+    if (match) { inv.buyer = toBuy.name; inv.buyerId = toBuy.id; count++; touchedInvIdsForMerge[inv.id] = true; }
   });
   if (count === 0) { st.textContent = 'No invoices found attributed to "' + fromName + '".'; st.style.color = 'var(--m)'; return; }
-  sv(K.i, DB.inv);
+
+  if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+    for (var mi = 0; mi < DB.inv.length; mi++) {
+      if (touchedInvIdsForMerge[DB.inv[mi].id]) await persistInvChange(DB.inv[mi], true);
+    }
+    await refreshInvFromSupabase();
+  } else {
+    sv(K.i, DB.inv);
+  }
+
   logEv('buyer', toBuy.id, 'updated', 'Bulk buyer merge: ' + count + ' invoice(s) reassigned from "' + fromName + '" to "' + toName + '"', 'operator');
   st.textContent = count + ' invoice(s) reassigned to "' + toName + '" successfully.';
   st.style.color = 'var(--gn)';
@@ -13119,7 +13685,11 @@ async function savePayment(payment) {
       inv.status = 'Partially Paid';
     }
 
-    sv(K.i, DB.inv);
+    if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+      await persistInvChange(inv, true);
+    } else {
+      sv(K.i, DB.inv);
+    }
     syncEnt('inv', inv).catch(function(){});
 
     // Auto-recover FPM deposits if now Paid
@@ -13148,13 +13718,14 @@ async function savePayment(payment) {
       else toast('\u2713 Invoice marked Paid');
     }
 
+    if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) await refreshInvFromSupabase();
     rInv(); rDash();
   }
 
   // Payments not synced to Sheets yet — handled in v3.0.0
 }
 
-function deletePayment(id) {
+async function deletePayment(id) {
   var pm = DB.payments.find(function(p){ return p.id === id; });
   if (!pm) return;
   if (!confirm('Delete this payment record?')) return;
@@ -13185,7 +13756,11 @@ function deletePayment(id) {
       }
     }
 
-    sv(K.i, DB.inv);
+    if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
+      await persistInvChange(inv, false);
+    } else {
+      sv(K.i, DB.inv);
+    }
     syncEnt('inv', inv).catch(function(){});
     rInv(); rDash();
   }
