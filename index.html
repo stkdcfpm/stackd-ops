@@ -3014,6 +3014,20 @@ function migrateLinkedPOIds() {
   });
   if (changed) saveAll();
 }
+function backfillShLinkedInvs() {
+  // SH-GAP-002: heals Shipment records already corrupted (linkedInvs coerced from array to
+  // string) by a Sheets sync before unmapRec()'s split-back-into-array fix existed. unmapRec()
+  // itself stops this from recurring on any future pull; this is the one-time repair for
+  // whatever is already sitting in local DB right now.
+  var changed = false;
+  DB.sh.forEach(function(s) {
+    if (typeof s.linkedInvs === 'string') {
+      s.linkedInvs = s.linkedInvs === '' ? [] : s.linkedInvs.split(',').map(function(v){ return v.trim(); }).filter(Boolean);
+      changed = true;
+    }
+  });
+  if (changed) saveAll();
+}
 async function backfillInvoicePOs() {
   var posByInv = {};
   DB.po.forEach(function(po) {
@@ -4498,6 +4512,14 @@ function unmapRec(entity, sheetRec) {
     var headerKey = map[internalKey];
     if (Object.prototype.hasOwnProperty.call(sheetRec, headerKey)) out[internalKey] = sheetRec[headerKey];
   });
+  // SH-GAP-002: mapRec() joins linkedInvs (the only array-valued FIELD_MAPS field) into a
+  // ', '-separated string for Sheets export, but this function had no matching split-back-into-
+  // array step — every Sheets pull was silently corrupting it from an array into a plain string,
+  // which then crashes rShp()/editShp()/openFwdReq() (`(s.linkedInvs||[]).join is not a function`)
+  // the moment anyone opens that shipment. Confirmed live in a real operator export.
+  if (entity === 'sh' && typeof out.linkedInvs === 'string') {
+    out.linkedInvs = out.linkedInvs === '' ? [] : out.linkedInvs.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  }
   return out;
 }
 function findLocalMatchByBizKey(entity, localArr, pulledRec) {
@@ -12420,6 +12442,7 @@ function doImport(e) {
     backfillRefNums();
     backfillConIds();
     migrateLinkedPOIds();
+    backfillShLinkedInvs();
     backfillOrderRequests();
     backfillInvoicePOs();
     migrateQtePoShape();
@@ -14821,6 +14844,7 @@ function initApp() {
     backfillRefNums();
     backfillConIds();
     migrateLinkedPOIds();
+    backfillShLinkedInvs();
     backfillOrderRequests();
     backfillInvoicePOs();
     migrateQtePoShape();

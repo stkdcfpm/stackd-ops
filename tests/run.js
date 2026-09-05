@@ -1729,6 +1729,35 @@ test('unmapRec — does not leak a stray operator-added Sheet column not in FIEL
   assert(!('Internal Notes' in out), 'unmapped Sheet columns are dropped, not carried through');
 });
 
+test('unmapRec — sh entity splits linkedInvs back into an array (SH-GAP-002 fix)', function() {
+  var out = ctx.unmapRec('sh', { 'Shipment Ref':'SHP-001', 'Linked Invoices':'INV10028, INV10029' });
+  assert(Array.isArray(out.linkedInvs), 'linkedInvs is an array, not the raw joined string mapRec() produced');
+  assertEqual(out.linkedInvs.length, 2);
+  assertEqual(out.linkedInvs[0], 'INV10028');
+  assertEqual(out.linkedInvs[1], 'INV10029');
+});
+
+test('unmapRec — sh entity with blank Linked Invoices produces an empty array, not an empty string', function() {
+  var out = ctx.unmapRec('sh', { 'Shipment Ref':'SHP-002', 'Linked Invoices':'' });
+  assert(Array.isArray(out.linkedInvs), 'blank string still becomes an array');
+  assertEqual(out.linkedInvs.length, 0);
+});
+
+test('backfillShLinkedInvs() — heals an already-corrupted local Shipment (linkedInvs stored as a string)', function() {
+  resetDB();
+  ctx.DB.sh = [
+    { id: 'S1', ref: 'SHP-001', linkedInvs: 'INV10028' },       // corrupted: single value, no comma
+    { id: 'S2', ref: 'SHP-002', linkedInvs: 'INV10028, INV10029' }, // corrupted: comma-joined
+    { id: 'S3', ref: 'SHP-003', linkedInvs: ['INV10030'] },     // already correct — must survive untouched
+  ];
+  ctx.backfillShLinkedInvs();
+  assertEqual(ctx.DB.sh[0].linkedInvs.length, 1);
+  assertEqual(ctx.DB.sh[0].linkedInvs[0], 'INV10028');
+  assertEqual(ctx.DB.sh[1].linkedInvs.length, 2);
+  assertEqual(ctx.DB.sh[2].linkedInvs.length, 1, 'an already-correct array is left alone, not re-processed');
+  assertEqual(ctx.DB.sh[2].linkedInvs[0], 'INV10030');
+});
+
 test('findLocalMatchByBizKey — li matches by sku when present', function() {
   var local = [{ id:'l1', sku:'ABC', desc:'Widget', supId:'s1' }];
   var m = ctx.findLocalMatchByBizKey('li', local, { sku:'ABC' });
