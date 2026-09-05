@@ -1729,6 +1729,35 @@ test('unmapRec — does not leak a stray operator-added Sheet column not in FIEL
   assert(!('Internal Notes' in out), 'unmapped Sheet columns are dropped, not carried through');
 });
 
+test('unmapRec — sh entity splits linkedInvs back into an array (SH-GAP-002 fix)', function() {
+  var out = ctx.unmapRec('sh', { 'Shipment Ref':'SHP-001', 'Linked Invoices':'INV10028, INV10029' });
+  assert(Array.isArray(out.linkedInvs), 'linkedInvs is an array, not the raw joined string mapRec() produced');
+  assertEqual(out.linkedInvs.length, 2);
+  assertEqual(out.linkedInvs[0], 'INV10028');
+  assertEqual(out.linkedInvs[1], 'INV10029');
+});
+
+test('unmapRec — sh entity with blank Linked Invoices produces an empty array, not an empty string', function() {
+  var out = ctx.unmapRec('sh', { 'Shipment Ref':'SHP-002', 'Linked Invoices':'' });
+  assert(Array.isArray(out.linkedInvs), 'blank string still becomes an array');
+  assertEqual(out.linkedInvs.length, 0);
+});
+
+test('backfillShLinkedInvs() — heals an already-corrupted local Shipment (linkedInvs stored as a string)', function() {
+  resetDB();
+  ctx.DB.sh = [
+    { id: 'S1', ref: 'SHP-001', linkedInvs: 'INV10028' },       // corrupted: single value, no comma
+    { id: 'S2', ref: 'SHP-002', linkedInvs: 'INV10028, INV10029' }, // corrupted: comma-joined
+    { id: 'S3', ref: 'SHP-003', linkedInvs: ['INV10030'] },     // already correct — must survive untouched
+  ];
+  ctx.backfillShLinkedInvs();
+  assertEqual(ctx.DB.sh[0].linkedInvs.length, 1);
+  assertEqual(ctx.DB.sh[0].linkedInvs[0], 'INV10028');
+  assertEqual(ctx.DB.sh[1].linkedInvs.length, 2);
+  assertEqual(ctx.DB.sh[2].linkedInvs.length, 1, 'an already-correct array is left alone, not re-processed');
+  assertEqual(ctx.DB.sh[2].linkedInvs[0], 'INV10030');
+});
+
 test('findLocalMatchByBizKey — li matches by sku when present', function() {
   var local = [{ id:'l1', sku:'ABC', desc:'Widget', supId:'s1' }];
   var m = ctx.findLocalMatchByBizKey('li', local, { sku:'ABC' });
@@ -12207,6 +12236,20 @@ test('scanForPhantomRecords() — zero phantoms across all entities reports noth
   assertEqual(Object.keys(scan).length, 0, 'no entity keys reported when nothing is phantom');
 });
 
+test('isPhantomRecord() — blank-shell criterion for Shipment catches pre-SH-GAP-003-fix residue (SH-GAP-003)', function() {
+  assertEqual(ctx.isPhantomRecord('sh', { id: 'mtlejemnvhn', ref: '', blNum: '', vessel: '', carrier: '', containerNum: '', notes: '' }), true, 'a real id with every meaningful field blank is still phantom — this is exactly the shape pullAll() used to create before the SH-GAP-003 pull-time fix');
+  assertEqual(ctx.isPhantomRecord('sh', { id: '' }), true, 'missing id alone is still phantom, same as every other entity');
+  assertEqual(ctx.isPhantomRecord('sh', { id: 'S1', ref: 'SHP-001' }), false, 'a real ref makes it a real shipment even with every other field blank');
+  assertEqual(ctx.isPhantomRecord('sh', { id: 'S1', ref: '', vessel: 'MSC Altair' }), false, 'any one identifying field survives the phantom check');
+});
+
+test('scanForPhantomRecords() — includes supPayments in its scan and reports its phantoms', function() {
+  resetDB();
+  ctx.DB.supPayments = [{ id: 'P1', poId: 'PO1' }, { id: '', poId: 'PO2' }];
+  var scan = ctx.scanForPhantomRecords();
+  assertEqual(scan.supPayments.length, 1, 'the missing-id Supplier Payment is caught — previously invisible since supPayments was absent from the scan key list entirely');
+});
+
 test('openDataCleanupScan() — zero-found case reports clean and does not open the preview modal (AC-9)', function() {
   resetDB();
   ctx.DB.sup = [{ id: 'S1', name: 'A' }];
@@ -12337,6 +12380,31 @@ testAsync('pullAll() — drops an id-keyed pulled record (Contact) that resolves
   assertEqual(ctx.DB.con.length, 1, 'the falsy-id record is dropped, the valid one survives');
   assertEqual(ctx.DB.con[0].name, 'Jane');
   assert(warned.some(function(w) { return w.indexOf('dropping') >= 0; }), 'a console warning is emitted for the dropped record');
+});
+
+testAsync('pullAll() — drops a blank-ref Shipment row instead of creating an unmatchable phantom (SH-GAP-003)', async function() {
+  resetDB();
+  ctx.SS = { url: 'https://example.com/exec', auto: false, pull: true };
+  var blankShRow = { 'Shipment Ref': '', 'BL Number': '', 'Vessel': '', 'Carrier': '', 'Origin Port': '', 'Dest Port': '', 'ETD': '', 'ETA': '', 'Status': '', 'Container Type': '', 'Container Number': '', 'DG Onboard': '', 'Docs Status': '', 'Forwarder Name': '', 'Forwarder Email': '', 'Linked Invoices': '', 'Notes': '' };
+  var realShRow = { 'Shipment Ref': 'SHP-001', 'BL Number': 'BL1', 'Vessel': '', 'Carrier': '', 'Origin Port': '', 'Dest Port': '', 'ETD': '', 'ETA': '', 'Status': '', 'Container Type': '', 'Container Number': '', 'DG Onboard': '', 'Docs Status': '', 'Forwarder Name': '', 'Forwarder Email': '', 'Linked Invoices': '', 'Notes': '' };
+  _mockPullResponses = {
+    sup: { status: 'ok', records: [] },
+    li: { status: 'ok', records: [] },
+    payments: { status: 'ok', records: [] },
+    sh: { status: 'ok', records: [blankShRow, blankShRow, realShRow] }, // two identical blank rows — must not become two distinct phantoms, or any phantoms at all
+    qt: { status: 'ok', records: [] },
+    co: { status: 'ok', records: [] },
+  };
+  var warned = [];
+  var origWarn = console.warn;
+  console.warn = function() { warned.push(Array.prototype.slice.call(arguments).join(' ')); };
+  await ctx.pullAll();
+  console.warn = origWarn;
+  _mockPullResponses = {};
+  assertEqual(ctx.DB.sh.length, 1, 'both blank-ref rows are dropped; only the real one survives — pre-fix this created 2 new phantom Shipments every pull');
+  assertEqual(ctx.DB.sh[0].ref, 'SHP-001');
+  var dropWarnings = warned.filter(function(w) { return w.indexOf('dropping sh record with no ref') >= 0; });
+  assertEqual(dropWarnings.length, 2, 'one warning per dropped blank-ref row');
 });
 
 console.log('\nOrder Request/RFQ -> Quote -> Invoice referential integrity (REQ/SPEC-INTEG-001 Phase 1)');
