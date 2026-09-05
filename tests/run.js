@@ -406,6 +406,7 @@ console.log('\nShipment CRUD');
 
 test('saveShp stores a new shipment in DB.sh', () => {
   resetDB();
+  ctx._sb = null;
   ctx.DB.sh = [];
   ctx.EI.sh = null;
 
@@ -439,6 +440,7 @@ test('saveShp stores a new shipment in DB.sh', () => {
 
 test('saveShp parses DG flag correctly', () => {
   resetDB();
+  ctx._sb = null;
   ctx.DB.sh = [];
   ctx.EI.sh = null;
 
@@ -468,6 +470,7 @@ test('saveShp parses DG flag correctly', () => {
 
 test('delShp removes shipment from DB.sh', () => {
   resetDB();
+  ctx._sb = null;
   ctx.DB.sh = [{ id:'sh-1', ref:'SHP-DEL', status:'Pending', linkedInvs:[], dg:false }];
   ctx.confirm = () => true;
 
@@ -8090,7 +8093,7 @@ testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-
   ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
   var origInitSbClient = ctx.initSbClient;
   ctx.initSbClient = function(){}; // keep the mock _sb below in place instead of overwriting it with a real client
-  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] } });
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] }, shipments: { selectData: [] } });
   var origEnsureAuth = ctx.ensureSbAuth;
   ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
   var called = false;
@@ -8113,9 +8116,15 @@ testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-
   // corrupting every later test that touches Invoice/CN.
   var origRefreshInv = ctx.refreshInvFromSupabase;
   ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-007: initCloudDataLayer() now also calls refreshShFromSupabase() after
+  // refreshInvFromSupabase() — stub it too, or the real function runs unmocked against
+  // DB.sh (empty at this point) and permanently sets st_sh_cloud_migration_ts,
+  // corrupting every later test that touches Shipment.
+  var origRefreshSh = ctx.refreshShFromSupabase;
+  ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
 });
 
@@ -8654,7 +8663,7 @@ testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirro
   ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
   var origInitSbClient = ctx.initSbClient;
   ctx.initSbClient = function(){};
-  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] } });
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] }, shipments: { selectData: [] } });
   var origEnsureAuth = ctx.ensureSbAuth;
   ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
   var called = false;
@@ -8672,9 +8681,15 @@ testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirro
   // reason as refreshPOFromSupabase() above.
   var origRefreshInv = ctx.refreshInvFromSupabase;
   ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-007: initCloudDataLayer() now also calls refreshShFromSupabase() after
+  // refreshInvFromSupabase() — stub it too, or the real function runs unmocked against
+  // DB.sh (empty at this point) and permanently sets st_sh_cloud_migration_ts,
+  // corrupting every later test that touches Shipment.
+  var origRefreshSh = ctx.refreshShFromSupabase;
+  ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshQteFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
   ctx._sb = null;
 });
@@ -9061,7 +9076,7 @@ testAsync('initCloudDataLayer — now also calls refreshPOFromSupabase()', async
   ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
   var origInitSbClient = ctx.initSbClient;
   ctx.initSbClient = function(){};
-  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] } });
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] }, shipments: { selectData: [] } });
   var origEnsureAuth = ctx.ensureSbAuth;
   ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
   var called = false;
@@ -9072,9 +9087,15 @@ testAsync('initCloudDataLayer — now also calls refreshPOFromSupabase()', async
   // DB.inv (empty at this point) and permanently sets st_inv_cloud_migration_ts.
   var origRefreshInv = ctx.refreshInvFromSupabase;
   ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-007: initCloudDataLayer() now also calls refreshShFromSupabase() after
+  // refreshInvFromSupabase() — stub it too, or the real function runs unmocked against
+  // DB.sh (empty at this point) and permanently sets st_sh_cloud_migration_ts,
+  // corrupting every later test that touches Shipment.
+  var origRefreshSh = ctx.refreshShFromSupabase;
+  ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshPOFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
   ctx._sb = null;
 });
@@ -9567,15 +9588,17 @@ testAsync('initCloudDataLayer — now also calls refreshInvFromSupabase()', asyn
   ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
   var origInitSbClient = ctx.initSbClient;
   ctx.initSbClient = function(){};
-  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] } });
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] }, shipments: { selectData: [] } });
   var origEnsureAuth = ctx.ensureSbAuth;
   ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
   var called = false;
   var origRefreshInv = ctx.refreshInvFromSupabase;
   ctx.refreshInvFromSupabase = function(){ called = true; return Promise.resolve(); };
+  var origRefreshSh = ctx.refreshShFromSupabase;
+  ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshInvFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshInvFromSupabase = origRefreshInv;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
   ctx._sb = null;
 });
@@ -10442,6 +10465,322 @@ testAsync('SPEC-CLOUD-006 test-hygiene cleanup — reset _sb and every Invoice/C
   ctx._sb = null;
   ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
   ctx.localStorage.removeItem('st_inv_pre_migration');
+});
+
+// ── CLOUD DATA — Shipment (SPEC-CLOUD-007) ──
+
+testAsync('migrateShToSupabase — inserts every field including linkedInvs, remaps DB.sh\'s own id, archives the true pre-migration snapshot before remapping', async function() {
+  resetDB();
+  ctx.DB.sh.push({
+    id: 'sh1', ref: 'SHP-1001', blNum: 'MEDU1234567', vessel: 'MSC Mara', carrier: 'MSC',
+    originPort: 'Qingdao', destPort: 'Bridgetown', etd: '2026-05-01', eta: '2026-06-01',
+    containerType: '40HQ', containerNum: 'MSCU1234567', dg: true, docsStatus: 'Complete',
+    status: 'Booked', linkedInvs: ['INV10030','INV10031'], forwarder: 'Kuehne+Nagel',
+    forwarderEmail: 'ops@kn-demo.example', notes: 'test note', updAt: '2026-01-01T00:00:00.000Z'
+  });
+  ctx.localStorage.setItem(ctx.K.sh, JSON.stringify(ctx.DB.sh));
+  var sb = mockSb({ shipments: { insertImpl: function(row){ return Object.assign({ id: 'new-sh-uuid' }, row); },
+    selectData: [{ id: 'new-sh-uuid', ref: 'SHP-1001', bl_num: 'MEDU1234567', vessel: 'MSC Mara', carrier: 'MSC',
+      origin_port: 'Qingdao', dest_port: 'Bridgetown', etd: '2026-05-01', eta: '2026-06-01',
+      container_type: '40HQ', container_num: 'MSCU1234567', dg: true, docs_status: 'Complete',
+      status: 'Booked', linked_invs: ['INV10030','INV10031'], forwarder: 'Kuehne+Nagel',
+      forwarder_email: 'ops@kn-demo.example', notes: 'test note', upd_at: '2026-01-01T00:00:00.000Z' }] } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-sh-restore-btn');
+  await ctx.migrateShToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assert(insertCall, 'insert called');
+  assertEqual(insertCall.row.ref, 'SHP-1001', 'ref inserted');
+  assertEqual(insertCall.row.bl_num, 'MEDU1234567', 'bl_num inserted');
+  assertEqual(insertCall.row.container_type, '40HQ', 'container_type inserted');
+  assertEqual(insertCall.row.dg, true, 'dg inserted');
+  assertEqual(JSON.stringify(insertCall.row.linked_invs), JSON.stringify(['INV10030','INV10031']), 'linked_invs inserted as array, unchanged');
+  assertEqual(insertCall.row.upd_at, '2026-01-01T00:00:00.000Z', 'upd_at inserted');
+  assertEqual(ctx.DB.sh[0].id, 'new-sh-uuid', 'Shipment\'s own id remapped to the Supabase-assigned id');
+  var archived = JSON.parse(ctx.localStorage.getItem('st_sh_pre_migration'));
+  assertEqual(archived[0].id, 'sh1', 'pre-migration archive captured the ORIGINAL local id, not the remapped one');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx._sb = null;
+});
+
+testAsync('migrateShToSupabase — succeeds with zero other entities ever migrated (AC-4)', async function() {
+  resetDB();
+  ctx.DB.sh.push({ id: 'sh1', ref: 'SHP-0001', status: 'Pending', linkedInvs: [] });
+  ctx.localStorage.setItem(ctx.K.sh, JSON.stringify(ctx.DB.sh));
+  ['st_cloud_migration_ts','st_li_cloud_migration_ts','st_con_cloud_migration_ts','st_ord_cloud_migration_ts','st_qt_cloud_migration_ts','st_po_cloud_migration_ts','st_inv_cloud_migration_ts'].forEach(function(k){ ctx.localStorage.removeItem(k); });
+  var sb = mockSb({ shipments: {} });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-sh-restore-btn');
+  await ctx.migrateShToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assert(insertCall, 'migration succeeded with zero other entities ever migrated — no precondition check exists (REQ-CLOUD-007b)');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx._sb = null;
+});
+
+testAsync('migrateShToSupabase — blocked by a duplicate ref (exact match); does not insert any row (AC-5)', async function() {
+  resetDB();
+  ctx.DB.sh.push({ id: 'sh1', ref: 'SHP-0099', status: 'Pending', linkedInvs: [] });
+  ctx.DB.sh.push({ id: 'sh2', ref: 'SHP-0099', status: 'Booked', linkedInvs: [] });
+  var sb = mockSb({ shipments: {} });
+  ctx._sb = sb;
+  mockEl('sh-dup-list');
+  await ctx.migrateShToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assert(!insertCall, 'migration blocked before any insert');
+  ctx._sb = null;
+});
+
+testAsync('migrateShToSupabase — coerces a string-typed linkedInvs into an array before insert (AC-11, SH-GAP-002/REQ-CLOUD-007i-1)', async function() {
+  resetDB();
+  ctx.DB.sh.push({ id: 'sh1', ref: 'SHP-2001', status: 'Pending', linkedInvs: 'INV0001, INV0002' });
+  ctx.localStorage.setItem(ctx.K.sh, JSON.stringify(ctx.DB.sh));
+  var sb = mockSb({ shipments: {} });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-sh-restore-btn');
+  await ctx.migrateShToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assertEqual(JSON.stringify(insertCall.row.linked_invs), JSON.stringify(['INV0001','INV0002']), 'string-typed linkedInvs coerced into the equivalent array, not inserted as a raw string');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx._sb = null;
+});
+
+testAsync('migrateShToSupabase — a genuinely-empty string linkedInvs inserts as [], an already-correct array passes through unchanged (AC-11)', async function() {
+  resetDB();
+  ctx.DB.sh.push({ id: 'sh1', ref: 'SHP-2002', status: 'Pending', linkedInvs: '' });
+  ctx.DB.sh.push({ id: 'sh2', ref: 'SHP-2003', status: 'Pending', linkedInvs: ['INV0009'] });
+  ctx.localStorage.setItem(ctx.K.sh, JSON.stringify(ctx.DB.sh));
+  var sb = mockSb({ shipments: {} });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-sh-restore-btn');
+  await ctx.migrateShToSupabase();
+  var calls = sb._calls.filter(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assertEqual(JSON.stringify(calls[0].row.linked_invs), JSON.stringify([]), 'empty string coerces to []');
+  assertEqual(JSON.stringify(calls[1].row.linked_invs), JSON.stringify(['INV0009']), 'already-correct array passes through unchanged');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx._sb = null;
+});
+
+testAsync('migrateShToSupabase — touches no other entity\'s array (AC-8)', async function() {
+  resetDB();
+  ctx.DB.sup.push({id:'s1'}); ctx.DB.li.push({id:'l1'}); ctx.DB.inv.push({id:'i1'}); ctx.DB.po.push({id:'p1'});
+  ctx.DB.qt.push({id:'q1'}); ctx.DB.con.push({id:'c1'}); ctx.DB.ord.push({id:'o1'});
+  ctx.DB.sh.push({ id: 'sh1', ref: 'SHP-AC8', status: 'Pending', linkedInvs: [] });
+  var before = JSON.stringify({sup:ctx.DB.sup, li:ctx.DB.li, inv:ctx.DB.inv, po:ctx.DB.po, qt:ctx.DB.qt, con:ctx.DB.con, ord:ctx.DB.ord});
+  var sb = mockSb({ shipments: {} });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  mockEl('cfg-sb-sh-restore-btn');
+  await ctx.migrateShToSupabase();
+  var after = JSON.stringify({sup:ctx.DB.sup, li:ctx.DB.li, inv:ctx.DB.inv, po:ctx.DB.po, qt:ctx.DB.qt, con:ctx.DB.con, ord:ctx.DB.ord});
+  assertEqual(after, before, 'no other entity array mutated by migrateShToSupabase() — confirms the zero-sweep claim (REQ-CLOUD-007 §1.5) operationally, not just by inspection');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx._sb = null;
+});
+
+test('migrateShToSupabase — no other migrate*ToSupabase function references DB.sh anywhere in the source (AC-8)', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  var start = html.indexOf('async function migrateSuppliersBuyersToSupabase()');
+  var end = html.indexOf('async function migrateShToSupabase()');
+  assert(start > -1 && end > start, 'both markers found in source, in the expected order');
+  var otherMigrateFns = html.slice(start, end);
+  assert(otherMigrateFns.indexOf('DB.sh') === -1, 'no migrate*ToSupabase function other than migrateShToSupabase() itself references DB.sh — confirms REQ-CLOUD-007 §1.6\'s "zero cross-phase retrofit" claim is still true on the current codebase');
+});
+
+testAsync('saveShp — cloud-configured create inserts with no client-generated id and resolves the real Supabase id onto the local record (AC-2)', async function() {
+  resetDB();
+  ctx.DB.sh = []; ctx.EI.sh = null;
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ shipments: { insertImpl: function(row){ return Object.assign({ id: 'real-sh-uuid' }, row); },
+    selectData: [{ id: 'real-sh-uuid', ref: 'SHP-CLOUD-1', status: 'Booked', linked_invs: [] }] } });
+  ctx._sb = sb;
+  mockEl('shf-ref').value = 'SHP-CLOUD-1'; mockEl('shf-bl').value=''; mockEl('shf-vessel').value='';
+  mockEl('shf-carrier').value=''; mockEl('shf-op').value=''; mockEl('shf-dp').value='';
+  mockEl('shf-etd').value=''; mockEl('shf-eta').value=''; mockEl('shf-ctype').value='20GP';
+  mockEl('shf-cnum').value=''; mockEl('shf-dg').checked=false; mockEl('shf-docs').value='Pending';
+  mockEl('shf-st').value='Booked'; mockEl('shf-invs').value=''; mockEl('shf-nt').value='';
+  await ctx.saveShp();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assert(insertCall, 'insert called, not update');
+  assert(insertCall.row.id === undefined, 'no client-generated id sent in the insert row');
+  assertEqual(ctx.DB.sh[0].id, 'real-sh-uuid', 'real Supabase-assigned id resolved onto the local record');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx._sb = null;
+});
+
+testAsync('saveShp — cloud-configured update calls .update(...).eq(\'id\',...), not .insert(), on a subsequent edit of the same record (AC-2)', async function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'sh-existing', ref: 'SHP-EXIST', status: 'Booked', linkedInvs: [] }];
+  ctx.EI.sh = 'sh-existing';
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ shipments: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); } } });
+  ctx._sb = sb;
+  var origRefresh = ctx.refreshShFromSupabase;
+  ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
+  mockEl('shf-ref').value = 'SHP-EXIST'; mockEl('shf-bl').value=''; mockEl('shf-vessel').value='';
+  mockEl('shf-carrier').value=''; mockEl('shf-op').value=''; mockEl('shf-dp').value='';
+  mockEl('shf-etd').value=''; mockEl('shf-eta').value=''; mockEl('shf-ctype').value='20GP';
+  mockEl('shf-cnum').value=''; mockEl('shf-dg').checked=false; mockEl('shf-docs').value='Pending';
+  mockEl('shf-st').value='In Transit'; mockEl('shf-invs').value=''; mockEl('shf-nt').value='';
+  await ctx.saveShp();
+  var updateCall = sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'update'; });
+  var insertCall = sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assert(updateCall, 'update called');
+  assert(!insertCall, 'insert NOT called on an edit');
+  var eqCall = sb._calls.find(function(c){ return c.table==='shipments' && c.op==='eq' && c.col==='id'; });
+  assertEqual(eqCall.val, 'sh-existing', '.eq(\'id\', ...) targets the existing record');
+  ctx.refreshShFromSupabase = origRefresh;
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx._sb = null;
+});
+
+testAsync('delShp — cloud-configured delete soft-deletes via .update({deleted_at:...}), not a hard delete (AC-3)', async function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'sh-del', ref: 'SHP-DEL2', status: 'Pending', linkedInvs: [] }];
+  ctx.confirm = function(){ return true; };
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ shipments: {} });
+  ctx._sb = sb;
+  var origRefresh = ctx.refreshShFromSupabase;
+  ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.delShp('sh-del');
+  var updateCall = sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'update'; });
+  assert(updateCall, 'update called (soft delete)');
+  assert(updateCall.row.deleted_at, 'deleted_at timestamp set on the update row');
+  assertEqual(ctx.DB.sh.length, 1, 'DB.sh NOT spliced locally — the cloud branch relies on refreshShFromSupabase(), not a local filter, for the visible list to update');
+  ctx.refreshShFromSupabase = origRefresh;
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx._sb = null;
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('refreshShFromSupabase — mocked select returning rows populates DB.sh correctly including linkedInvs, persists to localStorage, sets its own marker', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx._sb = mockSb({ shipments: { selectData: [
+    { id: 'u1', ref: 'SHP-3001', bl_num: 'BL1', vessel: 'V1', carrier: 'C1', origin_port: 'CNQAO', dest_port: 'DEHAM',
+      etd: '2026-01-01', eta: '2026-02-01', container_type: '40HQ', container_num: 'CN1', dg: true, docs_status: 'Complete',
+      status: 'In Transit', linked_invs: ['INV0001'], forwarder: 'Fwd Co', forwarder_email: 'ops@fwd.example', notes: 'n1', upd_at: '2026-01-01T00:00:00.000Z' }
+  ] } });
+  await ctx.refreshShFromSupabase();
+  assertEqual(ctx.DB.sh.length, 1, '1 shipment loaded');
+  assertEqual(ctx.DB.sh[0].id, 'u1', 'id mapped');
+  assertEqual(ctx.DB.sh[0].blNum, 'BL1', 'bl_num mapped to blNum');
+  assertEqual(JSON.stringify(ctx.DB.sh[0].linkedInvs), JSON.stringify(['INV0001']), 'linked_invs mapped to linkedInvs array');
+  assertEqual(ctx.DB.sh[0].updAt, '2026-01-01T00:00:00.000Z', 'upd_at mapped');
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.sh)).length, 1, 'persisted to localStorage via sv(K.sh,...)');
+  assert(ctx.localStorage.getItem('st_sh_cloud_migration_ts'), 'own migration marker set on success (second-device case)');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx._sb = null;
+});
+
+testAsync('refreshShFromSupabase — refuses to overwrite real local data when this device has never migrated; proceeds when local data is empty (AC-7)', async function() {
+  resetDB();
+  ctx.DB.sh.push({ id: 'local-sh', ref: 'SHP-LOCAL' });
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx._sb = mockSb({ shipments: { selectData: [{ id: 'cloud-sh', ref: 'SHP-CLOUD', status: 'Booked', linked_invs: [] }] } });
+  await ctx.refreshShFromSupabase();
+  assertEqual(ctx.DB.sh.length, 1, 'real local data NOT overwritten');
+  assertEqual(ctx.DB.sh[0].id, 'local-sh', 'existing local record preserved');
+
+  resetDB(); // local now empty — second-device case
+  await ctx.refreshShFromSupabase();
+  assertEqual(ctx.DB.sh.length, 1, 'proceeds and loads Cloud Data when local is empty');
+  assertEqual(ctx.DB.sh[0].id, 'cloud-sh', 'cloud record loaded');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx._sb = null;
+});
+
+testAsync('pullAll() — drops \'sh\' from both _simpleEntsForBatch/_allPullKeys and simpleEnts once st_sh_cloud_migration_ts is set (AC-6)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://script.google.com/mock';
+  ctx._sb = mockSb({});
+  _fetchCallLog = [];
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  await ctx.pullAll();
+  assert(_fetchCallLog[0].entities.indexOf('sh') >= 0, 'sh still requested — not migrated yet');
+
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assertEqual(_fetchCallLog[0].entities.indexOf('sh'), -1, 'sh excluded from the batched request once its own marker is set');
+
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx.SS.url = '';
+  ctx._sb = null;
+});
+
+testAsync('initCloudDataLayer — now also calls refreshShFromSupabase()', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){};
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] }, shipments: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var called = false;
+  var origRefreshSh = ctx.refreshShFromSupabase;
+  ctx.refreshShFromSupabase = function(){ called = true; return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(called, 'initCloudDataLayer() calls refreshShFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshShFromSupabase = origRefreshSh;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+  ctx._sb = null;
+});
+
+test('processImportRecords()/processImport() and the AI-assistant dispatch path are unaffected by Shipment Cloud Data — no \'sh\' CSV branch exists, DB.sh untouched by a CSV import attempt (REQ-CLOUD-007l, AC-10)', () => {
+  var html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  var recStart = html.indexOf('function processImportRecords(entity, records, callback) {');
+  var recEnd = html.indexOf('\nfunction openPayments(');
+  var impStart = html.indexOf('async function processImport(entity, csvText) {');
+  var impEnd = html.indexOf('\nfunction processImportRecords(');
+  assert(recStart > -1 && recEnd > recStart, 'processImportRecords() boundaries found');
+  assert(impStart > -1 && impEnd > impStart, 'processImport() boundaries found');
+  assert(!/entity\s*===\s*'sh'/.test(html.slice(recStart, recEnd)), 'processImportRecords() has no entity===\'sh\' branch');
+  assert(!/entity\s*===\s*'sh'/.test(html.slice(impStart, impEnd)), 'processImport() has no entity===\'sh\' branch');
+
+  resetDB();
+  ctx.DB.sh.push({ id: 'sh-existing', ref: 'SHP-KEEP' });
+  var before = JSON.stringify(ctx.DB.sh);
+  ctx.processImportRecords('sh', [{ 'Shipment Ref': 'SHP-NEW' }], function(){});
+  assertEqual(JSON.stringify(ctx.DB.sh), before, 'DB.sh completely unchanged after a CSV import attempt for entity \'sh\' — no branch exists to process the record');
+});
+
+test('cleanupExpiredMigrationArchive — Shipment archive expires independently of every other entity', function() {
+  var day31 = new Date(Date.now() - 31*86400000).toISOString();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', day31);
+  ctx.localStorage.setItem('st_sh_pre_migration', '[]');
+  ctx.cleanupExpiredMigrationArchive();
+  assertEqual(ctx.localStorage.getItem('st_sh_pre_migration'), null, 'expired Shipment archive removed at day 31');
+});
+
+test('restoreShMigrationArchive — restores K.sh and clears SS.supabaseUrl/supabaseAnonKey and its own marker', function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_pre_migration', JSON.stringify([{ id: 'orig-sh', ref: 'SHP-76001' }]));
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  ctx.confirm = function(){ return true; };
+  var origReload = ctx.location.reload; ctx.location.reload = function(){};
+  var origSetTimeout = ctx.setTimeout; ctx.setTimeout = function(fn){ fn(); };
+  ctx.restoreShMigrationArchive();
+  assertEqual(JSON.parse(ctx.localStorage.getItem(ctx.K.sh))[0].id, 'orig-sh', 'K.sh restored from archive');
+  assertEqual(ctx.SS.supabaseUrl, '', 'supabaseUrl cleared');
+  assertEqual(ctx.localStorage.getItem('st_sh_cloud_migration_ts'), null, 'own marker cleared on restore');
+  ctx.location.reload = origReload; ctx.setTimeout = origSetTimeout; ctx.confirm = function(){ return false; };
+});
+
+testAsync('SPEC-CLOUD-007 test-hygiene cleanup — reset _sb and every Shipment Cloud Data migration marker this block may have left set, so later unrelated tests are not affected', async function() {
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_sh_pre_migration');
 });
 
 // ── AI Assistant — Invoice/Line Item/Credit Note actions + Supplier/Buyer read tools (SPEC-AI-GAP-002) ──
