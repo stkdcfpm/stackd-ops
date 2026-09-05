@@ -1342,9 +1342,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.82</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.83</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong><code>delSup()</code> never warned about or cleaned up Line Items referencing a deleted Supplier</strong> (<code>SUP-GAP-001</code>, new) — found while helping an operator diagnose 6 real Line Items (an irrigation/drip-tape product line) that had silently lost their Supplier reference, with no way to recover which supplier it was from data alone, since the deleted supplier predated the app's event log and <code>delSup()</code> gave no warning at delete time. <code>delSup()</code> already warned about linked Purchase Orders, invoice references, and Order Request RFQ responses before deleting a supplier — it now also counts and warns about Line Items linked via <code>supId</code>, in the same warning list. <code>supId</code> is left in place as a historical record on delete, not nulled, matching the existing RFQ-response precedent. 1 new test. Tests: 916/916 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.82</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong>two live Shipment sync-corruption bugs</strong>, both found and confirmed against a real operator's data export ahead of their Cloud Data migration — not a formally-gated REQ, a direct fix during that data-cleanse session. <code>SH-GAP-003</code> (new): <code>pullAll()</code>'s Shipment merge matched local/pulled records via <code>s.ref &amp;&amp; s.ref === p.ref</code>, which can never match two blank refs against each other, so every blank/trailing-empty row in the linked Google Sheet created a brand-new phantom Shipment on every single sync, forever — confirmed live as 500 of 503 Shipment records being entirely blank shells, created in exactly 20 timestamped bursts of 34 or 4 records matching 20 sync runs. Fixed by dropping a pulled Shipment row with no <code>ref</code> before attempting any match, mirroring the existing <code>SYNC-GAP-001</code>-class drop already in place for id-keyed entities with no resolvable id. <code>SH-GAP-002</code> (previously logged at <code>REQ-CLOUD-007</code> ship time, deliberately deferred): <code>mapRec()</code>/<code>unmapRec()</code>'s <code>linkedInvs</code> asymmetry let an ordinary Sheets sync corrupt it from an array into a string — confirmed live as 3 real Shipments that would crash <code>rShp()</code>/<code>editShp()</code>/<code>openFwdReq()</code> the instant any of them was opened, aborting <code>renderAll()</code> for every other entity in the same pass. <code>unmapRec()</code> now splits it back into an array at the source; a new <code>backfillShLinkedInvs()</code> heals any record already corrupted before this fix existed. Also extends <strong>Scan for phantom records</strong> so a blank-shell Shipment (real ID, every other field blank) is now detected, and adds Supplier Payment to its entity coverage, closing a blind spot that existed since that ledger shipped. Separately, resolved unresolved git merge-conflict markers left in <code>main</code> by PR #135 across 7 docs files — a commit on that PR's source branch had claimed to resolve them but hadn't, and the merge carried the broken content through untouched. 7 new tests. Tests: 915/915 pass.</li>
@@ -7396,12 +7405,19 @@ async function delSup(id) {
       return (l.rfqResponses||[]).some(function(r){ return r.supId === id; });
     }).length;
   }, 0);
+  // SUP-GAP-001: the catalogue Line Item itself (DB.li[].supId), as distinct from `invRef` above
+  // (which counts Invoices whose lineItems reference a *catalogue item* belonging to this supplier).
+  // Deleting a Supplier with no warning here left a Line Item's own supId silently dangling —
+  // confirmed live: 6 real Line Items lost their Supplier reference this way with no trace of when
+  // or why, since delSup() never warned about them and never nulled the reference on delete.
+  var liCount = DB.li.filter(function(l){ return l.supId === id; }).length;
   var warns = [];
   if (poCount > 0)  warns.push(poCount + ' purchase order' + (poCount>1?'s':'') + ' linked to this supplier');
+  if (liCount > 0)  warns.push(liCount + ' Line Item' + (liCount>1?'s':'') + ' in your catalogue linked to this supplier');
   if (invRef > 0)   warns.push(invRef + ' invoice' + (invRef>1?'s':'') + ' reference items from this supplier');
   if (ordRfqCount > 0) warns.push(ordRfqCount + ' Order Request line' + (ordRfqCount>1?'s':'') + ' reference RFQ responses from this supplier');
   var msg = 'Delete this supplier?';
-  if (warns.length) msg += '\n\nWarning: ' + warns.join('\n') + '\n\nThe POs, invoices, and Order Request RFQ responses will remain but will show a missing supplier reference.';
+  if (warns.length) msg += '\n\nWarning: ' + warns.join('\n') + '\n\nThe POs, Line Items, invoices, and Order Request RFQ responses will remain but will show a missing supplier reference.';
   if (!confirm(msg)) return;
   if (_sb) {
     if (!(await ensureSbAuth())) return;

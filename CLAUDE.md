@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used for Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment when Cloud Data is configured — REQ/SPEC-CLOUD-001, extended to Line Item/Contact by REQ/SPEC-CLOUD-002, to Order Request by REQ/SPEC-CLOUD-003, to Quote by REQ/SPEC-CLOUD-004, to Purchase Order by REQ/SPEC-CLOUD-005 (completing Phase 2), to Invoice/Credit Note by REQ/SPEC-CLOUD-006 (Phase 3 sub-phase 1 of 3), to Shipment by REQ/SPEC-CLOUD-007 (Phase 3 sub-phase 2 of 3), and to Buyer Payment/Supplier Payment by REQ/SPEC-CLOUD-008 (Phase 3 sub-phase 3 of 3, completing Phase 3) — of the cross-platform backend migration; no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.82**  
-**Test count: 915/915 PASS** (`node tests/run.js`)
+**Current version: v2.9.83**  
+**Test count: 916/916 PASS** (`node tests/run.js`)
 
 ---
 
@@ -188,6 +188,7 @@ See `docs/known-gaps.md` for full entries.
 | SYNC-GAP-003 | Sync / performance | Open, backlogged — post-redeploy Network-tab evidence was inconsistent/inconclusive; may just be the Apps Script deployment needing to be re-pointed at its latest version, not a code defect |
 | SH-GAP-002 | Shipment / Sheets sync | `linkedInvs` corrupted from array to string by ordinary Sheets sync, crashing `rShp()`/`editShp()`/`openFwdReq()` on open — Fixed v2.9.82, confirmed live in a real operator export (3 corrupted records) before the fix landed |
 | SH-GAP-003 | Shipment / Sheets sync | `pullAll()` could never match two blank-`ref` Shipment rows, creating an unbounded phantom Shipment on every sync — Fixed v2.9.82, confirmed live (500 blank-shell records from ~20 sync runs) |
+| SUP-GAP-001 | Suppliers / data integrity | `delSup()` never warned about or cleaned up Line Items referencing the deleted Supplier — confirmed live as 6 real Line Items silently orphaned this way, with no trace of when/why. Fixed v2.9.83: `delSup()` now warns with a count, mirroring its existing PO/invoice/RFQ-response warnings; `supId` left in place as a historical record, not nulled, same as those existing precedents |
 
 ---
 
