@@ -2985,11 +2985,19 @@ function isPhantomRecord(entityKey, rec) {
   if (entityKey === 'con') {
     return !rec.id || (!rec.name && !rec.email);
   }
+  if (entityKey === 'sh') {
+    // SH-GAP-003: a blank-ref Shipment pulled from Sheets (see pullAll()'s drop guard) could
+    // already exist locally from before that fix shipped — these carry a real id but every
+    // other field blank, so the bare `!rec.id` check below never catches them. Confirmed live:
+    // 500 such records in one operator's real export, all missing ref/vessel/carrier/blNum/
+    // containerNum/notes — no usable identifying information at all.
+    return !rec.id || (!rec.ref && !rec.vessel && !rec.carrier && !rec.blNum && !rec.containerNum && !rec.notes);
+  }
   return !rec.id;
 }
 function scanForPhantomRecords() {
   var result = {};
-  ['sup', 'li', 'inv', 'po', 'qt', 'payments', 'con', 'buy', 'ord', 'sh'].forEach(function(key) {
+  ['sup', 'li', 'inv', 'po', 'qt', 'payments', 'con', 'buy', 'ord', 'sh', 'supPayments'].forEach(function(key) {
     var phantoms = (DB[key] || []).filter(function(rec) { return isPhantomRecord(key, rec); });
     if (phantoms.length) result[key] = phantoms;
   });
@@ -4715,6 +4723,17 @@ async function pullAll() {
         var claim = claimOnceMatcher();
         var matchedLocalIds = {};
         var merged = pulledRecs.map(function(p) {
+          if (eKey === 'sh' && !p.ref) {
+            // SH-GAP-003: findLocalMatchByBizKey('sh',...) matches on `s.ref && s.ref === p.ref` —
+            // a blank ref can never match another blank ref, so every blank/trailing-empty row in
+            // the linked Sheet was creating a brand-new phantom Shipment on every single pull,
+            // forever (confirmed live: 500 blank-shell Shipment records from ~20 sync runs).
+            // A ref-less pulled Shipment can never be reconciled on any future pull either, so drop
+            // it now rather than materialize an unmatchable record — same shape as the existing
+            // no-resolvable-id drop below (SYNC-GAP-001 class).
+            console.warn('[Stackd] pullAll: dropping sh record with no ref — cannot be matched or reconciled on any future sync (SH-GAP-003)', p);
+            return null;
+          }
           var candidate = idKeyedEnts.indexOf(eKey) > -1
             ? localArr.find(function(r){ return r.id === p.id; })
             : findLocalMatchByBizKey(eKey, localArr, p);
@@ -10701,8 +10720,8 @@ async function runDataRepair() {
   status.style.color = '#4ade80';
 }
 
-var DATA_CLEANUP_LABELS = { sup:'Supplier', li:'Line Item', inv:'Invoice', po:'PO', qt:'Quote', payments:'Payment', con:'Contact', buy:'Buyer', ord:'Order Request', sh:'Shipment' };
-var DATA_CLEANUP_ENTITY_TYPE = { sup:'supplier', li:'line_item', inv:'invoice', po:'po', qt:'quote', payments:'payment', con:'contact', buy:'buyer', ord:'order', sh:'shipment' };
+var DATA_CLEANUP_LABELS = { sup:'Supplier', li:'Line Item', inv:'Invoice', po:'PO', qt:'Quote', payments:'Payment', con:'Contact', buy:'Buyer', ord:'Order Request', sh:'Shipment', supPayments:'Supplier Payment' };
+var DATA_CLEANUP_ENTITY_TYPE = { sup:'supplier', li:'line_item', inv:'invoice', po:'po', qt:'quote', payments:'payment', con:'contact', buy:'buyer', ord:'order', sh:'shipment', supPayments:'supplier_payment' };
 
 function openDataCleanupScan() {
   var scan = scanForPhantomRecords();
@@ -10799,7 +10818,7 @@ async function confirmDataCleanup() {
 
 async function executeDataCleanup() {
   var removedCounts = {};
-  ['sup', 'li', 'inv', 'po', 'qt', 'payments', 'con', 'buy', 'ord', 'sh'].forEach(function(key) {
+  ['sup', 'li', 'inv', 'po', 'qt', 'payments', 'con', 'buy', 'ord', 'sh', 'supPayments'].forEach(function(key) {
     var before = DB[key].length;
     DB[key] = DB[key].filter(function(rec) { return !isPhantomRecord(key, rec); });
     var removed = before - DB[key].length;
