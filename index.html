@@ -778,7 +778,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" onclick="migrateSuppliersBuyersToSupabase()">Migrate Suppliers/Buyers to Cloud</button>
         <button class="btn btn-g" id="cfg-sb-restore-btn" style="display:none;" onclick="restoreFromMigrationArchive()">Restore Pre-Migration Suppliers/Buyers</button>
       </div>
-      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When configured, Suppliers and Buyers are stored in a shared Supabase database instead of only this browser's local storage, so a colleague on another device sees the same records. Requires a separate Supabase sign-in the first time a session loads with this configured. Every other deal-pipeline and master-data entity (Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Buyer Payment, Supplier Payment) migrates independently via its own card below — see each card's own note for what still stays local-only until that entity migrates too. Migrating existing local Suppliers/Buyers requires a full backup export first (a blocking step) and moves them to the cloud copy as the source of truth going forward — the "Ad-Hoc" default Buyer never migrates and stays local-only.</p>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When configured, Suppliers and Buyers are stored in a shared Supabase database instead of only this browser's local storage, so a colleague on another device sees the same records. Requires a separate Supabase sign-in the first time a session loads with this configured. Every other deal-pipeline and master-data entity (Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, Supplier Payment) migrates independently via its own card below — see each card's own note for what still stays local-only until that entity migrates too. Migrating existing local Suppliers/Buyers requires a full backup export first (a blocking step) and moves them to the cloud copy as the source of truth going forward — the "Ad-Hoc" default Buyer never migrates and stays local-only.</p>
     </div>
     <div class="card">
       <div class="ct">Cloud Data (Line Items)</div>
@@ -827,6 +827,14 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" id="cfg-sb-inv-restore-btn" style="display:none;" onclick="restoreInvMigrationArchive()">Restore Pre-Migration Invoices &amp; Credit Notes</button>
       </div>
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Requires Buyers, Line Items, Quotes, and Purchase Orders to already be migrated to Cloud Data above (every Invoice requires each of these links). Uses the same Supabase connection configured above.</p>
+    </div>
+    <div class="card">
+      <div class="ct">Cloud Data (Shipments)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="migrateShToSupabase()">Migrate Shipments to Cloud</button>
+        <button class="btn btn-g" id="cfg-sb-sh-restore-btn" style="display:none;" onclick="restoreShMigrationArchive()">Restore Pre-Migration Shipments</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Independent of every other entity's migration — no other entity needs to migrate first. Uses the same Supabase connection configured above.</p>
     </div>
     <div class="card">
       <div class="ct">Cloud Data (Buyer Payments)</div>
@@ -2780,6 +2788,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
   </div>
 </div>
 
+<div class="ov" id="ov-sh-dup" onclick="if(event.target===this)closeM('ov-sh-dup')">
+  <div class="modal" style="max-width:460px;">
+    <div class="mh"><h2 style="font-size:.75rem;">Migration Blocked — Duplicate Shipment References</h2><button class="mx" onclick="closeM('ov-sh-dup')">&#215;</button></div>
+    <div class="mb">
+      <div id="sh-dup-list" style="font-size:.55rem;"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-g" onclick="closeM('ov-sh-dup')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="ov" id="ov-data-cleanup-preview" onclick="if(event.target===this)closeM('ov-data-cleanup-preview')">
   <div class="modal" style="max-width:520px;">
     <div class="mh"><h2 style="font-size:.75rem;">Data Integrity Scan</h2><button class="mx" onclick="closeM('ov-data-cleanup-preview')">&#215;</button></div>
@@ -4565,6 +4585,7 @@ async function pullAll() {
   if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'li'; });
   if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'co'; });
   if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'qt'; });
+  if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'sh'; });
   if (_sb && localStorage.getItem('st_pmt_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'payments'; });
   var _allPullKeys = ['inv','cn','po'].concat(_simpleEntsForBatch);
   if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) _allPullKeys = _allPullKeys.filter(function(e){ return e !== 'po'; });
@@ -4674,6 +4695,10 @@ async function pullAll() {
   if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'li'; });
   if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'co'; });
   if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'qt'; });
+  // Shipment (SPEC-CLOUD-007): same race — cloud-authoritative once migrated, excluded
+  // once its own local completion marker is set, matching Line Item/Contact/Quote's
+  // identical per-entity-marker shape.
+  if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'sh'; });
   // Buyer Payment (REQ-CLOUD-008h): same race — this is the load-bearing filter of the
   // two (the merge loop below iterates ONLY over simpleEnts; the _simpleEntsForBatch
   // filter above merely avoids a wasted server round-trip on the happy path).
@@ -5663,6 +5688,7 @@ async function initCloudDataLayer() {
     await refreshQteFromSupabase();
     await refreshPOFromSupabase();
     await refreshInvFromSupabase();
+    await refreshShFromSupabase();
     await refreshPmtFromSupabase();
     await refreshSupPmtFromSupabase();
   }
@@ -5801,6 +5827,27 @@ async function refreshPOFromSupabase() {
   sv(K.p, DB.po);
   if (!localStorage.getItem('st_po_cloud_migration_ts')) localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
   rPO();
+}
+
+async function refreshShFromSupabase() {
+  if (!_sb) return;
+  if (DB.sh.length > 0 && !localStorage.getItem('st_sh_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
+  var result = await _sb.from('shipments').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Shipments from Cloud Data.'); return; }
+  DB.sh = result.data.map(function(row){
+    var s = {
+      id: row.id, ref: row.ref, blNum: row.bl_num || '', vessel: row.vessel || '', carrier: row.carrier || '',
+      originPort: row.origin_port || '', destPort: row.dest_port || '', etd: row.etd || '', eta: row.eta || '',
+      containerType: row.container_type || '', containerNum: row.container_num || '', dg: !!row.dg,
+      docsStatus: row.docs_status || '', status: row.status, linkedInvs: row.linked_invs || [],
+      forwarder: row.forwarder || '', forwarderEmail: row.forwarder_email || '', notes: row.notes || ''
+    };
+    if (row.upd_at != null) s.updAt = row.upd_at;
+    return s;
+  });
+  sv(K.sh, DB.sh);
+  if (!localStorage.getItem('st_sh_cloud_migration_ts')) localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  rShp(); rDash();
 }
 
 async function refreshInvFromSupabase() {
@@ -6081,6 +6128,16 @@ function findDuplicateInvNums(inv) {
   return Object.keys(groups).map(function(k){ return groups[k]; }).filter(function(g){ return g.length > 1; });
 }
 
+function findDuplicateShRefs(sh) {
+  var groups = {};
+  sh.forEach(function(r){
+    var key = r.ref || '';
+    if (!key) return;
+    (groups[key] = groups[key] || []).push(r);
+  });
+  return Object.keys(groups).map(function(k){ return groups[k]; }).filter(function(g){ return g.length > 1; });
+}
+
 function showQteDupConflictModal(dupes) {
   G('qt-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following Quote numbers are duplicated (exact match) and would violate the cloud database\'s unique-number constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
     dupes.map(function(g){ return '<li>' + g.map(function(q){ return san(q.num); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
@@ -6097,6 +6154,12 @@ function showInvDupConflictModal(dupes) {
   G('inv-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following Invoice/Credit Note numbers are duplicated (exact match) and would violate the cloud database\'s unique-number constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
     dupes.map(function(g){ return '<li>' + g.map(function(r){ return san(r.num); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
   G('ov-inv-dup').classList.add('on');
+}
+
+function showShDupConflictModal(dupes) {
+  G('sh-dup-list').innerHTML = '<p style="margin-bottom:10px;">Migration blocked: the following Shipment references are duplicated (exact match) and would violate the cloud database\'s unique-reference constraint. Rename one of each pair before migrating.</p><ul style="padding-left:18px;">' +
+    dupes.map(function(g){ return '<li>' + g.map(function(r){ return san(r.ref); }).join(' &nbsp;/&nbsp; '); }).join('</li>') + '</li></ul>';
+  G('ov-sh-dup').classList.add('on');
 }
 
 var _sbMigrationResolve = null;
@@ -6888,6 +6951,66 @@ async function migrateInvToSupabase() {
   toast('Invoice/Credit Note migration complete. Pre-migration data archived for 30 days.');
 }
 
+async function migrateShToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+
+  // REQ-CLOUD-007b: no migration precondition on any other entity — Shipment
+  // carries no FK field of any kind. linkedInvs is a free-text array of Invoice
+  // NUMBERS (not ids), confirmed never dereferenced against DB.inv anywhere in
+  // the app (REQ-CLOUD-007 §1.1b) — there is nothing here for a precondition to
+  // ever validate against.
+
+  // REQ-CLOUD-007c: ref is manually entered with no format check anywhere and no
+  // case-normalization — a real pre-flight duplicate scan is required, not a
+  // documented no-op.
+  var shDupes = findDuplicateShRefs(DB.sh);
+  if (shDupes.length) { showShDupConflictModal(shDupes); return; }
+
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  // REQ-CLOUD-007i-1 (SH-GAP-002 defensive fix): linkedInvs is the only
+  // array-valued FIELD_MAPS field in the app — mapRec() joins it to a
+  // comma-string for Sheets, but unmapRec() never splits it back, so a local
+  // record that has been through one Sheets-pull-with-non-empty-invoices cycle
+  // can reach migration time with a string-typed linkedInvs (confirmed live,
+  // requirements-gate round 1). Coerced once per record here, local record left
+  // as-is — the underlying mapRec()/unmapRec() asymmetry is a separate,
+  // pre-existing defect, logged not fixed (SH-GAP-002, §3).
+  var shIdMap = {};
+  for (var i = 0; i < DB.sh.length; i++) {
+    var s = DB.sh[i];
+    var result = await _sb.from('shipments').insert({
+      ref: s.ref, bl_num: s.blNum || null, vessel: s.vessel || null, carrier: s.carrier || null,
+      origin_port: s.originPort || null, dest_port: s.destPort || null, etd: s.etd || null, eta: s.eta || null,
+      container_type: s.containerType || null, container_num: s.containerNum || null, dg: !!s.dg,
+      docs_status: s.docsStatus || null, status: s.status,
+      linked_invs: Array.isArray(s.linkedInvs) ? s.linkedInvs : (typeof s.linkedInvs === 'string' && s.linkedInvs ? s.linkedInvs.split(',').map(function(t){return t.trim();}).filter(Boolean) : []),
+      forwarder: s.forwarder || null, forwarder_email: s.forwarderEmail || null, notes: s.notes || null,
+      upd_at: s.updAt != null ? s.updAt : null
+    }).select().single();
+    if (result.error) { toast('Migration failed on Shipment ' + (s.ref||s.id) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    shIdMap[s.id] = result.data.id;
+  }
+
+  // REQ-CLOUD-007i/§1.5: no external-reference sweep in either direction —
+  // nothing else in the app stores or resolves a Shipment id (REQ-CLOUD-007
+  // §1.1c), so shIdMap has no consumer beyond Shipment's own records remapped
+  // immediately below. Stated explicitly, not silently omitted (AC-8).
+
+  // Archive the true pre-migration snapshot BEFORE remapping DB.sh's own ids below.
+  localStorage.setItem('st_sh_pre_migration', localStorage.getItem(K.sh));
+  localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+
+  DB.sh.forEach(function(s){ if (shIdMap[s.id]) s.id = shIdMap[s.id]; });
+  sv(K.sh, DB.sh);
+
+  await refreshShFromSupabase();
+  if (G('cfg-sb-sh-restore-btn')) G('cfg-sb-sh-restore-btn').style.display = '';
+  toast('Shipment migration complete. Pre-migration data archived for 30 days.');
+}
+
 async function migratePmtToSupabase() {
   if (!_sb) { toast('Configure Supabase first.'); return; }
   if (!(await ensureSbAuth())) return;
@@ -7090,6 +7213,18 @@ function restoreInvMigrationArchive() {
   setTimeout(function(){ location.reload(); }, 1200);
 }
 
+function restoreShMigrationArchive() {
+  var arch = localStorage.getItem('st_sh_pre_migration');
+  if (!arch) { toast('No Shipment migration archive available to restore.'); return; }
+  if (!confirm('Restore Shipments to their state immediately before the Supabase migration?\n\nThis does not change Suppliers, Buyers, Line Items, Contacts, Order Requests, Quotes, Purchase Orders, Invoices, Credit Notes, or any other document data, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected for ALL entities, not just Shipments — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect any of them afterwards.')) return;
+  localStorage.setItem(K.sh, arch);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  localStorage.removeItem('st_sh_cloud_migration_ts');
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+
 function restorePmtMigrationArchive() {
   var arch = localStorage.getItem('st_pmt_pre_migration');
   if (!arch) { toast('No Payment migration archive available to restore.'); return; }
@@ -7150,6 +7285,11 @@ function cleanupExpiredMigrationArchive() {
   if (invTs && (Date.now() - new Date(invTs).getTime()) / 86400000 > 30) {
     localStorage.removeItem('st_inv_pre_migration');
     localStorage.removeItem('st_inv_cloud_migration_ts');
+  }
+  var shTs = localStorage.getItem('st_sh_cloud_migration_ts');
+  if (shTs && (Date.now() - new Date(shTs).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_sh_pre_migration');
+    localStorage.removeItem('st_sh_cloud_migration_ts');
   }
   var pmtTs = localStorage.getItem('st_pmt_cloud_migration_ts');
   if (pmtTs && (Date.now() - new Date(pmtTs).getTime()) / 86400000 > 30) {
@@ -10996,7 +11136,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Suppliers',
   'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes. Each supplier is auto-assigned a SUP-#### reference number on creation (see Reference Numbers above).',
-  'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004/005/006/008): Settings → Cloud Data lets an operator connect a shared Supabase database. Each of Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Buyer Payment, and Supplier Payment migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Only Shipment remains local-only, regardless of what has migrated. Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them; Purchase Order requires Suppliers to have migrated first (every Purchase Order requires a Supplier link); Invoice/Credit Note requires Buyer, Line Item, Quote, AND Purchase Order to all have migrated first — the most demanding precondition of any entity; Buyer Payment requires Invoice to have migrated first (a payment\'s stored invoice reference is resolved via the same `invId`-primary rule the Buyer Payment ledger itself already uses for reconciliation, not the Num-first pattern used elsewhere in this series); Supplier Payment requires Purchase Order to have migrated first. Each entity can migrate independently of the others except where a precondition is stated. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
+  'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004/005/006/007/008): Settings → Cloud Data lets an operator connect a shared Supabase database. Every deal-pipeline and master-data entity — Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment — migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them; Purchase Order requires Suppliers to have migrated first (every Purchase Order requires a Supplier link); Invoice/Credit Note requires Buyer, Line Item, Quote, AND Purchase Order to all have migrated first — the most demanding precondition of any entity; Shipment requires no precondition at all, carrying no reference field of any kind to any other entity; Buyer Payment requires Invoice to have migrated first (a payment\'s stored invoice reference is resolved via the same `invId`-primary rule the Buyer Payment ledger itself already uses for reconciliation, not the Num-first pattern used elsewhere in this series); Supplier Payment requires Purchase Order to have migrated first. Each entity can migrate independently of the others except where a precondition is stated. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
   '',
   '## Line Items (Product Catalogue)',
   'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox. Each line item is auto-assigned an LI-#### reference number on creation (see Reference Numbers above).',
@@ -11808,6 +11948,7 @@ function rCfg() {
   if(G('cfg-sb-qt-restore-btn')) G('cfg-sb-qt-restore-btn').style.display = localStorage.getItem('st_qt_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-po-restore-btn')) G('cfg-sb-po-restore-btn').style.display = localStorage.getItem('st_po_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-inv-restore-btn')) G('cfg-sb-inv-restore-btn').style.display = localStorage.getItem('st_inv_cloud_migration_ts') ? '' : 'none';
+  if(G('cfg-sb-sh-restore-btn')) G('cfg-sb-sh-restore-btn').style.display = localStorage.getItem('st_sh_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-pmt-restore-btn')) G('cfg-sb-pmt-restore-btn').style.display = localStorage.getItem('st_pmt_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-spm-restore-btn')) G('cfg-sb-spm-restore-btn').style.display = localStorage.getItem('st_spm_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-lang')) G('cfg-lang').value = _lang;
@@ -12391,21 +12532,55 @@ async function saveShp() {
     notes: G('shf-nt').value.trim(),
     updAt: new Date().toISOString()
   };
-  if (EI.sh) {
-    var idx = DB.sh.findIndex(function(x){ return x.id===EI.sh; });
-    if (idx>-1) DB.sh[idx]=shp; else DB.sh.push(shp);
+
+  if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var shRow = {
+      ref: shp.ref, bl_num: shp.blNum || null, vessel: shp.vessel || null, carrier: shp.carrier || null,
+      origin_port: shp.originPort || null, dest_port: shp.destPort || null, etd: shp.etd || null, eta: shp.eta || null,
+      container_type: shp.containerType || null, container_num: shp.containerNum || null, dg: !!shp.dg,
+      docs_status: shp.docsStatus || null, status: shp.status, linked_invs: shp.linkedInvs || [],
+      forwarder: shp.forwarder || null, forwarder_email: shp.forwarderEmail || null, notes: shp.notes || null,
+      upd_at: shp.updAt
+    };
+    var shResult;
+    if (EI.sh) {
+      shResult = await _sb.from('shipments').update(shRow).eq('id', EI.sh).select().single();
+    } else {
+      shResult = await _sb.from('shipments').insert(shRow).select().single();
+    }
+    if (shResult.error) { toast('Save failed: ' + shResult.error.message); return; }
+    shp.id = shResult.data.id;
+    await refreshShFromSupabase();
   } else {
-    DB.sh.push(shp);
+    if (EI.sh) {
+      var idx = DB.sh.findIndex(function(x){ return x.id===EI.sh; });
+      if (idx>-1) DB.sh[idx]=shp; else DB.sh.push(shp);
+    } else {
+      DB.sh.push(shp);
+    }
+    sv(K.sh, DB.sh);
   }
-  sv(K.sh, DB.sh); closeM('ov-shp'); rShp(); rDash(); toast('Shipment saved');
+
+  closeM('ov-shp'); rShp(); rDash(); toast('Shipment saved');
   await syncEnt('sh', shp).catch(function(){});
 }
 
 async function delShp(id) {
   if (!confirm('Delete this shipment?')) return;
   var _shRef = (DB.sh.find(function(s){return s.id===id;})||{}).ref||id;
-  DB.sh = DB.sh.filter(function(s){ return s.id!==id; });
-  sv(K.sh, DB.sh); rShp(); rDash(); toast('Deleted'); await delEnt('sh', _shRef).catch(function(){});
+
+  if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('shipments').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    await refreshShFromSupabase();
+  } else {
+    DB.sh = DB.sh.filter(function(s){ return s.id!==id; });
+    sv(K.sh, DB.sh);
+  }
+
+  rShp(); rDash(); toast('Deleted'); await delEnt('sh', _shRef).catch(function(){});
 }
 
 // ── LOAD CALCULATOR ─────────────────────────────────────────────
