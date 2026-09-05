@@ -62,6 +62,8 @@ Once the Order Request's stage reaches Fulfilled, a realised margin figure appea
 
 Add a supplier manually (name, country, contact person, email, phone, currency, notes), or upload a CSV via Import Data → Suppliers step (the first step — suppliers must exist before you can import Line Items or Purchase Orders that reference them). See **Cloud Data** below — if it's configured, adding/editing/deleting a Supplier requires being signed in, and the record becomes visible to every other connected device/colleague, not just yours.
 
+**Deleting a supplier** shows a warning naming exactly what's still linked to it — Purchase Orders, invoices referencing its catalogue items, Order Request RFQ responses, and (since v2.9.83) Line Items in your catalogue — before you confirm. Those linked records aren't deleted or auto-fixed; they'll just show a missing supplier reference afterward, so make a note of what the warning lists if you might need to re-link it to a different supplier later.
+
 ## Line Items
 
 Your product catalogue — SKU, description, specs, HS code, linked supplier, unit of measure, unit cost, unit price, currency, dimensions, and a dangerous-goods flag. Add manually or via CSV upload (Import Data → Line Items step, after Suppliers). A Line Item's cost feeds Invoice COGS (cost of goods sold) automatically whenever an invoice line is created via "Import from Library." If you instead quick-add a line directly on an invoice (without linking it to the catalogue), make sure to enter a Unit Cost — COGS is still tracked correctly as long as a cost is entered; only leaving Unit Cost at zero causes profit figures to be understated for that line.

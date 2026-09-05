@@ -12141,6 +12141,23 @@ testAsync('delSup() — warns on RFQ response references and the comparison degr
   assertEqual(line.rfqResponses[0].supId, 'SUP-DEL', 'supId left in place as a historical record, not nulled');
 });
 
+testAsync('delSup() — warns on Line Item catalogue references, previously a silent dangling reference (SUP-GAP-001)', async function() {
+  resetDB();
+  ctx.DB.sup = [{ id: 'SUP-DEL', name: 'ToDelete' }];
+  ctx.DB.li = [
+    { id: 'L1', num: 'LI-0001', desc: 'Widget A', supId: 'SUP-DEL' },
+    { id: 'L2', num: 'LI-0002', desc: 'Widget B', supId: 'SUP-DEL' },
+    { id: 'L3', num: 'LI-0003', desc: 'Unrelated', supId: 'OTHER-SUP' },
+  ];
+  var capturedMsg;
+  ctx.confirm = function(msg){ capturedMsg = msg; return true; };
+  await ctx.delSup('SUP-DEL');
+  ctx.confirm = function(){ return false; };
+  assertContains(capturedMsg, '2 Line Items', 'confirm message warns about exactly the 2 Line Items linked to this supplier, not the unrelated one');
+  assertEqual(ctx.DB.li[0].supId, 'SUP-DEL', 'supId left in place as a historical record, not nulled — matches the existing RFQ-response/PO precedent, confirmed live as the actual real-world source of dangling Line Item references');
+  assertEqual(ctx.DB.li.length, 3, 'the Line Items themselves are never deleted, only the now-orphaned supplier link is surfaced');
+});
+
 test('delCon() — nulls contactId nested inside rfqResponses[], not just the top-level Order Request field (AC-017)', function() {
   resetDB();
   var line = mkOrdWithLine({ rfqResponses: [
