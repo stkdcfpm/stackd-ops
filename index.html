@@ -778,7 +778,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" onclick="migrateSuppliersBuyersToSupabase()">Migrate Suppliers/Buyers to Cloud</button>
         <button class="btn btn-g" id="cfg-sb-restore-btn" style="display:none;" onclick="restoreFromMigrationArchive()">Restore Pre-Migration Suppliers/Buyers</button>
       </div>
-      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When configured, Suppliers and Buyers are stored in a shared Supabase database instead of only this browser's local storage, so a colleague on another device sees the same records. Requires a separate Supabase sign-in the first time a session loads with this configured. Every other deal-pipeline and master-data entity (Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment) migrates independently via its own card below — see each card's own note for what still stays local-only until that entity migrates too. Migrating existing local Suppliers/Buyers requires a full backup export first (a blocking step) and moves them to the cloud copy as the source of truth going forward — the "Ad-Hoc" default Buyer never migrates and stays local-only.</p>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When configured, Suppliers and Buyers are stored in a shared Supabase database instead of only this browser's local storage, so a colleague on another device sees the same records. Requires a separate Supabase sign-in the first time a session loads with this configured. Every other deal-pipeline and master-data entity (Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, Supplier Payment) migrates independently via its own card below — see each card's own note for what still stays local-only until that entity migrates too. Migrating existing local Suppliers/Buyers requires a full backup export first (a blocking step) and moves them to the cloud copy as the source of truth going forward — the "Ad-Hoc" default Buyer never migrates and stays local-only.</p>
     </div>
     <div class="card">
       <div class="ct">Cloud Data (Line Items)</div>
@@ -835,6 +835,22 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <button class="btn btn-g" id="cfg-sb-sh-restore-btn" style="display:none;" onclick="restoreShMigrationArchive()">Restore Pre-Migration Shipments</button>
       </div>
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Independent of every other entity's migration — no other entity needs to migrate first. Uses the same Supabase connection configured above.</p>
+    </div>
+    <div class="card">
+      <div class="ct">Cloud Data (Buyer Payments)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="migratePmtToSupabase()">Migrate Payments to Cloud</button>
+        <button class="btn btn-g" id="cfg-sb-pmt-restore-btn" style="display:none;" onclick="restorePmtMigrationArchive()">Restore Pre-Migration Payments</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Requires Invoices to already be migrated to Cloud Data above — every Buyer Payment requires an Invoice link. Uses the same Supabase connection configured above.</p>
+    </div>
+    <div class="card">
+      <div class="ct">Cloud Data (Supplier Payments)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="migrateSupPmtToSupabase()">Migrate Supplier Payments to Cloud</button>
+        <button class="btn btn-g" id="cfg-sb-spm-restore-btn" style="display:none;" onclick="restoreSupPmtMigrationArchive()">Restore Pre-Migration Supplier Payments</button>
+      </div>
+      <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; Requires Purchase Orders to already be migrated to Cloud Data above — every Supplier Payment requires a Purchase Order link. Uses the same Supabase connection configured above.</p>
     </div>
     <div class="card">
       <div class="ct">Accounting Export — Field Mapping Reference</div>
@@ -4570,6 +4586,7 @@ async function pullAll() {
   if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'co'; });
   if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'qt'; });
   if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'sh'; });
+  if (_sb && localStorage.getItem('st_pmt_cloud_migration_ts')) _simpleEntsForBatch = _simpleEntsForBatch.filter(function(e){ return e !== 'payments'; });
   var _allPullKeys = ['inv','cn','po'].concat(_simpleEntsForBatch);
   if (_sb && localStorage.getItem('st_po_cloud_migration_ts')) _allPullKeys = _allPullKeys.filter(function(e){ return e !== 'po'; });
   if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) _allPullKeys = _allPullKeys.filter(function(e){ return e !== 'inv' && e !== 'cn'; });
@@ -4682,6 +4699,10 @@ async function pullAll() {
   // once its own local completion marker is set, matching Line Item/Contact/Quote's
   // identical per-entity-marker shape.
   if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'sh'; });
+  // Buyer Payment (REQ-CLOUD-008h): same race — this is the load-bearing filter of the
+  // two (the merge loop below iterates ONLY over simpleEnts; the _simpleEntsForBatch
+  // filter above merely avoids a wasted server round-trip on the happy path).
+  if (_sb && localStorage.getItem('st_pmt_cloud_migration_ts')) simpleEnts = simpleEnts.filter(function(e){ return e !== 'payments'; });
   var idKeyedEnts = ['sup', 'payments', 'co'];
   for (var ei = 0; ei < simpleEnts.length; ei++) {
     var eKey = simpleEnts[ei];
@@ -5668,6 +5689,8 @@ async function initCloudDataLayer() {
     await refreshPOFromSupabase();
     await refreshInvFromSupabase();
     await refreshShFromSupabase();
+    await refreshPmtFromSupabase();
+    await refreshSupPmtFromSupabase();
   }
 }
 
@@ -5888,6 +5911,48 @@ async function refreshInvFromSupabase() {
   rInv(); rDash();
 }
 
+async function refreshPmtFromSupabase() {
+  if (!_sb) return;
+  if (DB.payments.length > 0 && !localStorage.getItem('st_pmt_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
+  var result = await _sb.from('buyer_payments').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Payments from Cloud Data.'); return; }
+  DB.payments = result.data.map(function(row){
+    var rec = { id: row.id, invId: row.inv_id || '', invNum: row.inv_num || '', date: row.date, amount: row.amount, method: row.method || '' };
+    if (row.purpose   != null) rec.purpose   = row.purpose;
+    if (row.currency  != null) rec.currency  = row.currency;
+    if (row.rate_lock != null) rec.rateLock  = row.rate_lock;
+    if (row.reference != null) rec.reference = row.reference;
+    if (row.ref       != null) rec.ref       = row.ref;
+    if (row.notes     != null) rec.notes     = row.notes;
+    if (row.type      != null) rec.type      = row.type;
+    if (row.cre_at    != null) rec.creAt     = row.cre_at;
+    return rec;
+  });
+  sv(K.pm, DB.payments);
+  if (!localStorage.getItem('st_pmt_cloud_migration_ts')) localStorage.setItem('st_pmt_cloud_migration_ts', new Date().toISOString());
+  // No list-render call — Buyer Payment has no dedicated list view; every mutation site
+  // that needs a redraw already calls renderPaymentsTab(invId) itself (SPEC §0.5).
+}
+
+async function refreshSupPmtFromSupabase() {
+  if (!_sb) return;
+  if (DB.supPayments.length > 0 && !localStorage.getItem('st_spm_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
+  var result = await _sb.from('supplier_payments').select('*').is('deleted_at', null);
+  if (result.error) { toast('Could not load Supplier Payments from Cloud Data.'); return; }
+  DB.supPayments = result.data.map(function(row){
+    return {
+      id: row.id, poId: row.po_id || '', poNum: row.po_num || '', date: row.date, amount: row.amount,
+      currency: row.currency, purpose: row.purpose, method: row.method || '',
+      reference: row.reference || '', notes: row.notes || '', rateLock: row.rate_lock,
+      type: row.type, creAt: row.cre_at
+    };
+  });
+  sv(K.spm, DB.supPayments);
+  if (!localStorage.getItem('st_spm_cloud_migration_ts')) localStorage.setItem('st_spm_cloud_migration_ts', new Date().toISOString());
+  // No list-render call — same reasoning as refreshPmtFromSupabase() above; Supplier
+  // Payment renders exclusively via renderPOPaymentsTab(poId).
+}
+
 async function persistInvChange(inv, skipRefresh) {
   if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
@@ -6007,6 +6072,13 @@ async function isPOMigrationComplete() {
   if (!_sb) return false;
   if (localStorage.getItem('st_po_cloud_migration_ts')) return true;
   var result = await _sb.from('purchase_orders').select('*').is('deleted_at', null);
+  return !!(result.data && result.data.length > 0);
+}
+
+async function isInvMigrationComplete() {
+  if (!_sb) return false;
+  if (localStorage.getItem('st_inv_cloud_migration_ts')) return true;
+  var result = await _sb.from('invoices').select('*').is('deleted_at', null);
   return !!(result.data && result.data.length > 0);
 }
 
@@ -6625,8 +6697,23 @@ async function migratePOToSupabase() {
   });
   sv(K.i, DB.inv);
 
-  DB.supPayments.forEach(function(pm){ if (poIdMap[pm.poId]) pm.poId = poIdMap[pm.poId]; });
+  // REQ-CLOUD-008i (defense-in-depth retrofit, SPEC §0.7): same reasoning as
+  // migrateInvToSupabase()'s identical treatment of DB.payments[].invId above — the
+  // ordinary case needs no push (this sweep runs strictly before Supplier Payment's
+  // own migration is reachable), but a restore-and-remigrate of Purchase Order after
+  // Supplier Payment has separately already migrated makes this non-vacuous.
+  var touchedSupPmtIdsForPo = {};
+  DB.supPayments.forEach(function(pm){ if (poIdMap[pm.poId]) { pm.poId = poIdMap[pm.poId]; touchedSupPmtIdsForPo[pm.id] = true; } });
   sv(K.spm, DB.supPayments);
+
+  if (Object.keys(touchedSupPmtIdsForPo).length && localStorage.getItem('st_spm_cloud_migration_ts')) {
+    for (var spmi = 0; spmi < DB.supPayments.length; spmi++) {
+      if (!touchedSupPmtIdsForPo[DB.supPayments[spmi].id]) continue;
+      var spmtSweepResult = await _sb.from('supplier_payments').update({ po_id: DB.supPayments[spmi].poId }).eq('id', DB.supPayments[spmi].id);
+      if (spmtSweepResult.error) console.warn('[Stackd] migratePOToSupabase: failed to push retrofit poId update for supplier payment ' + DB.supPayments[spmi].id, spmtSweepResult.error.message);
+    }
+    await refreshSupPmtFromSupabase();
+  }
 
   // Outward cross-phase retrofit (REQ-CLOUD-005i): the mirror image of
   // migrateQteToSupabase()'s own outward retrofit onto Order Request in
@@ -6815,20 +6902,38 @@ async function migrateInvToSupabase() {
   }
 
   // REQ-CLOUD-006g: local-only inward sweep of DB.payments[].invId — invNum-first,
-  // invId-fallback, identical precedence. No Supabase push — Buyer Payment isn't
-  // Cloud-eligible yet (Phase 3 sub-phase 3). Also covers self-referencing
-  // goodwill-credit DB.payments[] entries automatically (§1.6 of the REQ), since
-  // those always carry a correct invId/invNum pair at creation and resolve via
-  // either path identically.
+  // invId-fallback, identical precedence. Also covers self-referencing goodwill-credit
+  // DB.payments[] entries automatically (§1.6 of REQ-CLOUD-006), since those always
+  // carry a correct invId/invNum pair at creation and resolve via either path
+  // identically.
+  //
+  // REQ-CLOUD-008i (defense-in-depth retrofit, SPEC §0.7): in the ORDINARY case this
+  // sweep runs strictly before Buyer Payment's own migration is even reachable (its
+  // precondition requires Invoice's migration to already be complete), so nothing here
+  // needs pushing. The one compound scenario where it matters: Invoice is restored and
+  // re-migrated AFTER Buyer Payment has separately already migrated (its own marker
+  // survives Invoice's own restore untouched) — a touched payment record could then
+  // genuinely need pushing. Narrow, single-field push, no shared persistPmtChange()
+  // helper (SPEC §0.8) — mirrors this same function's own linked_inv_id fix-up above.
   var paymentsChanged = false;
+  var touchedPmtIdsForInv = {};
   DB.payments.forEach(function(p){
     var home = p.invNum ? DB.inv.find(function(x){ return x.num === p.invNum; }) : null;
     if (!home && p.invId) home = DB.inv.find(function(x){ return x.id === p.invId; });
     if (!home || !invIdMap[home.id]) return;
     var newInvId = invIdMap[home.id];
-    if (p.invId !== newInvId) { p.invId = newInvId; paymentsChanged = true; }
+    if (p.invId !== newInvId) { p.invId = newInvId; paymentsChanged = true; touchedPmtIdsForInv[p.id] = true; }
   });
   if (paymentsChanged) sv(K.pm, DB.payments);
+
+  if (Object.keys(touchedPmtIdsForInv).length && localStorage.getItem('st_pmt_cloud_migration_ts')) {
+    for (var pmi = 0; pmi < DB.payments.length; pmi++) {
+      if (!touchedPmtIdsForInv[DB.payments[pmi].id]) continue;
+      var pmtSweepResult = await _sb.from('buyer_payments').update({ inv_id: DB.payments[pmi].invId }).eq('id', DB.payments[pmi].id);
+      if (pmtSweepResult.error) console.warn('[Stackd] migrateInvToSupabase: failed to push retrofit invId update for payment ' + DB.payments[pmi].id, pmtSweepResult.error.message);
+    }
+    await refreshPmtFromSupabase();
+  }
 
   // Archive the true pre-migration snapshot BEFORE remapping DB.inv's own ids below.
   localStorage.setItem('st_inv_pre_migration', localStorage.getItem(K.i));
@@ -6904,6 +7009,123 @@ async function migrateShToSupabase() {
   await refreshShFromSupabase();
   if (G('cfg-sb-sh-restore-btn')) G('cfg-sb-sh-restore-btn').style.display = '';
   toast('Shipment migration complete. Pre-migration data archived for 30 days.');
+}
+
+async function migratePmtToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+
+  // REQ-CLOUD-008b: single precondition — Invoice must have completed its own
+  // migration first. Every DB.payments[].invId, once resolvable, already resolves to
+  // a real Supabase invoice id by this point (REQ §0.3/§1.4) — Buyer's own completion
+  // is already transitively guaranteed by Invoice's own precondition (REQ-CLOUD-006a),
+  // so no separate Buyer check is needed here.
+  if (!(await isInvMigrationComplete())) { toast('Migrate Invoices to Cloud Data first — every Buyer Payment requires an Invoice link.'); return; }
+
+  // REQ-CLOUD-008d: neither ledger has a num field — no duplicate-reference-number
+  // pre-flight scan applies here. Documented no-op, not an oversight.
+
+  // REQ-CLOUD-008c: non-blocking informational orphan scan, reusing getInvPayments()'s
+  // own settled invId-primary/invNum-fallback rule (§1.4), inverted in direction —
+  // given a payment, does ANY current DB.inv record satisfy it. Checked against local
+  // DB.inv (already carrying real Supabase ids by this point, per the precondition
+  // above), NOT a live query — unlike every prior entity's BLOCKING pre-flight FK
+  // check, this never blocks the migration (both ledgers already tolerate a dangling
+  // reference today as an accepted, pre-existing state — REQ §2c).
+  var orphanPmtCount = DB.payments.filter(function(p){
+    var idResolves = p.invId && DB.inv.some(function(i){ return i.id === p.invId; });
+    if (idResolves) return false;
+    var numResolves = p.invNum && DB.inv.some(function(i){ return i.num === p.invNum; });
+    return !numResolves;
+  }).length;
+  if (orphanPmtCount) toast('⚠ ' + orphanPmtCount + ' payment record(s) reference an invoice that could not be resolved — they will migrate with the dangling reference preserved, not blocked. Review Payments after migrating if unexpected.');
+
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  // REQ-CLOUD-008 §0.3: no id-remapping needed at insert time — invId/invNum are
+  // already real, final values (Invoice's own migration already rewrote them via
+  // migrateInvToSupabase()'s own existing sweep, §2.11) — carried through verbatim.
+  var pmtIdMap = {};
+  for (var i = 0; i < DB.payments.length; i++) {
+    var p = DB.payments[i];
+    var row = {
+      inv_id: p.invId || null, inv_num: p.invNum || null, date: p.date || null, amount: p.amount,
+      method: p.method || null, purpose: p.purpose != null ? p.purpose : null,
+      currency: p.currency != null ? p.currency : null, rate_lock: p.rateLock != null ? p.rateLock : null,
+      reference: p.reference != null ? p.reference : null, ref: p.ref != null ? p.ref : null,
+      notes: p.notes || null, type: p.type != null ? p.type : null, cre_at: p.creAt != null ? p.creAt : null
+    };
+    var result = await _sb.from('buyer_payments').insert(row).select().single();
+    if (result.error) { toast('Migration failed on payment ' + (p.invNum||p.id) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    pmtIdMap[p.id] = result.data.id;
+  }
+
+  // REQ-CLOUD-008 §1.5: no outward sweep — nothing else references a payment's own id.
+
+  localStorage.setItem('st_pmt_pre_migration', localStorage.getItem(K.pm));
+  localStorage.setItem('st_pmt_cloud_migration_ts', new Date().toISOString());
+
+  DB.payments.forEach(function(p){ if (pmtIdMap[p.id]) p.id = pmtIdMap[p.id]; });
+  sv(K.pm, DB.payments);
+
+  await refreshPmtFromSupabase();
+  if (G('cfg-sb-pmt-restore-btn')) G('cfg-sb-pmt-restore-btn').style.display = '';
+  toast('Buyer Payment migration complete. Pre-migration data archived for 30 days.');
+}
+
+async function migrateSupPmtToSupabase() {
+  if (!_sb) { toast('Configure Supabase first.'); return; }
+  if (!(await ensureSbAuth())) return;
+
+  // REQ-CLOUD-008b: single precondition — Purchase Order must have completed its own
+  // migration first. isPOMigrationComplete() (existing) is reused verbatim.
+  if (!(await isPOMigrationComplete())) { toast('Migrate Purchase Orders to Cloud Data first — every Supplier Payment requires a Purchase Order link.'); return; }
+
+  // REQ-CLOUD-008d: no num field on this ledger — no duplicate-reference-number scan.
+
+  // REQ-CLOUD-008c: non-blocking informational orphan scan — bare poId match, NO
+  // poNum fallback of any kind (getPOPayments()'s own settled rule, §1.4). Checked
+  // against the LIVE, connected Purchase Order table (unlike Buyer Payment's scan
+  // above, which checks local DB.inv) — Supplier Payment has zero Sheets footprint
+  // (§1.2/§1.7), so a second device's local DB.po copy carries no equivalent
+  // guarantee of being current that Buyer Payment's precondition chain gives DB.inv.
+  // Never blocks the migration.
+  var knownPOIdsForScan = await _sb.from('purchase_orders').select('*').is('deleted_at', null);
+  if (knownPOIdsForScan.error) { toast('Could not verify Purchase Order links before migrating: ' + knownPOIdsForScan.error.message); return; }
+  var knownPOIdSetForScan = {};
+  knownPOIdsForScan.data.forEach(function(p){ knownPOIdSetForScan[p.id] = true; });
+  var orphanSupPmtCount = DB.supPayments.filter(function(pm){ return !pm.poId || !knownPOIdSetForScan[pm.poId]; }).length;
+  if (orphanSupPmtCount) toast('⚠ ' + orphanSupPmtCount + ' supplier payment record(s) reference a Purchase Order that could not be resolved — they will migrate with the dangling reference preserved, not blocked. Review Supplier Payments after migrating if unexpected.');
+
+  var backupConfirmed = await showBlockingBackupModal();
+  if (!backupConfirmed) return;
+
+  var supPmtIdMap = {};
+  for (var i = 0; i < DB.supPayments.length; i++) {
+    var pm = DB.supPayments[i];
+    var row = {
+      po_id: pm.poId || null, po_num: pm.poNum || null, date: pm.date || null, amount: pm.amount,
+      currency: pm.currency, purpose: pm.purpose, method: pm.method || null,
+      reference: pm.reference || null, notes: pm.notes || null, rate_lock: pm.rateLock || null,
+      type: pm.type || null, cre_at: pm.creAt || null
+    };
+    var result = await _sb.from('supplier_payments').insert(row).select().single();
+    if (result.error) { toast('Migration failed on supplier payment ' + (pm.poNum||pm.id) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
+    supPmtIdMap[pm.id] = result.data.id;
+  }
+
+  // No outward sweep — nothing else references a Supplier Payment's own id (§1.5).
+
+  localStorage.setItem('st_spm_pre_migration', localStorage.getItem(K.spm));
+  localStorage.setItem('st_spm_cloud_migration_ts', new Date().toISOString());
+
+  DB.supPayments.forEach(function(pm){ if (supPmtIdMap[pm.id]) pm.id = supPmtIdMap[pm.id]; });
+  sv(K.spm, DB.supPayments);
+
+  await refreshSupPmtFromSupabase();
+  if (G('cfg-sb-spm-restore-btn')) G('cfg-sb-spm-restore-btn').style.display = '';
+  toast('Supplier Payment migration complete. Pre-migration data archived for 30 days.');
 }
 
 function restoreFromMigrationArchive() {
@@ -7003,6 +7225,30 @@ function restoreShMigrationArchive() {
   setTimeout(function(){ location.reload(); }, 1200);
 }
 
+function restorePmtMigrationArchive() {
+  var arch = localStorage.getItem('st_pmt_pre_migration');
+  if (!arch) { toast('No Payment migration archive available to restore.'); return; }
+  if (!confirm('Restore Payments to their state immediately before the Supabase migration?\n\nThis does not change Suppliers, Buyers, Line Items, Contacts, Order Requests, Quotes, Purchase Orders, Invoices/Credit Notes, or Supplier Payments, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected for ALL entities, not just Payments — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect any of them afterwards.')) return;
+  localStorage.setItem(K.pm, arch);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  localStorage.removeItem('st_pmt_cloud_migration_ts');
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+
+function restoreSupPmtMigrationArchive() {
+  var arch = localStorage.getItem('st_spm_pre_migration');
+  if (!arch) { toast('No Supplier Payment migration archive available to restore.'); return; }
+  if (!confirm('Restore Supplier Payments to their state immediately before the Supabase migration?\n\nThis does not change Suppliers, Buyers, Line Items, Contacts, Order Requests, Quotes, Purchase Orders, Invoices/Credit Notes, or Payments, which keep their current (remapped) references. Cloud Data (Supabase) will be disconnected for ALL entities, not just Supplier Payments — re-enter your Supabase URL/key in Settings → Cloud Data if you want to reconnect any of them afterwards.')) return;
+  localStorage.setItem(K.spm, arch);
+  SS.supabaseUrl = ''; SS.supabaseAnonKey = '';
+  sv(K.ss, SS);
+  localStorage.removeItem('st_spm_cloud_migration_ts');
+  toast('Restored and disconnected from Cloud Data. Reloading…');
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+
 function cleanupExpiredMigrationArchive() {
   var ts = localStorage.getItem('st_cloud_migration_ts');
   if (ts && (Date.now() - new Date(ts).getTime()) / 86400000 > 30) {
@@ -7044,6 +7290,16 @@ function cleanupExpiredMigrationArchive() {
   if (shTs && (Date.now() - new Date(shTs).getTime()) / 86400000 > 30) {
     localStorage.removeItem('st_sh_pre_migration');
     localStorage.removeItem('st_sh_cloud_migration_ts');
+  }
+  var pmtTs = localStorage.getItem('st_pmt_cloud_migration_ts');
+  if (pmtTs && (Date.now() - new Date(pmtTs).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_pmt_pre_migration');
+    localStorage.removeItem('st_pmt_cloud_migration_ts');
+  }
+  var spmTs = localStorage.getItem('st_spm_cloud_migration_ts');
+  if (spmTs && (Date.now() - new Date(spmTs).getTime()) / 86400000 > 30) {
+    localStorage.removeItem('st_spm_pre_migration');
+    localStorage.removeItem('st_spm_cloud_migration_ts');
   }
 }
 
@@ -7721,9 +7977,31 @@ async function saveInv() {
 
   // Goodwill credit: maintain a payments ledger entry (remove stale, add current)
   if (inv.type === 'goodwill_credit' && inv.cnAmount) {
-    DB.payments = DB.payments.filter(function(p){ return !(p.invId===inv.id && p.method==='Goodwill Credit'); });
-    DB.payments.push({ id:uid(), invId:inv.id, invNum:inv.num, amount:+inv.cnAmount||0, method:'Goodwill Credit', ref:inv.num, notes:inv.cnReason||'', date:inv.date||today() });
-    sv(K.pm, DB.payments);
+    var _gwPmt = { id: uid(), invId: inv.id, invNum: inv.num, amount: +inv.cnAmount||0, method: 'Goodwill Credit', ref: inv.num, notes: inv.cnReason||'', date: inv.date||today() };
+    if (_sb && localStorage.getItem('st_pmt_cloud_migration_ts')) {
+      if (!(await ensureSbAuth())) return;
+      // REQ-CLOUD-008e item 3: delete-then-recreate, mirroring the local filter's own
+      // shape exactly (never an in-place edit). Predicate: inv_id = <resolved Supabase
+      // invoice id> and method = 'Goodwill Credit' — matches the local filter above
+      // verbatim. Safe to assume inv.id is already a real Supabase id whenever this
+      // branch is reachable — REQ-CLOUD-008b's own precondition requires Invoice's
+      // migration to already be complete before st_pmt_cloud_migration_ts can be set
+      // (SPEC §0.4).
+      var gwDelResult = await _sb.from('buyer_payments').update({ deleted_at: new Date().toISOString() }).eq('inv_id', inv.id).eq('method', 'Goodwill Credit');
+      if (gwDelResult.error) { toast('Save failed: ' + gwDelResult.error.message); return; }
+      var gwInsResult = await _sb.from('buyer_payments').insert({
+        inv_id: inv.id, inv_num: inv.num, amount: +inv.cnAmount||0, method: 'Goodwill Credit',
+        ref: inv.num, notes: inv.cnReason||'', date: inv.date||today()
+      }).select().single();
+      if (gwInsResult.error) { toast('Save failed: ' + gwInsResult.error.message); return; }
+      _gwPmt.id = gwInsResult.data.id;
+      DB.payments = DB.payments.filter(function(p){ return !(p.invId===inv.id && p.method==='Goodwill Credit'); });
+      DB.payments.push(_gwPmt);
+    } else {
+      DB.payments = DB.payments.filter(function(p){ return !(p.invId===inv.id && p.method==='Goodwill Credit'); });
+      DB.payments.push(_gwPmt);
+      sv(K.pm, DB.payments);
+    }
   }
   // Auto-record price history when invoice price deviates from catalogue price
   var liChanged = false;
@@ -10725,9 +11003,28 @@ async function saveCN() {
 
   // Goodwill credit → payments ledger entry
   if (type === 'goodwill_credit') {
-    DB.payments = DB.payments.filter(function(p){ return p.invId !== cn.id; });
-    DB.payments.push({ id: uid(), invId: cn.id, invNum: cn.num, date: cn.date||today(), amount: amt, method: 'Goodwill Credit', ref: cn.cnReason||'Goodwill credit', notes: '' });
-    sv(K.pm, DB.payments);
+    var _gwCnPmt = { id: uid(), invId: cn.id, invNum: cn.num, date: cn.date||today(), amount: amt, method: 'Goodwill Credit', ref: cn.cnReason||'Goodwill credit', notes: '' };
+    if (_sb && localStorage.getItem('st_pmt_cloud_migration_ts')) {
+      if (!(await ensureSbAuth())) return;
+      // REQ-CLOUD-008e item 4: identical delete-then-recreate treatment, matched on
+      // inv_id ONLY — mirrors the local filter above, which removes ALL prior entries
+      // for this CN's own id (cn.id here IS the Credit Note's own id, never an
+      // Invoice's), not just ones matching a method.
+      var gwCnDelResult = await _sb.from('buyer_payments').update({ deleted_at: new Date().toISOString() }).eq('inv_id', cn.id);
+      if (gwCnDelResult.error) { toast('Save failed: ' + gwCnDelResult.error.message); return; }
+      var gwCnInsResult = await _sb.from('buyer_payments').insert({
+        inv_id: cn.id, inv_num: cn.num, date: cn.date||today(), amount: amt, method: 'Goodwill Credit',
+        ref: cn.cnReason||'Goodwill credit', notes: ''
+      }).select().single();
+      if (gwCnInsResult.error) { toast('Save failed: ' + gwCnInsResult.error.message); return; }
+      _gwCnPmt.id = gwCnInsResult.data.id;
+      DB.payments = DB.payments.filter(function(p){ return p.invId !== cn.id; });
+      DB.payments.push(_gwCnPmt);
+    } else {
+      DB.payments = DB.payments.filter(function(p){ return p.invId !== cn.id; });
+      DB.payments.push(_gwCnPmt);
+      sv(K.pm, DB.payments);
+    }
   }
   // When a CN is Applied and linked to an invoice, recalculate that invoice's balance due
   if (cn.status === 'CN Applied' && cn.linkedInvNum) {
@@ -10839,7 +11136,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Suppliers',
   'Suppliers tab → + New Supplier. Fields: Name, Country (controlled lookup), Currency (25 currencies available, default GBP), Contact, Email, Phone/WeChat, Payment Terms (controlled lookup), Notes. Each supplier is auto-assigned a SUP-#### reference number on creation (see Reference Numbers above).',
-  'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004/005/006/007): Settings → Cloud Data lets an operator connect a shared Supabase database. Each of Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, and Shipment migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Only the Payment ledgers (Buyer Payment, Supplier Payment) remain local-only, regardless of what has migrated. Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them; Purchase Order requires Suppliers to have migrated first (every Purchase Order requires a Supplier link); Invoice/Credit Note requires Buyer, Line Item, Quote, AND Purchase Order to all have migrated first — the most demanding precondition of any entity; Shipment requires no precondition at all, carrying no reference field of any kind to any other entity. Each entity can migrate independently of the others except where a precondition is stated. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
+  'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004/005/006/007/008): Settings → Cloud Data lets an operator connect a shared Supabase database. Every deal-pipeline and master-data entity — Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment — migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them; Purchase Order requires Suppliers to have migrated first (every Purchase Order requires a Supplier link); Invoice/Credit Note requires Buyer, Line Item, Quote, AND Purchase Order to all have migrated first — the most demanding precondition of any entity; Shipment requires no precondition at all, carrying no reference field of any kind to any other entity; Buyer Payment requires Invoice to have migrated first (a payment\'s stored invoice reference is resolved via the same `invId`-primary rule the Buyer Payment ledger itself already uses for reconciliation, not the Num-first pattern used elsewhere in this series); Supplier Payment requires Purchase Order to have migrated first. Each entity can migrate independently of the others except where a precondition is stated. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
   '',
   '## Line Items (Product Catalogue)',
   'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox. Each line item is auto-assigned an LI-#### reference number on creation (see Reference Numbers above).',
@@ -11652,6 +11949,8 @@ function rCfg() {
   if(G('cfg-sb-po-restore-btn')) G('cfg-sb-po-restore-btn').style.display = localStorage.getItem('st_po_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-inv-restore-btn')) G('cfg-sb-inv-restore-btn').style.display = localStorage.getItem('st_inv_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-sb-sh-restore-btn')) G('cfg-sb-sh-restore-btn').style.display = localStorage.getItem('st_sh_cloud_migration_ts') ? '' : 'none';
+  if(G('cfg-sb-pmt-restore-btn')) G('cfg-sb-pmt-restore-btn').style.display = localStorage.getItem('st_pmt_cloud_migration_ts') ? '' : 'none';
+  if(G('cfg-sb-spm-restore-btn')) G('cfg-sb-spm-restore-btn').style.display = localStorage.getItem('st_spm_cloud_migration_ts') ? '' : 'none';
   if(G('cfg-lang')) G('cfg-lang').value = _lang;
   rCoBrand();
   qteFillRates();
@@ -13835,10 +14134,34 @@ function getInvEffectiveDepInfo(inv) {
 }
 
 async function savePayment(payment) {
+  // REQ-CLOUD-008e item 1: own dedicated create-or-update _sb-branch. Cannot early-
+  // return like saveLI()/saveCon() do — the cascading Invoice/PO logic below reads
+  // the just-updated DB.payments array and must run in both the cloud and local case
+  // (SPEC §0.1).
+  var pmtIsNew = !DB.payments.some(function(p){ return p.id === payment.id; });
+  if (_sb && localStorage.getItem('st_pmt_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var pmtRow = {
+      inv_id: payment.invId || null, inv_num: payment.invNum || null, date: payment.date || null,
+      amount: payment.amount, method: payment.method || null,
+      purpose: payment.purpose != null ? payment.purpose : null,
+      currency: payment.currency != null ? payment.currency : null,
+      rate_lock: payment.rateLock != null ? payment.rateLock : null,
+      reference: payment.reference != null ? payment.reference : null,
+      ref: payment.ref != null ? payment.ref : null,
+      notes: payment.notes || null, type: payment.type != null ? payment.type : null,
+      cre_at: payment.creAt != null ? payment.creAt : null
+    };
+    var pmtResult = pmtIsNew
+      ? await _sb.from('buyer_payments').insert(pmtRow).select().single()
+      : await _sb.from('buyer_payments').update(pmtRow).eq('id', payment.id).select().single();
+    if (pmtResult.error) { toast('Save failed: ' + pmtResult.error.message); return; }
+    payment.id = pmtResult.data.id; // resolve the real Supabase id onto the local record (AC-4) — no client-generated id is ever sent
+  }
   var existing = DB.payments.findIndex(function(p){ return p.id === payment.id; });
   if (existing >= 0) { DB.payments[existing] = payment; }
   else { DB.payments.push(payment); }
-  sv(K.pm, DB.payments);
+  if (!(_sb && localStorage.getItem('st_pmt_cloud_migration_ts'))) sv(K.pm, DB.payments);
   audit('SAVE', 'payment', payment.id, payment);
   logEv('payment', payment.id, 'created', 'Payment $' + (+payment.amount||0).toFixed(2) + ' received — ' + (payment.invNum||payment.invId||''), 'operator');
 
@@ -13906,7 +14229,14 @@ async function deletePayment(id) {
   if (!confirm('Delete this payment record?')) return;
   logEv('payment', pm.id, 'deleted', 'Payment deleted — ' + (pm.invNum||pm.invId||''), 'operator');
   DB.payments = DB.payments.filter(function(p){ return p.id !== id; });
-  sv(K.pm, DB.payments);
+  // REQ-CLOUD-008e item 2: own dedicated soft-delete branch.
+  if (_sb && localStorage.getItem('st_pmt_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var pmtDelResult = await _sb.from('buyer_payments').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (pmtDelResult.error) { toast('Delete failed: ' + pmtDelResult.error.message); return; }
+  } else {
+    sv(K.pm, DB.payments);
+  }
   audit('DELETE', 'payment', id, pm);
 
   // Recalculate invoice dep
@@ -14166,7 +14496,30 @@ function vSupPay(date, amount, purpose) {
   return true;
 }
 
-function saveSupPayment(payment) {
+async function saveSupPayment(payment) {
+  // REQ-CLOUD-008f item 1: own dedicated create-or-update _sb-branch. Unlike
+  // savePayment(), this function has no cascading side effects on any other entity,
+  // so its cloud branch fully mirrors saveLI()'s early-return shape (SPEC \u00a70.2).
+  var spmIsNew = !DB.supPayments.some(function(p){ return p.id === payment.id; });
+  if (_sb && localStorage.getItem('st_spm_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var spmRow = {
+      po_id: payment.poId || null, po_num: payment.poNum || null, date: payment.date || null,
+      amount: payment.amount, currency: payment.currency, purpose: payment.purpose,
+      method: payment.method || null, reference: payment.reference || null, notes: payment.notes || null,
+      rate_lock: payment.rateLock || null, type: payment.type || null, cre_at: payment.creAt || null
+    };
+    var spmResult = spmIsNew
+      ? await _sb.from('supplier_payments').insert(spmRow).select().single()
+      : await _sb.from('supplier_payments').update(spmRow).eq('id', payment.id).select().single();
+    if (spmResult.error) { toast('Save failed: ' + spmResult.error.message); return; }
+    payment.id = spmResult.data.id; // resolve the real Supabase id onto the local record (AC-4)
+    var spmIdx = DB.supPayments.findIndex(function(p){ return p.id === payment.id; });
+    if (spmIdx >= 0) { DB.supPayments[spmIdx] = payment; } else { DB.supPayments.push(payment); }
+    audit('SAVE', 'sup_payment', payment.id, payment);
+    logEv('sup_payment', payment.id, 'created', 'Supplier payment ' + payment.currency + ' ' + (+payment.amount||0).toFixed(2) + ' recorded \u2014 ' + (payment.poNum||payment.poId||''), 'operator');
+    return;
+  }
   var existing = DB.supPayments.findIndex(function(p){ return p.id === payment.id; });
   if (existing >= 0) { DB.supPayments[existing] = payment; }
   else { DB.supPayments.push(payment); }
@@ -14175,13 +14528,22 @@ function saveSupPayment(payment) {
   logEv('sup_payment', payment.id, 'created', 'Supplier payment ' + payment.currency + ' ' + (+payment.amount||0).toFixed(2) + ' recorded \u2014 ' + (payment.poNum||payment.poId||''), 'operator');
 }
 
-function deleteSupPayment(id) {
+async function deleteSupPayment(id) {
   var pm = DB.supPayments.find(function(p){ return p.id === id; });
   if (!pm) return;
   if (!confirm('Delete this supplier payment record?')) return;
   logEv('sup_payment', pm.id, 'deleted', 'Supplier payment deleted \u2014 ' + (pm.poNum||pm.poId||''), 'operator');
   DB.supPayments = DB.supPayments.filter(function(p){ return p.id !== id; });
-  sv(K.spm, DB.supPayments);
+  // REQ-CLOUD-008f item 2: own dedicated soft-delete branch. A single flow, not an
+  // early return \u2014 renderPOPaymentsTab()/rPO()/rDash() below must run in both the
+  // cloud and local case, mirroring deletePayment()'s own shape (SPEC \u00a70.2).
+  if (_sb && localStorage.getItem('st_spm_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var spmDelResult = await _sb.from('supplier_payments').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (spmDelResult.error) { toast('Delete failed: ' + spmDelResult.error.message); return; }
+  } else {
+    sv(K.spm, DB.supPayments);
+  }
   audit('DELETE', 'sup_payment', id, pm);
   renderPOPaymentsTab(pm.poId);
   rPO(); rDash();

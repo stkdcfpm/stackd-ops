@@ -5569,18 +5569,17 @@ test('backfillInvoicePOs() — exclusivity: a PO whose invId/invNum resolve to t
   assertEqual((invA.pos||[]).indexOf('po-2b-4') > -1, false, 'never present in both — the stale invId match (A) is not also populated');
 });
 
-test('delPO() removes the deleted PO\'s id from every invoice\'s pos[] (AC-3)', function() {
+testAsync('delPO() removes the deleted PO\'s id from every invoice\'s pos[] (AC-3)', async function() {
   resetDB();
   ctx.DB.inv.push({ id: 'inv-2b-2', num: 'INV-2B-2', pos: ['po-2b-5', 'po-2b-6'] });
   ctx.DB.po.push({ id: 'po-2b-5', num: 'PO-2B-5', invId: 'inv-2b-2', invNum: 'INV-2B-2' });
   ctx.DB.po.push({ id: 'po-2b-6', num: 'PO-2B-6', invId: 'inv-2b-2', invNum: 'INV-2B-2' });
   var origConfirm = ctx.confirm; ctx.confirm = function(){ return true; };
-  return ctx.delPO('po-2b-5').then(function(){
-    ctx.confirm = origConfirm;
-    var inv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-2'; });
-    assertEqual(JSON.stringify(inv.pos), JSON.stringify(['po-2b-6']), 'deleted PO\'s id removed, surviving PO\'s id untouched');
-    assertEqual(ctx.getInvoicePOs(inv).length, 1, 'getInvoicePOs() now returns only the surviving PO');
-  });
+  await ctx.delPO('po-2b-5');
+  ctx.confirm = origConfirm;
+  var inv = ctx.DB.inv.find(function(i){ return i.id === 'inv-2b-2'; });
+  assertEqual(JSON.stringify(inv.pos), JSON.stringify(['po-2b-6']), 'deleted PO\'s id removed, surviving PO\'s id untouched');
+  assertEqual(ctx.getInvoicePOs(inv).length, 1, 'getInvoicePOs() now returns only the surviving PO');
 });
 
 testAsync('saveInv() FPM-recovery block uses getInvoicePOs(inv), auto-set behavior unchanged (AC-7)', async function() {
@@ -8122,9 +8121,18 @@ testAsync('initCloudDataLayer — now also calls refreshOrdFromSupabase() (spec-
   // corrupting every later test that touches Shipment.
   var origRefreshSh = ctx.refreshShFromSupabase;
   ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-008: initCloudDataLayer() now also calls refreshPmtFromSupabase() and
+  // refreshSupPmtFromSupabase() after refreshShFromSupabase() — stub both, or the real
+  // functions run unmocked against DB.payments/DB.supPayments (empty at this point) and
+  // permanently set st_pmt_cloud_migration_ts/st_spm_cloud_migration_ts, corrupting
+  // every later test that touches either payment ledger.
+  var origRefreshPmt = ctx.refreshPmtFromSupabase;
+  ctx.refreshPmtFromSupabase = function(){ return Promise.resolve(); };
+  var origRefreshSupPmt = ctx.refreshSupPmtFromSupabase;
+  ctx.refreshSupPmtFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshOrdFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshOrdFromSupabase = origRefreshOrd; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh; ctx.refreshPmtFromSupabase = origRefreshPmt; ctx.refreshSupPmtFromSupabase = origRefreshSupPmt;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
 });
 
@@ -8687,9 +8695,18 @@ testAsync('initCloudDataLayer — now also calls refreshQteFromSupabase() (mirro
   // corrupting every later test that touches Shipment.
   var origRefreshSh = ctx.refreshShFromSupabase;
   ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-008: initCloudDataLayer() now also calls refreshPmtFromSupabase() and
+  // refreshSupPmtFromSupabase() after refreshShFromSupabase() — stub both, or the real
+  // functions run unmocked against DB.payments/DB.supPayments (empty at this point) and
+  // permanently set st_pmt_cloud_migration_ts/st_spm_cloud_migration_ts, corrupting
+  // every later test that touches either payment ledger.
+  var origRefreshPmt = ctx.refreshPmtFromSupabase;
+  ctx.refreshPmtFromSupabase = function(){ return Promise.resolve(); };
+  var origRefreshSupPmt = ctx.refreshSupPmtFromSupabase;
+  ctx.refreshSupPmtFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshQteFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshQteFromSupabase = origRefreshQte; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh; ctx.refreshPmtFromSupabase = origRefreshPmt; ctx.refreshSupPmtFromSupabase = origRefreshSupPmt;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
   ctx._sb = null;
 });
@@ -9093,9 +9110,18 @@ testAsync('initCloudDataLayer — now also calls refreshPOFromSupabase()', async
   // corrupting every later test that touches Shipment.
   var origRefreshSh = ctx.refreshShFromSupabase;
   ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-008: initCloudDataLayer() now also calls refreshPmtFromSupabase() and
+  // refreshSupPmtFromSupabase() after refreshShFromSupabase() — stub both, or the real
+  // functions run unmocked against DB.payments/DB.supPayments (empty at this point) and
+  // permanently set st_pmt_cloud_migration_ts/st_spm_cloud_migration_ts, corrupting
+  // every later test that touches either payment ledger.
+  var origRefreshPmt = ctx.refreshPmtFromSupabase;
+  ctx.refreshPmtFromSupabase = function(){ return Promise.resolve(); };
+  var origRefreshSupPmt = ctx.refreshSupPmtFromSupabase;
+  ctx.refreshSupPmtFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshPOFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshPOFromSupabase = origRefreshPO; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh; ctx.refreshPmtFromSupabase = origRefreshPmt; ctx.refreshSupPmtFromSupabase = origRefreshSupPmt;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
   ctx._sb = null;
 });
@@ -9596,9 +9622,18 @@ testAsync('initCloudDataLayer — now also calls refreshInvFromSupabase()', asyn
   ctx.refreshInvFromSupabase = function(){ called = true; return Promise.resolve(); };
   var origRefreshSh = ctx.refreshShFromSupabase;
   ctx.refreshShFromSupabase = function(){ return Promise.resolve(); };
+  // SPEC-CLOUD-008: initCloudDataLayer() now also calls refreshPmtFromSupabase() and
+  // refreshSupPmtFromSupabase() after refreshShFromSupabase() — stub both, or the real
+  // functions run unmocked against DB.payments/DB.supPayments (empty at this point) and
+  // permanently set st_pmt_cloud_migration_ts/st_spm_cloud_migration_ts, corrupting
+  // every later test that touches either payment ledger.
+  var origRefreshPmt = ctx.refreshPmtFromSupabase;
+  ctx.refreshPmtFromSupabase = function(){ return Promise.resolve(); };
+  var origRefreshSupPmt = ctx.refreshSupPmtFromSupabase;
+  ctx.refreshSupPmtFromSupabase = function(){ return Promise.resolve(); };
   await ctx.initCloudDataLayer();
   assert(called, 'initCloudDataLayer() calls refreshInvFromSupabase()');
-  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh;
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshShFromSupabase = origRefreshSh; ctx.refreshPmtFromSupabase = origRefreshPmt; ctx.refreshSupPmtFromSupabase = origRefreshSupPmt;
   ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
   ctx._sb = null;
 });
@@ -10467,6 +10502,7 @@ testAsync('SPEC-CLOUD-006 test-hygiene cleanup — reset _sb and every Invoice/C
   ctx.localStorage.removeItem('st_inv_pre_migration');
 });
 
+
 // ── CLOUD DATA — Shipment (SPEC-CLOUD-007) ──
 
 testAsync('migrateShToSupabase — inserts every field including linkedInvs, remaps DB.sh\'s own id, archives the true pre-migration snapshot before remapping', async function() {
@@ -10782,6 +10818,431 @@ testAsync('SPEC-CLOUD-007 test-hygiene cleanup — reset _sb and every Shipment 
   ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
   ctx.localStorage.removeItem('st_sh_pre_migration');
 });
+
+
+// ── CLOUD DATA — Buyer Payment and Supplier Payment (SPEC-CLOUD-008) ──
+
+testAsync('initCloudDataLayer — now also calls refreshPmtFromSupabase() and refreshSupPmtFromSupabase() after refreshInvFromSupabase() (AC-7)', async function() {
+  ctx.SS.supabaseUrl = 'https://mock.supabase.co'; ctx.SS.supabaseAnonKey = 'k';
+  var origInitSbClient = ctx.initSbClient;
+  ctx.initSbClient = function(){};
+  ctx._sb = mockSb({ suppliers: { selectData: [] }, buyers: { selectData: [] }, line_items: { selectData: [] }, contacts: { selectData: [] }, order_requests: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] }, invoices: { selectData: [] }, buyer_payments: { selectData: [] }, supplier_payments: { selectData: [] } });
+  var origEnsureAuth = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var pmtCalled = false, supPmtCalled = false;
+  var origRefreshInv = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  var origRefreshPmt = ctx.refreshPmtFromSupabase;
+  ctx.refreshPmtFromSupabase = function(){ pmtCalled = true; return Promise.resolve(); };
+  var origRefreshSupPmt = ctx.refreshSupPmtFromSupabase;
+  ctx.refreshSupPmtFromSupabase = function(){ supPmtCalled = true; return Promise.resolve(); };
+  await ctx.initCloudDataLayer();
+  assert(pmtCalled, 'initCloudDataLayer() calls refreshPmtFromSupabase()');
+  assert(supPmtCalled, 'initCloudDataLayer() calls refreshSupPmtFromSupabase()');
+  ctx.initSbClient = origInitSbClient; ctx.ensureSbAuth = origEnsureAuth; ctx.refreshInvFromSupabase = origRefreshInv; ctx.refreshPmtFromSupabase = origRefreshPmt; ctx.refreshSupPmtFromSupabase = origRefreshSupPmt;
+  ctx.SS.supabaseUrl = ''; ctx.SS.supabaseAnonKey = '';
+  ctx._sb = null;
+});
+
+testAsync('migratePmtToSupabase — blocked unless Invoice has completed its own migration; PO alone does not satisfy it (AC-2)', async function() {
+  resetDB();
+  // Defensive: an earlier initCloudDataLayer()-wiring test (e.g. Shipment's own
+  // "now also calls refreshShFromSupabase()" test) calls initCloudDataLayer() with
+  // DB.inv empty and st_inv_cloud_migration_ts unset, without stubbing the upstream
+  // refreshInvFromSupabase() call it triggers as a side effect — that real,
+  // unstubbed call self-marks st_inv_cloud_migration_ts on success, per this
+  // series' own recurring "self-marking test contamination" bug class. This test's
+  // own first assertion depends on that marker being genuinely unset, so clear it
+  // explicitly rather than assume the ambient state is clean.
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+  ctx._sb = mockSb({ invoices: { selectData: [] } });
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString()); // PO migrated, Invoice not
+  var insertCall1;
+  await ctx.migratePmtToSupabase();
+  insertCall1 = ctx._sb._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'insert'; });
+  assert(!insertCall1, 'blocked — Invoice has not migrated');
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migratePmtToSupabase();
+  assertEqual(ctx._sb._calls.filter(function(c){ return c.table === 'buyer_payments' && c.op === 'insert'; }).length, 0, 'no local payments to insert, but no longer blocked by the precondition');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migrateSupPmtToSupabase — blocked unless Purchase Order has completed its own migration; Invoice alone does not satisfy it (AC-2)', async function() {
+  resetDB();
+  // Defensive: same self-marking-contamination risk as the migratePmtToSupabase
+  // precondition test immediately above — clear both markers before asserting on them.
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx._sb = mockSb({ purchase_orders: { selectData: [] } });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString()); // Invoice migrated, PO not
+  await ctx.migrateSupPmtToSupabase();
+  assert(!ctx._sb._calls.find(function(c){ return c.table === 'supplier_payments' && c.op === 'insert'; }), 'blocked — Purchase Order has not migrated');
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migratePmtToSupabase — orphan scan: blank/dangling invId with a resolving invNum is NOT counted as orphaned (AC-3)', async function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-real', num: 'INV90001', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm1', invId: 'ghost-id', invNum: 'INV90001', amount: 100, date: '2026-01-01' });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ buyer_payments: { insertImpl: function(row){ return Object.assign({ id: 'new-pm-1' }, row); } } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  var origToast = ctx.toast; var toastMsgs = [];
+  ctx.toast = function(m){ toastMsgs.push(m); };
+  await ctx.migratePmtToSupabase();
+  assert(!toastMsgs.some(function(m){ return /reference an invoice that could not be resolved/.test(m); }), 'not counted as orphaned — invNum resolves');
+  assert(sb._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'insert'; }), 'migration proceeded, not blocked');
+  ctx.toast = origToast; ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migratePmtToSupabase — orphan scan: resolving invId with a stale/mismatched invNum is NOT counted as orphaned (AC-3)', async function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-real2', num: 'INV90002', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm2', invId: 'inv-real2', invNum: 'GHOST-NUM', amount: 100, date: '2026-01-01' });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = mockSb({ buyer_payments: { insertImpl: function(row){ return Object.assign({ id: 'new-pm-2' }, row); } } });
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  var origToast = ctx.toast; var toastMsgs = [];
+  ctx.toast = function(m){ toastMsgs.push(m); };
+  await ctx.migratePmtToSupabase();
+  assert(!toastMsgs.some(function(m){ return /reference an invoice that could not be resolved/.test(m); }), 'not counted as orphaned — invId resolves regardless of invNum');
+  ctx.toast = origToast; ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migratePmtToSupabase — orphan scan: neither invId nor invNum resolves — counted, surfaced via toast, still NOT blocking (AC-3)', async function() {
+  resetDB();
+  ctx.DB.payments.push({ id: 'pm3', invId: 'ghost-id', invNum: 'GHOST-NUM', amount: 100, date: '2026-01-01' });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = mockSb({ buyer_payments: { insertImpl: function(row){ return Object.assign({ id: 'new-pm-3' }, row); } } });
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  var origToast = ctx.toast; var toastMsgs = [];
+  ctx.toast = function(m){ toastMsgs.push(m); };
+  await ctx.migratePmtToSupabase();
+  assert(toastMsgs.some(function(m){ return /1 payment record\(s\) reference an invoice that could not be resolved/.test(m); }), 'genuinely orphaned record surfaced via toast');
+  assert(ctx._sb._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'insert'; }), 'migration still proceeded — non-blocking');
+  ctx.toast = origToast; ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
+testAsync('migrateSupPmtToSupabase — orphan scan: resolving poId is NOT counted; a dangling poId IS counted and surfaced, still non-blocking (AC-3)', async function() {
+  resetDB();
+  ctx.DB.supPayments.push({ id: 'spm1', poId: 'real-po', poNum: 'PO-0001', amount: 50, currency: 'USD', purpose: 'Deposit', date: '2026-01-01' });
+  ctx.DB.supPayments.push({ id: 'spm2', poId: 'ghost-po', poNum: 'PO-9999', amount: 50, currency: 'USD', purpose: 'Deposit', date: '2026-01-01' });
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = mockSb({
+    purchase_orders: { selectData: [{ id: 'real-po', num: 'PO-0001' }] },
+    supplier_payments: { insertImpl: function(row){ return Object.assign({ id: 'new-spm-' + Math.random() }, row); } }
+  });
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  var origToast = ctx.toast; var toastMsgs = [];
+  ctx.toast = function(m){ toastMsgs.push(m); };
+  await ctx.migrateSupPmtToSupabase();
+  assert(toastMsgs.some(function(m){ return /1 supplier payment record\(s\) reference a Purchase Order that could not be resolved/.test(m); }), 'exactly one orphan counted — poNum fallback never applies (bare poId match)');
+  assertEqual(ctx._sb._calls.filter(function(c){ return c.table === 'supplier_payments' && c.op === 'insert'; }).length, 2, 'both records still inserted — non-blocking');
+  ctx.toast = origToast; ctx.showBlockingBackupModal = origShowBackup;
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+test('savePayment() — local-only behavior unchanged when Buyer Payment has not migrated (AC-4)', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-sv1', num: 'INV91001', status: 'Draft', lineItems: [], calc_grandTotal: '100' });
+  ctx.savePayment({ id: 'pm-sv1', invId: 'inv-sv1', invNum: 'INV91001', amount: 100, date: '2026-01-01', method: 'Bank Transfer' });
+  assertEqual(ctx.DB.payments.find(function(p){ return p.id === 'pm-sv1'; }).amount, 100, 'saved locally, no Supabase involvement');
+});
+
+testAsync('savePayment() — Cloud-configured create inserts with no client-generated id, resolves the real Supabase id onto the local record; a subsequent edit calls .update().eq(\'id\',...) (AC-4)', async function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-sv2', num: 'INV91002', status: 'Draft', lineItems: [], calc_grandTotal: '100' });
+  ctx.localStorage.setItem('st_pmt_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ buyer_payments: { insertImpl: function(row){ return Object.assign({ id: 'real-pmt-uuid' }, row); }, updateImpl: function(row, id){ return Object.assign({ id: id }, row); } } });
+  ctx._sb = sb;
+  await ctx.savePayment({ id: 'local-uid-1', invId: 'inv-sv2', invNum: 'INV91002', amount: 40, date: '2026-01-01', method: 'Bank Transfer' });
+  var insertCall = sb._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'insert'; });
+  assert(insertCall, 'insert called on create');
+  assertEqual(insertCall.row.id, undefined, 'no client-generated id sent');
+  assertEqual(ctx.DB.payments[0].id, 'real-pmt-uuid', 'real Supabase id resolved onto the local record');
+
+  await ctx.savePayment({ id: 'real-pmt-uuid', invId: 'inv-sv2', invNum: 'INV91002', amount: 60, date: '2026-01-02', method: 'Wire Transfer' });
+  var updateCall = sb._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'update'; });
+  assert(updateCall, 'update called on a subsequent edit of the same record');
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_pmt_cloud_migration_ts');
+});
+
+testAsync('deletePayment() — Cloud-configured delete soft-deletes via update({deleted_at}), not a hard delete (AC-5)', async function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-del1', num: 'INV91003', status: 'Sent', lineItems: [], calc_grandTotal: '100' });
+  ctx.DB.payments.push({ id: 'pm-del1', invId: 'inv-del1', invNum: 'INV91003', amount: 50, date: '2026-01-01' });
+  ctx.localStorage.setItem('st_pmt_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({});
+  ctx._sb = sb;
+  ctx.confirm = function(){ return true; };
+  await ctx.deletePayment('pm-del1');
+  var delCall = sb._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'update'; });
+  assert(delCall, 'soft-delete update called');
+  assert(delCall.row.deleted_at, 'deleted_at timestamp set, not a hard delete');
+  ctx._sb = null; ctx.confirm = function(){ return false; };
+  ctx.localStorage.removeItem('st_pmt_cloud_migration_ts');
+});
+
+testAsync('saveSupPayment() — Cloud-configured create/update mirrors savePayment()\'s shape; local-only unchanged when not migrated (AC-4)', async function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-sv1', num: 'PO-9001', supId: 's1', cur: 'USD', status: 'Confirmed', dep: 0, lineItems: [] });
+  var sb = mockSb({ supplier_payments: { insertImpl: function(row){ return Object.assign({ id: 'real-spm-uuid' }, row); }, updateImpl: function(row, id){ return Object.assign({ id: id }, row); } } });
+
+  await ctx.saveSupPayment({ id: 'local-uid-2', poId: 'po-sv1', poNum: 'PO-9001', amount: 100, currency: 'USD', purpose: 'Deposit', date: '2026-01-01' });
+  assert(!sb._calls.length, 'not yet configured for _sb in this call — resetDB() leaves _sb unset, so this is local-only');
+  assertEqual(ctx.DB.supPayments[0].id, 'local-uid-2', 'local id preserved when not Cloud-configured');
+
+  ctx.localStorage.setItem('st_spm_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = sb;
+  await ctx.saveSupPayment({ id: 'local-uid-3', poId: 'po-sv1', poNum: 'PO-9001', amount: 200, currency: 'USD', purpose: 'Deposit', date: '2026-01-02' });
+  var insertCall = sb._calls.find(function(c){ return c.table === 'supplier_payments' && c.op === 'insert'; });
+  assert(insertCall, 'insert called on create once Cloud-configured');
+  assertEqual(ctx.DB.supPayments[1].id, 'real-spm-uuid', 'real Supabase id resolved onto the local record');
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_spm_cloud_migration_ts');
+});
+
+testAsync('deleteSupPayment() — Cloud-configured delete soft-deletes via update({deleted_at}) (AC-5)', async function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-del1', num: 'PO-9002', supId: 's1', cur: 'USD', status: 'Confirmed', dep: 0, lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'spm-del1', poId: 'po-del1', poNum: 'PO-9002', amount: 30, currency: 'USD', purpose: 'Deposit', date: '2026-01-01' });
+  ctx.localStorage.setItem('st_spm_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({});
+  ctx._sb = sb;
+  ctx.confirm = function(){ return true; };
+  await ctx.deleteSupPayment('spm-del1');
+  var delCall = sb._calls.find(function(c){ return c.table === 'supplier_payments' && c.op === 'update'; });
+  assert(delCall, 'soft-delete update called');
+  assert(delCall.row.deleted_at, 'deleted_at timestamp set, not a hard delete');
+  ctx._sb = null; ctx.confirm = function(){ return false; };
+  ctx.localStorage.removeItem('st_spm_cloud_migration_ts');
+});
+
+testAsync('saveInv() goodwill-credit push — Cloud-configured: no prior row exists, inserts the fresh replacement and assigns a real Supabase id (AC-6)', async function() {
+  resetDB();
+  ctx.EI.i = null; ctx.cIL = [];
+  setupCNForm('CN94001', '', 300, true);
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_pmt_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({
+    invoices: { insertImpl: function(row){ return Object.assign({ id: 'gw-inv-1' }, row); } },
+    buyer_payments: { insertImpl: function(row){ return Object.assign({ id: 'gw-pmt-1' }, row); } }
+  });
+  ctx._sb = sb;
+  // saveInv()'s own pre-existing Invoice-row cloud branch (unrelated to this REQ) calls
+  // refreshInvFromSupabase() near the end — stub it, or it re-queries the mocked
+  // 'invoices' table (no selectData configured here) and wipes DB.inv to [], matching
+  // this file's own established convention (e.g. tests/run.js:9885-9886).
+  var origRefreshInv = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  await ctx.saveInv();
+  // The soft-delete predicate is issued unconditionally (mirroring the local filter's own
+  // unconditional shape) — it is simply a no-op WHERE clause when nothing matches, exactly
+  // like the pre-existing local .filter() call above it. What matters for "no prior row"
+  // is that it does not block or corrupt the subsequent insert, not that the call itself
+  // is skipped.
+  var insCall = sb._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'insert'; });
+  assert(insCall, 'fresh replacement row inserted even with no prior matching row');
+  var cn = ctx.DB.inv.find(function(i){ return i.num === 'CN94001'; });
+  assert(cn, 'CN record saved with a real Supabase invoice id');
+  assert(ctx.DB.payments.some(function(p){ return p.id === 'gw-pmt-1' && p.invId === cn.id && p.method === 'Goodwill Credit'; }), 'local payment record carries the real Supabase id and references the CN\'s own real id');
+  ctx._sb = null;
+  ctx.refreshInvFromSupabase = origRefreshInv;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_pmt_cloud_migration_ts');
+});
+
+testAsync('saveInv() goodwill-credit push — Cloud-configured: a prior matching row IS soft-deleted before the fresh replacement is inserted (AC-6)', async function() {
+  resetDB();
+  ctx.EI.i = null; ctx.cIL = [];
+  setupCNForm('CN94002', '', 100, true);
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_pmt_cloud_migration_ts', new Date().toISOString());
+  var origRefreshInv = ctx.refreshInvFromSupabase;
+  ctx.refreshInvFromSupabase = function(){ return Promise.resolve(); };
+  var sb1 = mockSb({ invoices: { insertImpl: function(row){ return Object.assign({ id: 'gw-inv-2' }, row); } }, buyer_payments: { insertImpl: function(row){ return Object.assign({ id: 'gw-pmt-2a' }, row); } } });
+  ctx._sb = sb1;
+  await ctx.saveInv(); // first goodwill credit, creates the row
+  ctx.EI.i = null; ctx.cIL = [];
+  setupCNForm('CN94002', '', 250, true); // edit the amount, re-save (same CN num → same record)
+  ctx.EI.i = ctx.DB.inv.find(function(i){ return i.num === 'CN94002'; }).id;
+  var sb2 = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); } }, buyer_payments: { insertImpl: function(row){ return Object.assign({ id: 'gw-pmt-2b' }, row); } } });
+  ctx._sb = sb2;
+  await ctx.saveInv();
+  var delCall = sb2._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'update' && c.row && c.row.deleted_at; });
+  assert(delCall, 'prior matching row soft-deleted on the second goodwill-credit save');
+  var eqInvId = sb2._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'eq' && c.col === 'inv_id'; });
+  var eqMethod = sb2._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'eq' && c.col === 'method' && c.val === 'Goodwill Credit'; });
+  assert(eqInvId && eqMethod, 'delete predicate matches saveInv()\'s own local filter: inv_id AND method=Goodwill Credit');
+  var insCall = sb2._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'insert'; });
+  assert(insCall, 'fresh replacement row inserted');
+  ctx._sb = null;
+  ctx.refreshInvFromSupabase = origRefreshInv;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_pmt_cloud_migration_ts');
+});
+
+testAsync('saveCN() goodwill-credit push — Cloud-configured: matched on inv_id ONLY (no method filter), soft-deletes ALL prior entries for this CN id (AC-6)', async function() {
+  resetDB();
+  ctx.EI.cn = null;
+  setupCNFormNew('CN94101', '', 400, true);
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_pmt_cloud_migration_ts', new Date().toISOString());
+  var cnSb = mockSb({
+    invoices: { insertImpl: function(row){ return Object.assign({ id: 'gw-cn-1' }, row); } },
+    buyer_payments: { insertImpl: function(row){ return Object.assign({ id: 'gw-cn-pmt-1' }, row); } }
+  });
+  ctx._sb = cnSb;
+  await ctx.saveCN();
+  var cn = ctx.DB.inv.find(function(i){ return i.num === 'CN94101'; });
+  assert(cn, 'goodwill CN record saved with a real Supabase invoice id');
+  var delCall = cnSb._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'eq' && c.col === 'inv_id'; });
+  assert(delCall, 'delete predicate keyed on inv_id only');
+  var eqMethodCalls = cnSb._calls.filter(function(c){ return c.table === 'buyer_payments' && c.op === 'eq' && c.col === 'method'; });
+  assertEqual(eqMethodCalls.length, 0, 'no method filter on the CN goodwill-credit delete predicate — unlike saveInv()\'s own');
+  assert(ctx.DB.payments.some(function(p){ return p.id === 'gw-cn-pmt-1' && p.invId === cn.id; }), 'local record carries the real Supabase id and references the CN\'s own real id');
+  ctx._sb = null;
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+  ctx.localStorage.removeItem('st_pmt_cloud_migration_ts');
+});
+
+testAsync('pullAll() — drops \'payments\' from the batched request and the merge loop once st_pmt_cloud_migration_ts is set (AC-8)', async function() {
+  resetDB();
+  ctx.SS.url = 'https://sheets.example';
+  ctx._sb = mockSb({});
+  var _fetchCallLog = [];
+  var origSPost = ctx.sPost; // SPEC-CLOUD-008 spec-gate fix: restore this, or every later
+  // test in the file that relies on the real sPost()/_mockPullResponses mechanism (e.g.
+  // the Contact pullAll() falsy-id test) is silently broken for the rest of the run —
+  // exactly the test-hygiene contamination bug class this series otherwise guards against.
+  ctx.sPost = function(payload){ _fetchCallLog.push(payload); return Promise.resolve({ status: 'ok', results: {} }); };
+  ctx.localStorage.removeItem('st_pmt_cloud_migration_ts');
+  await ctx.pullAll();
+  assert(_fetchCallLog[0].entities.indexOf('payments') >= 0, 'payments still requested — its own migration marker is not set yet');
+
+  ctx.localStorage.setItem('st_pmt_cloud_migration_ts', new Date().toISOString());
+  _fetchCallLog = [];
+  await ctx.pullAll();
+  assertEqual(_fetchCallLog[0].entities.indexOf('payments'), -1, 'payments excluded from the batched request once its own migration marker is set');
+
+  ctx.localStorage.removeItem('st_pmt_cloud_migration_ts');
+  ctx.SS.url = ''; ctx._sb = null; ctx.sPost = origSPost;
+});
+
+test('AC-8 — \'supPayments\'/\'spm\' never appears in any pullAll()-related array, before or after this SPEC', function() {
+  var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+  var pullAllSrc = src.slice(src.indexOf('async function pullAll()'), src.indexOf('async function pullAll()') + 6000);
+  assert(pullAllSrc.indexOf("'supPayments'") === -1, 'supPayments never referenced inside pullAll()');
+  assert(pullAllSrc.indexOf("'spm'") === -1, 'spm never referenced inside pullAll()');
+});
+
+testAsync('migrateInvToSupabase() retrofit — pushes a touched DB.payments[].invId sweep update when Buyer Payment has ALSO already migrated (AC-9)', async function() {
+  resetDB();
+  ctx.DB.buy.push({ id: 'b1', name: 'Buyer' });
+  ctx.DB.inv.push({ id: 'inv-old', num: 'INV92001', status: 'Draft', lineItems: [], buyerId: 'b1' });
+  ctx.DB.payments.push({ id: 'real-pmt-x', invId: 'inv-old', invNum: 'INV92001', amount: 10, date: '2026-01-01' });
+  ctx.localStorage.setItem('st_pmt_cloud_migration_ts', new Date().toISOString()); // Buyer Payment ALREADY migrated
+  // (rest of migrateInvToSupabase()'s own standard fixture: Buyer/LineItem/Quote/PO already migrated, etc.)
+  var sb = mockSb({
+    buyers: { selectData: [{ id: 'b1' }] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] },
+    invoices: { insertImpl: function(row){ return Object.assign({ id: 'new-inv-id' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migrateInvToSupabase();
+  var pmtSweepCall = sb._calls.find(function(c){ return c.table === 'buyer_payments' && c.op === 'update' && c.row.inv_id === 'new-inv-id'; });
+  assert(pmtSweepCall, 'touched payment record pushed to Supabase via the retrofit — Buyer Payment had already migrated');
+  ctx.showBlockingBackupModal = origShowBackup; ctx._sb = null;
+  ['st_cloud_migration_ts','st_li_cloud_migration_ts','st_qt_cloud_migration_ts','st_po_cloud_migration_ts','st_inv_cloud_migration_ts','st_pmt_cloud_migration_ts'].forEach(function(k){ ctx.localStorage.removeItem(k); });
+});
+
+testAsync('migrateInvToSupabase() retrofit — does NOT push when Buyer Payment has not itself migrated (local-only fix instead, matching the ordinary case)', async function() {
+  resetDB();
+  ctx.DB.buy.push({ id: 'b1', name: 'Buyer' });
+  ctx.DB.inv.push({ id: 'inv-old2', num: 'INV92002', status: 'Draft', lineItems: [], buyerId: 'b1' });
+  ctx.DB.payments.push({ id: 'local-pmt-y', invId: 'inv-old2', invNum: 'INV92002', amount: 10, date: '2026-01-01' });
+  var sb = mockSb({
+    buyers: { selectData: [{ id: 'b1' }] }, line_items: { selectData: [] }, quotes: { selectData: [] }, purchase_orders: { selectData: [] },
+    invoices: { insertImpl: function(row){ return Object.assign({ id: 'new-inv-id-2' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  ctx.localStorage.setItem('st_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_li_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+  ctx.localStorage.setItem('st_po_cloud_migration_ts', new Date().toISOString());
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migrateInvToSupabase();
+  assert(!sb._calls.find(function(c){ return c.table === 'buyer_payments'; }), 'no push attempted — Buyer Payment has not migrated (the ordinary case)');
+  assertEqual(ctx.DB.payments[0].invId, 'new-inv-id-2', 'local fix still applied');
+  ctx.showBlockingBackupModal = origShowBackup; ctx._sb = null;
+  ['st_cloud_migration_ts','st_li_cloud_migration_ts','st_qt_cloud_migration_ts','st_po_cloud_migration_ts','st_inv_cloud_migration_ts'].forEach(function(k){ ctx.localStorage.removeItem(k); });
+});
+
+testAsync('migratePOToSupabase() retrofit — pushes a touched DB.supPayments[].poId sweep update when Supplier Payment has ALSO already migrated (AC-9)', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', name: 'Supplier' });
+  ctx.DB.po.push({ id: 'po-old', num: 'PO-93001', supId: 's1', status: 'Draft', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'real-spm-x', poId: 'po-old', poNum: 'PO-93001', amount: 10, currency: 'USD', purpose: 'Deposit', date: '2026-01-01' });
+  ctx.localStorage.setItem('st_spm_cloud_migration_ts', new Date().toISOString()); // Supplier Payment ALREADY migrated
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 's1' }] },
+    purchase_orders: { insertImpl: function(row){ return Object.assign({ id: 'new-po-id' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migratePOToSupabase();
+  var spmSweepCall = sb._calls.find(function(c){ return c.table === 'supplier_payments' && c.op === 'update' && c.row.po_id === 'new-po-id'; });
+  assert(spmSweepCall, 'touched supplier payment record pushed to Supabase via the retrofit — Supplier Payment had already migrated');
+  ctx.showBlockingBackupModal = origShowBackup; ctx._sb = null;
+  ['st_po_cloud_migration_ts','st_spm_cloud_migration_ts'].forEach(function(k){ ctx.localStorage.removeItem(k); });
+});
+
+testAsync('migratePOToSupabase() retrofit — does NOT push when Supplier Payment has not itself migrated (local-only fix instead, matching the ordinary case)', async function() {
+  resetDB();
+  ctx.DB.sup.push({ id: 's1', name: 'Supplier' });
+  ctx.DB.po.push({ id: 'po-old2', num: 'PO-93002', supId: 's1', status: 'Draft', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'local-spm-y', poId: 'po-old2', poNum: 'PO-93002', amount: 10, currency: 'USD', purpose: 'Deposit', date: '2026-01-01' });
+  var sb = mockSb({
+    suppliers: { selectData: [{ id: 's1' }] },
+    purchase_orders: { insertImpl: function(row){ return Object.assign({ id: 'new-po-id-2' }, row); }, selectData: [] }
+  });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migratePOToSupabase();
+  assert(!sb._calls.find(function(c){ return c.table === 'supplier_payments'; }), 'no push attempted — Supplier Payment has not migrated (the ordinary case)');
+  assertEqual(ctx.DB.supPayments[0].poId, 'new-po-id-2', 'local fix still applied');
+  ctx.showBlockingBackupModal = origShowBackup; ctx._sb = null;
+  ctx.localStorage.removeItem('st_po_cloud_migration_ts');
+});
+
+testAsync('SPEC-CLOUD-008 test-hygiene cleanup — reset _sb and every Buyer/Supplier Payment Cloud Data migration marker this block may have left set, so later unrelated tests are not affected', async function() {
+  ctx._sb = null;
+  ['st_pmt_cloud_migration_ts','st_pmt_pre_migration','st_spm_cloud_migration_ts','st_spm_pre_migration'].forEach(function(k){ ctx.localStorage.removeItem(k); });
+});
+
+
 
 // ── AI Assistant — Invoice/Line Item/Credit Note actions + Supplier/Buyer read tools (SPEC-AI-GAP-002) ──
 
@@ -11755,7 +12216,7 @@ test('openDataCleanupScan() — zero-found case reports clean and does not open 
   mockEl('ov-data-cleanup-preview').classList.add = function() {};
 });
 
-test('confirmDataCleanup() — declining the backup gate blocks the actual cleanup (AC-2)', async function() {
+testAsync('confirmDataCleanup() — declining the backup gate blocks the actual cleanup (AC-2)', async function() {
   resetDB();
   ctx.DB.sup = [{ id: 'S1', name: 'Real' }, { id: '', name: '' }];
   var origShow = ctx.showDataCleanupBackupModal;
