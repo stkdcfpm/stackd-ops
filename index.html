@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.83</title>
+<title>Stackd Ops v2.9.85</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.83</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.85</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -437,7 +437,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <div class="ov" id="ov-rfq" onclick="if(event.target===this)closeM('ov-rfq')">
   <div class="modal">
-    <div class="mh"><h2 id="rfq-title">RFQ Response</h2><button class="mx" onclick="closeM('ov-rfq')">&#215;</button></div>
+    <div class="mh"><h2 id="rfq-title">RFQ Response</h2><button class="mx" id="rfq-close-btn" onclick="closeM('ov-rfq')">&#215;</button></div>
     <div class="mb">
       <div class="fld"><label>Supplier</label><select id="rfq-sup"></select></div>
       <div class="fld"><label>Unit Cost</label><input type="number" id="rfq-cost" min="0" step="any"></div>
@@ -452,8 +452,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div class="fld"><label>Notes</label><textarea id="rfq-notes" rows="2"></textarea></div>
     </div>
     <div class="mf">
-      <button class="btn btn-g" onclick="closeM('ov-rfq')">Cancel</button>
-      <button class="btn btn-s" onclick="saveRfqResponse()">Save Response</button>
+      <button class="btn btn-g" id="rfq-cancel-btn" onclick="closeM('ov-rfq')">Cancel</button>
+      <button class="btn btn-s" id="rfq-save-btn" onclick="saveRfqResponse()">Save Response</button>
     </div>
   </div>
 </div>
@@ -1342,9 +1342,31 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.83</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.85</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Import Supplier Quote File</strong> (<code>REQ/SPEC-AI-GAP-012</code>, extends <code>REQ/SPEC-AI-GAP-011</code>'s pasted-email RFQ update to also accept a CSV file). A new button lives once per Order Request, above its line items — the operator selects the supplier the file is from and uploads a comma-delimited <code>.csv</code> (Excel/<code>.xlsx</code> not supported — no parser for it exists in this codebase, and adding one would violate the app's no-dependency policy), reviews every parsed row in a mandatory pre-send confirmation step (nothing is sent to the AI without this), and the AI attempts to match each row to one of the Order Request's own line items by description. Each confidently-matched line gets its own independent diff review — old → proposed, Apply or Discard individually, no bulk "Apply All" — reusing the exact same <code>editRfqResponse()</code>/<code>saveRfqResponse()</code> mechanism the email-parse feature already uses, so a matched line with no existing response from that supplier creates one; a line that already has one is updated in place with the same id-rotation/staleness-banner behavior. Rows the AI can't confidently match are listed separately for manual review, never guessed at or silently dropped. Re-running Import on the same Order Request (a correction, or a second supplier's file) preserves any still-pending, unapplied proposals from an earlier run rather than discarding them. Went through this repo's full two-person requirements-gate and spec-gate process before any code was written — both independent reviews found real issues in the first drafts (a genuine concurrency risk where the batch UI's own file-import buttons didn't actually prevent a double-save race through the pre-existing, shared RFQ response modal, a failed Apply being silently reported as success, and a test that would have passed regardless of whether the fix worked), all fixed before implementation began. 14 new tests. Tests: 945/945 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.84</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix (CRITICAL): <strong><code>SEC-GAP-021</code> — stored XSS via unsanitized status text in class attributes</strong>, found by a proactive security audit run immediately after the Cloud Data migration went live. 7 render sites built a CSS class string by slugifying raw status text and concatenating it into <code>class="tag s-&lt;slug&gt;"</code>, breakable out of the attribute by a status value containing a double-quote — concretely reachable via CSV Invoice import, which falls through to the raw cell value for any unrecognized Status, capable of exfiltrating <code>localStorage</code> (the Anthropic API key, Supabase session) to an attacker-controlled endpoint. Fixed with three new fixed-lookup-table helpers (<code>invStatusClass()</code>, <code>poStatusClass()</code>, <code>conStatusClass()</code>) mirroring the pre-existing, already-safe <code>shpStatusClass()</code> pattern.</li>
+          <li>Fix (CRITICAL): <strong><code>INV-GAP-004</code></strong> — the empty-string/numeric bug fixed the same day in <code>migrateInvToSupabase()</code> was still present in the two far-more-frequently-hit paths, <code>persistInvChange()</code> (called from 12+ sites) and <code>saveInv()</code>'s own cloud-save block. <code>numOrNull()</code> promoted to a shared helper, applied at both.</li>
+          <li>Fix: <strong><code>LI-GAP-002</code>/<code>CON-GAP-007</code></strong> — <code>saveLI()</code>/<code>delLI()</code>/<code>saveCon()</code>/<code>delCon()</code> gated on bare <code>_sb</code> truthiness instead of their own entity's migration marker, unlike every other entity's own save/del function. Fixed at all 5 gate sites.</li>
+          <li>Fix: <strong><code>PMT-GAP-004</code></strong> — added missing test coverage for the duplicate-payment confirmation guard shipped earlier the same day (no functional defect, an audit-coverage gap only).</li>
+          <li>Housekeeping: untracked <code>.DS_Store</code> (same class of accidental-inclusion miss as <code>SEC-GAP-020</code>); logged <code>SEC-GAP-022</code>/<code>023</code>/<code>024</code> as open, accepted gaps (GDPR erasure path on Cloud Data, single-shared-role RLS monitoring, and a handful of minor items) rather than silently dropping them. 15 new tests. Tests: 931/931 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.83</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong><code>delSup()</code> never warned about or cleaned up Line Items referencing a deleted Supplier</strong> (<code>SUP-GAP-001</code>, new) — found while helping an operator diagnose 6 real Line Items (an irrigation/drip-tape product line) that had silently lost their Supplier reference, with no way to recover which supplier it was from data alone, since the deleted supplier predated the app's event log and <code>delSup()</code> gave no warning at delete time. <code>delSup()</code> already warned about linked Purchase Orders, invoice references, and Order Request RFQ responses before deleting a supplier — it now also counts and warns about Line Items linked via <code>supId</code>, in the same warning list. <code>supId</code> is left in place as a historical record on delete, not nulled, matching the existing RFQ-response precedent. 1 new test. Tests: 916/916 pass.</li>
@@ -2925,6 +2947,10 @@ var cRfqEditId = null;
 var cRfqEmailParseLineId = null;
 var cRfqEmailParseRespId = null;
 var cRfqEmailParseProposed = null;
+var cRfqFileImportOrdId = null;
+var cRfqFileImportPendingRows = null;
+var cRfqFileImportProposals = {};
+var cRfqFileImportApplyInFlight = false;
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
@@ -3333,7 +3359,7 @@ function rOrdLines(ord) {
   var el = G('of-lines-list'); if (!el) return;
   if (!ord) { el.innerHTML = '<div style="font-size:.55rem;color:var(--m);">Save the Order Request first, then add line items.</div>'; return; }
   var lines = ord.lines || [];
-  el.innerHTML = lines.map(function(l){
+  var linesHtml = lines.map(function(l){
     var pending = (l.lineUpdates||[]).filter(function(u){ return !u.confirmedBy; });
     return '<div style="border:1px solid var(--ln);border-radius:4px;padding:6px;margin-bottom:6px;font-size:.55rem;">' +
       '<div><strong>' + san(l.category||'-') + '</strong> — ' + san(l.itemSpec||'-') + '</div>' +
@@ -3350,7 +3376,273 @@ function rOrdLines(ord) {
       '<div id="ord-rfq-' + l.id + '" style="display:none;margin-top:4px;"></div>' +
       '</div>';
   }).join('') || '<div style="font-size:.55rem;color:var(--m);">No line items yet</div>';
+  var importControl = lines.length ? (
+    '<div style="margin-bottom:8px;">' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:2px 6px;" onclick="rfqOpenFileImport(\'' + ord.id + '\')">Import Supplier Quote File</button>' +
+    '</div>' +
+    '<div id="ord-fileimport-' + ord.id + '" style="display:none;margin-bottom:8px;"></div>'
+  ) : '';
+  el.innerHTML = importControl + linesHtml;
 }
+
+// ── RFQ RESPONSE FILE IMPORT (REQ/SPEC-AI-GAP-012) ──────────────
+function rfqOpenFileImport(ordId) {
+  if (!EI.ord || EI.ord !== ordId) return;
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  cRfqFileImportOrdId = ordId;
+  cRfqFileImportPendingRows = null;
+  panel.style.display = 'block';
+  panel.innerHTML = '<div style="border:1px solid var(--ln);border-radius:4px;padding:6px;">' +
+    '<div style="font-size:.5rem;margin-bottom:4px;">Import Supplier Quote File</div>' +
+    '<div class="fld"><label>Supplier</label><select id="rfq-fileimport-sup-' + ordId + '">' +
+      '<option value="">— Supplier —</option>' +
+      DB.sup.map(function(s){ return '<option value="' + san(s.id) + '">' + san(s.name) + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="fld" style="margin-top:4px;"><label>Quote File (CSV)</label><input type="file" id="rfq-fileimport-file-' + ordId + '" accept=".csv"></div>' +
+    '<div style="margin-top:4px;">' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqRunFileImport(\'' + ordId + '\')">Parse</button> ' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseFileImport(\'' + ordId + '\')">Cancel</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function rfqCloseFileImport(ordId) {
+  if (ordId === cRfqFileImportOrdId) {
+    cRfqFileImportOrdId = null;
+    cRfqFileImportPendingRows = null;
+    cRfqFileImportProposals = {};
+  }
+  var panel = G('ord-fileimport-' + ordId);
+  if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
+}
+
+function rfqRunFileImport(ordId) {
+  if (!EI.ord || EI.ord !== ordId) return;
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  var supId = G('rfq-fileimport-sup-' + ordId).value;
+  if (!supId) { toast('Select a supplier first.'); return; }
+  var fileInput = G('rfq-fileimport-file-' + ordId);
+  var file = fileInput && fileInput.files[0];
+  if (!file) { toast('Select a file first.'); return; }
+  if (!/\.csv$/i.test(file.name)) { toast('Only .csv files are supported.'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    if (G('ord-fileimport-' + ordId) !== panel) return;
+    var parsed = parseImportCSV(e.target.result);
+    if (!parsed.rows.length) { toast('No data rows found in that file.'); return; }
+    rfqShowFileImportConfirm(ordId, supId, parsed);
+  };
+  reader.readAsText(file);
+}
+
+function rfqShowFileImportConfirm(ordId, supId, parsed) {
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  cRfqFileImportPendingRows = { rows: parsed.rows, supId: supId };
+  var preview = '<div style="max-height:200px;overflow-y:auto;"><table class="tbl" style="font-size:.46rem;"><thead><tr>' +
+    parsed.headers.map(function(h){ return '<th>' + san(h) + '</th>'; }).join('') +
+    '</tr></thead><tbody>' +
+    parsed.rows.map(function(r){
+      return '<tr>' + parsed.headers.map(function(h){ return '<td>' + san(r[h]||'') + '</td>'; }).join('') + '</tr>';
+    }).join('') +
+    '</tbody></table></div>';
+  panel.innerHTML = '<div style="font-size:.5rem;margin-bottom:4px;">Review parsed rows before sending to AI — nothing is sent yet:</div>' +
+    preview +
+    '<div style="margin-top:4px;">' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqSendFileToAI(\'' + ordId + '\')">Send to AI</button> ' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseFileImport(\'' + ordId + '\')">Cancel</button>' +
+    '</div>';
+}
+
+function rfqSendFileToAI(ordId) {
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  var pending = cRfqFileImportPendingRows;
+  if (!pending) return;
+  cRfqFileImportPendingRows = null;
+  var supId = pending.supId;
+  var lineContexts = (ord.lines || []).map(function(l){
+    var ctx = { id: l.id, category: l.category, itemSpec: l.itemSpec, orderVolumeQty: l.orderVolumeQty, orderVolumeUnit: l.orderVolumeUnit };
+    var existingResp = (l.rfqResponses || []).find(function(r){ return r.supId === supId; });
+    if (existingResp) {
+      ctx.currentValues = { cost: existingResp.cost, currency: existingResp.currency, moq: existingResp.moq, leadTime: existingResp.leadTime, paymentTerms: existingResp.paymentTerms };
+    }
+    return ctx;
+  });
+  panel.innerHTML = '<div style="color:var(--m);">Parsing…</div>';
+  rfqParseUpdateFromFile(pending.rows, lineContexts).then(function(result){
+    if (G('ord-fileimport-' + ordId) !== panel) return;
+    if (result === null) {
+      panel.innerHTML = '<div style="color:var(--m);">AI parse unavailable.</div>' +
+        '<div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseFileImport(\'' + ordId + '\')">Close</button></div>';
+      return;
+    }
+    rfqRenderFileImportResults(ordId, supId, result, ord);
+  });
+}
+
+var RFQ_FILE_IMPORT_PROMPT = 'Given these supplier quote spreadsheet rows and a list of this Order Request\'s own line items, match each row to at most one line item using its description/spec. For each row you can confidently match to exactly one line, extract any of {cost, currency, moq, leadTime, paymentTerms, notes} the row states a value for. If you cannot confidently match a row to exactly one line item, do not guess — return it as unmatched with a brief reason. Respond with ONLY a JSON object of the exact shape {"matches":[{"lineId":"<id>","fields":{...}}],"unmatched":[{"row":{...},"reason":"<brief reason>"}]} — no prose, no markdown fences.';
+async function rfqParseUpdateFromFile(rows, lineContexts) {
+  if (!AI.key) return null;
+  var payload = { rows: rows, lines: lineContexts };
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': AI.key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        temperature: 0.2,
+        system: RFQ_FILE_IMPORT_PROMPT,
+        messages: [{ role: 'user', content: JSON.stringify(payload) }]
+      })
+    });
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var parsed = JSON.parse(text.trim());
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    if (!Array.isArray(parsed.matches) || !Array.isArray(parsed.unmatched)) return null;
+    var allowed = ['cost', 'currency', 'moq', 'leadTime', 'paymentTerms', 'notes'];
+    var knownLineIds = {};
+    lineContexts.forEach(function(l){ knownLineIds[l.id] = true; });
+    var matches = [];
+    var unmatched = parsed.unmatched.slice();
+    parsed.matches.forEach(function(m){
+      if (!m || typeof m.lineId !== 'string' || !knownLineIds[m.lineId]) {
+        unmatched.push({ row: (m && m.fields) || {}, reason: 'Could not verify this match against a real line item.' });
+        return;
+      }
+      var filtered = {};
+      if (m.fields && typeof m.fields === 'object' && !Array.isArray(m.fields)) {
+        allowed.forEach(function(k){ if (m.fields[k] !== undefined) filtered[k] = m.fields[k]; });
+      }
+      matches.push({ lineId: m.lineId, fields: filtered });
+    });
+    return { matches: matches, unmatched: unmatched };
+  } catch (e) {
+    return null;
+  }
+}
+
+function rfqRenderFileImportResults(ordId, supId, result, ord) {
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  cRfqFileImportOrdId = ordId;
+  result.matches.forEach(function(m){
+    cRfqFileImportProposals[m.lineId] = { supId: supId, fields: m.fields };
+  });
+  var pendingLineIds = Object.keys(cRfqFileImportProposals);
+  var panelsHtml = pendingLineIds.map(function(lid){
+    var proposal = cRfqFileImportProposals[lid];
+    var line = (ord.lines || []).find(function(l){ return l.id === lid; });
+    if (!line) return '';
+    var existingResp = (line.rfqResponses || []).find(function(r){ return r.supId === proposal.supId; });
+    var diffRows = rfqDiffRowsHtml(existingResp || {}, proposal.fields);
+    var label = san(line.category||'-') + ' — ' + san(line.itemSpec||'-');
+    return '<div id="rfq-fileimport-panel-' + lid + '" style="border:1px solid var(--ln);border-radius:4px;padding:6px;margin-top:4px;">' +
+      '<div style="font-size:.5rem;font-weight:600;">' + label + (existingResp ? '' : ' <em style="font-weight:400;color:var(--m);">(new response)</em>') + '</div>' +
+      '<div style="font-size:.5rem;">' + diffRows + '</div>' +
+      '<div style="margin-top:4px;">' +
+        '<button class="btn btn-g" id="rfq-fileimport-apply-' + lid + '" style="font-size:.44rem;padding:1px 6px;" onclick="rfqApplyFileProposal(\'' + ordId + '\',\'' + lid + '\')">Apply</button> ' +
+        '<button class="btn btn-g" id="rfq-fileimport-discard-' + lid + '" style="font-size:.44rem;padding:1px 6px;" onclick="rfqDiscardFileProposal(\'' + ordId + '\',\'' + lid + '\')">Discard</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  var unmatchedHtml = result.unmatched.length ? (
+    '<div style="margin-top:6px;font-size:.5rem;color:var(--m);">Needs manual review — could not confidently match to a line item:</div>' +
+    result.unmatched.map(function(u){
+      return '<div style="font-size:.46rem;color:var(--m);margin-top:2px;">' + san(JSON.stringify(u.row)) + ' — ' + san(u.reason) + '</div>';
+    }).join('')
+  ) : '';
+  panel.innerHTML = (panelsHtml || '<div style="font-size:.5rem;color:var(--m);">No confident matches found in this file.</div>') +
+    unmatchedHtml +
+    '<div style="margin-top:6px;"><button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseFileImport(\'' + ordId + '\')">Close</button></div>';
+}
+
+function rfqDiscardFileProposal(ordId, lineId) {
+  if (ordId !== cRfqFileImportOrdId) return;
+  delete cRfqFileImportProposals[lineId];
+  var el = G('rfq-fileimport-panel-' + lineId);
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+
+function rfqFillRfqFormFields(fields) {
+  if (fields.cost !== undefined) G('rfq-cost').value = fields.cost;
+  if (fields.currency !== undefined) G('rfq-cur').value = fields.currency;
+  if (fields.moq !== undefined) G('rfq-moq').value = fields.moq;
+  if (fields.leadTime !== undefined) G('rfq-leadtime').value = fields.leadTime;
+  if (fields.paymentTerms !== undefined) G('rfq-payterms').value = fields.paymentTerms;
+  if (fields.notes !== undefined) G('rfq-notes').value = fields.notes;
+}
+
+function rfqSetOrdRfqUiFrozen(frozen) {
+  var linesList = G('of-lines-list');
+  if (linesList) {
+    linesList.style.pointerEvents = frozen ? 'none' : '';
+    linesList.style.opacity = frozen ? '0.6' : '';
+  }
+  var saveBtn = G('rfq-save-btn'), cancelBtn = G('rfq-cancel-btn'), closeBtn = G('rfq-close-btn');
+  if (saveBtn) saveBtn.disabled = frozen;
+  if (cancelBtn) cancelBtn.disabled = frozen;
+  if (closeBtn) closeBtn.disabled = frozen;
+}
+
+async function rfqApplyFileProposal(ordId, lineId) {
+  if (ordId !== cRfqFileImportOrdId) return;
+  if (cRfqFileImportApplyInFlight) return;
+  var proposal = cRfqFileImportProposals[lineId];
+  if (!proposal) return;
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+
+  cRfqFileImportApplyInFlight = true;
+  rfqSetOrdRfqUiFrozen(true);
+
+  var existingResp = (line.rfqResponses || []).find(function(r){ return r.supId === proposal.supId; });
+  if (existingResp) {
+    editRfqResponse(lineId, existingResp.id);
+    if (cRfqEditId === existingResp.id) {
+      rfqFillRfqFormFields(proposal.fields);
+      await saveRfqResponse();
+    }
+  } else {
+    openRfqResponse(lineId);
+    G('rfq-sup').value = proposal.supId;
+    rfqFillRfqFormFields(proposal.fields);
+    await saveRfqResponse();
+  }
+
+  var modalStillOpen = G('ov-rfq').classList.contains('on');
+
+  cRfqFileImportApplyInFlight = false;
+  rfqSetOrdRfqUiFrozen(false);
+
+  if (modalStillOpen) {
+    toast('Could not apply automatically — the response form is open with a validation error. Resolve it in the form or Cancel, then retry from the file import panel.');
+    return;
+  }
+
+  delete cRfqFileImportProposals[lineId];
+  var el = G('rfq-fileimport-panel-' + lineId);
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+
 function ordCheckLineGaps(lineId) {
   if (!EI.ord) return;
   var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
@@ -3636,6 +3928,13 @@ function rfqCloseEmailParse(lineId) {
   if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
 }
 
+function rfqDiffRowsHtml(baseline, proposed) {
+  return Object.keys(proposed).map(function(f){
+    var oldVal = baseline[f] != null && baseline[f] !== '' ? String(baseline[f]) : '(unset)';
+    return '<div>' + san(f) + ': ' + san(oldVal) + ' &rarr; <strong>' + san(String(proposed[f])) + '</strong></div>';
+  }).join('');
+}
+
 function rfqRunEmailParse(lineId) {
   if (!EI.ord) return;
   var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
@@ -3665,10 +3964,7 @@ function rfqRunEmailParse(lineId) {
       return;
     }
     cRfqEmailParseProposed = result;
-    var rows = fields.map(function(f){
-      var oldVal = resp[f] != null && resp[f] !== '' ? String(resp[f]) : '(unset)';
-      return '<div>' + san(f) + ': ' + san(oldVal) + ' &rarr; <strong>' + san(String(result[f])) + '</strong></div>';
-    }).join('');
+    var rows = rfqDiffRowsHtml(resp, result);
     panel.innerHTML = '<div style="font-size:.5rem;">' + rows + '</div>' +
       '<div style="margin-top:4px;">' +
         '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqApplyEmailParse(\'' + lineId + '\')">Apply</button> ' +
@@ -11192,7 +11488,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.83).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.85).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -11258,7 +11554,7 @@ var AI_SYSTEM_PROMPT = [
   'RFQ supplier comparison (v2.9.56): each Order Request line can record multiple suppliers\' RFQ responses (unit cost, currency, CBM, duty %, DG flag, MOQ, lead time, payment terms, optional linked Contact, notes) via "Compare RFQs" → "+ Add Response". Responses are ranked by landed cost converted to GBP (same rate engine as Quotes, LCL basis) — the nominal cheapest quoted price is not always the landed-cheapest once freight/duty/DG are factored in and currencies are converted. A response with no CBM entered shows a warning next to its landed cost, since its freight component reads as zero rather than unknown. Exactly one response per line can be marked Committed at a time; committing again on a different response replaces the prior choice. Each response can also be individually edited or deleted (v2.9.69, REQ/SPEC-ORD-006) — see below. Converting a Contact\'s Order Request to a Quote ("Create Quote") pre-fills one Quote line per line that has a committed response, carrying over that response\'s supplier, quantity (its Order Request line\'s base qty, if set), and unit cost — converted to the Quote\'s working currency if the response was recorded in a different one — so the operator never has to retype or reconvert either. A committed line\'s new Quote line has no per-line margin override set; it uses the quote\'s own default margin like any manually-added line.',
   'get_suppliers/get_buyers tools exist to resolve a name to an id before emitting create_invoice/create_line_item/create_po action blocks — call one of these first whenever a supplier or buyer name is mentioned but no id is already known from the conversation, and ask a clarifying question rather than guessing if there are zero or multiple ambiguous matches. These tools deliberately do not return contact/email/phone — if the user asks for a supplier\'s or buyer\'s contact details, say that information isn\'t available through these tools and point them to the Suppliers/Buyers tab instead, rather than inventing an answer.',
   'Source traceability & staleness warning (v2.9.58, Phase 1 of a referential-integrity build): a Quote line created via "Create Quote" from a committed RFQ response now records which Order Request line and which specific RFQ response it came from. If the operator later commits a *different* RFQ response on that same Order Request line, re-opening the Quote shows a warning banner ("Source pricing has changed since this Quote was created — review before sending") — the Quote itself is never auto-updated, only flagged. A distinct message appears if the source Order Request has been deleted entirely. Quotes created before this version, or built entirely from manually-added lines, never show this banner — there is nothing to trace them back to. Manually-added lines and AI-proposed Quotes (create_quote action) are unaffected and never carry this traceability.',
-  'Edit and delete RFQ responses (v2.9.69, REQ/SPEC-ORD-006): each response row in "Compare RFQs" now has Edit and Delete buttons alongside Commit/Uncommit. Edit reopens the same "+ Add Response" modal pre-filled with that response\'s values; saving replaces it in place (same position, same count of responses) rather than adding a new one. Delete removes a response outright; if it is the line\'s currently committed response, the operator sees an explicit warning before confirming that this will un-commit the line and may trigger the staleness banner described above on any Quote already converted from it — deleting or editing the specific response a Quote was sourced from re-triggers that same staleness banner, exactly as committing a different response already did. Each response row also has an envelope (✉) button (v2.9.70, REQ/SPEC-AI-GAP-011, only functional if a Claude API key is configured) — the operator pastes a supplier\'s email text, and a single AI call extracts any of cost/currency/MOQ/lead time/payment terms/notes the email explicitly states a new value for, shown as a before/after diff for the operator to Apply or Discard; nothing is applied automatically, and Apply goes through the exact same edit mechanism described above, including the id-rotation/staleness-banner behavior if the response is committed. If asked whether the chat assistant itself can do this from a pasted email, say no — direct the operator to this button on the specific response instead, since that is the only place this capability exists.',
+  'Edit and delete RFQ responses (v2.9.69, REQ/SPEC-ORD-006): each response row in "Compare RFQs" now has Edit and Delete buttons alongside Commit/Uncommit. Edit reopens the same "+ Add Response" modal pre-filled with that response\'s values; saving replaces it in place (same position, same count of responses) rather than adding a new one. Delete removes a response outright; if it is the line\'s currently committed response, the operator sees an explicit warning before confirming that this will un-commit the line and may trigger the staleness banner described above on any Quote already converted from it — deleting or editing the specific response a Quote was sourced from re-triggers that same staleness banner, exactly as committing a different response already did. Each response row also has an envelope (✉) button (v2.9.70, REQ/SPEC-AI-GAP-011, only functional if a Claude API key is configured) — the operator pastes a supplier\'s email text, and a single AI call extracts any of cost/currency/MOQ/lead time/payment terms/notes the email explicitly states a new value for, shown as a before/after diff for the operator to Apply or Discard; nothing is applied automatically, and Apply goes through the exact same edit mechanism described above, including the id-rotation/staleness-banner behavior if the response is committed. If asked whether the chat assistant itself can do this from a pasted email, say no — direct the operator to this button on the specific response instead, since that is the only place this capability exists. A separate "Import Supplier Quote File" button (v2.9.85, REQ/SPEC-AI-GAP-012, CSV only — .xlsx is not supported) lives once per Order Request, above its line items — the operator selects the supplier the file is from and uploads a comma-delimited .csv, reviews the parsed rows before anything is sent (a mandatory confirmation step), and the AI attempts to match each row to one of the Order Request\'s own line items, proposing a diff per confidently-matched line for individual Apply or Discard, exactly as the single-response email version does; any row it can\'t confidently match is listed separately for manual review, never guessed at or silently dropped. If asked whether this same button can accept an Excel (.xlsx) file, say no — only .csv is supported today.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
