@@ -8,7 +8,7 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used for Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment when Cloud Data is configured — REQ/SPEC-CLOUD-001, extended to Line Item/Contact by REQ/SPEC-CLOUD-002, to Order Request by REQ/SPEC-CLOUD-003, to Quote by REQ/SPEC-CLOUD-004, to Purchase Order by REQ/SPEC-CLOUD-005 (completing Phase 2), to Invoice/Credit Note by REQ/SPEC-CLOUD-006 (Phase 3 sub-phase 1 of 3), to Shipment by REQ/SPEC-CLOUD-007 (Phase 3 sub-phase 2 of 3), and to Buyer Payment/Supplier Payment by REQ/SPEC-CLOUD-008 (Phase 3 sub-phase 3 of 3, completing Phase 3) — of the cross-platform backend migration; no CDN, no auto-update). Deployed via GitHub Pages.
 
 **Current version: v2.9.85**  
-**Test count: 945/945 PASS** (`node tests/run.js`)
+**Test count: 947/947 PASS** (`node tests/run.js`)
 
 ---
 

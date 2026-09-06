@@ -12480,8 +12480,10 @@ testAsync('rfqApplyFileProposal() serializes against concurrent saveRfqResponse(
   var applyA = ctx.rfqApplyFileProposal('O1', 'LA');
   var applyB = ctx.rfqApplyFileProposal('O1', 'LB');
 
+  // These two checks hold regardless of the lock (B's own call hasn't reached an await yet either way) —
+  // the real proof that the lock actually blocked B is in the three post-await assertions below.
   assertEqual(ctx.cRfqFileImportApplyInFlight, true, 'lock is held while A is still in flight');
-  assert(!!ctx.cRfqFileImportProposals['LB'], 'B\'s own proposal is untouched — the second call returned immediately, never reaching B\'s own logic');
+  assert(!!ctx.cRfqFileImportProposals['LB'], 'B\'s own proposal is untouched at this point');
 
   resolveFirst({ error: null });
   await applyA;
@@ -12492,6 +12494,50 @@ testAsync('rfqApplyFileProposal() serializes against concurrent saveRfqResponse(
   assert(!!ctx.cRfqFileImportProposals['LB'], 'B was never applied by the blocked call — still pending, exactly as before');
 
   ctx.persistOrdChange = originalPersist;
+});
+
+testAsync('rfqSetOrdRfqUiFrozen() disables the shared ov-rfq modal\'s own Save/Cancel/Close buttons while an Apply is in flight, re-enabling them after (spec-gate finding 2 regression)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: { cost: 10 } } };
+
+  var resolveFirst;
+  var originalPersist = ctx.persistOrdChange;
+  ctx.persistOrdChange = function(ord, skipRefresh) {
+    return new Promise(function(resolve){ resolveFirst = resolve; });
+  };
+
+  var applyA = ctx.rfqApplyFileProposal('O1', 'LA');
+
+  assertEqual(mockEl('rfq-save-btn').disabled, true, 'the shared modal\'s own Save Response button is disabled while an apply is in flight, not just #of-lines-list');
+  assertEqual(mockEl('rfq-cancel-btn').disabled, true, 'the shared modal\'s own Cancel button is disabled while an apply is in flight');
+  assertEqual(mockEl('rfq-close-btn').disabled, true, 'the shared modal\'s own close (x) button is disabled while an apply is in flight');
+
+  resolveFirst({ error: null });
+  await applyA;
+
+  assertEqual(mockEl('rfq-save-btn').disabled, false, 'Save Response button re-enabled once the apply completes');
+  assertEqual(mockEl('rfq-cancel-btn').disabled, false, 'Cancel button re-enabled once the apply completes');
+  assertEqual(mockEl('rfq-close-btn').disabled, false, 'close (x) button re-enabled once the apply completes');
+
+  ctx.persistOrdChange = originalPersist;
+});
+
+testAsync('rfqApplyFileProposal() does NOT clear a proposal when saveRfqResponse() validation fails, leaving ov-rfq open (spec-gate finding 3 regression)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  // no cost field -> saveRfqResponse()'s own cost validation rejects it and never calls closeM('ov-rfq')
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: {} } };
+  mockEl('ov-rfq').classList = { add: function(){}, remove: function(){}, contains: function(){ return true; } };
+
+  await ctx.rfqApplyFileProposal('O1', 'LA');
+
+  assert(!!ctx.cRfqFileImportProposals['LA'], 'a failed Apply must not silently clear the pending proposal');
+  var line = ctx.DB.ord[0].lines.find(function(l){ return l.id === 'LA'; });
+  assertEqual((line.rfqResponses || []).length, 0, 'no response was actually recorded — the validation failure was real, not just simulated');
+  assertEqual(ctx.cRfqFileImportApplyInFlight, false, 'the in-flight lock is still released even though the apply failed, so a retry is possible');
 });
 
 test('rOrdLines() — shows "Import Supplier Quote File" when the Order Request has lines, and the shared panel div exists', function() {
