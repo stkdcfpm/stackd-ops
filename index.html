@@ -1356,7 +1356,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
-          <li>New: <strong>Auto-created Shipment on Invoice Paid, with a progressive trade-document checklist</strong> (<code>REQ/SPEC-SHIP-001</code>). Marking an Invoice Paid — whether a status change or a brand-new invoice saved directly as Paid — now auto-creates a linked Shipment record (unless disabled via the new Settings → Integrations toggle, which shows a persistent banner on the Invoices/Shipments tabs while off) seeded with a 7-item trade-document checklist (Purchase Invoice, Commercial Invoice, Packing List, Bill of Lading, Certificate of Origin, Verified Gross Mass Declaration, Insurance Certificate — an 8th, Dangerous Goods Declaration, if the shipment is DG-flagged) that the operator fills in with reference numbers, received dates, and a file-location note as documents arrive; no file upload, location/link tracking only. The default checklist is deliberately destination-agnostic — no Barbados-specific customs forms hardcoded — since FPM's own stated expansion beyond Barbados to Nigeria/Ghana/India would make a single-country checklist actively wrong, not just incomplete; grounded in cited shipping-document research including a Verified Gross Mass requirement (SOLAS-mandatory for every containerized shipment since 2016) that's easy for small-operator tools to miss. Went through this repo's full requirements-gate (3 independent review rounds — round 1 found a design that would have silently wiped the entire checklist on the first ordinary edit to an auto-created Shipment, and a trigger design that missed a brand-new invoice saved directly as Paid; round 2 found the round-1 fixes had introduced two new issues of their own, including a duplicate-Shipment risk from an invoice-number rename; round 3 found only documentation drift) and spec-gate (3 independent review rounds — found a wrong claim about CSS positioning, a citation gap, a new CRUD layer that could silently discard an edit on a cancelled Cloud Data login, and a create-path bug that would have overwritten an operator's own manual dropdown selection) processes, with every finding personally re-verified against the live code before being accepted, and every safety-critical fix confirmed via mutation testing (each fix reverted in a scratch copy, confirming the exact predicted test failure) before this delivery closed out. 37 new tests. Tests: 984/984 pass.</li>
+          <li>New: <strong>Auto-created Shipment on Invoice Paid, with a progressive trade-document checklist</strong> (<code>REQ/SPEC-SHIP-001</code>). Marking an Invoice Paid — whether a status change or a brand-new invoice saved directly as Paid — now auto-creates a linked Shipment record (unless disabled via the new Settings → Integrations toggle, which shows a persistent banner on the Invoices/Shipments tabs while off) seeded with a 7-item trade-document checklist (Purchase Invoice, Commercial Invoice, Packing List, Bill of Lading, Certificate of Origin, Verified Gross Mass Declaration, Insurance Certificate — an 8th, Dangerous Goods Declaration, if the shipment is DG-flagged) that the operator fills in with reference numbers, received dates, and a file-location note as documents arrive; no file upload, location/link tracking only. The default checklist is deliberately destination-agnostic — no Barbados-specific customs forms hardcoded — since FPM's own stated expansion beyond Barbados to Nigeria/Ghana/India would make a single-country checklist actively wrong, not just incomplete; grounded in cited shipping-document research including a Verified Gross Mass requirement (SOLAS-mandatory for every containerized shipment since 2016) that's easy for small-operator tools to miss. Went through this repo's full requirements-gate (3 independent review rounds — round 1 found a design that would have silently wiped the entire checklist on the first ordinary edit to an auto-created Shipment, and a trigger design that missed a brand-new invoice saved directly as Paid; round 2 found the round-1 fixes had introduced two new issues of their own, including a duplicate-Shipment risk from an invoice-number rename; round 3 found only documentation drift) and spec-gate (3 independent review rounds — found a wrong claim about CSS positioning, a citation gap, a new CRUD layer that could silently discard an edit on a cancelled Cloud Data login, and a create-path bug that would have overwritten an operator's own manual dropdown selection) processes, with every finding personally re-verified against the live code before being accepted, and every safety-critical fix confirmed via mutation testing (each fix reverted in a scratch copy, confirming the exact predicted test failure) before this delivery closed out. Independent build-gate review then caught one severe defect: the trade-document checklist's three CRUD functions were correctly built and unit-tested but never wired into any UI — invisible and uneditable in the actual app, despite already-shipped docs describing it as working. Fixed with a new Trade Documents section on the existing Edit Shipment modal, wired to the same functions unmodified. 37 + 5 new tests. Tests: 986/986 pass.</li>
         </ul>
       </div>
 
@@ -2538,6 +2538,16 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld" style="grid-column:1/-1"><label>Notes</label>
           <textarea id="shf-nt" placeholder="Customs agent, port notes, delays..."></textarea></div>
       </div>
+
+      <div style="margin-bottom:14px;border-top:1px solid var(--ln);padding-top:12px;">
+        <label style="font-weight:600;display:block;margin-bottom:6px;">Trade Documents</label>
+        <div id="shp-docs-panel"></div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <input type="text" id="shp-docs-newtype" placeholder="Add a document (e.g. Fumigation Certificate)" style="flex:1;">
+          <button class="btn btn-g" onclick="shpAddTradeDocFromForm()">+ Add</button>
+        </div>
+      </div>
+
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button class="btn btn-g" onclick="closeM('ov-shp')">Cancel</button>
         <button class="btn btn-s" onclick="saveShp()">Save Shipment</button>
@@ -8726,6 +8736,43 @@ async function shpPersistTradeDocsChange(s, candidateDocs) {
     sv(K.sh, DB.sh);
   }
   rShp();
+  if (EI.sh === s.id) renderShpDocsPanel(s.id);
+}
+
+function shpAddTradeDocFromForm() {
+  if (!EI.sh) return;
+  var input = G('shp-docs-newtype');
+  var type = input ? input.value.trim() : '';
+  if (!type) return;
+  if (input) input.value = '';
+  shpAddTradeDoc(EI.sh, type).catch(function(){});
+}
+
+function renderShpDocsPanel(shId) {
+  var panel = G('shp-docs-panel');
+  if (!panel) return;
+  var s = DB.sh.find(function(x){ return x.id === shId; });
+  if (!s) { panel.innerHTML = ''; return; }
+  var docs = s.tradeDocs || [];
+  if (!docs.length) {
+    panel.innerHTML = '<div style="color:var(--m);font-size:.54rem;">No trade documents tracked yet — add one below, or check DG above to seed a Dangerous Goods Declaration line.</div>';
+    return;
+  }
+  var rows = docs.map(function(d){
+    var statusOpts = ['Pending','Received','N/A'].map(function(opt){
+      return '<option value="' + opt + '"' + (d.status===opt?' selected':'') + '>' + opt + '</option>';
+    }).join('');
+    return '<tr>' +
+      '<td style="font-size:.54rem;">' + san(d.type) + (d.autoManaged ? ' <span style="font-size:.4rem;color:var(--m);">(auto)</span>' : '') + '</td>' +
+      '<td><select style="font-size:.5rem;" onchange="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{status:this.value})">' + statusOpts + '</select></td>' +
+      '<td><input type="text" value="' + san(d.refNum||'') + '" style="font-size:.5rem;width:90px;" placeholder="Ref #" onblur="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{refNum:this.value})"></td>' +
+      '<td><input type="text" value="' + san(d.fileLocation||'') + '" style="font-size:.5rem;width:130px;" placeholder="Where the file lives" onblur="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{fileLocation:this.value})"></td>' +
+      '<td><input type="date" value="' + san(d.receivedDate||'') + '" style="font-size:.5rem;" onchange="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{receivedDate:this.value})"></td>' +
+      '<td><input type="text" value="' + san(d.notes||'') + '" style="font-size:.5rem;width:110px;" placeholder="Notes" onblur="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{notes:this.value})"></td>' +
+      '<td><button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="shpRemoveTradeDoc(\'' + s.id + '\',\'' + d.id + '\')">Del</button></td>' +
+      '</tr>';
+  }).join('');
+  panel.innerHTML = '<div class="tw" style="overflow-x:auto;"><table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Document</th><th>Status</th><th>Ref #</th><th>File Location</th><th>Received</th><th>Notes</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 
 // REQ-SHIP-001: auto-creates a Shipment when an Invoice's status is Paid.
@@ -11802,7 +11849,7 @@ var AI_SYSTEM_PROMPT = [
   'Tax is always a buyer pass-through — never Stackd income.',
   '',
   '## Shipments',
-  'A Shipment is now also auto-created automatically whenever an Invoice is saved with status Paid (unless disabled in Settings → Integrations → Auto-create Shipment toggle) — it starts with a 7-item trade-document checklist (Purchase Invoice, Commercial Invoice, Packing List, Bill of Lading, Certificate of Origin, VGM Declaration, Insurance Certificate; an 8th, Dangerous Goods Declaration, if the shipment is DG-flagged) that the operator fills in with reference numbers, received dates, and a file-location note as documents arrive — no file upload, location/link tracking only.',
+  'A Shipment is now also auto-created automatically whenever an Invoice is saved with status Paid (unless disabled in Settings → Integrations → Auto-create Shipment toggle) — it starts with a 7-item trade-document checklist (Purchase Invoice, Commercial Invoice, Packing List, Bill of Lading, Certificate of Origin, VGM Declaration, Insurance Certificate; an 8th, Dangerous Goods Declaration, if the shipment is DG-flagged). The operator fills these in from the Trade Documents section near the bottom of the Edit Shipment modal — a status dropdown (Pending/Received/N-A) plus reference number, received date, and file-location note per document — and can add a custom line for anything destination-specific the default checklist doesn\'t cover. This section only shows once the Shipment has been saved at least once. No file upload — location/link tracking only.',
   'Shipments tab → + New Shipment. Ref format: SHP-001.',
   'Fields: BL Number, Vessel, Carrier, Origin Port (UN/LOCODE lookup), Destination Port (UN/LOCODE lookup), ETD, ETA, Container Type (20GP / 40HQ / LCL / Other), Container Number, DG Onboard, Docs Status (Pending / In Progress / Complete), Status, Linked Invoices, Forwarder Name, Forwarder Email, Notes.',
   'Status flow: Pending → Booked → In Transit → Arrived → Delivered.',
@@ -13053,6 +13100,8 @@ function openShp() {
   if(G('shf-docs')) G('shf-docs').value='Pending';
   if(G('shf-st')) G('shf-st').value='Pending';
   if(G('shf-dg')) G('shf-dg').checked=false;
+  if(G('shp-docs-panel')) G('shp-docs-panel').innerHTML = '<div style="color:var(--m);font-size:.54rem;">Save this Shipment first, then reopen it to add trade documents.</div>';
+  if(G('shp-docs-newtype')) G('shp-docs-newtype').value = '';
   G('ov-shp').classList.add('on');
   setTimeout(function(){ if(G('shf-ref')) G('shf-ref').focus(); }, 50);
 }
@@ -13073,6 +13122,8 @@ function editShp(id) {
   if(G('shf-fwd')) G('shf-fwd').value=s.forwarder||'';
   if(G('shf-fwde')) G('shf-fwde').value=s.forwarderEmail||'';
   G('shf-nt').value=s.notes||'';
+  if(G('shp-docs-newtype')) G('shp-docs-newtype').value = '';
+  renderShpDocsPanel(id);
   G('ov-shp').classList.add('on');
 }
 

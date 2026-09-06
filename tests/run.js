@@ -13844,11 +13844,32 @@ testAsync('saveShp() — a manually-created Shipment that later gains tradeDocs 
 });
 
 // ── AC-11: fileLocation XSS safety ──
-test('fileLocation containing a script payload never breaks out of its containing markup (AC-11)', function() {
+test('renderShpDocsPanel() — a malicious fileLocation/refNum/notes value never breaks out of its containing markup (AC-11)', function() {
   resetDB();
   var malicious = '"><script>alert(1)</script>';
-  var out = '<td>' + ctx.san(malicious) + '</td>';
-  assertNotContains(out, '<script>', 'fileLocation is sanitized like every other free-text field');
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.fileLocation = malicious; doc.refNum = malicious; doc.notes = malicious;
+  ctx.DB.sh = [{ id: 'sh-xss1', ref: 'SHP-XSS1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  ctx.renderShpDocsPanel('sh-xss1');
+  var html = mockEl('shp-docs-panel').innerHTML;
+  assertNotContains(html, '<script>', 'a malicious value in fileLocation/refNum/notes never reaches the DOM as a live tag');
+  assertContains(html, '&quot;&gt;', 'the value is still present, just escaped — san() sanitizes, does not silently drop the field');
+});
+test('renderShpDocsPanel() — no tradeDocs shows a helpful empty state, not an error', function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'sh-empty3', ref: 'SHP-EMPTY3', tradeDocs: [], docsStatus: null, autoCreatedFromInvIds: [] }];
+  ctx.renderShpDocsPanel('sh-empty3');
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'No trade documents tracked yet');
+});
+test('editShp() renders the trade-documents panel for the record being edited', function() {
+  resetDB();
+  var doc = ctx.shpNewTradeDocEntry('Commercial Invoice', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-edit1', ref: 'SHP-EDIT1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-edit1');
+  var html = mockEl('shp-docs-panel').innerHTML;
+  assertContains(html, 'Commercial Invoice');
+  assertContains(html, 'selected', 'the Received status is reflected in the rendered select');
 });
 
 // ── AC-12/AC-13: Settings toggle + persistent banner ──
