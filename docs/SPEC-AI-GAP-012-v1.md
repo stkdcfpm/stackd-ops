@@ -1,8 +1,8 @@
 # SPEC-AI-GAP-012 — AI-assisted RFQ response update from an uploaded supplier quote file (CSV)
 
-**Status:** v1 — drafted, not yet independently spec-gate reviewed.
+**Status:** v1 — independent spec-gate review complete: CONDITIONAL PASS, 4 blocking findings + 5 advisories. All 4 blocking findings fixed in this revision (§1-13 updated accordingly); advisories addressed inline. See §15 for the full review-resolution log.
 **Implements:** `docs/REQ-AI-GAP-012-v1.md` (requirements-gate complete: self-review §8 + independent second review §8b, CONDITIONAL PASS with all findings addressed).
-**Touches:** `index.html` only. No `Code.gs`, no schema change, no `FIELD_MAPS` entry (matches REQ §3).
+**Touches:** `index.html` only. No `Code.gs`, no schema change, no `FIELD_MAPS` entry (matches REQ §3). This revision adds three `id` attributes to already-static HTML in the `ov-rfq` modal (§10d) — markup only, no change to any existing function's behavior.
 
 All line citations below were re-verified directly against the current `index.html` at spec-drafting time (line numbers have moved since the REQ was drafted, due to unrelated fixes shipped earlier the same session — do not trust the REQ document's own citations without re-checking).
 
@@ -10,7 +10,7 @@ All line citations below were re-verified directly against the current `index.ht
 
 ## 1. New module-level state
 
-**File:** `index.html:2920-2927` (immediately after the existing `cRfqEmailParseLineId`/`cRfqEmailParseRespId`/`cRfqEmailParseProposed` trio, which this feature's state deliberately parallels rather than duplicates in shape).
+**File:** `index.html:2922-2927` (immediately after the existing `cRfqEmailParseLineId`/`cRfqEmailParseRespId`/`cRfqEmailParseProposed` trio, which this feature's state deliberately parallels rather than duplicates in shape).
 
 **Current:**
 ```js
@@ -97,7 +97,6 @@ function rfqOpenFileImport(ordId) {
   if (!panel) return;
   cRfqFileImportOrdId = ordId;
   cRfqFileImportPendingRows = null;
-  cRfqFileImportProposals = {};
   panel.style.display = 'block';
   panel.innerHTML = '<div style="border:1px solid var(--ln);border-radius:4px;padding:6px;">' +
     '<div style="font-size:.5rem;margin-bottom:4px;">Import Supplier Quote File</div>' +
@@ -115,6 +114,8 @@ function rfqOpenFileImport(ordId) {
 ```
 
 Existence guards mirror `rfqOpenEmailParse()`'s exact style (`index.html:3602-3611`) — same silent-return-on-miss convention. The `EI.ord !== ordId` check (stricter than `rfqOpenEmailParse()`'s bare `!EI.ord`, since this function takes an `ordId` argument that `rfqOpenEmailParse()`'s line-scoped equivalent doesn't need to cross-check) guards against a stale button click from a different, previously-open Order Request modal.
+
+**`cRfqFileImportProposals` is deliberately NOT reset here (fixed after spec-gate finding 1, §15).** REQ §1.2 Decision 2 requires that re-opening Import while an earlier run's proposals are still pending and unapplied must **not** discard them — only a fresh parse's own results replace same-`lineId` entries (§10a), and `rfqCloseFileImport()` remains the only place that clears the map entirely (§4). Re-opening the "select supplier + file" sub-form here simply doesn't touch whatever is already pending; the next successful parse's render (§10a) shows the full current set — old survivors plus new matches — together.
 
 The supplier `<select>` markup matches `openRfqResponse()`'s own dropdown-population pattern exactly (`index.html:3429-3430`) — same options list, same `san()` usage, no new dropdown-building logic invented.
 
@@ -226,7 +227,7 @@ function rfqSendFileToAI(ordId) {
     return ctx;
   });
   panel.innerHTML = '<div style="color:var(--m);">Parsing…</div>';
-  rfqParseUpdateFromFile(pending.rows, supId, lineContexts).then(function(result){
+  rfqParseUpdateFromFile(pending.rows, lineContexts).then(function(result){
     if (G('ord-fileimport-' + ordId) !== panel) return;
     if (result === null) {
       panel.innerHTML = '<div style="color:var(--m);">AI parse unavailable.</div>' +
@@ -244,13 +245,13 @@ function rfqSendFileToAI(ordId) {
 
 ---
 
-## 8. New function: `rfqParseUpdateFromFile(rows, supId, lineContexts)`
+## 8. New function: `rfqParseUpdateFromFile(rows, lineContexts)`
 
 **File:** insert after `rfqParseUpdateFromEmail()` closes (after `index.html:3743`ish — alongside the other single-shot AI-extraction functions, matching `SPEC-AI-GAP-011-v1.md §8`'s own placement rationale).
 
 ```js
 var RFQ_FILE_IMPORT_PROMPT = 'Given these supplier quote spreadsheet rows and a list of this Order Request\'s own line items, match each row to at most one line item using its description/spec. For each row you can confidently match to exactly one line, extract any of {cost, currency, moq, leadTime, paymentTerms, notes} the row states a value for. If you cannot confidently match a row to exactly one line item, do not guess — return it as unmatched with a brief reason. Respond with ONLY a JSON object of the exact shape {"matches":[{"lineId":"<id>","fields":{...}}],"unmatched":[{"row":{...},"reason":"<brief reason>"}]} — no prose, no markdown fences.';
-async function rfqParseUpdateFromFile(rows, supId, lineContexts) {
+async function rfqParseUpdateFromFile(rows, lineContexts) {
   if (!AI.key) return null;
   var payload = { rows: rows, lines: lineContexts };
   try {
@@ -359,21 +360,29 @@ function rfqRenderFileImportResults(ordId, supId, result, ord) {
   var panel = G('ord-fileimport-' + ordId);
   if (!panel) return;
   cRfqFileImportOrdId = ordId;
-  cRfqFileImportProposals = {};
+  // Merge, never wipe (fixed after spec-gate finding 1, §15): a new run's matches
+  // overwrite only their own lineId keys; any other line's still-pending, unapplied
+  // proposal from an earlier run on this same Order Request survives untouched,
+  // exactly as REQ §1.2 Decision 2 requires.
   result.matches.forEach(function(m){
     cRfqFileImportProposals[m.lineId] = { supId: supId, fields: m.fields };
   });
-  var panelsHtml = result.matches.map(function(m){
-    var line = (ord.lines || []).find(function(l){ return l.id === m.lineId; });
-    var existingResp = line ? (line.rfqResponses || []).find(function(r){ return r.supId === supId; }) : null;
-    var diffRows = rfqDiffRowsHtml(existingResp || {}, m.fields);
-    var label = line ? (san(line.category||'-') + ' — ' + san(line.itemSpec||'-')) : san(m.lineId);
-    return '<div id="rfq-fileimport-panel-' + m.lineId + '" style="border:1px solid var(--ln);border-radius:4px;padding:6px;margin-top:4px;">' +
+  // Render every currently-pending proposal — old survivors and this run's new
+  // matches together — not just this run's own result.matches.
+  var pendingLineIds = Object.keys(cRfqFileImportProposals);
+  var panelsHtml = pendingLineIds.map(function(lid){
+    var proposal = cRfqFileImportProposals[lid];
+    var line = (ord.lines || []).find(function(l){ return l.id === lid; });
+    if (!line) return ''; // line removed since the proposal was created — drop silently, defensive only
+    var existingResp = (line.rfqResponses || []).find(function(r){ return r.supId === proposal.supId; });
+    var diffRows = rfqDiffRowsHtml(existingResp || {}, proposal.fields);
+    var label = san(line.category||'-') + ' — ' + san(line.itemSpec||'-');
+    return '<div id="rfq-fileimport-panel-' + lid + '" style="border:1px solid var(--ln);border-radius:4px;padding:6px;margin-top:4px;">' +
       '<div style="font-size:.5rem;font-weight:600;">' + label + (existingResp ? '' : ' <em style="font-weight:400;color:var(--m);">(new response)</em>') + '</div>' +
       '<div style="font-size:.5rem;">' + diffRows + '</div>' +
       '<div style="margin-top:4px;">' +
-        '<button class="btn btn-g" id="rfq-fileimport-apply-' + m.lineId + '" style="font-size:.44rem;padding:1px 6px;" onclick="rfqApplyFileProposal(\'' + ordId + '\',\'' + m.lineId + '\')">Apply</button> ' +
-        '<button class="btn btn-g" id="rfq-fileimport-discard-' + m.lineId + '" style="font-size:.44rem;padding:1px 6px;" onclick="rfqDiscardFileProposal(\'' + ordId + '\',\'' + m.lineId + '\')">Discard</button>' +
+        '<button class="btn btn-g" id="rfq-fileimport-apply-' + lid + '" style="font-size:.44rem;padding:1px 6px;" onclick="rfqApplyFileProposal(\'' + ordId + '\',\'' + lid + '\')">Apply</button> ' +
+        '<button class="btn btn-g" id="rfq-fileimport-discard-' + lid + '" style="font-size:.44rem;padding:1px 6px;" onclick="rfqDiscardFileProposal(\'' + ordId + '\',\'' + lid + '\')">Discard</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -408,6 +417,8 @@ Removes only that line's own panel element and its own proposal-map entry — ev
 
 ### 10c. `rfqApplyFileProposal(ordId, lineId)` — the safety-critical function (REQ-AI-GAP-012f addendum, AC-7b)
 
+**Rewritten after spec-gate finding 2 (§15).** The v1 draft's lock (`cRfqFileImportApplyInFlight`) only guarded this feature's own new Apply/Discard buttons against each other — it did nothing to stop the operator clicking the pre-existing, now-visibly-open `ov-rfq` modal's own "Save Response" button a second time, or clicking Edit on a *different* line via the ordinary, already-shipped `renderRfqComparison()` UI, during the very `await saveRfqResponse()` window this function creates. Both `editRfqResponse()` (`index.html:3475`) and `openRfqResponse()` (`index.html:3444`) unconditionally do `G('ov-rfq').classList.add('on')` — this function's own two branches are the ones popping that shared, page-wide modal open, with its live Save/Cancel/× buttons visible, for the whole in-flight duration. REQ-AI-GAP-012f's actual mandate — "no two `saveRfqResponse()` invocations may ever be in flight concurrently" — is not satisfiable by locking only this feature's own buttons; every path that can reach `saveRfqResponse()` for the duration of one in-flight call must be frozen, which means the entire per-Order-Request RFQ editing surface, not just this feature's own panels.
+
 ```js
 async function rfqApplyFileProposal(ordId, lineId) {
   if (ordId !== cRfqFileImportOrdId) return;
@@ -420,7 +431,7 @@ async function rfqApplyFileProposal(ordId, lineId) {
   if (!line) return;
 
   cRfqFileImportApplyInFlight = true;
-  rfqSetOtherFileImportPanelsDisabled(lineId, true);
+  rfqSetOrdRfqUiFrozen(true);
 
   var existingResp = (line.rfqResponses || []).find(function(r){ return r.supId === proposal.supId; });
   if (existingResp) {
@@ -436,12 +447,24 @@ async function rfqApplyFileProposal(ordId, lineId) {
     await saveRfqResponse();
   }
 
+  // Success/failure signal without touching saveRfqResponse()'s own internals
+  // (fixed after spec-gate finding 3, §15): only its success path calls
+  // closeM('ov-rfq') (index.html:3508). If the modal is still open, a validation
+  // error inside saveRfqResponse() left it open unsaved — the proposal must NOT
+  // be treated as applied.
+  var modalStillOpen = G('ov-rfq').classList.contains('on');
+
+  cRfqFileImportApplyInFlight = false;
+  rfqSetOrdRfqUiFrozen(false);
+
+  if (modalStillOpen) {
+    toast('Could not apply automatically — the response form is open with a validation error. Resolve it in the form or Cancel, then retry from the file import panel.');
+    return; // proposal and its panel are deliberately left in place — nothing was saved
+  }
+
   delete cRfqFileImportProposals[lineId];
   var el = G('rfq-fileimport-panel-' + lineId);
   if (el && el.parentNode) el.parentNode.removeChild(el);
-
-  cRfqFileImportApplyInFlight = false;
-  rfqSetOtherFileImportPanelsDisabled(lineId, false);
 }
 
 function rfqFillRfqFormFields(fields) {
@@ -453,27 +476,65 @@ function rfqFillRfqFormFields(fields) {
   if (fields.notes !== undefined) G('rfq-notes').value = fields.notes;
 }
 
-function rfqSetOtherFileImportPanelsDisabled(excludeLineId, disabled) {
-  Object.keys(cRfqFileImportProposals).forEach(function(otherLineId){
-    if (otherLineId === excludeLineId) return;
-    var applyBtn = G('rfq-fileimport-apply-' + otherLineId);
-    var discardBtn = G('rfq-fileimport-discard-' + otherLineId);
-    if (applyBtn) applyBtn.disabled = disabled;
-    if (discardBtn) discardBtn.disabled = disabled;
-  });
+// Freezes the ENTIRE per-Order-Request RFQ editing surface, not just this
+// feature's own file-import panels — every Edit/Del/Commit/+Add Response/envelope
+// button rendered by rOrdLines()/renderRfqComparison() for every line, AND the
+// shared ov-rfq modal's own Save/Cancel/close controls whenever it happens to be
+// open. This is the actual fix for spec-gate finding 2: freezing only this
+// feature's own buttons left every other path into saveRfqResponse() reachable
+// during the in-flight window; freezing the whole surface closes all of them at
+// once, correctly implementing REQ-AI-GAP-012f's "no two saveRfqResponse()
+// invocations may ever be in flight concurrently" as an actual guarantee rather
+// than one this feature's own new UI happened to honor for itself alone.
+function rfqSetOrdRfqUiFrozen(frozen) {
+  var linesList = G('of-lines-list');
+  if (linesList) {
+    linesList.style.pointerEvents = frozen ? 'none' : '';
+    linesList.style.opacity = frozen ? '0.6' : '';
+  }
+  var saveBtn = G('rfq-save-btn'), cancelBtn = G('rfq-cancel-btn'), closeBtn = G('rfq-close-btn');
+  if (saveBtn) saveBtn.disabled = frozen;
+  if (cancelBtn) cancelBtn.disabled = frozen;
+  if (closeBtn) closeBtn.disabled = frozen;
 }
 ```
 
-**This is the direct implementation of REQ-AI-GAP-012f's serialization requirement and AC-7b.** Walking through why it actually closes the gap the independent REQ review found (REQ §8b, finding B1), not just gestures at it:
+**Walking through why this actually closes the gap the independent REQ review found (REQ §8b, finding B1) and the gap spec-gate's own independent review found in the v1 draft (§15, finding 2):**
 
-1. **The lock (`cRfqFileImportApplyInFlight`) is a single shared boolean, checked synchronously at the very top of the function, before anything else happens.** Because JavaScript is single-threaded, the *first* Apply click to run sets this flag to `true` and disables every other panel's buttons — both of these happen synchronously, before this function's own first `await`. A second Apply click, on a *different* line, dispatched as its own separate event, cannot begin executing until the first click's synchronous portion has already run to completion (or reached its own `await`) — by which point the lock is already `true` and the second click's own invocation of `rfqApplyFileProposal()` returns immediately at the `if (cRfqFileImportApplyInFlight) return;` guard, doing nothing. There is no window in which two `saveRfqResponse()` calls can be in flight at once, because the guard that prevents the second one from *starting* is itself set synchronously, not behind an await.
-2. **Disabling the other panels' actual DOM buttons (`el.disabled = true`)** is not merely cosmetic — it prevents the operator from generating a second click event in the first place during the in-flight window, which is the simplest way to close the race at the UI layer as well as the state layer (belt-and-braces: the lock alone is already sufficient per point 1, but a disabled button is also honest, visible feedback to the operator about why nothing happens if they try).
-3. **The lock is released, and every other panel's buttons re-enabled, only after `await saveRfqResponse()` resolves** — whether it actually persisted (the common case) or hit its own internal validation failure and left `ov-rfq` open without saving (the known, accepted edge case `SPEC-AI-GAP-011-v1.md §7`'s own final paragraph already documents for the single-line case, carried through unchanged here). Either way, the *next* Apply click, on any line, is only ever able to begin after this one's entire async chain — including `saveRfqResponse()`'s own internal `await persistOrdChange(ord)` under Cloud Data — has fully settled.
-4. **This function `await`s `saveRfqResponse()` directly, a deliberate, necessary departure from this codebase's own stated "async save functions are called fire-and-forget from onclick" convention** (`CLAUDE.md`, Key coding conventions). `saveRfqResponse()` is already `async function saveRfqResponse()` (`index.html:3478`) and already returns a promise that resolves once its own work (including the `persistOrdChange()` Supabase round-trip) completes — nothing about it needs to change for this function to await it. The fire-and-forget convention exists for the *ordinary*, single-operation case, where nothing else needs to know when the save finishes; this feature is exactly the exception the convention doesn't anticipate, because knowing precisely when the save finishes is the entire mechanism the safety requirement depends on. This divergence is deliberate and load-bearing, not an oversight — call this out explicitly at build-gate review so it isn't "corrected" back to fire-and-forget.
+1. **The lock (`cRfqFileImportApplyInFlight`) is a single shared boolean, checked synchronously at the very top of the function, before anything else happens.** Because JavaScript is single-threaded, the *first* Apply click to run sets this flag to `true` and freezes the whole surface — both synchronously, before this function's own first `await`. A second Apply click on a *different* line cannot begin executing until the first click's synchronous portion has already run (or reached its own `await`) — by which point the lock is already `true`, so the second call returns immediately at the `if (cRfqFileImportApplyInFlight) return;` guard.
+2. **`rfqSetOrdRfqUiFrozen(true)` freezes every other path into `saveRfqResponse()`, not just this feature's own buttons.** Setting `pointer-events:none` on `#of-lines-list` — the same container `rOrdLines()` renders into (§2) — disables every Edit/Del/Commit/+Add Response/envelope button for every line in this Order Request in one shot, without needing to enumerate them individually. Separately disabling the `ov-rfq` modal's own Save/Cancel/× buttons (`rfq-save-btn`/`rfq-cancel-btn`/`rfq-close-btn`, §10d) closes the specific gap spec-gate found: that modal is a sibling element outside `#of-lines-list`, and it is exactly the modal this function's own two branches (`editRfqResponse()`/`openRfqResponse()`) pop open and leave visibly interactive for the whole in-flight duration. With both frozen, there is no remaining button on screen, anywhere in this Order Request's UI, that can reach `saveRfqResponse()` a second time while this call's own invocation is in flight.
+3. **This also resolves the same-line-Discard-during-Apply sub-issue spec-gate flagged**, as a side effect of freezing the whole surface rather than excluding the currently-applying line: that line's own Discard button (part of `#of-lines-list`) is frozen along with everything else, so it can no longer be clicked mid-flight to produce a false "discarded" signal for a save that is, in fact, in progress.
+4. **The lock is released, and everything re-enabled, only after `await saveRfqResponse()` resolves** — whether it actually persisted or hit its own internal validation failure (point 5 below). Either way, the *next* Apply click, on any line, can only begin after this one's entire async chain — including `saveRfqResponse()`'s own internal `await persistOrdChange(ord)` under Cloud Data — has fully settled.
+5. **Success is verified, not assumed (spec-gate finding 3, fixed).** `saveRfqResponse()`'s own two internal validation failures (a missing supplier, an invalid cost) leave `ov-rfq` open without persisting anything, with no return-value signal distinguishing this from success. Checking `G('ov-rfq').classList.contains('on')` after the `await` — only ever cleared by `saveRfqResponse()`'s own success path (`closeM('ov-rfq')`, `index.html:3508`) — is a reliable, non-invasive way to tell them apart without adding a return value to `saveRfqResponse()` itself (which REQ §3 forbids modifying). On a detected failure, the proposal and its panel are deliberately left in place, and the operator is told plainly what happened, rather than the batch UI silently reporting success for a write that never happened.
+6. **This function `await`s `saveRfqResponse()` directly, a deliberate, necessary departure from this codebase's own stated "async save functions are called fire-and-forget from onclick" convention** (`CLAUDE.md`, Key coding conventions). `saveRfqResponse()` is already `async function saveRfqResponse()` (`index.html:3478`) and already returns a promise that resolves once its own work completes — nothing about it needs to change for this function to await it. This divergence is deliberate and load-bearing, not an oversight — call this out explicitly at build-gate review so it isn't "corrected" back to fire-and-forget.
 
-**Two additional guards, matching the email-parse precedent's own two-guard pattern (`SPEC-AI-GAP-011-v1.md §7`) for the narrower edge cases the serialization lock alone doesn't cover:**
+**Two additional guards, matching the email-parse precedent's own two-guard pattern (`SPEC-AI-GAP-011-v1.md §7`) for the narrower edge cases the freeze-and-lock mechanism alone doesn't cover:**
 - `if (ordId !== cRfqFileImportOrdId) return;` — a stale button from a closed-and-reopened-on-a-different-order panel (not reachable given the single-modal-at-a-time UI this spec builds, but zero-cost defense-in-depth, consistent with §4's identical guard).
 - `if (cRfqEditId === existingResp.id)` before writing form fields — the same "did `editRfqResponse()` actually succeed" check `rfqApplyEmailParse()` already uses (`index.html:3686`), covering the case where the response was deleted by some other action between the proposal being generated and Apply being clicked.
+
+**Accepted residual scope, named explicitly rather than silently carried:** while the whole per-Order-Request RFQ surface is frozen, the operator cannot Edit/Delete/Commit any response on *any* line of this Order Request, nor use the pasted-email parse feature (§10 of `SPEC-AI-GAP-011`), until the current file-import Apply resolves — typically a single network round-trip's worth of time. This is a broader, more visible freeze than REQ-AI-GAP-012f's own text literally describes ("disable every other line's Apply and Discard controls"), but it is what actually satisfying the REQ's own stated guarantee requires, given `saveRfqResponse()` is reachable from many more places than this feature's own new buttons. Flagged for the requirements owner to confirm this broader freeze is acceptable UX, rather than silently shipping a narrower implementation that reads as compliant but isn't.
+
+### 10d. Markup addition: three `id` attributes on the existing, static `ov-rfq` modal
+
+**File:** `index.html:438-457` (the modal's static HTML, not the JS that opens/populates it).
+
+**Current** (`index.html:440`, `455`, `456`):
+```html
+<div class="mh"><h2 id="rfq-title">RFQ Response</h2><button class="mx" onclick="closeM('ov-rfq')">&#215;</button></div>
+...
+<button class="btn btn-g" onclick="closeM('ov-rfq')">Cancel</button>
+<button class="btn btn-s" onclick="saveRfqResponse()">Save Response</button>
+```
+
+**New:**
+```html
+<div class="mh"><h2 id="rfq-title">RFQ Response</h2><button class="mx" id="rfq-close-btn" onclick="closeM('ov-rfq')">&#215;</button></div>
+...
+<button class="btn btn-g" id="rfq-cancel-btn" onclick="closeM('ov-rfq')">Cancel</button>
+<button class="btn btn-s" id="rfq-save-btn" onclick="saveRfqResponse()">Save Response</button>
+```
+
+**This is a markup-only change** — three `id` attributes added to already-existing static HTML elements, no change to any `onclick` handler, no change to any JS function's behavior for the ordinary single-response flow (a disabled button with an unchanged `onclick` simply doesn't fire when clicked — standard HTML `disabled` semantics, nothing this spec needs to implement itself). This does not modify `editRfqResponse()`/`saveRfqResponse()`/`openRfqResponse()`'s own internals (REQ §3's constraint is about those functions' logic, not unrelated static markup they happen to populate), and has zero effect on the existing, already-shipped single-response email-parse flow (`SPEC-AI-GAP-011`) outside of the same freeze window this spec's own code triggers.
 
 ---
 
@@ -497,7 +558,7 @@ function rfqSetOtherFileImportPanelsDisabled(excludeLineId, disabled) {
 
 ## 12. Explicitly unchanged (confirmed by this spec, not just asserted by the REQ)
 
-- `editRfqResponse()` (`index.html:3447-3477`), `saveRfqResponse()` (`index.html:3478-3511`), `delRfqResponse()` (`index.html:3513-3531`) — zero modifications. Every AC-5/AC-6 guarantee is inherited by calling these exactly as they exist today, not by re-deriving their behavior. (§10c's `await` of `saveRfqResponse()` is a change in how it's *called*, not to the function itself.)
+- `editRfqResponse()` (`index.html:3447-3477`), `saveRfqResponse()` (`index.html:3478-3511`), `delRfqResponse()` (`index.html:3513-3531`), `openRfqResponse()` (`index.html:3423-3445`) — zero modifications to their own JS logic. Every AC-5/AC-6 guarantee is inherited by calling these exactly as they exist today, not by re-deriving their behavior. (§10c's `await` of `saveRfqResponse()`, and its own reliance on the `ov-rfq` modal's open/closed class state, are changes in how these functions are *called and observed*, not to their own bodies.) The three `id` attributes added to the static `ov-rfq` modal markup (§10d) are the one change touching this modal at all — markup only, no `onclick` handler or JS function altered.
 - `parseImportCSV()` (`index.html:10169-10220`), `processImport()` (`index.html:10222` onward) — zero modifications. This spec is a new, independent caller of `parseImportCSV()` only; `processImport()` is never called by this feature at all (§5's rationale).
 - `rfqOpenEmailParse`/`rfqCloseEmailParse`/`rfqRunEmailParse`/`rfqApplyEmailParse`/`rfqParseUpdateFromEmail` (`index.html:3602-3743`) — zero modifications, except that `rfqRunEmailParse()`'s own diff-row-building lines are replaced with a call to the new shared `rfqDiffRowsHtml()` (§9) — a refactor that preserves its exact existing behavior byte-for-byte, confirmed by the "why this factoring is safe" argument in §9.
 - `renderQteSourceDriftWarn()` — zero modifications; this feature never touches Quotes, only RFQ responses, and inherits the staleness-banner behavior transitively through `saveRfqResponse()`'s own unmodified internals (same inheritance argument as `SPEC-AI-GAP-011-v1.md §10`).
@@ -528,9 +589,12 @@ Follows `SPEC-AI-GAP-011-v1.md §11`'s established pattern and `REQ-AI-GAP-012 �
 
 **AC-7 (cross-line proposal-state isolation, non-async):** seed two lines, populate `cRfqFileImportProposals` with entries for both, discard one line's proposal — assert the other line's own `cRfqFileImportProposals` entry and its own DOM panel are completely untouched. This is a synchronous-only test and, per the independent REQ review's own finding, is **not sufficient on its own** to prove serialization — it proves the *state map* is correctly isolated, which AC-7b then builds on to prove the *persistence pipeline* is too.
 
-**AC-7b (serialization — the highest-value test in this spec, required per REQ §8b):** synchronous calls cannot reach the actual risk window (the `await saveRfqResponse()` line inside `rfqApplyFileProposal()`), so this test needs a genuinely controllable, not-yet-resolved promise at that exact point. **No existing harness in `tests/run.js` provides this today** (`mockSb()`, `tests/run.js:61-74`, resolves every call immediately) — rather than modifying that shared harness (used by many unrelated tests) to add a general-purpose deferred-resolution mode, this spec specifies a minimal, test-local technique: temporarily replace `ctx.persistOrdChange` with a stub the test controls directly, for the duration of this one test only, restoring the original immediately after:
+**AC-7b (serialization — the highest-value test in this spec, required per REQ §8b):** synchronous calls cannot reach the actual risk window (the `await saveRfqResponse()` line inside `rfqApplyFileProposal()`), so this test needs a genuinely controllable, not-yet-resolved promise at that exact point. **No existing harness in `tests/run.js` provides this today** (`mockSb()`, `tests/run.js:7390` onward, resolves every call immediately — corrected citation, fixed after spec-gate finding 4, §15; the earlier draft mis-cited this as `mockFetch()`'s own line range) — rather than modifying that shared harness (used by many unrelated tests) to add a general-purpose deferred-resolution mode, this spec specifies a minimal, test-local technique: temporarily replace `ctx.persistOrdChange` with a stub the test controls directly, for the duration of this one test only, restoring the original immediately after.
+
+**Must be registered via `testAsync(...)`, never `test(...)` (fixed after spec-gate finding 4, §15).** `tests/run.js`'s `test(name, fn)` calls `fn()` and records pass/fail without awaiting any returned promise — for an `async function` test body, this records a pass the instant the function reaches its own first `await`, before any assertion after that point ever runs; those later assertions become an orphaned, unobserved promise continuation that can silently fail without the suite ever reporting it. `testAsync(name, fn)` queues the test and is properly awaited by `_runAsyncTests()`. This is not a hypothetical distinction — `tests/run.js` already has at least one pre-existing test making exactly this mistake (found during spec-gate review); do not add a second one to the single test this spec calls its highest-value proof.
+
 ```js
-test('rfqApplyFileProposal() serializes against concurrent saveRfqResponse() calls (AC-7b)', async function() {
+testAsync('rfqApplyFileProposal() serializes against concurrent saveRfqResponse() calls (AC-7b)', async function() {
   resetDB();
   // seed an Order Request with two lines, adversarially similar itemSpec text (per §5's fixture note)
   // ... ord/line A ("R1") / line B ("R2") setup ...
@@ -579,3 +643,26 @@ Per `CLAUDE.md`'s standing checklist and `REQ-AI-GAP-012 §7`:
 - `STACKD_CONTEXT.md`/`CLAUDE.md`: standard version-ship updates.
 - `AI_SYSTEM_PROMPT`: done in §11 above, as part of this spec's own diff, not deferred to a separate housekeeping pass — matching how `SPEC-AI-GAP-011` handled its own mandatory prompt update.
 - `docs/user-guide.md`: add a short paragraph to the existing "Comparing supplier quotes (RFQ comparison)" section describing the new button, its CSV-only limitation, and the mandatory pre-send confirmation step — mirroring how `SPEC-AI-GAP-011`'s own housekeeping extended that same section for the envelope button.
+
+---
+
+## 15. Review-resolution log
+
+**Independent spec-gate review: CONDITIONAL PASS — 4 blocking findings, 5 advisories. All addressed in this revision.** The reviewer independently re-verified every `index.html` citation against the current file (all confirmed exact except one cosmetic off-by-one in §1's range header, fixed), traced the serialization mechanism (§10c) by hand against the real `editRfqResponse()`/`openRfqResponse()`/`saveRfqResponse()` code rather than trusting the spec's own narrative, and mechanically checked the AC-7b test against `tests/run.js`'s actual `test()`/`testAsync()` semantics.
+
+**Blocking finding 1 (addressed — §3, §10a):** REQ §1.2 Decision 2 requires that re-opening Import while an earlier run's proposals are still pending must preserve them, replacing only same-`lineId` entries. The v1 draft did the opposite — `rfqOpenFileImport()` and `rfqRenderFileImportResults()` both unconditionally wiped `cRfqFileImportProposals` to `{}`. **Fixed:** `rfqOpenFileImport()` no longer touches the map at all; `rfqRenderFileImportResults()` merges a new run's matches into the existing map (overwriting only their own keys) and renders every currently-pending proposal — old survivors and new matches together — not just the new run's own results.
+
+**Blocking finding 2 (addressed — §10c, new §10d):** the serialization lock (`cRfqFileImportApplyInFlight`) only guarded this feature's own new Apply/Discard buttons against each other. It did nothing to stop the operator clicking the pre-existing `ov-rfq` modal's own visible "Save Response" button a second time, or editing a *different* line via the ordinary, already-shipped Edit button, during the exact in-flight window this function itself creates by calling `editRfqResponse()`/`openRfqResponse()` — both of which unconditionally open that same shared, page-wide modal (verified directly: `index.html:3444`, `:3475`). This is precisely the double-write race REQ finding B1 (§8b of the REQ) was written to close, still open in the v1 draft. **Fixed:** `rfqSetOrdRfqUiFrozen()` replaces the narrower per-panel disable — it freezes the entire per-Order-Request RFQ editing surface (`#of-lines-list` via `pointer-events:none`, covering every Edit/Del/Commit/+Add Response/envelope button for every line) plus the `ov-rfq` modal's own Save/Cancel/close controls (three new `id` attributes added to that already-static markup, §10d, so they can be targeted directly). This also resolves, as a side effect, the related same-line-Discard-during-Apply gap the reviewer separately named, since the applying line's own Discard button is now frozen along with everything else rather than deliberately excluded.
+
+**Blocking finding 3 (addressed — §10c):** `rfqApplyFileProposal()` unconditionally treated Apply as successful, clearing the proposal and removing its panel regardless of whether `saveRfqResponse()` actually persisted anything — a real, reachable failure mode for the new-response path (an AI-confident match that happens to omit `cost` hits `saveRfqResponse()`'s own validation, leaving `ov-rfq` open unsaved, with the batch UI reporting success anyway). **Fixed:** checks `G('ov-rfq').classList.contains('on')` after the `await` — only ever cleared by `saveRfqResponse()`'s own success path — to distinguish success from a left-open validation failure, without adding a return value to `saveRfqResponse()` itself (which REQ §3 forbids modifying). On a detected failure, the proposal and panel are deliberately left in place and the operator is told plainly what happened.
+
+**Blocking finding 4 (addressed — §13):** the AC-7b test — the one this spec calls its highest-value proof — was registered via `test(...)` rather than `testAsync(...)`. Given `test()`'s synchronous, non-awaited call convention, the test would have recorded a pass the instant its async body reached its own first `await`, before any of the assertions that actually verify the lock's release and final state ever ran; a broken serialization mechanism could pass this test regardless. **Fixed:** registered via `testAsync(...)`. Also fixed a wrong citation in the same section (`mockSb()` was mis-cited as `tests/run.js:61-74`, which is actually `mockFetch()`; `mockSb()` is at `tests/run.js:7390`).
+
+**Five advisories, all addressed:**
+1. Citation off-by-one in §1's range header (`2920` → `2922`) — fixed.
+2. `rfqParseUpdateFromFile()` accepted an unused `supId` parameter — removed; its one call site (§7) updated accordingly.
+3. REQ §1.2 Decision 2's multi-run behavior has no dedicated AC in REQ §4 despite being a non-optional requirement — noted here rather than reopening the REQ document; this spec treats it as binding regardless (per finding 1's fix).
+4. The `mockSb()` citation error (folded into blocking finding 4's fix above rather than tracked separately, since both live in the same sentence).
+5. Same-line-Discard-during-Apply was reasoned about only for unrelated lines in the v1 draft — folded into finding 2's fix (the broader freeze now covers this case too) rather than requiring a separate mechanism.
+
+This document is now considered to have passed the spec-gate process this repo's other shipped specs went through, and is ready to proceed to build-gate.
