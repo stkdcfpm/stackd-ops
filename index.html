@@ -5262,12 +5262,12 @@ function rDash() {
   } else {
     pl.innerHTML = DB.inv.slice().reverse().slice(0,10).map(function(inv){
       var c = iCalc(inv);
-      var sc = (inv.status||'draft').toLowerCase().replace(/ /g, '-');
+      var sc = invStatusClass(inv.status);
       return '<div class="pi" onclick="editInv(\'' + inv.id + '\')">' +
         '<span class="pref">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</span>' +
         '<span class="pbuy">' + (san(inv.buyer)||'-') + '</span>' +
         '<span class="pdst">' + san(inv.dst||'') + '</span>' +
-        '<span class="tag s-' + sc + '">' + (inv.status||'Draft') + '</span>' +
+        '<span class="tag ' + sc + '">' + san(inv.status||'Draft') + '</span>' +
         '<span class="pamt">' + fmt(c.np, inv.cur||'USD') + '</span>' +
         '<span class="pbal">' + (c.bal>0 ? fmt(c.bal, inv.cur||'USD') : '') + '</span>' +
         '</div>';
@@ -5404,7 +5404,7 @@ function renderAccts() {
     var totalToChase = toDisp(balFromBuyer, cur) + unrecoveredFPM;
     var netPos = buyerDep - supDepPaid;
     var nc = netPos >= 0 ? 'pos' : 'neg';
-    var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = invStatusClass(inv.status);
 
     var fpmCell = fpmFunded > 0
       ? (fpmRecovered
@@ -5420,7 +5420,7 @@ function renderAccts() {
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap;">' + (san(inv.num)||'-') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td>' +
       '<td>' + (san(inv.dst)||'-') + '</td>' +
-      '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
+      '<td><span class="tag ' + sc + '">' + san(inv.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(c.grand, cur) + '</td>' +
       '<td class="num" style="color:var(--gn);">' + (buyerDep ? fmt(buyerDep,cur) : '-') + '</td>' +
       '<td class="num ' + (balFromBuyer>0?'neg':'') + '">' + (balFromBuyer>0 ? fmt(balFromBuyer,cur) : '<span style="color:var(--gn);">&#10003;</span>') + '</td>' +
@@ -5600,7 +5600,7 @@ function renderSupContacts() {
   el.innerHTML = '<table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead><tbody>' +
     linked.map(function(c){
       return '<tr><td>' + san(c.name) + '</td><td>' + san(c.email) + '</td>' +
-        '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
+        '<td><span class="tag ' + conStatusClass(c.status) + '">' + san(c.status) + '</span></td>' +
         '<td><button class="ab" onclick="unlinkSupCon(\'' + c.id + '\')">Unlink</button></td></tr>';
     }).join('') + '</tbody></table>';
 }
@@ -8544,13 +8544,13 @@ function rInv() {
   if(invTb) invTb.innerHTML=fi.slice().reverse().map(function(inv){
     var c=iCalc(inv), cur=inv.cur||'USD';
     var mc=c.mgn===null||isNaN(c.mgn)?'':(c.mgn>=20?'phi':c.mgn>=10?'pmi':'plo');
-    var sc=(inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = invStatusClass(inv.status);
     var balDue = c.bal;
     return '<tr>' +
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td><td>' + (san(inv.dst)||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (inv.date||'-') + '</td>' +
-      '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
+      '<td><span class="tag ' + sc + '">' + san(inv.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(c.grand,cur) + '</td>' +
       '<td class="num">' + fmt(c.cogs,cur) + '</td>' +
       '<td class="num ' + (c.gp>=0?'pos':'neg') + '">' + fmt(c.gp,cur) + '</td>' +
@@ -9097,7 +9097,7 @@ function renderStatement(buyer) {
     var credits = DB.inv.filter(function(cn){ return isCnRec(cn) && cn.linkedInvNum===inv.num && cn.status==='CN Applied'; })
                         .reduce(function(s,cn){ return s+Math.abs(+cn.cnAmount||0); }, 0);
     var balDue = c.bal;
-    var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = invStatusClass(inv.status);
     totalGrand += c.grand; totalPaid += paid; totalCredits += credits;
     return '<tr>' +
       '<td style="font-weight:500;color:var(--cr);">'+san(inv.num||'-')+'</td>' +
@@ -9106,7 +9106,7 @@ function renderStatement(buyer) {
       '<td class="num" style="color:var(--gn);">'+fmt(paid,cur)+'</td>' +
       '<td class="num" style="color:var(--gold);">'+fmt(-credits,cur)+'</td>' +
       '<td class="num" style="color:var(--bl);">'+fmt(balDue,cur)+'</td>' +
-      '<td><span class="tag s-'+sc+'">'+san(inv.status||'-')+'</span></td>' +
+      '<td><span class="tag '+sc+'">'+san(inv.status||'-')+'</span></td>' +
     '</tr>';
   }).join('');
 
@@ -9349,13 +9349,13 @@ function rPO() {
   G('po-tb').innerHTML=f.slice().reverse().map(function(po){
     var liT=(po.lineItems||[]).reduce(function(s,li){return s+(+li.qty||0)*(+li.cost||0);},0);
     var dep=getPOEffectiveDep(po), bal=liT+(+po.oth||0)-dep, cur=po.cur||'USD';
-    var sc=(po.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = poStatusClass(po.status);
     return '<tr>' +
       '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + san(po.num||'-') + (po._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(gsn(po.supId)) + '</td>' +
       '<td style="color:var(--m);font-size:.54rem;">' + san(po.invNum||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (po.date||'-') + '</td>' +
-      '<td><span class="tag s-' + sc + '">' + (po.status||'-') + '</span></td>' +
+      '<td><span class="tag ' + sc + '">' + san(po.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(liT,cur) + '</td>' +
       '<td class="num" style="color:var(--bl);">' + (dep?fmt(dep,cur):'-') + '</td>' +
       '<td class="num" style="color:var(--gold);">' + fmt(bal,cur) + '</td>' +
@@ -12500,6 +12500,34 @@ function shpStatusClass(st) {
   return m[st] || 's-draft';
 }
 
+// SEC-GAP-021: status-tag class strings must never be built by slugifying
+// unsanitized `status` text (`(x.status||'draft').toLowerCase().replace(/ /g,'-')`)
+// and concatenating it into `class="tag s-' + sc + '"` — a status value containing
+// a `"` breaks out of the attribute regardless of whether the adjacent text content
+// is san()'d, and this was reachable live via CSV Invoice import (processImportRecords()'s
+// status mapper falls through to the raw cell value for anything it doesn't recognize).
+// Every entity with a status tag gets its own fixed lookup + safe default, mirroring
+// shpStatusClass() above — never slugify raw text into a class attribute again.
+function invStatusClass(st) {
+  var m = {
+    'Draft':'s-draft', 'Pro-forma':'s-pro-forma', 'Sent':'s-sent',
+    'Partially Paid':'s-partially-paid', 'Paid':'s-paid', 'Cancelled':'s-cancelled',
+    'CN Draft':'s-cn-draft', 'CN Issued':'s-cn-issued', 'CN Applied':'s-cn-applied'
+  };
+  return m[st] || 's-draft';
+}
+function poStatusClass(st) {
+  var m = {
+    'Draft':'s-draft', 'Sent':'s-sent', 'Deposit Paid':'s-deposit-paid',
+    'Settled':'s-settled', 'Confirmed':'s-confirmed', 'Cancelled':'s-cancelled'
+  };
+  return m[st] || 's-draft';
+}
+function conStatusClass(st) {
+  var m = { 'lead':'s-lead', 'qualified':'s-qualified', 'converted':'s-converted', 'closed':'s-closed' };
+  return m[st] || 's-lead';
+}
+
 function rShp() {
   var q = (G('sh-q') ? G('sh-q').value.toLowerCase() : '');
   var sf = (G('sh-sf') ? G('sh-sf').value : '');
@@ -13540,7 +13568,7 @@ function rCon() {
       '<td>' + san(c.name) + stale + (c._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(c.company||'—') + '</td>' +
       '<td>' + san(c.email) + '</td>' +
-      '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
+      '<td><span class="tag ' + conStatusClass(c.status) + '">' + san(c.status) + '</span></td>' +
       '<td>' + san(c.source||'—') + '</td>' +
       '<td>' + (c.supplierId ? san(gsn(c.supplierId)) : '—') + '</td>' +
       '<td>' + lastDate + '</td>' +

@@ -13101,6 +13101,64 @@ test('AC-7: fmt() call-count reflects REQ-INTEG-002-2c\'s own new, legitimate ca
   assertEqual(fmtNCount, 6, 'fmtN( occurs 6 times total (5 call sites + 1 definition) — untouched by this REQ');
 });
 
+// ── SEC-GAP-021: status-tag class-attribute injection fix ──────
+console.log('\nSEC-GAP-021 — status-tag class injection fix');
+
+test('invStatusClass() returns the fixed, known class for every real Invoice/CN status', () => {
+  assertEqual(ctx.invStatusClass('Draft'), 's-draft');
+  assertEqual(ctx.invStatusClass('Pro-forma'), 's-pro-forma');
+  assertEqual(ctx.invStatusClass('Sent'), 's-sent');
+  assertEqual(ctx.invStatusClass('Partially Paid'), 's-partially-paid');
+  assertEqual(ctx.invStatusClass('Paid'), 's-paid');
+  assertEqual(ctx.invStatusClass('Cancelled'), 's-cancelled');
+  assertEqual(ctx.invStatusClass('CN Applied'), 's-cn-applied');
+});
+test('invStatusClass() never passes through unrecognized/malicious input — falls back to a fixed safe default', () => {
+  assertEqual(ctx.invStatusClass('"><img src=x onerror=alert(1)>'), 's-draft', 'malicious status must map to the fixed fallback, never be echoed into the class string');
+  assertEqual(ctx.invStatusClass(undefined), 's-draft');
+});
+test('poStatusClass() and conStatusClass() also never pass through unrecognized input', () => {
+  assertEqual(ctx.poStatusClass('"><script>alert(1)</script>'), 's-draft');
+  assertEqual(ctx.poStatusClass('Deposit Paid'), 's-deposit-paid');
+  assertEqual(ctx.conStatusClass('"><script>alert(1)</script>'), 's-lead');
+  assertEqual(ctx.conStatusClass('qualified'), 's-qualified');
+});
+
+test('rInv() never breaks out of the class attribute for a malicious inv.status (reachable via CSV import fallthrough)', () => {
+  resetDB();
+  ctx.DB.inv = [{
+    id: 'inv-sec21-1', num: 'INV-SEC21-1', buyer: 'Test Buyer', cur: 'USD', dep: 0,
+    calc_grandTotal: '100', lineItems: [],
+    status: '"><img src=x onerror=alert(1)>'
+  }];
+  mockEl('inv-q').value = ''; mockEl('inv-sf').value = '';
+  ctx.rInv();
+  const html = mockEl('inv-tb').innerHTML;
+  assertNotContains(html, '<img', 'malicious status must never reach the DOM as a live tag');
+  assertNotContains(html, 'class="tag s-">', 'malicious status must not break out of the class attribute (would leave a truncated, unstyled tag if it had)');
+  assertContains(html, 'class="tag s-draft"', 'malicious/unrecognized status renders with the fixed safe-default class');
+});
+
+test('rCon() never breaks out of the class attribute for a malicious c.status', () => {
+  resetDB();
+  ctx.DB.con = [{ id: 'con-sec21-1', name: 'Test Contact', email: 'test@example.com', status: '"><script>alert(1)</script>' }];
+  ctx.rCon();
+  const html = mockEl('con-tbody').innerHTML;
+  assertNotContains(html, '<script>', 'malicious status must never reach the DOM as a live tag');
+  assertContains(html, 'class="tag s-lead"', 'malicious/unrecognized Contact status renders with the fixed safe-default class');
+});
+
+test('rPO() never breaks out of the class attribute for a malicious po.status', () => {
+  resetDB();
+  ctx.DB.sup = [{ id: 'sup-sec21-1', name: 'Test Supplier' }];
+  ctx.DB.po = [{ id: 'po-sec21-1', num: 'PO-SEC21-1', supId: 'sup-sec21-1', cur: 'USD', lineItems: [], status: '"><img src=x onerror=alert(1)>' }];
+  mockEl('po-q').value = ''; mockEl('po-sf').value = '';
+  ctx.rPO();
+  const html = mockEl('po-tb').innerHTML;
+  assertNotContains(html, '<img', 'malicious status must never reach the DOM as a live tag');
+  assertContains(html, 'class="tag s-draft"', 'malicious/unrecognized PO status renders with the fixed safe-default class');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
