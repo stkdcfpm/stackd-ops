@@ -13883,16 +13883,17 @@ testAsync('shpEditTradeDoc() re-renders the open modal\'s docs panel immediately
   await ctx.shpEditTradeDoc('sh-live1', doc.id, { refNum: 'REF-999' });
   assertContains(mockEl('shp-docs-panel').innerHTML, 'value="REF-999"', 'the open modal\'s panel reflects the edit immediately — this is the exact behavior the EI.sh===s.id re-render guard exists for');
 });
-test('shpRemoveTradeDoc() re-renders the open modal\'s docs panel immediately (round-2 build-gate Gap A)', function() {
+testAsync('shpRemoveTradeDoc() re-renders the open modal\'s docs panel immediately (round-2 build-gate Gap A)', async function() {
   resetDB();
   ctx._sb = null;
   var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
   ctx.DB.sh = [{ id: 'sh-live2', ref: 'SHP-LIVE2', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
   ctx.editShp('sh-live2');
   assertContains(mockEl('shp-docs-panel').innerHTML, 'Bill of Lading');
-  return ctx.shpRemoveTradeDoc('sh-live2', doc.id).then(function(){
-    assertContains(mockEl('shp-docs-panel').innerHTML, 'No trade documents tracked yet', 'panel updates to the empty state immediately after the last doc is removed while the modal is open');
-  });
+  assertEqual(mockEl('shf-docs').disabled, true, 'sanity check: dropdown starts locked while a tradeDoc exists');
+  await ctx.shpRemoveTradeDoc('sh-live2', doc.id);
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'No trade documents tracked yet', 'panel updates to the empty state immediately after the last doc is removed while the modal is open');
+  assertEqual(mockEl('shf-docs').disabled, false, 'round-4 build-gate nit: removing the last document mid-session must re-enable the dropdown, not leave it falsely locked with no tradeDocs present');
 });
 test('renderShpDocsPanel() wires each row\'s controls to its OWN doc id, never a sibling\'s (round-2 build-gate Gap B)', function() {
   resetDB();
