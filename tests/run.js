@@ -13872,6 +13872,72 @@ test('editShp() renders the trade-documents panel for the record being edited', 
   assertContains(html, 'selected', 'the Received status is reflected in the rendered select');
 });
 
+// ── Round-2 build-gate findings: live-panel re-render, per-row wiring correctness, shf-docs sync ──
+testAsync('shpEditTradeDoc() re-renders the open modal\'s docs panel immediately, without closing/reopening (round-2 build-gate Gap A)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-live1', ref: 'SHP-LIVE1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-live1');
+  assertNotContains(mockEl('shp-docs-panel').innerHTML, 'value="REF-999"', 'not yet present before the edit');
+  await ctx.shpEditTradeDoc('sh-live1', doc.id, { refNum: 'REF-999' });
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'value="REF-999"', 'the open modal\'s panel reflects the edit immediately — this is the exact behavior the EI.sh===s.id re-render guard exists for');
+});
+test('shpRemoveTradeDoc() re-renders the open modal\'s docs panel immediately (round-2 build-gate Gap A)', function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-live2', ref: 'SHP-LIVE2', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-live2');
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'Bill of Lading');
+  return ctx.shpRemoveTradeDoc('sh-live2', doc.id).then(function(){
+    assertContains(mockEl('shp-docs-panel').innerHTML, 'No trade documents tracked yet', 'panel updates to the empty state immediately after the last doc is removed while the modal is open');
+  });
+});
+test('renderShpDocsPanel() wires each row\'s controls to its OWN doc id, never a sibling\'s (round-2 build-gate Gap B)', function() {
+  resetDB();
+  var docA = ctx.shpNewTradeDocEntry('Doc A', false);
+  var docB = ctx.shpNewTradeDocEntry('Doc B', false);
+  ctx.DB.sh = [{ id: 'sh-wire1', ref: 'SHP-WIRE1', tradeDocs: [docA, docB], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.renderShpDocsPanel('sh-wire1');
+  var html = mockEl('shp-docs-panel').innerHTML;
+  // Extract every shpEditTradeDoc(...) call target in the rendered markup and confirm
+  // each field type only ever appears paired with its own row's doc id, not the other's.
+  var calls = html.match(/shpEditTradeDoc\('sh-wire1','([^']+)',\{(\w+):/g) || [];
+  assert(calls.length >= 8, 'both rows (4 editable fields each) produced onblur/onchange call strings — got ' + calls.length);
+  calls.forEach(function(call){
+    var m = call.match(/shpEditTradeDoc\('sh-wire1','([^']+)',\{(\w+):/);
+    var docId = m[1];
+    assert(docId === docA.id || docId === docB.id, 'every call targets a real doc id from this Shipment, never a foreign or malformed one: ' + call);
+  });
+  // Specifically: docA's own status <select> onchange must reference docA.id, not docB.id.
+  var docARowStart = html.indexOf(ctx.san(docA.type));
+  var docBRowStart = html.indexOf(ctx.san(docB.type));
+  var docARowHtml = html.slice(docARowStart, docBRowStart > docARowStart ? docBRowStart : html.length);
+  assertContains(docARowHtml, "shpEditTradeDoc('sh-wire1','" + docA.id + "'", 'Doc A\'s own row wires to Doc A\'s id');
+  assertNotContains(docARowHtml, "shpEditTradeDoc('sh-wire1','" + docB.id + "'", 'Doc A\'s row never accidentally wires to Doc B\'s id');
+});
+test('renderShpDocsPanel() disables and live-syncs the shf-docs dropdown once tradeDocs exist (round-2 build-gate UX finding)', function() {
+  resetDB();
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-sync1', ref: 'SHP-SYNC1', tradeDocs: [doc], docsStatus: 'In Progress', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  mockEl('shf-docs').value = 'Pending'; // stale value the modal happened to have shown before
+  mockEl('shf-docs').disabled = false;
+  ctx.renderShpDocsPanel('sh-sync1');
+  assertEqual(mockEl('shf-docs').disabled, true, 'dropdown disabled once tradeDocs exist — saveShp() would silently override it anyway');
+  assertEqual(mockEl('shf-docs').value, 'In Progress', 'dropdown synced to the live computed value, not left showing a stale prior value');
+});
+test('renderShpDocsPanel() leaves shf-docs enabled and untouched for a Shipment with no tradeDocs', function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'sh-sync2', ref: 'SHP-SYNC2', tradeDocs: [], docsStatus: null, autoCreatedFromInvIds: [], linkedInvs: [] }];
+  mockEl('shf-docs').value = 'In Progress'; // the operator's own manual selection
+  mockEl('shf-docs').disabled = false;
+  ctx.renderShpDocsPanel('sh-sync2');
+  assertEqual(mockEl('shf-docs').disabled, false, 'dropdown stays manually editable — this record has not opted into the automated checklist');
+  assertEqual(mockEl('shf-docs').value, 'In Progress', 'the operator\'s own selection is left untouched');
+});
+
 // ── AC-12/AC-13: Settings toggle + persistent banner ──
 test('saveAutoShipToggle() — unchecking sets SS.autoCreateShipmentOnPaid false and shows both banners (AC-12)', function() {
   resetDB();
