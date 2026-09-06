@@ -12261,6 +12261,302 @@ test('renderRfqComparison() — each response row shows the envelope (parse-upda
   assert(mockEl('ord-rfq-emailparse-L1') !== undefined, 'shared parse panel div exists for rfqOpenEmailParse to populate');
 });
 
+// ── RFQ RESPONSE FILE IMPORT (REQ/SPEC-AI-GAP-012) ──────────────
+function mkOrdTwoLines() {
+  ctx.DB.ord = [{
+    id: 'O1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [],
+    lines: [
+      {
+        id: 'LA', category: 'Frozen Seafood', itemSpec: 'Whole frozen tilapia, 500-800g, IQF', orderVolumeQty: '1',
+        orderVolumeUnit: 'container', packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown',
+        sourceCountry: '', variantOption: '', lineUpdates: [], rfqResponses: [], committedResponseId: null
+      },
+      {
+        id: 'LB', category: 'Frozen Seafood', itemSpec: 'Whole frozen tilapia, 800-1000g, IQF', orderVolumeQty: '1',
+        orderVolumeUnit: 'container', packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown',
+        sourceCountry: '', variantOption: '', lineUpdates: [], rfqResponses: [], committedResponseId: null
+      }
+    ]
+  }];
+  ctx.EI.ord = 'O1';
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme Foods' }];
+}
+
+testAsync('rfqParseUpdateFromFile: no AI.key configured → resolves null, no fetch call (AC-1)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: '' };
+  _lastAnthropicBody = null;
+  var result = await ctx.rfqParseUpdateFromFile([{ desc: 'tilapia 500-800g' }], [{ id: 'LA' }, { id: 'LB' }]);
+  assertEqual(result, null, 'resolves null with no key');
+  assertEqual(_lastAnthropicBody, null, 'no fetch call made');
+  ctx.AI = { key: 'test-key' };
+});
+
+testAsync('rfqParseUpdateFromFile: 2 confidently-matched rows against 2 distinct lines → both returned, unmatched empty (AC-2)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: JSON.stringify({
+    matches: [{ lineId: 'LA', fields: { cost: 10 } }, { lineId: 'LB', fields: { cost: 12 } }],
+    unmatched: []
+  }) };
+  var result = await ctx.rfqParseUpdateFromFile([{}, {}], [{ id: 'LA' }, { id: 'LB' }]);
+  assertEqual(result.matches.length, 2, 'both lines matched');
+  assertEqual(result.unmatched.length, 0, 'nothing unmatched');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromFile: one unmatched row alongside one valid match → both present, correctly separated (AC-3)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: JSON.stringify({
+    matches: [{ lineId: 'LA', fields: { cost: 10 } }],
+    unmatched: [{ row: { desc: 'unrelated widget' }, reason: 'No matching line item found.' }]
+  }) };
+  var result = await ctx.rfqParseUpdateFromFile([{}, {}], [{ id: 'LA' }, { id: 'LB' }]);
+  assertEqual(result.matches.length, 1, 'one confident match');
+  assertEqual(result.matches[0].lineId, 'LA');
+  assertEqual(result.unmatched.length, 1, 'one unmatched row preserved');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromFile: network error, non-200, non-object, and array responses all resolve null (AC-8)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: 'test-key' };
+
+  _mockAnthropic = 'reject';
+  var r1 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r1, null, 'network error → null');
+
+  _mockAnthropic = { status: 500, text: '' };
+  var r2 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r2, null, 'non-200 → null');
+
+  _mockAnthropic = { status: 200, text: 'not valid json {' };
+  var r3 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r3, null, 'malformed JSON → null');
+
+  _mockAnthropic = { status: 200, text: '[]' };
+  var r4 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r4, null, 'a JSON array (not object) → null, three-part guard catches it');
+
+  _mockAnthropic = { status: 200, text: JSON.stringify({ matches: {}, unmatched: [] }) };
+  var r5 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r5, null, 'matches not an array → null');
+
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromFile: a hallucinated lineId is redirected to unmatched, other matches unaffected (AC-10)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: JSON.stringify({
+    matches: [
+      { lineId: 'LA', fields: { cost: 10 } },
+      { lineId: 'DOES-NOT-EXIST', fields: { cost: 99 } }
+    ],
+    unmatched: []
+  }) };
+  var result = await ctx.rfqParseUpdateFromFile([{}, {}], [{ id: 'LA' }, { id: 'LB' }]);
+  assertEqual(result.matches.length, 1, 'only the real lineId is kept in matches');
+  assertEqual(result.matches[0].lineId, 'LA');
+  assertEqual(result.unmatched.length, 1, 'the hallucinated lineId is redirected to unmatched');
+  _mockAnthropic = null;
+});
+
+test('rfqRunFileImport() rejects a non-.csv file by name before any read is attempted (AC-4)', function() {
+  resetDB();
+  mkOrdTwoLines();
+  mockEl('rfq-fileimport-sup-O1').value = 'S1';
+  var readAttempted = false;
+  mockEl('rfq-fileimport-file-O1').files = [{ name: 'quote.xlsx' }];
+  var OrigFileReader = ctx.FileReader;
+  ctx.FileReader = function(){ return { readAsText: function(){ readAttempted = true; } }; };
+  ctx.rfqRunFileImport('O1');
+  assertEqual(readAttempted, false, 'FileReader.readAsText never called for a rejected extension');
+  ctx.FileReader = OrigFileReader;
+});
+
+test('rfqRunFileImport() with zero data rows shows "No data rows found" and never proceeds toward an AI call (AC-11)', function() {
+  resetDB();
+  mkOrdTwoLines();
+  mockEl('rfq-fileimport-sup-O1').value = 'S1';
+  mockEl('rfq-fileimport-file-O1').files = [{ name: 'quote.csv' }];
+  var confirmCalled = false;
+  var origShow = ctx.rfqShowFileImportConfirm;
+  ctx.rfqShowFileImportConfirm = function(){ confirmCalled = true; };
+  var OrigFileReader = ctx.FileReader;
+  ctx.FileReader = function(){
+    var r = { readAsText: function(){ r.onload({ target: { result: 'Header1,Header2\n' } }); } };
+    return r;
+  };
+  ctx.rfqRunFileImport('O1');
+  assertEqual(confirmCalled, false, 'never reaches the confirmation step on a header-only/empty file');
+  ctx.FileReader = OrigFileReader;
+  ctx.rfqShowFileImportConfirm = origShow;
+});
+
+testAsync('rfqApplyFileProposal() — new-response case: creates via the existing add path with a fresh id (AC-5)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: { cost: 42, currency: 'USD' } } };
+  await ctx.rfqApplyFileProposal('O1', 'LA');
+  var line = ctx.DB.ord[0].lines.find(function(l){ return l.id === 'LA'; });
+  assertEqual(line.rfqResponses.length, 1, 'one new response created');
+  assertEqual(line.rfqResponses[0].cost, 42);
+  assertEqual(line.rfqResponses[0].supId, 'S1');
+  assert(!ctx.cRfqFileImportProposals['LA'], 'proposal cleared after a successful apply');
+});
+
+testAsync('rfqApplyFileProposal() — update case: existing response replaced in place with a new id (AC-6)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.DB.ord[0].lines[0].rfqResponses = [_rfqRespFixture({ id: 'R1', supId: 'S1', cost: 100 })];
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: { cost: 88 } } };
+  await ctx.rfqApplyFileProposal('O1', 'LA');
+  var line = ctx.DB.ord[0].lines.find(function(l){ return l.id === 'LA'; });
+  assertEqual(line.rfqResponses.length, 1, 'still exactly one response — replaced, not added');
+  assertEqual(line.rfqResponses[0].cost, 88, 'proposed field applied');
+  assert(line.rfqResponses[0].id !== 'R1', 'response id rotated, matching the existing edit-path guarantee');
+});
+
+testAsync('rfqApplyFileProposal() — committed response with a Quote already converted from it: repoints committedResponseId and re-triggers the staleness banner (AC-6)', async function() {
+  resetDB();
+  mkOrdWithCommittedResponse();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = { L1: { supId: 'S1', fields: { cost: 150 } } };
+  ctx.DB.qt = [{ id: 'Q1', num: 'QTE-0001', client: 'Acme', status: 'Draft', lines: [{
+    rid: 'r1', desc: 'Item A', qty: 10, up: 100, sourceOrdId: 'O1', sourceOrdLineId: 'L1', sourceRfqResponseId: 'R1'
+  }] }];
+  await ctx.rfqApplyFileProposal('O1', 'L1');
+  var line = ctx.DB.ord[0].lines[0];
+  assert(line.committedResponseId !== 'R1', 'committedResponseId repointed to the new id');
+  mockEl('qt-drift-warn');
+  ctx.renderQteSourceDriftWarn(ctx.DB.qt[0]);
+  assertContains(mockEl('qt-drift-warn').innerHTML, 'changed', 'staleness banner text mentions the source pricing changed');
+});
+
+test('rfqDiscardFileProposal() — removes only its own line\'s proposal and panel; other lines untouched (AC-7)', function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = {
+    LA: { supId: 'S1', fields: { cost: 10 } },
+    LB: { supId: 'S1', fields: { cost: 20 } }
+  };
+  mockEl('rfq-fileimport-panel-LA');
+  mockEl('rfq-fileimport-panel-LB');
+  ctx.rfqDiscardFileProposal('O1', 'LA');
+  assert(!ctx.cRfqFileImportProposals['LA'], 'LA proposal removed');
+  assert(!!ctx.cRfqFileImportProposals['LB'], 'LB proposal untouched');
+});
+
+testAsync('rfqApplyFileProposal() serializes against concurrent saveRfqResponse() calls — no two applies ever run concurrently (AC-7b)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = {
+    LA: { supId: 'S1', fields: { cost: 10 } },
+    LB: { supId: 'S1', fields: { cost: 20 } }
+  };
+
+  var resolveFirst;
+  var firstCallSeen = false;
+  var originalPersist = ctx.persistOrdChange;
+  ctx.persistOrdChange = function(ord, skipRefresh) {
+    if (!firstCallSeen) {
+      firstCallSeen = true;
+      return new Promise(function(resolve){ resolveFirst = resolve; });
+    }
+    return originalPersist(ord, skipRefresh);
+  };
+
+  var applyA = ctx.rfqApplyFileProposal('O1', 'LA');
+  var applyB = ctx.rfqApplyFileProposal('O1', 'LB');
+
+  // These two checks hold regardless of the lock (B's own call hasn't reached an await yet either way) —
+  // the real proof that the lock actually blocked B is in the three post-await assertions below.
+  assertEqual(ctx.cRfqFileImportApplyInFlight, true, 'lock is held while A is still in flight');
+  assert(!!ctx.cRfqFileImportProposals['LB'], 'B\'s own proposal is untouched at this point');
+
+  resolveFirst({ error: null });
+  await applyA;
+  await applyB;
+
+  assertEqual(ctx.cRfqFileImportApplyInFlight, false, 'lock released after A completes');
+  assert(!ctx.cRfqFileImportProposals['LA'], 'A applied and cleared');
+  assert(!!ctx.cRfqFileImportProposals['LB'], 'B was never applied by the blocked call — still pending, exactly as before');
+
+  ctx.persistOrdChange = originalPersist;
+});
+
+testAsync('rfqSetOrdRfqUiFrozen() disables the shared ov-rfq modal\'s own Save/Cancel/Close buttons while an Apply is in flight, re-enabling them after (spec-gate finding 2 regression)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: { cost: 10 } } };
+
+  var resolveFirst;
+  var originalPersist = ctx.persistOrdChange;
+  ctx.persistOrdChange = function(ord, skipRefresh) {
+    return new Promise(function(resolve){ resolveFirst = resolve; });
+  };
+
+  var applyA = ctx.rfqApplyFileProposal('O1', 'LA');
+
+  assertEqual(mockEl('rfq-save-btn').disabled, true, 'the shared modal\'s own Save Response button is disabled while an apply is in flight, not just #of-lines-list');
+  assertEqual(mockEl('rfq-cancel-btn').disabled, true, 'the shared modal\'s own Cancel button is disabled while an apply is in flight');
+  assertEqual(mockEl('rfq-close-btn').disabled, true, 'the shared modal\'s own close (x) button is disabled while an apply is in flight');
+
+  resolveFirst({ error: null });
+  await applyA;
+
+  assertEqual(mockEl('rfq-save-btn').disabled, false, 'Save Response button re-enabled once the apply completes');
+  assertEqual(mockEl('rfq-cancel-btn').disabled, false, 'Cancel button re-enabled once the apply completes');
+  assertEqual(mockEl('rfq-close-btn').disabled, false, 'close (x) button re-enabled once the apply completes');
+
+  ctx.persistOrdChange = originalPersist;
+});
+
+testAsync('rfqApplyFileProposal() does NOT clear a proposal when saveRfqResponse() validation fails, leaving ov-rfq open (spec-gate finding 3 regression)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  // no cost field -> saveRfqResponse()'s own cost validation rejects it and never calls closeM('ov-rfq')
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: {} } };
+  mockEl('ov-rfq').classList = { add: function(){}, remove: function(){}, contains: function(){ return true; } };
+
+  await ctx.rfqApplyFileProposal('O1', 'LA');
+
+  assert(!!ctx.cRfqFileImportProposals['LA'], 'a failed Apply must not silently clear the pending proposal');
+  var line = ctx.DB.ord[0].lines.find(function(l){ return l.id === 'LA'; });
+  assertEqual((line.rfqResponses || []).length, 0, 'no response was actually recorded — the validation failure was real, not just simulated');
+  assertEqual(ctx.cRfqFileImportApplyInFlight, false, 'the in-flight lock is still released even though the apply failed, so a retry is possible');
+});
+
+test('rOrdLines() — shows "Import Supplier Quote File" when the Order Request has lines, and the shared panel div exists', function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.rOrdLines(ctx.DB.ord[0]);
+  var html = mockEl('of-lines-list').innerHTML;
+  assertContains(html, "rfqOpenFileImport('O1')", 'import control wired to rfqOpenFileImport');
+  assert(mockEl('ord-fileimport-O1') !== undefined, 'shared file-import panel div exists');
+});
+
+test('rOrdLines() — does not show the import control when the Order Request has no lines yet', function() {
+  resetDB();
+  ctx.DB.ord = [{ id: 'O2', num: 'ORD-0002', contactId: null, stage: 'New', actions: [], lines: [] }];
+  ctx.rOrdLines(ctx.DB.ord[0]);
+  var html = mockEl('of-lines-list').innerHTML;
+  assertNotContains(html, 'rfqOpenFileImport', 'no import control shown with zero lines');
+});
+
 testAsync('delSup() — warns on RFQ response references and the comparison degrades gracefully after deletion (AC-011)', async function() {
   resetDB();
   var line = mkOrdWithLine({ rfqResponses: [

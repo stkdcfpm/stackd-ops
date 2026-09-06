@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used for Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment when Cloud Data is configured — REQ/SPEC-CLOUD-001, extended to Line Item/Contact by REQ/SPEC-CLOUD-002, to Order Request by REQ/SPEC-CLOUD-003, to Quote by REQ/SPEC-CLOUD-004, to Purchase Order by REQ/SPEC-CLOUD-005 (completing Phase 2), to Invoice/Credit Note by REQ/SPEC-CLOUD-006 (Phase 3 sub-phase 1 of 3), to Shipment by REQ/SPEC-CLOUD-007 (Phase 3 sub-phase 2 of 3), and to Buyer Payment/Supplier Payment by REQ/SPEC-CLOUD-008 (Phase 3 sub-phase 3 of 3, completing Phase 3) — of the cross-platform backend migration; no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.83**  
-**Test count: 916/916 PASS** (`node tests/run.js`)
+**Current version: v2.9.85**  
+**Test count: 947/947 PASS** (`node tests/run.js`)
 
 ---
 
@@ -26,7 +26,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | DR procedure | `docs/dr-procedure.md` |
 | Agent architecture | `docs/agent-architecture.md` |
 | Council decisions log | `docs/councils/` — verdicts from LLM Council sessions |
-| Branch for new work | `claude/project-overview-21z6g4` |
+| Branch for new work | `claude/req-ai-gap-012-21z6g4` |
 
 ---
 
@@ -190,6 +190,14 @@ See `docs/known-gaps.md` for full entries.
 | SH-GAP-002 | Shipment / Sheets sync | `linkedInvs` corrupted from array to string by ordinary Sheets sync, crashing `rShp()`/`editShp()`/`openFwdReq()` on open — Fixed v2.9.82, confirmed live in a real operator export (3 corrupted records) before the fix landed |
 | SH-GAP-003 | Shipment / Sheets sync | `pullAll()` could never match two blank-`ref` Shipment rows, creating an unbounded phantom Shipment on every sync — Fixed v2.9.82, confirmed live (500 blank-shell records from ~20 sync runs) |
 | SUP-GAP-001 | Suppliers / data integrity | `delSup()` never warned about or cleaned up Line Items referencing the deleted Supplier — confirmed live as 6 real Line Items silently orphaned this way, with no trace of when/why. Fixed v2.9.83: `delSup()` now warns with a count, mirroring its existing PO/invoice/RFQ-response warnings; `supId` left in place as a historical record, not nulled, same as those existing precedents |
+| SEC-GAP-021 | Security / XSS | Status-tag rendering built the CSS class string from unsanitized status text, breakable out of the `class` attribute — reachable via CSV Invoice import. Fixed v2.9.84 via `invStatusClass()`/`poStatusClass()`/`conStatusClass()` |
+| SEC-GAP-022 | Security / GDPR | No GDPR erasure path on Cloud Data; soft-delete `deleted_at` not enforced by RLS — open, accepted architectural trade-off |
+| SEC-GAP-023 | Security / RLS | Single-shared-role RLS depends on an out-of-band Supabase dashboard setting this app can't verify or enforce — open, monitoring gap |
+| SEC-GAP-024 | Security / minor | `qteEffectiveOverhead()` NaN guard, `sendFwdReq()`'s arbitrary webhook target, `fetchLiveRates()`'s unpinned CDN dependency, Apps Script token comparison — open, low priority |
+| INV-GAP-004 | Cloud Data / Invoice | `persistInvChange()`/`saveInv()`'s cloud block had the identical unguarded empty-string/numeric bug `INV-GAP-003` fixed in `migrateInvToSupabase()`, in far-more-frequently-hit paths — Fixed v2.9.84 via shared `numOrNull()` |
+| LI-GAP-002 / CON-GAP-007 | Cloud Data / Line Item, Contact | `saveLI()`/`delLI()`/`saveCon()`/`delCon()` gated on bare `_sb` truthiness instead of their own entity's migration marker — Fixed v2.9.84 |
+| PMT-GAP-004 | Payments / test coverage | Duplicate-payment confirmation guard shipped with zero test coverage — Fixed v2.9.84 (test-coverage gap only, no functional defect) |
+| AI-GAP-012 | AI assistant / Order Requests | "Import Supplier Quote File" (v2.9.85, REQ/SPEC-AI-GAP-012) supports comma-delimited `.csv` only — `.xlsx` and other delimiters are accepted, documented limitations, not silently dropped; no parser for either exists in this codebase and adding one is a separate future architecture decision |
 
 ---
 
