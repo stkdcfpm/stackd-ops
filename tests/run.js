@@ -4971,6 +4971,56 @@ test('addPaymentFromForm() legacy-plus-new payment on the same EUR invoice share
   assertEqual(inv.dep, 350, 'inv.dep reflects the correct combined raw sum after save');
 });
 
+// Duplicate-entry confirmation guard (found needed by 6 real-world exact-duplicate
+// Buyer Payment records in production — see docs/known-gaps.md). Shipped with zero
+// test coverage originally; added here.
+test('addPaymentFromForm() blocks a same-invoice/same-date/same-amount duplicate when confirm() is declined', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-dup-1', num: 'INV-DUP-1', cur: 'USD', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-dup-existing', invId: 'inv-dup-1', invNum: 'INV-DUP-1', date: '2026-01-01', amount: 200, currency: 'USD' });
+  mockEl('pm-date').value = '2026-01-01'; mockEl('pm-amount').value = '200'; mockEl('pm-cur').value = 'USD';
+  mockEl('pm-purpose').value = 'Balance'; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = ''; mockEl('pm-notes').value = '';
+  ctx.confirm = function(){ return false; };
+  ctx.addPaymentFromForm('inv-dup-1');
+  assertEqual(ctx.DB.payments.length, 1, 'declining the confirm blocks the duplicate save entirely');
+  ctx.confirm = function(){ return true; };
+});
+test('addPaymentFromForm() allows a genuine second payment matching an existing one when confirm() is accepted', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-dup-2', num: 'INV-DUP-2', cur: 'USD', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-dup-existing-2', invId: 'inv-dup-2', invNum: 'INV-DUP-2', date: '2026-01-01', amount: 200, currency: 'USD' });
+  mockEl('pm-date').value = '2026-01-01'; mockEl('pm-amount').value = '200'; mockEl('pm-cur').value = 'USD';
+  mockEl('pm-purpose').value = 'Balance'; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = ''; mockEl('pm-notes').value = '';
+  ctx.confirm = function(){ return true; };
+  ctx.addPaymentFromForm('inv-dup-2');
+  assertEqual(ctx.DB.payments.length, 2, 'confirming proceeds — a real second payment for the same amount/date is not blocked outright');
+});
+test('addPaymentFromForm() never prompts for a payment that does not match any existing one', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-dup-3', num: 'INV-DUP-3', cur: 'USD', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-dup-existing-3', invId: 'inv-dup-3', invNum: 'INV-DUP-3', date: '2026-01-01', amount: 200, currency: 'USD' });
+  mockEl('pm-date').value = '2026-01-02'; mockEl('pm-amount').value = '300'; mockEl('pm-cur').value = 'USD'; // different date AND amount
+  mockEl('pm-purpose').value = 'Balance'; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = ''; mockEl('pm-notes').value = '';
+  var confirmCalled = false;
+  ctx.confirm = function(){ confirmCalled = true; return false; };
+  ctx.addPaymentFromForm('inv-dup-3');
+  assertEqual(confirmCalled, false, 'confirm() never invoked — nothing matches, no prompt needed');
+  assertEqual(ctx.DB.payments.length, 2, 'genuinely distinct payment saves without any prompt');
+  ctx.confirm = function(){ return true; };
+});
+
+test('addSupPaymentFromForm() blocks a same-PO/same-date/same-amount duplicate when confirm() is declined', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-dup-1', num: 'PO-DUP-1', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'spm-dup-existing', poId: 'po-dup-1', poNum: 'PO-DUP-1', date: '2026-01-01', amount: 100, currency: 'USD' });
+  mockEl('spm-date').value = '2026-01-01'; mockEl('spm-amount').value = '100'; mockEl('spm-cur').value = 'USD';
+  mockEl('spm-purpose').value = 'Deposit'; mockEl('spm-method').value = 'Bank Transfer'; mockEl('spm-ref').value = ''; mockEl('spm-notes').value = '';
+  ctx.confirm = function(){ return false; };
+  ctx.addSupPaymentFromForm('po-dup-1');
+  assertEqual(ctx.DB.supPayments.length, 1, 'declining the confirm blocks the duplicate save entirely');
+  ctx.confirm = function(){ return true; };
+});
+
 test('savePayment()/deletePayment() on a EUR invoice: raw sum survives a full save-then-delete cycle, never mis-pivoted (AC-3b)', function() {
   resetDB();
   ctx.confirm = function(){ return true; };
@@ -7903,6 +7953,68 @@ testAsync('delCon — Cloud Data configured: soft-delete via update({deleted_at}
   ctx.confirm = function(){ return false; };
 });
 
+// LI-GAP-002/CON-GAP-007: saveLI()/delLI()/saveCon()/delCon() previously gated on
+// bare `_sb` truthiness, unlike every other entity's own save/del function (Order
+// Request, Purchase Order, Quote, Invoice all correctly check their own migration
+// marker too). _sb is configured the moment ANY entity's Cloud Data is set up —
+// Supplier/Buyer, say — long before Line Item or Contact's OWN migration has run.
+// Editing a pre-existing local (uid()-format id) Line Item/Contact in that window
+// hit the Supabase branch anyway, and PostgREST's .single() on an id that was never
+// inserted into the table returns a 0-rows error, silently losing the edit.
+test('saveLI() falls back to local save when _sb is configured but Line Item has not migrated yet (LI-GAP-002)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.EI.l = null;
+  ['lf-s','lf-d','lf-sp','lf-hs','lf-sup','lf-u','lf-c','lf-p','lf-cur','lf-nt','lf-diml','lf-dimw','lf-dimh'].forEach(function(id){ mockEl(id); });
+  mockEl('lf-s').value = 'SKU2'; mockEl('lf-d').value = 'Gadget'; mockEl('lf-sup').value = 'sup-1'; mockEl('lf-cur').value = 'USD';
+  var sb = mockSb({ line_items: { insertImpl: function(row){ return Object.assign({ id: 'should-not-be-used' }, row); } } });
+  ctx._sb = sb;
+  await ctx.saveLI();
+  assertEqual(sb._calls.length, 0, 'Supabase never called — Line Item has not migrated on this device');
+  assertEqual(ctx.DB.li.length, 1, 'saved locally instead');
+  assertEqual(ctx.DB.li[0].sku, 'SKU2');
+});
+
+testAsync('delLI() falls back to local delete when _sb is configured but Line Item has not migrated yet (LI-GAP-002)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.DB.li.push({ id: 'l-nomig', sku: 'SKU3' });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.delLI('l-nomig');
+  assertEqual(sb._calls.length, 0, 'Supabase never called — Line Item has not migrated on this device');
+  assertEqual(ctx.DB.li.length, 0, 'deleted locally instead');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveCon() falls back to local save when _sb is configured but Contact has not migrated yet (CON-GAP-007)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.EI.co = null;
+  ['ct-name','ct-email','ct-status','ct-enq-summary','ct-phone','ct-company','ct-source','ct-notes','ct-sup'].forEach(function(id){ mockEl(id); });
+  mockEl('ct-name').value = 'No Migration Yet'; mockEl('ct-email').value = 'nomig@x.com'; mockEl('ct-status').value = 'lead';
+  var sb = mockSb({ contacts: { insertImpl: function(row){ return Object.assign({ id: 'should-not-be-used' }, row); } } });
+  ctx._sb = sb;
+  await ctx.saveCon();
+  assertEqual(sb._calls.length, 0, 'Supabase never called — Contact has not migrated on this device');
+  assertEqual(ctx.DB.con.length, 1, 'saved locally instead');
+  assertEqual(ctx.DB.con[0].email, 'nomig@x.com');
+});
+
+testAsync('delCon() falls back to local delete when _sb is configured but Contact has not migrated yet (CON-GAP-007)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.DB.con.push({ id: 'c-nomig', name: 'No Migration Yet', email: 'nomig2@x.com' });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.delCon('c-nomig');
+  assertEqual(sb._calls.length, 0, 'Supabase never called — Contact has not migrated on this device');
+  assertEqual(ctx.DB.con.length, 0, 'deleted locally instead');
+  ctx.confirm = function(){ return false; };
+});
+
 test('restoreLIMigrationArchive / restoreConMigrationArchive — each restores its own key and clears SS.supabaseUrl/supabaseAnonKey independently', function() {
   resetDB();
   ctx.localStorage.setItem('st_li_pre_migration', JSON.stringify([{ id: 'orig-li', sku: 'SKU1' }]));
@@ -10212,6 +10324,30 @@ testAsync('savePayment — pushes the invoice\'s updated dep/status via persistI
   ctx._sb = null;
   await ctx.savePayment({ id: 'pm2', invId: 'inv2', invNum: 'INV63002', amount: 100, date: '2026-01-01', method: 'Bank Transfer' });
   assertEqual(ctx.DB.inv[0].status, 'Paid', 'local-only behavior unchanged when Invoice has not migrated');
+});
+
+testAsync('numOrNull() (INV-GAP-003/004): persistInvChange() sends null, not \'\', for a calc_* field stored locally as empty string', async function() {
+  // Confirmed-reachable path: a Draft invoice round-tripped through Sheets sync once
+  // (mapRec()/unmapRec() writes '' for an unset calc_grandTotal) then has ANY of
+  // persistInvChange()'s 12+ call sites (saveInvApprove, savePayment, etc.) touch it —
+  // the old `!= null` guard let '' straight through into a Postgres `numeric` column,
+  // which rejects it with 22P02, silently failing the push (console.warn only).
+  resetDB();
+  ctx.DB.inv.push({
+    id: 'inv-numnull-1', num: 'INV64001', status: 'Draft', cur: 'USD', lineItems: [],
+    calc_grandTotal: '', calc_cogs: '', calc_grossProfit: '', calc_netProfit: '',
+    calc_margin: '', calc_balanceDue: '', calc_liTotal: '', calc_taxAmt: ''
+  });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.persistInvChange(ctx.DB.inv[0], true);
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'push attempted');
+  ['calc_grand_total','calc_cogs','calc_gross_profit','calc_net_profit','calc_margin','calc_balance_due','calc_li_total','calc_tax_amt'].forEach(function(f) {
+    assertEqual(upd.row[f], null, f + ' sent as null, never as the literal empty string');
+  });
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
 });
 
 testAsync('deletePayment — pushes the invoice\'s recalculated dep via persistInvChange when Invoice has migrated; local-only behavior unchanged when not migrated (AC-8, call site #5)', async function() {
