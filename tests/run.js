@@ -13937,6 +13937,17 @@ test('renderShpDocsPanel() leaves shf-docs enabled and untouched for a Shipment 
   assertEqual(mockEl('shf-docs').disabled, false, 'dropdown stays manually editable — this record has not opted into the automated checklist');
   assertEqual(mockEl('shf-docs').value, 'In Progress', 'the operator\'s own selection is left untouched');
 });
+test('openShp() resets shf-docs disabled/title left over from a prior editShp() on a doc-having Shipment (round-3 build-gate finding)', function() {
+  resetDB();
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-newafter1', ref: 'SHP-NEWAFTER1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-newafter1');
+  assertEqual(mockEl('shf-docs').disabled, true, 'sanity check: editing a doc-having Shipment disables the dropdown');
+  ctx.openShp();
+  assertEqual(mockEl('shf-docs').disabled, false, 'a brand-new Shipment must not inherit a locked dropdown from whatever was open before it');
+  assertEqual(mockEl('shf-docs').title, '', 'the stale "automatically computed" tooltip must also be cleared on the create path');
+  assertEqual(mockEl('shf-docs').value, 'Pending', 'the create path\'s own default value is still applied');
+});
 
 // ── AC-12/AC-13: Settings toggle + persistent banner ──
 test('saveAutoShipToggle() — unchecking sets SS.autoCreateShipmentOnPaid false and shows both banners (AC-12)', function() {
