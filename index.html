@@ -6872,6 +6872,14 @@ async function migrateInvToSupabase() {
   // REQ-CLOUD-006b(2): two-pass insert. Pass 1 inserts every DB.inv record (Invoice
   // and CN alike) with linked_inv_id deferred to null, building invIdMap from each
   // insert's returned row.
+  //
+  // INV-GAP-003: the calc_* fields are stored locally as strings (String(gt) etc,
+  // per this file's own header comment above) and a Draft/incomplete Invoice can
+  // carry '' rather than being unset entirely — `!= null` lets '' straight through
+  // into a `numeric` column, which Postgres rejects with 22P02 ("invalid input
+  // syntax for type numeric"), failing the insert for that record and blocking the
+  // whole migration. numOrNull() below treats '' the same as null/undefined.
+  function numOrNull(v) { return (v === null || v === undefined || v === '') ? null : v; }
   var invIdMap = {};
   for (var i = 0; i < DB.inv.length; i++) {
     var r = DB.inv[i];
@@ -6898,14 +6906,14 @@ async function migrateInvToSupabase() {
       linked_quote_id: r.linkedQuoteId || null, linked_quote_num: r.linkedQuoteNum || null,
       linked_inv_num: null, linked_inv_id: null, // a true Invoice never carries these locally
       notes: r.notes || null, edit_history: r.editHistory || null,
-      calc_grand_total: r.calc_grandTotal != null ? r.calc_grandTotal : null,
-      calc_cogs: r.calc_cogs != null ? r.calc_cogs : null,
-      calc_gross_profit: r.calc_grossProfit != null ? r.calc_grossProfit : null,
-      calc_net_profit: r.calc_netProfit != null ? r.calc_netProfit : null,
-      calc_margin: r.calc_margin != null ? r.calc_margin : null,
-      calc_balance_due: r.calc_balanceDue != null ? r.calc_balanceDue : null,
-      calc_li_total: r.calc_liTotal != null ? r.calc_liTotal : null,
-      calc_tax_amt: r.calc_taxAmt != null ? r.calc_taxAmt : null
+      calc_grand_total: numOrNull(r.calc_grandTotal),
+      calc_cogs: numOrNull(r.calc_cogs),
+      calc_gross_profit: numOrNull(r.calc_grossProfit),
+      calc_net_profit: numOrNull(r.calc_netProfit),
+      calc_margin: numOrNull(r.calc_margin),
+      calc_balance_due: numOrNull(r.calc_balanceDue),
+      calc_li_total: numOrNull(r.calc_liTotal),
+      calc_tax_amt: numOrNull(r.calc_taxAmt)
     };
     row.upd_at = r.updAt != null ? r.updAt : null;
     var result = await _sb.from('invoices').insert(row).select().single();
@@ -14435,6 +14443,12 @@ function addPaymentFromForm(invId) {
 
   if (!vPay(date, amount, invId, purpose)) return;
 
+  // Defense-in-depth against an accidental duplicate entry (same invoice, same date,
+  // same amount) — does not block a genuine second payment that happens to match,
+  // just requires an explicit confirm rather than silently doubling the ledger.
+  var dupePm = DB.payments.find(function(p){ return p.invId === invId && p.date === date && Math.abs((+p.amount||0) - amount) < 0.005; });
+  if (dupePm && !confirm('A payment of ' + amount + ' on ' + date + ' is already recorded for this invoice. Save this as a second, separate payment?')) return;
+
   var inv = DB.inv.find(function(i){ return i.id === invId; });
   var invCurUC = (inv && inv.cur || 'USD').toUpperCase();
   var invCurNorm = invCurUC === 'CNY' ? 'RMB' : invCurUC;
@@ -14681,6 +14695,10 @@ function addSupPaymentFromForm(poId) {
   var notes = G('spm-notes') ? G('spm-notes').value.trim() : '';
 
   if (!vSupPay(date, amount, purpose)) return;
+
+  // Mirrors addPaymentFromForm()'s identical duplicate-entry guard above.
+  var dupeSpm = DB.supPayments.find(function(p){ return p.poId === poId && p.date === date && Math.abs((+p.amount||0) - amount) < 0.005; });
+  if (dupeSpm && !confirm('A payment of ' + amount + ' on ' + date + ' is already recorded for this Purchase Order. Save this as a second, separate payment?')) return;
 
   var po = DB.po.find(function(p){ return p.id === poId; });
   var pm = {
