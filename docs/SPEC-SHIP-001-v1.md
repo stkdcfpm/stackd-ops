@@ -1,6 +1,6 @@
 # SPEC-SHIP-001 — Auto-created Shipment record with a progressive trade-document checklist, triggered on Invoice → Paid
 
-**Status:** v1 — drafted directly against `REQ-SHIP-001-v1.md` (requirements-gate complete, 3 independent review rounds, ready for spec-gate per that document's own status line). Not yet independently spec-reviewed.
+**Status:** v1 — drafted directly against `REQ-SHIP-001-v1.md` (requirements-gate complete, 3 independent review rounds). Independent spec-gate review round 1: **FAIL**, 4 blocking + 6 advisory findings, all verified against live code and fixed in this revision (§16). Ready for a confirmatory round-2 spec-gate review before build.
 **Depends on:** nothing unshipped. Shipment is already Cloud-Data-migrated (`REQ-CLOUD-007`, v2.9.80); this SPEC extends its existing table with two new nullable columns.
 
 All line numbers below were re-verified directly against the current `index.html`/`supabase/migrations/` at spec-drafting time, not carried forward from the REQ's own (slightly earlier) citations.
@@ -85,7 +85,8 @@ Placed directly after `autoPos()` (`index.html:8572-8612` currently) so the two 
 async function autoCreateShipmentFromInvoice(inv) {
   if (SS.autoCreateShipmentOnPaid === false) return;
   var already = DB.sh.some(function(s){
-    return (s.autoCreatedFromInvIds||[]).indexOf(inv.id) > -1 || (s.linkedInvs||[]).indexOf(inv.num) > -1;
+    var linked = Array.isArray(s.linkedInvs) ? s.linkedInvs : []; // advisory A1: a still-string-typed legacy linkedInvs (pre-SH-GAP-002 backfill) must never be substring-matched via a bare .indexOf on the string itself
+    return (s.autoCreatedFromInvIds||[]).indexOf(inv.id) > -1 || linked.indexOf(inv.num) > -1;
   });
   if (already) return;
 
@@ -93,10 +94,11 @@ async function autoCreateShipmentFromInvoice(inv) {
   var suffix = 2;
   while (DB.sh.some(function(s){ return s.ref === ref; })) { ref = 'SHP-' + (inv.num || Date.now().toString(36)) + '-' + suffix; suffix++; }
 
+  var seededDocs = shpSeedTradeDocs(false);
   var newShp = {
     id: uid(), ref: ref, blNum: '', vessel: '', carrier: '', originPort: '', destPort: '',
-    etd: '', eta: '', containerType: '', containerNum: '', dg: false,
-    tradeDocs: shpSeedTradeDocs(false), docsStatus: 'Pending', status: RD_SHP_STATUS[0],
+    etd: '', eta: '', containerType: '20GP', containerNum: '', dg: false,
+    tradeDocs: seededDocs, docsStatus: shpComputeDocsStatus(seededDocs), status: RD_SHP_STATUS[0],
     linkedInvs: [inv.num], autoCreatedFromInvIds: [inv.id],
     forwarder: '', forwarderEmail: '', notes: '', updAt: new Date().toISOString()
   };
@@ -105,7 +107,7 @@ async function autoCreateShipmentFromInvoice(inv) {
     if (!(await ensureSbAuth())) return;
     var shRow = {
       ref: newShp.ref, bl_num: null, vessel: null, carrier: null, origin_port: null, dest_port: null,
-      etd: null, eta: null, container_type: null, container_num: null, dg: false,
+      etd: null, eta: null, container_type: newShp.containerType, container_num: null, dg: false,
       docs_status: newShp.docsStatus, status: newShp.status, linked_invs: newShp.linkedInvs,
       trade_docs: newShp.tradeDocs, auto_created_from_inv_ids: newShp.autoCreatedFromInvIds,
       forwarder: null, forwarder_email: null, notes: null, upd_at: newShp.updAt
@@ -129,6 +131,7 @@ Notes tying this directly to REQ-SHIP-001's decisions:
 - `status: RD_SHP_STATUS[0]` reads the live constant rather than hardcoding `'Booked'` as a string literal, so a future reordering of `RD_SHP_STATUS` (unlikely, but this avoids the exact class of drift `SH_STATUSES`/`RD_SHP_STATUS` naming confusion produced during requirements-gate) can't silently desync this default from the dropdown's own first option.
 - `rShp()` is called unconditionally after either branch (mirroring `autoPos()`'s own `rPO()` call) so the Shipments tab reflects the new record immediately if the operator is already looking at it — cheap no-op if they're on a different tab, since `rShp()` only touches `#sh-tb`/`#sh-em` if the DOM elements exist.
 - No `vShp()` call anywhere in this function — this path bypasses form validation entirely, exactly as `autoPos()` bypasses `vPO()`, since there is no form for the trigger to have populated.
+- **Three advisory fixes from spec-gate round 1, applied above:** (A1) the idempotency check now guards `s.linkedInvs` with `Array.isArray()` before calling `.indexOf()` on it — a still-string-typed legacy `linkedInvs` (a record that predates the `SH-GAP-002` backfill) would otherwise do substring matching on the raw string rather than element matching, risking a false-positive idempotency match that silently skips a legitimate auto-creation. (A2) `docsStatus` is now derived via `shpComputeDocsStatus(seededDocs)` rather than the hardcoded literal `'Pending'` — currently equivalent since every seeded doc starts `'Pending'`, but removes a latent drift risk if the seed list's own defaults ever change. (A4) `containerType` now defaults to `'20GP'`, matching `openShp()`'s own manual-create default (`index.html:12888`), rather than an empty string — purely cosmetic consistency, not REQ-mandated either way, but there's no reason for the auto-created path to look different from the manual one here.
 
 ---
 
@@ -208,11 +211,12 @@ async function saveShp() {
 
 ## 5. `refreshShFromSupabase()` — carry both new fields (fix for finding C1)
 
-**File:** `index.html:6187-6206` (current, re-verified). Exact current code:
+**File:** `index.html:6187-6206` (current, re-verified after spec-gate round 1 found a real citation gap here — the guard line below was missing from this SPEC's first-draft snippet). Exact current code:
 
 ```js
 async function refreshShFromSupabase() {
   if (!_sb) return;
+  if (DB.sh.length > 0 && !localStorage.getItem('st_sh_cloud_migration_ts')) return; // never migrated on this device and real local data exists — refuse to silently overwrite
   var result = await _sb.from('shipments').select('*').is('deleted_at', null);
   if (result.error) { toast('Could not load Shipments from Cloud Data.'); return; }
   DB.sh = result.data.map(function(row){
@@ -357,23 +361,27 @@ function saveAutoShipToggle() {
 
 ## 9. Persistent off-state banner on Invoices and Shipments tabs
 
-**Static HTML**, added immediately inside each view's opening `<div class="view" id="v-inv">`/`id="v-sh">`, before the existing `<div class="tb">` toolbar row. Invoices view (`index.html`, immediately before line 296's `<div style="font-family:'Bebas Neue'...">INVOICES</div>` toolbar content):
+**Corrected after spec-gate round 1 (finding B1) — two verified errors in the first draft of this section, both confirmed by direct re-read of the live CSS and HTML, fixed here:**
+1. `.banner`'s actual, complete CSS rule (`index.html:33`) is `background:var(--gold);padding:9px 22px;display:flex;align-items:center;gap:10px;font-size:.6rem;color:var(--ink);flex-wrap:wrap;` — **it has no `position` property at all.** The existing instance (`index.html:218`) sits above `<nav>` purely by DOM order, not by `position:fixed`. The first draft's claim that this class needed a `position:static` override to "stop overlaying content" was simply wrong — no override is needed or should be added; the `style="display:none;...` inline attribute below only needs to toggle `display`, nothing else.
+2. The Invoices-view insertion point was cited incorrectly: "before line 296" lands the banner *inside* `<div class="tb">` (`index.html:294`), between the INVOICES label (295) and the search input (296) — a flex toolbar child, not a full-width row above the toolbar. The correct insertion point, matching the Shipments-view treatment exactly, is immediately after `<div class="view" id="v-inv">` (`index.html:293`) and before `<div class="tb">` opens (`index.html:294`).
+
+**Static HTML**, added immediately inside each view's opening `<div class="view" id="v-inv">`/`id="v-sh">`, before that view's own `<div class="tb">` toolbar row opens — in both cases, this is a sibling of `.tb`, not a child of it. Invoices view (`index.html`, between line 293 and line 294):
 
 ```html
-<div id="inv-autoship-banner" class="banner" style="display:none;position:static;margin-bottom:10px;">
+<div id="inv-autoship-banner" class="banner" style="display:none;margin-bottom:10px;">
   <span>&#9888; Shipment auto-creation is OFF — Paid invoices will not create a Shipment record automatically. Turn back on in Settings → Integrations.</span>
 </div>
 ```
 
-Shipments view, symmetrically, immediately after `<div class="view" id="v-sh">` and before its own `<div class="tb">` (`index.html:333-334`):
+Shipments view, symmetrically (`index.html:333-334`):
 
 ```html
-<div id="sh-autoship-banner" class="banner" style="display:none;position:static;margin-bottom:10px;">
+<div id="sh-autoship-banner" class="banner" style="display:none;margin-bottom:10px;">
   <span>&#9888; Shipment auto-creation is OFF — Paid invoices will not create a Shipment record automatically. Turn back on in Settings → Integrations.</span>
 </div>
 ```
 
-**Reusing the existing `.banner` CSS class** (already defined for the page-load Sheets-sync-URL banner, `index.html:218`) rather than a new style — that banner is `position: fixed` by default for its own page-header placement; both new banner instances need `position: static` inline (as shown above) so they lay out normally within their view instead of overlaying content, since they aren't page-global. Confirm `.banner`'s base CSS rule at implementation time and add whatever override is needed beyond `position` if the fixed variant's other properties (width, z-index) also assume page-header placement — this is a spec-gate-acknowledged detail, not fully resolved here, since the exact CSS cascade depends on rules not reproduced in this SPEC.
+Reusing the existing `.banner` CSS class as-is (already defined for the page-load Sheets-sync-URL banner, `index.html:33`/`218`) — no override needed, per the correction above. `flex-wrap:wrap` already present on the class means a long banner string wraps sensibly at narrow widths with no extra CSS.
 
 **Wiring into `rInv()`/`rShp()`** — add one line near the top of each function's body (`rInv()`, `index.html:8838`; `rShp()`, `index.html:12834`), before either function does anything else:
 
@@ -397,7 +405,9 @@ Since `rInv()`/`rShp()` already run on every tab-open (`showV()`'s `fns` dispatc
 
 ## 10. REQ-SHIP-001e — DG toggle add/remove logic, inside `saveShp()`
 
-Placed in the same preservation block added in §4, immediately after `tradeDocs`/`autoCreatedFromInvIds` are carried forward, still inside the `if (EI.sh)` branch (this logic only applies on edit — a brand-new Shipment's `dg` starts `false` with no DG line to add or remove):
+Placed in the same preservation block added in §4, immediately after `tradeDocs`/`autoCreatedFromInvIds` are carried forward, **only inside the `if (EI.sh)` (edit) branch — never on create.** REQ-SHIP-001e's own wording is explicit about this scope: *"If an operator **edits** an existing... Shipment and changes `dg`..."* — this is an edit-time behavior, full stop, not something that also applies to the "New Shipment" create path.
+
+**Corrected after spec-gate round 1 (finding B4) — the first draft of this section incorrectly extended DG-line seeding to the create path too, which silently overrode an operator's own manual `docsStatus` dropdown selection.** The first draft's `else` branch (create path) seeded a one-item `tradeDocs` array (just the DG line) whenever the "New Shipment" form's DG checkbox was ticked, which then made the unconditional `shp.tradeDocs.length` check below fire and overwrite whatever the operator had picked in the `shf-docs` dropdown (`openShp()`'s own default is `'Pending'`, `index.html:12889` — matching the computed value by coincidence in the default case, but silently clobbering any *other* value the operator picked, e.g. `'In Progress'` for a Shipment being backfilled from partial paper records already in hand) with `shpComputeDocsStatus()`'s own `'Pending'` result — a real, previously undisclosed interaction, confirmed reachable, that no AC or test covered. REQ-SHIP-001d/REQ-SHIP-001e never asked for the create path to seed anything at all; removing that `else` branch's seeding entirely both fixes the bug and brings this section back in line with what the REQ actually specifies:
 
 ```js
   if (EI.sh) {
@@ -413,76 +423,81 @@ Placed in the same preservation block added in §4, immediately after `tradeDocs
       var untouched = dgLine.status === 'Pending' && !dgLine.refNum && !dgLine.fileLocation && !dgLine.notes;
       if (untouched) shp.tradeDocs = shp.tradeDocs.filter(function(d, i){ return i !== dgLineIdx; });
     }
+    if (shp.tradeDocs.length) shp.docsStatus = shpComputeDocsStatus(shp.tradeDocs);
   } else {
-    shp.tradeDocs = shp.dg ? [shpNewTradeDocEntry('Dangerous Goods Declaration', true)] : [];
+    // Create path: a brand-new Shipment always starts with no tradeDocs at all,
+    // regardless of the dg checkbox state, and docsStatus stays exactly what the
+    // operator picked in the shf-docs dropdown — this record hasn't "opted into"
+    // the automated checklist at all, so nothing here should be computed or seeded.
+    shp.tradeDocs = [];
     shp.autoCreatedFromInvIds = [];
   }
 ```
 
-The `wasDg`/current-`shp.dg` comparison (rather than reacting to `dg` alone) means this logic only fires on an actual toggle, not on every save of an already-`dg:true` Shipment — a re-save with `dg` unchanged neither adds nor removes anything, leaving an operator's own custom "Dangerous Goods Declaration"-labeled line (which never has `autoManaged: true`) untouched in every case, per REQ-SHIP-001e's own disambiguation requirement.
+The `wasDg`/current-`shp.dg` comparison (rather than reacting to `dg` alone) means the edit-path add/remove logic only fires on an actual toggle, not on every save of an already-`dg:true` Shipment — a re-save with `dg` unchanged neither adds nor removes anything, leaving an operator's own custom "Dangerous Goods Declaration"-labeled line (which never has `autoManaged: true`) untouched in every case, per REQ-SHIP-001e's own disambiguation requirement. The `docsStatus` recomputation is now nested inside the `if (EI.sh)` branch only, immediately after the add/remove logic, so it only ever runs against a record that already had a `tradeDocs` array before this save began (either auto-created, or already opted in via REQ-SHIP-001f's CRUD functions) — never against a record whose only `tradeDocs` content this exact save is about to invent.
 
-**`docsStatus` recomputation**, immediately after the block above, still inside `saveShp()`:
-
-```js
-  if (shp.tradeDocs.length) shp.docsStatus = shpComputeDocsStatus(shp.tradeDocs);
-```
-
-This one line covers REQ-SHIP-001g for the `saveShp()` path — the DG add/remove case above, and any future edit that mutates `tradeDocs` through `saveShp()` directly (none does today; REQ-SHIP-001f's CRUD functions, §11, are the actual mutation surface for a general document-status change, and must call `shpComputeDocsStatus()` themselves after their own mutation, then persist via their own path — not necessarily through `saveShp()`).
+This covers REQ-SHIP-001g for the `saveShp()` edit path specifically. REQ-SHIP-001f's CRUD functions (§11) are the actual mutation surface for a general document-status change on any record (auto-created or, after this fix, a manually-created one that later gains entries through those functions) and compute `docsStatus` themselves after their own mutation, independently of `saveShp()`.
 
 ---
 
 ## 11. REQ-SHIP-001f — per-document CRUD functions
 
-Three new functions, exact UI trigger/placement left to implementation (a details panel on the Shipment edit view is the natural fit, given `tradeDocs` isn't a form field on the main modal per §4's design) — but the **function contracts and preservation rigor below are not optional**, per REQ-SHIP-001f's own explicit carry-forward requirement:
+Three new functions, exact UI trigger/placement left to implementation (a details panel on the Shipment edit view is the natural fit, given `tradeDocs` isn't a form field on the main modal per §4's design) — but the **function contracts and preservation rigor below are not optional**, per REQ-SHIP-001f's own explicit carry-forward requirement.
+
+**Redesigned after spec-gate round 1 (finding B3) — do not mutate the live `DB.sh` record until persistence has actually succeeded.** The first draft found `s` by reference inside `DB.sh` and mutated `s.tradeDocs`/`s.docsStatus` directly, *before* calling the shared persist helper — so if the Cloud Data branch's `ensureSbAuth()` resolved to `false` (confirmed reachable: `index.html:6025-6032` returns `false` when an operator cancels the login modal, not just on a hard error), the function returned with the mutation already sitting live in `DB.sh`, no toast, no `rShp()`, and nothing written to Supabase or `localStorage` — an edit that silently looked successful to the operator and then vanished on the next refresh or reload. Fixed by computing the candidate values first and only committing them to the real record after the write is confirmed:
 
 ```js
 async function shpAddTradeDoc(shId, type) {
   var s = DB.sh.find(function(x){ return x.id === shId; });
   if (!s || !type || !type.trim()) return;
-  s.tradeDocs = (s.tradeDocs || []).concat([shpNewTradeDocEntry(type.trim(), false)]);
-  s.docsStatus = shpComputeDocsStatus(s.tradeDocs);
-  s.updAt = new Date().toISOString();
-  await shpPersistTradeDocsChange(s);
+  var candidateDocs = (s.tradeDocs || []).concat([shpNewTradeDocEntry(type.trim(), false)]);
+  await shpPersistTradeDocsChange(s, candidateDocs);
 }
 
 async function shpEditTradeDoc(shId, docId, fields) {
   var s = DB.sh.find(function(x){ return x.id === shId; });
   if (!s) return;
-  var d = (s.tradeDocs || []).find(function(x){ return x.id === docId; });
-  if (!d) return;
-  ['status','refNum','fileLocation','receivedDate','notes'].forEach(function(k){
-    if (fields[k] !== undefined) d[k] = fields[k];
+  var candidateDocs = (s.tradeDocs || []).map(function(d){
+    if (d.id !== docId) return d;
+    var updated = Object.assign({}, d);
+    ['status','refNum','fileLocation','receivedDate','notes'].forEach(function(k){
+      if (fields[k] !== undefined) updated[k] = fields[k];
+    });
+    return updated;
   });
-  s.docsStatus = shpComputeDocsStatus(s.tradeDocs);
-  s.updAt = new Date().toISOString();
-  await shpPersistTradeDocsChange(s);
+  if (!candidateDocs.some(function(d){ return d.id === docId; })) return; // docId not found — no-op
+  await shpPersistTradeDocsChange(s, candidateDocs);
 }
 
 async function shpRemoveTradeDoc(shId, docId) {
   var s = DB.sh.find(function(x){ return x.id === shId; });
   if (!s) return;
-  s.tradeDocs = (s.tradeDocs || []).filter(function(d){ return d.id !== docId; });
-  s.docsStatus = shpComputeDocsStatus(s.tradeDocs);
-  s.updAt = new Date().toISOString();
-  await shpPersistTradeDocsChange(s);
+  var candidateDocs = (s.tradeDocs || []).filter(function(d){ return d.id !== docId; });
+  await shpPersistTradeDocsChange(s, candidateDocs);
 }
 
-async function shpPersistTradeDocsChange(s) {
+async function shpPersistTradeDocsChange(s, candidateDocs) {
+  var candidateStatus = shpComputeDocsStatus(candidateDocs);
+  var candidateUpdAt = new Date().toISOString();
   if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
-    if (!(await ensureSbAuth())) return;
+    if (!(await ensureSbAuth())) return; // operator cancelled login — DB.sh untouched, no silent revert needed because nothing was ever mutated
     var result = await _sb.from('shipments').update({
-      trade_docs: s.tradeDocs, docs_status: s.docsStatus, upd_at: s.updAt
+      trade_docs: candidateDocs, docs_status: candidateStatus, upd_at: candidateUpdAt
     }).eq('id', s.id).select().single();
-    if (result.error) { toast('Save failed: ' + result.error.message); return; }
+    if (result.error) { toast('Save failed: ' + result.error.message); return; } // DB.sh still untouched on failure
+    s.tradeDocs = candidateDocs; s.docsStatus = candidateStatus; s.updAt = candidateUpdAt;
     await refreshShFromSupabase();
   } else {
+    s.tradeDocs = candidateDocs; s.docsStatus = candidateStatus; s.updAt = candidateUpdAt;
     sv(K.sh, DB.sh);
   }
   rShp();
 }
 ```
 
-Every one of these three mutation functions operates on `s.tradeDocs` **in place on the existing `DB.sh` record** (found by `id`, mutated, never rebuilt from a partial field set) and pushes only the two touched columns (`trade_docs`, `docs_status`) on the Cloud Data branch — this is the structural reason none of them can reintroduce B1's bug class: there is no full-object-replace anywhere in this section, so there is nothing to preserve *against*. `shpPersistTradeDocsChange()` deliberately does not touch `ref`/`status`/`linkedInvs`/etc. at all, on either branch, for the same reason.
+`s` (the live `DB.sh` reference) is only ever written to in the two lines immediately preceding `refreshShFromSupabase()`/`sv()` — both of which are only reached once persistence has already succeeded. A failed `ensureSbAuth()` or a failed `.update()` now leaves `DB.sh` byte-identical to before the call, with the operator's edit simply not applied (a `toast` on the `.update()` failure path; a silent no-op on the login-cancellation path, matching this codebase's existing convention that a cancelled auth prompt is not itself an error worth toasting — see `ensureSbAuth()`'s own callers elsewhere).
+
+Every one of these three mutation functions builds its own candidate `tradeDocs` array (via `.concat()`/`.map()`/`.filter()` — never mutating an existing entry object in place, never a full-object-replace of the Shipment record itself) and pushes only the three touched columns (`trade_docs`, `docs_status`, `upd_at`) on the Cloud Data branch — this is the structural reason none of them can reintroduce B1's bug class: `ref`/`status`/`linkedInvs`/`autoCreatedFromInvIds`/etc. are never read from or written to anywhere in this section, so there is nothing to preserve *against*.
 
 `shpRemoveTradeDoc()` on the last surviving `autoManaged: true` DG line has no special guard — an operator can remove it directly through this path even without toggling `dg` off first; REQ-SHIP-001e's own guard only governs the `saveShp()`-driven add/remove-on-toggle path (§10), not this direct per-document deletion, which is an explicit, deliberate operator action requiring no additional protection (mirrors `delRfqResponse()`'s own unguarded-by-default deletion pattern elsewhere in this codebase).
 
@@ -535,8 +550,10 @@ Every AC from `REQ-SHIP-001-v1.md` §3 maps to at least one test; several ACs ar
 - **AC-12 / AC-13:** `saveAutoShipToggle()` called with the checkbox unchecked → `SS.autoCreateShipmentOnPaid === false`, `mockEl('inv-autoship-banner').style.display`/`mockEl('sh-autoship-banner').style.display` both `'flex'` after calling `rInv()`/`rShp()`; toggled back → both `'none'`. A separate test confirms `autoCreateShipmentFromInvoice()` itself is a no-op (asserted via a spy, not just "no new Shipment," to distinguish "correctly bailed" from "bailed for the wrong reason") when the toggle is off, and behaves as AC-1 when on/unset.
 - **AC-14 / AC-16:** the primary B1-regression tests. AC-14: auto-create via AC-1's fixture, then call `saveShp()` with `EI.sh` set to that record's id and only an unrelated field (`vessel`) changed on the mock form — assert `tradeDocs` on the resulting `DB.sh` record is deep-equal to its pre-edit value. AC-16: same shape but starting from a manually-created Shipment (no auto-creation involved) that has `tradeDocs` populated via `shpAddTradeDoc()` first.
 - **AC-17 / AC-18 / AC-19:** mock `_sb`, drive `autoCreateShipmentFromInvoice()` through its Cloud Data branch, then call `refreshShFromSupabase()` with a mocked response echoing back the inserted row's `trade_docs`/`auto_created_from_inv_ids` — assert both survive on the resulting `DB.sh` record (AC-17). A second test mocks a row with both columns `null` (simulating a legacy pre-feature record) — assert `tradeDocs`/`autoCreatedFromInvIds` are absent (`'tradeDocs' in record === false`), not `[]`, and `docsStatus` is untouched (AC-18, the negative-assertion pattern this codebase's own `CLAUDE.md` calls out as necessary for this exact bug class). A third test drives `migrateShToSupabase()` on a local record with real `tradeDocs` progress, mocks the insert response, and confirms the payload sent to Supabase included both new fields (AC-19).
+- **New, added after spec-gate round 1 — B3 regression coverage (§11's CRUD persistence-failure divergence):** mock `_sb`/the Cloud Data migration marker, stub `ensureSbAuth()` to resolve `false` (simulating an operator cancelling the login modal), call `shpEditTradeDoc()` on an existing record with a real field change — assert `DB.sh`'s record is byte-identical to its pre-call state (not just "no crash") and that `_sb.from('shipments').update` was never called. A second test stubs `ensureSbAuth()` to resolve `true` but the `.update()` call to return `{error: {...}}` — assert the same "untouched, no partial mutation" outcome, plus the failure toast. A third, positive-path test confirms a successful Cloud Data update DOES commit `tradeDocs`/`docsStatus`/`updAt` onto the real `DB.sh` record after `refreshShFromSupabase()`.
+- **New, added after spec-gate round 1 — B4 regression coverage (§10's create-path docsStatus override):** call `saveShp()` on the create path (`EI.sh` unset) with the DG checkbox checked and the `shf-docs` dropdown mock set to a non-default value (e.g. `'In Progress'`) — assert the resulting `DB.sh` record has `tradeDocs: []` (not a seeded DG-only array) and `docsStatus === 'In Progress'` (the operator's own selection, unmodified). A second test confirms the same create path with DG unchecked also yields `tradeDocs: []`, `autoCreatedFromInvIds: []`.
 
-Mutation-testing discipline (per this session's established practice): once implemented, revert each of the following in a scratch copy and confirm the predicted test(s) fail — (a) the `saveShp()` preservation block from §4, (b) the two new lines in `refreshShFromSupabase()`, (c) the two new fields in `migrateShToSupabase()`'s insert payload, (d) the `autoCreatedFromInvIds` half of the idempotency `.some()` check in §3, (e) the `SS.autoCreateShipmentOnPaid === false` bail-out.
+Mutation-testing discipline (per this session's established practice): once implemented, revert each of the following in a scratch copy and confirm the predicted test(s) fail — (a) the `saveShp()` preservation block from §4, (b) the two new lines in `refreshShFromSupabase()`, (c) the two new fields in `migrateShToSupabase()`'s insert payload, (d) the `autoCreatedFromInvIds` half of the idempotency `.some()` check in §3, (e) the `SS.autoCreateShipmentOnPaid === false` bail-out, (f) `shpPersistTradeDocsChange()`'s commit-after-success ordering (move the `s.tradeDocs = candidateDocs` assignment back above the `ensureSbAuth()`/`.update()` calls and confirm the new B3 tests correctly fail), (g) the create-path `tradeDocs: []` reset in §10 (restore the DG-seeding `else` branch and confirm the new B4 tests correctly fail).
 
 ---
 
@@ -555,4 +572,19 @@ Mutation-testing discipline (per this session's established practice): once impl
 
 ## 16. Review-resolution log
 
-(Populated once independent spec-gate review runs.)
+**Independent spec-gate review round 1: FAIL — 4 blocking findings, 6 advisory findings.** Every finding was personally re-verified against the live `index.html` before being accepted, per this session's standing practice:
+
+- **B1 (banner mechanism, §9):** confirmed real by direct read of `.banner`'s CSS (`index.html:33` — no `position` property at all, contradicting the SPEC's stated rationale for a `position:static` override) and the Invoices-view HTML structure (`index.html:293-296` — the cited insertion point was literally inside the `.tb` toolbar's flex children, not above it, inconsistent with the Shipments-view treatment in the same section). Fixed: removed the incorrect CSS claim and the unnecessary override, corrected the Invoices insertion point to be a sibling of `.tb`, matching Shipments exactly.
+- **B2 (`refreshShFromSupabase()` citation, §5):** confirmed real — the SPEC's "exact current code" snippet omitted a real guard line (`index.html:6189`, the never-migrated/real-local-data early return) present in the live function. Fixed: snippet corrected to match live code exactly.
+- **B3 (CRUD mutate-before-persist, §11):** confirmed real by tracing `ensureSbAuth()` (`index.html:6025-6032`) — it genuinely resolves `false` when an operator cancels the login modal, not just on a hard error. The original `shpAddTradeDoc`/`shpEditTradeDoc`/`shpRemoveTradeDoc` mutated the live `DB.sh` record before calling the shared persist helper, so a cancelled login (or a failed `.update()`) left an unsaved mutation sitting in memory with no toast, no revert, and no indication to the operator that nothing was actually saved. Fixed: all three functions now build a candidate `tradeDocs` value and only commit it to the real record after `shpPersistTradeDocsChange()` confirms the write succeeded (or after the synchronous local-write branch, which cannot fail this way).
+- **B4 (create-path `docsStatus` override, §10):** confirmed real by reading `openShp()`'s create-path defaults (`index.html:12888-12889` — `containerType` defaults to `'20GP'`, `docsStatus` defaults to `'Pending'`). The original §10 seeded a DG-only `tradeDocs` entry on the manual "New Shipment" create path whenever the DG checkbox was checked, which then made the unconditional `docsStatus` recompute line silently overwrite whatever the operator had picked in the `shf-docs` dropdown — undisclosed, untested, and not something REQ-SHIP-001d/e actually asked for (REQ-SHIP-001e's own wording scopes this behavior to editing an *existing* Shipment only). Fixed: removed all `tradeDocs` seeding from the create path — a brand-new manually-created Shipment always starts with `tradeDocs: []` and its `docsStatus` is left exactly as the operator set it, regardless of the DG checkbox.
+- **A1 (linkedInvs string-corruption false-positive risk):** fixed with an `Array.isArray()` guard in the idempotency check (§3).
+- **A2 (hardcoded `docsStatus: 'Pending'` instead of derived):** fixed — now calls `shpComputeDocsStatus(seededDocs)` (§3).
+- **A3 (silent create-path design call):** resolved as a side effect of the B4 fix — there is no longer any create-path seeding to disclose.
+- **A4 (`containerType` cosmetic inconsistency):** fixed — auto-created Shipments now default to `'20GP'`, matching the manual-create modal (§3).
+- **A5 (test-plan gaps for B3/B4):** fixed — new dedicated test descriptions added to §14 for both, plus two new mutation-testing checklist items.
+- **A6 (unnecessary hedge on the CSV-import citation):** left as a minor stylistic note in §2's prose rather than removed outright — the reviewer confirmed the underlying claim holds, so the hedge is harmless, not incorrect; not worth a further edit purely to tighten wording.
+
+All fixes were applied directly to the sections above rather than appended as patches, so this SPEC reads as internally consistent throughout — a reader encountering §3/§9/§10/§11 for the first time sees the corrected design, not the original draft plus a correction note grafted on top (except where the correction's own rationale is itself worth preserving inline, as with B1/B3/B4 above, matching this session's established documentation style for prior REQ/SPEC review rounds).
+
+Status: all round-1 findings fixed and verified against live code. Ready for a confirmatory round-2 spec-gate review before build.
