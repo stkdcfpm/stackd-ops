@@ -5262,12 +5262,12 @@ function rDash() {
   } else {
     pl.innerHTML = DB.inv.slice().reverse().slice(0,10).map(function(inv){
       var c = iCalc(inv);
-      var sc = (inv.status||'draft').toLowerCase().replace(/ /g, '-');
+      var sc = invStatusClass(inv.status);
       return '<div class="pi" onclick="editInv(\'' + inv.id + '\')">' +
         '<span class="pref">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</span>' +
         '<span class="pbuy">' + (san(inv.buyer)||'-') + '</span>' +
         '<span class="pdst">' + san(inv.dst||'') + '</span>' +
-        '<span class="tag s-' + sc + '">' + (inv.status||'Draft') + '</span>' +
+        '<span class="tag ' + sc + '">' + san(inv.status||'Draft') + '</span>' +
         '<span class="pamt">' + fmt(c.np, inv.cur||'USD') + '</span>' +
         '<span class="pbal">' + (c.bal>0 ? fmt(c.bal, inv.cur||'USD') : '') + '</span>' +
         '</div>';
@@ -5404,7 +5404,7 @@ function renderAccts() {
     var totalToChase = toDisp(balFromBuyer, cur) + unrecoveredFPM;
     var netPos = buyerDep - supDepPaid;
     var nc = netPos >= 0 ? 'pos' : 'neg';
-    var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = invStatusClass(inv.status);
 
     var fpmCell = fpmFunded > 0
       ? (fpmRecovered
@@ -5420,7 +5420,7 @@ function renderAccts() {
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap;">' + (san(inv.num)||'-') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td>' +
       '<td>' + (san(inv.dst)||'-') + '</td>' +
-      '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
+      '<td><span class="tag ' + sc + '">' + san(inv.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(c.grand, cur) + '</td>' +
       '<td class="num" style="color:var(--gn);">' + (buyerDep ? fmt(buyerDep,cur) : '-') + '</td>' +
       '<td class="num ' + (balFromBuyer>0?'neg':'') + '">' + (balFromBuyer>0 ? fmt(balFromBuyer,cur) : '<span style="color:var(--gn);">&#10003;</span>') + '</td>' +
@@ -5600,7 +5600,7 @@ function renderSupContacts() {
   el.innerHTML = '<table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead><tbody>' +
     linked.map(function(c){
       return '<tr><td>' + san(c.name) + '</td><td>' + san(c.email) + '</td>' +
-        '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
+        '<td><span class="tag ' + conStatusClass(c.status) + '">' + san(c.status) + '</span></td>' +
         '<td><button class="ab" onclick="unlinkSupCon(\'' + c.id + '\')">Unlink</button></td></tr>';
     }).join('') + '</tbody></table>';
 }
@@ -6012,6 +6012,15 @@ async function refreshSupPmtFromSupabase() {
   // Payment renders exclusively via renderPOPaymentsTab(poId).
 }
 
+// INV-GAP-003/004: the calc_* fields are stored locally as strings (String(gt) etc.)
+// and a Draft/incomplete Invoice can carry '' rather than being unset entirely —
+// `!= null` lets '' straight through into a `numeric` column, which Postgres rejects
+// with 22P02 ("invalid input syntax for type numeric"). numOrNull() treats '' the
+// same as null/undefined. Shared by every site that builds an invoices-table row —
+// migrateInvToSupabase(), persistInvChange(), and saveInv()'s own cloud-save block —
+// since all three build the identical calc_* field set from the identical source shape.
+function numOrNull(v) { return (v === null || v === undefined || v === '') ? null : v; }
+
 async function persistInvChange(inv, skipRefresh) {
   if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
@@ -6037,14 +6046,14 @@ async function persistInvChange(inv, skipRefresh) {
       approval_method: inv.approvalMethod || null, approval_note: inv.approvalNote || null,
       linked_quote_id: inv.linkedQuoteId || null, linked_quote_num: inv.linkedQuoteNum || null,
       notes: inv.notes || null, edit_history: inv.editHistory || null,
-      calc_grand_total: inv.calc_grandTotal != null ? inv.calc_grandTotal : null,
-      calc_cogs: inv.calc_cogs != null ? inv.calc_cogs : null,
-      calc_gross_profit: inv.calc_grossProfit != null ? inv.calc_grossProfit : null,
-      calc_net_profit: inv.calc_netProfit != null ? inv.calc_netProfit : null,
-      calc_margin: inv.calc_margin != null ? inv.calc_margin : null,
-      calc_balance_due: inv.calc_balanceDue != null ? inv.calc_balanceDue : null,
-      calc_li_total: inv.calc_liTotal != null ? inv.calc_liTotal : null,
-      calc_tax_amt: inv.calc_taxAmt != null ? inv.calc_taxAmt : null
+      calc_grand_total: numOrNull(inv.calc_grandTotal),
+      calc_cogs: numOrNull(inv.calc_cogs),
+      calc_gross_profit: numOrNull(inv.calc_grossProfit),
+      calc_net_profit: numOrNull(inv.calc_netProfit),
+      calc_margin: numOrNull(inv.calc_margin),
+      calc_balance_due: numOrNull(inv.calc_balanceDue),
+      calc_li_total: numOrNull(inv.calc_liTotal),
+      calc_tax_amt: numOrNull(inv.calc_taxAmt)
     };
     row.upd_at = inv.updAt != null ? inv.updAt : null;
     var result = await _sb.from('invoices').update(row).eq('id', inv.id);
@@ -6873,13 +6882,6 @@ async function migrateInvToSupabase() {
   // and CN alike) with linked_inv_id deferred to null, building invIdMap from each
   // insert's returned row.
   //
-  // INV-GAP-003: the calc_* fields are stored locally as strings (String(gt) etc,
-  // per this file's own header comment above) and a Draft/incomplete Invoice can
-  // carry '' rather than being unset entirely — `!= null` lets '' straight through
-  // into a `numeric` column, which Postgres rejects with 22P02 ("invalid input
-  // syntax for type numeric"), failing the insert for that record and blocking the
-  // whole migration. numOrNull() below treats '' the same as null/undefined.
-  function numOrNull(v) { return (v === null || v === undefined || v === '') ? null : v; }
   var invIdMap = {};
   for (var i = 0; i < DB.inv.length; i++) {
     var r = DB.inv[i];
@@ -7549,7 +7551,7 @@ async function saveLI() {
   var dims=(diml&&dimw&&dimh)?{l:diml,w:dimw,h:dimh}:(existing&&existing.dims)||null;
   var dg = !!(G('lf-dg')&&G('lf-dg').checked);
 
-  if (_sb) {
+  if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var row = {
       sku: G('lf-s').value.trim(), "desc": G('lf-d').value.trim(), specs: G('lf-sp').value.trim(),
@@ -7590,7 +7592,7 @@ async function delLI(id) {
   if (warns.length) msg += '\n\nWarning: This item is referenced in:\n  ' + warns.join('\n  ') + '\n\nExisting line entries on those documents will be preserved but the catalogue link will be broken.';
   if (!confirm(msg)) return;
 
-  if (_sb) {
+  if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var result = await _sb.from('line_items').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (result.error) { toast('Delete failed: ' + result.error.message); return; }
@@ -8032,14 +8034,14 @@ async function saveInv() {
       approval_method: inv.approvalMethod || null, approval_note: inv.approvalNote || null,
       linked_quote_id: inv.linkedQuoteId || null, linked_quote_num: inv.linkedQuoteNum || null,
       edit_history: inv.editHistory || null,
-      calc_grand_total: inv.calc_grandTotal != null ? inv.calc_grandTotal : null,
-      calc_cogs: inv.calc_cogs != null ? inv.calc_cogs : null,
-      calc_gross_profit: inv.calc_grossProfit != null ? inv.calc_grossProfit : null,
-      calc_net_profit: inv.calc_netProfit != null ? inv.calc_netProfit : null,
-      calc_margin: inv.calc_margin != null ? inv.calc_margin : null,
-      calc_balance_due: inv.calc_balanceDue != null ? inv.calc_balanceDue : null,
-      calc_li_total: inv.calc_liTotal != null ? inv.calc_liTotal : null,
-      calc_tax_amt: inv.calc_taxAmt != null ? inv.calc_taxAmt : null,
+      calc_grand_total: numOrNull(inv.calc_grandTotal),
+      calc_cogs: numOrNull(inv.calc_cogs),
+      calc_gross_profit: numOrNull(inv.calc_grossProfit),
+      calc_net_profit: numOrNull(inv.calc_netProfit),
+      calc_margin: numOrNull(inv.calc_margin),
+      calc_balance_due: numOrNull(inv.calc_balanceDue),
+      calc_li_total: numOrNull(inv.calc_liTotal),
+      calc_tax_amt: numOrNull(inv.calc_taxAmt),
       upd_at: inv.updAt || null
     };
     var invResult = EI.i
@@ -8108,6 +8110,11 @@ async function saveInv() {
   }
 
   // ── invoiceRefs index (gated on cIL.length > 0) ──────────────
+  // invoiceRefs has no Supabase column (not in 0002_line_items_contacts.sql) — it is
+  // deliberately local-only/derived, and refreshLIFromSupabase() already preserves it
+  // from the in-memory DB.li at refresh time (prev.invoiceRefs) rather than expecting
+  // Supabase to be authoritative for it. sv(K.l, DB.li) is therefore correct as-is,
+  // regardless of Cloud Data state — do not add a push here (LIB-GAP-001).
   if (cIL.length > 0) {
     var refsChanged = false;
     cIL.forEach(function(li) {
@@ -8544,13 +8551,13 @@ function rInv() {
   if(invTb) invTb.innerHTML=fi.slice().reverse().map(function(inv){
     var c=iCalc(inv), cur=inv.cur||'USD';
     var mc=c.mgn===null||isNaN(c.mgn)?'':(c.mgn>=20?'phi':c.mgn>=10?'pmi':'plo');
-    var sc=(inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = invStatusClass(inv.status);
     var balDue = c.bal;
     return '<tr>' +
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td><td>' + (san(inv.dst)||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (inv.date||'-') + '</td>' +
-      '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
+      '<td><span class="tag ' + sc + '">' + san(inv.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(c.grand,cur) + '</td>' +
       '<td class="num">' + fmt(c.cogs,cur) + '</td>' +
       '<td class="num ' + (c.gp>=0?'pos':'neg') + '">' + fmt(c.gp,cur) + '</td>' +
@@ -9097,7 +9104,7 @@ function renderStatement(buyer) {
     var credits = DB.inv.filter(function(cn){ return isCnRec(cn) && cn.linkedInvNum===inv.num && cn.status==='CN Applied'; })
                         .reduce(function(s,cn){ return s+Math.abs(+cn.cnAmount||0); }, 0);
     var balDue = c.bal;
-    var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = invStatusClass(inv.status);
     totalGrand += c.grand; totalPaid += paid; totalCredits += credits;
     return '<tr>' +
       '<td style="font-weight:500;color:var(--cr);">'+san(inv.num||'-')+'</td>' +
@@ -9106,7 +9113,7 @@ function renderStatement(buyer) {
       '<td class="num" style="color:var(--gn);">'+fmt(paid,cur)+'</td>' +
       '<td class="num" style="color:var(--gold);">'+fmt(-credits,cur)+'</td>' +
       '<td class="num" style="color:var(--bl);">'+fmt(balDue,cur)+'</td>' +
-      '<td><span class="tag s-'+sc+'">'+san(inv.status||'-')+'</span></td>' +
+      '<td><span class="tag '+sc+'">'+san(inv.status||'-')+'</span></td>' +
     '</tr>';
   }).join('');
 
@@ -9349,13 +9356,13 @@ function rPO() {
   G('po-tb').innerHTML=f.slice().reverse().map(function(po){
     var liT=(po.lineItems||[]).reduce(function(s,li){return s+(+li.qty||0)*(+li.cost||0);},0);
     var dep=getPOEffectiveDep(po), bal=liT+(+po.oth||0)-dep, cur=po.cur||'USD';
-    var sc=(po.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = poStatusClass(po.status);
     return '<tr>' +
       '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + san(po.num||'-') + (po._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(gsn(po.supId)) + '</td>' +
       '<td style="color:var(--m);font-size:.54rem;">' + san(po.invNum||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (po.date||'-') + '</td>' +
-      '<td><span class="tag s-' + sc + '">' + (po.status||'-') + '</span></td>' +
+      '<td><span class="tag ' + sc + '">' + san(po.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(liT,cur) + '</td>' +
       '<td class="num" style="color:var(--bl);">' + (dep?fmt(dep,cur):'-') + '</td>' +
       '<td class="num" style="color:var(--gold);">' + fmt(bal,cur) + '</td>' +
@@ -12500,6 +12507,34 @@ function shpStatusClass(st) {
   return m[st] || 's-draft';
 }
 
+// SEC-GAP-021: status-tag class strings must never be built by slugifying
+// unsanitized `status` text (`(x.status||'draft').toLowerCase().replace(/ /g,'-')`)
+// and concatenating it into `class="tag s-' + sc + '"` — a status value containing
+// a `"` breaks out of the attribute regardless of whether the adjacent text content
+// is san()'d, and this was reachable live via CSV Invoice import (processImportRecords()'s
+// status mapper falls through to the raw cell value for anything it doesn't recognize).
+// Every entity with a status tag gets its own fixed lookup + safe default, mirroring
+// shpStatusClass() above — never slugify raw text into a class attribute again.
+function invStatusClass(st) {
+  var m = {
+    'Draft':'s-draft', 'Pro-forma':'s-pro-forma', 'Sent':'s-sent',
+    'Partially Paid':'s-partially-paid', 'Paid':'s-paid', 'Cancelled':'s-cancelled',
+    'CN Draft':'s-cn-draft', 'CN Issued':'s-cn-issued', 'CN Applied':'s-cn-applied'
+  };
+  return m[st] || 's-draft';
+}
+function poStatusClass(st) {
+  var m = {
+    'Draft':'s-draft', 'Sent':'s-sent', 'Deposit Paid':'s-deposit-paid',
+    'Settled':'s-settled', 'Confirmed':'s-confirmed', 'Cancelled':'s-cancelled'
+  };
+  return m[st] || 's-draft';
+}
+function conStatusClass(st) {
+  var m = { 'lead':'s-lead', 'qualified':'s-qualified', 'converted':'s-converted', 'closed':'s-closed' };
+  return m[st] || 's-lead';
+}
+
 function rShp() {
   var q = (G('sh-q') ? G('sh-q').value.toLowerCase() : '');
   var sf = (G('sh-sf') ? G('sh-sf').value : '');
@@ -13540,7 +13575,7 @@ function rCon() {
       '<td>' + san(c.name) + stale + (c._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(c.company||'—') + '</td>' +
       '<td>' + san(c.email) + '</td>' +
-      '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
+      '<td><span class="tag ' + conStatusClass(c.status) + '">' + san(c.status) + '</span></td>' +
       '<td>' + san(c.source||'—') + '</td>' +
       '<td>' + (c.supplierId ? san(gsn(c.supplierId)) : '—') + '</td>' +
       '<td>' + lastDate + '</td>' +
@@ -13641,7 +13676,7 @@ async function saveCon() {
         var mergedEnquiries = (dup.enquiries || []).slice();
         if (enqSummary) mergedEnquiries.push({ id: uid(), ts: new Date().toISOString(), summary: enqSummary, source: 'manual' });
         var mergedLastContactedAt = new Date().toISOString();
-        if (_sb) {
+        if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
           if (!(await ensureSbAuth())) return;
           var mergeResult = await _sb.from('contacts').update({ enquiries: mergedEnquiries, last_contacted_at: mergedLastContactedAt }).eq('id', dup.id);
           if (mergeResult.error) { toast('Merge failed: ' + mergeResult.error.message); return; }
@@ -13673,7 +13708,7 @@ async function saveCon() {
   var lastContactedAt = enqSummary ? new Date().toISOString() : (existC ? (existC.lastContactedAt || '') : '');
   var prevStatus = existC ? existC.status : null;
 
-  if (_sb) {
+  if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var row = {
       name: name, email: email, phone: phone, company: company, status: status, source: source,
@@ -13743,7 +13778,7 @@ async function saveCon() {
 async function delCon(id) {
   if (!confirm('Delete this contact? This cannot be undone.')) return;
 
-  if (_sb) {
+  if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var result = await _sb.from('contacts').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (result.error) { toast('Delete failed: ' + result.error.message); return; }

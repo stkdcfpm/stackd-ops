@@ -3,3 +3,6 @@ Test-data/
 Stackd-Backup-*.json
 Stackd-Clean-*.json
 *.backup.json
+
+# OS cruft — accidentally tracked twice before (SEC-GAP-020-class hygiene miss)
+.DS_Store
