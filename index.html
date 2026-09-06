@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.85</title>
+<title>Stackd Ops v2.9.86</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.85</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.86</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -291,6 +291,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div class="view" id="v-inv">
+  <div id="inv-autoship-banner" class="banner" style="display:none;margin-bottom:10px;">
+    <span>&#9888; Shipment auto-creation is OFF — Paid invoices will not create a Shipment record automatically. Turn back on in Settings → Integrations.</span>
+  </div>
   <div class="tb">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">INVOICES</div>
     <input class="sb" type="text" placeholder="Search invoices..." id="inv-q" oninput="rInv()">
@@ -332,6 +335,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <!-- SHIPMENTS VIEW -->
 <div class="view" id="v-sh">
+  <div id="sh-autoship-banner" class="banner" style="display:none;margin-bottom:10px;">
+    <span>&#9888; Shipment auto-creation is OFF — Paid invoices will not create a Shipment record automatically. Turn back on in Settings → Integrations.</span>
+  </div>
   <div class="tb">
     <input class="sb" type="text" placeholder="Search shipments..." id="sh-q" oninput="rShp()">
     <select class="sb" style="max-width:160px;" id="sh-sf" onchange="rShp()"><option value="">All statuses</option><option>Booked</option><option>Confirmed</option><option>In Transit</option><option>At Origin Port</option><option>At Destination Port</option><option>In Customs</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option><option>On Hold</option><option>Cancelled</option></select>
@@ -749,6 +755,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     </div>
     <div class="card">
       <div class="ct">Integrations</div>
+      <div class="fld" style="margin-bottom:10px;">
+        <label><input type="checkbox" id="cfg-autoship-toggle" onchange="saveAutoShipToggle()"> Auto-create Shipment when an Invoice is marked Paid <span style="font-size:.44rem;color:var(--m);">(default on)</span></label>
+      </div>
       <div class="fld" style="margin-bottom:10px;">
         <label>Forwarder Webhook URL <span style="font-size:.44rem;color:var(--m);">(Power Automate or Zapier — receives JSON with shipmentRef + message)</span></label>
         <input type="text" id="cfg-fwd-webhook" placeholder="https://prod.example.com/triggers/..." autocomplete="off">
@@ -1342,9 +1351,18 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.85</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.86</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Auto-created Shipment on Invoice Paid, with a progressive trade-document checklist</strong> (<code>REQ/SPEC-SHIP-001</code>). Marking an Invoice Paid — whether a status change or a brand-new invoice saved directly as Paid — now auto-creates a linked Shipment record (unless disabled via the new Settings → Integrations toggle, which shows a persistent banner on the Invoices/Shipments tabs while off) seeded with a 7-item trade-document checklist (Purchase Invoice, Commercial Invoice, Packing List, Bill of Lading, Certificate of Origin, Verified Gross Mass Declaration, Insurance Certificate — an 8th, Dangerous Goods Declaration, if the shipment is DG-flagged) that the operator fills in with reference numbers, received dates, and a file-location note as documents arrive; no file upload, location/link tracking only. The default checklist is deliberately destination-agnostic — no Barbados-specific customs forms hardcoded — since FPM's own stated expansion beyond Barbados to Nigeria/Ghana/India would make a single-country checklist actively wrong, not just incomplete; grounded in cited shipping-document research including a Verified Gross Mass requirement (SOLAS-mandatory for every containerized shipment since 2016) that's easy for small-operator tools to miss. Went through this repo's full requirements-gate (3 independent review rounds — round 1 found a design that would have silently wiped the entire checklist on the first ordinary edit to an auto-created Shipment, and a trigger design that missed a brand-new invoice saved directly as Paid; round 2 found the round-1 fixes had introduced two new issues of their own, including a duplicate-Shipment risk from an invoice-number rename; round 3 found only documentation drift) and spec-gate (3 independent review rounds — found a wrong claim about CSS positioning, a citation gap, a new CRUD layer that could silently discard an edit on a cancelled Cloud Data login, and a create-path bug that would have overwritten an operator's own manual dropdown selection) processes, with every finding personally re-verified against the live code before being accepted, and every safety-critical fix confirmed via mutation testing (each fix reverted in a scratch copy, confirming the exact predicted test failure) before this delivery closed out. 37 new tests. Tests: 984/984 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.85</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Import Supplier Quote File</strong> (<code>REQ/SPEC-AI-GAP-012</code>, extends <code>REQ/SPEC-AI-GAP-011</code>'s pasted-email RFQ update to also accept a CSV file). A new button lives once per Order Request, above its line items — the operator selects the supplier the file is from and uploads a comma-delimited <code>.csv</code> (Excel/<code>.xlsx</code> not supported — no parser for it exists in this codebase, and adding one would violate the app's no-dependency policy), reviews every parsed row in a mandatory pre-send confirmation step (nothing is sent to the AI without this), and the AI attempts to match each row to one of the Order Request's own line items by description. Each confidently-matched line gets its own independent diff review — old → proposed, Apply or Discard individually, no bulk "Apply All" — reusing the exact same <code>editRfqResponse()</code>/<code>saveRfqResponse()</code> mechanism the email-parse feature already uses, so a matched line with no existing response from that supplier creates one; a line that already has one is updated in place with the same id-rotation/staleness-banner behavior. Rows the AI can't confidently match are listed separately for manual review, never guessed at or silently dropped. Re-running Import on the same Order Request (a correction, or a second supplier's file) preserves any still-pending, unapplied proposals from an earlier run rather than discarding them. Went through this repo's full two-person requirements-gate and spec-gate process before any code was written — both independent reviews found real issues in the first drafts (a genuine concurrency risk where the batch UI's own file-import buttons didn't actually prevent a double-save race through the pre-existing, shared RFQ response modal, a failed Apply being silently reported as success, and a test that would have passed regardless of whether the fix worked), all fixed before implementation began. 14 new tests. Tests: 945/945 pass.</li>
@@ -6198,6 +6216,8 @@ async function refreshShFromSupabase() {
       forwarder: row.forwarder || '', forwarderEmail: row.forwarder_email || '', notes: row.notes || ''
     };
     if (row.upd_at != null) s.updAt = row.upd_at;
+    if (row.trade_docs != null) s.tradeDocs = row.trade_docs;
+    if (row.auto_created_from_inv_ids != null) s.autoCreatedFromInvIds = row.auto_created_from_inv_ids;
     return s;
   });
   sv(K.sh, DB.sh);
@@ -7352,6 +7372,8 @@ async function migrateShToSupabase() {
       container_type: s.containerType || null, container_num: s.containerNum || null, dg: !!s.dg,
       docs_status: s.docsStatus || null, status: s.status,
       linked_invs: Array.isArray(s.linkedInvs) ? s.linkedInvs : (typeof s.linkedInvs === 'string' && s.linkedInvs ? s.linkedInvs.split(',').map(function(t){return t.trim();}).filter(Boolean) : []),
+      trade_docs: Array.isArray(s.tradeDocs) ? s.tradeDocs : null,
+      auto_created_from_inv_ids: Array.isArray(s.autoCreatedFromInvIds) ? s.autoCreatedFromInvIds : null,
       forwarder: s.forwarder || null, forwarder_email: s.forwarderEmail || null, notes: s.notes || null,
       upd_at: s.updAt != null ? s.updAt : null
     }).select().single();
@@ -8472,6 +8494,7 @@ async function saveInv() {
       toast('FPM-funded deposits marked as recovered ✓');
     }
   }
+  if (inv.status === 'Paid') await autoCreateShipmentFromInvoice(inv);
   if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) await refreshInvFromSupabase();
 }
 
@@ -8616,6 +8639,143 @@ async function autoPos(inv) {
   }
   rPO();
   toast(cnt+' PO'+(cnt!==1?'s':'')+' auto-generated');
+}
+
+// REQ-SHIP-001: default trade-document checklist seeded on every auto-created
+// Shipment. Deliberately destination-agnostic (no Barbados/CARICOM-specific
+// forms) since FPM's own ICP expands beyond Barbados to Nigeria/Ghana/India —
+// a hardcoded single-country form set would be actively wrong, not just
+// incomplete, the moment a second corridor ships. See REQ-SHIP-001-v1.md §0.1.
+var SHIP_DEFAULT_TRADE_DOCS = ['Purchase Invoice', 'Commercial Invoice', 'Packing List', 'Bill of Lading', 'Certificate of Origin', 'Verified Gross Mass (VGM) Declaration', 'Insurance Certificate'];
+
+function shpNewTradeDocEntry(type, autoManaged) {
+  return { id: uid(), type: type, status: 'Pending', refNum: '', fileLocation: '', receivedDate: '', notes: '', autoManaged: !!autoManaged };
+}
+
+function shpSeedTradeDocs(dg) {
+  var docs = SHIP_DEFAULT_TRADE_DOCS.map(function(t){ return shpNewTradeDocEntry(t, false); });
+  if (dg) docs.push(shpNewTradeDocEntry('Dangerous Goods Declaration', true));
+  return docs;
+}
+
+// Returns null (not 'Pending') for an absent/empty tradeDocs array — callers
+// must only assign docsStatus when this returns non-null, since a Shipment
+// that never opted into the checklist must never get a computed docsStatus.
+function shpComputeDocsStatus(tradeDocs) {
+  if (!Array.isArray(tradeDocs) || !tradeDocs.length) return null;
+  var anyReceived = tradeDocs.some(function(d){ return d.status === 'Received'; });
+  var allDone = tradeDocs.every(function(d){ return d.status === 'Received' || d.status === 'N/A'; });
+  if (allDone) return 'Complete';
+  if (anyReceived) return 'In Progress';
+  return 'Pending';
+}
+
+// REQ-SHIP-001f: per-document CRUD on tradeDocs[]. None of these mutate the
+// live DB.sh record until persistence has actually succeeded — a candidate
+// array is built first, and only committed to `s` after the write goes
+// through (or synchronously on the local-only branch, which cannot fail this
+// way). A cancelled Cloud Data login or a failed .update() leaves DB.sh
+// byte-identical to before the call, rather than silently applying an edit
+// that was never actually saved.
+async function shpAddTradeDoc(shId, type) {
+  var s = DB.sh.find(function(x){ return x.id === shId; });
+  if (!s || !type || !type.trim()) return;
+  var candidateDocs = (s.tradeDocs || []).concat([shpNewTradeDocEntry(type.trim(), false)]);
+  await shpPersistTradeDocsChange(s, candidateDocs);
+}
+
+async function shpEditTradeDoc(shId, docId, fields) {
+  var s = DB.sh.find(function(x){ return x.id === shId; });
+  if (!s) return;
+  var candidateDocs = (s.tradeDocs || []).map(function(d){
+    if (d.id !== docId) return d;
+    var updated = Object.assign({}, d);
+    ['status','refNum','fileLocation','receivedDate','notes'].forEach(function(k){
+      if (fields[k] !== undefined) updated[k] = fields[k];
+    });
+    return updated;
+  });
+  if (!candidateDocs.some(function(d){ return d.id === docId; })) return; // docId not found — no-op
+  await shpPersistTradeDocsChange(s, candidateDocs);
+}
+
+async function shpRemoveTradeDoc(shId, docId) {
+  var s = DB.sh.find(function(x){ return x.id === shId; });
+  if (!s) return;
+  var candidateDocs = (s.tradeDocs || []).filter(function(d){ return d.id !== docId; });
+  await shpPersistTradeDocsChange(s, candidateDocs);
+}
+
+async function shpPersistTradeDocsChange(s, candidateDocs) {
+  // shpComputeDocsStatus() deliberately returns null for an empty array (to
+  // avoid a vacuous .every() reporting 'Complete' for zero documents) — when
+  // every entry has just been removed, preserve whatever docsStatus already
+  // was rather than overwriting a real value with null.
+  var candidateStatus = candidateDocs.length ? shpComputeDocsStatus(candidateDocs) : s.docsStatus;
+  var candidateUpdAt = new Date().toISOString();
+  if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('shipments').update({
+      trade_docs: candidateDocs, docs_status: candidateStatus, upd_at: candidateUpdAt
+    }).eq('id', s.id).select().single();
+    if (result.error) { toast('Save failed: ' + result.error.message); return; }
+    s.tradeDocs = candidateDocs; s.docsStatus = candidateStatus; s.updAt = candidateUpdAt;
+    await refreshShFromSupabase();
+  } else {
+    s.tradeDocs = candidateDocs; s.docsStatus = candidateStatus; s.updAt = candidateUpdAt;
+    sv(K.sh, DB.sh);
+  }
+  rShp();
+}
+
+// REQ-SHIP-001: auto-creates a Shipment when an Invoice's status is Paid.
+// Fires unconditionally on inv.status === 'Paid' (no old-status/transition
+// check) — mirrors the FPM-funded-deposit-recovery block immediately above
+// this call site in saveInv(), which solves the identical "act on Paid,
+// don't repeat" problem via target-record idempotency rather than tracking
+// the invoice's own status history. This also means a brand-new Invoice
+// saved directly as Paid (never having been Draft first) still gets a
+// Shipment, which a transition-based guard would have missed.
+async function autoCreateShipmentFromInvoice(inv) {
+  if (SS.autoCreateShipmentOnPaid === false) return;
+  var already = DB.sh.some(function(s){
+    var linked = Array.isArray(s.linkedInvs) ? s.linkedInvs : [];
+    return (s.autoCreatedFromInvIds||[]).indexOf(inv.id) > -1 || linked.indexOf(inv.num) > -1;
+  });
+  if (already) return;
+
+  var ref = 'SHP-' + (inv.num || Date.now().toString(36));
+  var suffix = 2;
+  while (DB.sh.some(function(s){ return s.ref === ref; })) { ref = 'SHP-' + (inv.num || Date.now().toString(36)) + '-' + suffix; suffix++; }
+
+  var seededDocs = shpSeedTradeDocs(false);
+  var newShp = {
+    id: uid(), ref: ref, blNum: '', vessel: '', carrier: '', originPort: '', destPort: '',
+    etd: '', eta: '', containerType: '20GP', containerNum: '', dg: false,
+    tradeDocs: seededDocs, docsStatus: shpComputeDocsStatus(seededDocs), status: RD_SHP_STATUS[0],
+    linkedInvs: [inv.num], autoCreatedFromInvIds: [inv.id],
+    forwarder: '', forwarderEmail: '', notes: '', updAt: new Date().toISOString()
+  };
+
+  if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var shRow = {
+      ref: newShp.ref, bl_num: null, vessel: null, carrier: null, origin_port: null, dest_port: null,
+      etd: null, eta: null, container_type: newShp.containerType, container_num: null, dg: false,
+      docs_status: newShp.docsStatus, status: newShp.status, linked_invs: newShp.linkedInvs,
+      trade_docs: newShp.tradeDocs, auto_created_from_inv_ids: newShp.autoCreatedFromInvIds,
+      forwarder: null, forwarder_email: null, notes: null, upd_at: newShp.updAt
+    };
+    var result = await _sb.from('shipments').insert(shRow).select().single();
+    if (result.error) { toast('Auto-created Shipment failed to save to Cloud Data: ' + result.error.message); return; }
+    newShp.id = result.data.id;
+    await refreshShFromSupabase();
+  } else {
+    DB.sh.push(newShp);
+    sv(K.sh, DB.sh);
+  }
+  rShp();
+  toast('Shipment ' + ref + ' auto-created — add details as they become available');
 }
 
 function getInvoicePOs(inv) {
@@ -8836,6 +8996,7 @@ function exportVATTransactions() {
 
 // ── INVOICES TABLE ─────────────────────────────────────────────
 function rInv() {
+  var banner = G('inv-autoship-banner'); if (banner) banner.style.display = (SS.autoCreateShipmentOnPaid === false) ? 'flex' : 'none';
   var q=(G('inv-q')&&G('inv-q').value||'').toLowerCase(), sf=G('inv-sf')&&G('inv-sf').value||'';
   // Split records: invoices vs credit notes
   var isCnRec = function(r) { return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
@@ -11488,7 +11649,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.85).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.86).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -11641,6 +11802,7 @@ var AI_SYSTEM_PROMPT = [
   'Tax is always a buyer pass-through — never Stackd income.',
   '',
   '## Shipments',
+  'A Shipment is now also auto-created automatically whenever an Invoice is saved with status Paid (unless disabled in Settings → Integrations → Auto-create Shipment toggle) — it starts with a 7-item trade-document checklist (Purchase Invoice, Commercial Invoice, Packing List, Bill of Lading, Certificate of Origin, VGM Declaration, Insurance Certificate; an 8th, Dangerous Goods Declaration, if the shipment is DG-flagged) that the operator fills in with reference numbers, received dates, and a file-location note as documents arrive — no file upload, location/link tracking only.',
   'Shipments tab → + New Shipment. Ref format: SHP-001.',
   'Fields: BL Number, Vessel, Carrier, Origin Port (UN/LOCODE lookup), Destination Port (UN/LOCODE lookup), ETD, ETA, Container Type (20GP / 40HQ / LCL / Other), Container Number, DG Onboard, Docs Status (Pending / In Progress / Complete), Status, Linked Invoices, Forwarder Name, Forwarder Email, Notes.',
   'Status flow: Pending → Booked → In Transit → Arrived → Delivered.',
@@ -12315,6 +12477,7 @@ function rCfg() {
   if(G('cfg-ai-key')) G('cfg-ai-key').value=AI.key||'';
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
   if(G('cfg-fwd-webhook')) G('cfg-fwd-webhook').value=SS.fwdWebhook||'';
+  if(G('cfg-autoship-toggle')) G('cfg-autoship-toggle').checked = SS.autoCreateShipmentOnPaid !== false;
   if(G('cfg-sup-intel-threshold')) G('cfg-sup-intel-threshold').value = +localStorage.getItem('stackd_sup_intel_threshold_months') || 12;
   if(G('cfg-sb-url')) G('cfg-sb-url').value = SS.supabaseUrl||'';
   if(G('cfg-sb-key')) G('cfg-sb-key').value = SS.supabaseAnonKey||'';
@@ -12832,6 +12995,7 @@ function conStatusClass(st) {
 }
 
 function rShp() {
+  var banner = G('sh-autoship-banner'); if (banner) banner.style.display = (SS.autoCreateShipmentOnPaid === false) ? 'flex' : 'none';
   var q = (G('sh-q') ? G('sh-q').value.toLowerCase() : '');
   var sf = (G('sh-sf') ? G('sh-sf').value : '');
   var rows = DB.sh.filter(function(s){
@@ -12939,6 +13103,34 @@ async function saveShp() {
     updAt: new Date().toISOString()
   };
 
+  // REQ-SHIP-001e2: tradeDocs/autoCreatedFromInvIds have no form field on this
+  // modal — without carrying them forward here, any edit to any other field on
+  // a Shipment that has them silently discards the whole trade-document
+  // checklist and the auto-creation idempotency marker.
+  if (EI.sh) {
+    var existingShp = DB.sh.find(function(x){ return x.id === EI.sh; });
+    shp.tradeDocs = (existingShp && existingShp.tradeDocs) || [];
+    shp.autoCreatedFromInvIds = (existingShp && existingShp.autoCreatedFromInvIds) || [];
+    // REQ-SHIP-001e: DG toggle add/remove — edit-time only, never on create.
+    var wasDg = !!(existingShp && existingShp.dg);
+    var dgLineIdx = shp.tradeDocs.findIndex(function(d){ return d.autoManaged && d.type === 'Dangerous Goods Declaration'; });
+    if (shp.dg && !wasDg && dgLineIdx === -1) {
+      shp.tradeDocs = shp.tradeDocs.concat([shpNewTradeDocEntry('Dangerous Goods Declaration', true)]);
+    } else if (!shp.dg && wasDg && dgLineIdx > -1) {
+      var dgLine = shp.tradeDocs[dgLineIdx];
+      var untouched = dgLine.status === 'Pending' && !dgLine.refNum && !dgLine.fileLocation && !dgLine.notes;
+      if (untouched) shp.tradeDocs = shp.tradeDocs.filter(function(d, i){ return i !== dgLineIdx; });
+    }
+    if (shp.tradeDocs.length) shp.docsStatus = shpComputeDocsStatus(shp.tradeDocs);
+  } else {
+    // Create path: a brand-new Shipment always starts with no tradeDocs at
+    // all, regardless of the dg checkbox — docsStatus stays exactly what the
+    // operator picked in the shf-docs dropdown, since this record hasn't
+    // opted into the automated checklist yet.
+    shp.tradeDocs = [];
+    shp.autoCreatedFromInvIds = [];
+  }
+
   if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var shRow = {
@@ -12946,6 +13138,7 @@ async function saveShp() {
       origin_port: shp.originPort || null, dest_port: shp.destPort || null, etd: shp.etd || null, eta: shp.eta || null,
       container_type: shp.containerType || null, container_num: shp.containerNum || null, dg: !!shp.dg,
       docs_status: shp.docsStatus || null, status: shp.status, linked_invs: shp.linkedInvs || [],
+      trade_docs: shp.tradeDocs, auto_created_from_inv_ids: shp.autoCreatedFromInvIds,
       forwarder: shp.forwarder || null, forwarder_email: shp.forwarderEmail || null, notes: shp.notes || null,
       upd_at: shp.updAt
     };
@@ -13154,6 +13347,13 @@ function saveFwdWebhook() {
   if (webhook && !webhook.startsWith('https://')) { toast('Webhook URL must start with https://'); return; }
   SS.fwdWebhook = webhook;
   sv(K.ss, SS); toast('Webhook saved');
+}
+
+function saveAutoShipToggle() {
+  SS.autoCreateShipmentOnPaid = G('cfg-autoship-toggle').checked;
+  sv(K.ss, SS);
+  rInv(); rShp();
+  toast('Setting saved');
 }
 
 function unlockInv() {
