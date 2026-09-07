@@ -88,7 +88,16 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .phi{background:var(--gnf);color:var(--gn);}.pmi{background:#fdf6ec;color:#7a5200;}.plo{background:var(--crf);color:var(--cr);}
 .ab{background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--m);font-size:.66rem;transition:color .2s,opacity .15s;opacity:.45;}
 .ab:hover{color:var(--cr);}
-.tbl tr:hover .ab,.pi:hover .ab{opacity:1;}
+.tbl tr:hover .ab,.pi:hover .ab,.wh-rule:hover .ab{opacity:1;}
+.wh-notice{background:#fdf8ef;border:1px solid rgba(201,150,58,.35);border-left:3px solid var(--gold);border-radius:4px;padding:9px 12px;font-size:.5rem;color:#6b5423;line-height:1.55;margin-bottom:12px;}
+.wh-rule{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--ln);border-radius:5px;margin-bottom:6px;background:white;}
+.wh-url{flex:1;color:var(--m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.52rem;}
+.wh-add-form{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;align-items:flex-end;}
+.wh-add-form .fld{flex:1;min-width:150px;}
+.wh-add-form .fld:nth-child(2){flex:2;}
+.wh-enabled-check{display:flex;align-items:center;gap:4px;font-size:.5rem;color:var(--m);padding-bottom:6px;white-space:nowrap;}
+.wh-attest-box{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--ln);border-radius:5px;padding:9px 11px;margin-top:12px;font-size:.48rem;color:var(--m);background:#fafafa;cursor:pointer;}
+.wh-attest-box input{margin-top:2px;flex-shrink:0;}
 .ov{position:fixed;inset:0;background:rgba(15,12,13,.65);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:26px 14px;overflow-y:auto;}
 .ov.on{display:flex;}
 .modal{background:white;width:100%;max-width:840px;border-top:3px solid var(--cr);border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,.12);animation:sd .18s ease;}
@@ -764,24 +773,21 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
       <button class="btn btn-s" onclick="saveFwdWebhook()">Save Webhook</button>
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When a webhook URL is configured, shipment data (origin/destination ports, ETD, cargo description, forwarder contact name and email) is posted to that endpoint on each Forwarder Update Request. Only configure a URL you control or trust. Webhook is opt-in — no data is transmitted if no URL is configured.</p>
-
-      <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:12px;">
-        <div class="fld" style="margin-bottom:8px;">
-          <label style="font-weight:600;">Automation Webhooks</label>
-        </div>
-        <div id="webhook-rules-disclosure"></div>
-        <div id="webhook-rules-panel"></div>
-        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-          <select id="whr-trigger" style="flex:1;min-width:160px;"></select>
-          <input type="text" id="whr-url" placeholder="https://hook.us1.make.com/..." style="flex:2;min-width:200px;" autocomplete="off">
-          <label style="display:flex;align-items:center;gap:4px;font-size:.5rem;"><input type="checkbox" id="whr-enabled" checked> Enabled</label>
-          <button class="btn btn-g" onclick="addWebhookRule()">+ Add Rule</button>
-        </div>
-        <label style="display:flex;align-items:flex-start;gap:5px;margin-top:8px;font-size:.48rem;color:var(--m);">
-          <input type="checkbox" id="whr-attest" style="margin-top:2px;">
-          <span>I've checked this destination's own data handling before adding it — including that any email it sends (e.g. an invoice PDF) goes out from a business account with its own data processing agreement, such as Google Workspace, not a personal Gmail or similar consumer address. Required before a rule can be added.</span>
-        </label>
+    </div>
+    <div class="card">
+      <div class="ct">Automation Webhooks</div>
+      <div id="webhook-rules-disclosure"></div>
+      <div id="webhook-rules-panel"></div>
+      <div class="wh-add-form">
+        <div class="fld"><label>Trigger</label><select id="whr-trigger"></select></div>
+        <div class="fld"><label>Destination URL</label><input type="text" id="whr-url" placeholder="https://hook.us1.make.com/..." autocomplete="off"></div>
+        <label class="wh-enabled-check"><input type="checkbox" id="whr-enabled" checked> Enabled</label>
+        <button class="btn btn-s" onclick="addWebhookRule()">+ Add Rule</button>
       </div>
+      <label class="wh-attest-box">
+        <input type="checkbox" id="whr-attest">
+        <span>I've checked this destination's own data handling before adding it — including that any email it sends (e.g. an invoice PDF) goes out from a business account with its own data processing agreement, such as Google Workspace, not a personal Gmail or similar consumer address. <strong>Required before a rule can be added.</strong></span>
+      </label>
     </div>
     <div class="card">
       <div class="ct">Supplier Intelligence</div>
@@ -13539,17 +13545,19 @@ var WEBHOOK_DISCLOSURE_HTML = '&#9432; A webhook rule targeting <b>Invoice: Buye
 
 function renderWebhookRulesPanel() {
   var disclosure = G('webhook-rules-disclosure');
-  if (disclosure) disclosure.innerHTML = '<p style="font-size:.48rem;color:var(--m);margin-bottom:8px;">' + WEBHOOK_DISCLOSURE_HTML + '</p>';
+  if (disclosure) disclosure.innerHTML = '<div class="wh-notice">' + WEBHOOK_DISCLOSURE_HTML + '</div>';
   var panel = G('webhook-rules-panel');
   if (!panel) return;
   var rules = SS.webhookRules || [];
   var rows = rules.map(function(r){
     var t = WEBHOOK_TRIGGERS.find(function(x){ return x.key === r.trigger; });
-    return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--ln);font-size:.5rem;">'
-      + '<label style="display:flex;align-items:center;gap:4px;"><input type="checkbox"' + (r.enabled?' checked':'') + ' onchange="toggleWebhookRule(\'' + r.id + '\',this.checked)"></label>'
-      + '<span style="flex-shrink:0;">' + san(t?t.label:r.trigger) + '</span>'
-      + '<span style="flex:1;color:var(--m);word-break:break-all;">' + san(r.url) + '</span>'
-      + '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delWebhookRule(\'' + r.id + '\')">Del</button>'
+    var statusTag = r.enabled ? '<span class="tag s-paid">Enabled</span>' : '<span class="tag s-draft">Disabled</span>';
+    return '<div class="wh-rule">'
+      + '<label style="display:flex;align-items:center;" title="Enable/disable this rule"><input type="checkbox"' + (r.enabled?' checked':'') + ' onchange="toggleWebhookRule(\'' + r.id + '\',this.checked)"></label>'
+      + statusTag
+      + '<span class="tag" style="background:var(--blf);color:var(--bl);">' + san(t?t.label:r.trigger) + '</span>'
+      + '<span class="wh-url" title="' + san(r.url) + '">' + san(r.url) + '</span>'
+      + '<button class="ab" onclick="delWebhookRule(\'' + r.id + '\')" title="Remove rule">&#10005;</button>'
       + '</div>';
   }).join('');
   panel.innerHTML = rows || '<div style="color:var(--m);font-size:.54rem;">No automation webhook rules configured.</div>';
