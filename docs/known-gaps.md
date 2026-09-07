@@ -763,6 +763,12 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 - Google Apps Script `doPost` (`Code.gs`) compares its shared bearer token with `!==`, not timing-safe. Low severity for a single shared token with one client; noted for completeness.
 - `.DS_Store` was tracked in git (root and `docs/`) and thus publicly served via GitHub Pages — the same class of accidental-inclusion miss `SEC-GAP-020` was about. **Fixed same pass:** untracked and added to `.gitignore`.
 
+### SHIP-GAP-001 — Async double-submit race on Shipment auto-creation/CRUD, pre-existing class, disclosed not fixed *(Open, accepted, low priority)*
+
+**Area:** `autoCreateShipmentFromInvoice()`, `shpAddTradeDoc()`/`shpEditTradeDoc()`/`shpRemoveTradeDoc()` (`index.html`, REQ/SPEC-SHIP-001).
+**Logged:** v2.9.86, found by independent spec-gate review round 3, at ship time — an explicit, disclosed limitation, not a defect discovered later.
+**Detail:** Two rapid saves of the same Cloud-Data-migrated Invoice (e.g. a double-click before the first `saveInv()`/`autoCreateShipmentFromInvoice()` round trip resolves) could both pass the idempotency scan before either commits to `DB.sh`, producing two Shipments. This is the identical, already-unguarded shape of risk present in `saveShp()`, `saveInv()`, and `autoPos()` today — not a new failure mode this feature introduces, and fixing it codebase-wide (a proper mutex/in-flight-request guard pattern) is out of scope for this delivery.
+
 ### AI-GAP-012 — "Import Supplier Quote File" supports comma-delimited CSV only *(Open, accepted limitation, by design)*
 
 **Area:** `rfqRunFileImport()`/`parseImportCSV()` (`index.html`, REQ/SPEC-AI-GAP-012).

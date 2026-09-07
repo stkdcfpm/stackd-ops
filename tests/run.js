@@ -7961,7 +7961,7 @@ testAsync('delCon — Cloud Data configured: soft-delete via update({deleted_at}
 // Editing a pre-existing local (uid()-format id) Line Item/Contact in that window
 // hit the Supabase branch anyway, and PostgREST's .single() on an id that was never
 // inserted into the table returns a 0-rows error, silently losing the edit.
-test('saveLI() falls back to local save when _sb is configured but Line Item has not migrated yet (LI-GAP-002)', async function() {
+testAsync('saveLI() falls back to local save when _sb is configured but Line Item has not migrated yet (LI-GAP-002)', async function() {
   resetDB();
   ctx.localStorage.removeItem('st_li_cloud_migration_ts');
   ctx.EI.l = null;
@@ -13589,6 +13589,554 @@ test('rPO() never breaks out of the class attribute for a malicious po.status', 
   const html = mockEl('po-tb').innerHTML;
   assertNotContains(html, '<img', 'malicious status must never reach the DOM as a live tag');
   assertContains(html, 'class="tag s-draft"', 'malicious/unrecognized PO status renders with the fixed safe-default class');
+});
+
+// ── REQ/SPEC-SHIP-001: auto-created Shipment + trade-document checklist ──
+console.log('\nREQ/SPEC-SHIP-001 — auto-created Shipment on Invoice Paid');
+
+function mkPaidInvoice(overrides) {
+  return Object.assign({ id: 'inv-ship-1', num: 'INV20001', status: 'Paid', lineItems: [], taxRate: 0 }, overrides || {});
+}
+
+// ── shpComputeDocsStatus() (AC-7) ──
+test('shpComputeDocsStatus() — all Pending returns Pending (AC-7)', function() {
+  var docs = [{ status: 'Pending' }, { status: 'Pending' }];
+  assertEqual(ctx.shpComputeDocsStatus(docs), 'Pending');
+});
+test('shpComputeDocsStatus() — one Received, rest Pending returns In Progress (AC-7)', function() {
+  var docs = [{ status: 'Received' }, { status: 'Pending' }];
+  assertEqual(ctx.shpComputeDocsStatus(docs), 'In Progress');
+});
+test('shpComputeDocsStatus() — all Received/N-A returns Complete (AC-7)', function() {
+  var docs = [{ status: 'Received' }, { status: 'N/A' }];
+  assertEqual(ctx.shpComputeDocsStatus(docs), 'Complete');
+});
+test('shpComputeDocsStatus() — empty/absent array returns null, not Pending', function() {
+  assertEqual(ctx.shpComputeDocsStatus([]), null);
+  assertEqual(ctx.shpComputeDocsStatus(undefined), null);
+});
+
+// ── autoCreateShipmentFromInvoice() (AC-1, AC-2, AC-3, AC-3b, AC-6, A1) ──
+testAsync('autoCreateShipmentFromInvoice() — creates one Shipment with the 7-item default checklist (AC-1)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var inv = mkPaidInvoice();
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  assertEqual(ctx.DB.sh.length, 1, 'exactly one Shipment created');
+  var s = ctx.DB.sh[0];
+  assertEqual(s.tradeDocs.length, 7, '7 seeded docs when dg is false');
+  assertContains(s.ref, 'SHP-INV20001', 'ref synthesized from invoice num');
+  assertEqual(JSON.stringify(s.linkedInvs), JSON.stringify(['INV20001']));
+  assertEqual(JSON.stringify(s.autoCreatedFromInvIds), JSON.stringify(['inv-ship-1']));
+  assertEqual(s.docsStatus, 'Pending');
+  assertEqual(s.status, ctx.RD_SHP_STATUS[0]);
+});
+testAsync('autoCreateShipmentFromInvoice() — dg true seeds 8th Dangerous Goods Declaration line, autoManaged', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var seeded = ctx.shpSeedTradeDocs(true);
+  assertEqual(seeded.length, 8);
+  var dgLine = seeded[7];
+  assertEqual(dgLine.type, 'Dangerous Goods Declaration');
+  assertEqual(dgLine.autoManaged, true);
+});
+testAsync('autoCreateShipmentFromInvoice() — calling twice with the same invoice creates no second Shipment (AC-2/AC-3)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var inv = mkPaidInvoice();
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  assertEqual(ctx.DB.sh.length, 1, 'idempotent — no duplicate');
+});
+testAsync('autoCreateShipmentFromInvoice() — renaming the invoice num after creation still does not duplicate (AC-3b)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var inv = mkPaidInvoice();
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  inv.num = 'INV20002-RENAMED';
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  assertEqual(ctx.DB.sh.length, 1, 'match came from autoCreatedFromInvIds (immutable id), not the renamed num');
+});
+testAsync('autoCreateShipmentFromInvoice() — synthesized ref never collides with an existing ref (AC-6)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.DB.sh.push({ id: 'sh-existing', ref: 'SHP-INV20001', tradeDocs: [], linkedInvs: [], autoCreatedFromInvIds: [] });
+  var inv = mkPaidInvoice();
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  var created = ctx.DB.sh.find(function(s){ return s.id !== 'sh-existing'; });
+  assertEqual(created.ref, 'SHP-INV20001-2', 'collision-avoidance suffix applied');
+});
+testAsync('autoCreateShipmentFromInvoice() — a string-corrupted legacy linkedInvs never causes a false-positive substring match (A1)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.DB.sh.push({ id: 'sh-corrupt', ref: 'SHP-OTHER', tradeDocs: [], linkedInvs: 'INV2000', autoCreatedFromInvIds: [] });
+  var inv = mkPaidInvoice({ num: 'INV20001' }); // 'INV2000' is a substring of 'INV20001' — must not false-match
+  // rShp()'s own render already crashes on a string-typed linkedInvs (pre-existing,
+  // unrelated SH-GAP-002-class fragility — a corrupted record should never reach
+  // render without going through backfillShLinkedInvs() first). Stubbed here since
+  // this test's own purpose is the idempotency guard, not that unrelated render path.
+  var origRShp = ctx.rShp;
+  ctx.rShp = function(){};
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  ctx.rShp = origRShp;
+  assertEqual(ctx.DB.sh.length, 2, 'Array.isArray guard prevents substring false-positive on a corrupted string linkedInvs');
+});
+testAsync('autoCreateShipmentFromInvoice() — SS.autoCreateShipmentOnPaid === false is a silent no-op (AC-12)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = false;
+  await ctx.autoCreateShipmentFromInvoice(mkPaidInvoice());
+  assertEqual(ctx.DB.sh.length, 0, 'no Shipment created while toggle is off');
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+});
+testAsync('autoCreateShipmentFromInvoice() — toggle unset (upgrading operator) behaves as default-on (AC-13)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  await ctx.autoCreateShipmentFromInvoice(mkPaidInvoice());
+  assertEqual(ctx.DB.sh.length, 1, 'default-on for an SS predating this field');
+});
+
+// ── AC-1b: full saveInv() round trip, brand-new invoice saved directly as Paid ──
+testAsync('saveInv() — a brand-new Invoice saved directly with status Paid also auto-creates a Shipment (AC-1b)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.EI.i = null;
+  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }];
+  setupInvForm('INV20099');
+  mockEl('inv-sm').value = 'Paid';
+  await ctx.saveInv();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV20099'; });
+  assert(inv, 'invoice created');
+  var sh = ctx.DB.sh.find(function(s){ return (s.autoCreatedFromInvIds||[]).indexOf(inv.id) > -1; });
+  assert(sh, 'Shipment auto-created even though the invoice was never Draft first — the original _invOldStatus-transition guard would have missed this');
+});
+
+// ── AC-4/AC-5: bulk import / Sheets pull never trigger auto-creation ──
+test('processImportRecords(\'inv\', ...) with status Paid set directly never calls autoCreateShipmentFromInvoice (AC-4)', function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var called = false;
+  var orig = ctx.autoCreateShipmentFromInvoice;
+  ctx.autoCreateShipmentFromInvoice = function(){ called = true; return Promise.resolve(); };
+  ctx.processImportRecords('inv', [{ 'Invoice Number': 'INV20050', 'Status': 'Paid', 'Buyer': 'Test Buyer', 'Date': '2026-05-01' }], function(){});
+  ctx.autoCreateShipmentFromInvoice = orig;
+  assertEqual(called, false, 'CSV import bypasses saveInv() entirely, never reaching the trigger');
+});
+
+// ── DG toggle via saveShp() (AC-9, AC-15) ──
+function setupShpFormMinimal(ref) {
+  ['shf-bl','shf-vessel','shf-carrier','shf-op','shf-dp','shf-etd','shf-eta','shf-cnum','shf-invs','shf-nt'].forEach(function(id){ mockEl(id).value = ''; });
+  mockEl('shf-ref').value = ref;
+  mockEl('shf-ctype').value = '20GP';
+  mockEl('shf-docs').value = 'Pending';
+  mockEl('shf-st').value = 'Booked';
+  mockEl('shf-dg').checked = false;
+}
+
+test('saveShp() — dg false→true on edit adds one autoManaged DG line (AC-9)', function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.sh.push({ id: 'sh-dg1', ref: 'SHP-DG1', dg: false, tradeDocs: ctx.shpSeedTradeDocs(false), docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] });
+  ctx.EI.sh = 'sh-dg1';
+  setupShpFormMinimal('SHP-DG1');
+  mockEl('shf-dg').checked = true;
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-dg1'; });
+  var dgLines = s.tradeDocs.filter(function(d){ return d.autoManaged && d.type === 'Dangerous Goods Declaration'; });
+  assertEqual(dgLines.length, 1, 'exactly one DG line added');
+  assertEqual(s.tradeDocs.length, 8, 'original 7 preserved plus the new DG line');
+});
+test('saveShp() — dg true→false removes an untouched DG line (AC-9/AC-15)', function() {
+  resetDB();
+  ctx._sb = null;
+  var docs = ctx.shpSeedTradeDocs(true);
+  ctx.DB.sh.push({ id: 'sh-dg2', ref: 'SHP-DG2', dg: true, tradeDocs: docs, docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] });
+  ctx.EI.sh = 'sh-dg2';
+  setupShpFormMinimal('SHP-DG2');
+  mockEl('shf-dg').checked = false;
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-dg2'; });
+  assertEqual(s.tradeDocs.length, 7, 'untouched Pending DG line removed');
+});
+test('saveShp() — dg true→false does NOT remove a DG line that already has data (AC-9/AC-15)', function() {
+  resetDB();
+  ctx._sb = null;
+  var docs = ctx.shpSeedTradeDocs(true);
+  docs[7].refNum = 'DGD-001'; // the DG line now has real progress
+  ctx.DB.sh.push({ id: 'sh-dg3', ref: 'SHP-DG3', dg: true, tradeDocs: docs, docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] });
+  ctx.EI.sh = 'sh-dg3';
+  setupShpFormMinimal('SHP-DG3');
+  mockEl('shf-dg').checked = false;
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-dg3'; });
+  assertEqual(s.tradeDocs.length, 8, 'DG line with recorded data is never silently removed');
+});
+test('saveShp() — an operator\'s own custom "Dangerous Goods Declaration" line (not autoManaged) is never touched (AC-9)', function() {
+  resetDB();
+  ctx._sb = null;
+  var customLine = { id: 'custom1', type: 'Dangerous Goods Declaration', status: 'Pending', refNum: '', fileLocation: '', receivedDate: '', notes: '', autoManaged: false };
+  ctx.DB.sh.push({ id: 'sh-dg4', ref: 'SHP-DG4', dg: false, tradeDocs: [customLine], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] });
+  ctx.EI.sh = 'sh-dg4';
+  setupShpFormMinimal('SHP-DG4');
+  mockEl('shf-dg').checked = true; // toggling dg on should add a NEW autoManaged line, not touch the custom one
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-dg4'; });
+  assertEqual(s.tradeDocs.length, 2, 'custom line untouched, a second autoManaged DG line added');
+  assertEqual(s.tradeDocs[0].id, 'custom1', 'original custom line unchanged');
+});
+
+// ── B4 regression: manual "New Shipment" create path never seeds/overrides docsStatus ──
+test('saveShp() create path — dg checked on a brand-new Shipment does not seed tradeDocs or override docsStatus (B4 regression)', function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-NEW1');
+  mockEl('shf-dg').checked = true;
+  mockEl('shf-docs').value = 'In Progress'; // operator's own non-default selection
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-NEW1'; });
+  assertEqual(s.tradeDocs.length, 0, 'create path never seeds tradeDocs, even with dg checked');
+  assertEqual(s.docsStatus, 'In Progress', 'operator\'s own docsStatus selection is never overridden');
+});
+test('saveShp() create path — dg unchecked also yields empty tradeDocs/autoCreatedFromInvIds (B4 regression)', function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-NEW2');
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-NEW2'; });
+  assertEqual(s.tradeDocs.length, 0);
+  assertEqual(s.autoCreatedFromInvIds.length, 0);
+});
+
+// ── AC-14/AC-16: saveShp() preservation (the B1 regression) ──
+testAsync('saveShp() — editing an unrelated field on an auto-created Shipment preserves tradeDocs unchanged (AC-14, B1 regression)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx._sb = null;
+  await ctx.autoCreateShipmentFromInvoice(mkPaidInvoice());
+  var s = ctx.DB.sh[0];
+  var beforeDocs = JSON.stringify(s.tradeDocs);
+  var beforeIds = JSON.stringify(s.autoCreatedFromInvIds);
+  ctx.EI.sh = s.id;
+  setupShpFormMinimal(s.ref);
+  mockEl('shf-vessel').value = 'MSC Renamed'; // the only real change
+  ctx.saveShp();
+  var updated = ctx.DB.sh.find(function(x){ return x.id === s.id; });
+  assertEqual(updated.vessel, 'MSC Renamed');
+  assertEqual(JSON.stringify(updated.tradeDocs), beforeDocs, 'tradeDocs untouched by an unrelated field edit');
+  assertEqual(JSON.stringify(updated.autoCreatedFromInvIds), beforeIds, 'autoCreatedFromInvIds untouched by an unrelated field edit');
+});
+testAsync('saveShp() — a manually-created Shipment that later gains tradeDocs via shpAddTradeDoc() also survives an unrelated edit (AC-16)', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-MAN1');
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-MAN1'; });
+  await ctx.shpAddTradeDoc(s.id, 'Custom Certificate');
+  ctx.EI.sh = s.id;
+  setupShpFormMinimal('SHP-MAN1');
+  mockEl('shf-carrier').value = 'New Carrier';
+  ctx.saveShp();
+  var updated = ctx.DB.sh.find(function(x){ return x.id === s.id; });
+  assertEqual(updated.carrier, 'New Carrier');
+  assertEqual(updated.tradeDocs.length, 1, 'the manually-added tradeDoc survives an unrelated edit');
+});
+
+// ── AC-11: fileLocation XSS safety ──
+test('renderShpDocsPanel() — a malicious fileLocation/refNum/notes value never breaks out of its containing markup (AC-11)', function() {
+  resetDB();
+  var malicious = '"><script>alert(1)</script>';
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.fileLocation = malicious; doc.refNum = malicious; doc.notes = malicious;
+  ctx.DB.sh = [{ id: 'sh-xss1', ref: 'SHP-XSS1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  ctx.renderShpDocsPanel('sh-xss1');
+  var html = mockEl('shp-docs-panel').innerHTML;
+  assertNotContains(html, '<script>', 'a malicious value in fileLocation/refNum/notes never reaches the DOM as a live tag');
+  assertContains(html, '&quot;&gt;', 'the value is still present, just escaped — san() sanitizes, does not silently drop the field');
+});
+test('renderShpDocsPanel() — no tradeDocs shows a helpful empty state, not an error', function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'sh-empty3', ref: 'SHP-EMPTY3', tradeDocs: [], docsStatus: null, autoCreatedFromInvIds: [] }];
+  ctx.renderShpDocsPanel('sh-empty3');
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'No trade documents tracked yet');
+});
+test('editShp() renders the trade-documents panel for the record being edited', function() {
+  resetDB();
+  var doc = ctx.shpNewTradeDocEntry('Commercial Invoice', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-edit1', ref: 'SHP-EDIT1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-edit1');
+  var html = mockEl('shp-docs-panel').innerHTML;
+  assertContains(html, 'Commercial Invoice');
+  assertContains(html, 'selected', 'the Received status is reflected in the rendered select');
+});
+
+// ── Round-2 build-gate findings: live-panel re-render, per-row wiring correctness, shf-docs sync ──
+testAsync('shpEditTradeDoc() re-renders the open modal\'s docs panel immediately, without closing/reopening (round-2 build-gate Gap A)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-live1', ref: 'SHP-LIVE1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-live1');
+  assertNotContains(mockEl('shp-docs-panel').innerHTML, 'value="REF-999"', 'not yet present before the edit');
+  await ctx.shpEditTradeDoc('sh-live1', doc.id, { refNum: 'REF-999' });
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'value="REF-999"', 'the open modal\'s panel reflects the edit immediately — this is the exact behavior the EI.sh===s.id re-render guard exists for');
+});
+testAsync('shpRemoveTradeDoc() re-renders the open modal\'s docs panel immediately (round-2 build-gate Gap A)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-live2', ref: 'SHP-LIVE2', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-live2');
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'Bill of Lading');
+  assertEqual(mockEl('shf-docs').disabled, true, 'sanity check: dropdown starts locked while a tradeDoc exists');
+  await ctx.shpRemoveTradeDoc('sh-live2', doc.id);
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'No trade documents tracked yet', 'panel updates to the empty state immediately after the last doc is removed while the modal is open');
+  assertEqual(mockEl('shf-docs').disabled, false, 'round-4 build-gate nit: removing the last document mid-session must re-enable the dropdown, not leave it falsely locked with no tradeDocs present');
+});
+test('renderShpDocsPanel() wires each row\'s controls to its OWN doc id, never a sibling\'s (round-2 build-gate Gap B)', function() {
+  resetDB();
+  var docA = ctx.shpNewTradeDocEntry('Doc A', false);
+  var docB = ctx.shpNewTradeDocEntry('Doc B', false);
+  ctx.DB.sh = [{ id: 'sh-wire1', ref: 'SHP-WIRE1', tradeDocs: [docA, docB], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.renderShpDocsPanel('sh-wire1');
+  var html = mockEl('shp-docs-panel').innerHTML;
+  // Extract every shpEditTradeDoc(...) call target in the rendered markup and confirm
+  // each field type only ever appears paired with its own row's doc id, not the other's.
+  var calls = html.match(/shpEditTradeDoc\('sh-wire1','([^']+)',\{(\w+):/g) || [];
+  assert(calls.length >= 8, 'both rows (4 editable fields each) produced onblur/onchange call strings — got ' + calls.length);
+  calls.forEach(function(call){
+    var m = call.match(/shpEditTradeDoc\('sh-wire1','([^']+)',\{(\w+):/);
+    var docId = m[1];
+    assert(docId === docA.id || docId === docB.id, 'every call targets a real doc id from this Shipment, never a foreign or malformed one: ' + call);
+  });
+  // Specifically: docA's own status <select> onchange must reference docA.id, not docB.id.
+  var docARowStart = html.indexOf(ctx.san(docA.type));
+  var docBRowStart = html.indexOf(ctx.san(docB.type));
+  var docARowHtml = html.slice(docARowStart, docBRowStart > docARowStart ? docBRowStart : html.length);
+  assertContains(docARowHtml, "shpEditTradeDoc('sh-wire1','" + docA.id + "'", 'Doc A\'s own row wires to Doc A\'s id');
+  assertNotContains(docARowHtml, "shpEditTradeDoc('sh-wire1','" + docB.id + "'", 'Doc A\'s row never accidentally wires to Doc B\'s id');
+});
+test('renderShpDocsPanel() disables and live-syncs the shf-docs dropdown once tradeDocs exist (round-2 build-gate UX finding)', function() {
+  resetDB();
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-sync1', ref: 'SHP-SYNC1', tradeDocs: [doc], docsStatus: 'In Progress', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  mockEl('shf-docs').value = 'Pending'; // stale value the modal happened to have shown before
+  mockEl('shf-docs').disabled = false;
+  ctx.renderShpDocsPanel('sh-sync1');
+  assertEqual(mockEl('shf-docs').disabled, true, 'dropdown disabled once tradeDocs exist — saveShp() would silently override it anyway');
+  assertEqual(mockEl('shf-docs').value, 'In Progress', 'dropdown synced to the live computed value, not left showing a stale prior value');
+});
+test('renderShpDocsPanel() leaves shf-docs enabled and untouched for a Shipment with no tradeDocs', function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'sh-sync2', ref: 'SHP-SYNC2', tradeDocs: [], docsStatus: null, autoCreatedFromInvIds: [], linkedInvs: [] }];
+  mockEl('shf-docs').value = 'In Progress'; // the operator's own manual selection
+  mockEl('shf-docs').disabled = false;
+  ctx.renderShpDocsPanel('sh-sync2');
+  assertEqual(mockEl('shf-docs').disabled, false, 'dropdown stays manually editable — this record has not opted into the automated checklist');
+  assertEqual(mockEl('shf-docs').value, 'In Progress', 'the operator\'s own selection is left untouched');
+});
+test('openShp() resets shf-docs disabled/title left over from a prior editShp() on a doc-having Shipment (round-3 build-gate finding)', function() {
+  resetDB();
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-newafter1', ref: 'SHP-NEWAFTER1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-newafter1');
+  assertEqual(mockEl('shf-docs').disabled, true, 'sanity check: editing a doc-having Shipment disables the dropdown');
+  ctx.openShp();
+  assertEqual(mockEl('shf-docs').disabled, false, 'a brand-new Shipment must not inherit a locked dropdown from whatever was open before it');
+  assertEqual(mockEl('shf-docs').title, '', 'the stale "automatically computed" tooltip must also be cleared on the create path');
+  assertEqual(mockEl('shf-docs').value, 'Pending', 'the create path\'s own default value is still applied');
+});
+
+// ── AC-12/AC-13: Settings toggle + persistent banner ──
+test('saveAutoShipToggle() — unchecking sets SS.autoCreateShipmentOnPaid false and shows both banners (AC-12)', function() {
+  resetDB();
+  mockEl('cfg-autoship-toggle').checked = false;
+  ctx.saveAutoShipToggle();
+  assertEqual(ctx.SS.autoCreateShipmentOnPaid, false);
+  mockEl('inv-q').value = ''; mockEl('inv-sf').value = '';
+  mockEl('sh-q').value = ''; mockEl('sh-sf').value = '';
+  ctx.rInv(); ctx.rShp();
+  assertEqual(mockEl('inv-autoship-banner').style.display, 'flex', 'Invoices banner shown while toggle is off');
+  assertEqual(mockEl('sh-autoship-banner').style.display, 'flex', 'Shipments banner shown while toggle is off');
+});
+test('saveAutoShipToggle() — checking it again hides both banners immediately, no reload needed (AC-12)', function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = false;
+  mockEl('cfg-autoship-toggle').checked = true;
+  ctx.saveAutoShipToggle();
+  assertEqual(ctx.SS.autoCreateShipmentOnPaid, true);
+  assertEqual(mockEl('inv-autoship-banner').style.display, 'none');
+  assertEqual(mockEl('sh-autoship-banner').style.display, 'none');
+});
+test('rCfg() — an upgrading operator (SS predates this field) renders the toggle as checked (AC-13)', function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.rCfg();
+  assertEqual(mockEl('cfg-autoship-toggle').checked, true, 'default-on rendered visually, not just behaviorally');
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+});
+
+// ── AC-10/AC-17/AC-18/AC-19: Cloud Data ──
+testAsync('autoCreateShipmentFromInvoice() — Cloud Data branch inserts trade_docs/auto_created_from_inv_ids and refreshes (AC-10, AC-17)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var insertedRow = null;
+  ctx._sb = mockSb({ shipments: {
+    insertImpl: function(row){ insertedRow = row; return Object.assign({ id: 'sb-sh-1' }, row); },
+    selectData: [] // autoCreateShipmentFromInvoice() calls refreshShFromSupabase() internally right after insert — must not be null or its own .map() crashes
+  }});
+  await ctx.autoCreateShipmentFromInvoice(mkPaidInvoice());
+  assert(insertedRow, 'insert called');
+  assertEqual(insertedRow.trade_docs.length, 7, 'trade_docs included in the insert payload');
+  assertEqual(JSON.stringify(insertedRow.auto_created_from_inv_ids), JSON.stringify(['inv-ship-1']));
+  // Re-point selectData to the row just inserted, simulating the mandatory post-insert refresh reading it back
+  ctx._sb = mockSb({ shipments: { selectData: [Object.assign({ id: 'sb-sh-1' }, insertedRow)] } });
+  await ctx.refreshShFromSupabase();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sb-sh-1'; });
+  assert(s, 'Shipment present after refresh');
+  assertEqual(s.tradeDocs.length, 7, 'tradeDocs survives the mandatory post-insert refresh — the C1 regression');
+  assertEqual(JSON.stringify(s.autoCreatedFromInvIds), JSON.stringify(['inv-ship-1']), 'autoCreatedFromInvIds survives the refresh too');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('refreshShFromSupabase() — a legacy row with trade_docs/auto_created_from_inv_ids both null leaves both fields absent, not [] (AC-18)', async function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'legacy1', ref: 'SHP-LEGACY', docsStatus: 'Complete' }]; // pre-existing local data so the never-migrated guard doesn't bail
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = mockSb({ shipments: { selectData: [
+    { id: 'legacy1', ref: 'SHP-LEGACY', bl_num: null, vessel: null, carrier: null, origin_port: null, dest_port: null,
+      etd: null, eta: null, container_type: null, container_num: null, dg: false, docs_status: 'Complete', status: 'Delivered',
+      linked_invs: [], trade_docs: null, auto_created_from_inv_ids: null, forwarder: null, forwarder_email: null, notes: null, upd_at: null }
+  ] } });
+  await ctx.refreshShFromSupabase();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'legacy1'; });
+  assertEqual('tradeDocs' in s, false, 'tradeDocs left absent, not set to [], for a legacy null column');
+  assertEqual('autoCreatedFromInvIds' in s, false, 'autoCreatedFromInvIds left absent too');
+  assertEqual(s.docsStatus, 'Complete', 'docsStatus untouched — no computed override for a record with no tradeDocs');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('migrateShToSupabase() — a local record with real tradeDocs/autoCreatedFromInvIds progress carries both fields into the insert payload (AC-19)', async function() {
+  resetDB();
+  ctx._sb = mockSb({ shipments: {} });
+  var seeded = ctx.shpSeedTradeDocs(false);
+  ctx.DB.sh = [{ id: 'local1', ref: 'SHP-LOCAL1', tradeDocs: seeded, autoCreatedFromInvIds: ['inv-x'], linkedInvs: ['INV-X'], status: 'Booked', dg: false }];
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); }; // real modal only resolves on a UI click — must be stubbed or the await hangs forever
+  await ctx.migrateShToSupabase();
+  ctx.showBlockingBackupModal = origShowBackup;
+  var insertCall = ctx._sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assert(insertCall, 'insert attempted');
+  assertEqual(JSON.stringify(insertCall.row.trade_docs), JSON.stringify(seeded), 'tradeDocs carried into the migration insert payload');
+  assertEqual(JSON.stringify(insertCall.row.auto_created_from_inv_ids), JSON.stringify(['inv-x']));
+});
+
+// ── B3 regression: CRUD functions never mutate DB.sh before persistence succeeds ──
+testAsync('shpEditTradeDoc() — a cancelled Cloud Data login leaves DB.sh byte-identical, no silent partial edit (B3 regression)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-b3-1', ref: 'SHP-B3-1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  var before = JSON.stringify(ctx.DB.sh[0]);
+  var origEnsure = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(false); }; // operator cancels the login modal
+  var updateCalled = false;
+  ctx._sb = mockSb({ shipments: {} });
+  var origFrom = ctx._sb.from;
+  ctx._sb.from = function(name){ if (name === 'shipments') updateCalled = true; return origFrom(name); };
+  await ctx.shpEditTradeDoc('sh-b3-1', doc.id, { status: 'Received' });
+  ctx.ensureSbAuth = origEnsure;
+  assertEqual(JSON.stringify(ctx.DB.sh[0]), before, 'DB.sh completely untouched after a cancelled login');
+  assertEqual(updateCalled, false, '.update() never even attempted after ensureSbAuth() resolves false');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('shpEditTradeDoc() — a failed Cloud Data update also leaves DB.sh untouched, with a failure toast (B3 regression)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-b3-2', ref: 'SHP-B3-2', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  var before = JSON.stringify(ctx.DB.sh[0]);
+  ctx._sb = mockSb({ shipments: { updateError: { message: 'network error' } } });
+  await ctx.shpEditTradeDoc('sh-b3-2', doc.id, { status: 'Received' });
+  assertEqual(JSON.stringify(ctx.DB.sh[0]), before, 'DB.sh untouched after a failed update');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('shpEditTradeDoc() — a successful Cloud Data update DOES commit the change after refresh (B3 positive path)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-b3-3', ref: 'SHP-B3-3', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  ctx._sb = mockSb({ shipments: { selectData: [{ id: 'sh-b3-3', ref: 'SHP-B3-3', trade_docs: [Object.assign({}, doc, { status: 'Received' })], docs_status: 'Complete', status: 'Booked', linked_invs: [] }] } });
+  await ctx.shpEditTradeDoc('sh-b3-3', doc.id, { status: 'Received' });
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-b3-3'; });
+  assert(s, 'record survives the refresh');
+  assertEqual(s.tradeDocs[0].status, 'Received', 'edit committed after successful persistence + refresh');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('shpEditTradeDoc() — editing a non-existent docId is a no-op, no persistence attempted', async function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-b3-4', ref: 'SHP-B3-4', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  var svCalled = false;
+  var origSv = ctx.sv;
+  ctx.sv = function(){ svCalled = true; return origSv.apply(this, arguments); };
+  await ctx.shpEditTradeDoc('sh-b3-4', 'does-not-exist', { status: 'Received' });
+  ctx.sv = origSv;
+  assertEqual(svCalled, false, 'no persistence attempted for an unknown docId');
+  assertEqual(ctx.DB.sh[0].tradeDocs[0].status, 'Pending', 'original entry unchanged');
+});
+
+// ── shpAddTradeDoc() / shpRemoveTradeDoc() basic CRUD ──
+testAsync('shpAddTradeDoc() — adds a custom line and recomputes docsStatus', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.sh = [{ id: 'sh-crud-1', ref: 'SHP-CRUD1', tradeDocs: [], docsStatus: null, autoCreatedFromInvIds: [] }];
+  await ctx.shpAddTradeDoc('sh-crud-1', 'Custom Import Permit');
+  var s = ctx.DB.sh[0];
+  assertEqual(s.tradeDocs.length, 1);
+  assertEqual(s.tradeDocs[0].type, 'Custom Import Permit');
+  assertEqual(s.docsStatus, 'Pending');
+});
+testAsync('shpRemoveTradeDoc() — removes only the targeted entry', async function() {
+  resetDB();
+  ctx._sb = null;
+  var docA = ctx.shpNewTradeDocEntry('A', false), docB = ctx.shpNewTradeDocEntry('B', false);
+  ctx.DB.sh = [{ id: 'sh-crud-2', ref: 'SHP-CRUD2', tradeDocs: [docA, docB], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  await ctx.shpRemoveTradeDoc('sh-crud-2', docA.id);
+  var s = ctx.DB.sh[0];
+  assertEqual(s.tradeDocs.length, 1);
+  assertEqual(s.tradeDocs[0].id, docB.id);
+});
+
+// ── Round-2 spec-gate finding: emptying the checklist preserves the last real docsStatus, never null ──
+testAsync('shpRemoveTradeDoc() — removing the last remaining entry preserves the prior real docsStatus, not null (round-2 spec-gate finding)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-empty1', ref: 'SHP-EMPTY1', tradeDocs: [doc], docsStatus: 'Complete', autoCreatedFromInvIds: [] }];
+  await ctx.shpRemoveTradeDoc('sh-empty1', doc.id);
+  var s = ctx.DB.sh[0];
+  assertEqual(s.tradeDocs.length, 0);
+  assertEqual(s.docsStatus, 'Complete', 'prior real docsStatus preserved, not silently overwritten with null');
+});
+testAsync('shpRemoveTradeDoc() — same guard on the Cloud Data branch: docs_status payload preserves the prior value, not null (round-2 spec-gate finding)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-empty2', ref: 'SHP-EMPTY2', tradeDocs: [doc], docsStatus: 'Complete', autoCreatedFromInvIds: [] }];
+  var updatedRow = null;
+  ctx._sb = mockSb({ shipments: {
+    updateImpl: function(row, id){ updatedRow = row; return Object.assign({ id: id }, row); }
+  } });
+  await ctx.shpRemoveTradeDoc('sh-empty2', doc.id);
+  assert(updatedRow, 'update attempted');
+  assertEqual(updatedRow.docs_status, 'Complete', 'Supabase payload preserves the prior value, never sends null');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
 });
 
 // ── SUMMARY ────────────────────────────────────────────────────
