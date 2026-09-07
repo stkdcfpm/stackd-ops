@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.86</title>
+<title>Stackd Ops v2.9.87</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -215,7 +215,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.86</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.87</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -764,6 +764,20 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       </div>
       <button class="btn btn-s" onclick="saveFwdWebhook()">Save Webhook</button>
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When a webhook URL is configured, shipment data (origin/destination ports, ETD, cargo description, forwarder contact name and email) is posted to that endpoint on each Forwarder Update Request. Only configure a URL you control or trust. Webhook is opt-in — no data is transmitted if no URL is configured.</p>
+
+      <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:12px;">
+        <div class="fld" style="margin-bottom:8px;">
+          <label style="font-weight:600;">Automation Webhooks</label>
+        </div>
+        <div id="webhook-rules-disclosure"></div>
+        <div id="webhook-rules-panel"></div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+          <select id="whr-trigger" style="flex:1;min-width:160px;"></select>
+          <input type="text" id="whr-url" placeholder="https://hook.us1.make.com/..." style="flex:2;min-width:200px;" autocomplete="off">
+          <label style="display:flex;align-items:center;gap:4px;font-size:.5rem;"><input type="checkbox" id="whr-enabled" checked> Enabled</label>
+          <button class="btn btn-g" onclick="addWebhookRule()">+ Add Rule</button>
+        </div>
+      </div>
     </div>
     <div class="card">
       <div class="ct">Supplier Intelligence</div>
@@ -1351,9 +1365,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.86</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.87</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Automation Webhooks — Invoice buyer-approval triggers a Make.com-style email with the invoice attached</strong> (<code>REQ/SPEC-WEBHOOK-001</code>). Settings → Integrations → Automation Webhooks lets an operator configure one or more rules (trigger + destination <code>https://</code> URL, individually enabled/disabled). v1 ships one trigger, "Invoice: Buyer Approved" — the moment an Invoice's buyer approval genuinely transitions from unapproved to approved (never on a later correction to an already-approved invoice), a JSON payload POSTs to every enabled rule carrying invoice/buyer data, line items, and the invoice rendered as HTML, so the destination automation (e.g. a Make.com scenario) can build a PDF and email it to the buyer — this app never generates a PDF itself. If the invoice's buyer has no usable email on file, including the Ad-Hoc/<code>BUY-ADHOC</code> placeholder buyer, the webhook is skipped with an explanatory toast rather than sent to an empty recipient. Fire-and-forget, matching the existing Forwarder Webhook precedent: no delivery guarantee or retry if the destination is briefly unreachable. The deferred outbound-webhook half of an operator request whose in-app-rules half shipped as <code>REQ/SPEC-SHIP-001</code> (v2.9.86).</li>
+          <li>This delivery went through the deepest review cycle in this repo's history: <strong>6 requirements-gate rounds</strong> (rounds 1-2 found real design defects — a `buildInvDocHtml()` extraction that would have hijacked the operator's Ctrl+P reprint shortcut, and a refuted "no dedup guard needed" design that would have silently double-sent the buyer's email on a routine correction click; rounds 3-5 found progressively narrower citation-accuracy issues; round 6 was a clean PASS) and <strong>8 spec-gate rounds</strong> (rounds 1-2 found real functional defects — a payload bug that would have sent £0 for the majority of real approvals, a GDPR disclosure structurally unable to show before the first rule save, and a `balanceDue` figure that could silently diverge from the same payload's own rendered invoice total on any Credit-Note-bearing invoice, fixed structurally by deriving both from one shared source so they can never drift apart again; rounds 3-5 each found one instance of the REQ's own text going stale after an earlier SPEC-side fix was never reconciled back — closed as REQ erratums, not silently patched around; round 6 found a genuine security-relevant guard-completeness gap in the buyer-email precondition, relying on the Ad-Hoc buyer's email happening to be blank rather than an explicit check — a routine "add a general inbox to the Ad-Hoc buyer" edit would have silently defeated it; round 7 found and fixed a stale mutation-test assertion left by round 6's own fix; round 8, the explicitly time-boxed final round, found one minor payload-field documentation ambiguity). This repo's REQ/SPEC-WEBHOOK-001 review history also produced a new, permanent process improvement: <code>scripts/check-req-citations.js</code>, a scripted citation-checker now mandatory before every future REQ/SPEC gate submission, added after 3 spec-gate rounds spent finding nothing but wrong <code>index.html:NNN</code> citations that were mechanically checkable in seconds. All 10 safety-critical mechanisms in the SPEC's own mutation-testing checklist confirmed via actual mutation testing (each fix reverted in a scratch copy, confirming the exact predicted test(s) fail and nothing else, then restored) before this delivery closed out. 20 new tests. Tests: 1012/1012 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.86</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Auto-created Shipment on Invoice Paid, with a progressive trade-document checklist</strong> (<code>REQ/SPEC-SHIP-001</code>). Marking an Invoice Paid — whether a status change or a brand-new invoice saved directly as Paid — now auto-creates a linked Shipment record (unless disabled via the new Settings → Integrations toggle, which shows a persistent banner on the Invoices/Shipments tabs while off) seeded with a 7-item trade-document checklist (Purchase Invoice, Commercial Invoice, Packing List, Bill of Lading, Certificate of Origin, Verified Gross Mass Declaration, Insurance Certificate — an 8th, Dangerous Goods Declaration, if the shipment is DG-flagged) that the operator fills in with reference numbers, received dates, and a file-location note as documents arrive; no file upload, location/link tracking only. The default checklist is deliberately destination-agnostic — no Barbados-specific customs forms hardcoded — since FPM's own stated expansion beyond Barbados to Nigeria/Ghana/India would make a single-country checklist actively wrong, not just incomplete; grounded in cited shipping-document research including a Verified Gross Mass requirement (SOLAS-mandatory for every containerized shipment since 2016) that's easy for small-operator tools to miss. Went through this repo's full requirements-gate (3 independent review rounds — round 1 found a design that would have silently wiped the entire checklist on the first ordinary edit to an auto-created Shipment, and a trigger design that missed a brand-new invoice saved directly as Paid; round 2 found the round-1 fixes had introduced two new issues of their own, including a duplicate-Shipment risk from an invoice-number rename; round 3 found only documentation drift) and spec-gate (3 independent review rounds — found a wrong claim about CSS positioning, a citation gap, a new CRUD layer that could silently discard an edit on a cancelled Cloud Data login, and a create-path bug that would have overwritten an operator's own manual dropdown selection) processes, with every finding personally re-verified against the live code before being accepted, and every safety-critical fix confirmed via mutation testing (each fix reverted in a scratch copy, confirming the exact predicted test failure) before this delivery closed out. Independent build-gate review then caught one severe defect: the trade-document checklist's three CRUD functions were correctly built and unit-tested but never wired into any UI — invisible and uneditable in the actual app, despite already-shipped docs describing it as working. Fixed with a new Trade Documents section on the existing Edit Shipment modal, wired to the same functions unmodified. A round-2 confirmatory build-gate pass then found two more real test-coverage gaps in that UI fix (live in-modal re-render, per-row wiring correctness) plus a genuine UX bug — the pre-existing "Docs Status" dropdown on the same modal went stale once the checklist made it auto-computed. Fixed by disabling/syncing that dropdown and closing both coverage gaps. A round-3 confirmatory build-gate pass then caught one more regression from the round-2 fix: opening a new Shipment right after editing a doc-having one left the "Docs Status" dropdown permanently locked, since the create path never reset it. Fixed. A round-4 confirmatory pass found no further defect but flagged a minor test-coverage nit; a live re-verification also caught and fixed a hidden test-authoring bug of its own (a test using the codebase's known `test()`-with-`.then()` anti-pattern that always reported pass regardless of the real behavior). Build-gate is now clean across all 4 rounds. 37 + 5 + 5 + 1 new tests. Tests: 992/992 pass.</li>
@@ -2986,6 +3010,9 @@ var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
 // ── INVOICE STATUS LOCKING ──────────────────────────────────────
 var LOCKED_STATUSES = ['Sent', 'Partially Paid', 'Paid', 'Cancelled'];
 var STATUS_ORDER    = ['Draft', 'Pro-forma', 'Sent', 'Partially Paid', 'Paid', 'Cancelled'];
+var WEBHOOK_TRIGGERS = [
+  { key: 'inv_buyer_approved', label: 'Invoice: Buyer Approved' }
+];
 var _unlockedInvIds = {}; // in-memory override set — cleared on page reload
 var _invEditSnapshot = null; // G-06: pre-edit snapshot captured at unlock, cleared on save or close
 
@@ -8536,10 +8563,19 @@ function openInvApprove(id) {
   G('ov-inv-approve').classList.add('on');
 }
 
+function resolveBuyerForWebhook(inv) {
+  var buyId = inv.buyerId ? inv.buyerId : (DB.buy.find(function(b){ return b.name.toLowerCase()===(inv.buyer||'').toLowerCase(); })||{}).id || 'BUY-ADHOC';
+  if (buyId === 'BUY-ADHOC') return null;
+  var buy = DB.buy.find(function(b){ return b.id === buyId; });
+  if (!buy || !buy.email) return null;
+  return buy;
+}
+
 async function saveInvApprove() {
   if (!vInvApprove()) return;
   var inv = DB.inv.find(function(x){ return x.id === _apprInvId; });
   if (!inv) return;
+  var wasApproved = !!inv.buyerApprovedAt;
   inv.buyerApprovedAt = new Date().toISOString();
   inv.buyerApprovedBy = G('ia-by').value.trim();
   inv.approvalMethod = G('ia-method').value;
@@ -8558,6 +8594,32 @@ async function saveInvApprove() {
   if (G('ov-inv').classList.contains('on') && EI.i === inv.id) {
     G('inv-approve-btn').style.display = invApprovalActionVisible(inv) ? '' : 'none';
     G('inv-progress-btn').style.display = invProgressActionVisible(inv) ? '' : 'none';
+  }
+  if (!wasApproved) {
+    var buy = resolveBuyerForWebhook(inv);
+    if (buy) {
+      var lis = inv.lineItems||[];
+      if (typeof lis === 'string') { try { lis=JSON.parse(lis); } catch(e){ lis=[]; } }
+      var built = buildInvDocHtml(inv);
+      var payload = {
+        trigger: 'inv_buyer_approved',
+        invoice: {
+          id: inv.id, num: inv.num, status: inv.status, cur: inv.cur||'USD', date: inv.date,
+          grandTotal: built.grand, balanceDue: built.bal,
+          buyerApprovedAt: inv.buyerApprovedAt, buyerApprovedBy: inv.buyerApprovedBy,
+          approvalMethod: inv.approvalMethod, approvalNote: inv.approvalNote
+        },
+        buyer: { id: buy.id, name: buy.name, email: buy.email },
+        lineItems: lis.map(function(li){ return { desc: li.desc, uom: li.uom, qty: li.qty, up: li.up, lineTotal: (+li.qty||0)*(+li.up||0) }; }),
+        invoiceHtml: built.html,
+        ts: new Date().toISOString()
+      };
+      fireWebhookRules('inv_buyer_approved', payload).then(function(r){
+        if (r.sent || r.failed) toast('Webhook: ' + r.sent + ' sent' + (r.failed ? ', ' + r.failed + ' failed' : ''));
+      });
+    } else {
+      toast('No buyer email on file — automation webhook not sent', 3200);
+    }
   }
 }
 
@@ -10008,9 +10070,7 @@ function buildPdfFooter() {
     + '</div>';
 }
 
-function prevInvDoc(inv) {
-  window._lastInv = inv;
-  window._lastPO  = null;
+function buildInvDocHtml(inv) {
   var cur = inv.cur||'USD';
   var lis = inv.lineItems||[];
   if (typeof lis === 'string') { try { lis=JSON.parse(lis); } catch(e){ lis=[]; } }
@@ -10147,7 +10207,14 @@ function prevInvDoc(inv) {
     +'</div>'
     +'</body></html>';
 
-  var blob = new Blob([html], {type:'text/html'});
+  return { html: html, grand: grand, bal: bal };
+}
+
+function prevInvDoc(inv) {
+  window._lastInv = inv;
+  window._lastPO  = null;
+  var built = buildInvDocHtml(inv);
+  var blob = new Blob([built.html], {type:'text/html'});
   var url = URL.createObjectURL(blob);
   var w = window.open(url, '_blank');
   if (!w) { URL.revokeObjectURL(url); alert('Allow pop-ups for this page then try again.'); return; }
@@ -11706,7 +11773,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.86).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.87).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -11866,6 +11933,9 @@ var AI_SYSTEM_PROMPT = [
   'DG Onboard: tick if any product is classified as Dangerous Goods (e.g. refrigerants, batteries). Triggers IMDG compliance requirements.',
   'Load Calculator: &#128220; Load Calculator button on Shipments toolbar. Select invoices → Calculate to sum CBM from invoice cubic weight fields, get container recommendation, and flag DG. Export as plain text summary.',
   'Forwarder Update Request: &#128231; button on each shipment row. Opens a pre-filled message with all shipment details. Copy to clipboard or send via webhook (configure in Settings → Integrations). Forwarder name/email auto-populates from the shipment record.',
+  '',
+  '## Automation Webhooks',
+  'Settings → Integrations → Automation Webhooks. Operator configures one or more rules (trigger + destination URL, must start with https://, individually enabled/disabled) that POST a JSON payload to an external automation tool such as Make.com when a trigger fires. v1 has exactly one trigger: "Invoice: Buyer Approved" — fires once, the moment an Invoice\'s buyer approval genuinely transitions from unapproved to approved (clicking "Mark Buyer Approved" on a Pro-forma invoice), never again on a later correction to an already-approved invoice\'s approval fields. The payload carries invoice/buyer data, line items, and the invoice rendered as HTML (so the destination automation can build a PDF and email it to the buyer) — no PDF is generated by this app itself. If the invoice\'s buyer has no usable email on file (including the Ad-Hoc/BUY-ADHOC placeholder buyer), the webhook is skipped and the operator sees a toast explaining why. Fire-and-forget: no delivery guarantee or retry if the destination is briefly unreachable or the browser tab closes moments after the click.',
   '',
   '## Google Sheets Sync',
   'Settings → Google Sheets. Paste Apps Script URL → Save & Connect.',
@@ -12535,6 +12605,8 @@ function rCfg() {
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
   if(G('cfg-fwd-webhook')) G('cfg-fwd-webhook').value=SS.fwdWebhook||'';
   if(G('cfg-autoship-toggle')) G('cfg-autoship-toggle').checked = SS.autoCreateShipmentOnPaid !== false;
+  if(G('whr-trigger')) populateWebhookTriggerSelect();
+  if(G('webhook-rules-disclosure') || G('webhook-rules-panel')) renderWebhookRulesPanel();
   if(G('cfg-sup-intel-threshold')) G('cfg-sup-intel-threshold').value = +localStorage.getItem('stackd_sup_intel_threshold_months') || 12;
   if(G('cfg-sb-url')) G('cfg-sb-url').value = SS.supabaseUrl||'';
   if(G('cfg-sb-key')) G('cfg-sb-key').value = SS.supabaseAnonKey||'';
@@ -13403,11 +13475,77 @@ async function sendFwdReq() {
   }
 }
 
+async function fireWebhookRules(triggerKey, payload) {
+  var rules = (SS.webhookRules || []).filter(function(r){ return r.trigger === triggerKey && r.enabled; });
+  if (!rules.length) return { sent: 0, failed: 0 };
+  var body = JSON.stringify(payload);
+  var results = await Promise.allSettled(rules.map(function(r){
+    return fetch(r.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
+      .then(function(res){ if (!res.ok) throw new Error('HTTP ' + res.status); return res; });
+  }));
+  var sent = results.filter(function(r){ return r.status === 'fulfilled'; }).length;
+  var failed = results.length - sent;
+  return { sent: sent, failed: failed };
+}
+
 function saveFwdWebhook() {
   var webhook = G('cfg-fwd-webhook') ? G('cfg-fwd-webhook').value.trim() : '';
   if (webhook && !webhook.startsWith('https://')) { toast('Webhook URL must start with https://'); return; }
   SS.fwdWebhook = webhook;
   sv(K.ss, SS); toast('Webhook saved');
+}
+
+function populateWebhookTriggerSelect() {
+  var sel = G('whr-trigger');
+  if (!sel) return;
+  sel.innerHTML = WEBHOOK_TRIGGERS.map(function(t){ return '<option value="' + t.key + '">' + san(t.label) + '</option>'; }).join('');
+}
+
+function addWebhookRule() {
+  var trigger = G('whr-trigger').value;
+  var url = G('whr-url').value.trim();
+  var enabled = G('whr-enabled') ? G('whr-enabled').checked : true;
+  if (!url || !url.startsWith('https://')) { toast('Webhook URL must start with https://'); return; }
+  if (!SS.webhookRules) SS.webhookRules = [];
+  SS.webhookRules.push({ id: uid(), trigger: trigger, url: url, enabled: enabled, createdAt: new Date().toISOString() });
+  sv(K.ss, SS);
+  G('whr-url').value = '';
+  renderWebhookRulesPanel();
+  toast('Webhook rule added');
+}
+
+function toggleWebhookRule(id, enabled) {
+  var r = (SS.webhookRules||[]).find(function(x){ return x.id === id; });
+  if (!r) return;
+  r.enabled = enabled;
+  sv(K.ss, SS);
+}
+
+function delWebhookRule(id) {
+  SS.webhookRules = (SS.webhookRules||[]).filter(function(x){ return x.id !== id; });
+  sv(K.ss, SS);
+  renderWebhookRulesPanel();
+  toast('Webhook rule removed');
+}
+
+var WEBHOOK_DISCLOSURE_HTML = '&#9432; A webhook rule targeting <b>Invoice: Buyer Approved</b> sends, to the URL you configure: buyer name and email; and the full rendered invoice document exactly as printed &mdash; financial detail, line items, buyer name/address, FPM\'s own company bank account details (Settings &rarr; Company (Stackd)), and anything else configured to appear on that document (e.g. a custom footer note). Only configure a URL you control or trust. Webhook rules are opt-in &mdash; no data is transmitted unless a rule exists and is enabled.';
+
+function renderWebhookRulesPanel() {
+  var disclosure = G('webhook-rules-disclosure');
+  if (disclosure) disclosure.innerHTML = '<p style="font-size:.48rem;color:var(--m);margin-bottom:8px;">' + WEBHOOK_DISCLOSURE_HTML + '</p>';
+  var panel = G('webhook-rules-panel');
+  if (!panel) return;
+  var rules = SS.webhookRules || [];
+  var rows = rules.map(function(r){
+    var t = WEBHOOK_TRIGGERS.find(function(x){ return x.key === r.trigger; });
+    return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--ln);font-size:.5rem;">'
+      + '<label style="display:flex;align-items:center;gap:4px;"><input type="checkbox"' + (r.enabled?' checked':'') + ' onchange="toggleWebhookRule(\'' + r.id + '\',this.checked)"></label>'
+      + '<span style="flex-shrink:0;">' + san(t?t.label:r.trigger) + '</span>'
+      + '<span style="flex:1;color:var(--m);word-break:break-all;">' + san(r.url) + '</span>'
+      + '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delWebhookRule(\'' + r.id + '\')">Del</button>'
+      + '</div>';
+  }).join('');
+  panel.innerHTML = rows || '<div style="color:var(--m);font-size:.54rem;">No automation webhook rules configured.</div>';
 }
 
 function saveAutoShipToggle() {

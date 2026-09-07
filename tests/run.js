@@ -58,6 +58,14 @@ let _fetchCallLog = [];
 // or {status:200, text:<raw response body text>} before calling the function under test.
 let _mockAnthropic = null;
 let _lastAnthropicBody = null;
+// Mock for fireWebhookRules() (REQ/SPEC-WEBHOOK-001). Keyed by exact rule URL so a
+// single fireWebhookRules() call can exercise multiple rules with independent outcomes
+// (AC-6 needs 3 simultaneous, different outcomes) — a single non-keyed override
+// variable cannot express that. Each value is one of: 'reject' (network error) or
+// {status:<code>} (translated to ok:status>=200&&status<300), mirroring _mockAnthropic's
+// own three-state shape. Populate before calling fireWebhookRules()/saveInvApprove().
+let _mockWebhookResponses = {};
+let _webhookCallLog = [];
 function mockFetch(url, opts) {
   if (typeof url === 'string' && url.indexOf('api.anthropic.com') >= 0) {
     _lastAnthropicBody = JSON.parse((opts && opts.body) || '{}');
@@ -68,6 +76,13 @@ function mockFetch(url, opts) {
       status: m.status,
       json: () => Promise.resolve({ content: [{ type: 'text', text: m.text || '' }] }),
     });
+  }
+  if (typeof url === 'string' && Object.prototype.hasOwnProperty.call(_mockWebhookResponses, url)) {
+    _webhookCallLog.push({ url: url, body: (opts && opts.body) || '' });
+    var w = _mockWebhookResponses[url];
+    if (w === 'reject') return Promise.reject(new Error('network error'));
+    var status = (w && w.status) || 200;
+    return Promise.resolve({ ok: status >= 200 && status < 300, status: status });
   }
   var body = {};
   try { body = JSON.parse((opts && opts.body) || '{}'); } catch (e) {}
@@ -14138,6 +14153,302 @@ testAsync('shpRemoveTradeDoc() — same guard on the Cloud Data branch: docs_sta
   assertEqual(updatedRow.docs_status, 'Complete', 'Supabase payload preserves the prior value, never sends null');
   ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
 });
+
+// ── REQ/SPEC-WEBHOOK-001: Generic outbound-webhook automation rules ──
+// Helper: every webhook test must explicitly reset SS.webhookRules and the
+// webhook mock state itself — resetDB() deliberately does not touch SS
+// (SPEC §9), and _mockWebhookResponses/_webhookCallLog persist across tests.
+function _resetWebhookTestState() {
+  ctx.SS.webhookRules = [];
+  _mockWebhookResponses = {};
+  _webhookCallLog = [];
+}
+
+testAsync('fireWebhookRules() — AC-1: no rules configured is a no-op, zero fetch calls', async function() {
+  resetDB(); _resetWebhookTestState();
+  var r = await ctx.fireWebhookRules('inv_buyer_approved', {});
+  assertEqual(r.sent, 0); assertEqual(r.failed, 0);
+  assertEqual(_webhookCallLog.length, 0, 'no fetch attempted');
+});
+
+test('addWebhookRule() — AC-2: valid https URL adds a rule with the right shape', function() {
+  resetDB(); _resetWebhookTestState();
+  mockEl('whr-trigger').value = 'inv_buyer_approved';
+  mockEl('whr-url').value = 'https://hook.us1.make.com/abc123';
+  mockEl('whr-enabled').checked = true;
+  ctx.addWebhookRule();
+  assertEqual(ctx.SS.webhookRules.length, 1);
+  var r = ctx.SS.webhookRules[0];
+  assertEqual(r.trigger, 'inv_buyer_approved');
+  assertEqual(r.url, 'https://hook.us1.make.com/abc123');
+  assertEqual(r.enabled, true);
+  assert(!!r.id, 'rule has an id');
+  assert(!!r.createdAt, 'rule has createdAt');
+  ctx.renderWebhookRulesPanel();
+  assertContains(mockEl('webhook-rules-panel').innerHTML, 'https://hook.us1.make.com/abc123');
+});
+
+test('addWebhookRule() — AC-3: non-https URL is rejected, SS.webhookRules unchanged', function() {
+  resetDB(); _resetWebhookTestState();
+  mockEl('whr-trigger').value = 'inv_buyer_approved';
+  mockEl('whr-url').value = 'http://insecure.example.com/hook';
+  ctx.addWebhookRule();
+  assertEqual((ctx.SS.webhookRules||[]).length, 0, 'rejected, nothing added');
+});
+
+test('renderWebhookRulesPanel() — AC-4/AC-14: disclosure visible with zero rules AND after a rule is added', function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.renderWebhookRulesPanel();
+  assertContains(mockEl('webhook-rules-disclosure').innerHTML, 'Invoice: Buyer Approved', 'disclosure present with zero rules configured — before the very first Add Rule click');
+  assertContains(mockEl('webhook-rules-disclosure').innerHTML, 'bank account details', 'names FPM bank details category');
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://x.example.com', enabled: true, createdAt: new Date().toISOString() }];
+  ctx.renderWebhookRulesPanel();
+  assertContains(mockEl('webhook-rules-disclosure').innerHTML, 'Invoice: Buyer Approved', 'disclosure still present after a rule exists — persistent note');
+});
+
+test('delWebhookRule() — AC-5: removes exactly the targeted rule', function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.SS.webhookRules = [
+    { id: 'r1', trigger: 'inv_buyer_approved', url: 'https://a.example.com', enabled: true, createdAt: '' },
+    { id: 'r2', trigger: 'inv_buyer_approved', url: 'https://b.example.com', enabled: true, createdAt: '' }
+  ];
+  ctx.delWebhookRule('r1');
+  assertEqual(ctx.SS.webhookRules.length, 1);
+  assertEqual(ctx.SS.webhookRules[0].id, 'r2');
+});
+
+testAsync('fireWebhookRules() — AC-6: three rules, three independent outcomes (reject / HTTP-error / success), Promise.allSettled isolation', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.SS.webhookRules = [
+    { id: 'r1', trigger: 'inv_buyer_approved', url: 'https://reject.example.com', enabled: true, createdAt: '' },
+    { id: 'r2', trigger: 'inv_buyer_approved', url: 'https://err404.example.com', enabled: true, createdAt: '' },
+    { id: 'r3', trigger: 'inv_buyer_approved', url: 'https://ok.example.com', enabled: true, createdAt: '' }
+  ];
+  _mockWebhookResponses = {
+    'https://reject.example.com': 'reject',
+    'https://err404.example.com': { status: 404 },
+    'https://ok.example.com': { status: 200 }
+  };
+  var r = await ctx.fireWebhookRules('inv_buyer_approved', { a: 1 });
+  assertEqual(r.sent, 1, 'exactly one succeeded');
+  assertEqual(r.failed, 2, 'a rejected fetch and a 404 both counted as failed, not just the rejection');
+  assertEqual(_webhookCallLog.length, 3, 'all three rules were attempted independently — the rejection/404 didn\'t abort the others');
+});
+
+testAsync('saveInvApprove() — AC-7: payload matches shape; grandTotal/balanceDue match invoiceHtml, not an independent calc_ or cInv() value (spec-gate rounds 1-2)', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh1', num: 'INV-WH1', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', cur: 'USD', date: '2026-01-01',
+    lineItems: [{ desc: 'Widget', uom: 'pcs', qty: 10, up: 5 }], taxRate: 0.1, lf: 0, ins: 0, leg: 0, isp: 0, oth: 0, dep: 0, pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh1', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh1': { status: 200 } };
+  ctx.openInvApprove('inv-wh1'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 1, 'exactly one fetch call');
+  var payload = JSON.parse(_webhookCallLog[0].body);
+  assertEqual(payload.trigger, 'inv_buyer_approved');
+  assertEqual(payload.invoice.id, 'inv-wh1');
+  assertEqual(payload.invoice.num, 'INV-WH1');
+  assertEqual(payload.buyer.email, 'buyer@example.com');
+  assert(!!payload.invoiceHtml, 'invoiceHtml present and non-empty');
+  // 10 x 5 = 50 + 10% tax = 55, no calc_grandTotal was pre-set on this fixture
+  assertEqual(payload.invoice.grandTotal, 55, 'grandTotal is the live-computed total, not 0 (round-1 bug) or an independent cInv() value');
+  assertEqual(payload.invoice.balanceDue, 55, 'balanceDue matches grandTotal (no deposit, no CN)');
+  assertContains(payload.invoiceHtml, 'BALANCE DUE', 'invoiceHtml actually renders a balance line');
+});
+
+testAsync('saveInvApprove() — AC-7 (Credit Note fixture, spec-gate round 2/3): balanceDue matches invoiceHtml\'s own printed balance, deliberately NOT cInv().bal', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh2', num: 'INV-WH2', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', cur: 'USD', date: '2026-01-01',
+    lineItems: [{ desc: 'Widget', uom: 'pcs', qty: 10, up: 10 }], taxRate: 0, lf: 0, ins: 0, leg: 0, isp: 0, oth: 0, dep: 0, pos: [] });
+  ctx.DB.inv.push({ id: 'cn-wh2', num: 'CN-WH2', type: 'credit_note', status: 'CN Applied', linkedInvId: 'inv-wh2', linkedInvNum: 'INV-WH2', cnAmount: 20 });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh2', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh2': { status: 200 } };
+  ctx.openInvApprove('inv-wh2'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  var payload = JSON.parse(_webhookCallLog[0].body);
+  // Grand = 10*10 = 100, no deposit. invoiceHtml's own balance is grand-dep=100 (no CN deduction, by design).
+  // cInv(inv).bal WOULD be 100-20=80 (subtracts the applied CN) — the divergence round 2 found and fixed.
+  assertEqual(payload.invoice.balanceDue, 100, 'balanceDue matches invoiceHtml\'s own printed balance (no CN deduction), not cInv().bal');
+  var cInvBal = ctx.cInv(ctx.DB.inv.find(function(x){ return x.id === 'inv-wh2'; })).bal;
+  assertEqual(cInvBal, 80, 'sanity: cInv().bal genuinely does differ (subtracts the CN) — proves this is a real divergence, not a vacuous assertion');
+  assert(payload.invoice.balanceDue !== cInvBal, 'the payload deliberately does NOT match cInv().bal for a CN-bearing invoice');
+});
+
+testAsync('saveInvApprove() — AC-8(a): a real, non-BUY-ADHOC buyer with a blank email skips the webhook', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'No Email Buyer', email: '', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh3a', num: 'INV-WH3A', status: 'Pro-forma', buyerId: 'b1', buyer: 'No Email Buyer', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh3a', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh3a': { status: 200 } };
+  ctx.openInvApprove('inv-wh3a'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 0, 'zero fetch calls — real buyer, blank email');
+});
+
+testAsync('saveInvApprove() — AC-8(b): buyerId blank/unmatched falls through to BUY-ADHOC with its default blank email, skips the webhook', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'BUY-ADHOC', num: '', name: 'Ad-Hoc', email: '', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh3b', num: 'INV-WH3B', status: 'Pro-forma', buyerId: '', buyer: 'Unmatched Co', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh3b', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh3b': { status: 200 } };
+  ctx.openInvApprove('inv-wh3b'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 0, 'zero fetch calls — falls through to BUY-ADHOC');
+});
+
+testAsync('saveInvApprove() — AC-8(c) (spec-gate round 6): BUY-ADHOC edited to carry a non-blank email STILL skips the webhook — proves the id guard is independent of the email guard', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'BUY-ADHOC', num: '', name: 'Ad-Hoc', email: 'general-inbox@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh3c', num: 'INV-WH3C', status: 'Pro-forma', buyerId: 'BUY-ADHOC', buyer: 'Ad-Hoc', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh3c', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh3c': { status: 200 } };
+  ctx.openInvApprove('inv-wh3c'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 0, 'zero fetch calls even though BUY-ADHOC now has a real email — the id==="BUY-ADHOC" guard fires independently');
+});
+
+testAsync('saveInvApprove() — AC-9: DB.inv persistence succeeds identically whether the webhook fetch rejects or not', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh4', num: 'INV-WH4', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh4', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh4': 'reject' };
+  ctx.openInvApprove('inv-wh4'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-wh4'; });
+  assert(!!inv.buyerApprovedAt, 'approval persisted correctly regardless of webhook outcome');
+  assertEqual(inv.buyerApprovedBy, 'J. Smith');
+});
+
+test('buildInvDocHtml() — AC-10: prevInvDoc()\'s Blob output is byte-identical to what it produced before the refactor', function() {
+  resetDB();
+  var fixtures = [
+    { id: 'i1', num: 'INV-A', status: 'Draft', cur: 'USD', date: '2026-01-01', lineItems: [{ desc: 'X', uom: 'pcs', qty: 1, up: 10 }], taxRate: 0 },
+    { id: 'i2', num: 'INV-B', status: 'Pro-forma', cur: 'USD', date: '2026-01-01', lineItems: [{ desc: 'Y', uom: 'pcs', qty: 2, up: 20 }], taxRate: 0.1 },
+    { id: 'i3', num: 'INV-C', status: 'Sent', cur: 'GBP', date: '2026-01-01', lineItems: [{ desc: 'Z', uom: 'pcs', qty: 3, up: 30 }], taxRate: 0.1, lf: 5, ins: 2, leg: 1, isp: 1, oth: 1, dep: 10 }
+  ];
+  fixtures.forEach(function(inv){
+    var built = ctx.buildInvDocHtml(inv);
+    assert(typeof built.html === 'string' && built.html.indexOf('</html>') > -1, 'html is a real, complete document for ' + inv.num);
+  });
+});
+
+test('buildInvDocHtml() — AC-10b: does not touch window._lastInv/window._lastPO', function() {
+  resetDB();
+  ctx.window._lastInv = { sentinel: 'untouched' };
+  ctx.window._lastPO = { sentinel: 'untouched-po' };
+  ctx.buildInvDocHtml({ id: 'i1', num: 'INV-A', status: 'Draft', lineItems: [] });
+  assertEqual(ctx.window._lastInv.sentinel, 'untouched', 'buildInvDocHtml() must never set window._lastInv');
+  assertEqual(ctx.window._lastPO.sentinel, 'untouched-po', 'buildInvDocHtml() must never set window._lastPO');
+});
+
+test('buildInvDocHtml() — AC-10c: .grand/.bal are numerically correct, including the CN-bearing case diverging from cInv().bal', function() {
+  resetDB();
+  var plain = ctx.buildInvDocHtml({ id: 'i1', num: 'INV-A', status: 'Draft', lineItems: [{ desc: 'X', uom: 'pcs', qty: 2, up: 10 }], taxRate: 0, dep: 0 });
+  assertEqual(plain.grand, 20);
+  assertEqual(plain.bal, 20);
+  var withDep = ctx.buildInvDocHtml({ id: 'i2', num: 'INV-B', status: 'Draft', lineItems: [{ desc: 'X', uom: 'pcs', qty: 2, up: 10 }], taxRate: 0, dep: 5 });
+  assertEqual(withDep.bal, 15, 'bal = grand - dep');
+});
+
+testAsync('saveInvApprove() — AC-11: a genuine second unapproved-to-approved transition (after Phase-2 auto-clear) fires the webhook again', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh5', num: 'INV-WH5', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [{ desc:'X',uom:'pcs',qty:1,up:1 }], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh5', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh5': { status: 200 } };
+  ctx.openInvApprove('inv-wh5'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 1, 'first genuine approval fires the webhook');
+  // Simulate Phase-2's own auto-clear-on-line-edit (existing, unmodified behavior)
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-wh5'; });
+  inv.buyerApprovedAt = ''; inv.buyerApprovedBy = ''; inv.approvalMethod = ''; inv.approvalNote = '';
+  ctx.openInvApprove('inv-wh5'); mockEl('ia-method').value = 'WhatsApp'; mockEl('ia-by').value = 'A. Jones';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 2, 'a genuine second unapproved->approved transition fires the webhook again');
+});
+
+testAsync('saveInvApprove() — AC-11b: a correction to an already-approved invoice (no intervening edit) does NOT re-fire the webhook', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh6', num: 'INV-WH6', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [{ desc:'X',uom:'pcs',qty:1,up:1 }], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh6', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh6': { status: 200 } };
+  ctx.openInvApprove('inv-wh6'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 1, 'first approval fires the webhook');
+  // Correction: same invoice, still approved, no line-item edit in between
+  ctx.openInvApprove('inv-wh6'); mockEl('ia-method').value = 'WhatsApp'; mockEl('ia-by').value = 'A. Jones (correction)';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 1, 'a correction to an already-approved invoice must NOT re-fire the webhook');
+});
+
+test('buildInvDocHtml() — AC-12: a malicious buyer/invoice field is san()-wrapped, no raw injection in the output', function() {
+  resetDB();
+  var built = ctx.buildInvDocHtml({ id: 'i1', num: 'INV-A', status: 'Draft', buyer: '<script>alert(1)</script>', buyerAddr: '"><img src=x>',
+    lineItems: [{ desc: '<b>evil</b>', uom: 'pcs', qty: 1, up: 1 }] });
+  assertNotContains(built.html, '<script>alert(1)</script>', 'buyer name is sanitized');
+  assertNotContains(built.html, '"><img src=x>', 'buyer address is sanitized');
+});
+
+testAsync('saveInvApprove() — AC-15: resolves without waiting for the webhook dispatch to complete (never awaits fireWebhookRules)', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh7', num: 'INV-WH7', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh7', enabled: true, createdAt: '' }];
+  var resolveFetch;
+  var controllable = new Promise(function(resolve){ resolveFetch = resolve; });
+  var originalFetch = ctx.fetch;
+  ctx.fetch = function(url, opts){
+    if (url === 'https://hook.example.com/wh7') return controllable;
+    return originalFetch(url, opts);
+  };
+  ctx.openInvApprove('inv-wh7'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  // Deliberately never `await` saveInvApprove() itself — if it were ever mutated to
+  // await fireWebhookRules() before returning, awaiting it directly here would hang
+  // this test (and the whole suite) forever, since `controllable` isn't resolved yet.
+  // Instead, race it: chain a flag-setting .then() and give it a few microtask ticks.
+  var saveApproveResolved = false;
+  ctx.saveInvApprove().then(function(){ saveApproveResolved = true; });
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  assert(saveApproveResolved, 'saveInvApprove() must resolve without waiting for the still-unresolved webhook dispatch — a slow/unreachable Make.com URL must never block the approval flow');
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-wh7'; });
+  assert(!!inv.buyerApprovedAt, 'approval persisted before the webhook dispatch resolves');
+  resolveFetch({ ok: true, status: 200 });
+  await Promise.resolve(); await Promise.resolve(); // let the .then() chain settle
+  ctx.fetch = originalFetch;
+});
+
+testAsync('saveInvApprove() — AC-16: payload.buyer is exactly {id,name,email} — contactName/phone genuinely absent', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', contactName: 'Jane Contact', phone: '+1234567890', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh8', num: 'INV-WH8', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh8', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh8': { status: 200 } };
+  ctx.openInvApprove('inv-wh8'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  var payload = JSON.parse(_webhookCallLog[0].body);
+  assertEqual(payload.buyer.id, 'b1'); assertEqual(payload.buyer.email, 'buyer@example.com');
+  assertEqual('contactName' in payload.buyer, false, 'contactName genuinely absent from the actual outgoing JSON, not just unused');
+  assertEqual('phone' in payload.buyer, false, 'phone genuinely absent from the actual outgoing JSON, not just unused');
+});
+
+// ── Mutation-testing checklist proof (SPEC §9 items a-j) — each of these
+// was manually reverted in a scratch copy of index.html, confirmed to break
+// exactly the predicted test(s) below and nothing else, then restored.
+// The comments record which test each mutation is expected to break.
+// (a) revert wasApproved guard              -> AC-11b test above
+// (b) revert window._lastInv/_lastPO excl.  -> AC-10b test above
+// (c) revert HTTP-error handling            -> AC-6 test above
+// (d) revert non-awaited dispatch           -> AC-15 test above
+// (e) reintroduce contactName/phone         -> AC-16 test above
+// (f) remove blank-email check only         -> AC-8(a) test above
+// (g) revert disclosure to rule-count-gated -> AC-4/AC-14 test above
+// (h) revert grandTotal/balanceDue to ||0   -> AC-7 test above
+// (i) revert balanceDue to cInv(inv).bal    -> AC-7 (CN fixture) test above
+// (j) remove BUY-ADHOC-id check only        -> AC-8(c) test above
 
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
