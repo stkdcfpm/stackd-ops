@@ -14171,11 +14171,12 @@ testAsync('fireWebhookRules() — AC-1: no rules configured is a no-op, zero fet
   assertEqual(_webhookCallLog.length, 0, 'no fetch attempted');
 });
 
-test('addWebhookRule() — AC-2: valid https URL adds a rule with the right shape', function() {
+test('addWebhookRule() — AC-2: valid https URL + attestation adds a rule with the right shape', function() {
   resetDB(); _resetWebhookTestState();
   mockEl('whr-trigger').value = 'inv_buyer_approved';
   mockEl('whr-url').value = 'https://hook.us1.make.com/abc123';
   mockEl('whr-enabled').checked = true;
+  mockEl('whr-attest').checked = true;
   ctx.addWebhookRule();
   assertEqual(ctx.SS.webhookRules.length, 1);
   var r = ctx.SS.webhookRules[0];
@@ -14184,6 +14185,8 @@ test('addWebhookRule() — AC-2: valid https URL adds a rule with the right shap
   assertEqual(r.enabled, true);
   assert(!!r.id, 'rule has an id');
   assert(!!r.createdAt, 'rule has createdAt');
+  assert(!!r.dataHandlingAttestedAt, 'rule records the data-handling attestation timestamp');
+  assertEqual(mockEl('whr-attest').checked, false, 'attestation checkbox resets after a successful add, same as the URL field');
   ctx.renderWebhookRulesPanel();
   assertContains(mockEl('webhook-rules-panel').innerHTML, 'https://hook.us1.make.com/abc123');
 });
@@ -14192,8 +14195,18 @@ test('addWebhookRule() — AC-3: non-https URL is rejected, SS.webhookRules unch
   resetDB(); _resetWebhookTestState();
   mockEl('whr-trigger').value = 'inv_buyer_approved';
   mockEl('whr-url').value = 'http://insecure.example.com/hook';
+  mockEl('whr-attest').checked = true;
   ctx.addWebhookRule();
   assertEqual((ctx.SS.webhookRules||[]).length, 0, 'rejected, nothing added');
+});
+
+test('addWebhookRule() — data-handling attestation checkbox is required even with a valid URL, rejected without it', function() {
+  resetDB(); _resetWebhookTestState();
+  mockEl('whr-trigger').value = 'inv_buyer_approved';
+  mockEl('whr-url').value = 'https://hook.us1.make.com/no-attest';
+  mockEl('whr-attest').checked = false;
+  ctx.addWebhookRule();
+  assertEqual((ctx.SS.webhookRules||[]).length, 0, 'rejected without attestation, nothing added, valid URL alone is not enough');
 });
 
 test('renderWebhookRulesPanel() — AC-4/AC-14: disclosure visible with zero rules AND after a rule is added', function() {
