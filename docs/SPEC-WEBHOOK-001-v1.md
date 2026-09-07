@@ -114,7 +114,7 @@ Any future trigger needing a buyer email must call this same helper, not re-deri
 
 ## 5. `saveInvApprove()` wiring (REQ-WEBHOOK-001e)
 
-Current function (`index.html:8539-8562`) is unchanged through line 8557 (`rInv();`). Insert immediately before the final `if (G('ov-inv').classList.contains('on') ...)` block — order matters, this must come after the existing "Buyer approval recorded" `toast()` call, never before:
+Current function (`index.html:8539-8562`) is unchanged through line 8562 (its final closing `}`). The new block is appended as new code *after* that closing brace is reached at runtime — concretely, insert it after the existing `if (G('ov-inv').classList.contains('on') ...)` block (`index.html:8558-8561`), still inside the function body, before its final `}`. Order matters only relative to the "Buyer approval recorded" `toast()` call at line 8556: the new block must run after that toast, never before — its actual position relative to the `G('ov-inv')` visibility-refresh block (before or after) has no functional effect, since neither block reads state the other writes.
 
 ```js
 async function saveInvApprove() {
@@ -150,7 +150,7 @@ async function saveInvApprove() {
         trigger: 'inv_buyer_approved',
         invoice: {
           id: inv.id, num: inv.num, status: inv.status, cur: inv.cur||'USD', date: inv.date,
-          grandTotal: +inv.calc_grandTotal||0, balanceDue: +inv.calc_balanceDue||0,
+          grandTotal: +inv.calc_grandTotal || cInv(inv).grand, balanceDue: cInv(inv).bal,
           buyerApprovedAt: inv.buyerApprovedAt, buyerApprovedBy: inv.buyerApprovedBy,
           approvalMethod: inv.approvalMethod, approvalNote: inv.approvalNote
         },
@@ -168,6 +168,8 @@ async function saveInvApprove() {
   }
 }
 ```
+
+**Correction from spec-gate round 1 (finding 1) — `grandTotal`/`balanceDue` must never be a bare `||0` fallback.** The original draft used `+inv.calc_grandTotal||0`/`+inv.calc_balanceDue||0`. `saveInv()`'s own object literal (`index.html:8235-8261`) never populates `calc_grandTotal`/`calc_balanceDue` for an ordinary interactively-created/edited Invoice — those fields are only ever set by CSV import, "Import from Sheets," or the one-time legacy migration, none of which run for the common case of an invoice built and approved entirely through the UI. `+inv.calc_grandTotal||0` would therefore have silently sent `grandTotal: 0`/`balanceDue: 0` in the payload for the majority of real approvals, while the very same payload's `invoiceHtml` (built by `buildInvDocHtml()`, which correctly falls back to a live-computed total, `index.html:10021-10025`) would show the real amount — a payload internally contradicting itself. Fixed to use this codebase's own established live-fallback idiom (`index.html:14844`, `+inv.calc_grandTotal || cInv(inv).grand`) for `grandTotal`, and `cInv(inv).bal` directly for `balanceDue` — per this codebase's own documented policy ("balance always live from `cInv`", `index.html:2107`), balance due has no legitimate stored-value case to fall back to at all, unlike the grand total.
 
 Notes an implementer must not deviate from:
 
@@ -200,10 +202,12 @@ New HTML block inserted into the existing Integrations `card` div (`index.html:7
         <div class="fld" style="margin-bottom:8px;">
           <label style="font-weight:600;">Automation Webhooks</label>
         </div>
+        <div id="webhook-rules-disclosure"></div>
         <div id="webhook-rules-panel"></div>
-        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;">
           <select id="whr-trigger" style="flex:1;min-width:160px;"></select>
           <input type="text" id="whr-url" placeholder="https://hook.us1.make.com/..." style="flex:2;min-width:200px;" autocomplete="off">
+          <label style="display:flex;align-items:center;gap:4px;font-size:.5rem;"><input type="checkbox" id="whr-enabled" checked> Enabled</label>
           <button class="btn btn-g" onclick="addWebhookRule()">+ Add Rule</button>
         </div>
       </div>
@@ -222,9 +226,10 @@ function populateWebhookTriggerSelect() {
 function addWebhookRule() {
   var trigger = G('whr-trigger').value;
   var url = G('whr-url').value.trim();
+  var enabled = G('whr-enabled') ? G('whr-enabled').checked : true;
   if (!url || !url.startsWith('https://')) { toast('Webhook URL must start with https://'); return; }
   if (!SS.webhookRules) SS.webhookRules = [];
-  SS.webhookRules.push({ id: uid(), trigger: trigger, url: url, enabled: true, createdAt: new Date().toISOString() });
+  SS.webhookRules.push({ id: uid(), trigger: trigger, url: url, enabled: enabled, createdAt: new Date().toISOString() });
   sv(K.ss, SS);
   G('whr-url').value = '';
   renderWebhookRulesPanel();
@@ -245,9 +250,11 @@ function delWebhookRule(id) {
   toast('Webhook rule removed');
 }
 
-var WEBHOOK_DISCLOSURE_HTML = '&#9432; A webhook rule targeting <b>Invoice: Buyer Approved</b> sends, to the URL you configure: buyer name and email; the full rendered invoice document (financial detail, line items, buyer name/address); and FPM\'s own company bank account details (from Settings &rarr; Company Branding). Only configure a URL you control or trust. Webhook rules are opt-in &mdash; no data is transmitted unless a rule exists and is enabled.';
+var WEBHOOK_DISCLOSURE_HTML = '&#9432; A webhook rule targeting <b>Invoice: Buyer Approved</b> sends, to the URL you configure: buyer name and email; the full rendered invoice document (financial detail, line items, buyer name/address); and FPM\'s own company bank account details (from Settings &rarr; Company (Stackd)). Only configure a URL you control or trust. Webhook rules are opt-in &mdash; no data is transmitted unless a rule exists and is enabled.';
 
 function renderWebhookRulesPanel() {
+  var disclosure = G('webhook-rules-disclosure');
+  if (disclosure) disclosure.innerHTML = '<p style="font-size:.48rem;color:var(--m);margin-bottom:8px;">' + WEBHOOK_DISCLOSURE_HTML + '</p>';
   var panel = G('webhook-rules-panel');
   if (!panel) return;
   var rules = SS.webhookRules || [];
@@ -260,9 +267,7 @@ function renderWebhookRulesPanel() {
       + '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delWebhookRule(\'' + r.id + '\')">Del</button>'
       + '</div>';
   }).join('');
-  var hasApprovedRule = rules.some(function(r){ return r.trigger === 'inv_buyer_approved'; });
-  panel.innerHTML = (rows || '<div style="color:var(--m);font-size:.54rem;">No automation webhook rules configured.</div>')
-    + (hasApprovedRule ? '<p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">' + WEBHOOK_DISCLOSURE_HTML + '</p>' : '');
+  panel.innerHTML = rows || '<div style="color:var(--m);font-size:.54rem;">No automation webhook rules configured.</div>';
 }
 ```
 
@@ -270,13 +275,16 @@ function renderWebhookRulesPanel() {
 
 ```js
   if(G('whr-trigger')) populateWebhookTriggerSelect();
-  if(G('webhook-rules-panel')) renderWebhookRulesPanel();
+  if(G('webhook-rules-disclosure') || G('webhook-rules-panel')) renderWebhookRulesPanel();
 ```
 
-**Disclosure requirements, exact (REQ-WEBHOOK-001b/Decision 5, requirements-gate rounds 1/2/3):**
-- `addWebhookRule()` for an `inv_buyer_approved` rule cannot be reached without the disclosure notice having been rendered — since `WEBHOOK_DISCLOSURE_HTML` renders inside `renderWebhookRulesPanel()`, and `renderWebhookRulesPanel()` runs on every Settings-tab load (`rCfg()`) and after every add/delete, the notice is present on the same screen as the "+ Add Rule" control from the moment the operator opens Settings — this satisfies "shown before it can be saved" without a separate modal step, and simultaneously satisfies the persistent-note requirement (matching `sendFwdReq()`'s own precedent at `index.html:766`) by construction, since it's the same render call in both cases (AC-4, AC-14).
-- The notice text names all three categories exactly: buyer name/email, the full invoice document (financial detail, line items, buyer name/address), and FPM's own bank details — matching §1.3/`SEC-GAP-025`'s text precisely; do not let this string drift from that text independently.
-- The notice appears only while at least one `inv_buyer_approved` rule exists (`hasApprovedRule`), and disappears the moment the last one is deleted — AC-14's exact, measurable condition.
+**Correction from spec-gate round 1 (finding 2) — the original disclosure design was gated on rule count, which structurally could never satisfy "shown before the first rule is saved."** The original draft rendered `WEBHOOK_DISCLOSURE_HTML` only when `rules.some(r => r.trigger==='inv_buyer_approved')` — i.e. only *after* a matching rule already existed. On an operator's very first attempt to add such a rule, that condition is false, so the disclosure never rendered, and `addWebhookRule()` had no independent gate of its own — an operator could type a URL and click "+ Add Rule" having never seen any of the three disclosure categories, directly violating `REQ-WEBHOOK-001b`/Decision 5's explicit "cannot be added without it being seen" requirement.
+
+**Fixed** by decoupling the disclosure from rule count entirely: `WEBHOOK_DISCLOSURE_HTML` now renders unconditionally into its own `#webhook-rules-disclosure` div, immediately above the rule list and immediately above the Add-Rule controls, every time `renderWebhookRulesPanel()` runs (on Settings load and after every add/delete) — regardless of whether any rule currently exists. Since `WEBHOOK_TRIGGERS` has exactly one entry in v1 and it is the sensitive one, showing the notice unconditionally is correct and satisfies both REQ conditions with a single mechanism: it is visible *before* the very first save (the panel renders the moment Settings opens, well before any click on "+ Add Rule") *and* it persists for as long as the feature exists in the UI (`REQ-WEBHOOK-001-v1.md:62`'s two-part requirement, both parts now genuinely met, not just the second one as before). **A future non-sensitive trigger added to `WEBHOOK_TRIGGERS` would need this logic revisited** — unconditional display stops being correct the moment a trigger that doesn't need this disclosure exists alongside one that does; that is out of scope for v1 (one trigger, always sensitive) but must not be forgotten when a second trigger is ever added.
+
+Disclosure requirements, exact (REQ-WEBHOOK-001b/Decision 5, requirements-gate rounds 1/2/3):
+- The notice text names all three categories exactly: buyer name/email, the full invoice document (financial detail, line items, buyer name/address), and FPM's own bank details — matching §1.3/`SEC-GAP-025`'s text precisely; do not let this string drift from that text independently. Corrected in this SPEC to reference "Company (Stackd)" (`index.html:614-627`, where `c-bank`→`AS.bank` actually lives), not "Company Branding" (`index.html:628-639`, a different card feeding `getCoBrand()`) — the original draft cited the wrong card name.
+- The notice is always visible whenever the Automation Webhooks section is on screen (AC-4, AC-14 — both revised in §9 below to test the unconditional-render design, not the old rule-count-gated one).
 
 ---
 
@@ -294,17 +302,23 @@ Log at ship time, text drawn directly and verbatim-consistent with REQ-WEBHOOK-0
 
 ## 9. Test plan
 
-All new functions are pure/synchronous-enough to unit test directly against `ctx.*` in `tests/run.js`, following this codebase's `resetDB()`/`mockEl()`/`mockSb()` conventions. Mapped to REQ-WEBHOOK-001's ACs:
+All new functions are pure/synchronous-enough to unit test directly against `ctx.*` in `tests/run.js`, following this codebase's `resetDB()`/`mockEl()`/`mockSb()` conventions, plus two new pieces of test infrastructure this SPEC requires (spec-gate round 1 findings 6-7):
+
+**New test infrastructure required, not optional:**
+- **`mockFetch()`'s existing generic branch (`tests/run.js:71-88`) does not set `.ok`/`.status`** on its resolved response — under `fireWebhookRules()`'s `.then(function(res){ if(!res.ok) throw...})`, every such response has `res.ok === undefined`, so `!res.ok` is always `true` and every webhook call would be misread as failed by the *existing* shared mock, regardless of what any individual test intends. `mockFetch()` must gain a new, dedicated branch for webhook URLs (matching the existing `_mockAnthropic`-style override pattern, `tests/run.js:57-70`): a new `let _mockWebhookResponse = null;` (or per-call via a `_mockWebhookResponses` map keyed by URL, if a test needs to control two rules independently, per AC-6), checked before the generic `action`-based branch, honoring `'reject'` (network failure) and `{status:<code>}` (translated to `ok: status===200||status<300` before returning) — mirroring `_mockAnthropic`'s own three-state shape (reject / non-200 / 200) rather than inventing a new one.
+- **`resetDB()` (`tests/run.js:181-183`) does not touch `SS`.** `SS.webhookRules` set by one test will leak into every subsequent `test()`/`testAsync()` call in the same run unless explicitly cleared. Every webhook test must explicitly reset `ctx.SS.webhookRules = []` (or the whole `ctx.SS = {}`, matching whatever the test needs) at its own start — do not rely on `resetDB()` to have done this, and do not add `SS` to `resetDB()`'s own scope without auditing every pre-existing test that reads `SS` today, per this codebase's own documented "self-marking test contamination" bug class (`CLAUDE.md`, recurred 4 times in the Cloud Data series) — a blanket change to a shared reset function is exactly the kind of edit that class of bug comes from.
+
+Mapped to REQ-WEBHOOK-001's ACs:
 
 | AC | Test |
 |---|---|
 | AC-1 | `SS.webhookRules` absent → `fireWebhookRules('inv_buyer_approved', {})` returns `{sent:0,failed:0}`, no `fetch()` call (spy/mock `fetch`, assert zero invocations) |
 | AC-2 | `addWebhookRule()` with a valid `https://` URL → `SS.webhookRules` gains one entry with the right shape; `renderWebhookRulesPanel()` output contains the URL |
 | AC-3 | `addWebhookRule()` with a `http://` (non-https) URL → `SS.webhookRules` unchanged, toast fired |
-| AC-4 | `renderWebhookRulesPanel()` output, with one `inv_buyer_approved` rule present, contains `WEBHOOK_DISCLOSURE_HTML`'s text; with zero rules, does not |
+| AC-4 (revised, spec-gate round 1 finding 2) | `renderWebhookRulesPanel()` output contains `WEBHOOK_DISCLOSURE_HTML`'s text **with zero rules configured** — i.e. specifically the state immediately before an operator's first "+ Add Rule" click, not only after a rule already exists. A second assertion confirms it's still present after a rule is added (both states covered, not just the post-add one the original draft tested). |
 | AC-5 | `delWebhookRule(id)` removes exactly that entry; a subsequent `fireWebhookRules()` call no longer reaches it |
 | AC-6 | Two enabled rules, one mocked `fetch` rejecting (network failure) and one mocked `fetch` resolving with `{ok:false,status:404}` — both counted in `failed`; a third rule with a normal `{ok:true}` response counted in `sent` — all three independent, `Promise.allSettled` semantics proven by the reject-and-resolve mix not aborting each other |
-| AC-7 | `saveInvApprove()` on an unapproved Invoice with a real buyer email and one enabled `inv_buyer_approved` rule → exactly one `fetch()` call, `JSON.parse(callArgs.body)` matches the documented payload shape, `invoiceHtml` non-empty |
+| AC-7 (strengthened, spec-gate round 1 finding 1) | `saveInvApprove()` on an unapproved Invoice with a real buyer email and one enabled `inv_buyer_approved` rule → exactly one `fetch()` call, `JSON.parse(callArgs.body)` matches the documented payload shape, `invoiceHtml` non-empty. **Critically, the fixture Invoice must have real `lineItems` but no `calc_grandTotal`/`calc_balanceDue` set** — the ordinary, non-CSV-imported shape — and the test must assert `payload.invoice.grandTotal`/`balanceDue` are the correct non-zero, live-computed amounts (matching `cInv(inv).grand`/`.bal`), not merely present. A fixture that happens to have `calc_grandTotal` pre-set would not have caught the original round-1 bug. |
 | AC-8 | Same, but buyer resolves to `BUY-ADHOC`/blank email → zero `fetch()` calls, distinct toast fired in addition to "Buyer approval recorded" |
 | AC-9 | Force the mocked `fetch` to reject → `DB.inv[].buyerApprovedAt`/etc. still set correctly (persistence unaffected by webhook outcome) |
 | AC-10 | `buildInvDocHtml(inv)` output, wrapped into the same Blob-construction logic `prevInvDoc()` uses, is byte-identical to `prevInvDoc()`'s pre-refactor output for 3 fixture invoices (Draft, Pro-forma, one with every optional charge field populated) |
@@ -313,7 +327,7 @@ All new functions are pure/synchronous-enough to unit test directly against `ctx
 | AC-11b | `saveInvApprove()` twice with **no** intervening edit (a correction) → webhook fires only on the first call |
 | AC-12 | A buyer/invoice field containing `<script>`/`"` reaches `buildInvDocHtml()`'s output only through existing `san()`-wrapped rendering — confirm no raw injection in the resulting HTML string |
 | AC-13 | Manual review of `AI_SYSTEM_PROMPT` against shipped behavior |
-| AC-14 | `renderWebhookRulesPanel()` with a rule present vs. absent — disclosure visible/absent exactly as specified |
+| AC-14 (revised, spec-gate round 1 finding 2) | Same disclosure-visibility assertion as AC-4 above — both ACs now cover the corrected unconditional-render design; kept as two distinct AC numbers only because the REQ names them separately (creation-time vs. persistent-note), even though this SPEC's fix satisfies both with one mechanism |
 | AC-15 | Mock `fetch` with a controllable, not-yet-resolved promise; call `saveInvApprove()`; assert the "Buyer approval recorded" toast and `DB.inv` mutation are both already complete before manually resolving the mock |
 | AC-16 | Assert `'contactName' in payload.buyer === false` and `'phone' in payload.buyer === false` on the actual parsed request body |
 | AC-17 | Manual review of the shipped `SEC-GAP-025` entry against §1.3 |
@@ -325,6 +339,8 @@ c. Revert the `.then(function(res){ if(!res.ok) throw ... })` HTTP-error handlin
 d. Change `fireWebhookRules(...)` back to `await`ed before the approval toast → confirm AC-15 fails.
 e. Reintroduce `contactName`/`phone` into the payload's `buyer` object → confirm AC-16 fails.
 f. Remove the `resolveBuyerForWebhook()` null-check (fire regardless of buyer email) → confirm AC-8 fails.
+g. Revert `renderWebhookRulesPanel()`'s disclosure back to the rule-count-gated design (only render `WEBHOOK_DISCLOSURE_HTML` when a matching rule already exists) → confirm the revised AC-4's zero-rules assertion fails, nothing else.
+h. Revert `saveInvApprove()`'s `grandTotal`/`balanceDue` fields back to `+inv.calc_grandTotal||0`/`+inv.calc_balanceDue||0` → confirm AC-7 fails for a fixture Invoice with no `calc_grandTotal` set (the common, non-CSV-imported case).
 
 ---
 
@@ -343,4 +359,16 @@ Bump `CLAUDE.md` Current version/Test count; `docs/version-history.md` new row; 
 
 ## 12. Review-resolution log
 
-(To be appended after each spec-gate round, per this repo's established convention — empty at initial draft.)
+### Round 1 — verdict FAIL, 2 major + 2 minor + 2 test-infrastructure findings, all fixed
+
+Citation check (`node scripts/check-req-citations.js docs/SPEC-WEBHOOK-001-v1.md`) came back clean — 11/11 citations correctly attributed on this first submission, the new standing pre-gate step working as intended. The review went beyond citations to trace actual data flow and found real code-level defects, all personally re-verified against live `index.html`/`tests/run.js` before being accepted:
+
+1. **[MAJOR] `grandTotal`/`balanceDue` used a bare `||0` fallback** (§5) — `saveInv()`'s ordinary create/edit path never populates `calc_grandTotal`/`calc_balanceDue` (only CSV import, Import-from-Sheets, and the legacy migration do), so the payload would have sent `0` for both fields on the majority of real approvals, while the same payload's `invoiceHtml` correctly showed the live total — an internally self-contradicting payload. **Fixed**: adopted this codebase's own established live-fallback idiom (`index.html:14844`) for `grandTotal`, and `cInv(inv).bal` directly for `balanceDue` per the codebase's own documented "balance always live from `cInv`" policy (`index.html:2107`). AC-7 strengthened to require a fixture without pre-set `calc_` fields; new mutation-test item h.
+2. **[MAJOR] The GDPR disclosure was gated on rule count, so it could never be seen before the very first rule was saved** (§6) — violating `REQ-WEBHOOK-001b`/Decision 5's explicit "cannot be added without it being seen" requirement, and the original AC-4 test as written would have passed while testing the wrong (non-compliant) state. **Fixed**: disclosure decoupled from rule count entirely, rendered unconditionally into its own div whenever the Automation Webhooks section is on screen — correct for v1 since its one trigger is always the sensitive one; explicitly flagged as needing revisiting if a second, non-sensitive trigger is ever added. AC-4/AC-14 rewritten to test the zero-rules state specifically; new mutation-test item g.
+3. **[minor] §5's insertion-point prose contradicted its own code block** (which function block came before which) — no functional effect, but a real ambiguity for an implementer. **Fixed**: clarified insertion point and stated explicitly that ordering between the two tail blocks has no functional effect.
+4. **[minor] The disclosure text cited the wrong Settings card** ("Company Branding" instead of "Company (Stackd)", where `c-bank`/`AS.bank` actually lives, `index.html:614-627` vs. `628-639`). **Fixed**: corrected in `WEBHOOK_DISCLOSURE_HTML`.
+5. **[minor] The REQ's explicit "enabled checkbox" on the Add-Rule control was missing** from the SPEC's HTML, with `enabled: true` silently hardcoded instead. **Fixed**: added `#whr-enabled` checkbox to the Add-Rule row, `addWebhookRule()` reads it.
+6. **[test-infrastructure] `mockFetch()`'s existing generic branch never sets `.ok`/`.status`**, so every mocked webhook `fetch()` would read as failed regardless of test intent under `fireWebhookRules()`'s `!res.ok` check. **Fixed**: §9 now specifies the required new mock branch, mirroring `_mockAnthropic`'s existing three-state pattern.
+7. **[test-infrastructure] `resetDB()` doesn't reset `SS`**, risking `SS.webhookRules` leaking across sequential tests — the exact "self-marking test contamination" bug class `CLAUDE.md` already documents recurring 4 times. **Fixed**: §9 now requires every webhook test to explicitly reset `SS.webhookRules` itself, and explicitly warns against a blanket `resetDB()` change without auditing every existing `SS`-reading test first.
+
+All fixes made directly to §5/§6/§9 in place.
