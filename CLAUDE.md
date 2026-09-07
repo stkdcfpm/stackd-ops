@@ -127,6 +127,12 @@ View routing: `showV(v, tab)` dispatches to render functions via the `fns` map. 
 
 ---
 
+## REQ/SPEC gate process
+
+New features of any real size go through this repo's formal REQ → SPEC → build-gate cycle: draft the doc (`docs/REQ-<ID>-v1.md` / `docs/SPEC-<ID>-v1.md`), self-review, then independent review via the `requirements-gate`/`spec-gate`/`build-gate` agents — never self-reviewed only. Every reviewing agent's findings must be personally re-verified against live code before being accepted or fixed, never taken on the agent's word; every safety-critical fix must be mutation-tested (revert in a scratch copy, confirm the exact predicted test fails, restore) before being considered done. A FAIL or CONDITIONAL PASS is always followed by one more confirmatory round on the same gate, repeated until a clean PASS.
+
+**Mandatory scripted citation check before every gate submission (added after REQ-WEBHOOK-001, whose first 6 requirements-gate rounds spent 3 of them finding nothing but wrong `index.html:NNN` citations — a wrong line, a wrong function entirely cited under a plausible-sounding name, an imprecise call-count — each one mechanically checkable and each one costing a full independent-agent review round to surface):** before submitting a REQ/SPEC document to `requirements-gate`/`spec-gate`/`build-gate` for the first time or any resubmission, run `node scripts/check-req-citations.js docs/<the-doc>.md`. It extracts every `index.html:NNN`/`NNN-MMM` citation in the document, confirms the line(s) exist, and reports which top-level function actually contains each one plus the doc's own surrounding prose — eyeball every citation's reported "Enclosing function" against what the prose right before it claims that citation proves. This does not replace independent review (it cannot judge whether a design or GDPR disclosure is sound) — it only catches "does this citation point where the prose says it does" before that check consumes a full review round to discover by hand. **Known limitation, not a bug:** the tool tracks function *starts* only, not closing braces, so a top-level `var X = {...}` declared between two functions is reported as "enclosed by" whichever function happens to precede it in the file — a citation against genuine top-level data (e.g. `FIELD_MAPS`) will look like a mismatch and should be checked by hand rather than trusted as a real error.
+
 ## On version delivery
 
 At the end of each version delivery, update:
