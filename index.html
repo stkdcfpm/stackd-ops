@@ -14651,15 +14651,15 @@ function prevQteDoc(q) {
       + '<td style="padding:4px 8px;font-size:11px;text-align:right;font-weight:600;">$' + fn(calc.landed||0,0) + '</td>'
       + '</tr>';
   }).join('');
-  var html = '<!DOCTYPE html><html><head><title>' + san(q.num) + ' — Quote</title>'
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + san(q.num) + ' — Quote</title>'
     + '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:0;padding:24px;color:#222;}'
     + 'h1{font-size:22px;letter-spacing:.1em;margin:0 0 4px;}table{border-collapse:collapse;width:100%;}'
-    + 'th{background:#1a1a1a;color:white;padding:6px 8px;text-align:left;font-size:11px;}'
+    + 'th{background:#0f0c0d;color:white;padding:6px 8px;text-align:left;font-size:11px;}'
     + 'td{border-bottom:1px solid #e8e8e8;}@media print{button{display:none!important;}}</style></head>'
     + '<body>'
     + '<div style="display:flex;justify-content:space-between;margin-bottom:16px;">'
     + '<div><h1>QUOTE</h1><div style="color:#888;font-size:11px;">' + san(AS.name||'Stackd') + ' · ' + san(AS.email||'') + '</div></div>'
-    + '<div style="text-align:right;"><div style="font-weight:600;font-size:16px;color:#c00;">' + san(q.num) + '</div>'
+    + '<div style="text-align:right;"><div style="font-weight:600;font-size:16px;color:#B8283A;">' + san(q.num) + '</div>'
     + '<div style="font-size:11px;">' + san(q.dt||'') + '</div>'
     + '<div style="font-size:11px;color:#888;">Valid until: ' + san(q.validUntil||'—') + '</div></div>'
     + '</div>'
@@ -14671,7 +14671,7 @@ function prevQteDoc(q) {
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.origin,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Destination Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.dest,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Admin</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.admin,0) + '</td></tr>'
-    + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#c00;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#B8283A;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
     + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (GBP)</td><td style="padding:3px 8px;text-align:right;font-weight:600;">£' + fn(c.sellGBP,0) + '</td></tr>'
     + '</tbody></table></div>'
     + (q.notes ? '<div style="margin-top:14px;font-size:11px;border-top:1px solid #e8e8e8;padding-top:10px;"><strong>Notes:</strong> ' + san(q.notes) + '</div>' : '')
