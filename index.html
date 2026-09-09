@@ -85,7 +85,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 .btn-o{background:white;color:var(--cr);}.btn-o:hover{background:var(--crf);}
 .btn-g{background:transparent;border-color:var(--ln);color:var(--m);}.btn-g:hover{border-color:var(--cr);color:var(--cr);}
 .btn-b{background:var(--bl);color:white;border-color:var(--bl);}
-.tw{overflow-x:auto;}
+.tw{overflow-x:auto;border:1px solid var(--ln);box-shadow:var(--sh-sm);}
 .tbl{width:100%;border-collapse:collapse;font-size:.58rem;}
 .tbl th{font-size:.48rem;letter-spacing:.11em;text-transform:uppercase;color:var(--m);padding:7px 8px;text-align:left;border-bottom:2px solid var(--cr);background:white;white-space:nowrap;}
 .tbl td{padding:8px 8px;border-bottom:1px solid rgba(0,0,0,.07);background:white;vertical-align:middle;font-variant-numeric:tabular-nums;}
@@ -3402,7 +3402,7 @@ function rOrd() {
     return '<tr>'
       + '<td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(o.num||'-') + (o._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>'
       + '<td>' + (c ? san(c.name) : '<span style="color:var(--m);">— contact deleted —</span>') + '</td>'
-      + '<td><span class="tag">' + san(o.stage) + '</span></td>'
+      + '<td><span class="tag ' + ordStageClass(o.stage) + '">' + san(o.stage) + '</span></td>'
       + '<td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(o.description||'') + (o._backfilled ? ' <span style="font-size:.4rem;color:var(--m);">(legacy)</span>' : '') + '</td>'
       + '<td>' + openActions + '</td>'
       + '<td class="num">' + (o.stage === 'Fulfilled' ? fmt(margin,'USD') : '—') + '</td>'
@@ -13143,6 +13143,14 @@ function poStatusClass(st) {
 function conStatusClass(st) {
   var m = { 'lead':'s-lead', 'qualified':'s-qualified', 'converted':'s-converted', 'closed':'s-closed' };
   return m[st] || 's-lead';
+}
+function ordStageClass(stage) {
+  var m = {
+    'New':'s-draft', 'Qualifying':'s-lead', 'Quoted':'s-sent',
+    'Converting':'s-partially-paid', 'Processing':'s-deposit-paid', 'Fulfilled':'s-paid',
+    'Declined':'s-cancelled', 'Lost':'s-cancelled'
+  };
+  return m[stage] || 's-draft';
 }
 
 function rShp() {
