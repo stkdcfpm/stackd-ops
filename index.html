@@ -2625,53 +2625,62 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <!-- CONTACT MODAL -->
-<div id="ov-con" class="ov">
-  <div class="card modal-card">
-    <h2 id="con-title">Contact</h2>
-    <label>Name*</label>
-    <input id="ct-name" type="text" placeholder="Full name">
-    <span id="ct-name-err" class="verr"></span>
-    <label>Email*</label>
-    <input id="ct-email" type="email" placeholder="email@example.com">
-    <span id="ct-email-err" class="verr"></span>
-    <label>Phone</label>
-    <input id="ct-phone" type="tel" placeholder="+44...">
-    <label>Company</label>
-    <input id="ct-company" type="text" placeholder="Company name">
-    <label>Status</label>
-    <select id="ct-status">
-      <option value="lead">Lead</option>
-      <option value="qualified">Qualified</option>
-      <option value="converted">Converted</option>
-      <option value="closed">Closed</option>
-    </select>
-    <label>Source</label>
-    <select id="ct-source">
-      <option value="manual">Manual</option>
-      <option value="chat">Chat</option>
-    </select>
-    <label>Supplier</label>
-    <select id="ct-sup">
-      <option value="">None</option>
-    </select>
-    <label>New enquiry note</label>
-    <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
-    <div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="conCheckEnquiry()">Check enquiry</button></div>
-    <div id="con-enqchk" style="display:none;margin-top:4px;"></div>
-    <label>Internal notes</label>
-    <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
-    <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;">
-  <div onclick="toggleAcc('con-activity-body');renderConActivity()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);">
-    Activity
-    <span style="font-size:.7rem;">&#9660;</span>
-  </div>
-  <div id="con-activity-body" style="display:none;margin-top:8px;font-size:.5rem;font-family:'DM Mono',monospace;max-height:200px;overflow-y:auto;">
-    <div id="con-activity-list">No activity recorded.</div>
-  </div>
-</div>
-    <div class="btn-row">
-      <button onclick="saveCon()">Save</button>
-      <button class="btn-sec" onclick="closeM('ov-con')">Cancel</button>
+<div id="ov-con" class="ov" onclick="if(event.target===this)closeM('ov-con')">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh"><h2 id="con-title">Contact</h2><button class="mx" onclick="closeM('ov-con')">&#215;</button></div>
+    <div class="mb">
+      <div class="fg fg2">
+        <div class="fld"><label>Name*</label>
+          <input id="ct-name" type="text" placeholder="Full name">
+          <span id="ct-name-err" class="verr"></span>
+        </div>
+        <div class="fld"><label>Email*</label>
+          <input id="ct-email" type="email" placeholder="email@example.com">
+          <span id="ct-email-err" class="verr"></span>
+        </div>
+        <div class="fld"><label>Phone</label><input id="ct-phone" type="tel" placeholder="+44..."></div>
+        <div class="fld"><label>Company</label><input id="ct-company" type="text" placeholder="Company name"></div>
+        <div class="fld"><label>Status</label>
+          <select id="ct-status">
+            <option value="lead">Lead</option>
+            <option value="qualified">Qualified</option>
+            <option value="converted">Converted</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        <div class="fld"><label>Source</label>
+          <select id="ct-source">
+            <option value="manual">Manual</option>
+            <option value="chat">Chat</option>
+          </select>
+        </div>
+        <div class="fld" style="grid-column:span 2"><label>Supplier</label>
+          <select id="ct-sup">
+            <option value="">None</option>
+          </select>
+        </div>
+        <div class="fld" style="grid-column:span 2"><label>New enquiry note</label>
+          <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
+          <div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="conCheckEnquiry()">Check enquiry</button></div>
+          <div id="con-enqchk" style="display:none;margin-top:4px;"></div>
+        </div>
+        <div class="fld" style="grid-column:span 2"><label>Internal notes</label>
+          <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
+        </div>
+      </div>
+      <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;">
+        <div onclick="toggleAcc('con-activity-body');renderConActivity()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);">
+          Activity
+          <span style="font-size:.7rem;">&#9660;</span>
+        </div>
+        <div id="con-activity-body" style="display:none;margin-top:8px;font-size:.5rem;font-family:'DM Mono',monospace;max-height:200px;overflow-y:auto;">
+          <div id="con-activity-list">No activity recorded.</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="btn btn-s" onclick="saveCon()">Save</button>
+        <button class="btn btn-g" onclick="closeM('ov-con')">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
@@ -14307,7 +14316,7 @@ function rCon() {
       '<td>' + (c.supplierId ? san(gsn(c.supplierId)) : '—') + '</td>' +
       '<td>' + lastDate + '</td>' +
       '<td>' + (c.enquiries||[]).length + '</td>' +
-      '<td class="ab"><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
+      '<td><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
            '<button class="btn btn-g" onclick="openConvertToQuote(\'' + c.id + '\')">&#8594; Quote</button> ' +
            '<button class="btn" style="background:var(--cr);color:white;" onclick="delCon(\'' + c.id + '\')">Del</button></td>' +
     '</tr>';
