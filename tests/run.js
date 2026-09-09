@@ -8,13 +8,27 @@ const vm       = require('vm');
 const fixtures = require('./fixtures.js');
 
 // ── MOCK BROWSER ENVIRONMENT ───────────────────────────────────
+function makeClassList() {
+  var classes = new Set();
+  return {
+    add(c) { classes.add(c); },
+    remove(c) { classes.delete(c); },
+    toggle(c, force) {
+      var on = force !== undefined ? force : !classes.has(c);
+      if (on) classes.add(c); else classes.delete(c);
+      return on;
+    },
+    contains(c) { return classes.has(c); },
+  };
+}
+
 const mockElements = {};
 function mockEl(id) {
   if (!mockElements[id]) {
     mockElements[id] = {
       value: '', innerHTML: '', textContent: '',
       style: { display: '', borderBottomColor: '', background: '' },
-      classList: { add() {}, remove() {}, contains: () => false },
+      classList: makeClassList(),
       options: { length: 0 },
       checked: false,
       appendChild() {},
@@ -30,6 +44,7 @@ const mockDoc = {
   addEventListener:  () => {},
   createElement:     () => ({ click() {}, href: '', download: '', style: {}, classList: { add() {}, remove() {} } }),
   title: '',
+  body: { classList: makeClassList() },
 };
 
 const mockStorage = {};
@@ -3246,6 +3261,45 @@ test('setLang — stores lang in localStorage', function() {
 test('_lang defaults to en when not set', function() {
   // _lang was initialised before mock storage had the key
   assert(ctx._lang === 'en' || ctx._lang === 'zh', '_lang is a valid language code');
+});
+
+// ── Presentation Mode (UI redesign, projector/screen optimization) ─
+console.log('\nPresentation Mode (UI redesign)');
+
+test('setPresentationMode(true) — adds body class, persists to localStorage, updates toggle button', function() {
+  ctx.setPresentationMode(true);
+  assert(ctx.document.body.classList.contains('presentation-mode'), 'body has presentation-mode class');
+  assertEqual(ctx.localStorage.getItem('stackd_presentation_mode'), '1');
+  assert(mockEl('pmode-btn').classList.contains('on'), 'toggle button shows on state');
+  assertContains(mockEl('pmode-btn').title, 'is ON', 'button title reflects the on state');
+  ctx.setPresentationMode(false); // reset for test isolation
+});
+
+test('setPresentationMode(false) — removes body class, persists to localStorage, resets toggle button', function() {
+  ctx.setPresentationMode(true);
+  ctx.setPresentationMode(false);
+  assert(!ctx.document.body.classList.contains('presentation-mode'), 'body class removed');
+  assertEqual(ctx.localStorage.getItem('stackd_presentation_mode'), '0');
+  assert(!mockEl('pmode-btn').classList.contains('on'), 'toggle button on state cleared');
+  assertContains(mockEl('pmode-btn').title, 'larger text', 'button title reflects the off state');
+});
+
+test('togglePresentationMode() — flips from the current state in both directions', function() {
+  ctx.setPresentationMode(false);
+  ctx.togglePresentationMode();
+  assert(ctx.document.body.classList.contains('presentation-mode'), 'toggled on from off');
+  ctx.togglePresentationMode();
+  assert(!ctx.document.body.classList.contains('presentation-mode'), 'toggled back off');
+});
+
+test('initPresentationMode() — applies the module-level _presentationMode value on startup', function() {
+  ctx.document.body.classList.remove('presentation-mode');
+  ctx._presentationMode = true;
+  ctx.initPresentationMode();
+  assert(ctx.document.body.classList.contains('presentation-mode'), 'startup applies a true _presentationMode');
+  ctx._presentationMode = false;
+  ctx.initPresentationMode();
+  assert(!ctx.document.body.classList.contains('presentation-mode'), 'startup applies a false _presentationMode');
 });
 
 // ── Company Branding (v2.9.10) ─────────────────────────────────
