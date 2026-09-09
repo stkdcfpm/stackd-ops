@@ -55,13 +55,13 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 .bc{display:flex;flex-direction:column;gap:7px;}
 .br{display:flex;align-items:center;gap:6px;}
 .bl2{font-size:.52rem;color:var(--ink);width:80px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bt{flex:1;height:13px;background:var(--bg);border-radius:1px;}
-.bf{height:100%;border-radius:1px;transition:width .5s ease;}
+.bt{flex:1;height:14px;background:var(--bg);border-radius:var(--rad-sm);box-shadow:inset 0 1px 2px rgba(15,12,13,.06);overflow:hidden;}
+.bf{height:100%;border-radius:var(--rad-sm);transition:width .5s ease;}
 .bf.cr{background:var(--cr);}.bf.go{background:var(--gold);}.bf.gn{background:var(--gn);}.bf.bl{background:var(--bl);}
 .bv{font-size:.52rem;color:var(--m);width:64px;text-align:right;flex-shrink:0;}
 .pl{display:flex;flex-direction:column;gap:4px;}
-.pi{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--ln);border-radius:4px;cursor:pointer;transition:background .2s;font-size:.58rem;}
-.pi:hover{background:rgba(184,40,58,.04);}
+.pi{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--ln);border-left:2px solid transparent;border-radius:var(--rad-sm);cursor:pointer;transition:background .15s,border-left-color .15s;font-size:.58rem;}
+.pi:hover{background:rgba(184,40,58,.04);border-left-color:var(--cr);}
 .pref{color:var(--cr);width:90px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pbuy{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pdst{color:var(--m);width:75px;flex-shrink:0;font-size:.54rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -85,7 +85,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 .btn-o{background:white;color:var(--cr);}.btn-o:hover{background:var(--crf);}
 .btn-g{background:transparent;border-color:var(--ln);color:var(--m);}.btn-g:hover{border-color:var(--cr);color:var(--cr);}
 .btn-b{background:var(--bl);color:white;border-color:var(--bl);}
-.tw{overflow-x:auto;}
+.tw{overflow-x:auto;border:1px solid var(--ln);box-shadow:var(--sh-sm);}
 .tbl{width:100%;border-collapse:collapse;font-size:.58rem;}
 .tbl th{font-size:.48rem;letter-spacing:.11em;text-transform:uppercase;color:var(--m);padding:7px 8px;text-align:left;border-bottom:2px solid var(--cr);background:white;white-space:nowrap;}
 .tbl td{padding:8px 8px;border-bottom:1px solid rgba(0,0,0,.07);background:white;vertical-align:middle;font-variant-numeric:tabular-nums;}
@@ -2625,53 +2625,62 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <!-- CONTACT MODAL -->
-<div id="ov-con" class="ov">
-  <div class="card modal-card">
-    <h2 id="con-title">Contact</h2>
-    <label>Name*</label>
-    <input id="ct-name" type="text" placeholder="Full name">
-    <span id="ct-name-err" class="verr"></span>
-    <label>Email*</label>
-    <input id="ct-email" type="email" placeholder="email@example.com">
-    <span id="ct-email-err" class="verr"></span>
-    <label>Phone</label>
-    <input id="ct-phone" type="tel" placeholder="+44...">
-    <label>Company</label>
-    <input id="ct-company" type="text" placeholder="Company name">
-    <label>Status</label>
-    <select id="ct-status">
-      <option value="lead">Lead</option>
-      <option value="qualified">Qualified</option>
-      <option value="converted">Converted</option>
-      <option value="closed">Closed</option>
-    </select>
-    <label>Source</label>
-    <select id="ct-source">
-      <option value="manual">Manual</option>
-      <option value="chat">Chat</option>
-    </select>
-    <label>Supplier</label>
-    <select id="ct-sup">
-      <option value="">None</option>
-    </select>
-    <label>New enquiry note</label>
-    <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
-    <div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="conCheckEnquiry()">Check enquiry</button></div>
-    <div id="con-enqchk" style="display:none;margin-top:4px;"></div>
-    <label>Internal notes</label>
-    <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
-    <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;">
-  <div onclick="toggleAcc('con-activity-body');renderConActivity()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);">
-    Activity
-    <span style="font-size:.7rem;">&#9660;</span>
-  </div>
-  <div id="con-activity-body" style="display:none;margin-top:8px;font-size:.5rem;font-family:'DM Mono',monospace;max-height:200px;overflow-y:auto;">
-    <div id="con-activity-list">No activity recorded.</div>
-  </div>
-</div>
-    <div class="btn-row">
-      <button onclick="saveCon()">Save</button>
-      <button class="btn-sec" onclick="closeM('ov-con')">Cancel</button>
+<div id="ov-con" class="ov" onclick="if(event.target===this)closeM('ov-con')">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh"><h2 id="con-title">Contact</h2><button class="mx" onclick="closeM('ov-con')">&#215;</button></div>
+    <div class="mb">
+      <div class="fg fg2">
+        <div class="fld"><label>Name*</label>
+          <input id="ct-name" type="text" placeholder="Full name">
+          <span id="ct-name-err" class="verr"></span>
+        </div>
+        <div class="fld"><label>Email*</label>
+          <input id="ct-email" type="email" placeholder="email@example.com">
+          <span id="ct-email-err" class="verr"></span>
+        </div>
+        <div class="fld"><label>Phone</label><input id="ct-phone" type="tel" placeholder="+44..."></div>
+        <div class="fld"><label>Company</label><input id="ct-company" type="text" placeholder="Company name"></div>
+        <div class="fld"><label>Status</label>
+          <select id="ct-status">
+            <option value="lead">Lead</option>
+            <option value="qualified">Qualified</option>
+            <option value="converted">Converted</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        <div class="fld"><label>Source</label>
+          <select id="ct-source">
+            <option value="manual">Manual</option>
+            <option value="chat">Chat</option>
+          </select>
+        </div>
+        <div class="fld" style="grid-column:span 2"><label>Supplier</label>
+          <select id="ct-sup">
+            <option value="">None</option>
+          </select>
+        </div>
+        <div class="fld" style="grid-column:span 2"><label>New enquiry note</label>
+          <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
+          <div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="conCheckEnquiry()">Check enquiry</button></div>
+          <div id="con-enqchk" style="display:none;margin-top:4px;"></div>
+        </div>
+        <div class="fld" style="grid-column:span 2"><label>Internal notes</label>
+          <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
+        </div>
+      </div>
+      <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;">
+        <div onclick="toggleAcc('con-activity-body');renderConActivity()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);">
+          Activity
+          <span style="font-size:.7rem;">&#9660;</span>
+        </div>
+        <div id="con-activity-body" style="display:none;margin-top:8px;font-size:.5rem;font-family:'DM Mono',monospace;max-height:200px;overflow-y:auto;">
+          <div id="con-activity-list">No activity recorded.</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="btn btn-s" onclick="saveCon()">Save</button>
+        <button class="btn btn-g" onclick="closeM('ov-con')">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3402,7 +3411,7 @@ function rOrd() {
     return '<tr>'
       + '<td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(o.num||'-') + (o._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>'
       + '<td>' + (c ? san(c.name) : '<span style="color:var(--m);">— contact deleted —</span>') + '</td>'
-      + '<td><span class="tag">' + san(o.stage) + '</span></td>'
+      + '<td><span class="tag ' + ordStageClass(o.stage) + '">' + san(o.stage) + '</span></td>'
       + '<td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(o.description||'') + (o._backfilled ? ' <span style="font-size:.4rem;color:var(--m);">(legacy)</span>' : '') + '</td>'
       + '<td>' + openActions + '</td>'
       + '<td class="num">' + (o.stage === 'Fulfilled' ? fmt(margin,'USD') : '—') + '</td>'
@@ -13144,6 +13153,14 @@ function conStatusClass(st) {
   var m = { 'lead':'s-lead', 'qualified':'s-qualified', 'converted':'s-converted', 'closed':'s-closed' };
   return m[st] || 's-lead';
 }
+function ordStageClass(stage) {
+  var m = {
+    'New':'s-draft', 'Qualifying':'s-lead', 'Quoted':'s-sent',
+    'Converting':'s-partially-paid', 'Processing':'s-deposit-paid', 'Fulfilled':'s-paid',
+    'Declined':'s-cancelled', 'Lost':'s-cancelled'
+  };
+  return m[stage] || 's-draft';
+}
 
 function rShp() {
   var banner = G('sh-autoship-banner'); if (banner) banner.style.display = (SS.autoCreateShipmentOnPaid === false) ? 'flex' : 'none';
@@ -14299,7 +14316,7 @@ function rCon() {
       '<td>' + (c.supplierId ? san(gsn(c.supplierId)) : '—') + '</td>' +
       '<td>' + lastDate + '</td>' +
       '<td>' + (c.enquiries||[]).length + '</td>' +
-      '<td class="ab"><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
+      '<td><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
            '<button class="btn btn-g" onclick="openConvertToQuote(\'' + c.id + '\')">&#8594; Quote</button> ' +
            '<button class="btn" style="background:var(--cr);color:white;" onclick="delCon(\'' + c.id + '\')">Del</button></td>' +
     '</tr>';
@@ -14643,15 +14660,15 @@ function prevQteDoc(q) {
       + '<td style="padding:4px 8px;font-size:11px;text-align:right;font-weight:600;">$' + fn(calc.landed||0,0) + '</td>'
       + '</tr>';
   }).join('');
-  var html = '<!DOCTYPE html><html><head><title>' + san(q.num) + ' — Quote</title>'
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + san(q.num) + ' — Quote</title>'
     + '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:0;padding:24px;color:#222;}'
     + 'h1{font-size:22px;letter-spacing:.1em;margin:0 0 4px;}table{border-collapse:collapse;width:100%;}'
-    + 'th{background:#1a1a1a;color:white;padding:6px 8px;text-align:left;font-size:11px;}'
+    + 'th{background:#0f0c0d;color:white;padding:6px 8px;text-align:left;font-size:11px;}'
     + 'td{border-bottom:1px solid #e8e8e8;}@media print{button{display:none!important;}}</style></head>'
     + '<body>'
     + '<div style="display:flex;justify-content:space-between;margin-bottom:16px;">'
     + '<div><h1>QUOTE</h1><div style="color:#888;font-size:11px;">' + san(AS.name||'Stackd') + ' · ' + san(AS.email||'') + '</div></div>'
-    + '<div style="text-align:right;"><div style="font-weight:600;font-size:16px;color:#c00;">' + san(q.num) + '</div>'
+    + '<div style="text-align:right;"><div style="font-weight:600;font-size:16px;color:#B8283A;">' + san(q.num) + '</div>'
     + '<div style="font-size:11px;">' + san(q.dt||'') + '</div>'
     + '<div style="font-size:11px;color:#888;">Valid until: ' + san(q.validUntil||'—') + '</div></div>'
     + '</div>'
@@ -14663,7 +14680,7 @@ function prevQteDoc(q) {
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.origin,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Destination Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.dest,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Admin</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.admin,0) + '</td></tr>'
-    + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#c00;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#B8283A;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
     + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (GBP)</td><td style="padding:3px 8px;text-align:right;font-weight:600;">£' + fn(c.sellGBP,0) + '</td></tr>'
     + '</tbody></table></div>'
     + (q.notes ? '<div style="margin-top:14px;font-size:11px;border-top:1px solid #e8e8e8;padding-top:10px;"><strong>Notes:</strong> ' + san(q.notes) + '</div>' : '')
