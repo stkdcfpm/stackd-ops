@@ -112,7 +112,7 @@ Run `node tests/run.js` after this pass. Every previously-passing test must stil
 - `vInv()`/`saveInv()` — mixed invoice: one valid `'product'` line plus one genuinely-bad `'product'` line → save refused (proves `.some()` catches a single bad line among otherwise-good ones).
 - `vInv()` — credit note path (`isCnForm` true) with a `cIL` that would otherwise trigger the block → save proceeds to the CN-specific checks, unaffected (AC-008).
 - `saveInv()` — simulate the unlock-then-edit flow (`_unlockedInvIds[id] = true`, invoice `status` in `LOCKED_STATUSES`) with a bad `'product'` line → save still refused (AC-009).
-- `_updQaWarn()` — re-run the five existing tests (`tests/run.js:2206-2258`) unmodified against the refactored function; all must still pass, proving the extraction changed nothing observable.
+- `_updQaWarn()` — re-run the six existing tests (`tests/run.js:2206-2258`) unmodified against the refactored function; all must still pass, proving the extraction changed nothing observable.
 
 ## 6. Out of scope (unchanged from REQ)
 
