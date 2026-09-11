@@ -32,7 +32,7 @@ function _updQaWarn() {
 }
 ```
 
-This is a pure extraction — the five existing `_updQaWarn()` tests (`tests/run.js:2206-2258`) must pass unmodified against the refactored function, proving no behavior changed. Do not add `lineType` scoping to `invLineHasCostBasis()` itself or to the refactored `_updQaWarn()` — the `lineType === 'product'` gate belongs only at the two new call sites below (REQ-INV-006/REQ-INV-008's explicit warning against copying the condition wholesale into a scoped context).
+This is a pure extraction — the six existing `_updQaWarn()` tests (`tests/run.js:2206-2258`) must pass unmodified against the refactored function, proving no behavior changed. Do not add `lineType` scoping to `invLineHasCostBasis()` itself or to the refactored `_updQaWarn()` — the `lineType === 'product'` gate belongs only at the two new call sites below (REQ-INV-006/REQ-INV-008's explicit warning against copying the condition wholesale into a scoped context).
 
 ## 2. `quickAddLine()` entry gate (REQ-INV-005/REQ-INV-006)
 
@@ -82,7 +82,7 @@ In `vInv()` (`index.html:10597-10647`), insert immediately after the existing `c
   }
 ```
 
-This runs only in the non-CN branch (the `isCnForm` branch already returns at `index.html:10624`, before this point — satisfies AC-008 with no extra code). It runs on every `saveInv()` call, including the unlock-then-edit flow, because `_unlockedInvIds`/`LOCKED_STATUSES` gate whether the *status transition* is restricted (`index.html:8321`), not whether `vInv()` itself runs — `vInv()` is called unconditionally at the top of `saveInv()` (`index.html:8296: if (!vInv()) return;`), before the lock check even executes. No separate code path is needed for AC-009; this is a structural consequence of `vInv()`'s existing call position, not new wiring.
+This runs only in the non-CN branch (the `isCnForm` branch already returns at `index.html:10624`, before this point — satisfies AC-008 with no extra code). It runs on every `saveInv()` call, including the unlock-then-edit flow, for two independent reasons that must not be conflated: (1) the actual `LOCKED_STATUSES` lock gate lives in `editInv()` (`index.html:8070`: `if (LOCKED_STATUSES.indexOf(inv.status) !== -1 && !_unlockedInvIds[id]) { showInvReadOnly(inv); return; }`) — it decides whether the edit modal opens at all, and once "Unlock Invoice" has set `_unlockedInvIds[id]`, the modal opens normally and `saveInv()` runs exactly as it would for any other edit; (2) separately, `index.html:8321`'s `STATUS_ORDER`/`_unlockedInvIds` check inside `saveInv()` only blocks a *backward status transition*, an unrelated guard that does not gate whether `vInv()` runs. `vInv()` itself is called unconditionally at the top of `saveInv()` (`index.html:8296: if (!vInv()) return;`), before either of these checks has any bearing on it. No separate code path is needed for AC-009; this is a structural consequence of `vInv()`'s existing call position, not new wiring.
 
 `cIL.some(...)` naturally returns `false` on an empty array, so this is a no-op (and therefore safe) when `cIL.length === 0` and the existing-`calc_grandTotal` fallback applies — it does not need to be conditioned on `cIL.length > 0` separately.
 
@@ -93,8 +93,8 @@ Before writing new tests, audit every `ctx.cIL = [...]` fixture in `tests/run.js
 1. If the fixture already has a `lid` that resolves to a `DB.li` record set up earlier in the same test, or a positive `unitCost`, or an explicit non-`'product'` `lineType` — **no change needed**, it already satisfies the new gate.
 2. Otherwise (bare `{lid:'', desc:..., up:...}` or `unitCost:0`, `lineType` absent/`'product'`) — the fixture will now fail `vInv()` and abort the test before its own real assertions run. Fix by adding a positive placeholder `unitCost` (e.g. `unitCost:1`, or a value matching the test's own existing numbers where one is already implied) to the fixture line itself — **do not** change the test's assertions, expected totals, or any other field; the goal is only to keep the fixture passing the new save-time gate, not to alter what the test is actually verifying. Where a test is specifically about a `'pass-through'` or generic non-cost scenario, `lineType:'pass-through'` is an equally valid fix if it doesn't change the test's own intent — prefer whichever is the smaller, more local diff for that specific test.
 
-Confirmed sites requiring this fix (from both requirements-gate rounds' live verification — re-verify at implementation time in case the file has moved since):
-`tests/run.js:2660`, `:2785`, `:10113`, `:10131`, and at least 6 more in the `13100`–`13800` range (`13156`, `13203`, `13219`, `13251`, `13354`, `13772` per direct citation in REQ-INV-002).
+Confirmed sites requiring this fix (from requirements-gate and spec-gate's own live verification — re-verify at implementation time in case the file has moved since; this list is a starting point for the audit, not a claim of exhaustiveness — spec-gate independently found one additional site, `13235-13238`, a two-line fixture, by actually running the audit criteria rather than trusting this list alone, which is exactly how every site should be found):
+`tests/run.js:2660`, `:2785`, `:10113`, `:10131`, `:13156`, `:13203`, `:13219`, `:13235-13238`, `:13251`, `:13354`, `:13772`.
 
 Run `node tests/run.js` after this pass. Every previously-passing test must still pass — a fixture fix that breaks the surrounding test's own assertions is itself a bug in the fix, not an acceptable side effect.
 
