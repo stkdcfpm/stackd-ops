@@ -8136,6 +8136,14 @@ function qaTypeChg() {
     ucEl.style.color = 'var(--ink)';
   }
 }
+// REQ/SPEC-INV-002: single source of truth for "does this line have a real cost
+// basis" — a resolvable catalogue link, or a positive unitCost. Extracted from
+// _updQaWarn()'s pre-existing condition; reused by quickAddLine()'s entry gate
+// and vInv()'s save-time backstop so all three never diverge (REQ-INV-008).
+function invLineHasCostBasis(li) {
+  var resolved = li.lid && DB.li.find(function(x){ return x.id === li.lid; });
+  return !!resolved || (+li.unitCost > 0);
+}
 function quickAddLine() {
   var desc = G('qal-desc') ? G('qal-desc').value.trim() : '';
   var uom  = G('qal-uom')  ? G('qal-uom').value.trim()  : 'pcs';
@@ -8144,6 +8152,10 @@ function quickAddLine() {
   var lt   = G('qal-type') ? G('qal-type').value   : 'product';
   var uc   = lt === 'pass-through' ? up : (G('qal-uc') ? +G('qal-uc').value : 0);
   if (!desc) { toast('⚠ Enter a description'); return; }
+  if (lt === 'product' && !invLineHasCostBasis({ lid:'', unitCost:uc })) {
+    toast('⚠ Product lines need a Unit Cost greater than 0 — enter a real cost, or set Type to Pass-thru/Charge if there\'s no separate cost to record');
+    return;
+  }
   if (qty === 0) qty = 1;
   cIL.push({ rid:uid(), lid:'', desc:desc, uom:uom, qty:qty, up:up, unitCost:uc, lineType:lt });
   rILT(); calcInv();
@@ -8157,11 +8169,7 @@ function quickAddLine() {
 }
 
 function _updQaWarn() {
-  var qaCount = cIL.filter(function(li){
-    var resolved = li.lid && DB.li.find(function(x){ return x.id === li.lid; });
-    var hasCost = +li.unitCost > 0;
-    return !resolved && !hasCost;
-  }).length;
+  var qaCount = cIL.filter(function(li){ return !invLineHasCostBasis(li); }).length;
   var el = G('inv-qa-warn');
   var ct = G('inv-qa-warn-count');
   if (!el) return;
@@ -10628,6 +10636,20 @@ function vInv() {
     if (!inv0 || !(+inv0.calc_grandTotal > 0)) {
       toast('⚠ Add at least one line item before saving'); return false;
     }
+  }
+  // REQ/SPEC-INV-002: hard save-time backstop — quickAddLine()'s own gate can be
+  // bypassed by editing an already-added line's Unit Cost down to 0 directly in the
+  // live table (rILT()'s oninput handlers), so this runs unconditionally on every
+  // save, including the unlock-then-edit flow (vInv() is called before any lock
+  // check even runs). Scoped to 'product' lines only — pass-through/charge are
+  // legitimately cost-optional by design.
+  var badProductLine = cIL.some(function(li){
+    var lt = li.lineType || 'product';
+    return lt === 'product' && !invLineHasCostBasis(li);
+  });
+  if (badProductLine) {
+    toast('⚠ One or more Product lines has no Unit Cost and no linked catalogue item — enter a cost, link a catalogue item, or change that line\'s Type');
+    return false;
   }
   if (dep !== '' && !RX.currency(dep)) return vErr('if-dep', 'Buyer deposit must be a non-negative number with at most 2 decimal places');
   if (+dep < 0)                    return vErr('if-dep', 'Buyer deposit cannot be negative');
