@@ -127,3 +127,22 @@ For the `vInv()` backstop specifically (the actual enforcement point — `quickA
 3. Restore the block, confirm the test passes again.
 
 Repeat the same revert/confirm/restore cycle for the `invLineHasCostBasis()` helper's `lid`-resolution branch (delete the `DB.li.find(...)` check, leaving only `unitCost > 0`) against the "resolvable `lid`, `unitCost:0` → succeeds" test, to prove that test would actually catch a regression to REQ-INV-008's exact divergence risk (a save-time check that stops honoring catalogue links as a valid cost basis).
+
+## 8. As-built line numbers (post-implementation correction, build-gate round 1)
+
+Implementation is complete (commit `8b33013`, requirements-gate PASS, spec-gate PASS, build-gate PASS, 1033/1033 tests). Every `index.html:NNN` citation in sections 1–3 above was written against a pre-implementation draft and has since drifted by a small, consistent offset because the real insertions ran a few lines longer/shorter than the illustrative snippets — build-gate's review caught two of these (`8296`→wrong function, `8321`→wrong function) and this section corrects all of them for anyone using this SPEC as a reference doc going forward, rather than only the two flagged:
+
+| Citation as originally written | What it refers to | Correct as-built line |
+|---|---|---|
+| `index.html:8139` (§1, insertion point) | `quickAddLine()` definition | `index.html:8147` |
+| `index.html:8161-8163` (§1, pre-refactor `_updQaWarn()` condition) | the exact 3-line condition this section quotes — now fully consolidated into `invLineHasCostBasis()` itself and no longer present as standalone code | `index.html:8143-8146` (i.e. cite the new helper, not the retired inline condition) |
+| `index.html:8159-8174` (§1, `_updQaWarn()` to refactor) | `_updQaWarn()` definition (post-refactor) | `index.html:8171-8182` |
+| `index.html:8139-8157` (§2, `quickAddLine()`) | `quickAddLine()` definition (post-gate) | `index.html:8147-8169` |
+| `index.html:10597-10647` (§3, `vInv()`) | `vInv()` definition (post-backstop) | `index.html:10605-10669` |
+| `index.html:10631` (§3, end of `cIL.length===0` block) | closing `}` of that block | `index.html:10639` |
+| `index.html:10624` (§3, `isCnForm` branch return) | `return vFormOk('ov-inv');` inside the CN branch | `index.html:10632` |
+| `index.html:8070` (§3, `editInv()` lock gate) | unchanged — still correct | `index.html:8070` (no drift) |
+| `index.html:8321` (§3, `STATUS_ORDER` guard) | `if (EI.i && !_unlockedInvIds[EI.i] && STATUS_ORDER.indexOf(...))` in `saveInv()` | `index.html:8329` |
+| `index.html:8296` (§3, `if (!vInv()) return;`) | the unconditional `vInv()` call at the top of `saveInv()` | `index.html:8304` |
+
+Verified via `node scripts/check-req-citations.js docs/SPEC-INV-002-v1.md` against the as-built file — all as-built line numbers in the table above resolve to the function/content named.
