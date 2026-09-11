@@ -5,14 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.83</title>
+<title>Stackd Ops v2.9.87</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
 <style>
-:root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;}
+:root{--cr:#B8283A;--cr2:#8B1A2F;--crf:#fdf0f1;--gold:#C9963A;--ink:#0f0c0d;--m:#8a7f82;--bg:#f8f5f3;--card:#fff;--gn:#1a7a4a;--gnf:#edf7f2;--bl:#1a4fdb;--blf:#e8f0fe;--ln:#e8e0de;
+  --sh-sm:0 1px 2px rgba(15,12,13,.05);--sh-md:0 3px 10px rgba(15,12,13,.09);--sh-lg:0 10px 32px rgba(15,12,13,.16);
+  --rad-sm:4px;--rad-md:8px;--rad-lg:10px;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-height:100vh;}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-height:100vh;transition:zoom .15s;}
+body.presentation-mode{zoom:1.3;}
+body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 .nav{background:var(--ink);display:flex;align-items:center;padding:0 22px;height:50px;position:sticky;top:0;z-index:100;}
 .logo{display:flex;align-items:center;margin-right:20px;flex-shrink:0;}
 .logo-wm{display:inline-flex;flex-direction:column;width:fit-content;}
@@ -27,6 +31,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .syncb:hover{border-color:var(--cr);color:white;}
 .syncb.loading{color:var(--gold);border-color:var(--gold);animation:pulse 1s infinite;}
 .syncb.ok{color:#4ade80;border-color:#4ade80;}.syncb.err{color:#f87171;border-color:#f87171;}
+.syncb.on{color:var(--gold);border-color:var(--gold);background:rgba(201,150,58,.12);}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 .sdot{width:6px;height:6px;border-radius:50%;background:#2a2a2a;margin-left:8px;}
 .sdot.g{background:#4ade80;}.sdot.a{background:var(--gold);}.sdot.r{background:#f87171;}
@@ -35,7 +40,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .banner button{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:white;border:none;padding:5px 11px;cursor:pointer;}
 .view{display:none;padding:22px;}.view.on{display:block;}
 .kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:11px;margin-bottom:18px;}
-.kpi{background:var(--card);border:1px solid var(--ln);border-left:3px solid var(--ln);border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:16px 18px 12px;}
+.kpi{background:var(--card);border:1px solid var(--ln);border-left:3px solid var(--ln);border-radius:var(--rad-md);box-shadow:var(--sh-sm);padding:16px 18px 12px;transition:box-shadow .2s;}
+.kpi:hover{box-shadow:var(--sh-md);}
 .kpi:has(.kv.r){border-left-color:var(--cr);}.kpi:has(.kv.g){border-left-color:var(--gn);}.kpi:has(.kv.b){border-left-color:var(--bl);}.kpi:has(.kv.gold){border-left-color:var(--gold);}
 .kl{font-size:.48rem;letter-spacing:.16em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
 .kv{font-family:'Bebas Neue',sans-serif;font-size:1.75rem;letter-spacing:.04em;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums;}
@@ -43,19 +49,19 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .ks{font-size:.5rem;color:var(--m);margin-top:3px;}
 .r2{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:18px;}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px;}
-.card{background:var(--card);border:1px solid var(--ln);border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:18px;}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:var(--rad-md);box-shadow:var(--sh-sm);padding:18px;transition:box-shadow .2s;}
 .ct{font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
 .ct::after{content:'';flex:1;height:1px;background:var(--ln);}
 .bc{display:flex;flex-direction:column;gap:7px;}
 .br{display:flex;align-items:center;gap:6px;}
 .bl2{font-size:.52rem;color:var(--ink);width:80px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bt{flex:1;height:13px;background:var(--bg);border-radius:1px;}
-.bf{height:100%;border-radius:1px;transition:width .5s ease;}
+.bt{flex:1;height:14px;background:var(--bg);border-radius:var(--rad-sm);box-shadow:inset 0 1px 2px rgba(15,12,13,.06);overflow:hidden;}
+.bf{height:100%;border-radius:var(--rad-sm);transition:width .5s ease;}
 .bf.cr{background:var(--cr);}.bf.go{background:var(--gold);}.bf.gn{background:var(--gn);}.bf.bl{background:var(--bl);}
 .bv{font-size:.52rem;color:var(--m);width:64px;text-align:right;flex-shrink:0;}
 .pl{display:flex;flex-direction:column;gap:4px;}
-.pi{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--ln);border-radius:4px;cursor:pointer;transition:background .2s;font-size:.58rem;}
-.pi:hover{background:rgba(184,40,58,.04);}
+.pi{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--ln);border-left:2px solid transparent;border-radius:var(--rad-sm);cursor:pointer;transition:background .15s,border-left-color .15s;font-size:.58rem;}
+.pi:hover{background:rgba(184,40,58,.04);border-left-color:var(--cr);}
 .pref{color:var(--cr);width:90px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pbuy{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pdst{color:var(--m);width:75px;flex-shrink:0;font-size:.54rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -73,12 +79,13 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .tb{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
 .sb{font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);border-radius:4px;background:white;padding:6px 10px;outline:none;flex:1;min-width:150px;max-width:220px;transition:border-color .2s;}
 .sb:focus{border-color:var(--cr);}
-.btn{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;padding:6px 13px;cursor:pointer;border:1px solid var(--cr);border-radius:4px;transition:all .2s;white-space:nowrap;}
+.btn{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;padding:6px 13px;cursor:pointer;border:1px solid var(--cr);border-radius:var(--rad-sm);transition:background-color .15s,border-color .15s,color .15s,transform .1s;white-space:nowrap;}
+.btn:active{transform:translateY(1px);}
 .btn-s{background:var(--cr);color:white;}.btn-s:hover{background:var(--cr2);}
 .btn-o{background:white;color:var(--cr);}.btn-o:hover{background:var(--crf);}
 .btn-g{background:transparent;border-color:var(--ln);color:var(--m);}.btn-g:hover{border-color:var(--cr);color:var(--cr);}
 .btn-b{background:var(--bl);color:white;border-color:var(--bl);}
-.tw{overflow-x:auto;}
+.tw{overflow-x:auto;border:1px solid var(--ln);box-shadow:var(--sh-sm);}
 .tbl{width:100%;border-collapse:collapse;font-size:.58rem;}
 .tbl th{font-size:.48rem;letter-spacing:.11em;text-transform:uppercase;color:var(--m);padding:7px 8px;text-align:left;border-bottom:2px solid var(--cr);background:white;white-space:nowrap;}
 .tbl td{padding:8px 8px;border-bottom:1px solid rgba(0,0,0,.07);background:white;vertical-align:middle;font-variant-numeric:tabular-nums;}
@@ -91,7 +98,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .tbl tr:hover .ab,.pi:hover .ab{opacity:1;}
 .ov{position:fixed;inset:0;background:rgba(15,12,13,.65);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:26px 14px;overflow-y:auto;}
 .ov.on{display:flex;}
-.modal{background:white;width:100%;max-width:840px;border-top:3px solid var(--cr);border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,.12);animation:sd .18s ease;}
+.modal{background:white;width:100%;max-width:840px;border-top:3px solid var(--cr);border-radius:var(--rad-md);box-shadow:var(--sh-lg);animation:sd .18s ease;}
 @keyframes sd{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 .mh{padding:14px 22px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--ln);}
 .mh h2{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.08em;color:var(--cr);margin-right:auto;}
@@ -128,7 +135,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .dc{padding:0 14px 0 0;}.dl{font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:#444;margin-bottom:2px;}
 .dv{font-family:'Bebas Neue',sans-serif;font-size:.95rem;color:#666;}
 .dv.by{color:#fca5a5;}.dv.ba{color:#fde68a;}.dv.su{color:#93c5fd;}.dv.gp{color:#86efac;}
-.pmodal{background:white;width:100%;max-width:740px;border-top:3px solid var(--cr);border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,.12);animation:sd .18s ease;}
+.pmodal{background:white;width:100%;max-width:740px;border-top:3px solid var(--cr);border-radius:var(--rad-md);box-shadow:var(--sh-lg);animation:sd .18s ease;}
 .idoc,.pdoc{font-family:'DM Mono',monospace;font-size:.68rem;color:#111;background:white;padding:30px 38px;max-width:700px;}
 .ihdr,.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #111;}
 .iwm{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.18em;line-height:1;}
@@ -165,7 +172,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 .iorg{display:flex;gap:18px;font-size:.58rem;margin-top:9px;padding-top:9px;border-top:1px solid #eee;}
 .ioitem{display:flex;flex-direction:column;gap:1px;}
 .iolab{font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);}
-.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:white;font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.1em;padding:9px 15px;opacity:0;transform:translateY(5px);transition:all .25s;pointer-events:none;z-index:999;border-left:3px solid var(--cr);border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.18);}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:white;font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.1em;padding:9px 15px;opacity:0;transform:translateY(5px);transition:all .25s;pointer-events:none;z-index:999;border-left:3px solid var(--cr);border-radius:var(--rad-sm);box-shadow:var(--sh-lg);}
 .toast.on{opacity:1;transform:translateY(0);}
 .spin{display:inline-block;width:9px;height:9px;border:2px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:3px;}
 @keyframes sp{to{transform:rotate(360deg);}}
@@ -215,7 +222,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.83</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.87</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -291,6 +298,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <div class="view" id="v-inv">
+  <div id="inv-autoship-banner" class="banner" style="display:none;margin-bottom:10px;">
+    <span>&#9888; Shipment auto-creation is OFF — Paid invoices will not create a Shipment record automatically. Turn back on in Settings → Integrations.</span>
+  </div>
   <div class="tb">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">INVOICES</div>
     <input class="sb" type="text" placeholder="Search invoices..." id="inv-q" oninput="rInv()">
@@ -332,6 +342,9 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <!-- SHIPMENTS VIEW -->
 <div class="view" id="v-sh">
+  <div id="sh-autoship-banner" class="banner" style="display:none;margin-bottom:10px;">
+    <span>&#9888; Shipment auto-creation is OFF — Paid invoices will not create a Shipment record automatically. Turn back on in Settings → Integrations.</span>
+  </div>
   <div class="tb">
     <input class="sb" type="text" placeholder="Search shipments..." id="sh-q" oninput="rShp()">
     <select class="sb" style="max-width:160px;" id="sh-sf" onchange="rShp()"><option value="">All statuses</option><option>Booked</option><option>Confirmed</option><option>In Transit</option><option>At Origin Port</option><option>At Destination Port</option><option>In Customs</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option><option>On Hold</option><option>Cancelled</option></select>
@@ -437,7 +450,7 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
 <div class="ov" id="ov-rfq" onclick="if(event.target===this)closeM('ov-rfq')">
   <div class="modal">
-    <div class="mh"><h2 id="rfq-title">RFQ Response</h2><button class="mx" onclick="closeM('ov-rfq')">&#215;</button></div>
+    <div class="mh"><h2 id="rfq-title">RFQ Response</h2><button class="mx" id="rfq-close-btn" onclick="closeM('ov-rfq')">&#215;</button></div>
     <div class="mb">
       <div class="fld"><label>Supplier</label><select id="rfq-sup"></select></div>
       <div class="fld"><label>Unit Cost</label><input type="number" id="rfq-cost" min="0" step="any"></div>
@@ -452,8 +465,8 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
       <div class="fld"><label>Notes</label><textarea id="rfq-notes" rows="2"></textarea></div>
     </div>
     <div class="mf">
-      <button class="btn btn-g" onclick="closeM('ov-rfq')">Cancel</button>
-      <button class="btn btn-s" onclick="saveRfqResponse()">Save Response</button>
+      <button class="btn btn-g" id="rfq-cancel-btn" onclick="closeM('ov-rfq')">Cancel</button>
+      <button class="btn btn-s" id="rfq-save-btn" onclick="saveRfqResponse()">Save Response</button>
     </div>
   </div>
 </div>
@@ -750,11 +763,32 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
     <div class="card">
       <div class="ct">Integrations</div>
       <div class="fld" style="margin-bottom:10px;">
+        <label><input type="checkbox" id="cfg-autoship-toggle" onchange="saveAutoShipToggle()"> Auto-create Shipment when an Invoice is marked Paid <span style="font-size:.44rem;color:var(--m);">(default on)</span></label>
+      </div>
+      <div class="fld" style="margin-bottom:10px;">
         <label>Forwarder Webhook URL <span style="font-size:.44rem;color:var(--m);">(Power Automate or Zapier — receives JSON with shipmentRef + message)</span></label>
         <input type="text" id="cfg-fwd-webhook" placeholder="https://prod.example.com/triggers/..." autocomplete="off">
       </div>
       <button class="btn btn-s" onclick="saveFwdWebhook()">Save Webhook</button>
       <p style="font-size:.48rem;color:var(--m);margin-top:10px;border-top:1px solid var(--ln);padding-top:8px;">&#9432; When a webhook URL is configured, shipment data (origin/destination ports, ETD, cargo description, forwarder contact name and email) is posted to that endpoint on each Forwarder Update Request. Only configure a URL you control or trust. Webhook is opt-in — no data is transmitted if no URL is configured.</p>
+
+      <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:12px;">
+        <div class="fld" style="margin-bottom:8px;">
+          <label style="font-weight:600;">Automation Webhooks</label>
+        </div>
+        <div id="webhook-rules-disclosure"></div>
+        <div id="webhook-rules-panel"></div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+          <select id="whr-trigger" style="flex:1;min-width:160px;"></select>
+          <input type="text" id="whr-url" placeholder="https://hook.us1.make.com/..." style="flex:2;min-width:200px;" autocomplete="off">
+          <label style="display:flex;align-items:center;gap:4px;font-size:.5rem;"><input type="checkbox" id="whr-enabled" checked> Enabled</label>
+          <button class="btn btn-g" onclick="addWebhookRule()">+ Add Rule</button>
+        </div>
+        <label style="display:flex;align-items:flex-start;gap:5px;margin-top:8px;font-size:.48rem;color:var(--m);">
+          <input type="checkbox" id="whr-attest" style="margin-top:2px;">
+          <span>I've checked this destination's own data handling before adding it — including that any email it sends (e.g. an invoice PDF) goes out from a business account with its own data processing agreement, such as Google Workspace, not a personal Gmail or similar consumer address. Required before a rule can be added.</span>
+        </label>
+      </div>
     </div>
     <div class="card">
       <div class="ct">Supplier Intelligence</div>
@@ -1342,9 +1376,51 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.83</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.87</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Automation Webhooks — Invoice buyer-approval triggers a Make.com-style email with the invoice attached</strong> (<code>REQ/SPEC-WEBHOOK-001</code>). Settings → Integrations → Automation Webhooks lets an operator configure one or more rules (trigger + destination <code>https://</code> URL, individually enabled/disabled). v1 ships one trigger, "Invoice: Buyer Approved" — the moment an Invoice's buyer approval genuinely transitions from unapproved to approved (never on a later correction to an already-approved invoice), a JSON payload POSTs to every enabled rule carrying invoice/buyer data, line items, and the invoice rendered as HTML, so the destination automation (e.g. a Make.com scenario) can build a PDF and email it to the buyer — this app never generates a PDF itself. If the invoice's buyer has no usable email on file, including the Ad-Hoc/<code>BUY-ADHOC</code> placeholder buyer, the webhook is skipped with an explanatory toast rather than sent to an empty recipient. Fire-and-forget, matching the existing Forwarder Webhook precedent: no delivery guarantee or retry if the destination is briefly unreachable. The deferred outbound-webhook half of an operator request whose in-app-rules half shipped as <code>REQ/SPEC-SHIP-001</code> (v2.9.86).</li>
+          <li>This delivery went through the deepest review cycle in this repo's history: <strong>6 requirements-gate rounds</strong> (rounds 1-2 found real design defects — a `buildInvDocHtml()` extraction that would have hijacked the operator's Ctrl+P reprint shortcut, and a refuted "no dedup guard needed" design that would have silently double-sent the buyer's email on a routine correction click; rounds 3-5 found progressively narrower citation-accuracy issues; round 6 was a clean PASS) and <strong>8 spec-gate rounds</strong> (rounds 1-2 found real functional defects — a payload bug that would have sent £0 for the majority of real approvals, a GDPR disclosure structurally unable to show before the first rule save, and a `balanceDue` figure that could silently diverge from the same payload's own rendered invoice total on any Credit-Note-bearing invoice, fixed structurally by deriving both from one shared source so they can never drift apart again; rounds 3-5 each found one instance of the REQ's own text going stale after an earlier SPEC-side fix was never reconciled back — closed as REQ erratums, not silently patched around; round 6 found a genuine security-relevant guard-completeness gap in the buyer-email precondition, relying on the Ad-Hoc buyer's email happening to be blank rather than an explicit check — a routine "add a general inbox to the Ad-Hoc buyer" edit would have silently defeated it; round 7 found and fixed a stale mutation-test assertion left by round 6's own fix; round 8, the explicitly time-boxed final round, found one minor payload-field documentation ambiguity). This repo's REQ/SPEC-WEBHOOK-001 review history also produced a new, permanent process improvement: <code>scripts/check-req-citations.js</code>, a scripted citation-checker now mandatory before every future REQ/SPEC gate submission, added after 3 spec-gate rounds spent finding nothing but wrong <code>index.html:NNN</code> citations that were mechanically checkable in seconds. All 10 safety-critical mechanisms in the SPEC's own mutation-testing checklist confirmed via actual mutation testing (each fix reverted in a scratch copy, confirming the exact predicted test(s) fail and nothing else, then restored) before this delivery closed out. 20 new tests. Independent build-gate review: clean PASS, no spec deviations, 1012/1012 confirmed.</li>
+          <li>Post-ship hardening: a real-world review of the operator's actual destination chain (Make.com → Gmail) found the Make.com leg had a signed Data Processing Agreement in place, but the Gmail leg was a personal <code>@gmail.com</code> account with no processor agreement at all — logged as an update to <code>SEC-GAP-025</code>. Since this app has no way to verify a destination's own data-handling practices, <strong>adding a webhook rule now requires an explicit attestation checkbox</strong> ("I've checked this destination's own data handling... including that any email it sends goes out from a business account, not a personal Gmail") before <code>addWebhookRule()</code> will accept it — mutation-tested to confirm the guard actually blocks an unattested submission, valid URL notwithstanding. The rule record carries a <code>dataHandlingAttestedAt</code> timestamp for audit purposes. 1 new test. Tests: 1013/1013 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.86</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Auto-created Shipment on Invoice Paid, with a progressive trade-document checklist</strong> (<code>REQ/SPEC-SHIP-001</code>). Marking an Invoice Paid — whether a status change or a brand-new invoice saved directly as Paid — now auto-creates a linked Shipment record (unless disabled via the new Settings → Integrations toggle, which shows a persistent banner on the Invoices/Shipments tabs while off) seeded with a 7-item trade-document checklist (Purchase Invoice, Commercial Invoice, Packing List, Bill of Lading, Certificate of Origin, Verified Gross Mass Declaration, Insurance Certificate — an 8th, Dangerous Goods Declaration, if the shipment is DG-flagged) that the operator fills in with reference numbers, received dates, and a file-location note as documents arrive; no file upload, location/link tracking only. The default checklist is deliberately destination-agnostic — no Barbados-specific customs forms hardcoded — since FPM's own stated expansion beyond Barbados to Nigeria/Ghana/India would make a single-country checklist actively wrong, not just incomplete; grounded in cited shipping-document research including a Verified Gross Mass requirement (SOLAS-mandatory for every containerized shipment since 2016) that's easy for small-operator tools to miss. Went through this repo's full requirements-gate (3 independent review rounds — round 1 found a design that would have silently wiped the entire checklist on the first ordinary edit to an auto-created Shipment, and a trigger design that missed a brand-new invoice saved directly as Paid; round 2 found the round-1 fixes had introduced two new issues of their own, including a duplicate-Shipment risk from an invoice-number rename; round 3 found only documentation drift) and spec-gate (3 independent review rounds — found a wrong claim about CSS positioning, a citation gap, a new CRUD layer that could silently discard an edit on a cancelled Cloud Data login, and a create-path bug that would have overwritten an operator's own manual dropdown selection) processes, with every finding personally re-verified against the live code before being accepted, and every safety-critical fix confirmed via mutation testing (each fix reverted in a scratch copy, confirming the exact predicted test failure) before this delivery closed out. Independent build-gate review then caught one severe defect: the trade-document checklist's three CRUD functions were correctly built and unit-tested but never wired into any UI — invisible and uneditable in the actual app, despite already-shipped docs describing it as working. Fixed with a new Trade Documents section on the existing Edit Shipment modal, wired to the same functions unmodified. A round-2 confirmatory build-gate pass then found two more real test-coverage gaps in that UI fix (live in-modal re-render, per-row wiring correctness) plus a genuine UX bug — the pre-existing "Docs Status" dropdown on the same modal went stale once the checklist made it auto-computed. Fixed by disabling/syncing that dropdown and closing both coverage gaps. A round-3 confirmatory build-gate pass then caught one more regression from the round-2 fix: opening a new Shipment right after editing a doc-having one left the "Docs Status" dropdown permanently locked, since the create path never reset it. Fixed. A round-4 confirmatory pass found no further defect but flagged a minor test-coverage nit; a live re-verification also caught and fixed a hidden test-authoring bug of its own (a test using the codebase's known `test()`-with-`.then()` anti-pattern that always reported pass regardless of the real behavior). Build-gate is now clean across all 4 rounds. 37 + 5 + 5 + 1 new tests. Tests: 992/992 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.85</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Import Supplier Quote File</strong> (<code>REQ/SPEC-AI-GAP-012</code>, extends <code>REQ/SPEC-AI-GAP-011</code>'s pasted-email RFQ update to also accept a CSV file). A new button lives once per Order Request, above its line items — the operator selects the supplier the file is from and uploads a comma-delimited <code>.csv</code> (Excel/<code>.xlsx</code> not supported — no parser for it exists in this codebase, and adding one would violate the app's no-dependency policy), reviews every parsed row in a mandatory pre-send confirmation step (nothing is sent to the AI without this), and the AI attempts to match each row to one of the Order Request's own line items by description. Each confidently-matched line gets its own independent diff review — old → proposed, Apply or Discard individually, no bulk "Apply All" — reusing the exact same <code>editRfqResponse()</code>/<code>saveRfqResponse()</code> mechanism the email-parse feature already uses, so a matched line with no existing response from that supplier creates one; a line that already has one is updated in place with the same id-rotation/staleness-banner behavior. Rows the AI can't confidently match are listed separately for manual review, never guessed at or silently dropped. Re-running Import on the same Order Request (a correction, or a second supplier's file) preserves any still-pending, unapplied proposals from an earlier run rather than discarding them. Went through this repo's full two-person requirements-gate and spec-gate process before any code was written — both independent reviews found real issues in the first drafts (a genuine concurrency risk where the batch UI's own file-import buttons didn't actually prevent a double-save race through the pre-existing, shared RFQ response modal, a failed Apply being silently reported as success, and a test that would have passed regardless of whether the fix worked), all fixed before implementation began. 14 new tests. Tests: 945/945 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.84</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix (CRITICAL): <strong><code>SEC-GAP-021</code> — stored XSS via unsanitized status text in class attributes</strong>, found by a proactive security audit run immediately after the Cloud Data migration went live. 7 render sites built a CSS class string by slugifying raw status text and concatenating it into <code>class="tag s-&lt;slug&gt;"</code>, breakable out of the attribute by a status value containing a double-quote — concretely reachable via CSV Invoice import, which falls through to the raw cell value for any unrecognized Status, capable of exfiltrating <code>localStorage</code> (the Anthropic API key, Supabase session) to an attacker-controlled endpoint. Fixed with three new fixed-lookup-table helpers (<code>invStatusClass()</code>, <code>poStatusClass()</code>, <code>conStatusClass()</code>) mirroring the pre-existing, already-safe <code>shpStatusClass()</code> pattern.</li>
+          <li>Fix (CRITICAL): <strong><code>INV-GAP-004</code></strong> — the empty-string/numeric bug fixed the same day in <code>migrateInvToSupabase()</code> was still present in the two far-more-frequently-hit paths, <code>persistInvChange()</code> (called from 12+ sites) and <code>saveInv()</code>'s own cloud-save block. <code>numOrNull()</code> promoted to a shared helper, applied at both.</li>
+          <li>Fix: <strong><code>LI-GAP-002</code>/<code>CON-GAP-007</code></strong> — <code>saveLI()</code>/<code>delLI()</code>/<code>saveCon()</code>/<code>delCon()</code> gated on bare <code>_sb</code> truthiness instead of their own entity's migration marker, unlike every other entity's own save/del function. Fixed at all 5 gate sites.</li>
+          <li>Fix: <strong><code>PMT-GAP-004</code></strong> — added missing test coverage for the duplicate-payment confirmation guard shipped earlier the same day (no functional defect, an audit-coverage gap only).</li>
+          <li>Housekeeping: untracked <code>.DS_Store</code> (same class of accidental-inclusion miss as <code>SEC-GAP-020</code>); logged <code>SEC-GAP-022</code>/<code>023</code>/<code>024</code> as open, accepted gaps (GDPR erasure path on Cloud Data, single-shared-role RLS monitoring, and a handful of minor items) rather than silently dropping them. 15 new tests. Tests: 931/931 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.83</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong><code>delSup()</code> never warned about or cleaned up Line Items referencing a deleted Supplier</strong> (<code>SUP-GAP-001</code>, new) — found while helping an operator diagnose 6 real Line Items (an irrigation/drip-tape product line) that had silently lost their Supplier reference, with no way to recover which supplier it was from data alone, since the deleted supplier predated the app's event log and <code>delSup()</code> gave no warning at delete time. <code>delSup()</code> already warned about linked Purchase Orders, invoice references, and Order Request RFQ responses before deleting a supplier — it now also counts and warns about Line Items linked via <code>supId</code>, in the same warning list. <code>supId</code> is left in place as a historical record on delete, not nulled, matching the existing RFQ-response precedent. 1 new test. Tests: 916/916 pass.</li>
@@ -2498,6 +2574,16 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
         <div class="fld" style="grid-column:1/-1"><label>Notes</label>
           <textarea id="shf-nt" placeholder="Customs agent, port notes, delays..."></textarea></div>
       </div>
+
+      <div style="margin-bottom:14px;border-top:1px solid var(--ln);padding-top:12px;">
+        <label style="font-weight:600;display:block;margin-bottom:6px;">Trade Documents</label>
+        <div id="shp-docs-panel"></div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <input type="text" id="shp-docs-newtype" placeholder="Add a document (e.g. Fumigation Certificate)" style="flex:1;">
+          <button class="btn btn-g" onclick="shpAddTradeDocFromForm()">+ Add</button>
+        </div>
+      </div>
+
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button class="btn btn-g" onclick="closeM('ov-shp')">Cancel</button>
         <button class="btn btn-s" onclick="saveShp()">Save Shipment</button>
@@ -2539,53 +2625,62 @@ body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--ink);min-h
 </div>
 
 <!-- CONTACT MODAL -->
-<div id="ov-con" class="ov">
-  <div class="card modal-card">
-    <h2 id="con-title">Contact</h2>
-    <label>Name*</label>
-    <input id="ct-name" type="text" placeholder="Full name">
-    <span id="ct-name-err" class="verr"></span>
-    <label>Email*</label>
-    <input id="ct-email" type="email" placeholder="email@example.com">
-    <span id="ct-email-err" class="verr"></span>
-    <label>Phone</label>
-    <input id="ct-phone" type="tel" placeholder="+44...">
-    <label>Company</label>
-    <input id="ct-company" type="text" placeholder="Company name">
-    <label>Status</label>
-    <select id="ct-status">
-      <option value="lead">Lead</option>
-      <option value="qualified">Qualified</option>
-      <option value="converted">Converted</option>
-      <option value="closed">Closed</option>
-    </select>
-    <label>Source</label>
-    <select id="ct-source">
-      <option value="manual">Manual</option>
-      <option value="chat">Chat</option>
-    </select>
-    <label>Supplier</label>
-    <select id="ct-sup">
-      <option value="">None</option>
-    </select>
-    <label>New enquiry note</label>
-    <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
-    <div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="conCheckEnquiry()">Check enquiry</button></div>
-    <div id="con-enqchk" style="display:none;margin-top:4px;"></div>
-    <label>Internal notes</label>
-    <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
-    <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;">
-  <div onclick="toggleAcc('con-activity-body');renderConActivity()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);">
-    Activity
-    <span style="font-size:.7rem;">&#9660;</span>
-  </div>
-  <div id="con-activity-body" style="display:none;margin-top:8px;font-size:.5rem;font-family:'DM Mono',monospace;max-height:200px;overflow-y:auto;">
-    <div id="con-activity-list">No activity recorded.</div>
-  </div>
-</div>
-    <div class="btn-row">
-      <button onclick="saveCon()">Save</button>
-      <button class="btn-sec" onclick="closeM('ov-con')">Cancel</button>
+<div id="ov-con" class="ov" onclick="if(event.target===this)closeM('ov-con')">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh"><h2 id="con-title">Contact</h2><button class="mx" onclick="closeM('ov-con')">&#215;</button></div>
+    <div class="mb">
+      <div class="fg fg2">
+        <div class="fld"><label>Name*</label>
+          <input id="ct-name" type="text" placeholder="Full name">
+          <span id="ct-name-err" class="verr"></span>
+        </div>
+        <div class="fld"><label>Email*</label>
+          <input id="ct-email" type="email" placeholder="email@example.com">
+          <span id="ct-email-err" class="verr"></span>
+        </div>
+        <div class="fld"><label>Phone</label><input id="ct-phone" type="tel" placeholder="+44..."></div>
+        <div class="fld"><label>Company</label><input id="ct-company" type="text" placeholder="Company name"></div>
+        <div class="fld"><label>Status</label>
+          <select id="ct-status">
+            <option value="lead">Lead</option>
+            <option value="qualified">Qualified</option>
+            <option value="converted">Converted</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        <div class="fld"><label>Source</label>
+          <select id="ct-source">
+            <option value="manual">Manual</option>
+            <option value="chat">Chat</option>
+          </select>
+        </div>
+        <div class="fld" style="grid-column:span 2"><label>Supplier</label>
+          <select id="ct-sup">
+            <option value="">None</option>
+          </select>
+        </div>
+        <div class="fld" style="grid-column:span 2"><label>New enquiry note</label>
+          <input id="ct-enq-summary" type="text" placeholder="What did they enquire about?">
+          <div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.4rem;padding:1px 4px;" onclick="conCheckEnquiry()">Check enquiry</button></div>
+          <div id="con-enqchk" style="display:none;margin-top:4px;"></div>
+        </div>
+        <div class="fld" style="grid-column:span 2"><label>Internal notes</label>
+          <textarea id="ct-notes" rows="3" placeholder="Internal notes..."></textarea>
+        </div>
+      </div>
+      <div style="margin-top:14px;border-top:1px solid var(--ln);padding-top:10px;">
+        <div onclick="toggleAcc('con-activity-body');renderConActivity()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--m);">
+          Activity
+          <span style="font-size:.7rem;">&#9660;</span>
+        </div>
+        <div id="con-activity-body" style="display:none;margin-top:8px;font-size:.5rem;font-family:'DM Mono',monospace;max-height:200px;overflow-y:auto;">
+          <div id="con-activity-list">No activity recorded.</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="btn btn-s" onclick="saveCon()">Save</button>
+        <button class="btn btn-g" onclick="closeM('ov-con')">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2925,6 +3020,10 @@ var cRfqEditId = null;
 var cRfqEmailParseLineId = null;
 var cRfqEmailParseRespId = null;
 var cRfqEmailParseProposed = null;
+var cRfqFileImportOrdId = null;
+var cRfqFileImportPendingRows = null;
+var cRfqFileImportProposals = {};
+var cRfqFileImportApplyInFlight = false;
 let AI = ld(K.ai) || { key: '' };
 let _aiHistory = [];
 var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
@@ -2932,6 +3031,9 @@ var _aiMode = localStorage.getItem('stackd_ai_mode') || 'ops';
 // ── INVOICE STATUS LOCKING ──────────────────────────────────────
 var LOCKED_STATUSES = ['Sent', 'Partially Paid', 'Paid', 'Cancelled'];
 var STATUS_ORDER    = ['Draft', 'Pro-forma', 'Sent', 'Partially Paid', 'Paid', 'Cancelled'];
+var WEBHOOK_TRIGGERS = [
+  { key: 'inv_buyer_approved', label: 'Invoice: Buyer Approved' }
+];
 var _unlockedInvIds = {}; // in-memory override set — cleared on page reload
 var _invEditSnapshot = null; // G-06: pre-edit snapshot captured at unlock, cleared on save or close
 
@@ -3309,7 +3411,7 @@ function rOrd() {
     return '<tr>'
       + '<td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(o.num||'-') + (o._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>'
       + '<td>' + (c ? san(c.name) : '<span style="color:var(--m);">— contact deleted —</span>') + '</td>'
-      + '<td><span class="tag">' + san(o.stage) + '</span></td>'
+      + '<td><span class="tag ' + ordStageClass(o.stage) + '">' + san(o.stage) + '</span></td>'
       + '<td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(o.description||'') + (o._backfilled ? ' <span style="font-size:.4rem;color:var(--m);">(legacy)</span>' : '') + '</td>'
       + '<td>' + openActions + '</td>'
       + '<td class="num">' + (o.stage === 'Fulfilled' ? fmt(margin,'USD') : '—') + '</td>'
@@ -3333,7 +3435,7 @@ function rOrdLines(ord) {
   var el = G('of-lines-list'); if (!el) return;
   if (!ord) { el.innerHTML = '<div style="font-size:.55rem;color:var(--m);">Save the Order Request first, then add line items.</div>'; return; }
   var lines = ord.lines || [];
-  el.innerHTML = lines.map(function(l){
+  var linesHtml = lines.map(function(l){
     var pending = (l.lineUpdates||[]).filter(function(u){ return !u.confirmedBy; });
     return '<div style="border:1px solid var(--ln);border-radius:4px;padding:6px;margin-bottom:6px;font-size:.55rem;">' +
       '<div><strong>' + san(l.category||'-') + '</strong> — ' + san(l.itemSpec||'-') + '</div>' +
@@ -3350,7 +3452,273 @@ function rOrdLines(ord) {
       '<div id="ord-rfq-' + l.id + '" style="display:none;margin-top:4px;"></div>' +
       '</div>';
   }).join('') || '<div style="font-size:.55rem;color:var(--m);">No line items yet</div>';
+  var importControl = lines.length ? (
+    '<div style="margin-bottom:8px;">' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:2px 6px;" onclick="rfqOpenFileImport(\'' + ord.id + '\')">Import Supplier Quote File</button>' +
+    '</div>' +
+    '<div id="ord-fileimport-' + ord.id + '" style="display:none;margin-bottom:8px;"></div>'
+  ) : '';
+  el.innerHTML = importControl + linesHtml;
 }
+
+// ── RFQ RESPONSE FILE IMPORT (REQ/SPEC-AI-GAP-012) ──────────────
+function rfqOpenFileImport(ordId) {
+  if (!EI.ord || EI.ord !== ordId) return;
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  cRfqFileImportOrdId = ordId;
+  cRfqFileImportPendingRows = null;
+  panel.style.display = 'block';
+  panel.innerHTML = '<div style="border:1px solid var(--ln);border-radius:4px;padding:6px;">' +
+    '<div style="font-size:.5rem;margin-bottom:4px;">Import Supplier Quote File</div>' +
+    '<div class="fld"><label>Supplier</label><select id="rfq-fileimport-sup-' + ordId + '">' +
+      '<option value="">— Supplier —</option>' +
+      DB.sup.map(function(s){ return '<option value="' + san(s.id) + '">' + san(s.name) + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="fld" style="margin-top:4px;"><label>Quote File (CSV)</label><input type="file" id="rfq-fileimport-file-' + ordId + '" accept=".csv"></div>' +
+    '<div style="margin-top:4px;">' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqRunFileImport(\'' + ordId + '\')">Parse</button> ' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseFileImport(\'' + ordId + '\')">Cancel</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function rfqCloseFileImport(ordId) {
+  if (ordId === cRfqFileImportOrdId) {
+    cRfqFileImportOrdId = null;
+    cRfqFileImportPendingRows = null;
+    cRfqFileImportProposals = {};
+  }
+  var panel = G('ord-fileimport-' + ordId);
+  if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
+}
+
+function rfqRunFileImport(ordId) {
+  if (!EI.ord || EI.ord !== ordId) return;
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  var supId = G('rfq-fileimport-sup-' + ordId).value;
+  if (!supId) { toast('Select a supplier first.'); return; }
+  var fileInput = G('rfq-fileimport-file-' + ordId);
+  var file = fileInput && fileInput.files[0];
+  if (!file) { toast('Select a file first.'); return; }
+  if (!/\.csv$/i.test(file.name)) { toast('Only .csv files are supported.'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    if (G('ord-fileimport-' + ordId) !== panel) return;
+    var parsed = parseImportCSV(e.target.result);
+    if (!parsed.rows.length) { toast('No data rows found in that file.'); return; }
+    rfqShowFileImportConfirm(ordId, supId, parsed);
+  };
+  reader.readAsText(file);
+}
+
+function rfqShowFileImportConfirm(ordId, supId, parsed) {
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  cRfqFileImportPendingRows = { rows: parsed.rows, supId: supId };
+  var preview = '<div style="max-height:200px;overflow-y:auto;"><table class="tbl" style="font-size:.46rem;"><thead><tr>' +
+    parsed.headers.map(function(h){ return '<th>' + san(h) + '</th>'; }).join('') +
+    '</tr></thead><tbody>' +
+    parsed.rows.map(function(r){
+      return '<tr>' + parsed.headers.map(function(h){ return '<td>' + san(r[h]||'') + '</td>'; }).join('') + '</tr>';
+    }).join('') +
+    '</tbody></table></div>';
+  panel.innerHTML = '<div style="font-size:.5rem;margin-bottom:4px;">Review parsed rows before sending to AI — nothing is sent yet:</div>' +
+    preview +
+    '<div style="margin-top:4px;">' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqSendFileToAI(\'' + ordId + '\')">Send to AI</button> ' +
+      '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseFileImport(\'' + ordId + '\')">Cancel</button>' +
+    '</div>';
+}
+
+function rfqSendFileToAI(ordId) {
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  var pending = cRfqFileImportPendingRows;
+  if (!pending) return;
+  cRfqFileImportPendingRows = null;
+  var supId = pending.supId;
+  var lineContexts = (ord.lines || []).map(function(l){
+    var ctx = { id: l.id, category: l.category, itemSpec: l.itemSpec, orderVolumeQty: l.orderVolumeQty, orderVolumeUnit: l.orderVolumeUnit };
+    var existingResp = (l.rfqResponses || []).find(function(r){ return r.supId === supId; });
+    if (existingResp) {
+      ctx.currentValues = { cost: existingResp.cost, currency: existingResp.currency, moq: existingResp.moq, leadTime: existingResp.leadTime, paymentTerms: existingResp.paymentTerms };
+    }
+    return ctx;
+  });
+  panel.innerHTML = '<div style="color:var(--m);">Parsing…</div>';
+  rfqParseUpdateFromFile(pending.rows, lineContexts).then(function(result){
+    if (G('ord-fileimport-' + ordId) !== panel) return;
+    if (result === null) {
+      panel.innerHTML = '<div style="color:var(--m);">AI parse unavailable.</div>' +
+        '<div style="margin-top:4px;"><button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseFileImport(\'' + ordId + '\')">Close</button></div>';
+      return;
+    }
+    rfqRenderFileImportResults(ordId, supId, result, ord);
+  });
+}
+
+var RFQ_FILE_IMPORT_PROMPT = 'Given these supplier quote spreadsheet rows and a list of this Order Request\'s own line items, match each row to at most one line item using its description/spec. For each row you can confidently match to exactly one line, extract any of {cost, currency, moq, leadTime, paymentTerms, notes} the row states a value for. If you cannot confidently match a row to exactly one line item, do not guess — return it as unmatched with a brief reason. Respond with ONLY a JSON object of the exact shape {"matches":[{"lineId":"<id>","fields":{...}}],"unmatched":[{"row":{...},"reason":"<brief reason>"}]} — no prose, no markdown fences.';
+async function rfqParseUpdateFromFile(rows, lineContexts) {
+  if (!AI.key) return null;
+  var payload = { rows: rows, lines: lineContexts };
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': AI.key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        temperature: 0.2,
+        system: RFQ_FILE_IMPORT_PROMPT,
+        messages: [{ role: 'user', content: JSON.stringify(payload) }]
+      })
+    });
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var parsed = JSON.parse(text.trim());
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    if (!Array.isArray(parsed.matches) || !Array.isArray(parsed.unmatched)) return null;
+    var allowed = ['cost', 'currency', 'moq', 'leadTime', 'paymentTerms', 'notes'];
+    var knownLineIds = {};
+    lineContexts.forEach(function(l){ knownLineIds[l.id] = true; });
+    var matches = [];
+    var unmatched = parsed.unmatched.slice();
+    parsed.matches.forEach(function(m){
+      if (!m || typeof m.lineId !== 'string' || !knownLineIds[m.lineId]) {
+        unmatched.push({ row: (m && m.fields) || {}, reason: 'Could not verify this match against a real line item.' });
+        return;
+      }
+      var filtered = {};
+      if (m.fields && typeof m.fields === 'object' && !Array.isArray(m.fields)) {
+        allowed.forEach(function(k){ if (m.fields[k] !== undefined) filtered[k] = m.fields[k]; });
+      }
+      matches.push({ lineId: m.lineId, fields: filtered });
+    });
+    return { matches: matches, unmatched: unmatched };
+  } catch (e) {
+    return null;
+  }
+}
+
+function rfqRenderFileImportResults(ordId, supId, result, ord) {
+  var panel = G('ord-fileimport-' + ordId);
+  if (!panel) return;
+  cRfqFileImportOrdId = ordId;
+  result.matches.forEach(function(m){
+    cRfqFileImportProposals[m.lineId] = { supId: supId, fields: m.fields };
+  });
+  var pendingLineIds = Object.keys(cRfqFileImportProposals);
+  var panelsHtml = pendingLineIds.map(function(lid){
+    var proposal = cRfqFileImportProposals[lid];
+    var line = (ord.lines || []).find(function(l){ return l.id === lid; });
+    if (!line) return '';
+    var existingResp = (line.rfqResponses || []).find(function(r){ return r.supId === proposal.supId; });
+    var diffRows = rfqDiffRowsHtml(existingResp || {}, proposal.fields);
+    var label = san(line.category||'-') + ' — ' + san(line.itemSpec||'-');
+    return '<div id="rfq-fileimport-panel-' + lid + '" style="border:1px solid var(--ln);border-radius:4px;padding:6px;margin-top:4px;">' +
+      '<div style="font-size:.5rem;font-weight:600;">' + label + (existingResp ? '' : ' <em style="font-weight:400;color:var(--m);">(new response)</em>') + '</div>' +
+      '<div style="font-size:.5rem;">' + diffRows + '</div>' +
+      '<div style="margin-top:4px;">' +
+        '<button class="btn btn-g" id="rfq-fileimport-apply-' + lid + '" style="font-size:.44rem;padding:1px 6px;" onclick="rfqApplyFileProposal(\'' + ordId + '\',\'' + lid + '\')">Apply</button> ' +
+        '<button class="btn btn-g" id="rfq-fileimport-discard-' + lid + '" style="font-size:.44rem;padding:1px 6px;" onclick="rfqDiscardFileProposal(\'' + ordId + '\',\'' + lid + '\')">Discard</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  var unmatchedHtml = result.unmatched.length ? (
+    '<div style="margin-top:6px;font-size:.5rem;color:var(--m);">Needs manual review — could not confidently match to a line item:</div>' +
+    result.unmatched.map(function(u){
+      return '<div style="font-size:.46rem;color:var(--m);margin-top:2px;">' + san(JSON.stringify(u.row)) + ' — ' + san(u.reason) + '</div>';
+    }).join('')
+  ) : '';
+  panel.innerHTML = (panelsHtml || '<div style="font-size:.5rem;color:var(--m);">No confident matches found in this file.</div>') +
+    unmatchedHtml +
+    '<div style="margin-top:6px;"><button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqCloseFileImport(\'' + ordId + '\')">Close</button></div>';
+}
+
+function rfqDiscardFileProposal(ordId, lineId) {
+  if (ordId !== cRfqFileImportOrdId) return;
+  delete cRfqFileImportProposals[lineId];
+  var el = G('rfq-fileimport-panel-' + lineId);
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+
+function rfqFillRfqFormFields(fields) {
+  if (fields.cost !== undefined) G('rfq-cost').value = fields.cost;
+  if (fields.currency !== undefined) G('rfq-cur').value = fields.currency;
+  if (fields.moq !== undefined) G('rfq-moq').value = fields.moq;
+  if (fields.leadTime !== undefined) G('rfq-leadtime').value = fields.leadTime;
+  if (fields.paymentTerms !== undefined) G('rfq-payterms').value = fields.paymentTerms;
+  if (fields.notes !== undefined) G('rfq-notes').value = fields.notes;
+}
+
+function rfqSetOrdRfqUiFrozen(frozen) {
+  var linesList = G('of-lines-list');
+  if (linesList) {
+    linesList.style.pointerEvents = frozen ? 'none' : '';
+    linesList.style.opacity = frozen ? '0.6' : '';
+  }
+  var saveBtn = G('rfq-save-btn'), cancelBtn = G('rfq-cancel-btn'), closeBtn = G('rfq-close-btn');
+  if (saveBtn) saveBtn.disabled = frozen;
+  if (cancelBtn) cancelBtn.disabled = frozen;
+  if (closeBtn) closeBtn.disabled = frozen;
+}
+
+async function rfqApplyFileProposal(ordId, lineId) {
+  if (ordId !== cRfqFileImportOrdId) return;
+  if (cRfqFileImportApplyInFlight) return;
+  var proposal = cRfqFileImportProposals[lineId];
+  if (!proposal) return;
+  var ord = DB.ord.find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  var line = (ord.lines || []).find(function(l){ return l.id === lineId; });
+  if (!line) return;
+
+  cRfqFileImportApplyInFlight = true;
+  rfqSetOrdRfqUiFrozen(true);
+
+  var existingResp = (line.rfqResponses || []).find(function(r){ return r.supId === proposal.supId; });
+  if (existingResp) {
+    editRfqResponse(lineId, existingResp.id);
+    if (cRfqEditId === existingResp.id) {
+      rfqFillRfqFormFields(proposal.fields);
+      await saveRfqResponse();
+    }
+  } else {
+    openRfqResponse(lineId);
+    G('rfq-sup').value = proposal.supId;
+    rfqFillRfqFormFields(proposal.fields);
+    await saveRfqResponse();
+  }
+
+  var modalStillOpen = G('ov-rfq').classList.contains('on');
+
+  cRfqFileImportApplyInFlight = false;
+  rfqSetOrdRfqUiFrozen(false);
+
+  if (modalStillOpen) {
+    toast('Could not apply automatically — the response form is open with a validation error. Resolve it in the form or Cancel, then retry from the file import panel.');
+    return;
+  }
+
+  delete cRfqFileImportProposals[lineId];
+  var el = G('rfq-fileimport-panel-' + lineId);
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+
 function ordCheckLineGaps(lineId) {
   if (!EI.ord) return;
   var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
@@ -3636,6 +4004,13 @@ function rfqCloseEmailParse(lineId) {
   if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
 }
 
+function rfqDiffRowsHtml(baseline, proposed) {
+  return Object.keys(proposed).map(function(f){
+    var oldVal = baseline[f] != null && baseline[f] !== '' ? String(baseline[f]) : '(unset)';
+    return '<div>' + san(f) + ': ' + san(oldVal) + ' &rarr; <strong>' + san(String(proposed[f])) + '</strong></div>';
+  }).join('');
+}
+
 function rfqRunEmailParse(lineId) {
   if (!EI.ord) return;
   var ord = DB.ord.find(function(o){ return o.id === EI.ord; });
@@ -3665,10 +4040,7 @@ function rfqRunEmailParse(lineId) {
       return;
     }
     cRfqEmailParseProposed = result;
-    var rows = fields.map(function(f){
-      var oldVal = resp[f] != null && resp[f] !== '' ? String(resp[f]) : '(unset)';
-      return '<div>' + san(f) + ': ' + san(oldVal) + ' &rarr; <strong>' + san(String(result[f])) + '</strong></div>';
-    }).join('');
+    var rows = rfqDiffRowsHtml(resp, result);
     panel.innerHTML = '<div style="font-size:.5rem;">' + rows + '</div>' +
       '<div style="margin-top:4px;">' +
         '<button class="btn btn-g" style="font-size:.44rem;padding:1px 6px;" onclick="rfqApplyEmailParse(\'' + lineId + '\')">Apply</button> ' +
@@ -3965,6 +4337,16 @@ var QR = (function(){ var saved = ld('st_qr'); return saved ? Object.assign({}, 
 
 // ── LANGUAGE ──────────────────────────────────────────────────
 var _lang = localStorage.getItem('stackd_lang') || 'en';
+var _presentationMode = localStorage.getItem('stackd_presentation_mode') === '1';
+function setPresentationMode(on) {
+  _presentationMode = on;
+  localStorage.setItem('stackd_presentation_mode', on ? '1' : '0');
+  document.body.classList.toggle('presentation-mode', on);
+  var btn = G('pmode-btn');
+  if (btn) { btn.classList.toggle('on', on); btn.title = on ? 'Presentation Mode is ON — click to return to normal size' : 'Presentation Mode — larger text for screen/projector'; }
+}
+function togglePresentationMode() { setPresentationMode(!_presentationMode); }
+function initPresentationMode() { setPresentationMode(_presentationMode); }
 function setLang(lang) {
   _lang = lang;
   localStorage.setItem('stackd_lang', lang);
@@ -5262,12 +5644,12 @@ function rDash() {
   } else {
     pl.innerHTML = DB.inv.slice().reverse().slice(0,10).map(function(inv){
       var c = iCalc(inv);
-      var sc = (inv.status||'draft').toLowerCase().replace(/ /g, '-');
+      var sc = invStatusClass(inv.status);
       return '<div class="pi" onclick="editInv(\'' + inv.id + '\')">' +
         '<span class="pref">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</span>' +
         '<span class="pbuy">' + (san(inv.buyer)||'-') + '</span>' +
         '<span class="pdst">' + san(inv.dst||'') + '</span>' +
-        '<span class="tag s-' + sc + '">' + (inv.status||'Draft') + '</span>' +
+        '<span class="tag ' + sc + '">' + san(inv.status||'Draft') + '</span>' +
         '<span class="pamt">' + fmt(c.np, inv.cur||'USD') + '</span>' +
         '<span class="pbal">' + (c.bal>0 ? fmt(c.bal, inv.cur||'USD') : '') + '</span>' +
         '</div>';
@@ -5404,7 +5786,7 @@ function renderAccts() {
     var totalToChase = toDisp(balFromBuyer, cur) + unrecoveredFPM;
     var netPos = buyerDep - supDepPaid;
     var nc = netPos >= 0 ? 'pos' : 'neg';
-    var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = invStatusClass(inv.status);
 
     var fpmCell = fpmFunded > 0
       ? (fpmRecovered
@@ -5420,7 +5802,7 @@ function renderAccts() {
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap;">' + (san(inv.num)||'-') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td>' +
       '<td>' + (san(inv.dst)||'-') + '</td>' +
-      '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
+      '<td><span class="tag ' + sc + '">' + san(inv.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(c.grand, cur) + '</td>' +
       '<td class="num" style="color:var(--gn);">' + (buyerDep ? fmt(buyerDep,cur) : '-') + '</td>' +
       '<td class="num ' + (balFromBuyer>0?'neg':'') + '">' + (balFromBuyer>0 ? fmt(balFromBuyer,cur) : '<span style="color:var(--gn);">&#10003;</span>') + '</td>' +
@@ -5600,7 +5982,7 @@ function renderSupContacts() {
   el.innerHTML = '<table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead><tbody>' +
     linked.map(function(c){
       return '<tr><td>' + san(c.name) + '</td><td>' + san(c.email) + '</td>' +
-        '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
+        '<td><span class="tag ' + conStatusClass(c.status) + '">' + san(c.status) + '</span></td>' +
         '<td><button class="ab" onclick="unlinkSupCon(\'' + c.id + '\')">Unlink</button></td></tr>';
     }).join('') + '</tbody></table>';
 }
@@ -5902,6 +6284,8 @@ async function refreshShFromSupabase() {
       forwarder: row.forwarder || '', forwarderEmail: row.forwarder_email || '', notes: row.notes || ''
     };
     if (row.upd_at != null) s.updAt = row.upd_at;
+    if (row.trade_docs != null) s.tradeDocs = row.trade_docs;
+    if (row.auto_created_from_inv_ids != null) s.autoCreatedFromInvIds = row.auto_created_from_inv_ids;
     return s;
   });
   sv(K.sh, DB.sh);
@@ -6012,6 +6396,15 @@ async function refreshSupPmtFromSupabase() {
   // Payment renders exclusively via renderPOPaymentsTab(poId).
 }
 
+// INV-GAP-003/004: the calc_* fields are stored locally as strings (String(gt) etc.)
+// and a Draft/incomplete Invoice can carry '' rather than being unset entirely —
+// `!= null` lets '' straight through into a `numeric` column, which Postgres rejects
+// with 22P02 ("invalid input syntax for type numeric"). numOrNull() treats '' the
+// same as null/undefined. Shared by every site that builds an invoices-table row —
+// migrateInvToSupabase(), persistInvChange(), and saveInv()'s own cloud-save block —
+// since all three build the identical calc_* field set from the identical source shape.
+function numOrNull(v) { return (v === null || v === undefined || v === '') ? null : v; }
+
 async function persistInvChange(inv, skipRefresh) {
   if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
@@ -6037,14 +6430,14 @@ async function persistInvChange(inv, skipRefresh) {
       approval_method: inv.approvalMethod || null, approval_note: inv.approvalNote || null,
       linked_quote_id: inv.linkedQuoteId || null, linked_quote_num: inv.linkedQuoteNum || null,
       notes: inv.notes || null, edit_history: inv.editHistory || null,
-      calc_grand_total: inv.calc_grandTotal != null ? inv.calc_grandTotal : null,
-      calc_cogs: inv.calc_cogs != null ? inv.calc_cogs : null,
-      calc_gross_profit: inv.calc_grossProfit != null ? inv.calc_grossProfit : null,
-      calc_net_profit: inv.calc_netProfit != null ? inv.calc_netProfit : null,
-      calc_margin: inv.calc_margin != null ? inv.calc_margin : null,
-      calc_balance_due: inv.calc_balanceDue != null ? inv.calc_balanceDue : null,
-      calc_li_total: inv.calc_liTotal != null ? inv.calc_liTotal : null,
-      calc_tax_amt: inv.calc_taxAmt != null ? inv.calc_taxAmt : null
+      calc_grand_total: numOrNull(inv.calc_grandTotal),
+      calc_cogs: numOrNull(inv.calc_cogs),
+      calc_gross_profit: numOrNull(inv.calc_grossProfit),
+      calc_net_profit: numOrNull(inv.calc_netProfit),
+      calc_margin: numOrNull(inv.calc_margin),
+      calc_balance_due: numOrNull(inv.calc_balanceDue),
+      calc_li_total: numOrNull(inv.calc_liTotal),
+      calc_tax_amt: numOrNull(inv.calc_taxAmt)
     };
     row.upd_at = inv.updAt != null ? inv.updAt : null;
     var result = await _sb.from('invoices').update(row).eq('id', inv.id);
@@ -6873,13 +7266,6 @@ async function migrateInvToSupabase() {
   // and CN alike) with linked_inv_id deferred to null, building invIdMap from each
   // insert's returned row.
   //
-  // INV-GAP-003: the calc_* fields are stored locally as strings (String(gt) etc,
-  // per this file's own header comment above) and a Draft/incomplete Invoice can
-  // carry '' rather than being unset entirely — `!= null` lets '' straight through
-  // into a `numeric` column, which Postgres rejects with 22P02 ("invalid input
-  // syntax for type numeric"), failing the insert for that record and blocking the
-  // whole migration. numOrNull() below treats '' the same as null/undefined.
-  function numOrNull(v) { return (v === null || v === undefined || v === '') ? null : v; }
   var invIdMap = {};
   for (var i = 0; i < DB.inv.length; i++) {
     var r = DB.inv[i];
@@ -7054,6 +7440,8 @@ async function migrateShToSupabase() {
       container_type: s.containerType || null, container_num: s.containerNum || null, dg: !!s.dg,
       docs_status: s.docsStatus || null, status: s.status,
       linked_invs: Array.isArray(s.linkedInvs) ? s.linkedInvs : (typeof s.linkedInvs === 'string' && s.linkedInvs ? s.linkedInvs.split(',').map(function(t){return t.trim();}).filter(Boolean) : []),
+      trade_docs: Array.isArray(s.tradeDocs) ? s.tradeDocs : null,
+      auto_created_from_inv_ids: Array.isArray(s.autoCreatedFromInvIds) ? s.autoCreatedFromInvIds : null,
       forwarder: s.forwarder || null, forwarder_email: s.forwarderEmail || null, notes: s.notes || null,
       upd_at: s.updAt != null ? s.updAt : null
     }).select().single();
@@ -7549,7 +7937,7 @@ async function saveLI() {
   var dims=(diml&&dimw&&dimh)?{l:diml,w:dimw,h:dimh}:(existing&&existing.dims)||null;
   var dg = !!(G('lf-dg')&&G('lf-dg').checked);
 
-  if (_sb) {
+  if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var row = {
       sku: G('lf-s').value.trim(), "desc": G('lf-d').value.trim(), specs: G('lf-sp').value.trim(),
@@ -7590,7 +7978,7 @@ async function delLI(id) {
   if (warns.length) msg += '\n\nWarning: This item is referenced in:\n  ' + warns.join('\n  ') + '\n\nExisting line entries on those documents will be preserved but the catalogue link will be broken.';
   if (!confirm(msg)) return;
 
-  if (_sb) {
+  if (_sb && localStorage.getItem('st_li_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var result = await _sb.from('line_items').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (result.error) { toast('Delete failed: ' + result.error.message); return; }
@@ -8032,14 +8420,14 @@ async function saveInv() {
       approval_method: inv.approvalMethod || null, approval_note: inv.approvalNote || null,
       linked_quote_id: inv.linkedQuoteId || null, linked_quote_num: inv.linkedQuoteNum || null,
       edit_history: inv.editHistory || null,
-      calc_grand_total: inv.calc_grandTotal != null ? inv.calc_grandTotal : null,
-      calc_cogs: inv.calc_cogs != null ? inv.calc_cogs : null,
-      calc_gross_profit: inv.calc_grossProfit != null ? inv.calc_grossProfit : null,
-      calc_net_profit: inv.calc_netProfit != null ? inv.calc_netProfit : null,
-      calc_margin: inv.calc_margin != null ? inv.calc_margin : null,
-      calc_balance_due: inv.calc_balanceDue != null ? inv.calc_balanceDue : null,
-      calc_li_total: inv.calc_liTotal != null ? inv.calc_liTotal : null,
-      calc_tax_amt: inv.calc_taxAmt != null ? inv.calc_taxAmt : null,
+      calc_grand_total: numOrNull(inv.calc_grandTotal),
+      calc_cogs: numOrNull(inv.calc_cogs),
+      calc_gross_profit: numOrNull(inv.calc_grossProfit),
+      calc_net_profit: numOrNull(inv.calc_netProfit),
+      calc_margin: numOrNull(inv.calc_margin),
+      calc_balance_due: numOrNull(inv.calc_balanceDue),
+      calc_li_total: numOrNull(inv.calc_liTotal),
+      calc_tax_amt: numOrNull(inv.calc_taxAmt),
       upd_at: inv.updAt || null
     };
     var invResult = EI.i
@@ -8108,6 +8496,11 @@ async function saveInv() {
   }
 
   // ── invoiceRefs index (gated on cIL.length > 0) ──────────────
+  // invoiceRefs has no Supabase column (not in 0002_line_items_contacts.sql) — it is
+  // deliberately local-only/derived, and refreshLIFromSupabase() already preserves it
+  // from the in-memory DB.li at refresh time (prev.invoiceRefs) rather than expecting
+  // Supabase to be authoritative for it. sv(K.l, DB.li) is therefore correct as-is,
+  // regardless of Cloud Data state — do not add a push here (LIB-GAP-001).
   if (cIL.length > 0) {
     var refsChanged = false;
     cIL.forEach(function(li) {
@@ -8169,6 +8562,7 @@ async function saveInv() {
       toast('FPM-funded deposits marked as recovered ✓');
     }
   }
+  if (inv.status === 'Paid') await autoCreateShipmentFromInvoice(inv);
   if (_sb && localStorage.getItem('st_inv_cloud_migration_ts')) await refreshInvFromSupabase();
 }
 
@@ -8200,10 +8594,19 @@ function openInvApprove(id) {
   G('ov-inv-approve').classList.add('on');
 }
 
+function resolveBuyerForWebhook(inv) {
+  var buyId = inv.buyerId ? inv.buyerId : (DB.buy.find(function(b){ return b.name.toLowerCase()===(inv.buyer||'').toLowerCase(); })||{}).id || 'BUY-ADHOC';
+  if (buyId === 'BUY-ADHOC') return null;
+  var buy = DB.buy.find(function(b){ return b.id === buyId; });
+  if (!buy || !buy.email) return null;
+  return buy;
+}
+
 async function saveInvApprove() {
   if (!vInvApprove()) return;
   var inv = DB.inv.find(function(x){ return x.id === _apprInvId; });
   if (!inv) return;
+  var wasApproved = !!inv.buyerApprovedAt;
   inv.buyerApprovedAt = new Date().toISOString();
   inv.buyerApprovedBy = G('ia-by').value.trim();
   inv.approvalMethod = G('ia-method').value;
@@ -8222,6 +8625,32 @@ async function saveInvApprove() {
   if (G('ov-inv').classList.contains('on') && EI.i === inv.id) {
     G('inv-approve-btn').style.display = invApprovalActionVisible(inv) ? '' : 'none';
     G('inv-progress-btn').style.display = invProgressActionVisible(inv) ? '' : 'none';
+  }
+  if (!wasApproved) {
+    var buy = resolveBuyerForWebhook(inv);
+    if (buy) {
+      var lis = inv.lineItems||[];
+      if (typeof lis === 'string') { try { lis=JSON.parse(lis); } catch(e){ lis=[]; } }
+      var built = buildInvDocHtml(inv);
+      var payload = {
+        trigger: 'inv_buyer_approved',
+        invoice: {
+          id: inv.id, num: inv.num, status: inv.status, cur: inv.cur||'USD', date: inv.date,
+          grandTotal: built.grand, balanceDue: built.bal,
+          buyerApprovedAt: inv.buyerApprovedAt, buyerApprovedBy: inv.buyerApprovedBy,
+          approvalMethod: inv.approvalMethod, approvalNote: inv.approvalNote
+        },
+        buyer: { id: buy.id, name: buy.name, email: buy.email },
+        lineItems: lis.map(function(li){ return { desc: li.desc, uom: li.uom, qty: li.qty, up: li.up, lineTotal: (+li.qty||0)*(+li.up||0) }; }),
+        invoiceHtml: built.html,
+        ts: new Date().toISOString()
+      };
+      fireWebhookRules('inv_buyer_approved', payload).then(function(r){
+        if (r.sent || r.failed) toast('Webhook: ' + r.sent + ' sent' + (r.failed ? ', ' + r.failed + ' failed' : ''));
+      });
+    } else {
+      toast('No buyer email on file — automation webhook not sent', 3200);
+    }
   }
 }
 
@@ -8313,6 +8742,190 @@ async function autoPos(inv) {
   }
   rPO();
   toast(cnt+' PO'+(cnt!==1?'s':'')+' auto-generated');
+}
+
+// REQ-SHIP-001: default trade-document checklist seeded on every auto-created
+// Shipment. Deliberately destination-agnostic (no Barbados/CARICOM-specific
+// forms) since FPM's own ICP expands beyond Barbados to Nigeria/Ghana/India —
+// a hardcoded single-country form set would be actively wrong, not just
+// incomplete, the moment a second corridor ships. See REQ-SHIP-001-v1.md §0.1.
+var SHIP_DEFAULT_TRADE_DOCS = ['Purchase Invoice', 'Commercial Invoice', 'Packing List', 'Bill of Lading', 'Certificate of Origin', 'Verified Gross Mass (VGM) Declaration', 'Insurance Certificate'];
+
+function shpNewTradeDocEntry(type, autoManaged) {
+  return { id: uid(), type: type, status: 'Pending', refNum: '', fileLocation: '', receivedDate: '', notes: '', autoManaged: !!autoManaged };
+}
+
+function shpSeedTradeDocs(dg) {
+  var docs = SHIP_DEFAULT_TRADE_DOCS.map(function(t){ return shpNewTradeDocEntry(t, false); });
+  if (dg) docs.push(shpNewTradeDocEntry('Dangerous Goods Declaration', true));
+  return docs;
+}
+
+// Returns null (not 'Pending') for an absent/empty tradeDocs array — callers
+// must only assign docsStatus when this returns non-null, since a Shipment
+// that never opted into the checklist must never get a computed docsStatus.
+function shpComputeDocsStatus(tradeDocs) {
+  if (!Array.isArray(tradeDocs) || !tradeDocs.length) return null;
+  var anyReceived = tradeDocs.some(function(d){ return d.status === 'Received'; });
+  var allDone = tradeDocs.every(function(d){ return d.status === 'Received' || d.status === 'N/A'; });
+  if (allDone) return 'Complete';
+  if (anyReceived) return 'In Progress';
+  return 'Pending';
+}
+
+// REQ-SHIP-001f: per-document CRUD on tradeDocs[]. None of these mutate the
+// live DB.sh record until persistence has actually succeeded — a candidate
+// array is built first, and only committed to `s` after the write goes
+// through (or synchronously on the local-only branch, which cannot fail this
+// way). A cancelled Cloud Data login or a failed .update() leaves DB.sh
+// byte-identical to before the call, rather than silently applying an edit
+// that was never actually saved.
+async function shpAddTradeDoc(shId, type) {
+  var s = DB.sh.find(function(x){ return x.id === shId; });
+  if (!s || !type || !type.trim()) return;
+  var candidateDocs = (s.tradeDocs || []).concat([shpNewTradeDocEntry(type.trim(), false)]);
+  await shpPersistTradeDocsChange(s, candidateDocs);
+}
+
+async function shpEditTradeDoc(shId, docId, fields) {
+  var s = DB.sh.find(function(x){ return x.id === shId; });
+  if (!s) return;
+  var candidateDocs = (s.tradeDocs || []).map(function(d){
+    if (d.id !== docId) return d;
+    var updated = Object.assign({}, d);
+    ['status','refNum','fileLocation','receivedDate','notes'].forEach(function(k){
+      if (fields[k] !== undefined) updated[k] = fields[k];
+    });
+    return updated;
+  });
+  if (!candidateDocs.some(function(d){ return d.id === docId; })) return; // docId not found — no-op
+  await shpPersistTradeDocsChange(s, candidateDocs);
+}
+
+async function shpRemoveTradeDoc(shId, docId) {
+  var s = DB.sh.find(function(x){ return x.id === shId; });
+  if (!s) return;
+  var candidateDocs = (s.tradeDocs || []).filter(function(d){ return d.id !== docId; });
+  await shpPersistTradeDocsChange(s, candidateDocs);
+}
+
+async function shpPersistTradeDocsChange(s, candidateDocs) {
+  // shpComputeDocsStatus() deliberately returns null for an empty array (to
+  // avoid a vacuous .every() reporting 'Complete' for zero documents) — when
+  // every entry has just been removed, preserve whatever docsStatus already
+  // was rather than overwriting a real value with null.
+  var candidateStatus = candidateDocs.length ? shpComputeDocsStatus(candidateDocs) : s.docsStatus;
+  var candidateUpdAt = new Date().toISOString();
+  if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var result = await _sb.from('shipments').update({
+      trade_docs: candidateDocs, docs_status: candidateStatus, upd_at: candidateUpdAt
+    }).eq('id', s.id).select().single();
+    if (result.error) { toast('Save failed: ' + result.error.message); return; }
+    s.tradeDocs = candidateDocs; s.docsStatus = candidateStatus; s.updAt = candidateUpdAt;
+    await refreshShFromSupabase();
+  } else {
+    s.tradeDocs = candidateDocs; s.docsStatus = candidateStatus; s.updAt = candidateUpdAt;
+    sv(K.sh, DB.sh);
+  }
+  rShp();
+  if (EI.sh === s.id) renderShpDocsPanel(s.id);
+}
+
+function shpAddTradeDocFromForm() {
+  if (!EI.sh) return;
+  var input = G('shp-docs-newtype');
+  var type = input ? input.value.trim() : '';
+  if (!type) return;
+  if (input) input.value = '';
+  shpAddTradeDoc(EI.sh, type).catch(function(){});
+}
+
+function renderShpDocsPanel(shId) {
+  var panel = G('shp-docs-panel');
+  if (!panel) return;
+  var s = DB.sh.find(function(x){ return x.id === shId; });
+  if (!s) { panel.innerHTML = ''; return; }
+  var docs = s.tradeDocs || [];
+  // round-2 build-gate finding: once a Shipment has any tradeDocs, docsStatus
+  // is computed and saveShp() overrides whatever this dropdown shows anyway —
+  // sync it live and disable it here so the modal never shows a stale value
+  // while the operator is actively checking documents off in the same session.
+  var docsSelect = G('shf-docs');
+  if (docsSelect) {
+    docsSelect.disabled = docs.length > 0;
+    docsSelect.title = docs.length > 0 ? 'Automatically computed from the Trade Documents checklist below' : '';
+    if (docs.length > 0) docsSelect.value = s.docsStatus || 'Pending';
+  }
+  if (!docs.length) {
+    panel.innerHTML = '<div style="color:var(--m);font-size:.54rem;">No trade documents tracked yet — add one below, or check DG above to seed a Dangerous Goods Declaration line.</div>';
+    return;
+  }
+  var rows = docs.map(function(d){
+    var statusOpts = ['Pending','Received','N/A'].map(function(opt){
+      return '<option value="' + opt + '"' + (d.status===opt?' selected':'') + '>' + opt + '</option>';
+    }).join('');
+    return '<tr>' +
+      '<td style="font-size:.54rem;">' + san(d.type) + (d.autoManaged ? ' <span style="font-size:.4rem;color:var(--m);">(auto)</span>' : '') + '</td>' +
+      '<td><select style="font-size:.5rem;" onchange="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{status:this.value})">' + statusOpts + '</select></td>' +
+      '<td><input type="text" value="' + san(d.refNum||'') + '" style="font-size:.5rem;width:90px;" placeholder="Ref #" onblur="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{refNum:this.value})"></td>' +
+      '<td><input type="text" value="' + san(d.fileLocation||'') + '" style="font-size:.5rem;width:130px;" placeholder="Where the file lives" onblur="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{fileLocation:this.value})"></td>' +
+      '<td><input type="date" value="' + san(d.receivedDate||'') + '" style="font-size:.5rem;" onchange="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{receivedDate:this.value})"></td>' +
+      '<td><input type="text" value="' + san(d.notes||'') + '" style="font-size:.5rem;width:110px;" placeholder="Notes" onblur="shpEditTradeDoc(\'' + s.id + '\',\'' + d.id + '\',{notes:this.value})"></td>' +
+      '<td><button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="shpRemoveTradeDoc(\'' + s.id + '\',\'' + d.id + '\')">Del</button></td>' +
+      '</tr>';
+  }).join('');
+  panel.innerHTML = '<div class="tw" style="overflow-x:auto;"><table class="tbl" style="font-size:.5rem;width:100%;"><thead><tr><th>Document</th><th>Status</th><th>Ref #</th><th>File Location</th><th>Received</th><th>Notes</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+// REQ-SHIP-001: auto-creates a Shipment when an Invoice's status is Paid.
+// Fires unconditionally on inv.status === 'Paid' (no old-status/transition
+// check) — mirrors the FPM-funded-deposit-recovery block immediately above
+// this call site in saveInv(), which solves the identical "act on Paid,
+// don't repeat" problem via target-record idempotency rather than tracking
+// the invoice's own status history. This also means a brand-new Invoice
+// saved directly as Paid (never having been Draft first) still gets a
+// Shipment, which a transition-based guard would have missed.
+async function autoCreateShipmentFromInvoice(inv) {
+  if (SS.autoCreateShipmentOnPaid === false) return;
+  var already = DB.sh.some(function(s){
+    var linked = Array.isArray(s.linkedInvs) ? s.linkedInvs : [];
+    return (s.autoCreatedFromInvIds||[]).indexOf(inv.id) > -1 || linked.indexOf(inv.num) > -1;
+  });
+  if (already) return;
+
+  var ref = 'SHP-' + (inv.num || Date.now().toString(36));
+  var suffix = 2;
+  while (DB.sh.some(function(s){ return s.ref === ref; })) { ref = 'SHP-' + (inv.num || Date.now().toString(36)) + '-' + suffix; suffix++; }
+
+  var seededDocs = shpSeedTradeDocs(false);
+  var newShp = {
+    id: uid(), ref: ref, blNum: '', vessel: '', carrier: '', originPort: '', destPort: '',
+    etd: '', eta: '', containerType: '20GP', containerNum: '', dg: false,
+    tradeDocs: seededDocs, docsStatus: shpComputeDocsStatus(seededDocs), status: RD_SHP_STATUS[0],
+    linkedInvs: [inv.num], autoCreatedFromInvIds: [inv.id],
+    forwarder: '', forwarderEmail: '', notes: '', updAt: new Date().toISOString()
+  };
+
+  if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
+    if (!(await ensureSbAuth())) return;
+    var shRow = {
+      ref: newShp.ref, bl_num: null, vessel: null, carrier: null, origin_port: null, dest_port: null,
+      etd: null, eta: null, container_type: newShp.containerType, container_num: null, dg: false,
+      docs_status: newShp.docsStatus, status: newShp.status, linked_invs: newShp.linkedInvs,
+      trade_docs: newShp.tradeDocs, auto_created_from_inv_ids: newShp.autoCreatedFromInvIds,
+      forwarder: null, forwarder_email: null, notes: null, upd_at: newShp.updAt
+    };
+    var result = await _sb.from('shipments').insert(shRow).select().single();
+    if (result.error) { toast('Auto-created Shipment failed to save to Cloud Data: ' + result.error.message); return; }
+    newShp.id = result.data.id;
+    await refreshShFromSupabase();
+  } else {
+    DB.sh.push(newShp);
+    sv(K.sh, DB.sh);
+  }
+  rShp();
+  toast('Shipment ' + ref + ' auto-created — add details as they become available');
 }
 
 function getInvoicePOs(inv) {
@@ -8533,6 +9146,7 @@ function exportVATTransactions() {
 
 // ── INVOICES TABLE ─────────────────────────────────────────────
 function rInv() {
+  var banner = G('inv-autoship-banner'); if (banner) banner.style.display = (SS.autoCreateShipmentOnPaid === false) ? 'flex' : 'none';
   var q=(G('inv-q')&&G('inv-q').value||'').toLowerCase(), sf=G('inv-sf')&&G('inv-sf').value||'';
   // Split records: invoices vs credit notes
   var isCnRec = function(r) { return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
@@ -8544,13 +9158,13 @@ function rInv() {
   if(invTb) invTb.innerHTML=fi.slice().reverse().map(function(inv){
     var c=iCalc(inv), cur=inv.cur||'USD';
     var mc=c.mgn===null||isNaN(c.mgn)?'':(c.mgn>=20?'phi':c.mgn>=10?'pmi':'plo');
-    var sc=(inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = invStatusClass(inv.status);
     var balDue = c.bal;
     return '<tr>' +
       '<td style="color:var(--cr);font-weight:500;white-space:nowrap">' + (san(inv.num)||'-') + (inv._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + (san(inv.buyer)||'-') + '</td><td>' + (san(inv.dst)||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (inv.date||'-') + '</td>' +
-      '<td><span class="tag s-' + sc + '">' + (inv.status||'-') + '</span></td>' +
+      '<td><span class="tag ' + sc + '">' + san(inv.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(c.grand,cur) + '</td>' +
       '<td class="num">' + fmt(c.cogs,cur) + '</td>' +
       '<td class="num ' + (c.gp>=0?'pos':'neg') + '">' + fmt(c.gp,cur) + '</td>' +
@@ -9097,7 +9711,7 @@ function renderStatement(buyer) {
     var credits = DB.inv.filter(function(cn){ return isCnRec(cn) && cn.linkedInvNum===inv.num && cn.status==='CN Applied'; })
                         .reduce(function(s,cn){ return s+Math.abs(+cn.cnAmount||0); }, 0);
     var balDue = c.bal;
-    var sc = (inv.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = invStatusClass(inv.status);
     totalGrand += c.grand; totalPaid += paid; totalCredits += credits;
     return '<tr>' +
       '<td style="font-weight:500;color:var(--cr);">'+san(inv.num||'-')+'</td>' +
@@ -9106,7 +9720,7 @@ function renderStatement(buyer) {
       '<td class="num" style="color:var(--gn);">'+fmt(paid,cur)+'</td>' +
       '<td class="num" style="color:var(--gold);">'+fmt(-credits,cur)+'</td>' +
       '<td class="num" style="color:var(--bl);">'+fmt(balDue,cur)+'</td>' +
-      '<td><span class="tag s-'+sc+'">'+san(inv.status||'-')+'</span></td>' +
+      '<td><span class="tag '+sc+'">'+san(inv.status||'-')+'</span></td>' +
     '</tr>';
   }).join('');
 
@@ -9349,13 +9963,13 @@ function rPO() {
   G('po-tb').innerHTML=f.slice().reverse().map(function(po){
     var liT=(po.lineItems||[]).reduce(function(s,li){return s+(+li.qty||0)*(+li.cost||0);},0);
     var dep=getPOEffectiveDep(po), bal=liT+(+po.oth||0)-dep, cur=po.cur||'USD';
-    var sc=(po.status||'draft').toLowerCase().replace(/ /g,'-');
+    var sc = poStatusClass(po.status);
     return '<tr>' +
       '<td style="color:var(--bl);font-weight:500;white-space:nowrap">' + san(po.num||'-') + (po._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(gsn(po.supId)) + '</td>' +
       '<td style="color:var(--m);font-size:.54rem;">' + san(po.invNum||'-') + '</td>' +
       '<td style="font-size:.54rem;color:var(--m);">' + (po.date||'-') + '</td>' +
-      '<td><span class="tag s-' + sc + '">' + (po.status||'-') + '</span></td>' +
+      '<td><span class="tag ' + sc + '">' + san(po.status||'-') + '</span></td>' +
       '<td class="num">' + fmt(liT,cur) + '</td>' +
       '<td class="num" style="color:var(--bl);">' + (dep?fmt(dep,cur):'-') + '</td>' +
       '<td class="num" style="color:var(--gold);">' + fmt(bal,cur) + '</td>' +
@@ -9487,9 +10101,7 @@ function buildPdfFooter() {
     + '</div>';
 }
 
-function prevInvDoc(inv) {
-  window._lastInv = inv;
-  window._lastPO  = null;
+function buildInvDocHtml(inv) {
   var cur = inv.cur||'USD';
   var lis = inv.lineItems||[];
   if (typeof lis === 'string') { try { lis=JSON.parse(lis); } catch(e){ lis=[]; } }
@@ -9626,7 +10238,14 @@ function prevInvDoc(inv) {
     +'</div>'
     +'</body></html>';
 
-  var blob = new Blob([html], {type:'text/html'});
+  return { html: html, grand: grand, bal: bal };
+}
+
+function prevInvDoc(inv) {
+  window._lastInv = inv;
+  window._lastPO  = null;
+  var built = buildInvDocHtml(inv);
+  var blob = new Blob([built.html], {type:'text/html'});
   var url = URL.createObjectURL(blob);
   var w = window.open(url, '_blank');
   if (!w) { URL.revokeObjectURL(url); alert('Allow pop-ups for this page then try again.'); return; }
@@ -11185,7 +11804,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.83).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.87).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -11251,7 +11870,7 @@ var AI_SYSTEM_PROMPT = [
   'RFQ supplier comparison (v2.9.56): each Order Request line can record multiple suppliers\' RFQ responses (unit cost, currency, CBM, duty %, DG flag, MOQ, lead time, payment terms, optional linked Contact, notes) via "Compare RFQs" → "+ Add Response". Responses are ranked by landed cost converted to GBP (same rate engine as Quotes, LCL basis) — the nominal cheapest quoted price is not always the landed-cheapest once freight/duty/DG are factored in and currencies are converted. A response with no CBM entered shows a warning next to its landed cost, since its freight component reads as zero rather than unknown. Exactly one response per line can be marked Committed at a time; committing again on a different response replaces the prior choice. Each response can also be individually edited or deleted (v2.9.69, REQ/SPEC-ORD-006) — see below. Converting a Contact\'s Order Request to a Quote ("Create Quote") pre-fills one Quote line per line that has a committed response, carrying over that response\'s supplier, quantity (its Order Request line\'s base qty, if set), and unit cost — converted to the Quote\'s working currency if the response was recorded in a different one — so the operator never has to retype or reconvert either. A committed line\'s new Quote line has no per-line margin override set; it uses the quote\'s own default margin like any manually-added line.',
   'get_suppliers/get_buyers tools exist to resolve a name to an id before emitting create_invoice/create_line_item/create_po action blocks — call one of these first whenever a supplier or buyer name is mentioned but no id is already known from the conversation, and ask a clarifying question rather than guessing if there are zero or multiple ambiguous matches. These tools deliberately do not return contact/email/phone — if the user asks for a supplier\'s or buyer\'s contact details, say that information isn\'t available through these tools and point them to the Suppliers/Buyers tab instead, rather than inventing an answer.',
   'Source traceability & staleness warning (v2.9.58, Phase 1 of a referential-integrity build): a Quote line created via "Create Quote" from a committed RFQ response now records which Order Request line and which specific RFQ response it came from. If the operator later commits a *different* RFQ response on that same Order Request line, re-opening the Quote shows a warning banner ("Source pricing has changed since this Quote was created — review before sending") — the Quote itself is never auto-updated, only flagged. A distinct message appears if the source Order Request has been deleted entirely. Quotes created before this version, or built entirely from manually-added lines, never show this banner — there is nothing to trace them back to. Manually-added lines and AI-proposed Quotes (create_quote action) are unaffected and never carry this traceability.',
-  'Edit and delete RFQ responses (v2.9.69, REQ/SPEC-ORD-006): each response row in "Compare RFQs" now has Edit and Delete buttons alongside Commit/Uncommit. Edit reopens the same "+ Add Response" modal pre-filled with that response\'s values; saving replaces it in place (same position, same count of responses) rather than adding a new one. Delete removes a response outright; if it is the line\'s currently committed response, the operator sees an explicit warning before confirming that this will un-commit the line and may trigger the staleness banner described above on any Quote already converted from it — deleting or editing the specific response a Quote was sourced from re-triggers that same staleness banner, exactly as committing a different response already did. Each response row also has an envelope (✉) button (v2.9.70, REQ/SPEC-AI-GAP-011, only functional if a Claude API key is configured) — the operator pastes a supplier\'s email text, and a single AI call extracts any of cost/currency/MOQ/lead time/payment terms/notes the email explicitly states a new value for, shown as a before/after diff for the operator to Apply or Discard; nothing is applied automatically, and Apply goes through the exact same edit mechanism described above, including the id-rotation/staleness-banner behavior if the response is committed. If asked whether the chat assistant itself can do this from a pasted email, say no — direct the operator to this button on the specific response instead, since that is the only place this capability exists.',
+  'Edit and delete RFQ responses (v2.9.69, REQ/SPEC-ORD-006): each response row in "Compare RFQs" now has Edit and Delete buttons alongside Commit/Uncommit. Edit reopens the same "+ Add Response" modal pre-filled with that response\'s values; saving replaces it in place (same position, same count of responses) rather than adding a new one. Delete removes a response outright; if it is the line\'s currently committed response, the operator sees an explicit warning before confirming that this will un-commit the line and may trigger the staleness banner described above on any Quote already converted from it — deleting or editing the specific response a Quote was sourced from re-triggers that same staleness banner, exactly as committing a different response already did. Each response row also has an envelope (✉) button (v2.9.70, REQ/SPEC-AI-GAP-011, only functional if a Claude API key is configured) — the operator pastes a supplier\'s email text, and a single AI call extracts any of cost/currency/MOQ/lead time/payment terms/notes the email explicitly states a new value for, shown as a before/after diff for the operator to Apply or Discard; nothing is applied automatically, and Apply goes through the exact same edit mechanism described above, including the id-rotation/staleness-banner behavior if the response is committed. If asked whether the chat assistant itself can do this from a pasted email, say no — direct the operator to this button on the specific response instead, since that is the only place this capability exists. A separate "Import Supplier Quote File" button (v2.9.85, REQ/SPEC-AI-GAP-012, CSV only — .xlsx is not supported) lives once per Order Request, above its line items — the operator selects the supplier the file is from and uploads a comma-delimited .csv, reviews the parsed rows before anything is sent (a mandatory confirmation step), and the AI attempts to match each row to one of the Order Request\'s own line items, proposing a diff per confidently-matched line for individual Apply or Discard, exactly as the single-response email version does; any row it can\'t confidently match is listed separately for manual review, never guessed at or silently dropped. If asked whether this same button can accept an Excel (.xlsx) file, say no — only .csv is supported today.',
   '',
   '## Invoices',
   'Invoices tab → + New Invoice.',
@@ -11338,12 +11957,16 @@ var AI_SYSTEM_PROMPT = [
   'Tax is always a buyer pass-through — never Stackd income.',
   '',
   '## Shipments',
+  'A Shipment is now also auto-created automatically whenever an Invoice is saved with status Paid (unless disabled in Settings → Integrations → Auto-create Shipment toggle) — it starts with a 7-item trade-document checklist (Purchase Invoice, Commercial Invoice, Packing List, Bill of Lading, Certificate of Origin, VGM Declaration, Insurance Certificate; an 8th, Dangerous Goods Declaration, if the shipment is DG-flagged). The operator fills these in from the Trade Documents section near the bottom of the Edit Shipment modal — a status dropdown (Pending/Received/N-A) plus reference number, received date, and file-location note per document — and can add a custom line for anything destination-specific the default checklist doesn\'t cover. This section only shows once the Shipment has been saved at least once. No file upload — location/link tracking only.',
   'Shipments tab → + New Shipment. Ref format: SHP-001.',
   'Fields: BL Number, Vessel, Carrier, Origin Port (UN/LOCODE lookup), Destination Port (UN/LOCODE lookup), ETD, ETA, Container Type (20GP / 40HQ / LCL / Other), Container Number, DG Onboard, Docs Status (Pending / In Progress / Complete), Status, Linked Invoices, Forwarder Name, Forwarder Email, Notes.',
   'Status flow: Pending → Booked → In Transit → Arrived → Delivered.',
   'DG Onboard: tick if any product is classified as Dangerous Goods (e.g. refrigerants, batteries). Triggers IMDG compliance requirements.',
   'Load Calculator: &#128220; Load Calculator button on Shipments toolbar. Select invoices → Calculate to sum CBM from invoice cubic weight fields, get container recommendation, and flag DG. Export as plain text summary.',
   'Forwarder Update Request: &#128231; button on each shipment row. Opens a pre-filled message with all shipment details. Copy to clipboard or send via webhook (configure in Settings → Integrations). Forwarder name/email auto-populates from the shipment record.',
+  '',
+  '## Automation Webhooks',
+  'Settings → Integrations → Automation Webhooks. Operator configures one or more rules (trigger + destination URL, must start with https://, individually enabled/disabled) that POST a JSON payload to an external automation tool such as Make.com when a trigger fires. Adding a rule also requires checking a one-time attestation box confirming the operator has checked the destination\'s own data handling — in particular that any email it sends out (e.g. an invoice PDF) goes via a business account with its own data processing agreement, not a personal Gmail address — this app has no way to verify that itself, so it asks for a deliberate confirmation instead of silently accepting any URL. v1 has exactly one trigger: "Invoice: Buyer Approved" — fires once, the moment an Invoice\'s buyer approval genuinely transitions from unapproved to approved (clicking "Mark Buyer Approved" on a Pro-forma invoice), never again on a later correction to an already-approved invoice\'s approval fields. The payload carries invoice/buyer data, line items, and the invoice rendered as HTML (so the destination automation can build a PDF and email it to the buyer) — no PDF is generated by this app itself. If the invoice\'s buyer has no usable email on file (including the Ad-Hoc/BUY-ADHOC placeholder buyer), the webhook is skipped and the operator sees a toast explaining why. Fire-and-forget: no delivery guarantee or retry if the destination is briefly unreachable or the browser tab closes moments after the click.',
   '',
   '## Google Sheets Sync',
   'Settings → Google Sheets. Paste Apps Script URL → Save & Connect.',
@@ -12012,6 +12635,9 @@ function rCfg() {
   if(G('cfg-ai-key')) G('cfg-ai-key').value=AI.key||'';
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
   if(G('cfg-fwd-webhook')) G('cfg-fwd-webhook').value=SS.fwdWebhook||'';
+  if(G('cfg-autoship-toggle')) G('cfg-autoship-toggle').checked = SS.autoCreateShipmentOnPaid !== false;
+  if(G('whr-trigger')) populateWebhookTriggerSelect();
+  if(G('webhook-rules-disclosure') || G('webhook-rules-panel')) renderWebhookRulesPanel();
   if(G('cfg-sup-intel-threshold')) G('cfg-sup-intel-threshold').value = +localStorage.getItem('stackd_sup_intel_threshold_months') || 12;
   if(G('cfg-sb-url')) G('cfg-sb-url').value = SS.supabaseUrl||'';
   if(G('cfg-sb-key')) G('cfg-sb-key').value = SS.supabaseAnonKey||'';
@@ -12500,7 +13126,44 @@ function shpStatusClass(st) {
   return m[st] || 's-draft';
 }
 
+// SEC-GAP-021: status-tag class strings must never be built by slugifying
+// unsanitized `status` text (`(x.status||'draft').toLowerCase().replace(/ /g,'-')`)
+// and concatenating it into `class="tag s-' + sc + '"` — a status value containing
+// a `"` breaks out of the attribute regardless of whether the adjacent text content
+// is san()'d, and this was reachable live via CSV Invoice import (processImportRecords()'s
+// status mapper falls through to the raw cell value for anything it doesn't recognize).
+// Every entity with a status tag gets its own fixed lookup + safe default, mirroring
+// shpStatusClass() above — never slugify raw text into a class attribute again.
+function invStatusClass(st) {
+  var m = {
+    'Draft':'s-draft', 'Pro-forma':'s-pro-forma', 'Sent':'s-sent',
+    'Partially Paid':'s-partially-paid', 'Paid':'s-paid', 'Cancelled':'s-cancelled',
+    'CN Draft':'s-cn-draft', 'CN Issued':'s-cn-issued', 'CN Applied':'s-cn-applied'
+  };
+  return m[st] || 's-draft';
+}
+function poStatusClass(st) {
+  var m = {
+    'Draft':'s-draft', 'Sent':'s-sent', 'Deposit Paid':'s-deposit-paid',
+    'Settled':'s-settled', 'Confirmed':'s-confirmed', 'Cancelled':'s-cancelled'
+  };
+  return m[st] || 's-draft';
+}
+function conStatusClass(st) {
+  var m = { 'lead':'s-lead', 'qualified':'s-qualified', 'converted':'s-converted', 'closed':'s-closed' };
+  return m[st] || 's-lead';
+}
+function ordStageClass(stage) {
+  var m = {
+    'New':'s-draft', 'Qualifying':'s-lead', 'Quoted':'s-sent',
+    'Converting':'s-partially-paid', 'Processing':'s-deposit-paid', 'Fulfilled':'s-paid',
+    'Declined':'s-cancelled', 'Lost':'s-cancelled'
+  };
+  return m[stage] || 's-draft';
+}
+
 function rShp() {
+  var banner = G('sh-autoship-banner'); if (banner) banner.style.display = (SS.autoCreateShipmentOnPaid === false) ? 'flex' : 'none';
   var q = (G('sh-q') ? G('sh-q').value.toLowerCase() : '');
   var sf = (G('sh-sf') ? G('sh-sf').value : '');
   var rows = DB.sh.filter(function(s){
@@ -12555,9 +13218,11 @@ function openShp() {
   if(G('shf-eta')) G('shf-eta').value='';
   vClrAll(['shf-ref','shf-etd','shf-eta']);
   if(G('shf-ctype')) G('shf-ctype').value='20GP';
-  if(G('shf-docs')) G('shf-docs').value='Pending';
+  if(G('shf-docs')) { G('shf-docs').value='Pending'; G('shf-docs').disabled=false; G('shf-docs').title=''; }
   if(G('shf-st')) G('shf-st').value='Pending';
   if(G('shf-dg')) G('shf-dg').checked=false;
+  if(G('shp-docs-panel')) G('shp-docs-panel').innerHTML = '<div style="color:var(--m);font-size:.54rem;">Save this Shipment first, then reopen it to add trade documents.</div>';
+  if(G('shp-docs-newtype')) G('shp-docs-newtype').value = '';
   G('ov-shp').classList.add('on');
   setTimeout(function(){ if(G('shf-ref')) G('shf-ref').focus(); }, 50);
 }
@@ -12578,6 +13243,8 @@ function editShp(id) {
   if(G('shf-fwd')) G('shf-fwd').value=s.forwarder||'';
   if(G('shf-fwde')) G('shf-fwde').value=s.forwarderEmail||'';
   G('shf-nt').value=s.notes||'';
+  if(G('shp-docs-newtype')) G('shp-docs-newtype').value = '';
+  renderShpDocsPanel(id);
   G('ov-shp').classList.add('on');
 }
 
@@ -12608,6 +13275,34 @@ async function saveShp() {
     updAt: new Date().toISOString()
   };
 
+  // REQ-SHIP-001e2: tradeDocs/autoCreatedFromInvIds have no form field on this
+  // modal — without carrying them forward here, any edit to any other field on
+  // a Shipment that has them silently discards the whole trade-document
+  // checklist and the auto-creation idempotency marker.
+  if (EI.sh) {
+    var existingShp = DB.sh.find(function(x){ return x.id === EI.sh; });
+    shp.tradeDocs = (existingShp && existingShp.tradeDocs) || [];
+    shp.autoCreatedFromInvIds = (existingShp && existingShp.autoCreatedFromInvIds) || [];
+    // REQ-SHIP-001e: DG toggle add/remove — edit-time only, never on create.
+    var wasDg = !!(existingShp && existingShp.dg);
+    var dgLineIdx = shp.tradeDocs.findIndex(function(d){ return d.autoManaged && d.type === 'Dangerous Goods Declaration'; });
+    if (shp.dg && !wasDg && dgLineIdx === -1) {
+      shp.tradeDocs = shp.tradeDocs.concat([shpNewTradeDocEntry('Dangerous Goods Declaration', true)]);
+    } else if (!shp.dg && wasDg && dgLineIdx > -1) {
+      var dgLine = shp.tradeDocs[dgLineIdx];
+      var untouched = dgLine.status === 'Pending' && !dgLine.refNum && !dgLine.fileLocation && !dgLine.notes;
+      if (untouched) shp.tradeDocs = shp.tradeDocs.filter(function(d, i){ return i !== dgLineIdx; });
+    }
+    if (shp.tradeDocs.length) shp.docsStatus = shpComputeDocsStatus(shp.tradeDocs);
+  } else {
+    // Create path: a brand-new Shipment always starts with no tradeDocs at
+    // all, regardless of the dg checkbox — docsStatus stays exactly what the
+    // operator picked in the shf-docs dropdown, since this record hasn't
+    // opted into the automated checklist yet.
+    shp.tradeDocs = [];
+    shp.autoCreatedFromInvIds = [];
+  }
+
   if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var shRow = {
@@ -12615,6 +13310,7 @@ async function saveShp() {
       origin_port: shp.originPort || null, dest_port: shp.destPort || null, etd: shp.etd || null, eta: shp.eta || null,
       container_type: shp.containerType || null, container_num: shp.containerNum || null, dg: !!shp.dg,
       docs_status: shp.docsStatus || null, status: shp.status, linked_invs: shp.linkedInvs || [],
+      trade_docs: shp.tradeDocs, auto_created_from_inv_ids: shp.autoCreatedFromInvIds,
       forwarder: shp.forwarder || null, forwarder_email: shp.forwarderEmail || null, notes: shp.notes || null,
       upd_at: shp.updAt
     };
@@ -12818,11 +13514,86 @@ async function sendFwdReq() {
   }
 }
 
+async function fireWebhookRules(triggerKey, payload) {
+  var rules = (SS.webhookRules || []).filter(function(r){ return r.trigger === triggerKey && r.enabled; });
+  if (!rules.length) return { sent: 0, failed: 0 };
+  var body = JSON.stringify(payload);
+  var results = await Promise.allSettled(rules.map(function(r){
+    return fetch(r.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
+      .then(function(res){ if (!res.ok) throw new Error('HTTP ' + res.status); return res; });
+  }));
+  var sent = results.filter(function(r){ return r.status === 'fulfilled'; }).length;
+  var failed = results.length - sent;
+  return { sent: sent, failed: failed };
+}
+
 function saveFwdWebhook() {
   var webhook = G('cfg-fwd-webhook') ? G('cfg-fwd-webhook').value.trim() : '';
   if (webhook && !webhook.startsWith('https://')) { toast('Webhook URL must start with https://'); return; }
   SS.fwdWebhook = webhook;
   sv(K.ss, SS); toast('Webhook saved');
+}
+
+function populateWebhookTriggerSelect() {
+  var sel = G('whr-trigger');
+  if (!sel) return;
+  sel.innerHTML = WEBHOOK_TRIGGERS.map(function(t){ return '<option value="' + t.key + '">' + san(t.label) + '</option>'; }).join('');
+}
+
+function addWebhookRule() {
+  var trigger = G('whr-trigger').value;
+  var url = G('whr-url').value.trim();
+  var enabled = G('whr-enabled') ? G('whr-enabled').checked : true;
+  if (!url || !url.startsWith('https://')) { toast('Webhook URL must start with https://'); return; }
+  if (!G('whr-attest').checked) { toast('Confirm this destination\'s data handling before adding it (checkbox below the Add Rule row)'); return; }
+  if (!SS.webhookRules) SS.webhookRules = [];
+  SS.webhookRules.push({ id: uid(), trigger: trigger, url: url, enabled: enabled, createdAt: new Date().toISOString(), dataHandlingAttestedAt: new Date().toISOString() });
+  sv(K.ss, SS);
+  G('whr-url').value = '';
+  G('whr-attest').checked = false;
+  renderWebhookRulesPanel();
+  toast('Webhook rule added');
+}
+
+function toggleWebhookRule(id, enabled) {
+  var r = (SS.webhookRules||[]).find(function(x){ return x.id === id; });
+  if (!r) return;
+  r.enabled = enabled;
+  sv(K.ss, SS);
+}
+
+function delWebhookRule(id) {
+  SS.webhookRules = (SS.webhookRules||[]).filter(function(x){ return x.id !== id; });
+  sv(K.ss, SS);
+  renderWebhookRulesPanel();
+  toast('Webhook rule removed');
+}
+
+var WEBHOOK_DISCLOSURE_HTML = '&#9432; A webhook rule targeting <b>Invoice: Buyer Approved</b> sends, to the URL you configure: buyer name and email; and the full rendered invoice document exactly as printed &mdash; financial detail, line items, buyer name/address, FPM\'s own company bank account details (Settings &rarr; Company (Stackd)), and anything else configured to appear on that document (e.g. a custom footer note). Only configure a URL you control or trust. Webhook rules are opt-in &mdash; no data is transmitted unless a rule exists and is enabled.';
+
+function renderWebhookRulesPanel() {
+  var disclosure = G('webhook-rules-disclosure');
+  if (disclosure) disclosure.innerHTML = '<p style="font-size:.48rem;color:var(--m);margin-bottom:8px;">' + WEBHOOK_DISCLOSURE_HTML + '</p>';
+  var panel = G('webhook-rules-panel');
+  if (!panel) return;
+  var rules = SS.webhookRules || [];
+  var rows = rules.map(function(r){
+    var t = WEBHOOK_TRIGGERS.find(function(x){ return x.key === r.trigger; });
+    return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--ln);font-size:.5rem;">'
+      + '<label style="display:flex;align-items:center;gap:4px;"><input type="checkbox"' + (r.enabled?' checked':'') + ' onchange="toggleWebhookRule(\'' + r.id + '\',this.checked)"></label>'
+      + '<span style="flex-shrink:0;">' + san(t?t.label:r.trigger) + '</span>'
+      + '<span style="flex:1;color:var(--m);word-break:break-all;">' + san(r.url) + '</span>'
+      + '<button class="btn btn-g" style="font-size:.44rem;padding:1px 5px;border-color:var(--cr);color:var(--cr);" onclick="delWebhookRule(\'' + r.id + '\')">Del</button>'
+      + '</div>';
+  }).join('');
+  panel.innerHTML = rows || '<div style="color:var(--m);font-size:.54rem;">No automation webhook rules configured.</div>';
+}
+
+function saveAutoShipToggle() {
+  SS.autoCreateShipmentOnPaid = G('cfg-autoship-toggle').checked;
+  sv(K.ss, SS);
+  rInv(); rShp();
+  toast('Setting saved');
 }
 
 function unlockInv() {
@@ -13540,12 +14311,12 @@ function rCon() {
       '<td>' + san(c.name) + stale + (c._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td>' +
       '<td>' + san(c.company||'—') + '</td>' +
       '<td>' + san(c.email) + '</td>' +
-      '<td><span class="tag s-' + c.status + '">' + san(c.status) + '</span></td>' +
+      '<td><span class="tag ' + conStatusClass(c.status) + '">' + san(c.status) + '</span></td>' +
       '<td>' + san(c.source||'—') + '</td>' +
       '<td>' + (c.supplierId ? san(gsn(c.supplierId)) : '—') + '</td>' +
       '<td>' + lastDate + '</td>' +
       '<td>' + (c.enquiries||[]).length + '</td>' +
-      '<td class="ab"><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
+      '<td><button class="btn btn-s" onclick="editCon(\'' + c.id + '\')">Edit</button> ' +
            '<button class="btn btn-g" onclick="openConvertToQuote(\'' + c.id + '\')">&#8594; Quote</button> ' +
            '<button class="btn" style="background:var(--cr);color:white;" onclick="delCon(\'' + c.id + '\')">Del</button></td>' +
     '</tr>';
@@ -13641,7 +14412,7 @@ async function saveCon() {
         var mergedEnquiries = (dup.enquiries || []).slice();
         if (enqSummary) mergedEnquiries.push({ id: uid(), ts: new Date().toISOString(), summary: enqSummary, source: 'manual' });
         var mergedLastContactedAt = new Date().toISOString();
-        if (_sb) {
+        if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
           if (!(await ensureSbAuth())) return;
           var mergeResult = await _sb.from('contacts').update({ enquiries: mergedEnquiries, last_contacted_at: mergedLastContactedAt }).eq('id', dup.id);
           if (mergeResult.error) { toast('Merge failed: ' + mergeResult.error.message); return; }
@@ -13673,7 +14444,7 @@ async function saveCon() {
   var lastContactedAt = enqSummary ? new Date().toISOString() : (existC ? (existC.lastContactedAt || '') : '');
   var prevStatus = existC ? existC.status : null;
 
-  if (_sb) {
+  if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var row = {
       name: name, email: email, phone: phone, company: company, status: status, source: source,
@@ -13743,7 +14514,7 @@ async function saveCon() {
 async function delCon(id) {
   if (!confirm('Delete this contact? This cannot be undone.')) return;
 
-  if (_sb) {
+  if (_sb && localStorage.getItem('st_con_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var result = await _sb.from('contacts').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (result.error) { toast('Delete failed: ' + result.error.message); return; }
@@ -13889,15 +14660,15 @@ function prevQteDoc(q) {
       + '<td style="padding:4px 8px;font-size:11px;text-align:right;font-weight:600;">$' + fn(calc.landed||0,0) + '</td>'
       + '</tr>';
   }).join('');
-  var html = '<!DOCTYPE html><html><head><title>' + san(q.num) + ' — Quote</title>'
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + san(q.num) + ' — Quote</title>'
     + '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:0;padding:24px;color:#222;}'
     + 'h1{font-size:22px;letter-spacing:.1em;margin:0 0 4px;}table{border-collapse:collapse;width:100%;}'
-    + 'th{background:#1a1a1a;color:white;padding:6px 8px;text-align:left;font-size:11px;}'
+    + 'th{background:#0f0c0d;color:white;padding:6px 8px;text-align:left;font-size:11px;}'
     + 'td{border-bottom:1px solid #e8e8e8;}@media print{button{display:none!important;}}</style></head>'
     + '<body>'
     + '<div style="display:flex;justify-content:space-between;margin-bottom:16px;">'
     + '<div><h1>QUOTE</h1><div style="color:#888;font-size:11px;">' + san(AS.name||'Stackd') + ' · ' + san(AS.email||'') + '</div></div>'
-    + '<div style="text-align:right;"><div style="font-weight:600;font-size:16px;color:#c00;">' + san(q.num) + '</div>'
+    + '<div style="text-align:right;"><div style="font-weight:600;font-size:16px;color:#B8283A;">' + san(q.num) + '</div>'
     + '<div style="font-size:11px;">' + san(q.dt||'') + '</div>'
     + '<div style="font-size:11px;color:#888;">Valid until: ' + san(q.validUntil||'—') + '</div></div>'
     + '</div>'
@@ -13909,7 +14680,7 @@ function prevQteDoc(q) {
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.origin,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Destination Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.dest,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Admin</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.admin,0) + '</td></tr>'
-    + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#c00;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
+    + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#B8283A;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
     + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (GBP)</td><td style="padding:3px 8px;text-align:right;font-weight:600;">£' + fn(c.sellGBP,0) + '</td></tr>'
     + '</tbody></table></div>'
     + (q.notes ? '<div style="margin-top:14px;font-size:11px;border-top:1px solid #e8e8e8;padding-top:10px;"><strong>Notes:</strong> ' + san(q.notes) + '</div>' : '')
@@ -14905,6 +15676,7 @@ function initApp() {
     window.currentTab = 'dash';
     updateAIChips('dash');
     initLang();
+    initPresentationMode();
     renderSyncStatus();
     checkStorageQuota();
   } catch(e) {

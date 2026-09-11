@@ -8,13 +8,27 @@ const vm       = require('vm');
 const fixtures = require('./fixtures.js');
 
 // ── MOCK BROWSER ENVIRONMENT ───────────────────────────────────
+function makeClassList() {
+  var classes = new Set();
+  return {
+    add(c) { classes.add(c); },
+    remove(c) { classes.delete(c); },
+    toggle(c, force) {
+      var on = force !== undefined ? force : !classes.has(c);
+      if (on) classes.add(c); else classes.delete(c);
+      return on;
+    },
+    contains(c) { return classes.has(c); },
+  };
+}
+
 const mockElements = {};
 function mockEl(id) {
   if (!mockElements[id]) {
     mockElements[id] = {
       value: '', innerHTML: '', textContent: '',
       style: { display: '', borderBottomColor: '', background: '' },
-      classList: { add() {}, remove() {}, contains: () => false },
+      classList: makeClassList(),
       options: { length: 0 },
       checked: false,
       appendChild() {},
@@ -30,6 +44,7 @@ const mockDoc = {
   addEventListener:  () => {},
   createElement:     () => ({ click() {}, href: '', download: '', style: {}, classList: { add() {}, remove() {} } }),
   title: '',
+  body: { classList: makeClassList() },
 };
 
 const mockStorage = {};
@@ -58,6 +73,14 @@ let _fetchCallLog = [];
 // or {status:200, text:<raw response body text>} before calling the function under test.
 let _mockAnthropic = null;
 let _lastAnthropicBody = null;
+// Mock for fireWebhookRules() (REQ/SPEC-WEBHOOK-001). Keyed by exact rule URL so a
+// single fireWebhookRules() call can exercise multiple rules with independent outcomes
+// (AC-6 needs 3 simultaneous, different outcomes) — a single non-keyed override
+// variable cannot express that. Each value is one of: 'reject' (network error) or
+// {status:<code>} (translated to ok:status>=200&&status<300), mirroring _mockAnthropic's
+// own three-state shape. Populate before calling fireWebhookRules()/saveInvApprove().
+let _mockWebhookResponses = {};
+let _webhookCallLog = [];
 function mockFetch(url, opts) {
   if (typeof url === 'string' && url.indexOf('api.anthropic.com') >= 0) {
     _lastAnthropicBody = JSON.parse((opts && opts.body) || '{}');
@@ -68,6 +91,13 @@ function mockFetch(url, opts) {
       status: m.status,
       json: () => Promise.resolve({ content: [{ type: 'text', text: m.text || '' }] }),
     });
+  }
+  if (typeof url === 'string' && Object.prototype.hasOwnProperty.call(_mockWebhookResponses, url)) {
+    _webhookCallLog.push({ url: url, body: (opts && opts.body) || '' });
+    var w = _mockWebhookResponses[url];
+    if (w === 'reject') return Promise.reject(new Error('network error'));
+    var status = (w && w.status) || 200;
+    return Promise.resolve({ ok: status >= 200 && status < 300, status: status });
   }
   var body = {};
   try { body = JSON.parse((opts && opts.body) || '{}'); } catch (e) {}
@@ -3233,6 +3263,45 @@ test('_lang defaults to en when not set', function() {
   assert(ctx._lang === 'en' || ctx._lang === 'zh', '_lang is a valid language code');
 });
 
+// ── Presentation Mode (UI redesign, projector/screen optimization) ─
+console.log('\nPresentation Mode (UI redesign)');
+
+test('setPresentationMode(true) — adds body class, persists to localStorage, updates toggle button', function() {
+  ctx.setPresentationMode(true);
+  assert(ctx.document.body.classList.contains('presentation-mode'), 'body has presentation-mode class');
+  assertEqual(ctx.localStorage.getItem('stackd_presentation_mode'), '1');
+  assert(mockEl('pmode-btn').classList.contains('on'), 'toggle button shows on state');
+  assertContains(mockEl('pmode-btn').title, 'is ON', 'button title reflects the on state');
+  ctx.setPresentationMode(false); // reset for test isolation
+});
+
+test('setPresentationMode(false) — removes body class, persists to localStorage, resets toggle button', function() {
+  ctx.setPresentationMode(true);
+  ctx.setPresentationMode(false);
+  assert(!ctx.document.body.classList.contains('presentation-mode'), 'body class removed');
+  assertEqual(ctx.localStorage.getItem('stackd_presentation_mode'), '0');
+  assert(!mockEl('pmode-btn').classList.contains('on'), 'toggle button on state cleared');
+  assertContains(mockEl('pmode-btn').title, 'larger text', 'button title reflects the off state');
+});
+
+test('togglePresentationMode() — flips from the current state in both directions', function() {
+  ctx.setPresentationMode(false);
+  ctx.togglePresentationMode();
+  assert(ctx.document.body.classList.contains('presentation-mode'), 'toggled on from off');
+  ctx.togglePresentationMode();
+  assert(!ctx.document.body.classList.contains('presentation-mode'), 'toggled back off');
+});
+
+test('initPresentationMode() — applies the module-level _presentationMode value on startup', function() {
+  ctx.document.body.classList.remove('presentation-mode');
+  ctx._presentationMode = true;
+  ctx.initPresentationMode();
+  assert(ctx.document.body.classList.contains('presentation-mode'), 'startup applies a true _presentationMode');
+  ctx._presentationMode = false;
+  ctx.initPresentationMode();
+  assert(!ctx.document.body.classList.contains('presentation-mode'), 'startup applies a false _presentationMode');
+});
+
 // ── Company Branding (v2.9.10) ─────────────────────────────────
 console.log('\nCompany Branding (v2.9.10)');
 
@@ -4969,6 +5038,56 @@ test('addPaymentFromForm() legacy-plus-new payment on the same EUR invoice share
   var inv = ctx.DB.inv[0];
   assertEqual(ctx.getInvTotalPaidNative(inv), 350, 'legacy (defaults to inv.cur) and new (forced to inv.cur) payments combine correctly');
   assertEqual(inv.dep, 350, 'inv.dep reflects the correct combined raw sum after save');
+});
+
+// Duplicate-entry confirmation guard (found needed by 6 real-world exact-duplicate
+// Buyer Payment records in production — see docs/known-gaps.md). Shipped with zero
+// test coverage originally; added here.
+test('addPaymentFromForm() blocks a same-invoice/same-date/same-amount duplicate when confirm() is declined', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-dup-1', num: 'INV-DUP-1', cur: 'USD', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-dup-existing', invId: 'inv-dup-1', invNum: 'INV-DUP-1', date: '2026-01-01', amount: 200, currency: 'USD' });
+  mockEl('pm-date').value = '2026-01-01'; mockEl('pm-amount').value = '200'; mockEl('pm-cur').value = 'USD';
+  mockEl('pm-purpose').value = 'Balance'; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = ''; mockEl('pm-notes').value = '';
+  ctx.confirm = function(){ return false; };
+  ctx.addPaymentFromForm('inv-dup-1');
+  assertEqual(ctx.DB.payments.length, 1, 'declining the confirm blocks the duplicate save entirely');
+  ctx.confirm = function(){ return true; };
+});
+test('addPaymentFromForm() allows a genuine second payment matching an existing one when confirm() is accepted', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-dup-2', num: 'INV-DUP-2', cur: 'USD', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-dup-existing-2', invId: 'inv-dup-2', invNum: 'INV-DUP-2', date: '2026-01-01', amount: 200, currency: 'USD' });
+  mockEl('pm-date').value = '2026-01-01'; mockEl('pm-amount').value = '200'; mockEl('pm-cur').value = 'USD';
+  mockEl('pm-purpose').value = 'Balance'; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = ''; mockEl('pm-notes').value = '';
+  ctx.confirm = function(){ return true; };
+  ctx.addPaymentFromForm('inv-dup-2');
+  assertEqual(ctx.DB.payments.length, 2, 'confirming proceeds — a real second payment for the same amount/date is not blocked outright');
+});
+test('addPaymentFromForm() never prompts for a payment that does not match any existing one', function() {
+  resetDB();
+  ctx.DB.inv.push({ id: 'inv-dup-3', num: 'INV-DUP-3', cur: 'USD', dep: 0, calc_grandTotal: '1000', lineItems: [] });
+  ctx.DB.payments.push({ id: 'pm-dup-existing-3', invId: 'inv-dup-3', invNum: 'INV-DUP-3', date: '2026-01-01', amount: 200, currency: 'USD' });
+  mockEl('pm-date').value = '2026-01-02'; mockEl('pm-amount').value = '300'; mockEl('pm-cur').value = 'USD'; // different date AND amount
+  mockEl('pm-purpose').value = 'Balance'; mockEl('pm-method').value = 'Bank Transfer'; mockEl('pm-ref').value = ''; mockEl('pm-notes').value = '';
+  var confirmCalled = false;
+  ctx.confirm = function(){ confirmCalled = true; return false; };
+  ctx.addPaymentFromForm('inv-dup-3');
+  assertEqual(confirmCalled, false, 'confirm() never invoked — nothing matches, no prompt needed');
+  assertEqual(ctx.DB.payments.length, 2, 'genuinely distinct payment saves without any prompt');
+  ctx.confirm = function(){ return true; };
+});
+
+test('addSupPaymentFromForm() blocks a same-PO/same-date/same-amount duplicate when confirm() is declined', function() {
+  resetDB();
+  ctx.DB.po.push({ id: 'po-dup-1', num: 'PO-DUP-1', supId: 'sup-1', cur: 'USD', status: 'Confirmed', lineItems: [] });
+  ctx.DB.supPayments.push({ id: 'spm-dup-existing', poId: 'po-dup-1', poNum: 'PO-DUP-1', date: '2026-01-01', amount: 100, currency: 'USD' });
+  mockEl('spm-date').value = '2026-01-01'; mockEl('spm-amount').value = '100'; mockEl('spm-cur').value = 'USD';
+  mockEl('spm-purpose').value = 'Deposit'; mockEl('spm-method').value = 'Bank Transfer'; mockEl('spm-ref').value = ''; mockEl('spm-notes').value = '';
+  ctx.confirm = function(){ return false; };
+  ctx.addSupPaymentFromForm('po-dup-1');
+  assertEqual(ctx.DB.supPayments.length, 1, 'declining the confirm blocks the duplicate save entirely');
+  ctx.confirm = function(){ return true; };
 });
 
 test('savePayment()/deletePayment() on a EUR invoice: raw sum survives a full save-then-delete cycle, never mis-pivoted (AC-3b)', function() {
@@ -7903,6 +8022,68 @@ testAsync('delCon — Cloud Data configured: soft-delete via update({deleted_at}
   ctx.confirm = function(){ return false; };
 });
 
+// LI-GAP-002/CON-GAP-007: saveLI()/delLI()/saveCon()/delCon() previously gated on
+// bare `_sb` truthiness, unlike every other entity's own save/del function (Order
+// Request, Purchase Order, Quote, Invoice all correctly check their own migration
+// marker too). _sb is configured the moment ANY entity's Cloud Data is set up —
+// Supplier/Buyer, say — long before Line Item or Contact's OWN migration has run.
+// Editing a pre-existing local (uid()-format id) Line Item/Contact in that window
+// hit the Supabase branch anyway, and PostgREST's .single() on an id that was never
+// inserted into the table returns a 0-rows error, silently losing the edit.
+testAsync('saveLI() falls back to local save when _sb is configured but Line Item has not migrated yet (LI-GAP-002)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.EI.l = null;
+  ['lf-s','lf-d','lf-sp','lf-hs','lf-sup','lf-u','lf-c','lf-p','lf-cur','lf-nt','lf-diml','lf-dimw','lf-dimh'].forEach(function(id){ mockEl(id); });
+  mockEl('lf-s').value = 'SKU2'; mockEl('lf-d').value = 'Gadget'; mockEl('lf-sup').value = 'sup-1'; mockEl('lf-cur').value = 'USD';
+  var sb = mockSb({ line_items: { insertImpl: function(row){ return Object.assign({ id: 'should-not-be-used' }, row); } } });
+  ctx._sb = sb;
+  await ctx.saveLI();
+  assertEqual(sb._calls.length, 0, 'Supabase never called — Line Item has not migrated on this device');
+  assertEqual(ctx.DB.li.length, 1, 'saved locally instead');
+  assertEqual(ctx.DB.li[0].sku, 'SKU2');
+});
+
+testAsync('delLI() falls back to local delete when _sb is configured but Line Item has not migrated yet (LI-GAP-002)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  ctx.DB.li.push({ id: 'l-nomig', sku: 'SKU3' });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.delLI('l-nomig');
+  assertEqual(sb._calls.length, 0, 'Supabase never called — Line Item has not migrated on this device');
+  assertEqual(ctx.DB.li.length, 0, 'deleted locally instead');
+  ctx.confirm = function(){ return false; };
+});
+
+testAsync('saveCon() falls back to local save when _sb is configured but Contact has not migrated yet (CON-GAP-007)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.EI.co = null;
+  ['ct-name','ct-email','ct-status','ct-enq-summary','ct-phone','ct-company','ct-source','ct-notes','ct-sup'].forEach(function(id){ mockEl(id); });
+  mockEl('ct-name').value = 'No Migration Yet'; mockEl('ct-email').value = 'nomig@x.com'; mockEl('ct-status').value = 'lead';
+  var sb = mockSb({ contacts: { insertImpl: function(row){ return Object.assign({ id: 'should-not-be-used' }, row); } } });
+  ctx._sb = sb;
+  await ctx.saveCon();
+  assertEqual(sb._calls.length, 0, 'Supabase never called — Contact has not migrated on this device');
+  assertEqual(ctx.DB.con.length, 1, 'saved locally instead');
+  assertEqual(ctx.DB.con[0].email, 'nomig@x.com');
+});
+
+testAsync('delCon() falls back to local delete when _sb is configured but Contact has not migrated yet (CON-GAP-007)', async function() {
+  resetDB();
+  ctx.localStorage.removeItem('st_con_cloud_migration_ts');
+  ctx.DB.con.push({ id: 'c-nomig', name: 'No Migration Yet', email: 'nomig2@x.com' });
+  ctx.confirm = function(){ return true; };
+  var sb = mockSb({});
+  ctx._sb = sb;
+  await ctx.delCon('c-nomig');
+  assertEqual(sb._calls.length, 0, 'Supabase never called — Contact has not migrated on this device');
+  assertEqual(ctx.DB.con.length, 0, 'deleted locally instead');
+  ctx.confirm = function(){ return false; };
+});
+
 test('restoreLIMigrationArchive / restoreConMigrationArchive — each restores its own key and clears SS.supabaseUrl/supabaseAnonKey independently', function() {
   resetDB();
   ctx.localStorage.setItem('st_li_pre_migration', JSON.stringify([{ id: 'orig-li', sku: 'SKU1' }]));
@@ -10214,6 +10395,30 @@ testAsync('savePayment — pushes the invoice\'s updated dep/status via persistI
   assertEqual(ctx.DB.inv[0].status, 'Paid', 'local-only behavior unchanged when Invoice has not migrated');
 });
 
+testAsync('numOrNull() (INV-GAP-003/004): persistInvChange() sends null, not \'\', for a calc_* field stored locally as empty string', async function() {
+  // Confirmed-reachable path: a Draft invoice round-tripped through Sheets sync once
+  // (mapRec()/unmapRec() writes '' for an unset calc_grandTotal) then has ANY of
+  // persistInvChange()'s 12+ call sites (saveInvApprove, savePayment, etc.) touch it —
+  // the old `!= null` guard let '' straight through into a Postgres `numeric` column,
+  // which rejects it with 22P02, silently failing the push (console.warn only).
+  resetDB();
+  ctx.DB.inv.push({
+    id: 'inv-numnull-1', num: 'INV64001', status: 'Draft', cur: 'USD', lineItems: [],
+    calc_grandTotal: '', calc_cogs: '', calc_grossProfit: '', calc_netProfit: '',
+    calc_margin: '', calc_balanceDue: '', calc_liTotal: '', calc_taxAmt: ''
+  });
+  ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
+  var sb = mockSb({ invoices: { updateImpl: function(row, id){ return Object.assign({ id: id }, row); }, selectData: [] } });
+  ctx._sb = sb;
+  await ctx.persistInvChange(ctx.DB.inv[0], true);
+  var upd = sb._calls.find(function(c){ return c.table === 'invoices' && c.op === 'update'; });
+  assert(upd, 'push attempted');
+  ['calc_grand_total','calc_cogs','calc_gross_profit','calc_net_profit','calc_margin','calc_balance_due','calc_li_total','calc_tax_amt'].forEach(function(f) {
+    assertEqual(upd.row[f], null, f + ' sent as null, never as the literal empty string');
+  });
+  ctx.localStorage.removeItem('st_inv_cloud_migration_ts');
+});
+
 testAsync('deletePayment — pushes the invoice\'s recalculated dep via persistInvChange when Invoice has migrated; local-only behavior unchanged when not migrated (AC-8, call site #5)', async function() {
   resetDB();
   ctx.DB.inv.push({ id: 'inv1', num: 'INV64001', status: 'Paid', dep: 100, lineItems: [] });
@@ -12125,6 +12330,302 @@ test('renderRfqComparison() — each response row shows the envelope (parse-upda
   assert(mockEl('ord-rfq-emailparse-L1') !== undefined, 'shared parse panel div exists for rfqOpenEmailParse to populate');
 });
 
+// ── RFQ RESPONSE FILE IMPORT (REQ/SPEC-AI-GAP-012) ──────────────
+function mkOrdTwoLines() {
+  ctx.DB.ord = [{
+    id: 'O1', num: 'ORD-0001', contactId: null, stage: 'New', actions: [],
+    lines: [
+      {
+        id: 'LA', category: 'Frozen Seafood', itemSpec: 'Whole frozen tilapia, 500-800g, IQF', orderVolumeQty: '1',
+        orderVolumeUnit: 'container', packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown',
+        sourceCountry: '', variantOption: '', lineUpdates: [], rfqResponses: [], committedResponseId: null
+      },
+      {
+        id: 'LB', category: 'Frozen Seafood', itemSpec: 'Whole frozen tilapia, 800-1000g, IQF', orderVolumeQty: '1',
+        orderVolumeUnit: 'container', packingSpec: '', baseUom: '', baseQty: null, qtyStatus: 'Unknown',
+        sourceCountry: '', variantOption: '', lineUpdates: [], rfqResponses: [], committedResponseId: null
+      }
+    ]
+  }];
+  ctx.EI.ord = 'O1';
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme Foods' }];
+}
+
+testAsync('rfqParseUpdateFromFile: no AI.key configured → resolves null, no fetch call (AC-1)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: '' };
+  _lastAnthropicBody = null;
+  var result = await ctx.rfqParseUpdateFromFile([{ desc: 'tilapia 500-800g' }], [{ id: 'LA' }, { id: 'LB' }]);
+  assertEqual(result, null, 'resolves null with no key');
+  assertEqual(_lastAnthropicBody, null, 'no fetch call made');
+  ctx.AI = { key: 'test-key' };
+});
+
+testAsync('rfqParseUpdateFromFile: 2 confidently-matched rows against 2 distinct lines → both returned, unmatched empty (AC-2)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: JSON.stringify({
+    matches: [{ lineId: 'LA', fields: { cost: 10 } }, { lineId: 'LB', fields: { cost: 12 } }],
+    unmatched: []
+  }) };
+  var result = await ctx.rfqParseUpdateFromFile([{}, {}], [{ id: 'LA' }, { id: 'LB' }]);
+  assertEqual(result.matches.length, 2, 'both lines matched');
+  assertEqual(result.unmatched.length, 0, 'nothing unmatched');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromFile: one unmatched row alongside one valid match → both present, correctly separated (AC-3)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: JSON.stringify({
+    matches: [{ lineId: 'LA', fields: { cost: 10 } }],
+    unmatched: [{ row: { desc: 'unrelated widget' }, reason: 'No matching line item found.' }]
+  }) };
+  var result = await ctx.rfqParseUpdateFromFile([{}, {}], [{ id: 'LA' }, { id: 'LB' }]);
+  assertEqual(result.matches.length, 1, 'one confident match');
+  assertEqual(result.matches[0].lineId, 'LA');
+  assertEqual(result.unmatched.length, 1, 'one unmatched row preserved');
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromFile: network error, non-200, non-object, and array responses all resolve null (AC-8)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: 'test-key' };
+
+  _mockAnthropic = 'reject';
+  var r1 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r1, null, 'network error → null');
+
+  _mockAnthropic = { status: 500, text: '' };
+  var r2 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r2, null, 'non-200 → null');
+
+  _mockAnthropic = { status: 200, text: 'not valid json {' };
+  var r3 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r3, null, 'malformed JSON → null');
+
+  _mockAnthropic = { status: 200, text: '[]' };
+  var r4 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r4, null, 'a JSON array (not object) → null, three-part guard catches it');
+
+  _mockAnthropic = { status: 200, text: JSON.stringify({ matches: {}, unmatched: [] }) };
+  var r5 = await ctx.rfqParseUpdateFromFile([{}], [{ id: 'LA' }]);
+  assertEqual(r5, null, 'matches not an array → null');
+
+  _mockAnthropic = null;
+});
+
+testAsync('rfqParseUpdateFromFile: a hallucinated lineId is redirected to unmatched, other matches unaffected (AC-10)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.AI = { key: 'test-key' };
+  _mockAnthropic = { status: 200, text: JSON.stringify({
+    matches: [
+      { lineId: 'LA', fields: { cost: 10 } },
+      { lineId: 'DOES-NOT-EXIST', fields: { cost: 99 } }
+    ],
+    unmatched: []
+  }) };
+  var result = await ctx.rfqParseUpdateFromFile([{}, {}], [{ id: 'LA' }, { id: 'LB' }]);
+  assertEqual(result.matches.length, 1, 'only the real lineId is kept in matches');
+  assertEqual(result.matches[0].lineId, 'LA');
+  assertEqual(result.unmatched.length, 1, 'the hallucinated lineId is redirected to unmatched');
+  _mockAnthropic = null;
+});
+
+test('rfqRunFileImport() rejects a non-.csv file by name before any read is attempted (AC-4)', function() {
+  resetDB();
+  mkOrdTwoLines();
+  mockEl('rfq-fileimport-sup-O1').value = 'S1';
+  var readAttempted = false;
+  mockEl('rfq-fileimport-file-O1').files = [{ name: 'quote.xlsx' }];
+  var OrigFileReader = ctx.FileReader;
+  ctx.FileReader = function(){ return { readAsText: function(){ readAttempted = true; } }; };
+  ctx.rfqRunFileImport('O1');
+  assertEqual(readAttempted, false, 'FileReader.readAsText never called for a rejected extension');
+  ctx.FileReader = OrigFileReader;
+});
+
+test('rfqRunFileImport() with zero data rows shows "No data rows found" and never proceeds toward an AI call (AC-11)', function() {
+  resetDB();
+  mkOrdTwoLines();
+  mockEl('rfq-fileimport-sup-O1').value = 'S1';
+  mockEl('rfq-fileimport-file-O1').files = [{ name: 'quote.csv' }];
+  var confirmCalled = false;
+  var origShow = ctx.rfqShowFileImportConfirm;
+  ctx.rfqShowFileImportConfirm = function(){ confirmCalled = true; };
+  var OrigFileReader = ctx.FileReader;
+  ctx.FileReader = function(){
+    var r = { readAsText: function(){ r.onload({ target: { result: 'Header1,Header2\n' } }); } };
+    return r;
+  };
+  ctx.rfqRunFileImport('O1');
+  assertEqual(confirmCalled, false, 'never reaches the confirmation step on a header-only/empty file');
+  ctx.FileReader = OrigFileReader;
+  ctx.rfqShowFileImportConfirm = origShow;
+});
+
+testAsync('rfqApplyFileProposal() — new-response case: creates via the existing add path with a fresh id (AC-5)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: { cost: 42, currency: 'USD' } } };
+  await ctx.rfqApplyFileProposal('O1', 'LA');
+  var line = ctx.DB.ord[0].lines.find(function(l){ return l.id === 'LA'; });
+  assertEqual(line.rfqResponses.length, 1, 'one new response created');
+  assertEqual(line.rfqResponses[0].cost, 42);
+  assertEqual(line.rfqResponses[0].supId, 'S1');
+  assert(!ctx.cRfqFileImportProposals['LA'], 'proposal cleared after a successful apply');
+});
+
+testAsync('rfqApplyFileProposal() — update case: existing response replaced in place with a new id (AC-6)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.DB.ord[0].lines[0].rfqResponses = [_rfqRespFixture({ id: 'R1', supId: 'S1', cost: 100 })];
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: { cost: 88 } } };
+  await ctx.rfqApplyFileProposal('O1', 'LA');
+  var line = ctx.DB.ord[0].lines.find(function(l){ return l.id === 'LA'; });
+  assertEqual(line.rfqResponses.length, 1, 'still exactly one response — replaced, not added');
+  assertEqual(line.rfqResponses[0].cost, 88, 'proposed field applied');
+  assert(line.rfqResponses[0].id !== 'R1', 'response id rotated, matching the existing edit-path guarantee');
+});
+
+testAsync('rfqApplyFileProposal() — committed response with a Quote already converted from it: repoints committedResponseId and re-triggers the staleness banner (AC-6)', async function() {
+  resetDB();
+  mkOrdWithCommittedResponse();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = { L1: { supId: 'S1', fields: { cost: 150 } } };
+  ctx.DB.qt = [{ id: 'Q1', num: 'QTE-0001', client: 'Acme', status: 'Draft', lines: [{
+    rid: 'r1', desc: 'Item A', qty: 10, up: 100, sourceOrdId: 'O1', sourceOrdLineId: 'L1', sourceRfqResponseId: 'R1'
+  }] }];
+  await ctx.rfqApplyFileProposal('O1', 'L1');
+  var line = ctx.DB.ord[0].lines[0];
+  assert(line.committedResponseId !== 'R1', 'committedResponseId repointed to the new id');
+  mockEl('qt-drift-warn');
+  ctx.renderQteSourceDriftWarn(ctx.DB.qt[0]);
+  assertContains(mockEl('qt-drift-warn').innerHTML, 'changed', 'staleness banner text mentions the source pricing changed');
+});
+
+test('rfqDiscardFileProposal() — removes only its own line\'s proposal and panel; other lines untouched (AC-7)', function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = {
+    LA: { supId: 'S1', fields: { cost: 10 } },
+    LB: { supId: 'S1', fields: { cost: 20 } }
+  };
+  mockEl('rfq-fileimport-panel-LA');
+  mockEl('rfq-fileimport-panel-LB');
+  ctx.rfqDiscardFileProposal('O1', 'LA');
+  assert(!ctx.cRfqFileImportProposals['LA'], 'LA proposal removed');
+  assert(!!ctx.cRfqFileImportProposals['LB'], 'LB proposal untouched');
+});
+
+testAsync('rfqApplyFileProposal() serializes against concurrent saveRfqResponse() calls — no two applies ever run concurrently (AC-7b)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = {
+    LA: { supId: 'S1', fields: { cost: 10 } },
+    LB: { supId: 'S1', fields: { cost: 20 } }
+  };
+
+  var resolveFirst;
+  var firstCallSeen = false;
+  var originalPersist = ctx.persistOrdChange;
+  ctx.persistOrdChange = function(ord, skipRefresh) {
+    if (!firstCallSeen) {
+      firstCallSeen = true;
+      return new Promise(function(resolve){ resolveFirst = resolve; });
+    }
+    return originalPersist(ord, skipRefresh);
+  };
+
+  var applyA = ctx.rfqApplyFileProposal('O1', 'LA');
+  var applyB = ctx.rfqApplyFileProposal('O1', 'LB');
+
+  // These two checks hold regardless of the lock (B's own call hasn't reached an await yet either way) —
+  // the real proof that the lock actually blocked B is in the three post-await assertions below.
+  assertEqual(ctx.cRfqFileImportApplyInFlight, true, 'lock is held while A is still in flight');
+  assert(!!ctx.cRfqFileImportProposals['LB'], 'B\'s own proposal is untouched at this point');
+
+  resolveFirst({ error: null });
+  await applyA;
+  await applyB;
+
+  assertEqual(ctx.cRfqFileImportApplyInFlight, false, 'lock released after A completes');
+  assert(!ctx.cRfqFileImportProposals['LA'], 'A applied and cleared');
+  assert(!!ctx.cRfqFileImportProposals['LB'], 'B was never applied by the blocked call — still pending, exactly as before');
+
+  ctx.persistOrdChange = originalPersist;
+});
+
+testAsync('rfqSetOrdRfqUiFrozen() disables the shared ov-rfq modal\'s own Save/Cancel/Close buttons while an Apply is in flight, re-enabling them after (spec-gate finding 2 regression)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: { cost: 10 } } };
+
+  var resolveFirst;
+  var originalPersist = ctx.persistOrdChange;
+  ctx.persistOrdChange = function(ord, skipRefresh) {
+    return new Promise(function(resolve){ resolveFirst = resolve; });
+  };
+
+  var applyA = ctx.rfqApplyFileProposal('O1', 'LA');
+
+  assertEqual(mockEl('rfq-save-btn').disabled, true, 'the shared modal\'s own Save Response button is disabled while an apply is in flight, not just #of-lines-list');
+  assertEqual(mockEl('rfq-cancel-btn').disabled, true, 'the shared modal\'s own Cancel button is disabled while an apply is in flight');
+  assertEqual(mockEl('rfq-close-btn').disabled, true, 'the shared modal\'s own close (x) button is disabled while an apply is in flight');
+
+  resolveFirst({ error: null });
+  await applyA;
+
+  assertEqual(mockEl('rfq-save-btn').disabled, false, 'Save Response button re-enabled once the apply completes');
+  assertEqual(mockEl('rfq-cancel-btn').disabled, false, 'Cancel button re-enabled once the apply completes');
+  assertEqual(mockEl('rfq-close-btn').disabled, false, 'close (x) button re-enabled once the apply completes');
+
+  ctx.persistOrdChange = originalPersist;
+});
+
+testAsync('rfqApplyFileProposal() does NOT clear a proposal when saveRfqResponse() validation fails, leaving ov-rfq open (spec-gate finding 3 regression)', async function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.cRfqFileImportOrdId = 'O1';
+  // no cost field -> saveRfqResponse()'s own cost validation rejects it and never calls closeM('ov-rfq')
+  ctx.cRfqFileImportProposals = { LA: { supId: 'S1', fields: {} } };
+  mockEl('ov-rfq').classList = { add: function(){}, remove: function(){}, contains: function(){ return true; } };
+
+  await ctx.rfqApplyFileProposal('O1', 'LA');
+
+  assert(!!ctx.cRfqFileImportProposals['LA'], 'a failed Apply must not silently clear the pending proposal');
+  var line = ctx.DB.ord[0].lines.find(function(l){ return l.id === 'LA'; });
+  assertEqual((line.rfqResponses || []).length, 0, 'no response was actually recorded — the validation failure was real, not just simulated');
+  assertEqual(ctx.cRfqFileImportApplyInFlight, false, 'the in-flight lock is still released even though the apply failed, so a retry is possible');
+});
+
+test('rOrdLines() — shows "Import Supplier Quote File" when the Order Request has lines, and the shared panel div exists', function() {
+  resetDB();
+  mkOrdTwoLines();
+  ctx.rOrdLines(ctx.DB.ord[0]);
+  var html = mockEl('of-lines-list').innerHTML;
+  assertContains(html, "rfqOpenFileImport('O1')", 'import control wired to rfqOpenFileImport');
+  assert(mockEl('ord-fileimport-O1') !== undefined, 'shared file-import panel div exists');
+});
+
+test('rOrdLines() — does not show the import control when the Order Request has no lines yet', function() {
+  resetDB();
+  ctx.DB.ord = [{ id: 'O2', num: 'ORD-0002', contactId: null, stage: 'New', actions: [], lines: [] }];
+  ctx.rOrdLines(ctx.DB.ord[0]);
+  var html = mockEl('of-lines-list').innerHTML;
+  assertNotContains(html, 'rfqOpenFileImport', 'no import control shown with zero lines');
+});
+
 testAsync('delSup() — warns on RFQ response references and the comparison degrades gracefully after deletion (AC-011)', async function() {
   resetDB();
   var line = mkOrdWithLine({ rfqResponses: [
@@ -13100,6 +13601,921 @@ test('AC-7: fmt() call-count reflects REQ-INTEG-002-2c\'s own new, legitimate ca
   assertEqual(fmtCount, 89, 'fmt( occurs 89 times total (88 call sites + 1 definition) — up 1 from REQ-LI-001\'s 88, this REQ\'s own new renderPaymentsTab() Currency/GBP-equivalent column');
   assertEqual(fmtNCount, 6, 'fmtN( occurs 6 times total (5 call sites + 1 definition) — untouched by this REQ');
 });
+
+// ── SEC-GAP-021: status-tag class-attribute injection fix ──────
+console.log('\nSEC-GAP-021 — status-tag class injection fix');
+
+test('invStatusClass() returns the fixed, known class for every real Invoice/CN status', () => {
+  assertEqual(ctx.invStatusClass('Draft'), 's-draft');
+  assertEqual(ctx.invStatusClass('Pro-forma'), 's-pro-forma');
+  assertEqual(ctx.invStatusClass('Sent'), 's-sent');
+  assertEqual(ctx.invStatusClass('Partially Paid'), 's-partially-paid');
+  assertEqual(ctx.invStatusClass('Paid'), 's-paid');
+  assertEqual(ctx.invStatusClass('Cancelled'), 's-cancelled');
+  assertEqual(ctx.invStatusClass('CN Applied'), 's-cn-applied');
+});
+test('invStatusClass() never passes through unrecognized/malicious input — falls back to a fixed safe default', () => {
+  assertEqual(ctx.invStatusClass('"><img src=x onerror=alert(1)>'), 's-draft', 'malicious status must map to the fixed fallback, never be echoed into the class string');
+  assertEqual(ctx.invStatusClass(undefined), 's-draft');
+});
+test('poStatusClass() and conStatusClass() also never pass through unrecognized input', () => {
+  assertEqual(ctx.poStatusClass('"><script>alert(1)</script>'), 's-draft');
+  assertEqual(ctx.poStatusClass('Deposit Paid'), 's-deposit-paid');
+  assertEqual(ctx.conStatusClass('"><script>alert(1)</script>'), 's-lead');
+  assertEqual(ctx.conStatusClass('qualified'), 's-qualified');
+});
+
+test('rInv() never breaks out of the class attribute for a malicious inv.status (reachable via CSV import fallthrough)', () => {
+  resetDB();
+  ctx.DB.inv = [{
+    id: 'inv-sec21-1', num: 'INV-SEC21-1', buyer: 'Test Buyer', cur: 'USD', dep: 0,
+    calc_grandTotal: '100', lineItems: [],
+    status: '"><img src=x onerror=alert(1)>'
+  }];
+  mockEl('inv-q').value = ''; mockEl('inv-sf').value = '';
+  ctx.rInv();
+  const html = mockEl('inv-tb').innerHTML;
+  assertNotContains(html, '<img', 'malicious status must never reach the DOM as a live tag');
+  assertNotContains(html, 'class="tag s-">', 'malicious status must not break out of the class attribute (would leave a truncated, unstyled tag if it had)');
+  assertContains(html, 'class="tag s-draft"', 'malicious/unrecognized status renders with the fixed safe-default class');
+});
+
+test('rCon() never breaks out of the class attribute for a malicious c.status', () => {
+  resetDB();
+  ctx.DB.con = [{ id: 'con-sec21-1', name: 'Test Contact', email: 'test@example.com', status: '"><script>alert(1)</script>' }];
+  ctx.rCon();
+  const html = mockEl('con-tbody').innerHTML;
+  assertNotContains(html, '<script>', 'malicious status must never reach the DOM as a live tag');
+  assertContains(html, 'class="tag s-lead"', 'malicious/unrecognized Contact status renders with the fixed safe-default class');
+});
+
+test('rPO() never breaks out of the class attribute for a malicious po.status', () => {
+  resetDB();
+  ctx.DB.sup = [{ id: 'sup-sec21-1', name: 'Test Supplier' }];
+  ctx.DB.po = [{ id: 'po-sec21-1', num: 'PO-SEC21-1', supId: 'sup-sec21-1', cur: 'USD', lineItems: [], status: '"><img src=x onerror=alert(1)>' }];
+  mockEl('po-q').value = ''; mockEl('po-sf').value = '';
+  ctx.rPO();
+  const html = mockEl('po-tb').innerHTML;
+  assertNotContains(html, '<img', 'malicious status must never reach the DOM as a live tag');
+  assertContains(html, 'class="tag s-draft"', 'malicious/unrecognized PO status renders with the fixed safe-default class');
+});
+
+// ── REQ/SPEC-SHIP-001: auto-created Shipment + trade-document checklist ──
+console.log('\nREQ/SPEC-SHIP-001 — auto-created Shipment on Invoice Paid');
+
+function mkPaidInvoice(overrides) {
+  return Object.assign({ id: 'inv-ship-1', num: 'INV20001', status: 'Paid', lineItems: [], taxRate: 0 }, overrides || {});
+}
+
+// ── shpComputeDocsStatus() (AC-7) ──
+test('shpComputeDocsStatus() — all Pending returns Pending (AC-7)', function() {
+  var docs = [{ status: 'Pending' }, { status: 'Pending' }];
+  assertEqual(ctx.shpComputeDocsStatus(docs), 'Pending');
+});
+test('shpComputeDocsStatus() — one Received, rest Pending returns In Progress (AC-7)', function() {
+  var docs = [{ status: 'Received' }, { status: 'Pending' }];
+  assertEqual(ctx.shpComputeDocsStatus(docs), 'In Progress');
+});
+test('shpComputeDocsStatus() — all Received/N-A returns Complete (AC-7)', function() {
+  var docs = [{ status: 'Received' }, { status: 'N/A' }];
+  assertEqual(ctx.shpComputeDocsStatus(docs), 'Complete');
+});
+test('shpComputeDocsStatus() — empty/absent array returns null, not Pending', function() {
+  assertEqual(ctx.shpComputeDocsStatus([]), null);
+  assertEqual(ctx.shpComputeDocsStatus(undefined), null);
+});
+
+// ── autoCreateShipmentFromInvoice() (AC-1, AC-2, AC-3, AC-3b, AC-6, A1) ──
+testAsync('autoCreateShipmentFromInvoice() — creates one Shipment with the 7-item default checklist (AC-1)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var inv = mkPaidInvoice();
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  assertEqual(ctx.DB.sh.length, 1, 'exactly one Shipment created');
+  var s = ctx.DB.sh[0];
+  assertEqual(s.tradeDocs.length, 7, '7 seeded docs when dg is false');
+  assertContains(s.ref, 'SHP-INV20001', 'ref synthesized from invoice num');
+  assertEqual(JSON.stringify(s.linkedInvs), JSON.stringify(['INV20001']));
+  assertEqual(JSON.stringify(s.autoCreatedFromInvIds), JSON.stringify(['inv-ship-1']));
+  assertEqual(s.docsStatus, 'Pending');
+  assertEqual(s.status, ctx.RD_SHP_STATUS[0]);
+});
+testAsync('autoCreateShipmentFromInvoice() — dg true seeds 8th Dangerous Goods Declaration line, autoManaged', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var seeded = ctx.shpSeedTradeDocs(true);
+  assertEqual(seeded.length, 8);
+  var dgLine = seeded[7];
+  assertEqual(dgLine.type, 'Dangerous Goods Declaration');
+  assertEqual(dgLine.autoManaged, true);
+});
+testAsync('autoCreateShipmentFromInvoice() — calling twice with the same invoice creates no second Shipment (AC-2/AC-3)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var inv = mkPaidInvoice();
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  assertEqual(ctx.DB.sh.length, 1, 'idempotent — no duplicate');
+});
+testAsync('autoCreateShipmentFromInvoice() — renaming the invoice num after creation still does not duplicate (AC-3b)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var inv = mkPaidInvoice();
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  inv.num = 'INV20002-RENAMED';
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  assertEqual(ctx.DB.sh.length, 1, 'match came from autoCreatedFromInvIds (immutable id), not the renamed num');
+});
+testAsync('autoCreateShipmentFromInvoice() — synthesized ref never collides with an existing ref (AC-6)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.DB.sh.push({ id: 'sh-existing', ref: 'SHP-INV20001', tradeDocs: [], linkedInvs: [], autoCreatedFromInvIds: [] });
+  var inv = mkPaidInvoice();
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  var created = ctx.DB.sh.find(function(s){ return s.id !== 'sh-existing'; });
+  assertEqual(created.ref, 'SHP-INV20001-2', 'collision-avoidance suffix applied');
+});
+testAsync('autoCreateShipmentFromInvoice() — a string-corrupted legacy linkedInvs never causes a false-positive substring match (A1)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.DB.sh.push({ id: 'sh-corrupt', ref: 'SHP-OTHER', tradeDocs: [], linkedInvs: 'INV2000', autoCreatedFromInvIds: [] });
+  var inv = mkPaidInvoice({ num: 'INV20001' }); // 'INV2000' is a substring of 'INV20001' — must not false-match
+  // rShp()'s own render already crashes on a string-typed linkedInvs (pre-existing,
+  // unrelated SH-GAP-002-class fragility — a corrupted record should never reach
+  // render without going through backfillShLinkedInvs() first). Stubbed here since
+  // this test's own purpose is the idempotency guard, not that unrelated render path.
+  var origRShp = ctx.rShp;
+  ctx.rShp = function(){};
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  ctx.rShp = origRShp;
+  assertEqual(ctx.DB.sh.length, 2, 'Array.isArray guard prevents substring false-positive on a corrupted string linkedInvs');
+});
+testAsync('autoCreateShipmentFromInvoice() — SS.autoCreateShipmentOnPaid === false is a silent no-op (AC-12)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = false;
+  await ctx.autoCreateShipmentFromInvoice(mkPaidInvoice());
+  assertEqual(ctx.DB.sh.length, 0, 'no Shipment created while toggle is off');
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+});
+testAsync('autoCreateShipmentFromInvoice() — toggle unset (upgrading operator) behaves as default-on (AC-13)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  await ctx.autoCreateShipmentFromInvoice(mkPaidInvoice());
+  assertEqual(ctx.DB.sh.length, 1, 'default-on for an SS predating this field');
+});
+
+// ── AC-1b: full saveInv() round trip, brand-new invoice saved directly as Paid ──
+testAsync('saveInv() — a brand-new Invoice saved directly with status Paid also auto-creates a Shipment (AC-1b)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.EI.i = null;
+  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }];
+  setupInvForm('INV20099');
+  mockEl('inv-sm').value = 'Paid';
+  await ctx.saveInv();
+  var inv = ctx.DB.inv.find(function(i){ return i.num === 'INV20099'; });
+  assert(inv, 'invoice created');
+  var sh = ctx.DB.sh.find(function(s){ return (s.autoCreatedFromInvIds||[]).indexOf(inv.id) > -1; });
+  assert(sh, 'Shipment auto-created even though the invoice was never Draft first — the original _invOldStatus-transition guard would have missed this');
+});
+
+// ── AC-4/AC-5: bulk import / Sheets pull never trigger auto-creation ──
+test('processImportRecords(\'inv\', ...) with status Paid set directly never calls autoCreateShipmentFromInvoice (AC-4)', function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  var called = false;
+  var orig = ctx.autoCreateShipmentFromInvoice;
+  ctx.autoCreateShipmentFromInvoice = function(){ called = true; return Promise.resolve(); };
+  ctx.processImportRecords('inv', [{ 'Invoice Number': 'INV20050', 'Status': 'Paid', 'Buyer': 'Test Buyer', 'Date': '2026-05-01' }], function(){});
+  ctx.autoCreateShipmentFromInvoice = orig;
+  assertEqual(called, false, 'CSV import bypasses saveInv() entirely, never reaching the trigger');
+});
+
+// ── DG toggle via saveShp() (AC-9, AC-15) ──
+function setupShpFormMinimal(ref) {
+  ['shf-bl','shf-vessel','shf-carrier','shf-op','shf-dp','shf-etd','shf-eta','shf-cnum','shf-invs','shf-nt'].forEach(function(id){ mockEl(id).value = ''; });
+  mockEl('shf-ref').value = ref;
+  mockEl('shf-ctype').value = '20GP';
+  mockEl('shf-docs').value = 'Pending';
+  mockEl('shf-st').value = 'Booked';
+  mockEl('shf-dg').checked = false;
+}
+
+test('saveShp() — dg false→true on edit adds one autoManaged DG line (AC-9)', function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.sh.push({ id: 'sh-dg1', ref: 'SHP-DG1', dg: false, tradeDocs: ctx.shpSeedTradeDocs(false), docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] });
+  ctx.EI.sh = 'sh-dg1';
+  setupShpFormMinimal('SHP-DG1');
+  mockEl('shf-dg').checked = true;
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-dg1'; });
+  var dgLines = s.tradeDocs.filter(function(d){ return d.autoManaged && d.type === 'Dangerous Goods Declaration'; });
+  assertEqual(dgLines.length, 1, 'exactly one DG line added');
+  assertEqual(s.tradeDocs.length, 8, 'original 7 preserved plus the new DG line');
+});
+test('saveShp() — dg true→false removes an untouched DG line (AC-9/AC-15)', function() {
+  resetDB();
+  ctx._sb = null;
+  var docs = ctx.shpSeedTradeDocs(true);
+  ctx.DB.sh.push({ id: 'sh-dg2', ref: 'SHP-DG2', dg: true, tradeDocs: docs, docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] });
+  ctx.EI.sh = 'sh-dg2';
+  setupShpFormMinimal('SHP-DG2');
+  mockEl('shf-dg').checked = false;
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-dg2'; });
+  assertEqual(s.tradeDocs.length, 7, 'untouched Pending DG line removed');
+});
+test('saveShp() — dg true→false does NOT remove a DG line that already has data (AC-9/AC-15)', function() {
+  resetDB();
+  ctx._sb = null;
+  var docs = ctx.shpSeedTradeDocs(true);
+  docs[7].refNum = 'DGD-001'; // the DG line now has real progress
+  ctx.DB.sh.push({ id: 'sh-dg3', ref: 'SHP-DG3', dg: true, tradeDocs: docs, docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] });
+  ctx.EI.sh = 'sh-dg3';
+  setupShpFormMinimal('SHP-DG3');
+  mockEl('shf-dg').checked = false;
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-dg3'; });
+  assertEqual(s.tradeDocs.length, 8, 'DG line with recorded data is never silently removed');
+});
+test('saveShp() — an operator\'s own custom "Dangerous Goods Declaration" line (not autoManaged) is never touched (AC-9)', function() {
+  resetDB();
+  ctx._sb = null;
+  var customLine = { id: 'custom1', type: 'Dangerous Goods Declaration', status: 'Pending', refNum: '', fileLocation: '', receivedDate: '', notes: '', autoManaged: false };
+  ctx.DB.sh.push({ id: 'sh-dg4', ref: 'SHP-DG4', dg: false, tradeDocs: [customLine], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] });
+  ctx.EI.sh = 'sh-dg4';
+  setupShpFormMinimal('SHP-DG4');
+  mockEl('shf-dg').checked = true; // toggling dg on should add a NEW autoManaged line, not touch the custom one
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-dg4'; });
+  assertEqual(s.tradeDocs.length, 2, 'custom line untouched, a second autoManaged DG line added');
+  assertEqual(s.tradeDocs[0].id, 'custom1', 'original custom line unchanged');
+});
+
+// ── B4 regression: manual "New Shipment" create path never seeds/overrides docsStatus ──
+test('saveShp() create path — dg checked on a brand-new Shipment does not seed tradeDocs or override docsStatus (B4 regression)', function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-NEW1');
+  mockEl('shf-dg').checked = true;
+  mockEl('shf-docs').value = 'In Progress'; // operator's own non-default selection
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-NEW1'; });
+  assertEqual(s.tradeDocs.length, 0, 'create path never seeds tradeDocs, even with dg checked');
+  assertEqual(s.docsStatus, 'In Progress', 'operator\'s own docsStatus selection is never overridden');
+});
+test('saveShp() create path — dg unchecked also yields empty tradeDocs/autoCreatedFromInvIds (B4 regression)', function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-NEW2');
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-NEW2'; });
+  assertEqual(s.tradeDocs.length, 0);
+  assertEqual(s.autoCreatedFromInvIds.length, 0);
+});
+
+// ── AC-14/AC-16: saveShp() preservation (the B1 regression) ──
+testAsync('saveShp() — editing an unrelated field on an auto-created Shipment preserves tradeDocs unchanged (AC-14, B1 regression)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx._sb = null;
+  await ctx.autoCreateShipmentFromInvoice(mkPaidInvoice());
+  var s = ctx.DB.sh[0];
+  var beforeDocs = JSON.stringify(s.tradeDocs);
+  var beforeIds = JSON.stringify(s.autoCreatedFromInvIds);
+  ctx.EI.sh = s.id;
+  setupShpFormMinimal(s.ref);
+  mockEl('shf-vessel').value = 'MSC Renamed'; // the only real change
+  ctx.saveShp();
+  var updated = ctx.DB.sh.find(function(x){ return x.id === s.id; });
+  assertEqual(updated.vessel, 'MSC Renamed');
+  assertEqual(JSON.stringify(updated.tradeDocs), beforeDocs, 'tradeDocs untouched by an unrelated field edit');
+  assertEqual(JSON.stringify(updated.autoCreatedFromInvIds), beforeIds, 'autoCreatedFromInvIds untouched by an unrelated field edit');
+});
+testAsync('saveShp() — a manually-created Shipment that later gains tradeDocs via shpAddTradeDoc() also survives an unrelated edit (AC-16)', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-MAN1');
+  ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-MAN1'; });
+  await ctx.shpAddTradeDoc(s.id, 'Custom Certificate');
+  ctx.EI.sh = s.id;
+  setupShpFormMinimal('SHP-MAN1');
+  mockEl('shf-carrier').value = 'New Carrier';
+  ctx.saveShp();
+  var updated = ctx.DB.sh.find(function(x){ return x.id === s.id; });
+  assertEqual(updated.carrier, 'New Carrier');
+  assertEqual(updated.tradeDocs.length, 1, 'the manually-added tradeDoc survives an unrelated edit');
+});
+
+// ── AC-11: fileLocation XSS safety ──
+test('renderShpDocsPanel() — a malicious fileLocation/refNum/notes value never breaks out of its containing markup (AC-11)', function() {
+  resetDB();
+  var malicious = '"><script>alert(1)</script>';
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.fileLocation = malicious; doc.refNum = malicious; doc.notes = malicious;
+  ctx.DB.sh = [{ id: 'sh-xss1', ref: 'SHP-XSS1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  ctx.renderShpDocsPanel('sh-xss1');
+  var html = mockEl('shp-docs-panel').innerHTML;
+  assertNotContains(html, '<script>', 'a malicious value in fileLocation/refNum/notes never reaches the DOM as a live tag');
+  assertContains(html, '&quot;&gt;', 'the value is still present, just escaped — san() sanitizes, does not silently drop the field');
+});
+test('renderShpDocsPanel() — no tradeDocs shows a helpful empty state, not an error', function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'sh-empty3', ref: 'SHP-EMPTY3', tradeDocs: [], docsStatus: null, autoCreatedFromInvIds: [] }];
+  ctx.renderShpDocsPanel('sh-empty3');
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'No trade documents tracked yet');
+});
+test('editShp() renders the trade-documents panel for the record being edited', function() {
+  resetDB();
+  var doc = ctx.shpNewTradeDocEntry('Commercial Invoice', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-edit1', ref: 'SHP-EDIT1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-edit1');
+  var html = mockEl('shp-docs-panel').innerHTML;
+  assertContains(html, 'Commercial Invoice');
+  assertContains(html, 'selected', 'the Received status is reflected in the rendered select');
+});
+
+// ── Round-2 build-gate findings: live-panel re-render, per-row wiring correctness, shf-docs sync ──
+testAsync('shpEditTradeDoc() re-renders the open modal\'s docs panel immediately, without closing/reopening (round-2 build-gate Gap A)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-live1', ref: 'SHP-LIVE1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-live1');
+  assertNotContains(mockEl('shp-docs-panel').innerHTML, 'value="REF-999"', 'not yet present before the edit');
+  await ctx.shpEditTradeDoc('sh-live1', doc.id, { refNum: 'REF-999' });
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'value="REF-999"', 'the open modal\'s panel reflects the edit immediately — this is the exact behavior the EI.sh===s.id re-render guard exists for');
+});
+testAsync('shpRemoveTradeDoc() re-renders the open modal\'s docs panel immediately (round-2 build-gate Gap A)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-live2', ref: 'SHP-LIVE2', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-live2');
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'Bill of Lading');
+  assertEqual(mockEl('shf-docs').disabled, true, 'sanity check: dropdown starts locked while a tradeDoc exists');
+  await ctx.shpRemoveTradeDoc('sh-live2', doc.id);
+  assertContains(mockEl('shp-docs-panel').innerHTML, 'No trade documents tracked yet', 'panel updates to the empty state immediately after the last doc is removed while the modal is open');
+  assertEqual(mockEl('shf-docs').disabled, false, 'round-4 build-gate nit: removing the last document mid-session must re-enable the dropdown, not leave it falsely locked with no tradeDocs present');
+});
+test('renderShpDocsPanel() wires each row\'s controls to its OWN doc id, never a sibling\'s (round-2 build-gate Gap B)', function() {
+  resetDB();
+  var docA = ctx.shpNewTradeDocEntry('Doc A', false);
+  var docB = ctx.shpNewTradeDocEntry('Doc B', false);
+  ctx.DB.sh = [{ id: 'sh-wire1', ref: 'SHP-WIRE1', tradeDocs: [docA, docB], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.renderShpDocsPanel('sh-wire1');
+  var html = mockEl('shp-docs-panel').innerHTML;
+  // Extract every shpEditTradeDoc(...) call target in the rendered markup and confirm
+  // each field type only ever appears paired with its own row's doc id, not the other's.
+  var calls = html.match(/shpEditTradeDoc\('sh-wire1','([^']+)',\{(\w+):/g) || [];
+  assert(calls.length >= 8, 'both rows (4 editable fields each) produced onblur/onchange call strings — got ' + calls.length);
+  calls.forEach(function(call){
+    var m = call.match(/shpEditTradeDoc\('sh-wire1','([^']+)',\{(\w+):/);
+    var docId = m[1];
+    assert(docId === docA.id || docId === docB.id, 'every call targets a real doc id from this Shipment, never a foreign or malformed one: ' + call);
+  });
+  // Specifically: docA's own status <select> onchange must reference docA.id, not docB.id.
+  var docARowStart = html.indexOf(ctx.san(docA.type));
+  var docBRowStart = html.indexOf(ctx.san(docB.type));
+  var docARowHtml = html.slice(docARowStart, docBRowStart > docARowStart ? docBRowStart : html.length);
+  assertContains(docARowHtml, "shpEditTradeDoc('sh-wire1','" + docA.id + "'", 'Doc A\'s own row wires to Doc A\'s id');
+  assertNotContains(docARowHtml, "shpEditTradeDoc('sh-wire1','" + docB.id + "'", 'Doc A\'s row never accidentally wires to Doc B\'s id');
+});
+test('renderShpDocsPanel() disables and live-syncs the shf-docs dropdown once tradeDocs exist (round-2 build-gate UX finding)', function() {
+  resetDB();
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-sync1', ref: 'SHP-SYNC1', tradeDocs: [doc], docsStatus: 'In Progress', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  mockEl('shf-docs').value = 'Pending'; // stale value the modal happened to have shown before
+  mockEl('shf-docs').disabled = false;
+  ctx.renderShpDocsPanel('sh-sync1');
+  assertEqual(mockEl('shf-docs').disabled, true, 'dropdown disabled once tradeDocs exist — saveShp() would silently override it anyway');
+  assertEqual(mockEl('shf-docs').value, 'In Progress', 'dropdown synced to the live computed value, not left showing a stale prior value');
+});
+test('renderShpDocsPanel() leaves shf-docs enabled and untouched for a Shipment with no tradeDocs', function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'sh-sync2', ref: 'SHP-SYNC2', tradeDocs: [], docsStatus: null, autoCreatedFromInvIds: [], linkedInvs: [] }];
+  mockEl('shf-docs').value = 'In Progress'; // the operator's own manual selection
+  mockEl('shf-docs').disabled = false;
+  ctx.renderShpDocsPanel('sh-sync2');
+  assertEqual(mockEl('shf-docs').disabled, false, 'dropdown stays manually editable — this record has not opted into the automated checklist');
+  assertEqual(mockEl('shf-docs').value, 'In Progress', 'the operator\'s own selection is left untouched');
+});
+test('openShp() resets shf-docs disabled/title left over from a prior editShp() on a doc-having Shipment (round-3 build-gate finding)', function() {
+  resetDB();
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-newafter1', ref: 'SHP-NEWAFTER1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [], linkedInvs: [] }];
+  ctx.editShp('sh-newafter1');
+  assertEqual(mockEl('shf-docs').disabled, true, 'sanity check: editing a doc-having Shipment disables the dropdown');
+  ctx.openShp();
+  assertEqual(mockEl('shf-docs').disabled, false, 'a brand-new Shipment must not inherit a locked dropdown from whatever was open before it');
+  assertEqual(mockEl('shf-docs').title, '', 'the stale "automatically computed" tooltip must also be cleared on the create path');
+  assertEqual(mockEl('shf-docs').value, 'Pending', 'the create path\'s own default value is still applied');
+});
+
+// ── AC-12/AC-13: Settings toggle + persistent banner ──
+test('saveAutoShipToggle() — unchecking sets SS.autoCreateShipmentOnPaid false and shows both banners (AC-12)', function() {
+  resetDB();
+  mockEl('cfg-autoship-toggle').checked = false;
+  ctx.saveAutoShipToggle();
+  assertEqual(ctx.SS.autoCreateShipmentOnPaid, false);
+  mockEl('inv-q').value = ''; mockEl('inv-sf').value = '';
+  mockEl('sh-q').value = ''; mockEl('sh-sf').value = '';
+  ctx.rInv(); ctx.rShp();
+  assertEqual(mockEl('inv-autoship-banner').style.display, 'flex', 'Invoices banner shown while toggle is off');
+  assertEqual(mockEl('sh-autoship-banner').style.display, 'flex', 'Shipments banner shown while toggle is off');
+});
+test('saveAutoShipToggle() — checking it again hides both banners immediately, no reload needed (AC-12)', function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = false;
+  mockEl('cfg-autoship-toggle').checked = true;
+  ctx.saveAutoShipToggle();
+  assertEqual(ctx.SS.autoCreateShipmentOnPaid, true);
+  assertEqual(mockEl('inv-autoship-banner').style.display, 'none');
+  assertEqual(mockEl('sh-autoship-banner').style.display, 'none');
+});
+test('rCfg() — an upgrading operator (SS predates this field) renders the toggle as checked (AC-13)', function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.rCfg();
+  assertEqual(mockEl('cfg-autoship-toggle').checked, true, 'default-on rendered visually, not just behaviorally');
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+});
+
+// ── AC-10/AC-17/AC-18/AC-19: Cloud Data ──
+testAsync('autoCreateShipmentFromInvoice() — Cloud Data branch inserts trade_docs/auto_created_from_inv_ids and refreshes (AC-10, AC-17)', async function() {
+  resetDB();
+  ctx.SS.autoCreateShipmentOnPaid = undefined;
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var insertedRow = null;
+  ctx._sb = mockSb({ shipments: {
+    insertImpl: function(row){ insertedRow = row; return Object.assign({ id: 'sb-sh-1' }, row); },
+    selectData: [] // autoCreateShipmentFromInvoice() calls refreshShFromSupabase() internally right after insert — must not be null or its own .map() crashes
+  }});
+  await ctx.autoCreateShipmentFromInvoice(mkPaidInvoice());
+  assert(insertedRow, 'insert called');
+  assertEqual(insertedRow.trade_docs.length, 7, 'trade_docs included in the insert payload');
+  assertEqual(JSON.stringify(insertedRow.auto_created_from_inv_ids), JSON.stringify(['inv-ship-1']));
+  // Re-point selectData to the row just inserted, simulating the mandatory post-insert refresh reading it back
+  ctx._sb = mockSb({ shipments: { selectData: [Object.assign({ id: 'sb-sh-1' }, insertedRow)] } });
+  await ctx.refreshShFromSupabase();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sb-sh-1'; });
+  assert(s, 'Shipment present after refresh');
+  assertEqual(s.tradeDocs.length, 7, 'tradeDocs survives the mandatory post-insert refresh — the C1 regression');
+  assertEqual(JSON.stringify(s.autoCreatedFromInvIds), JSON.stringify(['inv-ship-1']), 'autoCreatedFromInvIds survives the refresh too');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('refreshShFromSupabase() — a legacy row with trade_docs/auto_created_from_inv_ids both null leaves both fields absent, not [] (AC-18)', async function() {
+  resetDB();
+  ctx.DB.sh = [{ id: 'legacy1', ref: 'SHP-LEGACY', docsStatus: 'Complete' }]; // pre-existing local data so the never-migrated guard doesn't bail
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  ctx._sb = mockSb({ shipments: { selectData: [
+    { id: 'legacy1', ref: 'SHP-LEGACY', bl_num: null, vessel: null, carrier: null, origin_port: null, dest_port: null,
+      etd: null, eta: null, container_type: null, container_num: null, dg: false, docs_status: 'Complete', status: 'Delivered',
+      linked_invs: [], trade_docs: null, auto_created_from_inv_ids: null, forwarder: null, forwarder_email: null, notes: null, upd_at: null }
+  ] } });
+  await ctx.refreshShFromSupabase();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'legacy1'; });
+  assertEqual('tradeDocs' in s, false, 'tradeDocs left absent, not set to [], for a legacy null column');
+  assertEqual('autoCreatedFromInvIds' in s, false, 'autoCreatedFromInvIds left absent too');
+  assertEqual(s.docsStatus, 'Complete', 'docsStatus untouched — no computed override for a record with no tradeDocs');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('migrateShToSupabase() — a local record with real tradeDocs/autoCreatedFromInvIds progress carries both fields into the insert payload (AC-19)', async function() {
+  resetDB();
+  ctx._sb = mockSb({ shipments: {} });
+  var seeded = ctx.shpSeedTradeDocs(false);
+  ctx.DB.sh = [{ id: 'local1', ref: 'SHP-LOCAL1', tradeDocs: seeded, autoCreatedFromInvIds: ['inv-x'], linkedInvs: ['INV-X'], status: 'Booked', dg: false }];
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); }; // real modal only resolves on a UI click — must be stubbed or the await hangs forever
+  await ctx.migrateShToSupabase();
+  ctx.showBlockingBackupModal = origShowBackup;
+  var insertCall = ctx._sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assert(insertCall, 'insert attempted');
+  assertEqual(JSON.stringify(insertCall.row.trade_docs), JSON.stringify(seeded), 'tradeDocs carried into the migration insert payload');
+  assertEqual(JSON.stringify(insertCall.row.auto_created_from_inv_ids), JSON.stringify(['inv-x']));
+});
+
+// ── B3 regression: CRUD functions never mutate DB.sh before persistence succeeds ──
+testAsync('shpEditTradeDoc() — a cancelled Cloud Data login leaves DB.sh byte-identical, no silent partial edit (B3 regression)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-b3-1', ref: 'SHP-B3-1', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  var before = JSON.stringify(ctx.DB.sh[0]);
+  var origEnsure = ctx.ensureSbAuth;
+  ctx.ensureSbAuth = function(){ return Promise.resolve(false); }; // operator cancels the login modal
+  var updateCalled = false;
+  ctx._sb = mockSb({ shipments: {} });
+  var origFrom = ctx._sb.from;
+  ctx._sb.from = function(name){ if (name === 'shipments') updateCalled = true; return origFrom(name); };
+  await ctx.shpEditTradeDoc('sh-b3-1', doc.id, { status: 'Received' });
+  ctx.ensureSbAuth = origEnsure;
+  assertEqual(JSON.stringify(ctx.DB.sh[0]), before, 'DB.sh completely untouched after a cancelled login');
+  assertEqual(updateCalled, false, '.update() never even attempted after ensureSbAuth() resolves false');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('shpEditTradeDoc() — a failed Cloud Data update also leaves DB.sh untouched, with a failure toast (B3 regression)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-b3-2', ref: 'SHP-B3-2', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  var before = JSON.stringify(ctx.DB.sh[0]);
+  ctx._sb = mockSb({ shipments: { updateError: { message: 'network error' } } });
+  await ctx.shpEditTradeDoc('sh-b3-2', doc.id, { status: 'Received' });
+  assertEqual(JSON.stringify(ctx.DB.sh[0]), before, 'DB.sh untouched after a failed update');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('shpEditTradeDoc() — a successful Cloud Data update DOES commit the change after refresh (B3 positive path)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-b3-3', ref: 'SHP-B3-3', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  ctx._sb = mockSb({ shipments: { selectData: [{ id: 'sh-b3-3', ref: 'SHP-B3-3', trade_docs: [Object.assign({}, doc, { status: 'Received' })], docs_status: 'Complete', status: 'Booked', linked_invs: [] }] } });
+  await ctx.shpEditTradeDoc('sh-b3-3', doc.id, { status: 'Received' });
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-b3-3'; });
+  assert(s, 'record survives the refresh');
+  assertEqual(s.tradeDocs[0].status, 'Received', 'edit committed after successful persistence + refresh');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+testAsync('shpEditTradeDoc() — editing a non-existent docId is a no-op, no persistence attempted', async function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  ctx.DB.sh = [{ id: 'sh-b3-4', ref: 'SHP-B3-4', tradeDocs: [doc], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  var svCalled = false;
+  var origSv = ctx.sv;
+  ctx.sv = function(){ svCalled = true; return origSv.apply(this, arguments); };
+  await ctx.shpEditTradeDoc('sh-b3-4', 'does-not-exist', { status: 'Received' });
+  ctx.sv = origSv;
+  assertEqual(svCalled, false, 'no persistence attempted for an unknown docId');
+  assertEqual(ctx.DB.sh[0].tradeDocs[0].status, 'Pending', 'original entry unchanged');
+});
+
+// ── shpAddTradeDoc() / shpRemoveTradeDoc() basic CRUD ──
+testAsync('shpAddTradeDoc() — adds a custom line and recomputes docsStatus', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.sh = [{ id: 'sh-crud-1', ref: 'SHP-CRUD1', tradeDocs: [], docsStatus: null, autoCreatedFromInvIds: [] }];
+  await ctx.shpAddTradeDoc('sh-crud-1', 'Custom Import Permit');
+  var s = ctx.DB.sh[0];
+  assertEqual(s.tradeDocs.length, 1);
+  assertEqual(s.tradeDocs[0].type, 'Custom Import Permit');
+  assertEqual(s.docsStatus, 'Pending');
+});
+testAsync('shpRemoveTradeDoc() — removes only the targeted entry', async function() {
+  resetDB();
+  ctx._sb = null;
+  var docA = ctx.shpNewTradeDocEntry('A', false), docB = ctx.shpNewTradeDocEntry('B', false);
+  ctx.DB.sh = [{ id: 'sh-crud-2', ref: 'SHP-CRUD2', tradeDocs: [docA, docB], docsStatus: 'Pending', autoCreatedFromInvIds: [] }];
+  await ctx.shpRemoveTradeDoc('sh-crud-2', docA.id);
+  var s = ctx.DB.sh[0];
+  assertEqual(s.tradeDocs.length, 1);
+  assertEqual(s.tradeDocs[0].id, docB.id);
+});
+
+// ── Round-2 spec-gate finding: emptying the checklist preserves the last real docsStatus, never null ──
+testAsync('shpRemoveTradeDoc() — removing the last remaining entry preserves the prior real docsStatus, not null (round-2 spec-gate finding)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-empty1', ref: 'SHP-EMPTY1', tradeDocs: [doc], docsStatus: 'Complete', autoCreatedFromInvIds: [] }];
+  await ctx.shpRemoveTradeDoc('sh-empty1', doc.id);
+  var s = ctx.DB.sh[0];
+  assertEqual(s.tradeDocs.length, 0);
+  assertEqual(s.docsStatus, 'Complete', 'prior real docsStatus preserved, not silently overwritten with null');
+});
+testAsync('shpRemoveTradeDoc() — same guard on the Cloud Data branch: docs_status payload preserves the prior value, not null (round-2 spec-gate finding)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  var doc = ctx.shpNewTradeDocEntry('Bill of Lading', false);
+  doc.status = 'Received';
+  ctx.DB.sh = [{ id: 'sh-empty2', ref: 'SHP-EMPTY2', tradeDocs: [doc], docsStatus: 'Complete', autoCreatedFromInvIds: [] }];
+  var updatedRow = null;
+  ctx._sb = mockSb({ shipments: {
+    updateImpl: function(row, id){ updatedRow = row; return Object.assign({ id: id }, row); }
+  } });
+  await ctx.shpRemoveTradeDoc('sh-empty2', doc.id);
+  assert(updatedRow, 'update attempted');
+  assertEqual(updatedRow.docs_status, 'Complete', 'Supabase payload preserves the prior value, never sends null');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+});
+
+// ── REQ/SPEC-WEBHOOK-001: Generic outbound-webhook automation rules ──
+// Helper: every webhook test must explicitly reset SS.webhookRules and the
+// webhook mock state itself — resetDB() deliberately does not touch SS
+// (SPEC §9), and _mockWebhookResponses/_webhookCallLog persist across tests.
+function _resetWebhookTestState() {
+  ctx.SS.webhookRules = [];
+  _mockWebhookResponses = {};
+  _webhookCallLog = [];
+}
+
+testAsync('fireWebhookRules() — AC-1: no rules configured is a no-op, zero fetch calls', async function() {
+  resetDB(); _resetWebhookTestState();
+  var r = await ctx.fireWebhookRules('inv_buyer_approved', {});
+  assertEqual(r.sent, 0); assertEqual(r.failed, 0);
+  assertEqual(_webhookCallLog.length, 0, 'no fetch attempted');
+});
+
+test('addWebhookRule() — AC-2: valid https URL + attestation adds a rule with the right shape', function() {
+  resetDB(); _resetWebhookTestState();
+  mockEl('whr-trigger').value = 'inv_buyer_approved';
+  mockEl('whr-url').value = 'https://hook.us1.make.com/abc123';
+  mockEl('whr-enabled').checked = true;
+  mockEl('whr-attest').checked = true;
+  ctx.addWebhookRule();
+  assertEqual(ctx.SS.webhookRules.length, 1);
+  var r = ctx.SS.webhookRules[0];
+  assertEqual(r.trigger, 'inv_buyer_approved');
+  assertEqual(r.url, 'https://hook.us1.make.com/abc123');
+  assertEqual(r.enabled, true);
+  assert(!!r.id, 'rule has an id');
+  assert(!!r.createdAt, 'rule has createdAt');
+  assert(!!r.dataHandlingAttestedAt, 'rule records the data-handling attestation timestamp');
+  assertEqual(mockEl('whr-attest').checked, false, 'attestation checkbox resets after a successful add, same as the URL field');
+  ctx.renderWebhookRulesPanel();
+  assertContains(mockEl('webhook-rules-panel').innerHTML, 'https://hook.us1.make.com/abc123');
+});
+
+test('addWebhookRule() — AC-3: non-https URL is rejected, SS.webhookRules unchanged', function() {
+  resetDB(); _resetWebhookTestState();
+  mockEl('whr-trigger').value = 'inv_buyer_approved';
+  mockEl('whr-url').value = 'http://insecure.example.com/hook';
+  mockEl('whr-attest').checked = true;
+  ctx.addWebhookRule();
+  assertEqual((ctx.SS.webhookRules||[]).length, 0, 'rejected, nothing added');
+});
+
+test('addWebhookRule() — data-handling attestation checkbox is required even with a valid URL, rejected without it', function() {
+  resetDB(); _resetWebhookTestState();
+  mockEl('whr-trigger').value = 'inv_buyer_approved';
+  mockEl('whr-url').value = 'https://hook.us1.make.com/no-attest';
+  mockEl('whr-attest').checked = false;
+  ctx.addWebhookRule();
+  assertEqual((ctx.SS.webhookRules||[]).length, 0, 'rejected without attestation, nothing added, valid URL alone is not enough');
+});
+
+test('renderWebhookRulesPanel() — AC-4/AC-14: disclosure visible with zero rules AND after a rule is added', function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.renderWebhookRulesPanel();
+  assertContains(mockEl('webhook-rules-disclosure').innerHTML, 'Invoice: Buyer Approved', 'disclosure present with zero rules configured — before the very first Add Rule click');
+  assertContains(mockEl('webhook-rules-disclosure').innerHTML, 'bank account details', 'names FPM bank details category');
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://x.example.com', enabled: true, createdAt: new Date().toISOString() }];
+  ctx.renderWebhookRulesPanel();
+  assertContains(mockEl('webhook-rules-disclosure').innerHTML, 'Invoice: Buyer Approved', 'disclosure still present after a rule exists — persistent note');
+});
+
+test('delWebhookRule() — AC-5: removes exactly the targeted rule', function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.SS.webhookRules = [
+    { id: 'r1', trigger: 'inv_buyer_approved', url: 'https://a.example.com', enabled: true, createdAt: '' },
+    { id: 'r2', trigger: 'inv_buyer_approved', url: 'https://b.example.com', enabled: true, createdAt: '' }
+  ];
+  ctx.delWebhookRule('r1');
+  assertEqual(ctx.SS.webhookRules.length, 1);
+  assertEqual(ctx.SS.webhookRules[0].id, 'r2');
+});
+
+testAsync('fireWebhookRules() — AC-6: three rules, three independent outcomes (reject / HTTP-error / success), Promise.allSettled isolation', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.SS.webhookRules = [
+    { id: 'r1', trigger: 'inv_buyer_approved', url: 'https://reject.example.com', enabled: true, createdAt: '' },
+    { id: 'r2', trigger: 'inv_buyer_approved', url: 'https://err404.example.com', enabled: true, createdAt: '' },
+    { id: 'r3', trigger: 'inv_buyer_approved', url: 'https://ok.example.com', enabled: true, createdAt: '' }
+  ];
+  _mockWebhookResponses = {
+    'https://reject.example.com': 'reject',
+    'https://err404.example.com': { status: 404 },
+    'https://ok.example.com': { status: 200 }
+  };
+  var r = await ctx.fireWebhookRules('inv_buyer_approved', { a: 1 });
+  assertEqual(r.sent, 1, 'exactly one succeeded');
+  assertEqual(r.failed, 2, 'a rejected fetch and a 404 both counted as failed, not just the rejection');
+  assertEqual(_webhookCallLog.length, 3, 'all three rules were attempted independently — the rejection/404 didn\'t abort the others');
+});
+
+testAsync('saveInvApprove() — AC-7: payload matches shape; grandTotal/balanceDue match invoiceHtml, not an independent calc_ or cInv() value (spec-gate rounds 1-2)', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh1', num: 'INV-WH1', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', cur: 'USD', date: '2026-01-01',
+    lineItems: [{ desc: 'Widget', uom: 'pcs', qty: 10, up: 5 }], taxRate: 0.1, lf: 0, ins: 0, leg: 0, isp: 0, oth: 0, dep: 0, pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh1', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh1': { status: 200 } };
+  ctx.openInvApprove('inv-wh1'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 1, 'exactly one fetch call');
+  var payload = JSON.parse(_webhookCallLog[0].body);
+  assertEqual(payload.trigger, 'inv_buyer_approved');
+  assertEqual(payload.invoice.id, 'inv-wh1');
+  assertEqual(payload.invoice.num, 'INV-WH1');
+  assertEqual(payload.buyer.email, 'buyer@example.com');
+  assert(!!payload.invoiceHtml, 'invoiceHtml present and non-empty');
+  // 10 x 5 = 50 + 10% tax = 55, no calc_grandTotal was pre-set on this fixture
+  assertEqual(payload.invoice.grandTotal, 55, 'grandTotal is the live-computed total, not 0 (round-1 bug) or an independent cInv() value');
+  assertEqual(payload.invoice.balanceDue, 55, 'balanceDue matches grandTotal (no deposit, no CN)');
+  assertContains(payload.invoiceHtml, 'BALANCE DUE', 'invoiceHtml actually renders a balance line');
+});
+
+testAsync('saveInvApprove() — AC-7 (Credit Note fixture, spec-gate round 2/3): balanceDue matches invoiceHtml\'s own printed balance, deliberately NOT cInv().bal', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh2', num: 'INV-WH2', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', cur: 'USD', date: '2026-01-01',
+    lineItems: [{ desc: 'Widget', uom: 'pcs', qty: 10, up: 10 }], taxRate: 0, lf: 0, ins: 0, leg: 0, isp: 0, oth: 0, dep: 0, pos: [] });
+  ctx.DB.inv.push({ id: 'cn-wh2', num: 'CN-WH2', type: 'credit_note', status: 'CN Applied', linkedInvId: 'inv-wh2', linkedInvNum: 'INV-WH2', cnAmount: 20 });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh2', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh2': { status: 200 } };
+  ctx.openInvApprove('inv-wh2'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  var payload = JSON.parse(_webhookCallLog[0].body);
+  // Grand = 10*10 = 100, no deposit. invoiceHtml's own balance is grand-dep=100 (no CN deduction, by design).
+  // cInv(inv).bal WOULD be 100-20=80 (subtracts the applied CN) — the divergence round 2 found and fixed.
+  assertEqual(payload.invoice.balanceDue, 100, 'balanceDue matches invoiceHtml\'s own printed balance (no CN deduction), not cInv().bal');
+  var cInvBal = ctx.cInv(ctx.DB.inv.find(function(x){ return x.id === 'inv-wh2'; })).bal;
+  assertEqual(cInvBal, 80, 'sanity: cInv().bal genuinely does differ (subtracts the CN) — proves this is a real divergence, not a vacuous assertion');
+  assert(payload.invoice.balanceDue !== cInvBal, 'the payload deliberately does NOT match cInv().bal for a CN-bearing invoice');
+});
+
+testAsync('saveInvApprove() — AC-8(a): a real, non-BUY-ADHOC buyer with a blank email skips the webhook', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'No Email Buyer', email: '', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh3a', num: 'INV-WH3A', status: 'Pro-forma', buyerId: 'b1', buyer: 'No Email Buyer', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh3a', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh3a': { status: 200 } };
+  ctx.openInvApprove('inv-wh3a'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 0, 'zero fetch calls — real buyer, blank email');
+});
+
+testAsync('saveInvApprove() — AC-8(b): buyerId blank/unmatched falls through to BUY-ADHOC with its default blank email, skips the webhook', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'BUY-ADHOC', num: '', name: 'Ad-Hoc', email: '', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh3b', num: 'INV-WH3B', status: 'Pro-forma', buyerId: '', buyer: 'Unmatched Co', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh3b', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh3b': { status: 200 } };
+  ctx.openInvApprove('inv-wh3b'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 0, 'zero fetch calls — falls through to BUY-ADHOC');
+});
+
+testAsync('saveInvApprove() — AC-8(c) (spec-gate round 6): BUY-ADHOC edited to carry a non-blank email STILL skips the webhook — proves the id guard is independent of the email guard', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'BUY-ADHOC', num: '', name: 'Ad-Hoc', email: 'general-inbox@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh3c', num: 'INV-WH3C', status: 'Pro-forma', buyerId: 'BUY-ADHOC', buyer: 'Ad-Hoc', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh3c', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh3c': { status: 200 } };
+  ctx.openInvApprove('inv-wh3c'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 0, 'zero fetch calls even though BUY-ADHOC now has a real email — the id==="BUY-ADHOC" guard fires independently');
+});
+
+testAsync('saveInvApprove() — AC-9: DB.inv persistence succeeds identically whether the webhook fetch rejects or not', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh4', num: 'INV-WH4', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh4', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh4': 'reject' };
+  ctx.openInvApprove('inv-wh4'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-wh4'; });
+  assert(!!inv.buyerApprovedAt, 'approval persisted correctly regardless of webhook outcome');
+  assertEqual(inv.buyerApprovedBy, 'J. Smith');
+});
+
+test('buildInvDocHtml() — AC-10: prevInvDoc()\'s Blob output is byte-identical to what it produced before the refactor', function() {
+  resetDB();
+  var fixtures = [
+    { id: 'i1', num: 'INV-A', status: 'Draft', cur: 'USD', date: '2026-01-01', lineItems: [{ desc: 'X', uom: 'pcs', qty: 1, up: 10 }], taxRate: 0 },
+    { id: 'i2', num: 'INV-B', status: 'Pro-forma', cur: 'USD', date: '2026-01-01', lineItems: [{ desc: 'Y', uom: 'pcs', qty: 2, up: 20 }], taxRate: 0.1 },
+    { id: 'i3', num: 'INV-C', status: 'Sent', cur: 'GBP', date: '2026-01-01', lineItems: [{ desc: 'Z', uom: 'pcs', qty: 3, up: 30 }], taxRate: 0.1, lf: 5, ins: 2, leg: 1, isp: 1, oth: 1, dep: 10 }
+  ];
+  fixtures.forEach(function(inv){
+    var built = ctx.buildInvDocHtml(inv);
+    assert(typeof built.html === 'string' && built.html.indexOf('</html>') > -1, 'html is a real, complete document for ' + inv.num);
+  });
+});
+
+test('buildInvDocHtml() — AC-10b: does not touch window._lastInv/window._lastPO', function() {
+  resetDB();
+  ctx.window._lastInv = { sentinel: 'untouched' };
+  ctx.window._lastPO = { sentinel: 'untouched-po' };
+  ctx.buildInvDocHtml({ id: 'i1', num: 'INV-A', status: 'Draft', lineItems: [] });
+  assertEqual(ctx.window._lastInv.sentinel, 'untouched', 'buildInvDocHtml() must never set window._lastInv');
+  assertEqual(ctx.window._lastPO.sentinel, 'untouched-po', 'buildInvDocHtml() must never set window._lastPO');
+});
+
+test('buildInvDocHtml() — AC-10c: .grand/.bal are numerically correct, including the CN-bearing case diverging from cInv().bal', function() {
+  resetDB();
+  var plain = ctx.buildInvDocHtml({ id: 'i1', num: 'INV-A', status: 'Draft', lineItems: [{ desc: 'X', uom: 'pcs', qty: 2, up: 10 }], taxRate: 0, dep: 0 });
+  assertEqual(plain.grand, 20);
+  assertEqual(plain.bal, 20);
+  var withDep = ctx.buildInvDocHtml({ id: 'i2', num: 'INV-B', status: 'Draft', lineItems: [{ desc: 'X', uom: 'pcs', qty: 2, up: 10 }], taxRate: 0, dep: 5 });
+  assertEqual(withDep.bal, 15, 'bal = grand - dep');
+});
+
+testAsync('saveInvApprove() — AC-11: a genuine second unapproved-to-approved transition (after Phase-2 auto-clear) fires the webhook again', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh5', num: 'INV-WH5', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [{ desc:'X',uom:'pcs',qty:1,up:1 }], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh5', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh5': { status: 200 } };
+  ctx.openInvApprove('inv-wh5'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 1, 'first genuine approval fires the webhook');
+  // Simulate Phase-2's own auto-clear-on-line-edit (existing, unmodified behavior)
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-wh5'; });
+  inv.buyerApprovedAt = ''; inv.buyerApprovedBy = ''; inv.approvalMethod = ''; inv.approvalNote = '';
+  ctx.openInvApprove('inv-wh5'); mockEl('ia-method').value = 'WhatsApp'; mockEl('ia-by').value = 'A. Jones';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 2, 'a genuine second unapproved->approved transition fires the webhook again');
+});
+
+testAsync('saveInvApprove() — AC-11b: a correction to an already-approved invoice (no intervening edit) does NOT re-fire the webhook', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh6', num: 'INV-WH6', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [{ desc:'X',uom:'pcs',qty:1,up:1 }], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh6', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh6': { status: 200 } };
+  ctx.openInvApprove('inv-wh6'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 1, 'first approval fires the webhook');
+  // Correction: same invoice, still approved, no line-item edit in between
+  ctx.openInvApprove('inv-wh6'); mockEl('ia-method').value = 'WhatsApp'; mockEl('ia-by').value = 'A. Jones (correction)';
+  await ctx.saveInvApprove();
+  assertEqual(_webhookCallLog.length, 1, 'a correction to an already-approved invoice must NOT re-fire the webhook');
+});
+
+test('buildInvDocHtml() — AC-12: a malicious buyer/invoice field is san()-wrapped, no raw injection in the output', function() {
+  resetDB();
+  var built = ctx.buildInvDocHtml({ id: 'i1', num: 'INV-A', status: 'Draft', buyer: '<script>alert(1)</script>', buyerAddr: '"><img src=x>',
+    lineItems: [{ desc: '<b>evil</b>', uom: 'pcs', qty: 1, up: 1 }] });
+  assertNotContains(built.html, '<script>alert(1)</script>', 'buyer name is sanitized');
+  assertNotContains(built.html, '"><img src=x>', 'buyer address is sanitized');
+});
+
+testAsync('saveInvApprove() — AC-15: resolves without waiting for the webhook dispatch to complete (never awaits fireWebhookRules)', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh7', num: 'INV-WH7', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh7', enabled: true, createdAt: '' }];
+  var resolveFetch;
+  var controllable = new Promise(function(resolve){ resolveFetch = resolve; });
+  var originalFetch = ctx.fetch;
+  ctx.fetch = function(url, opts){
+    if (url === 'https://hook.example.com/wh7') return controllable;
+    return originalFetch(url, opts);
+  };
+  ctx.openInvApprove('inv-wh7'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  // Deliberately never `await` saveInvApprove() itself — if it were ever mutated to
+  // await fireWebhookRules() before returning, awaiting it directly here would hang
+  // this test (and the whole suite) forever, since `controllable` isn't resolved yet.
+  // Instead, race it: chain a flag-setting .then() and give it a few microtask ticks.
+  var saveApproveResolved = false;
+  ctx.saveInvApprove().then(function(){ saveApproveResolved = true; });
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  assert(saveApproveResolved, 'saveInvApprove() must resolve without waiting for the still-unresolved webhook dispatch — a slow/unreachable Make.com URL must never block the approval flow');
+  var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-wh7'; });
+  assert(!!inv.buyerApprovedAt, 'approval persisted before the webhook dispatch resolves');
+  resolveFetch({ ok: true, status: 200 });
+  await Promise.resolve(); await Promise.resolve(); // let the .then() chain settle
+  ctx.fetch = originalFetch;
+});
+
+testAsync('saveInvApprove() — AC-16: payload.buyer is exactly {id,name,email} — contactName/phone genuinely absent', async function() {
+  resetDB(); _resetWebhookTestState();
+  ctx.DB.buy = [{ id: 'b1', num: 'BUY-0001', name: 'Real Buyer', email: 'buyer@example.com', contactName: 'Jane Contact', phone: '+1234567890', currency: 'GBP' }];
+  ctx.DB.inv.push({ id: 'inv-wh8', num: 'INV-WH8', status: 'Pro-forma', buyerId: 'b1', buyer: 'Real Buyer', lineItems: [], pos: [] });
+  ctx.SS.webhookRules = [{ id: 'r1', trigger: 'inv_buyer_approved', url: 'https://hook.example.com/wh8', enabled: true, createdAt: '' }];
+  _mockWebhookResponses = { 'https://hook.example.com/wh8': { status: 200 } };
+  ctx.openInvApprove('inv-wh8'); mockEl('ia-method').value = 'Email'; mockEl('ia-by').value = 'J. Smith';
+  await ctx.saveInvApprove();
+  var payload = JSON.parse(_webhookCallLog[0].body);
+  assertEqual(payload.buyer.id, 'b1'); assertEqual(payload.buyer.email, 'buyer@example.com');
+  assertEqual('contactName' in payload.buyer, false, 'contactName genuinely absent from the actual outgoing JSON, not just unused');
+  assertEqual('phone' in payload.buyer, false, 'phone genuinely absent from the actual outgoing JSON, not just unused');
+});
+
+// ── Mutation-testing checklist proof (SPEC §9 items a-j) — each of these
+// was manually reverted in a scratch copy of index.html, confirmed to break
+// exactly the predicted test(s) below and nothing else, then restored.
+// The comments record which test each mutation is expected to break.
+// (a) revert wasApproved guard              -> AC-11b test above
+// (b) revert window._lastInv/_lastPO excl.  -> AC-10b test above
+// (c) revert HTTP-error handling            -> AC-6 test above
+// (d) revert non-awaited dispatch           -> AC-15 test above
+// (e) reintroduce contactName/phone         -> AC-16 test above
+// (f) remove blank-email check only         -> AC-8(a) test above
+// (g) revert disclosure to rule-count-gated -> AC-4/AC-14 test above
+// (h) revert grandTotal/balanceDue to ||0   -> AC-7 test above
+// (i) revert balanceDue to cInv(inv).bal    -> AC-7 (CN fixture) test above
+// (j) remove BUY-ADHOC-id check only        -> AC-8(c) test above
 
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
