@@ -6,6 +6,15 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
 <title>Stackd Ops v2.9.88</title>
+<meta name="description" content="Stackd Ops — FPM International's trade operations portal for sourcing, freight, and procurement management.">
+<link rel="canonical" href="https://app.getstackdops.com/">
+<meta name="theme-color" content="#B8283A">
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Stackd Ops">
+<meta property="og:description" content="FPM International's trade operations portal for sourcing, freight, and procurement management.">
+<meta property="og:url" content="https://app.getstackdops.com/">
+<meta name="twitter:card" content="summary">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -9507,7 +9516,7 @@ async function quickAddBuyer() {
   if (!qName || !qName.trim()) { populateBuyDropdown('if-b', prevId); return; }
   qName = qName.trim();
   var dup = DB.buy.find(function(b){ return b.name.toLowerCase() === qName.toLowerCase(); });
-  if (dup) { alert('A buyer with this name already exists.'); populateBuyDropdown('if-b', dup.id); return; }
+  if (dup) { toast('⚠ A buyer with this name already exists.'); populateBuyDropdown('if-b', dup.id); return; }
   if (_sb) {
     if (!(await ensureSbAuth())) { populateBuyDropdown('if-b', prevId); return; }
     var result = await _sb.from('buyers').insert({ num: nextRefNum(DB.buy,'BUY'), name: qName, currency: 'GBP' }).select().single();
@@ -9655,7 +9664,7 @@ async function saveBuy() {
 async function delBuy(id) {
   if (!id || id === 'BUY-ADHOC') return;
   var linked = DB.inv.find(function(i){ return i.buyerId === id; });
-  if (linked) { alert('Cannot delete: this buyer has linked invoices. Reassign invoices first.'); return; }
+  if (linked) { toast('⚠ Cannot delete: this buyer has linked invoices. Reassign invoices first.', 3600); return; }
   if (!confirm('Delete buyer? This cannot be undone.')) return;
   if (_sb) {
     if (!(await ensureSbAuth())) return;
@@ -9852,7 +9861,7 @@ function prevStmtPdf() {
   var blob=new Blob([html],{type:'text/html'});
   var url=URL.createObjectURL(blob);
   var w=window.open(url,'_blank');
-  if(!w){URL.revokeObjectURL(url);alert('Allow pop-ups for this page then try again.');}else{w.focus();}
+  if(!w){URL.revokeObjectURL(url);toast('⚠ Allow pop-ups for this page then try again.');}else{w.focus();}
 }
 
 async function delInv(id) {
@@ -10094,7 +10103,7 @@ function buildPdfHeader(colour) {
   var b = getCoBrand();
   var c = colour || b.colour || '#B8283A';
   var logoHtml = b.logo
-    ? '<img src="' + sanitizeLogo(b.logo) + '" style="max-height:60px;max-width:180px;object-fit:contain;">'
+    ? '<img src="' + sanitizeLogo(b.logo) + '" alt="' + san(b.name||AS.name||'Company') + ' logo" style="max-height:60px;max-width:180px;object-fit:contain;">'
     : '<div style="font-weight:700;font-size:14pt;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
       + (b.trading && b.trading !== b.name ? '<div style="font-size:10pt;color:#555;">' + san(b.trading) + '</div>' : '');
   var rightHtml = '<div style="font-weight:700;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
@@ -10267,7 +10276,7 @@ function prevInvDoc(inv) {
   var blob = new Blob([built.html], {type:'text/html'});
   var url = URL.createObjectURL(blob);
   var w = window.open(url, '_blank');
-  if (!w) { URL.revokeObjectURL(url); alert('Allow pop-ups for this page then try again.'); return; }
+  if (!w) { URL.revokeObjectURL(url); toast('⚠ Allow pop-ups for this page then try again.'); return; }
   w.focus();
 }
 
@@ -10372,7 +10381,7 @@ function prevPODoc(po) {
   var blob = new Blob([html], {type:'text/html'});
   var url = URL.createObjectURL(blob);
   var w = window.open(url, '_blank');
-  if (!w) { URL.revokeObjectURL(url); alert('Allow pop-ups for this page then try again.'); return; }
+  if (!w) { URL.revokeObjectURL(url); toast('⚠ Allow pop-ups for this page then try again.'); return; }
   w.focus();
 }
 
@@ -12703,7 +12712,7 @@ function rCoBrand() {
   if(G('co-colour')) G('co-colour').value = b.colour;
   if(G('co-footer')) G('co-footer').value = b.footer;
   if(G('co-powered')) G('co-powered').checked = b.powered;
-  if(b.logo && G('co-logo-preview')) G('co-logo-preview').innerHTML = '<img src="' + sanitizeLogo(b.logo) + '" style="max-height:50px;max-width:160px;object-fit:contain;">';
+  if(b.logo && G('co-logo-preview')) G('co-logo-preview').innerHTML = '<img src="' + sanitizeLogo(b.logo) + '" alt="Company logo" style="max-height:50px;max-width:160px;object-fit:contain;">';
   updCoPreview();
 }
 
@@ -12716,7 +12725,7 @@ function updCoPreview() {
   var trading = G('co-trading') ? G('co-trading').value.trim() : '';
   var logo = b.logo;
   var left = logo
-    ? '<img src="' + logo + '" style="max-height:40px;max-width:120px;object-fit:contain;">'
+    ? '<img src="' + logo + '" alt="' + san(name) + ' logo" style="max-height:40px;max-width:120px;object-fit:contain;">'
     : '<div style="font-weight:700;font-size:11pt;">' + san(name) + '</div>' + (trading && trading !== name ? '<div style="font-size:8pt;color:#888;">' + san(trading) + '</div>' : '');
   el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:2px solid ' + colour + ';">'
     + '<div>' + left + '</div>'
@@ -12741,7 +12750,7 @@ function onCoLogoUpload(input) {
       return;
     }
     var prev = G('co-logo-preview');
-    if (prev) prev.innerHTML = '<img src="' + e.target.result + '" style="max-height:50px;max-width:160px;object-fit:contain;">';
+    if (prev) prev.innerHTML = '<img src="' + e.target.result + '" alt="Company logo preview" style="max-height:50px;max-width:160px;object-fit:contain;">';
     updCoPreview();
   };
   reader.readAsDataURL(file);
@@ -14822,7 +14831,7 @@ function renderQteSourceDriftWarn(q) {
 function printDoc() {
   if (window._lastInv) { prevInvDoc(window._lastInv); }
   else if (window._lastPO) { prevPODoc(window._lastPO); }
-  else { alert('Open a preview first.'); }
+  else { toast('⚠ Open a preview first.'); }
 }
 
 // ── KEYBOARD TRAP ─────────────────────────────────────────────
