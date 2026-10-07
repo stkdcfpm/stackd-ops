@@ -826,6 +826,45 @@ test('saveQte creates version 1 on first save with correct fields', () => {
   assertEqual(v.sellPrice, +(v.landed * 1.15).toFixed(2), 'sellPrice = landed * (1 + markup/100)');
 });
 
+test('saveQte priceHistory snapshot stores ins (insurance), not just landed — same gap as the Quote PDF/editor display bug', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rvIns', supId:'', desc:'Test item', qty:1, uom:'pcs', cost:0, cbm:2, dg:false, dutyPct:10 }];
+  saveQteSetup('rvIns', 500, 10, 15, '');
+  ctx.saveQte();
+  const v = ctx.DB.qt[0].lines[0].priceHistory[0];
+  // cost 500, cbm 2 -> freight = 2*85(QR.lclPerCBM) = 170; ins = (500+170)*0.005(QR.insRate) = 3.35
+  assertEqual(v.ins, 3.35, 'ins stored on the history snapshot');
+  assertApprox(v.landed, 723.35, 'landed (500 cost + 170 freight + 3.35 ins + 50 duty) unaffected by storing ins separately');
+});
+
+test('rQLT — editor grid shows an Insurance column, not silently folded into Landed', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rqlt1', supId:'', desc:'Zero-passthrough Item', qty:1, uom:'pcs', cost:1000, cbm:0, dg:false, dutyPct:0 }];
+  mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '0';
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR, { insRate: 0.005 });
+  ctx.rQLT();
+  ctx.QR = savedQR;
+  var rendered = mockEl('qt-lines').innerHTML;
+  assertContains(rendered, '<th>Insurance</th>', 'Insurance column header present in the editor grid');
+  // cost 1000, freight 0 (cbm 0) -> ins = 1000*0.005 = 5.00, landed = 1005
+  assertContains(rendered, '>$5.00<', 'Insurance amount rendered in its own cell in the live editor, distinct from Landed');
+  assertContains(rendered, '>$1005.00<', 'Landed still correctly includes insurance, unchanged by adding the column');
+});
+
+test('renderQteLineHistory — version-history panel shows the Insurance column for a saved snapshot', () => {
+  resetDB();
+  ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Test', qty: 1, uom: 'pcs', cost: 1000, cbm: 0, dg: false, dutyPct: 0,
+    priceHistory: [{ v: 1, ts: '2026-01-01T00:00:00.000Z', cost: 1000, dutyPct: 0, markup: 0, ins: 5, landed: 1005, sellPrice: 1005, note: '' }] }];
+  ctx.renderQteLineHistory('r1');
+  var rendered = mockEl('ql-hist-r1').innerHTML;
+  assertContains(rendered, '<th>Insurance</th>', 'Insurance column header present in the version-history panel');
+  assertContains(rendered, '>$5.00<', 'stored ins amount rendered in the version-history panel');
+});
+
 test('saveQte appends version 2 when cost changes on re-save', () => {
   resetDB();
   ctx.EI.qt = null;
