@@ -13713,6 +13713,22 @@ test('AC-4: Quote PDF line-item table shows 3-decimal cost', () => {
   assertContains(getHtml(), '0.125', 'Quote PDF shows 3-decimal cost (not rounded to 2 by the fn(...,0) falsy-zero bug)');
 });
 
+test('prevQteDoc — Insurance has its own column, not silently folded into Landed (user-reported: $969.99 cost appeared to become $974.84 in Landed with Freight/Duty both $0)', () => {
+  const getHtml = makePreviewMock();
+  resetDB();
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR, { insRate: 0.005 });
+  ctx.prevQteDoc({ num: 'QT-INS', client: 'Test Client', freightMode: 'LCL', dt: '2026-05-06', markup: 0,
+    lines: [{ rid: 'r1', supId: '', desc: 'Zero-passthrough Item', qty: 1, uom: 'pcs', cost: 1000, cbm: 0, dg: false, dutyPct: 0 }]
+  });
+  ctx.QR = savedQR;
+  var html = getHtml();
+  assertContains(html, '<th>Insurance</th>', 'Insurance column header present in the line-item table');
+  // cost 1000, freight 0 (cbm 0), duty 0 (dutyPct 0) -> ins = (1000+0)*0.005 = 5.00, landed = 1005.00
+  assertContains(html, '>$5.00<', 'Insurance amount (0.5% of cost+freight) rendered in its own cell, distinct from Landed');
+  assertContains(html, '>$1005.00<', 'Landed still correctly includes insurance (cost 1000 + ins 5), not changed by adding the column');
+});
+
 test('AC-4: Quote line version-history panel shows 3-decimal cost', () => {
   resetDB();
   ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Precision Item', qty: 1, uom: 'pcs', cost: 0.125, cbm: 0.1, dg: false, dutyPct: 0,
