@@ -14689,6 +14689,7 @@ function prevQteDoc(q) {
       + '<td style="padding:4px 8px;font-size:11px;text-align:center;">' + (+l.qty||1) + ' ' + san(l.uom||'pcs') + '</td>'
       + '<td style="padding:4px 8px;font-size:11px;text-align:right;">$' + fn(l.cost,3) + '</td>'
       + '<td style="padding:4px 8px;font-size:11px;text-align:right;">$' + fn(calc.freight||0,0) + '</td>'
+      + '<td style="padding:4px 8px;font-size:11px;text-align:right;">$' + fn(calc.ins||0,0) + '</td>'
       + '<td style="padding:4px 8px;font-size:11px;text-align:right;">$' + fn(calc.duty||0,0) + '</td>'
       + '<td style="padding:4px 8px;font-size:11px;text-align:right;font-weight:600;">$' + fn(calc.landed||0,0) + '</td>'
       + '</tr>';
@@ -14706,7 +14707,7 @@ function prevQteDoc(q) {
     + '<div style="font-size:11px;color:#888;">Valid until: ' + san(q.validUntil||'—') + '</div></div>'
     + '</div>'
     + '<div style="margin-bottom:12px;font-size:11px;"><strong>Client:</strong> ' + san(q.client||'') + ' &nbsp; <strong>Mode:</strong> ' + san(q.freightMode||'LCL') + '</div>'
-    + '<table><thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>Cost</th><th>Freight</th><th>Duty</th><th>Landed</th></tr></thead>'
+    + '<table><thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>Cost</th><th>Freight</th><th>Insurance</th><th>Duty</th><th>Landed</th></tr></thead>'
     + '<tbody>' + linesHtml + '</tbody></table>'
     + '<div style="margin-top:14px;display:flex;justify-content:flex-end;">'
     + '<table style="width:280px;"><tbody>'
