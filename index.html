@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.88</title>
+<title>Stackd Ops v2.9.89</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -222,7 +222,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.88</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.89</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1376,9 +1376,20 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.88</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.89</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong>Quote Insurance was silently folded into Landed with no visible breakdown</strong>, making a legitimate ~0.5%-of-cost charge look like an unexplained jump between Cost and Landed even when Freight and Duty were both $0 (user-reported: a $969.99 cost appearing to become $974.84 Landed). Added an explicit Insurance $ column/row to the Quote PDF preview, the live line-item editor grid, and the per-line price-history panel — all three places that previously went straight from Cost to Landed with no way to see the charge in between.</li>
+          <li>New: <strong>Insurance Rate % is now an editable override, not just a fixed global default</strong> (<code>REQ/SPEC-QTE-003</code>) — the same two-tier cascade as Margin %. A new "Insurance % Override" field on the quote form overrides the Settings → Rates & FX global default for that one quote (blank = inherit); a new "Ins %" field on each line in the editor grid overrides the quote-level value for just that line (blank = inherit). <code>cQteLine()</code> gained a 5th parameter carrying the quote-level override down to this per-line resolution; <code>qteEffectiveInsRate(line, quoteInsRatePct)</code> is the new line-vs-quote resolver, mirroring <code>qteEffectiveMargin()</code>. The quote-level override persists as <code>Quote.insRate</code> (new nullable <code>ins_rate</code> column on the Supabase <code>quotes</code> table, migration <code>0009_quotes_ins_rate.sql</code> — additive only, null means "inherit," identical in shape to the existing Origin/Dest/Admin override columns); the per-line override rides inside the pre-existing <code>lines</code> jsonb column alongside <code>line.markup</code>, needing no schema change. Price-history snapshots now also record the effective Insurance % and $ used at save time, shown as two new columns in the version-history panel.</li>
+          <li>9 new/extended tests across this work (1033 → 1042 pass), including the override cascade itself (line override &gt; quote override &gt; QR default, with blank at either tier correctly falling through) and the Supabase null-omission guarantee for the new column. No independent REQ/SPEC-gate review was run for this change — flagged here per this repo's own process rather than silently skipped.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.88</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong>a Product-type Invoice line item can no longer be saved with no cost basis at all</strong> (<code>REQ/SPEC-INV-002</code>). Found live against real production data: two real invoices had product lines saved with Unit Cost 0 and no catalogue link, inflating Gross Profit/Net Profit by $6,321.27 combined ("Pallets x3"/"Pallets x9" line items, and a $5,540.07 freight/customs charge line entered as a full-margin product rather than a pass-through). Quick-add now refuses to add a Product-type line with no Unit Cost and no library link; Save Invoice refuses the whole save if any Product line still lacks both — including a line that had a valid cost when added but was zeroed out afterward directly in the line-item table, which the quick-add-only fix alone would have missed. Pass-through and Charge line types are unaffected — Unit Cost 0 is a normal, expected value for those and is not treated as an error.</li>
@@ -2757,6 +2768,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
         <div class="fld"><label>Origin Charges Override ($)</label><input type="number" id="qf-origOv" min="0" step="5" oninput="calcQte()"></div>
         <div class="fld"><label>Dest Charges Override ($)</label><input type="number" id="qf-destOv" min="0" step="5" oninput="calcQte()"></div>
         <div class="fld"><label>FPM Admin Override ($)</label><input type="number" id="qf-admOv" min="0" step="5" oninput="calcQte()"></div>
+        <div class="fld"><label>Insurance % Override</label><input type="number" id="qf-insRate" min="0" max="100" step="0.1" oninput="calcQte()"></div>
         <div class="fld"><label>Currency</label>
           <select id="qf-cur">
             <option value="USD">USD</option><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="BBD">BBD</option>
@@ -6251,6 +6263,7 @@ async function refreshQteFromSupabase() {
     if (row.origin_charges != null) q.originCharges = row.origin_charges;
     if (row.dest_charges != null) q.destCharges = row.dest_charges;
     if (row.fpm_admin != null) q.fpmAdmin = row.fpm_admin;
+    if (row.ins_rate != null) q.insRate = row.ins_rate;
     return q;
   });
   sv(K.qt, DB.qt);
@@ -6488,7 +6501,8 @@ async function persistQteChange(qt, skipRefresh) {
       approved_by: qt.approvedBy || '', approved_reason: qt.approvedReason || '', approved_at: qt.approvedAt || null,
       origin_charges: qt.originCharges != null ? qt.originCharges : null,
       dest_charges: qt.destCharges != null ? qt.destCharges : null,
-      fpm_admin: qt.fpmAdmin != null ? qt.fpmAdmin : null
+      fpm_admin: qt.fpmAdmin != null ? qt.fpmAdmin : null,
+      ins_rate: qt.insRate != null ? qt.insRate : null
     }).eq('id', qt.id);
     if (result.error) { console.warn('[Stackd] persistQteChange: failed to push Quote update for ' + qt.id, result.error.message); return; }
     if (!skipRefresh) await refreshQteFromSupabase();
@@ -7019,7 +7033,8 @@ async function migrateQteToSupabase() {
       approved_by: q.approvedBy || '', approved_reason: q.approvedReason || '', approved_at: q.approvedAt || null,
       origin_charges: q.originCharges != null ? q.originCharges : null,
       dest_charges: q.destCharges != null ? q.destCharges : null,
-      fpm_admin: q.fpmAdmin != null ? q.fpmAdmin : null
+      fpm_admin: q.fpmAdmin != null ? q.fpmAdmin : null,
+      ins_rate: q.insRate != null ? q.insRate : null
     }).select().single();
     if (result.error) { toast('Migration failed on Quote ' + (q.num||q.id) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
     qteIdMap[q.id] = result.data.id;
@@ -11837,7 +11852,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.88).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.89).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -11876,6 +11891,7 @@ var AI_SYSTEM_PROMPT = [
   'Line items: Product description, Supplier (from catalogue), Qty, UOM, Unit Cost, CBM, DG flag (Y/N), Duty %.',
   'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX.',
   'Overhead charges (Origin Charges, Dest Charges, FPM Admin — v2.9.68, REQ/SPEC-QTE-002): three fixed dollar amounts added to every quote\'s total, unmarked-up (added at cost, never scaled by margin). Global defaults are set in Settings → Rates & FX; each quote can override any of the three individually — three optional fields on the quote form (blank = inherit the current global default, any typed number including 0 = override just this quote). An overridden quote is unaffected by later changes to the global default for that specific field; an un-overridden quote keeps tracking the global default live. Setting a field to 0 removes that charge from just that one quote.',
+  'Insurance Rate % override (v2.9.89, REQ/SPEC-QTE-003): insurance (default 0.5% of cost+freight per line, set in Settings → Rates & FX) is editable per quote AND per line, the same two-tier cascade as Margin %. The quote form has an "Insurance % Override" field (blank = inherit the global default). Each line in the editor grid also has its own "Ins %" field (blank = inherit the quote-level value, which itself may be inheriting the global default) — a line-level value always wins over the quote-level value. The editor grid and the PDF preview both show the computed Insurance $ amount as its own column/row, separate from Landed, so it is never a silent, unexplained jump between Cost and Landed.',
   'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
   'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
   'Convert to PO: only available when quote status is Accepted. Set the status dropdown to Accepted — the Convert to PO button appears automatically. Clicking it creates one PO per distinct supplier on the quote\'s lines (v2.9.44 — fixes PO-GAP-001, which previously misattributed every line to the first supplier on a multi-supplier quote); the quote modal title then shows a "PO RAISED" badge and the button is hidden. Each PO carries the Quote ID for traceability; PO numbers get a -1/-2 suffix when a quote splits across multiple suppliers.',
@@ -11884,7 +11900,7 @@ var AI_SYSTEM_PROMPT = [
   'Print preview: click 👁 on any quote row to open a formatted quote document in a new tab.',
   '',
   '## Rates & FX (Settings)',
-  'Settings → Rates & FX. Configure: GBP/USD rate, GBP/RMB rate, GBP/BBD rate, LCL rate per CBM, FCL 20GP rate, FCL 40HQ rate, Origin charges, Destination charges, DG surcharge per line, Insurance rate (% of CIF), FPM admin fee. These defaults populate new quotes but can be overridden per quote.',
+  'Settings → Rates & FX. Configure: GBP/USD rate, GBP/RMB rate, GBP/BBD rate, LCL rate per CBM, FCL 20GP rate, FCL 40HQ rate, Origin charges, Destination charges, DG surcharge per line, Insurance rate (% of CIF), FPM admin fee. These defaults populate new quotes but can be overridden per quote (Origin/Dest/Admin/Insurance) or per line (Margin %, Insurance %) — see the Quotes section above for the override cascade.',
   'Live FX rates: click ↻ Live Rates to fetch current GBP→USD/CNY/BBD rates from a free CDN-backed source (no API key). A freshness label shows when rates were last fetched (green = <8h, amber = 8–24h, red = >24h). A warning appears inside the quote modal when rates are older than 24h. Clicking Save Rates manually clears the timestamp and marks rates as manually set.',
   'Display currency (v2.9.46): a currency selector (GBP/USD/RMB/BBD) on the Dashboard lets the operator view aggregate financial figures converted into any currency, using the same configured FX rates. In scope: Dashboard KPIs, the Buyers list Outstanding column, and the Buyer edit modal Summary panel\'s "Total invoiced" figure. Out of scope, unaffected by the toggle: the Buyer Summary panel\'s "Outstanding" figure and recent-invoices amounts (always shown in that buyer\'s own currency), the Buyer Statement report, the Aging Report, and the MTD/VAT export (always GBP, a statutory figure). If FX rates are >24h stale and a non-GBP display currency is selected, a warning banner appears next to the converted figures. The preference persists across reloads and backup export/import (stored on the same QR rates object, not synced to Sheets).',
   '',
@@ -13804,7 +13820,7 @@ function nextQteNum() {
   return 'QTE-' + String(max + 1).padStart(4, '0');
 }
 
-function cQteLine(line, qr, freightMode, totalCBM) {
+function cQteLine(line, qr, freightMode, totalCBM, quoteInsRateRaw) {
   var cbm = +line.cbm || 0;
   var cost = +line.cost || 0;
   var freight = 0;
@@ -13816,10 +13832,20 @@ function cQteLine(line, qr, freightMode, totalCBM) {
     freight = cbm * qr.lclPerCBM;
   }
   var dgAmt = line.dg ? qr.dgSurcharge : 0;
-  var ins = (cost + freight) * qr.insRate;
+  // Insurance rate cascade (REQ/SPEC-QTE-003): line.insRate overrides the quote-level
+  // rate (quoteInsRateRaw, blank/undefined inherits qr.insRate*100) — same two-tier
+  // override shape as markup/quoteMarkup, mirrored so Insurance is editable like Duty/Margin.
+  var quoteInsPct = (quoteInsRateRaw === undefined || quoteInsRateRaw === null || quoteInsRateRaw === '') ? qr.insRate * 100 : +quoteInsRateRaw;
+  var insPct = qteEffectiveInsRate(line, quoteInsPct);
+  var ins = (cost + freight) * (insPct / 100);
   var duty = cost * (+line.dutyPct || 0) / 100;
   var landed = cost + freight + dgAmt + ins + duty;
-  return { freight: freight, dgAmt: dgAmt, ins: ins, duty: duty, landed: landed };
+  return { freight: freight, dgAmt: dgAmt, ins: ins, insPct: insPct, duty: duty, landed: landed };
+}
+
+function qteEffectiveInsRate(line, quoteInsRatePct) {
+  var li = line.insRate;
+  return (li !== undefined && li !== null && li !== '') ? +li : +quoteInsRatePct;
 }
 
 function qteEffectiveMargin(line, quoteMarkup) {
@@ -13850,7 +13876,7 @@ function cQte(qt) {
   var mode = qt.freightMode || 'LCL';
   var lines = qt.lines || [];
   var totalCBM = lines.reduce(function(s,l){ return s + (+l.cbm||0); }, 0);
-  var lineCalcs = lines.map(function(l){ return cQteLine(l, qr, mode, totalCBM); });
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, qr, mode, totalCBM, qt.insRate); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
   var markup = +qt.markup || 0;
   var overheadEff = qteEffectiveOverhead(qt.originCharges, qt.destCharges, qt.fpmAdmin, qr);
@@ -13910,6 +13936,7 @@ function openQte() {
   G('qf-origOv').value = '';
   G('qf-destOv').value = '';
   G('qf-admOv').value = '';
+  G('qf-insRate').value = '';
   G('qf-st').value = 'Draft';
   G('qf-nt').value = '';
   G('qf-approved-by').value = '';
@@ -13940,6 +13967,7 @@ function editQte(id) {
   G('qf-origOv').value = q.originCharges !== undefined ? String(q.originCharges) : '';
   G('qf-destOv').value = q.destCharges   !== undefined ? String(q.destCharges)   : '';
   G('qf-admOv').value  = q.fpmAdmin      !== undefined ? String(q.fpmAdmin)      : '';
+  G('qf-insRate').value = q.insRate      !== undefined ? String(q.insRate)       : '';
   G('qf-st').value = q.status || 'Draft';
   G('qf-nt').value = q.notes || '';
   G('qf-approved-by').value = q.approvedBy || '';
@@ -13965,6 +13993,11 @@ function qlEffectiveMarkupInput(rid) {
   return raw === '' ? undefined : +raw;
 }
 
+function qlEffectiveInsInput(rid) {
+  var raw = qlFld(rid, 'insRate');
+  return raw === '' ? undefined : +raw;
+}
+
 function addQteLine() {
   cQL.push({ rid: uid(), supId:'', desc:'', qty:1, uom:'pcs', cost:0, cbm:0, dg:false, dutyPct:0 });
   rQLT();
@@ -13985,16 +14018,19 @@ function rQLT() {
   }
   var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
   var quoteMarkup = G('qf-mkp') ? +G('qf-mkp').value : 15;
+  var quoteInsRateRaw = G('qf-insRate') ? G('qf-insRate').value : '';
+  var quoteInsPct = (quoteInsRateRaw === '') ? QR.insRate * 100 : +quoteInsRateRaw;
   var totalCBM = cQL.reduce(function(s,l){ return s+(+l.cbm||0); }, 0);
-  el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:980px;">'
-    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th>Margin %</th><th>Insurance</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
+  el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:1080px;">'
+    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th>Margin %</th><th>Ins %</th><th>Ins $</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
     + '<tbody>'
     + cQL.map(function(l){
-        var calcR = cQteLine(l, QR, mode, totalCBM);
+        var calcR = cQteLine(l, QR, mode, totalCBM, quoteInsRateRaw);
         var effM = qteEffectiveMargin(l, quoteMarkup);
         var sellP = calcR.landed * (1 + effM / 100);
         var hCount = l.priceHistory ? l.priceHistory.length : 0;
         var mkpVal = (l.markup !== undefined && l.markup !== null) ? l.markup : '';
+        var insVal = (l.insRate !== undefined && l.insRate !== null) ? l.insRate : '';
         return '<tr>'
           + '<td><select id="ql-supId-' + l.rid + '" style="font-size:.5rem;width:110px;" onchange="calcQte()">'
             + '<option value="">— Supplier —</option>'
@@ -14008,6 +14044,7 @@ function rQLT() {
           + '<td style="text-align:center;"><input type="checkbox" id="ql-dg-' + l.rid + '"' + (l.dg?' checked':'') + ' onchange="calcQte()"></td>'
           + '<td><input type="number" id="ql-dutyPct-' + l.rid + '" value="' + (+l.dutyPct||0) + '" min="0" max="100" step="0.5" style="font-size:.5rem;width:46px;" oninput="calcQte()"></td>'
           + '<td><input type="number" id="ql-mkp-' + l.rid + '" value="' + mkpVal + '" placeholder="' + quoteMarkup + '" min="0" max="500" step="0.5" style="font-size:.5rem;width:50px;" oninput="calcQte()" title="Blank = inherit quote-level ' + quoteMarkup + '%"></td>'
+          + '<td><input type="number" id="ql-insRate-' + l.rid + '" value="' + insVal + '" placeholder="' + fn(quoteInsPct,2) + '" min="0" max="100" step="0.1" style="font-size:.5rem;width:50px;" oninput="calcQte()" title="Blank = inherit quote-level ' + fn(quoteInsPct,2) + '%"></td>'
           + '<td>$' + fn(calcR.ins,2) + '</td>'
           + '<td style="font-weight:600;">$' + fn(calcR.landed,0) + '</td>'
           + '<td style="font-weight:600;color:var(--cr);">$' + fn(sellP,0) + '</td>'
@@ -14018,7 +14055,7 @@ function rQLT() {
           + '</td>'
           + '</tr>'
           + '<tr id="ql-hist-row-' + l.rid + '" style="display:none;">'
-          + '<td colspan="14" style="padding:4px 8px 8px;background:#fafafa;">'
+          + '<td colspan="15" style="padding:4px 8px 8px;background:#fafafa;">'
             + '<div id="ql-hist-' + l.rid + '"></div>'
           + '</td>'
           + '</tr>';
@@ -14047,7 +14084,7 @@ function renderQteLineHistory(rid) {
     return;
   }
   panel.innerHTML = '<table class="tbl" style="font-size:.5rem;width:100%;margin-top:4px;">'
-    + '<thead><tr><th>v</th><th>Saved</th><th>Cost</th><th>Duty %</th><th>Markup %</th><th>Insurance</th><th>Landed</th><th>Sell</th><th>Note</th></tr></thead>'
+    + '<thead><tr><th>v</th><th>Saved</th><th>Cost</th><th>Duty %</th><th>Markup %</th><th>Ins %</th><th>Ins $</th><th>Landed</th><th>Sell</th><th>Note</th></tr></thead>'
     + '<tbody>'
     + history.slice().reverse().map(function(v){
         return '<tr>'
@@ -14056,6 +14093,7 @@ function renderQteLineHistory(rid) {
           + '<td>$' + fn(v.cost,3) + '</td>'
           + '<td>' + fn(v.dutyPct,1) + '%</td>'
           + '<td>' + fn(v.markup,1) + '%</td>'
+          + '<td>' + fn(v.insRate,2) + '%</td>'
           + '<td>$' + fn(v.ins,2) + '</td>'
           + '<td>$' + fn(v.landed,0) + '</td>'
           + '<td style="font-weight:600;">$' + fn(v.sellPrice,0) + '</td>'
@@ -14069,6 +14107,7 @@ function updQteOverheadPlaceholders() {
   if (G('qf-origOv')) G('qf-origOv').placeholder = 'Default: $' + fn(QR.originCharges,0);
   if (G('qf-destOv')) G('qf-destOv').placeholder = 'Default: $' + fn(QR.destCharges,0);
   if (G('qf-admOv'))  G('qf-admOv').placeholder  = 'Default: $' + fn(QR.fpmAdmin,0);
+  if (G('qf-insRate')) G('qf-insRate').placeholder = 'Default: ' + fn(QR.insRate*100,2) + '%';
 }
 
 function calcQte() {
@@ -14079,11 +14118,12 @@ function calcQte() {
   }
   var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
   var markup = G('qf-mkp') ? +G('qf-mkp').value : 15;
+  var insRateOv = G('qf-insRate') ? G('qf-insRate').value : '';
   var totalCBM = cQL.reduce(function(s,l){ return s+(+qlFld(l.rid,'cbm')||0); }, 0);
   var lines = cQL.map(function(l){
-    return { cost:+qlFld(l.rid,'cost')||0, cbm:+qlFld(l.rid,'cbm')||0, dg:qlFld(l.rid,'dg'), dutyPct:+qlFld(l.rid,'dutyPct')||0, markup: qlEffectiveMarkupInput(l.rid) };
+    return { cost:+qlFld(l.rid,'cost')||0, cbm:+qlFld(l.rid,'cbm')||0, dg:qlFld(l.rid,'dg'), dutyPct:+qlFld(l.rid,'dutyPct')||0, markup: qlEffectiveMarkupInput(l.rid), insRate: qlEffectiveInsInput(l.rid) };
   });
-  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM); });
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM, insRateOv); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
   var origOvRaw = G('qf-origOv') ? G('qf-origOv').value : '';
   var destOvRaw = G('qf-destOv') ? G('qf-destOv').value : '';
@@ -14170,7 +14210,8 @@ async function saveQte() {
       cbm: +qlFld(l.rid,'cbm')||0,
       dg: qlFld(l.rid,'dg'),
       dutyPct: +qlFld(l.rid,'dutyPct')||0,
-      markup: qlEffectiveMarkupInput(l.rid)
+      markup: qlEffectiveMarkupInput(l.rid),
+      insRate: qlEffectiveInsInput(l.rid)
     };
     if (l.sourceOrdId) {
       out.sourceOrdId = l.sourceOrdId;
@@ -14180,7 +14221,8 @@ async function saveQte() {
     return out;
   });
   var totalCBM = lines.reduce(function(s,l){ return s+(l.cbm||0); }, 0);
-  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM); });
+  var insRateOvRaw = G('qf-insRate').value;
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM, insRateOvRaw); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s+c.landed; }, 0);
   var markup = +G('qf-mkp').value||0;
   var existQ = EI.qt ? DB.qt.find(function(x){ return x.id===EI.qt; }) : null;
@@ -14191,9 +14233,9 @@ async function saveQte() {
     var calcR = lineCalcs[i];
     var effM = qteEffectiveMargin(l, markup);
     var sellP = +(calcR.landed * (1 + effM/100)).toFixed(2);
-    var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== effM;
+    var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== effM || lastV.insRate !== calcR.insPct;
     if (changed) {
-      history.push({ v: lastV ? lastV.v+1 : 1, ts: new Date().toISOString(), cost: l.cost, dutyPct: l.dutyPct, markup: effM, ins: +fn(calcR.ins,2), landed: +fn(calcR.landed,2), sellPrice: sellP, note: qlFld(l.rid,'note') });
+      history.push({ v: lastV ? lastV.v+1 : 1, ts: new Date().toISOString(), cost: l.cost, dutyPct: l.dutyPct, markup: effM, insRate: calcR.insPct, ins: +fn(calcR.ins,2), landed: +fn(calcR.landed,2), sellPrice: sellP, note: qlFld(l.rid,'note') });
     }
     l.priceHistory = history;
   });
@@ -14232,6 +14274,7 @@ async function saveQte() {
   if (origOvRaw !== '') qt.originCharges = +origOvRaw;
   if (destOvRaw !== '') qt.destCharges = +destOvRaw;
   if (admOvRaw  !== '') qt.fpmAdmin = +admOvRaw;
+  if (insRateOvRaw !== '') qt.insRate = +insRateOvRaw;
 
   if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
@@ -14243,7 +14286,8 @@ async function saveQte() {
       approved_by: qt.approvedBy || '', approved_reason: qt.approvedReason || '', approved_at: qt.approvedAt || null,
       origin_charges: qt.originCharges != null ? qt.originCharges : null,
       dest_charges: qt.destCharges != null ? qt.destCharges : null,
-      fpm_admin: qt.fpmAdmin != null ? qt.fpmAdmin : null
+      fpm_admin: qt.fpmAdmin != null ? qt.fpmAdmin : null,
+      ins_rate: qt.insRate != null ? qt.insRate : null
     };
     var qtResult;
     if (EI.qt) {

@@ -760,6 +760,30 @@ test('cQteLine calculates landed cost correctly (LCL)', () => {
   assert(Math.abs(r.landed - 723.35) < 0.001, 'landed total correct');
 });
 
+test('cQteLine — insurance rate cascade: line override > quote override > QR default', () => {
+  var qr = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005 };
+  var line = { cost:1000, cbm:0, dg:false, dutyPct:0 };
+  // no quote override, no line override -> falls back to QR default (0.5%)
+  var r1 = ctx.cQteLine(line, qr, 'LCL', 0);
+  assertEqual(r1.insPct, 0.5, 'no overrides -> QR.insRate*100 (0.5%)');
+  assertEqual(r1.ins, 5, 'ins = 1000 * 0.5%');
+
+  // quote-level override (2%), no line override -> quote override wins over QR default
+  var r2 = ctx.cQteLine(line, qr, 'LCL', 0, '2');
+  assertEqual(r2.insPct, 2, 'quote-level override (2%) applied');
+  assertEqual(r2.ins, 20, 'ins = 1000 * 2%');
+
+  // line-level override (1%) wins even though a quote-level override (2%) is also set
+  var lineWithOverride = { cost:1000, cbm:0, dg:false, dutyPct:0, insRate:1 };
+  var r3 = ctx.cQteLine(lineWithOverride, qr, 'LCL', 0, '2');
+  assertEqual(r3.insPct, 1, 'line-level override (1%) wins over quote-level override (2%)');
+  assertEqual(r3.ins, 10, 'ins = 1000 * 1%');
+
+  // blank quote-level override (empty string, as a cleared DOM field sends) -> inherits QR default
+  var r4 = ctx.cQteLine(line, qr, 'LCL', 0, '');
+  assertEqual(r4.insPct, 0.5, 'blank quote-level override string inherits QR default, same as omitting the arg');
+});
+
 test('cQte sums lines and adds overheads correctly (SPEC-QTE-001: overhead never marked up)', () => {
   var savedQR = ctx.QR;
   ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:250, destCharges:350, fpmAdmin:75, fxGBPUSD:1.27 };
@@ -778,6 +802,21 @@ test('cQte sums lines and adds overheads correctly (SPEC-QTE-001: overhead never
   ctx.QR = savedQR;
 });
 
+test('cQte — qt.insRate overrides QR default for every line without its own override (REQ/SPEC-QTE-003)', () => {
+  var savedQR = ctx.QR;
+  ctx.QR = { lclPerCBM:85, fcl20GP:1800, fcl40HQ:2800, dgSurcharge:150, insRate:0.005, originCharges:0, destCharges:0, fpmAdmin:0, fxGBPUSD:1.27 };
+  var qt = { freightMode:'LCL', markup:0, insRate: 2, lines:[
+    { cost:1000, cbm:0, dg:false, dutyPct:0 },                 // inherits qt.insRate (2%)
+    { cost:1000, cbm:0, dg:false, dutyPct:0, insRate: 1 }       // own override (1%) wins over qt.insRate
+  ] };
+  var c = ctx.cQte(qt);
+  assertEqual(c.lineCalcs[0].insPct, 2, 'line with no own override inherits qt.insRate');
+  assertEqual(c.lineCalcs[0].ins, 20, 'ins = 1000 * qt.insRate (2%)');
+  assertEqual(c.lineCalcs[1].insPct, 1, 'line with its own override (1%) ignores qt.insRate (2%)');
+  assertEqual(c.lineCalcs[1].ins, 10, 'ins = 1000 * line.insRate (1%)');
+  ctx.QR = savedQR;
+});
+
 // ── Quote Line Price Versioning ────────────────────────────────
 console.log('\nQuote line price versioning');
 
@@ -789,6 +828,7 @@ function saveQteSetup(rid, cost, dutyPct, markup, note) {
   mockEl('qf-cur').value = 'USD';
   mockEl('qf-mode').value = 'LCL';
   mockEl('qf-mkp').value = String(markup);
+  mockEl('qf-insRate').value = '';
   mockEl('qf-st').value = 'Draft';
   mockEl('qf-nt').value = '';
   mockEl('qt-verr').textContent = '';
@@ -838,31 +878,68 @@ test('saveQte priceHistory snapshot stores ins (insurance), not just landed — 
   assertApprox(v.landed, 723.35, 'landed (500 cost + 170 freight + 3.35 ins + 50 duty) unaffected by storing ins separately');
 });
 
-test('rQLT — editor grid shows an Insurance column, not silently folded into Landed', () => {
+test('rQLT — editor grid shows Insurance columns (% override input + $ amount), not silently folded into Landed', () => {
   resetDB();
   ctx.EI.qt = null;
   ctx.cQL = [{ rid:'rqlt1', supId:'', desc:'Zero-passthrough Item', qty:1, uom:'pcs', cost:1000, cbm:0, dg:false, dutyPct:0 }];
   mockEl('qf-mode').value = 'LCL';
   mockEl('qf-mkp').value = '0';
+  mockEl('qf-insRate').value = '';
   var savedQR = ctx.QR;
   ctx.QR = Object.assign({}, ctx.QR, { insRate: 0.005 });
   ctx.rQLT();
   ctx.QR = savedQR;
   var rendered = mockEl('qt-lines').innerHTML;
-  assertContains(rendered, '<th>Insurance</th>', 'Insurance column header present in the editor grid');
+  assertContains(rendered, '<th>Ins %</th>', 'Insurance % override column header present in the editor grid');
+  assertContains(rendered, '<th>Ins $</th>', 'Insurance $ amount column header present in the editor grid');
+  assertContains(rendered, 'id="ql-insRate-rqlt1" value=""', 'no line-level override -> blank input, inherits quote-level/QR default');
+  assertContains(rendered, 'placeholder="0.50"', 'blank quote-level override -> placeholder shows QR default (0.50%)');
   // cost 1000, freight 0 (cbm 0) -> ins = 1000*0.005 = 5.00, landed = 1005
   assertContains(rendered, '>$5.00<', 'Insurance amount rendered in its own cell in the live editor, distinct from Landed');
   assertContains(rendered, '>$1005.00<', 'Landed still correctly includes insurance, unchanged by adding the column');
 });
 
-test('renderQteLineHistory — version-history panel shows the Insurance column for a saved snapshot', () => {
+test('rQLT — quote-level Insurance % override cascades to every line without its own override', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rqlt2', supId:'', desc:'Item', qty:1, uom:'pcs', cost:1000, cbm:0, dg:false, dutyPct:0 }];
+  mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '0';
+  mockEl('qf-insRate').value = '2';
+  var savedQR = ctx.QR;
+  ctx.QR = Object.assign({}, ctx.QR, { insRate: 0.005 });
+  ctx.rQLT();
+  ctx.QR = savedQR;
+  mockEl('qf-insRate').value = '';
+  var rendered = mockEl('qt-lines').innerHTML;
+  assertContains(rendered, 'placeholder="2.00"', 'quote-level override (2%) shown as the placeholder for an inheriting line');
+  assertContains(rendered, '>$20.00<', 'ins = 1000 * quote-level override (2%), not the QR default (0.5%)');
+});
+
+test('rQLT — line-level Insurance % override wins over the quote-level override', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [{ rid:'rqlt3', supId:'', desc:'Item', qty:1, uom:'pcs', cost:1000, cbm:0, dg:false, dutyPct:0, insRate:1 }];
+  mockEl('qf-mode').value = 'LCL';
+  mockEl('qf-mkp').value = '0';
+  mockEl('qf-insRate').value = '2';
+  ctx.rQLT();
+  mockEl('qf-insRate').value = '';
+  var rendered = mockEl('qt-lines').innerHTML;
+  assertContains(rendered, 'id="ql-insRate-rqlt3" value="1"', 'line-level override (1%) rendered explicitly, not blank');
+  assertContains(rendered, '>$10.00<', 'ins = 1000 * line-level override (1%), overriding the quote-level override (2%)');
+});
+
+test('renderQteLineHistory — version-history panel shows Ins % and Ins $ columns for a saved snapshot', () => {
   resetDB();
   ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Test', qty: 1, uom: 'pcs', cost: 1000, cbm: 0, dg: false, dutyPct: 0,
-    priceHistory: [{ v: 1, ts: '2026-01-01T00:00:00.000Z', cost: 1000, dutyPct: 0, markup: 0, ins: 5, landed: 1005, sellPrice: 1005, note: '' }] }];
+    priceHistory: [{ v: 1, ts: '2026-01-01T00:00:00.000Z', cost: 1000, dutyPct: 0, markup: 0, insRate: 0.5, ins: 5, landed: 1005, sellPrice: 1005, note: '' }] }];
   ctx.renderQteLineHistory('r1');
   var rendered = mockEl('ql-hist-r1').innerHTML;
-  assertContains(rendered, '<th>Insurance</th>', 'Insurance column header present in the version-history panel');
-  assertContains(rendered, '>$5.00<', 'stored ins amount rendered in the version-history panel');
+  assertContains(rendered, '<th>Ins %</th>', 'Insurance % column header present in the version-history panel');
+  assertContains(rendered, '<th>Ins $</th>', 'Insurance $ column header present in the version-history panel');
+  assertContains(rendered, '>0.50%<', 'stored insRate % rendered in the version-history panel');
+  assertContains(rendered, '>$5.00<', 'stored ins $ amount rendered in the version-history panel');
 });
 
 test('saveQte appends version 2 when cost changes on re-save', () => {
@@ -1136,6 +1213,31 @@ test('saveQte: overhead override and per-line markup override apply independentl
   var expectedSellUSD = lineCalc.landed * 1.05 + expectedOverhead;
   assertEqual(saved.originCharges, 0, 'overhead override persisted');
   assert(Math.abs(saved.calc_sellUSD - expectedSellUSD) < 0.01, "per-line markup override (5%) and overhead override ($0 origin) both apply, independently of each other");
+});
+
+test('saveQte persists qf-insRate as qt.insRate and per-line Insurance % override as line.insRate (REQ/SPEC-QTE-003)', () => {
+  resetDB();
+  ctx.EI.qt = null;
+  ctx.cQL = [
+    { rid:'ins-a', supId:'', desc:'Inherits quote override', qty:1, uom:'pcs', cost:1000, cbm:0, dg:false, dutyPct:0 },
+    { rid:'ins-b', supId:'', desc:'Own line override', qty:1, uom:'pcs', cost:1000, cbm:0, dg:false, dutyPct:0 }
+  ];
+  saveQteSetup('ins-a', 1000, 0, 0, '');
+  mockEl('ql-cbm-ins-a').value = '0';
+  mockEl('ql-supId-ins-b').value = ''; mockEl('ql-desc-ins-b').value = ''; mockEl('ql-qty-ins-b').value = '1';
+  mockEl('ql-uom-ins-b').value = 'pcs'; mockEl('ql-cost-ins-b').value = '1000'; mockEl('ql-cbm-ins-b').value = '0';
+  mockEl('ql-dg-ins-b').checked = false; mockEl('ql-dutyPct-ins-b').value = '0'; mockEl('ql-note-ins-b').value = '';
+  mockEl('qf-insRate').value = '2';        // quote-level Insurance % override
+  mockEl('ql-insRate-ins-b').value = '1';  // line b overrides down to 1%, ignoring the quote-level 2%
+  ctx.saveQte();
+  mockEl('qf-insRate').value = '';
+  mockEl('ql-insRate-ins-b').value = '';
+  var saved = ctx.DB.qt[0];
+  assertEqual(saved.insRate, 2, 'quote-level Insurance % override persisted on the Quote record');
+  var lineA = saved.lines.find(function(l){ return l.rid === 'ins-a'; });
+  var lineB = saved.lines.find(function(l){ return l.rid === 'ins-b'; });
+  assertEqual(lineA.insRate, undefined, 'line with a blank override persists no insRate key — inherits the quote-level value live');
+  assertEqual(lineB.insRate, 1, "line b's own override (1%) persisted, distinct from the quote-level override (2%)");
 });
 
 test("prevQteDoc: an overridden quote's itemized breakdown matches its total — no repeat of the pre-fix QR-vs-cQte mismatch (AC-6)", () => {
@@ -9139,11 +9241,12 @@ testAsync('refreshQteFromSupabase — refuses to overwrite real local data when 
   assertEqual(ctx.DB.qt[0].id, 'local-only-qt', 'original record untouched');
 
   resetDB();
-  ctx._sb = mockSb({ quotes: { selectData: [{ id: 'cloud-qt-1', num: 'QTE-0001', client: 'Cloud Client', dt: '2026-01-01', valid_until: '', currency: 'USD', freight_mode: 'LCL', markup: 15, status: 'Draft', notes: '', lines: [], linked_po_ids: [], source_contact_id: null, calc_total_landed: 0, calc_sell_usd: 0, calc_sell_gbp: 0, approved_by: '', approved_reason: '', approved_at: null, origin_charges: null, dest_charges: null, fpm_admin: null }] } });
+  ctx._sb = mockSb({ quotes: { selectData: [{ id: 'cloud-qt-1', num: 'QTE-0001', client: 'Cloud Client', dt: '2026-01-01', valid_until: '', currency: 'USD', freight_mode: 'LCL', markup: 15, status: 'Draft', notes: '', lines: [], linked_po_ids: [], source_contact_id: null, calc_total_landed: 0, calc_sell_usd: 0, calc_sell_gbp: 0, approved_by: '', approved_reason: '', approved_at: null, origin_charges: null, dest_charges: null, fpm_admin: null, ins_rate: null }] } });
   await ctx.refreshQteFromSupabase();
   assertEqual(ctx.DB.qt.length, 1, 'real Cloud Data correctly loaded');
   assertEqual(ctx.DB.qt[0].id, 'cloud-qt-1', 'loaded from Supabase');
   assertEqual('originCharges' in ctx.DB.qt[0], false, 'originCharges key omitted entirely, not set to null, when never overridden');
+  assertEqual('insRate' in ctx.DB.qt[0], false, 'insRate key omitted entirely, not set to null, when never overridden (REQ/SPEC-QTE-003, same null-omission rule as the other overrides)');
   assert(!!ctx.localStorage.getItem('st_qt_cloud_migration_ts'), 'marker set even though this device never ran the migration itself');
 });
 
