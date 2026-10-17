@@ -3017,7 +3017,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 // ───────────────────────────────────────────────────────────────
 
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev', bu:'st_buy', ord:'st_ord', spm:'st_spm'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev', bu:'st_buy', ord:'st_ord', spm:'st_spm', lip:'st_lip'};
 
 var _storageOK = (function() {
   try { localStorage.setItem('_stk_t','1'); localStorage.removeItem('_stk_t'); return true; }
@@ -3030,7 +3030,7 @@ function ld(k) {
 }
 function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 
-let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev), buy: ldArr(K.bu), ord: ldArr(K.ord), supPayments: ldArr(K.spm) };
+let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev), buy: ldArr(K.bu), ord: ldArr(K.ord), supPayments: ldArr(K.spm), liPending: ldArr(K.lip) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'', email:'', phone:'', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
 let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null, co:null, bu:null, ord:null };
@@ -3059,6 +3059,7 @@ var WEBHOOK_TRIGGERS = [
 ];
 var _unlockedInvIds = {}; // in-memory override set — cleared on page reload
 var _invEditSnapshot = null; // G-06: pre-edit snapshot captured at unlock, cleared on save or close
+var _liApproveCtx = null;    // REQ/SPEC-LI-002: {candidateId, quoteNum} while Approve is mid-flow; null otherwise. Set AFTER openLI()/editLI() (which clear it first), never before.
 
 function canTransitionStatus(from, to) {
   // Cancelled is a terminal state reachable from any status
@@ -4332,7 +4333,7 @@ function sv(k, d) {
     }
   }
 }
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); sv(K.bu,DB.buy); sv(K.ord,DB.ord); sv(K.spm,DB.supPayments); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); sv(K.bu,DB.buy); sv(K.ord,DB.ord); sv(K.spm,DB.supPayments); sv(K.lip,DB.liPending); };
 function logEv(entityType, entityId, verb, summary, actor) {
   var ev = {
     id:         uid(),
