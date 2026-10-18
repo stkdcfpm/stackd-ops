@@ -98,6 +98,14 @@ Event (DB.events / K.ev = 'st_ev')
   id                PK — uid()
   entityType, entityId   Loose, untyped reference to any entity's id — not a real FK,
                            no referential integrity enforced
+
+LiPending (DB.liPending / K.lip = 'st_lip')  — local-only, never Cloud-Data-synced (REQ/SPEC-LI-002)
+  id                PK — uid()
+  status            'pending' | 'approved' | 'dismissed'
+  kind              'new' | 'update'
+  matchedLiId       FK → LineItem.id   (only for kind:'update')
+  quoteId           FK → Quote.id
+  quoteNum, supId, desc, uom, cost, suggestedPrice, currency, notes, createdAt
 ```
 
 ### Relationships (arrows read "references")
@@ -115,6 +123,8 @@ CreditNote     ──(linkedInvId)────→ Invoice              (id-based
 CreditNote     ──(linkedInvNum)───→ Invoice.num           (business-key FK, redundant with above)
 Shipment       ──(linkedInvs[])───→ Invoice.num           (business-key FK, array)
 Event          ──(entityId)───────→ * any entity (untyped, no referential integrity)
+LiPending      ──(matchedLiId)────→ LineItem              (optional, kind:'update' only)
+LiPending      ──(quoteId)────────→ Quote
 ```
 
 ---

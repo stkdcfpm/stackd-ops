@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.89</title>
+<title>Stackd Ops v2.9.90</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -222,7 +222,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.89</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.90</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -287,6 +287,10 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div class="view" id="v-li">
+  <div id="li-pending-banner" class="banner" style="display:none;margin-bottom:10px;background:#FEF3C7;border:1px solid #D97706;border-radius:4px;padding:10px 12px;">
+    <div style="font-size:.6rem;color:#92400E;margin-bottom:6px;font-weight:600;">&#9888; Catalogue suggestions from accepted Quotes awaiting review:</div>
+    <div id="li-pending-list"></div>
+  </div>
   <div class="tb">
     <input class="sb" type="text" placeholder="Search items..." id="li-q" oninput="rLI()">
     <select class="sb" style="max-width:170px;" id="li-sf" onchange="rLI()"><option value="">All suppliers</option></select>
@@ -1193,13 +1197,14 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
         </div>
       </div>
       <div class="ms"><div class="mst r">Line Items</div>
-        <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description</th><th style="width:52px">UOM</th><th style="width:40px">Qty</th><th style="width:80px">Unit Cost</th><th style="width:83px">Unit Price</th><th style="width:62px" class="num">Margin</th><th style="width:75px" class="num">Total</th><th style="width:65px">Type</th><th style="width:22px"></th></tr></thead><tbody id="il-tb"></tbody></table>
+        <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description</th><th style="width:90px">Supplier</th><th style="width:52px">UOM</th><th style="width:40px">Qty</th><th style="width:80px">Unit Cost</th><th style="width:83px">Unit Price</th><th style="width:62px" class="num">Margin</th><th style="width:75px" class="num">Total</th><th style="width:65px">Type</th><th style="width:22px"></th></tr></thead><tbody id="il-tb"></tbody></table>
         <div style="display:flex;gap:7px;margin-top:5px;">
           <button class="btn btn-o" onclick="openPicker()">Import from Library</button>
         </div>
         <!-- Quick add form -->
-        <div style="display:grid;grid-template-columns:90px 2fr 52px 52px 88px 92px auto;gap:6px;margin-top:8px;align-items:end;">
+        <div style="display:grid;grid-template-columns:90px 90px 2fr 52px 52px 88px 92px auto;gap:6px;margin-top:8px;align-items:end;">
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Type</label><select id="qal-type" onchange="qaTypeChg()" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="product">Product</option><option value="pass-through">Pass-through</option><option value="charge">Charge</option></select></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Supplier</label><select id="qal-sup" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="">Select...</option></select></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Description</label><input type="text" id="qal-desc" placeholder="e.g. Local Freight"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">UOM</label><input type="text" id="qal-uom" placeholder="pcs" value="pcs" list="dl-uom" autocomplete="off"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Qty</label><input type="number" id="qal-qty" placeholder="1" value="1" min="0" step="any"></div>
@@ -1376,9 +1381,21 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.89</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.90</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong>Line Item catalogue quick-add silently discarded Supplier attribution</strong> (<code>REQ/SPEC-LI-002</code>) — a Product-type line added via the Invoice quick-add form, or via "Import from Library," could reach the catalogue with no Supplier link. Quick-add now requires a Supplier for Product lines (Pass-through/Charge exempt, mirroring the existing Unit Cost requirement from REQ/SPEC-INV-002); the Invoice line-items table gained an editable Supplier column for every line type; <code>vInv()</code> backstops the requirement at save time against a Supplier cleared directly in that table after a line was added correctly.</li>
+          <li>New: <strong>Accepting a Quote now proposes catalogue updates, review-gated</strong> (<code>REQ/SPEC-LI-002</code>) — a new local-only entity, <code>DB.liPending[]</code>, queues a "new item" or "price update" candidate whenever an Accepted Quote's line carries a Supplier and either doesn't match an existing catalogue item, or matches one with different cost/price. A review banner on the Line Items tab lets the operator Approve (opens the real Line Item form, pre-filled — nothing is written until the operator saves) or Dismiss each candidate. Never Cloud-Data or Sheets-synced; included in local backup/restore.</li>
+          <li>New: <strong>"Import from Library" and the main Line Items list are now searchable and grouped by Supplier</strong> (<code>REQ/SPEC-LI-002</code>), matching patterns already used elsewhere in the app.</li>
+          <li>Requirements-gate: 11 rounds (REQ-LI-002, clean PASS). Spec-gate: 2 confirmatory rounds (SPEC-LI-002, clean PASS — 2 dangling cross-reference findings, both fixed). 30 new tests; 20 pre-existing test fixtures audited and repaired for the new Supplier requirement (each needed only a <code>supId</code> value added, no assertion changed, plus two global mock-state leaks — <code>qf-st</code> stuck on <code>'Accepted'</code>, and <code>ql-desc</code>/<code>ql-supId</code> mock fields not reflecting the test's own <code>cQL</code> object — fixed at the source with an explicit test-hygiene cleanup). Tests: 1042 → 1073 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.89</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong>Quote Insurance was silently folded into Landed with no visible breakdown</strong>, making a legitimate ~0.5%-of-cost charge look like an unexplained jump between Cost and Landed even when Freight and Duty were both $0 (user-reported: a $969.99 cost appearing to become $974.84 Landed). Added an explicit Insurance $ column/row to the Quote PDF preview, the live line-item editor grid, and the per-line price-history panel — all three places that previously went straight from Cost to Landed with no way to see the charge in between.</li>
@@ -2544,6 +2561,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 <div class="ov" id="ov-pick" onclick="if(event.target===this)closeM('ov-pick')">
   <div class="modal" style="max-width:620px;"><div class="mh"><h2>Import Line Items</h2><button class="mx" onclick="closeM('ov-pick')">&#215;</button></div>
   <div class="mb"><p style="font-size:.6rem;color:var(--m);margin-bottom:10px;">Select items to add. Quantities editable after import.</p>
+  <input class="sb" type="text" placeholder="Search items..." id="pick-q" oninput="rPickList()" style="width:100%;margin-bottom:8px;box-sizing:border-box;">
   <div id="pick-list"></div>
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn btn-g" onclick="closeM('ov-pick')">Cancel</button><button class="btn btn-s" onclick="doPick()">Add Selected</button></div>
   </div></div>
@@ -5934,7 +5952,7 @@ function rSup() {
       '<td><button class="ab" onclick="editSup(\'' + s.id + '\')">&#9998;</button><button class="ab" onclick="delSup(\'' + s.id + '\')">&#10005;</button></td></tr>';
   }).join('');
   var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
-  ['lf-sup','pf-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
+  ['lf-sup','pf-sup','qal-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
   G('li-sf').innerHTML = '<option value="">All suppliers</option>' + opts;
   populateConSupDrop();
 }
@@ -7876,7 +7894,16 @@ function rLI() {
   var q = (G('li-q').value||'').toLowerCase(), sf = G('li-sf').value;
   var f = DB.li.filter(function(l){ return (!q||(l.desc||'').toLowerCase().includes(q)||(l.sku||'').toLowerCase().includes(q)) && (!sf||l.supId===sf); });
   G('li-em').style.display = f.length ? 'none' : 'block';
-  G('li-tb').innerHTML = f.map(function(li){
+  var groups = {};
+  f.forEach(function(li){ var key = li.supId||''; (groups[key]=groups[key]||[]).push(li); });
+  var groupKeys = Object.keys(groups).sort(function(a,b){
+    if (!a) return 1; if (!b) return -1;
+    return gsn(a).localeCompare(gsn(b));
+  });
+  G('li-tb').innerHTML = groupKeys.map(function(key){
+    var label = key ? gsn(key) : 'No Supplier';
+    var hdr = '<tr class="li-grp-hdr"><td colspan="12" style="background:var(--bg);font-weight:600;padding:6px 10px;color:var(--m);font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;">' + san(label) + '</td></tr>';
+    var rows = groups[key].map(function(li){
     var m = +li.price>0 ? ((+li.price||0)-(+li.cost||0))/(+li.price||1)*100 : null;
     var mc = m===null?'':(m>=20?'phi':m>=10?'pmi':'plo');
     var ph = li.priceHistory || [];
@@ -7907,7 +7934,10 @@ function rLI() {
       '<td>' + (li.invoiceRefs && li.invoiceRefs.length ? '<span style="font-size:.5rem;color:#1a7a4a;">used on ' + li.invoiceRefs.length + ' invoice(s)</span>' : '-') + '</td>' +
       '<td><button class="ab" onclick="editLI(\'' + li.id + '\')">&#9998;</button><button class="ab" onclick="delLI(\'' + li.id + '\')">&#10005;</button></td></tr>' +
       phRow;
+    }).join('');
+    return hdr + rows;
   }).join('');
+  rLIPending();
 }
 function togglePH(id) {
   var row = G('ph-' + id);
@@ -7926,6 +7956,7 @@ function calcLICBM() {
   el.value = (l&&w&&h) ? (l*w*h/1000000).toFixed(6) : '';
 }
 function openLI() {
+  _liApproveCtx = null; // REQ/SPEC-LI-002: clear any stale Approve context before this entry point takes over the form
   EI.l=null; G('li-mt').textContent='New Line Item';
   ['lf-s','lf-d','lf-sp','lf-u','lf-nt','lf-hs'].forEach(function(f){ var e=G(f); if(e) e.value=''; });
   G('lf-c').value=''; G('lf-p').value=''; G('lf-cur').value='USD'; G('lf-sup').value='';
@@ -7935,6 +7966,7 @@ function openLI() {
   liMgn(); G('ov-li').classList.add('on'); setTimeout(function(){ G('lf-s').focus(); }, 50);
 }
 function editLI(id) {
+  _liApproveCtx = null; // REQ/SPEC-LI-002: clear BEFORE the existence check, so even a failed lookup clears stale context
   var li=DB.li.find(function(x){return x.id===id;}); if(!li) return;
   EI.l=id; G('li-mt').textContent='Edit Line Item' + (li.num ? ' — ' + li.num : '');
   G('lf-s').value=li.sku||''; G('lf-d').value=li.desc||''; G('lf-sp').value=li.specs||''; G('lf-hs').value=li.hs||'';
@@ -7955,9 +7987,11 @@ async function saveLI() {
 
   // Seed first history entry on create, or append when cost/price changed via catalogue edit
   if (!existing) {
-    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Initial catalogue price' });
+    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '',
+      notes: _liApproveCtx ? ('Initial catalogue price (from Quote ' + _liApproveCtx.quoteNum + ')') : 'Initial catalogue price' });
   } else if (newCost !== (+existing.cost||0) || newPrice !== (+existing.price||0)) {
-    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Catalogue price updated' });
+    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '',
+      notes: _liApproveCtx ? ('Catalogue price updated (from Quote ' + _liApproveCtx.quoteNum + ')') : 'Catalogue price updated' });
   }
 
   var diml=+G('lf-diml').value||0, dimw=+G('lf-dimw').value||0, dimh=+G('lf-dimh').value||0;
@@ -7980,8 +8014,13 @@ async function saveLI() {
       result = await _sb.from('line_items').insert(row).select().single();
     }
     if (result.error) { toast('Save failed: ' + result.error.message); return; }
+    if (_liApproveCtx) {
+      var pc1 = DB.liPending.find(function(x){ return x.id === _liApproveCtx.candidateId; });
+      if (pc1) { pc1.status = 'approved'; sv(K.lip, DB.liPending); }
+      _liApproveCtx = null;
+    }
     closeM('ov-li');
-    await refreshLIFromSupabase();
+    await refreshLIFromSupabase(); // ends in its own rLI(), which covers the banner re-render too
     audit(EI.l?'UPDATE':'CREATE','li', result.data.id, result.data);
     toast('Line item saved'); renderOnboarding();
     return;
@@ -7989,7 +8028,13 @@ async function saveLI() {
 
   var li={id:EI.l||uid(),num:existing?existing.num:nextRefNum(DB.li,'LI'),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history,invoiceRefs:existing?(existing.invoiceRefs||[]):[],dims:dims,dg:dg};
   if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
-  sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li).catch(function(){});
+  sv(K.l,DB.li);
+  if (_liApproveCtx) {
+    var pc2 = DB.liPending.find(function(x){ return x.id === _liApproveCtx.candidateId; });
+    if (pc2) { pc2.status = 'approved'; sv(K.lip, DB.liPending); }
+    _liApproveCtx = null;
+  }
+  closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li).catch(function(){});
 }
 async function delLI(id) {
   var invRefs = DB.inv.filter(function(inv){
@@ -7998,9 +8043,13 @@ async function delLI(id) {
   var poRefs = DB.po.filter(function(po){
     return (po.lineItems||[]).some(function(li){ return li.lid===id; });
   });
+  var pendingUpdate = DB.liPending.find(function(p){
+    return p.matchedLiId === id && p.status === 'pending';
+  });
   var warns = [];
   if (invRefs.length) warns.push(invRefs.length + ' invoice' + (invRefs.length>1?'s':'') + ' (' + invRefs.map(function(i){return i.num||i.id;}).join(', ') + ')');
   if (poRefs.length)  warns.push(poRefs.length  + ' purchase order' + (poRefs.length>1?'s':'')  + ' (' + poRefs.map(function(p){return p.num||p.id;}).join(', ') + ')');
+  if (pendingUpdate) warns.push('1 pending catalogue-update suggestion (from Quote ' + pendingUpdate.quoteNum + ')');
   var msg = 'Delete this line item?';
   if (warns.length) msg += '\n\nWarning: This item is referenced in:\n  ' + warns.join('\n  ') + '\n\nExisting line entries on those documents will be preserved but the catalogue link will be broken.';
   if (!confirm(msg)) return;
@@ -8009,13 +8058,84 @@ async function delLI(id) {
     if (!(await ensureSbAuth())) return;
     var result = await _sb.from('line_items').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (result.error) { toast('Delete failed: ' + result.error.message); return; }
-    await refreshLIFromSupabase();
+    // REQ/SPEC-LI-002 LI-002h: duplicated here, not placed once after this branch —
+    // this branch ends in its own `return` below, mirroring delCon()'s own
+    // dual-branch cascade for the identical reason.
+    var cloudBeforeLen = DB.liPending.length;
+    DB.liPending = DB.liPending.filter(function(p){ return !(p.matchedLiId === id && p.status === 'pending'); });
+    if (DB.liPending.length !== cloudBeforeLen) sv(K.lip, DB.liPending);
+    await refreshLIFromSupabase(); // ends in its own rLI(), which covers the banner re-render too
     toast('Deleted');
     return;
   }
 
   var _liSku = (DB.li.find(function(l){return l.id===id;})||{}).sku||id;
-  DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li); rLI(); toast('Deleted'); await delEnt('li',_liSku).catch(function(){});
+  DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li);
+  var localBeforeLen = DB.liPending.length;
+  DB.liPending = DB.liPending.filter(function(p){ return !(p.matchedLiId === id && p.status === 'pending'); });
+  if (DB.liPending.length !== localBeforeLen) sv(K.lip, DB.liPending);
+  rLI(); toast('Deleted'); await delEnt('li',_liSku).catch(function(){});
+}
+
+function rLIPending() {
+  var banner = G('li-pending-banner');
+  if (!banner) return;
+  var pending = DB.liPending.filter(function(c){ return c.status === 'pending'; });
+  if (!pending.length) { banner.style.display = 'none'; return; }
+  banner.style.display = 'block';
+  G('li-pending-list').innerHTML = pending.map(function(c){
+    var kindLabel = c.kind === 'new' ? 'New item' : 'Price update';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid rgba(217,119,6,.25);font-size:.58rem;color:#92400E;">' +
+      '<span style="font-weight:600;flex:1;">' + san(c.desc) + '</span>' +
+      '<span>' + san(gsn(c.supId)) + '</span>' +
+      '<span style="font-size:.5rem;background:rgba(217,119,6,.2);padding:1px 5px;border-radius:2px;">' + kindLabel + '</span>' +
+      '<span>' + fmtN(c.suggestedPrice, c.currency, 2) + '</span>' +
+      '<span style="font-size:.52rem;color:#78350f;">from Quote ' + san(c.quoteNum) + '</span>' +
+      '<button class="btn btn-s" style="padding:2px 8px;font-size:.5rem;" onclick="approveLIPending(\'' + c.id + '\')">Approve</button>' +
+      '<button class="btn btn-g" style="padding:2px 8px;font-size:.5rem;" onclick="dismissLIPending(\'' + c.id + '\')">Dismiss</button>' +
+    '</div>';
+  }).join('');
+}
+function approveLIPending(id) {
+  var c = DB.liPending.find(function(x){ return x.id === id && x.status === 'pending'; });
+  if (!c) return;
+  if (c.kind === 'update') {
+    // matchedLiId may have been deleted on a different device since this
+    // (local-only, un-synced) candidate was queued. Check BEFORE calling
+    // editLI() — editLI() itself only does a silent `if(!li) return;` with no error.
+    var target = DB.li.find(function(x){ return x.id === c.matchedLiId; });
+    if (!target) {
+      toast("This update suggestion's line item no longer exists — dismissing it.");
+      c.status = 'dismissed';
+      c.notes = 'Auto-dismissed: matched line item was deleted';
+      sv(K.lip, DB.liPending);
+      rLIPending();
+      return;
+    }
+    editLI(c.matchedLiId); // clears any stale _liApproveCtx as its own first statement
+    G('lf-c').value = c.cost;
+    G('lf-p').value = c.suggestedPrice;
+  } else {
+    openLI(); // clears any stale _liApproveCtx as its own first statement
+    G('lf-d').value = c.desc;
+    G('lf-sup').value = c.supId;
+    G('lf-u').value = c.uom;
+    G('lf-c').value = c.cost;
+    G('lf-p').value = c.suggestedPrice;
+  }
+  // Set AFTER openLI()/editLI() — both just cleared it, and both reset lf-cur to
+  // USD, which is why lf-cur is also set here, after the call, not before.
+  _liApproveCtx = { candidateId: c.id, quoteNum: c.quoteNum };
+  G('lf-cur').value = c.currency || 'USD';
+}
+function dismissLIPending(id) {
+  var c = DB.liPending.find(function(x){ return x.id === id && x.status === 'pending'; });
+  if (!c) return;
+  if (!confirm('Dismiss this catalogue suggestion for "' + c.desc + '"? It will not be added or updated.')) return;
+  c.status = 'dismissed';
+  sv(K.lip, DB.liPending);
+  rLIPending();
+  toast('Suggestion dismissed');
 }
 
 // ── INVOICE MODAL ──────────────────────────────────────────────
@@ -8171,6 +8291,10 @@ function invLineHasCostBasis(li) {
   var resolved = li.lid && DB.li.find(function(x){ return x.id === li.lid; });
   return !!resolved || (+li.unitCost > 0);
 }
+function invLineHasSupplier(li) {
+  var resolved = li.lid && DB.li.find(function(x){ return x.id === li.lid; });
+  return !!(resolved && resolved.supId) || !!li.supId;
+}
 function quickAddLine() {
   var desc = G('qal-desc') ? G('qal-desc').value.trim() : '';
   var uom  = G('qal-uom')  ? G('qal-uom').value.trim()  : 'pcs';
@@ -8178,19 +8302,25 @@ function quickAddLine() {
   var up   = G('qal-up')   ? +G('qal-up').value   : 0;
   var lt   = G('qal-type') ? G('qal-type').value   : 'product';
   var uc   = lt === 'pass-through' ? up : (G('qal-uc') ? +G('qal-uc').value : 0);
+  var sup  = G('qal-sup')  ? G('qal-sup').value    : '';
   if (!desc) { toast('⚠ Enter a description'); return; }
   if (lt === 'product' && !invLineHasCostBasis({ lid:'', unitCost:uc })) {
     toast('⚠ Product lines need a Unit Cost greater than 0 — enter a real cost, or set Type to Pass-thru/Charge if there\'s no separate cost to record');
     return;
   }
+  if (lt === 'product' && !invLineHasSupplier({ lid:'', supId:sup })) {
+    toast('⚠ Product lines need a Supplier — select one, or set Type to Pass-thru/Charge if there\'s no supplier to record');
+    return;
+  }
   if (qty === 0) qty = 1;
-  cIL.push({ rid:uid(), lid:'', desc:desc, uom:uom, qty:qty, up:up, unitCost:uc, lineType:lt });
+  cIL.push({ rid:uid(), lid:'', desc:desc, uom:uom, qty:qty, up:up, unitCost:uc, supId:sup, lineType:lt });
   rILT(); calcInv();
   // Clear form
   if (G('qal-desc')) G('qal-desc').value = '';
   if (G('qal-up'))   G('qal-up').value   = '';
   if (G('qal-uc'))   G('qal-uc').value   = '';
   if (G('qal-qty'))  G('qal-qty').value  = '1';
+  if (G('qal-sup'))  G('qal-sup').value  = '';
   if (G('qal-type')) { G('qal-type').value = 'product'; qaTypeChg(); }
   toast('✓ Line item added — click Save Invoice to keep');
 }
@@ -8215,7 +8345,7 @@ function addILI(lid, desc, uom, qty, up) {
 function remILI(rid) { cIL=cIL.filter(function(x){return x.rid!==rid;}); rILT(); calcInv(); }
 function rILT() {
   var tb=G('il-tb'), cur=G('if-cur').value||'USD';
-  if(!cIL.length){ tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--m);font-size:.58rem;padding:12px;">No line items - add manually or import from library</td></tr>'; return; }
+  if(!cIL.length){ tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--m);font-size:.58rem;padding:12px;">No line items - add manually or import from library</td></tr>'; return; }
   tb.innerHTML=cIL.map(function(li,i){
     var lt = li.lineType || 'product';
     var libItem = li.lid ? DB.li.find(function(x){return x.id===li.lid;}) : null;
@@ -8238,9 +8368,13 @@ function rILT() {
     var priceOninput = lt==='pass-through'
       ? 'cIL['+i+'].up=+this.value;cIL['+i+'].unitCost=+this.value;calcInv()'
       : 'cIL['+i+'].up=+this.value;calcInv()';
+    var supOpts = '<option value="">-</option>' + DB.sup.map(function(s){
+      return '<option value="' + s.id + '"' + (li.supId===s.id?' selected':'') + '>' + san(s.name) + '</option>';
+    }).join('');
     return '<tr>' +
       '<td style="color:var(--m);font-size:.52rem;">' + (i+1) + '</td>' +
       '<td><input type="text" value="' + (li.desc||'').replace(/"/g,'&quot;') + '" oninput="cIL['+i+'].desc=this.value;calcInv()" placeholder="Description"></td>' +
+      '<td><select style="font-size:.56rem;border:none;background:transparent;width:100%;" onchange="cIL['+i+'].supId=this.value;">' + supOpts + '</select></td>' +
       '<td><input type="text" value="' + (li.uom||'') + '" oninput="cIL['+i+'].uom=this.value" placeholder="pcs" style="width:47px;"></td>' +
       '<td><input type="number" value="' + (li.qty||1) + '" min="0" step="any" oninput="cIL['+i+'].qty=+this.value;calcInv()" style="width:36px;"></td>' +
       '<td><input type="number" value="' + uc + '" min="0" step="0.01" '+(ucReadonly?'readonly ':'')+' oninput="cIL['+i+'].unitCost=+this.value;calcInv()" style="'+ucStyle+'"></td>' +
@@ -8253,21 +8387,42 @@ function rILT() {
   }).join('');
   _updQaWarn();
 }
+var _pickChecked = {};
 function openPicker() {
   if(!DB.li.length){toast('No items in library yet.');return;}
-  G('pick-list').innerHTML=DB.li.map(function(li){
-    var onInv = cIL.some(function(c){ return c.lid === li.id; });
-    var refCount = (li.invoiceRefs||[]).length;
-    return '<label class="' + (onInv ? 'li-already-on-inv' : '') + '" style="display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--ln);margin-bottom:3px;cursor:pointer;font-size:.6rem;' + (onInv ? 'background:#f0fdf4;' : '') + '">' +
-      '<input type="checkbox" value="' + li.id + '" style="flex-shrink:0;">' +
-      '<div style="flex:1;"><div style="font-weight:500;">' + (san(li.desc)||'-') + (onInv ? ' <span style="color:#1a7a4a;font-size:.5rem;">&#10003; on this invoice</span>' : '') + '</div>' +
-      '<div style="color:var(--m);font-size:.54rem;">' + gsn(li.supId) + ' - ' + (li.uom||'-') + ' - ' + fmtN(li.price,li.cur,3) + (refCount ? ' &nbsp;&middot;&nbsp; used on ' + refCount + ' invoice(s)' : '') + '</div></div></label>';
-  }).join('');
+  _pickChecked = {};
+  if (G('pick-q')) G('pick-q').value = '';
+  rPickList();
   G('ov-pick').classList.add('on');
 }
+function rPickList() {
+  var q = (G('pick-q') ? G('pick-q').value : '').toLowerCase();
+  var f = DB.li.filter(function(li){ return !q || (li.desc||'').toLowerCase().includes(q) || (li.sku||'').toLowerCase().includes(q); });
+  var groups = {};
+  f.forEach(function(li){ var key = li.supId||''; (groups[key]=groups[key]||[]).push(li); });
+  var keys = Object.keys(groups).sort(function(a,b){
+    if (!a) return 1; if (!b) return -1;
+    return gsn(a).localeCompare(gsn(b));
+  });
+  G('pick-list').innerHTML = keys.map(function(key){
+    var label = key ? gsn(key) : 'No Supplier';
+    var hdr = '<div style="font-weight:600;font-size:.56rem;color:var(--m);text-transform:uppercase;letter-spacing:.04em;padding:6px 2px 3px;">' + san(label) + '</div>';
+    var rows = groups[key].map(function(li){
+      var onInv = cIL.some(function(c){ return c.lid === li.id; });
+      var refCount = (li.invoiceRefs||[]).length;
+      var checked = _pickChecked[li.id] ? ' checked' : '';
+      return '<label class="' + (onInv ? 'li-already-on-inv' : '') + '" style="display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--ln);margin-bottom:3px;cursor:pointer;font-size:.6rem;' + (onInv ? 'background:#f0fdf4;' : '') + '">' +
+        '<input type="checkbox" value="' + li.id + '"' + checked + ' onchange="_pickChecked[\'' + li.id + '\']=this.checked;" style="flex-shrink:0;">' +
+        '<div style="flex:1;"><div style="font-weight:500;">' + (san(li.desc)||'-') + (onInv ? ' <span style="color:#1a7a4a;font-size:.5rem;">&#10003; on this invoice</span>' : '') + '</div>' +
+        '<div style="color:var(--m);font-size:.54rem;">' + gsn(li.supId) + ' - ' + (li.uom||'-') + ' - ' + fmtN(li.price,li.cur,3) + (refCount ? ' &nbsp;&middot;&nbsp; used on ' + refCount + ' invoice(s)' : '') + '</div></div></label>';
+    }).join('');
+    return hdr + rows;
+  }).join('');
+}
 function doPick() {
-  var ck=[].slice.call(G('pick-list').querySelectorAll('input:checked')).map(function(c){return c.value;});
+  var ck = Object.keys(_pickChecked).filter(function(id){ return _pickChecked[id]; });
   ck.forEach(function(id){ var li=DB.li.find(function(x){return x.id===id;}); if(li) addILI(li.id,li.desc,li.uom,1,li.price); });
+  _pickChecked = {};
   closeM('ov-pick'); toast(ck.length+' item'+(ck.length!==1?'s':'')+' added');
 }
 
@@ -10678,6 +10833,18 @@ function vInv() {
     toast('⚠ One or more Product lines has no Unit Cost and no linked catalogue item — enter a cost, link a catalogue item, or change that line\'s Type');
     return false;
   }
+  // REQ/SPEC-LI-002: hard save-time backstop for supplier attribution, mirroring the
+  // cost-basis backstop immediately above exactly — quickAddLine()'s own gate can be
+  // bypassed by clearing the Supplier dropdown directly in rILT() after the line was
+  // added. Scoped to 'product' lines only, for the same reason as the cost backstop.
+  var badSupplierLine = cIL.some(function(li){
+    var lt = li.lineType || 'product';
+    return lt === 'product' && !invLineHasSupplier(li);
+  });
+  if (badSupplierLine) {
+    toast('⚠ One or more Product lines has no Supplier and no linked catalogue item — select a supplier, link a catalogue item, or change that line\'s Type');
+    return false;
+  }
   if (dep !== '' && !RX.currency(dep)) return vErr('if-dep', 'Buyer deposit must be a non-negative number with at most 2 decimal places');
   if (+dep < 0)                    return vErr('if-dep', 'Buyer deposit cannot be negative');
   vOk('if-dep');
@@ -11853,7 +12020,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.89).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.90).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -11881,7 +12048,8 @@ var AI_SYSTEM_PROMPT = [
   'Cloud Data (REQ/SPEC-CLOUD-001/002/003/004/005/006/007/008): Settings → Cloud Data lets an operator connect a shared Supabase database. Every deal-pipeline and master-data entity — Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment — migrates independently, on its own schedule, via its own "Migrate ... to Cloud" button — a colleague on a different device/browser only sees the shared copy of an entity once that entity has actually been migrated, gated by a separate Supabase sign-in (distinct from the app password). Each migration requires a full backup export first (mandatory, blocking) and archives that entity\'s pre-migration data locally for 30 days as a rollback safety net. The "Ad-Hoc" default Buyer never migrates and always stays local. Order Request\'s and Quote\'s lines migrate embedded with their parent record — no separate migration or precondition for them; Purchase Order requires Suppliers to have migrated first (every Purchase Order requires a Supplier link); Invoice/Credit Note requires Buyer, Line Item, Quote, AND Purchase Order to all have migrated first — the most demanding precondition of any entity; Shipment requires no precondition at all, carrying no reference field of any kind to any other entity; Buyer Payment requires Invoice to have migrated first (a payment\'s stored invoice reference is resolved via the same `invId`-primary rule the Buyer Payment ledger itself already uses for reconciliation, not the Num-first pattern used elsewhere in this series); Supplier Payment requires Purchase Order to have migrated first. Each entity can migrate independently of the others except where a precondition is stated. If nothing is configured, nothing changes — every entity behaves exactly as before Cloud Data existed.',
   '',
   '## Line Items (Product Catalogue)',
-  'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox. Each line item is auto-assigned an LI-#### reference number on creation (see Reference Numbers above).',
+  'Line Items tab → + New Line Item. Fields: SKU, Description, UOM (controlled lookup — kg, mt, cbm, pcs, cartons, pallets etc), Unit Cost (COGS = what you pay the supplier), Unit Sell Price (what you charge the buyer), HS Code (searchable by chapter number or keyword), Supplier link, Currency, Length/Width/Height (cm) for CBM calculation, DG Item checkbox. Each line item is auto-assigned an LI-#### reference number on creation (see Reference Numbers above). The main list and the "Import from Library" picker both support a search box and are grouped by Supplier (v2.9.90, REQ/SPEC-LI-002).',
+  'Catalogue promotion queue (v2.9.90, REQ/SPEC-LI-002): accepting a Quote whose lines carry a Supplier link automatically proposes adding a matching new catalogue item, or updating an existing one\'s cost/price, via a review banner at the top of the Line Items tab — Approve opens the real Line Item form pre-filled (nothing is written to the catalogue until the operator explicitly saves); Dismiss discards the suggestion. A line with no Supplier is never proposed. Duplicate/no-op suggestions are silently skipped (e.g. a second Quote matching an already-pending suggestion, or a Quote whose cost/price already matches the catalogue exactly).',
   'Dimensions (L/W/H cm): optional per-unit dimensions. CBM/unit is calculated automatically (L×W×H÷1,000,000) and shown read-only. Stored as dims:{l,w,h} on the record. Used by Load Calculator. DG Item flag marks the product as Dangerous Goods — propagates into quote feasibility check and load calculator DG alerts.',
   'Invoice usage: each library item tracks which invoices it has been used on (invoiceRefs index). The list view shows "used on N invoice(s)" against each item. The Import from Library picker marks items already on the current invoice with a green tick.',
   'Rule: wrong unit cost or price corrupts profit calculations on every invoice using that product.',
@@ -11926,7 +12094,7 @@ var AI_SYSTEM_PROMPT = [
   'Invoices tab → + New Invoice.',
   '1. Invoice #, Buyer, Address, Destination (country lookup), Date, Currency, Status',
   '2. Shipping: Freight Type, Port of Loading (UN/LOCODE lookup), Port of Discharge (UN/LOCODE lookup), Country of Origin (country lookup), Incoterm (Incoterms 2020 select — required), Payment Terms (controlled lookup — required)',
-  '3. Line Items: use Import from Library (preferred — pulls correct COGS automatically) or quick-add form (enter Unit Cost manually). A Product-type line can no longer be saved with no cost basis at all (v2.9.88, REQ/SPEC-INV-002) — quick-add refuses it immediately, and Save Invoice refuses the whole invoice if any Product line still lacks both a library link and a Unit Cost, even if it was edited down to zero directly in the line-item table after being added correctly. Pass-through and Charge line types are exempt — Unit Cost 0 is a normal, expected value for those.',
+  '3. Line Items: use Import from Library (preferred — pulls correct COGS automatically) or quick-add form (enter Unit Cost manually). A Product-type line can no longer be saved with no cost basis at all (v2.9.88, REQ/SPEC-INV-002) — quick-add refuses it immediately, and Save Invoice refuses the whole invoice if any Product line still lacks both a library link and a Unit Cost, even if it was edited down to zero directly in the line-item table after being added correctly. The same is true of Supplier (REQ/SPEC-LI-002): a Product-type line also needs a Supplier, either from a linked catalogue item or selected directly in quick-add\'s own Supplier field, editable afterward in the line-item table\'s Supplier column. Pass-through and Charge line types are exempt from both the cost and supplier requirements — Unit Cost 0 and no Supplier are both normal, expected values for those.',
   '4. Charges: Local Freight, Insurance, Tax Rate (0% for zero-rated exports)',
   '5. Click Save Invoice — line items are NOT saved automatically. Always save before closing the modal.',
   'Statuses: Draft → Pro-forma → Sent → Partially Paid → Paid → Cancelled. CN Draft / CN Issued / CN Applied for credit notes.',
@@ -12036,7 +12204,7 @@ var AI_SYSTEM_PROMPT = [
   '',
   '## Known Quirks',
   '1. Always click Save Invoice before closing the modal — line items are lost if you close without saving.',
-  '2. Import from Library is preferred over quick-add for physical products — it pulls COGS automatically. Quick-add is fine for pass-through/charge lines with Unit Cost left at 0 (that\'s the normal, expected value for those types) — but a Product-type line can no longer be saved anywhere with no cost basis at all (v2.9.88, REQ/SPEC-INV-002): quick-add refuses it, and Save Invoice refuses the whole invoice if a Product line\'s cost was zeroed out afterward directly in the line-item table.',
+  '2. Import from Library is preferred over quick-add for physical products — it pulls COGS automatically. Quick-add is fine for pass-through/charge lines with Unit Cost left at 0 (that\'s the normal, expected value for those types) — but a Product-type line can no longer be saved anywhere with no cost basis at all (v2.9.88, REQ/SPEC-INV-002): quick-add refuses it, and Save Invoice refuses the whole invoice if a Product line\'s cost was zeroed out afterward directly in the line-item table. A Product-type line also needs a Supplier (REQ/SPEC-LI-002), the same way and for the same reason.',
   '3. Do not enable auto-sync.',
   '4. Run Repair after every Sheets pull.',
   '5. Do not use both the Local Freight charge field AND a local freight line item — double-counts charges.',
@@ -13087,6 +13255,7 @@ function expAll() {
     buy: DB.buy,
     ord: DB.ord,
     supPayments: DB.supPayments,
+    liPending: DB.liPending,
     settings: { url: SS.url, auto: SS.auto, pol: SS.pol }, // token excluded — credential, not config
     company: AS,
     branding: getCoBrand(),
@@ -13147,6 +13316,7 @@ function doImport(e) {
     if (data.buy && Array.isArray(data.buy)) { DB.buy = data.buy; sv(K.bu, DB.buy); }
     if (data.ord && Array.isArray(data.ord)) { DB.ord = data.ord; sv(K.ord, DB.ord); }
     if (data.supPayments && Array.isArray(data.supPayments)) { DB.supPayments = data.supPayments; sv(K.spm, DB.supPayments); }
+    if (data.liPending && Array.isArray(data.liPending)) { DB.liPending = data.liPending; sv(K.lip, DB.liPending); }
     seedAdHocBuyer();
     backfillRefNums();
     backfillConIds();
@@ -14227,6 +14397,7 @@ async function saveQte() {
   var totalLanded = lineCalcs.reduce(function(s,c){ return s+c.landed; }, 0);
   var markup = +G('qf-mkp').value||0;
   var existQ = EI.qt ? DB.qt.find(function(x){ return x.id===EI.qt; }) : null;
+  var sellPByRid = {};
   lines.forEach(function(l, i) {
     var existLine = existQ ? (existQ.lines||[]).find(function(x){ return x.rid===l.rid; }) : null;
     var history = existLine && existLine.priceHistory ? existLine.priceHistory.slice() : [];
@@ -14234,6 +14405,7 @@ async function saveQte() {
     var calcR = lineCalcs[i];
     var effM = qteEffectiveMargin(l, markup);
     var sellP = +(calcR.landed * (1 + effM/100)).toFixed(2);
+    sellPByRid[l.rid] = sellP;
     var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== effM || lastV.insRate !== calcR.insPct;
     if (changed) {
       history.push({ v: lastV ? lastV.v+1 : 1, ts: new Date().toISOString(), cost: l.cost, dutyPct: l.dutyPct, markup: effM, insRate: calcR.insPct, ins: +fn(calcR.ins,2), landed: +fn(calcR.landed,2), sellPrice: sellP, note: qlFld(l.rid,'note') });
@@ -14334,6 +14506,49 @@ async function saveQte() {
     }
     cConvertOrdId = null;
   }
+
+  // REQ/SPEC-LI-002 LI-002d: queue catalogue promotion candidates on the genuine
+  // Accepted-transition only (never on a re-save of an already-Accepted Quote),
+  // placed here — after both persistence branches and the existing post-persist
+  // side effects above — so it never runs on a failed/cancelled save and always has
+  // the real, finalized qt.id/qt.num/qt.currency.
+  if (isAccepted && !wasAccepted) {
+    lines.forEach(function(l) {
+      if (!l.supId) return; // LI-002d: lines with no supplier are never queued
+      var existingLi = DB.li.find(function(x){
+        return x.desc.toLowerCase() === l.desc.toLowerCase() && x.supId === l.supId;
+      });
+      if (existingLi) {
+        var sellP = sellPByRid[l.rid];
+        if (+existingLi.cost === +l.cost && +existingLi.price === sellP) return; // AC-5: nothing changed
+        var dupUpdate = DB.liPending.some(function(p){
+          return p.status === 'pending' && p.kind === 'update' && p.matchedLiId === existingLi.id;
+        });
+        if (dupUpdate) return; // Decision 7 extended to 'update' (round-2 finding)
+        DB.liPending.push({
+          id: uid(), status: 'pending', kind: 'update', matchedLiId: existingLi.id,
+          quoteId: qt.id, quoteNum: qt.num, supId: l.supId, desc: l.desc, uom: l.uom,
+          cost: l.cost, suggestedPrice: sellP, currency: qt.currency,
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        var dupNew = DB.liPending.some(function(p){
+          return p.status === 'pending' && p.kind === 'new' &&
+            p.desc.toLowerCase() === l.desc.toLowerCase() && p.supId === l.supId;
+        });
+        if (dupNew) return; // Decision 7 (round-1 finding 4)
+        DB.liPending.push({
+          id: uid(), status: 'pending', kind: 'new', matchedLiId: null,
+          quoteId: qt.id, quoteNum: qt.num, supId: l.supId, desc: l.desc, uom: l.uom,
+          cost: l.cost, suggestedPrice: sellPByRid[l.rid], currency: qt.currency,
+          createdAt: new Date().toISOString()
+        });
+      }
+    });
+    sv(K.lip, DB.liPending);
+    rLIPending();
+  }
+
   closeM('ov-qt');
   rQte();
   toast('Quote ' + qt.num + ' saved');
@@ -14364,6 +14579,12 @@ async function delQte(id) {
       }
     }
   }
+  // REQ/SPEC-LI-002 LI-002g: remove only still-pending candidates referencing this
+  // Quote — approved/dismissed entries already served their review purpose and are
+  // kept as resolved history.
+  var beforeLen = DB.liPending.length;
+  DB.liPending = DB.liPending.filter(function(p){ return !(p.quoteId === id && p.status === 'pending'); });
+  if (DB.liPending.length !== beforeLen) { sv(K.lip, DB.liPending); rLIPending(); }
   rQte();
   toast('Quote deleted');
 }
