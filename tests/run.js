@@ -15381,6 +15381,350 @@ test('REQ/SPEC-LI-002 test-hygiene cleanup — reset qf-st/qf-approved-by this b
   mockEl('qf-approved-by').value = '';
 });
 
+// ── REQ/SPEC-SHIP-002: Shipment↔Invoice real id-based linking, DG/port inheritance, source-drift detection ──
+
+testAsync('autoCreateShipmentFromInvoice() — inherits DG from a catalogue-linked line (AC-1)', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.li.push({ id: 'cat-dg1', dg: true });
+  var inv = mkPaidInvoice({ id: 'inv-dg1', num: 'INV30001', lineItems: [{ lid: 'cat-dg1' }] });
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  var s = ctx.DB.sh[0];
+  assertEqual(s.dg, true, 'DG inherited from catalogue-linked line');
+  var dgLines = s.tradeDocs.filter(function(d){ return d.autoManaged && d.type === 'Dangerous Goods Declaration'; });
+  assertEqual(dgLines.length, 1, '8th DG trade-doc line seeded since dg is true at creation');
+});
+
+testAsync('autoCreateShipmentFromInvoice() — inherits DG from a line-only li.dg flag, no catalogue link (AC-1)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var inv = mkPaidInvoice({ id: 'inv-dg2', num: 'INV30002', lineItems: [{ lid: '', dg: true }] });
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  var s = ctx.DB.sh[0];
+  assertEqual(s.dg, true, 'DG inherited from line-only li.dg, no catalogue record needed');
+});
+
+testAsync('autoCreateShipmentFromInvoice() — inherits Origin/Dest Port from invoice pol/pod (AC-2)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var inv = mkPaidInvoice({ id: 'inv-port1', num: 'INV30003', pol: 'Qingdao', pod: 'Bridgetown' });
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  var s = ctx.DB.sh[0];
+  assertEqual(s.originPort, 'Qingdao');
+  assertEqual(s.destPort, 'Bridgetown');
+});
+
+testAsync('autoCreateShipmentFromInvoice() — blank invoice pol/pod leaves Shipment ports blank, no crash (AC-2)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var inv = mkPaidInvoice({ id: 'inv-port2', num: 'INV30004' });
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  var s = ctx.DB.sh[0];
+  assertEqual(s.originPort, '');
+  assertEqual(s.destPort, '');
+});
+
+testAsync('autoCreateShipmentFromInvoice() — sets linkedInvIds/linkedInvSnapshots matching the invoice (AC-3)', async function() {
+  resetDB();
+  ctx._sb = null;
+  var inv = mkPaidInvoice({ id: 'inv-snap1', num: 'INV30005', pol: 'Shanghai', pod: 'Kingston', lineItems: [{ lid: '', dg: true }] });
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  var s = ctx.DB.sh[0];
+  assertEqual(s.linkedInvIds.length, 1);
+  assertEqual(s.linkedInvIds[0], 'inv-snap1');
+  assertEqual(s.linkedInvSnapshots.length, 1);
+  assertEqual(s.linkedInvSnapshots[0].invId, 'inv-snap1');
+  assertEqual(s.linkedInvSnapshots[0].dg, true);
+  assertEqual(s.linkedInvSnapshots[0].pol, 'Shanghai');
+  assertEqual(s.linkedInvSnapshots[0].pod, 'Kingston');
+});
+
+testAsync('autoCreateShipmentFromInvoice() — Cloud Data branch inserts linked_inv_ids/linked_inv_snapshots and refresh reads them back (AC-4)', async function() {
+  resetDB();
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var inv = mkPaidInvoice({ id: 'inv-cloud1', num: 'INV30006', pol: 'Ningbo', pod: 'Georgetown', lineItems: [{ lid: '', dg: true }] });
+  var insertedRow = null;
+  var sb = mockSb({ shipments: {
+    insertImpl: function(row){ insertedRow = row; return Object.assign({ id: 'real-sh-1' }, row); },
+    selectData: [{ id: 'real-sh-1', ref: 'SHP-INV30006', status: 'Pending', linked_invs: ['INV30006'],
+      linked_inv_ids: ['inv-cloud1'], linked_inv_snapshots: [{ invId: 'inv-cloud1', dg: true, pol: 'Ningbo', pod: 'Georgetown' }] }]
+  } });
+  ctx._sb = sb;
+  await ctx.autoCreateShipmentFromInvoice(inv);
+  assert(insertedRow, 'insert called');
+  assertEqual(insertedRow.linked_inv_ids.length, 1, 'insert payload carries linked_inv_ids');
+  assertEqual(insertedRow.linked_inv_snapshots[0].dg, true, 'insert payload carries linked_inv_snapshots');
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'real-sh-1'; });
+  assert(s, 'refreshed record present');
+  assertEqual(s.linkedInvIds[0], 'inv-cloud1', 'refresh read linked_inv_ids back onto linkedInvIds');
+  assertEqual(s.linkedInvSnapshots[0].pol, 'Ningbo', 'refresh read linked_inv_snapshots back');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx._sb = null;
+});
+
+testAsync('saveShp() — cloud-configured save sends non-empty linked_inv_ids/linked_inv_snapshots when shf-invs resolves to a real invoice (AC-4b, spec-gate round 2)', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-shsave1', num: 'INV30007', pol: 'Xiamen', pod: 'Castries', lineItems: [{ lid: '', dg: true }] }));
+  ctx.EI.sh = null;
+  ctx.localStorage.setItem('st_sh_cloud_migration_ts', new Date().toISOString());
+  ctx.ensureSbAuth = function(){ return Promise.resolve(true); };
+  var insertedRow = null;
+  var sb = mockSb({ shipments: { insertImpl: function(row){ insertedRow = row; return Object.assign({ id: 'real-sh-2' }, row); },
+    selectData: [{ id: 'real-sh-2', ref: 'SHP-SAVE1', status: 'Booked', linked_invs: ['INV30007'] }] } });
+  ctx._sb = sb;
+  setupShpFormMinimal('SHP-SAVE1');
+  mockEl('shf-invs').value = 'INV30007';
+  await ctx.saveShp();
+  assert(insertedRow, 'insert called');
+  assertEqual(insertedRow.linked_inv_ids.length, 1, 'shRow carries linked_inv_ids');
+  assertEqual(insertedRow.linked_inv_ids[0], 'inv-shsave1');
+  assertEqual(insertedRow.linked_inv_snapshots[0].dg, true, 'shRow carries linked_inv_snapshots with real dg');
+  ctx.localStorage.removeItem('st_sh_cloud_migration_ts');
+  ctx._sb = null;
+});
+
+testAsync('saveShp() — DG additive: no checkbox but a linked DG invoice still saves dg:true (AC-5)', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-add1', num: 'INV30008', lineItems: [{ lid: '', dg: true }] }));
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-ADD1');
+  mockEl('shf-invs').value = 'INV30008';
+  mockEl('shf-dg').checked = false;
+  await ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-ADD1'; });
+  assertEqual(s.dg, true, 'additive — invoice DG applies even though operator never checked the box');
+});
+
+testAsync('saveShp() — port-inheritance fallback fills blank ports from first linked invoice (AC-5b)', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-pf1', num: 'INV30009', pol: 'Dalian', pod: 'Nassau' }));
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-PF1');
+  mockEl('shf-invs').value = 'INV30009';
+  mockEl('shf-op').value = ''; mockEl('shf-dp').value = '';
+  await ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-PF1'; });
+  assertEqual(s.originPort, 'Dalian');
+  assertEqual(s.destPort, 'Nassau');
+});
+
+testAsync('saveShp() — port-inheritance fallback never overwrites an already-set port (AC-5b)', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-pf2', num: 'INV30010', pol: 'Dalian', pod: 'Nassau' }));
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-PF2');
+  mockEl('shf-invs').value = 'INV30010';
+  mockEl('shf-op').value = 'Shekou'; mockEl('shf-dp').value = 'Freeport';
+  await ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-PF2'; });
+  assertEqual(s.originPort, 'Shekou', 'operator-set port never overwritten');
+  assertEqual(s.destPort, 'Freeport');
+});
+
+test('renderShpSourceDriftWarn() — post-link drift: invoice DG status changed since snapshot (AC-6)', function() {
+  resetDB();
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-drift1', num: 'INV30011', lineItems: [] }));
+  var shp = { linkedInvSnapshots: [{ invId: 'inv-drift1', dg: true, pol: '', pod: '' }], originPort: '', destPort: '' };
+  ctx.renderShpSourceDriftWarn(shp);
+  var html = mockEl('sh-drift-warn').innerHTML;
+  assertContains(html, 'INV30011');
+  assertContains(html, 'DG status changed');
+});
+
+test('renderShpSourceDriftWarn() — multi-invoice port disagreement flags only the later (non-index-0) invoice (AC-6b)', function() {
+  resetDB();
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-m1', num: 'INV30012', pol: 'Qingdao', pod: '' }));
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-m2', num: 'INV30013', pol: 'Ningbo', pod: '' }));
+  var shp = { originPort: 'Qingdao', destPort: '', linkedInvSnapshots: [
+    { invId: 'inv-m1', dg: false, pol: 'Qingdao', pod: '' },
+    { invId: 'inv-m2', dg: false, pol: 'Ningbo', pod: '' }
+  ] };
+  ctx.renderShpSourceDriftWarn(shp);
+  var html = mockEl('sh-drift-warn').innerHTML;
+  assertContains(html, 'INV30013', 'the non-matching (index 1) invoice is named');
+  assert(html.indexOf('INV30012') === -1, 'the matching (index 0) invoice is never flagged');
+});
+
+test('renderShpSourceDriftWarn() — a linked invoice that no longer exists is reported without crashing (AC-6c)', function() {
+  resetDB();
+  var shp = { originPort: '', destPort: '', linkedInvSnapshots: [{ invId: 'vanished-id', dg: true, pol: 'X', pod: 'Y' }] };
+  ctx.renderShpSourceDriftWarn(shp);
+  var html = mockEl('sh-drift-warn').innerHTML;
+  assertContains(html, 'no longer exists');
+});
+
+test('renderShpSourceDriftWarn() — empty linkedInvSnapshots leaves the banner empty (AC-6d)', function() {
+  resetDB();
+  var shp = { originPort: '', destPort: '', linkedInvSnapshots: [] };
+  mockEl('sh-drift-warn').innerHTML = 'stale leftover content';
+  ctx.renderShpSourceDriftWarn(shp);
+  assertEqual(mockEl('sh-drift-warn').innerHTML, '', 'cleared, nothing to report');
+});
+
+test('backfillShLinkedInvIds() — populates linkedInvIds/linkedInvSnapshots for a pre-existing Shipment, idempotent on re-run (AC-7)', function() {
+  resetDB();
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-bf1', num: 'INV30014', pol: 'Fuzhou', pod: 'Roseau', lineItems: [{ lid: '', dg: true }] }));
+  ctx.DB.sh.push({ id: 'sh-bf1', ref: 'SHP-BF1', linkedInvs: ['INV30014'] });
+  ctx.backfillShLinkedInvIds();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-bf1'; });
+  assertEqual(s.linkedInvIds.length, 1);
+  assertEqual(s.linkedInvIds[0], 'inv-bf1');
+  assertEqual(s.linkedInvSnapshots[0].dg, true);
+  var before = JSON.stringify(s.linkedInvIds);
+  ctx.backfillShLinkedInvIds();
+  assertEqual(JSON.stringify(s.linkedInvIds), before, 're-running is a no-op once linkedInvIds already present');
+});
+
+test('backfillShLinkedInvIds() — a Shipment with no linkedInvs at all gets empty arrays, not left undefined (AC-7)', function() {
+  resetDB();
+  ctx.DB.sh.push({ id: 'sh-bf2', ref: 'SHP-BF2' });
+  ctx.backfillShLinkedInvIds();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-bf2'; });
+  assertEqual(s.linkedInvIds.length, 0);
+  assertEqual(s.linkedInvSnapshots.length, 0);
+});
+
+testAsync('migrateShToSupabase() — a local Shipment with no linkedInvIds/linkedInvSnapshots sends null for both, never undefined or a thrown error (AC-8)', async function() {
+  resetDB();
+  ctx.DB.sh.push({ id: 'sh-mig1', ref: 'SHP-MIG1', status: 'Pending', linkedInvs: [] });
+  ctx.localStorage.setItem(ctx.K.sh, JSON.stringify(ctx.DB.sh));
+  var sb = mockSb({ shipments: { insertImpl: function(row){ return Object.assign({ id: 'new-sh-mig1' }, row); },
+    selectData: [{ id: 'new-sh-mig1', ref: 'SHP-MIG1', status: 'Pending', linked_invs: [] }] } });
+  ctx._sb = sb;
+  var origShowBackup = ctx.showBlockingBackupModal;
+  ctx.showBlockingBackupModal = function(){ return Promise.resolve(true); };
+  await ctx.migrateShToSupabase();
+  var insertCall = sb._calls.find(function(c){ return c.table === 'shipments' && c.op === 'insert'; });
+  assert(insertCall, 'insert called');
+  assertEqual(insertCall.row.linked_inv_ids, null, 'linked_inv_ids sent as null, not undefined');
+  assertEqual(insertCall.row.linked_inv_snapshots, null, 'linked_inv_snapshots sent as null, not undefined');
+  ctx.showBlockingBackupModal = origShowBackup;
+  ctx._sb = null;
+});
+
+test('invHasDG() — true via catalogue-linked li.dg, true via line-only dg, false otherwise (AC-9)', function() {
+  resetDB();
+  ctx.DB.li.push({ id: 'cat-dg2', dg: true });
+  var invCat = mkPaidInvoice({ lineItems: [{ lid: 'cat-dg2' }] });
+  assertEqual(ctx.invHasDG(invCat), true, 'catalogue-linked dg');
+  var invLine = mkPaidInvoice({ lineItems: [{ lid: '', dg: true }] });
+  assertEqual(ctx.invHasDG(invLine), true, 'line-only dg, no catalogue link');
+  var invNone = mkPaidInvoice({ lineItems: [{ lid: '', dg: false }] });
+  assertEqual(ctx.invHasDG(invNone), false);
+});
+
+test('runLoadCalc() — DG detection via invHasDG() catches both a catalogue-linked and a line-only DG invoice (AC-9)', function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.li.push({ id: 'cat-dg3', dg: true });
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-lc1', num: 'INV30015', cbm: '5', lineItems: [{ lid: 'cat-dg3' }] }));
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-lc2', num: 'INV30016', cbm: '5', lineItems: [{ lid: '', dg: true }] }));
+  mockEl('lc-inv-list').querySelectorAll = function(){ return [{ value: 'inv-lc1' }, { value: 'inv-lc2' }]; };
+  mockEl('lc-result');
+  ctx.runLoadCalc();
+  assertEqual(ctx._lcResult.hasDG, true, 'both a catalogue-linked and a line-only DG invoice are detected via invHasDG()');
+});
+
+test('runLoadCalc() — neither DG path true yields hasDG false (AC-9)', function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-lc3', num: 'INV30017', cbm: '5', lineItems: [{ lid: '', dg: false }] }));
+  mockEl('lc-inv-list').querySelectorAll = function(){ return [{ value: 'inv-lc3' }]; };
+  mockEl('lc-result');
+  ctx.runLoadCalc();
+  assertEqual(ctx._lcResult.hasDG, false);
+});
+
+test('openLoadCalc() — DG badge now appears for a line-only li.dg invoice with no catalogue link (AC-9, disclosed behavior change)', function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-lc4', num: 'INV30018', cbm: '3', lineItems: [{ lid: '', dg: true }] }));
+  mockEl('lc-inv-list');
+  mockEl('lc-result');
+  mockEl('lc-exp-btn');
+  ctx.openLoadCalc();
+  var html = mockEl('lc-inv-list').innerHTML;
+  assertContains(html, 'DG</span>', 'DG badge rendered for a line-only dg invoice, previously missed before invHasDG() extraction');
+});
+
+testAsync('saveShp() — linkedInvSnapshots is never positionally padded for an unresolvable linkedInvs entry (AC-10)', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-np1', num: 'INV30019' }));
+  ctx.EI.sh = null;
+  setupShpFormMinimal('SHP-NP1');
+  mockEl('shf-invs').value = 'TYPO-NUM, INV30019';
+  await ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.ref === 'SHP-NP1'; });
+  assertEqual(s.linkedInvs.length, 2, 'linkedInvs keeps both, including the unresolvable one');
+  assertEqual(s.linkedInvSnapshots.length, 1, 'linkedInvSnapshots only has the one resolvable entry, never null-padded to length 2');
+  assertEqual(s.linkedInvSnapshots[0].invId, 'inv-np1');
+});
+
+testAsync('editShp()/recomputeShpDgLiveState() — pure invoice-driven DG resets to false on exit (AC-16)', async function() {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-ac16', num: 'INV30020', lineItems: [{ lid: '', dg: true }] }));
+  ctx.DB.sh.push({ id: 'sh-ac16', ref: 'SHP-AC16', dg: true, linkedInvs: ['INV30020'], linkedInvIds: ['inv-ac16'],
+    linkedInvSnapshots: [{ invId: 'inv-ac16', dg: true, pol: '', pod: '' }], tradeDocs: ctx.shpSeedTradeDocs(true), docsStatus: 'Pending',
+    autoCreatedFromInvIds: [] });
+  ctx.editShp('sh-ac16');
+  assertEqual(mockEl('shf-dg').checked, true, 'checked, forced by linked invoice');
+  assertEqual(mockEl('shf-dg').disabled, true, 'disabled while invoice-driven');
+  mockEl('shf-invs').value = '';
+  ctx.recomputeShpDgLiveState();
+  assertEqual(mockEl('shf-dg').disabled, false, 're-enabled once no invoice explains DG');
+  assertEqual(mockEl('shf-dg').checked, false, 'resets to false — never manually confirmed');
+  ctx.EI.sh = 'sh-ac16';
+  setupShpFormMinimal('SHP-AC16');
+  await ctx.saveShp();
+  var s = ctx.DB.sh.find(function(x){ return x.id === 'sh-ac16'; });
+  assertEqual(s.dg, false, 'saveShp() at this point produces dg:false');
+});
+
+test('openShp()/recomputeShpDgLiveState() — create path: linking a DG-flagged invoice live-disables+checks (AC-16b)', function() {
+  resetDB();
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-ac16b', num: 'INV30021', lineItems: [{ lid: '', dg: true }] }));
+  ctx.openShp();
+  assertEqual(mockEl('shf-dg').checked, false, 'starts unchecked, no invoices linked yet');
+  mockEl('shf-invs').value = 'INV30021';
+  ctx.recomputeShpDgLiveState();
+  assertEqual(mockEl('shf-dg').checked, true, 'forced checked once a DG invoice is linked, even on the create path');
+  assertEqual(mockEl('shf-dg').disabled, true);
+});
+
+test('editShp()/recomputeShpDgLiveState() — manual DG confirmation survives a transient invoice-linked period within the same session (AC-16c)', function() {
+  resetDB();
+  ctx.DB.inv.push(mkPaidInvoice({ id: 'inv-ac16c', num: 'INV30022', lineItems: [{ lid: '', dg: true }] }));
+  ctx.DB.sh.push({ id: 'sh-ac16c', ref: 'SHP-AC16C', dg: false, linkedInvs: [], linkedInvIds: [], linkedInvSnapshots: [],
+    tradeDocs: [], docsStatus: 'Pending', autoCreatedFromInvIds: [] });
+  ctx.editShp('sh-ac16c');
+  assertEqual(mockEl('shf-dg').checked, false, 'no linked invoices, stored dg false — starts unchecked');
+  mockEl('shf-dg').checked = true;
+  ctx.shpDgManualToggle();
+  mockEl('shf-invs').value = 'INV30022';
+  ctx.recomputeShpDgLiveState();
+  assertEqual(mockEl('shf-dg').checked, true);
+  assertEqual(mockEl('shf-dg').disabled, true, 'now invoice-driven');
+  mockEl('shf-invs').value = '';
+  ctx.recomputeShpDgLiveState();
+  assertEqual(mockEl('shf-dg').disabled, false, 're-enabled');
+  assertEqual(mockEl('shf-dg').checked, true, 'operator\'s own independent confirmation survives the transient invoice-linked period');
+});
+
+test('AI_SYSTEM_PROMPT coverage — new DG-inheritance/port-inheritance/drift-warning prose present (REQ-SHIP-002g, AC-15)', function() {
+  // AI_SYSTEM_PROMPT is declared as an array literal but immediately `.join('\n')`'d
+  // at the end of its own declaration (index.html, right after the array closes) —
+  // it is a plain string at runtime, not an array; a substring check is correct here.
+  assertContains(ctx.AI_SYSTEM_PROMPT, 'DG Onboard automatically ticks and locks itself', 'new DG-inheritance bullet present in AI_SYSTEM_PROMPT');
+  assertContains(ctx.AI_SYSTEM_PROMPT, 'Linking an Invoice also inherits its Origin', 'new port-inheritance/drift-warning bullet present in AI_SYSTEM_PROMPT');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));

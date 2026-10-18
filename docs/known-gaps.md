@@ -820,3 +820,11 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 ### LI-GAP-005 — `doImport()`'s restore `confirm()` dialog does not mention `liPending` counts
 **Area:** `doImport()` (`index.html`, REQ/SPEC-LI-002).
 **Detail:** Same, already-accepted precedent as `DB.events`/`DB.buy`/`DB.supPayments` — the restore confirmation dialog lists counts for only a subset of entities; `liPending` is restored correctly but not named in that dialog's message.
+
+## Shipment / Invoice Linking (v2.9.91, REQ/SPEC-SHIP-002)
+
+### SHIP-GAP-002 — DG manual-vs-invoice-derived tracking is session-scoped only, not cross-session *(Open, accepted, by design)*
+
+**Area:** `editShp()`'s initialization formula, `recomputeShpDgLiveState()`/`shpDgManualToggle()` (`index.html`, REQ/SPEC-SHIP-002).
+**Logged:** v2.9.91, at ship time — an explicit, disclosed limitation, not a defect discovered later.
+**Detail:** `_shpDgManualValue`/`_shpDgInvoiceDriven` correctly distinguish an operator's own independent DG confirmation from an invoice-derived one WITHIN one continuous modal-open editing session (the exact scenario REQ-SHIP-002's own requirements-gate round 4 found and round 5 fixed). They do not and cannot reconstruct that distinction from a `dg` value already saved in a PRIOR session, since the single `dg` boolean persisted to `DB.sh`/Supabase has never recorded which source set it. `editShp()`'s own initialization formula makes the conservative choice — preserve `dg:true` as if independently confirmed whenever no currently-linked invoice explains it right now, rather than silently drop it — but this is a best-effort inference, not a reconstruction of real history. A fully cross-session-correct version would need a new persisted field (e.g. `shp.dgManual`) — explicitly out of scope here, logged as a candidate for a future REQ if this proves insufficient in practice. Note: unrelated to the existing `SHIP-GAP-001` (async double-submit race, v2.9.86) — this is a new, independent gap.

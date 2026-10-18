@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.90</title>
+<title>Stackd Ops v2.9.91</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -222,7 +222,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.90</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.91</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1381,9 +1381,22 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.90</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.91</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New/Fix: <strong>Shipment↔Invoice relationship — real id-based linking, DG/port inheritance, source-drift detection</strong> (<code>REQ/SPEC-SHIP-002</code>) — <code>linkedInvs[]</code> was a bare array of invoice-number strings, never dereferenced against <code>DB.inv</code>, and DG status was hardcoded <code>false</code> at Shipment auto-creation regardless of the source invoice's own DG-flagged lines. New <code>linkedInvIds[]</code>/<code>linkedInvSnapshots[]</code> fields (not positionally parallel to <code>linkedInvs[]</code> — matched by <code>invId</code> only) and a shared <code>invHasDG(inv)</code> helper fix both: <code>autoCreateShipmentFromInvoice()</code>/<code>saveShp()</code> now inherit DG (additive, never replacing the operator's own checkbox) and fill a blank Origin/Dest Port from the first linked invoice, never overwriting one already set.</li>
+          <li>New: <strong>Live DG-checkbox mechanism</strong> — the DG Onboard checkbox auto-locks checked while any linked invoice is DG-flagged, and correctly restores the operator's own independent confirmation (not a hardcoded unchecked state) once that invoice is unlinked again, within the same editing session.</li>
+          <li>New: <strong><code>renderShpSourceDriftWarn()</code> banner</strong> — flags a linked invoice whose DG/port state has changed since it was linked, or two linked invoices disagreeing on port.</li>
+          <li>Disclosed: one Load Calculator behavior change (<code>openLoadCalc()</code>'s DG badge now also catches a line-only DG flag with no catalogue link) and one new known gap, <code>SHIP-GAP-002</code> (DG manual-vs-invoice-derived tracking is session-scoped only, not cross-session).</li>
+          <li>Requirements-gate: 5 rounds (REQ-SHIP-002, clean PASS). Spec-gate: 2 confirmatory rounds (SPEC-SHIP-002, clean PASS — round 1 caught a missing <code>docs/user-guide.md</code> update; round 2 caught a stale <code>docs/data-model.md</code> ERD note and a repeated false test-precedent claim). 26 new tests. Tests: 1073 → 1099 pass.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.90</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong>Line Item catalogue quick-add silently discarded Supplier attribution</strong> (<code>REQ/SPEC-LI-002</code>) — a Product-type line added via the Invoice quick-add form, or via "Import from Library," could reach the catalogue with no Supplier link. Quick-add now requires a Supplier for Product lines (Pass-through/Charge exempt, mirroring the existing Unit Cost requirement from REQ/SPEC-INV-002); the Invoice line-items table gained an editable Supplier column for every line type; <code>vInv()</code> backstops the requirement at save time against a Supplier cleared directly in that table after a line was added correctly.</li>
@@ -2600,7 +2613,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
           <select id="shf-ctype"><option>20GP</option><option>40HQ</option><option>LCL</option><option>Other</option></select></div>
         <div class="fld"><label>Container Number</label><input type="text" id="shf-cnum" placeholder="MSCU1234567"></div>
         <div class="fld" style="display:flex;align-items:center;gap:8px;padding-top:18px;">
-          <input type="checkbox" id="shf-dg" style="width:auto;margin:0;">
+          <input type="checkbox" id="shf-dg" style="width:auto;margin:0;" onchange="shpDgManualToggle()">
           <label for="shf-dg" style="margin:0;cursor:pointer;">DG Onboard</label>
         </div>
         <div class="fld"><label>Docs Status</label>
@@ -2608,12 +2621,13 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
         <div class="fld"><label>Status</label>
           <select id="shf-st"><option>Booked</option><option>Confirmed</option><option>In Transit</option><option>At Origin Port</option><option>At Destination Port</option><option>In Customs</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option><option>On Hold</option><option>Cancelled</option></select></div>
         <div class="fld"><label>Linked Invoices <span style="font-size:.44rem;color:var(--m);">(comma-separated)</span></label>
-          <input type="text" id="shf-invs" placeholder="INV10030, INV10031"></div>
+          <input type="text" id="shf-invs" placeholder="INV10030, INV10031" oninput="recomputeShpDgLiveState()"></div>
         <div class="fld"><label>Forwarder Name</label><input type="text" id="shf-fwd" placeholder="ABC Freight Ltd"></div>
         <div class="fld"><label>Forwarder Email</label><input type="text" id="shf-fwde" placeholder="ops@abcfreight.com"></div>
         <div class="fld" style="grid-column:1/-1"><label>Notes</label>
           <textarea id="shf-nt" placeholder="Customs agent, port notes, delays..."></textarea></div>
       </div>
+      <div id="sh-drift-warn" style="margin-bottom:8px;"></div>
 
       <div style="margin-bottom:14px;border-top:1px solid var(--ln);padding-top:12px;">
         <label style="font-weight:600;display:block;margin-bottom:6px;">Trade Documents</label>
@@ -3078,6 +3092,8 @@ var WEBHOOK_TRIGGERS = [
 var _unlockedInvIds = {}; // in-memory override set — cleared on page reload
 var _invEditSnapshot = null; // G-06: pre-edit snapshot captured at unlock, cleared on save or close
 var _liApproveCtx = null;    // REQ/SPEC-LI-002: {candidateId, quoteNum} while Approve is mid-flow; null otherwise. Set AFTER openLI()/editLI() (which clear it first), never before.
+var _shpDgInvoiceDriven = false; // REQ/SPEC-SHIP-002c: is shf-dg CURRENTLY forced true/disabled by a linked invoice?
+var _shpDgManualValue = false;   // REQ/SPEC-SHIP-002c: the operator's own last INDEPENDENT (non-invoice-forced) shf-dg value — must survive an invoice being linked and then unlinked again within the same modal session
 
 function canTransitionStatus(from, to) {
   // Cancelled is a terminal state reachable from any status
@@ -3187,6 +3203,26 @@ function backfillShLinkedInvs() {
       s.linkedInvs = s.linkedInvs === '' ? [] : s.linkedInvs.split(',').map(function(v){ return v.trim(); }).filter(Boolean);
       changed = true;
     }
+  });
+  if (changed) saveAll();
+}
+function backfillShLinkedInvIds() {
+  // Self-healing, no device-level marker — same pattern as the pre-existing
+  // backfillShLinkedInvs()/migrateLinkedPOIds() immediately above. Any
+  // Shipment saved before this feature shipped has linkedInvs but no
+  // linkedInvIds/linkedInvSnapshots at all; this derives them the same way
+  // saveShp() does, purely from data already on hand.
+  var changed = false;
+  DB.sh.forEach(function(s) {
+    if (Array.isArray(s.linkedInvIds)) return; // already backfilled or created post-ship
+    var linked = Array.isArray(s.linkedInvs) ? s.linkedInvs : [];
+    if (!linked.length) { s.linkedInvIds = []; s.linkedInvSnapshots = []; changed = true; return; }
+    var resolved = linked.map(function(num){ return DB.inv.find(function(i){ return i.num === num; }); }).filter(Boolean);
+    s.linkedInvIds = resolved.map(function(inv){ return inv.id; });
+    s.linkedInvSnapshots = resolved.map(function(inv){
+      return { invId: inv.id, dg: invHasDG(inv), pol: inv.pol || '', pod: inv.pod || '' };
+    });
+    changed = true;
   });
   if (changed) saveAll();
 }
@@ -6329,6 +6365,8 @@ async function refreshShFromSupabase() {
     if (row.upd_at != null) s.updAt = row.upd_at;
     if (row.trade_docs != null) s.tradeDocs = row.trade_docs;
     if (row.auto_created_from_inv_ids != null) s.autoCreatedFromInvIds = row.auto_created_from_inv_ids;
+    if (row.linked_inv_ids != null) s.linkedInvIds = row.linked_inv_ids;
+    if (row.linked_inv_snapshots != null) s.linkedInvSnapshots = row.linked_inv_snapshots;
     return s;
   });
   sv(K.sh, DB.sh);
@@ -7485,6 +7523,8 @@ async function migrateShToSupabase() {
       container_type: s.containerType || null, container_num: s.containerNum || null, dg: !!s.dg,
       docs_status: s.docsStatus || null, status: s.status,
       linked_invs: Array.isArray(s.linkedInvs) ? s.linkedInvs : (typeof s.linkedInvs === 'string' && s.linkedInvs ? s.linkedInvs.split(',').map(function(t){return t.trim();}).filter(Boolean) : []),
+      linked_inv_ids: Array.isArray(s.linkedInvIds) ? s.linkedInvIds : null,
+      linked_inv_snapshots: Array.isArray(s.linkedInvSnapshots) ? s.linkedInvSnapshots : null,
       trade_docs: Array.isArray(s.tradeDocs) ? s.tradeDocs : null,
       auto_created_from_inv_ids: Array.isArray(s.autoCreatedFromInvIds) ? s.autoCreatedFromInvIds : null,
       forwarder: s.forwarder || null, forwarder_email: s.forwarderEmail || null, notes: s.notes || null,
@@ -9088,21 +9128,31 @@ async function autoCreateShipmentFromInvoice(inv) {
   var suffix = 2;
   while (DB.sh.some(function(s){ return s.ref === ref; })) { ref = 'SHP-' + (inv.num || Date.now().toString(36)) + '-' + suffix; suffix++; }
 
-  var seededDocs = shpSeedTradeDocs(false);
+  // REQ/SPEC-SHIP-002b: a brand-new Shipment always starts with blank ports —
+  // inheriting here is never an "overwrite" per REQ §1.3, since there is
+  // nothing to overwrite yet.
+  var dg = invHasDG(inv);
+  var originPort = inv.pol || '';
+  var destPort = inv.pod || '';
+  var seededDocs = shpSeedTradeDocs(dg);
   var newShp = {
-    id: uid(), ref: ref, blNum: '', vessel: '', carrier: '', originPort: '', destPort: '',
-    etd: '', eta: '', containerType: '20GP', containerNum: '', dg: false,
+    id: uid(), ref: ref, blNum: '', vessel: '', carrier: '', originPort: originPort, destPort: destPort,
+    etd: '', eta: '', containerType: '20GP', containerNum: '', dg: dg,
     tradeDocs: seededDocs, docsStatus: shpComputeDocsStatus(seededDocs), status: RD_SHP_STATUS[0],
-    linkedInvs: [inv.num], autoCreatedFromInvIds: [inv.id],
+    linkedInvs: [inv.num], linkedInvIds: [inv.id],
+    linkedInvSnapshots: [{ invId: inv.id, dg: dg, pol: originPort, pod: destPort }],
+    autoCreatedFromInvIds: [inv.id],
     forwarder: '', forwarderEmail: '', notes: '', updAt: new Date().toISOString()
   };
 
   if (_sb && localStorage.getItem('st_sh_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
     var shRow = {
-      ref: newShp.ref, bl_num: null, vessel: null, carrier: null, origin_port: null, dest_port: null,
-      etd: null, eta: null, container_type: newShp.containerType, container_num: null, dg: false,
+      ref: newShp.ref, bl_num: null, vessel: null, carrier: null,
+      origin_port: newShp.originPort || null, dest_port: newShp.destPort || null,
+      etd: null, eta: null, container_type: newShp.containerType, container_num: null, dg: newShp.dg,
       docs_status: newShp.docsStatus, status: newShp.status, linked_invs: newShp.linkedInvs,
+      linked_inv_ids: newShp.linkedInvIds, linked_inv_snapshots: newShp.linkedInvSnapshots,
       trade_docs: newShp.tradeDocs, auto_created_from_inv_ids: newShp.autoCreatedFromInvIds,
       forwarder: null, forwarder_email: null, notes: null, upd_at: newShp.updAt
     };
@@ -9116,6 +9166,48 @@ async function autoCreateShipmentFromInvoice(inv) {
   }
   rShp();
   toast('Shipment ' + ref + ' auto-created — add details as they become available');
+}
+
+function invHasDG(inv) {
+  return (inv.lineItems||[]).some(function(li){
+    var cat = DB.li.find(function(x){ return x.id===li.lid; });
+    return (cat && cat.dg) || li.dg;
+  });
+}
+
+function shpCurrentLinkedInvoicesHaveDG() {
+  var raw = G('shf-invs') ? G('shf-invs').value.trim() : '';
+  var nums = raw ? raw.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+  return nums.some(function(num) {
+    var inv = DB.inv.find(function(x){ return x.num === num; });
+    return inv ? invHasDG(inv) : false;
+  });
+}
+
+function shpDgManualToggle() {
+  // Wired to shf-dg's own onchange. A disabled <input> never receives a
+  // user-driven change event, so this can only fire while the box is
+  // enabled — i.e. NOT currently invoice-driven — which is exactly the
+  // condition under which a change genuinely represents the operator's own
+  // independent choice, never a forced value.
+  _shpDgManualValue = G('shf-dg').checked;
+}
+
+function recomputeShpDgLiveState() {
+  var cb = G('shf-dg');
+  if (!cb) return;
+  var invoiceDG = shpCurrentLinkedInvoicesHaveDG();
+  if (invoiceDG) {
+    cb.checked = true;
+    cb.disabled = true;
+    cb.title = 'DG is set by a linked invoice — remove it from Linked Invoices to clear.';
+    _shpDgInvoiceDriven = true;
+  } else {
+    cb.disabled = false;
+    cb.title = '';
+    cb.checked = _shpDgManualValue; // ALWAYS restores the operator's own last independent value — never a hardcoded false
+    _shpDgInvoiceDriven = false;
+  }
 }
 
 function getInvoicePOs(inv) {
@@ -9162,6 +9254,42 @@ function renderPoSourceDriftWarn(po) {
 
   if (!stale) return;
   el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;">&#9888; Source Invoice has changed since this PO was generated — review before proceeding.</div>';
+}
+
+function renderShpSourceDriftWarn(shp) {
+  var el = G('sh-drift-warn');
+  if (!el) return;
+  el.innerHTML = '';
+  var snaps = shp.linkedInvSnapshots || [];
+  if (!snaps.length) return;
+  var lines = [];
+  snaps.forEach(function(snap, idx) {
+    var inv = DB.inv.find(function(x){ return x.id === snap.invId; });
+    if (!inv) {
+      lines.push('A previously linked Invoice no longer exists (was DG: ' + (snap.dg ? 'Yes' : 'No') + ', Origin: ' + (snap.pol || '-') + ', Dest: ' + (snap.pod || '-') + ').');
+      return;
+    }
+    var parts = [];
+    // Post-link drift (Decision 2): has this invoice's own live DG/port state
+    // changed since it was snapshotted?
+    var liveDg = invHasDG(inv);
+    if (liveDg !== !!snap.dg) parts.push('DG status changed (was ' + (snap.dg ? 'Yes' : 'No') + ', now ' + (liveDg ? 'Yes' : 'No') + ')');
+    if ((inv.pol || '') !== (snap.pol || '')) parts.push('Origin Port changed (was ' + (snap.pol || '-') + ', now ' + (inv.pol || '-') + ')');
+    if ((inv.pod || '') !== (snap.pod || '')) parts.push('Dest Port changed (was ' + (snap.pod || '-') + ', now ' + (inv.pod || '-') + ')');
+    // Multi-invoice port disagreement (Decision 1): does a non-first linked
+    // invoice's snapshotted port disagree with what this Shipment actually
+    // has set? (The first invoice is the one the port was inherited FROM, by
+    // construction never a disagreement with itself.)
+    if (idx > 0) {
+      if (snap.pol && shp.originPort && snap.pol !== shp.originPort) parts.push('Origin Port (' + snap.pol + ') differs from this Shipment’s Origin Port (' + shp.originPort + ')');
+      if (snap.pod && shp.destPort && snap.pod !== shp.destPort) parts.push('Dest Port (' + snap.pod + ') differs from this Shipment’s Dest Port (' + shp.destPort + ')');
+    }
+    if (parts.length) lines.push(inv.num + ': ' + parts.join('; ') + '.');
+  });
+  if (!lines.length) return;
+  el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;">' +
+    lines.map(function(l){ return '&#9888; ' + san(l); }).join('<br>') +
+    '</div>';
 }
 
 function renderPoDepNote(depInfo) {
@@ -12020,7 +12148,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.90).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.91).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12180,6 +12308,8 @@ var AI_SYSTEM_PROMPT = [
   'Fields: BL Number, Vessel, Carrier, Origin Port (UN/LOCODE lookup), Destination Port (UN/LOCODE lookup), ETD, ETA, Container Type (20GP / 40HQ / LCL / Other), Container Number, DG Onboard, Docs Status (Pending / In Progress / Complete), Status, Linked Invoices, Forwarder Name, Forwarder Email, Notes.',
   'Status flow: Pending → Booked → In Transit → Arrived → Delivered.',
   'DG Onboard: tick if any product is classified as Dangerous Goods (e.g. refrigerants, batteries). Triggers IMDG compliance requirements.',
+  'DG Onboard automatically ticks and locks itself whenever ANY currently-Linked Invoice is itself DG-flagged — the operator cannot uncheck it while that invoice stays linked (remove the invoice from Linked Invoices to regain manual control). An operator\'s own independent confirmation, made before or after a DG-linked invoice, is preserved and restored once that invoice is unlinked again, within the same editing session.',
+  'Linking an Invoice also inherits its Origin/Destination Port into a blank port field on the Shipment (never overwrites an already-set one), and the Shipment keeps a point-in-time snapshot of each linked invoice\'s DG/port state — if that invoice\'s own data changes afterward, or two linked invoices disagree on port, a warning banner appears on the Edit Shipment modal.',
   'Load Calculator: &#128220; Load Calculator button on Shipments toolbar. Select invoices → Calculate to sum CBM from invoice cubic weight fields, get container recommendation, and flag DG. Export as plain text summary.',
   'Forwarder Update Request: &#128231; button on each shipment row. Opens a pre-filled message with all shipment details. Copy to clipboard or send via webhook (configure in Settings → Integrations). Forwarder name/email auto-populates from the shipment record.',
   '',
@@ -13322,6 +13452,7 @@ function doImport(e) {
     backfillConIds();
     migrateLinkedPOIds();
     backfillShLinkedInvs();
+    backfillShLinkedInvIds();
     backfillOrderRequests();
     backfillInvoicePOs();
     migrateQtePoShape();
@@ -13441,6 +13572,8 @@ function openShp() {
   if(G('shf-docs')) { G('shf-docs').value='Pending'; G('shf-docs').disabled=false; G('shf-docs').title=''; }
   if(G('shf-st')) G('shf-st').value='Pending';
   if(G('shf-dg')) G('shf-dg').checked=false;
+  _shpDgManualValue = false; _shpDgInvoiceDriven = false;
+  recomputeShpDgLiveState(); // no-op in practice (shf-invs is already blank) — starts the session's state cleanly (AC-16b)
   if(G('shp-docs-panel')) G('shp-docs-panel').innerHTML = '<div style="color:var(--m);font-size:.54rem;">Save this Shipment first, then reopen it to add trade documents.</div>';
   if(G('shp-docs-newtype')) G('shp-docs-newtype').value = '';
   G('ov-shp').classList.add('on');
@@ -13460,11 +13593,30 @@ function editShp(id) {
   G('shf-dg').checked=!!s.dg; G('shf-docs').value=s.docsStatus||'Pending';
   G('shf-st').value=s.status||'Pending';
   G('shf-invs').value=(s.linkedInvs||[]).join(', ');
+  // REQ/SPEC-SHIP-002c: must run AFTER shf-invs is set (immediately above),
+  // never after shf-dg (two lines above that) — shpCurrentLinkedInvoicesHaveDG()
+  // reads shf-invs's live value, which isn't real yet until this point.
+  var openInvoiceDG = shpCurrentLinkedInvoicesHaveDG();
+  // The stored dg is attributable to independent confirmation only if no
+  // CURRENTLY-linked invoice explains it right now. If dg was true partly or
+  // wholly because of an invoice, the safe default (Decision 1) is to treat
+  // the independent baseline as false — this app has never separately
+  // recorded a cross-session-independent manual value (REQ §1.3).
+  // Disclosed edge case: if a linked invoice's own DG status has changed
+  // since this Shipment was last saved, openInvoiceDG may read false even
+  // though dg was originally invoice-derived — this formula then seeds
+  // _shpDgManualValue = true, conservatively preserving dg:true rather than
+  // silently dropping it. The checkbox is left enabled either way, so the
+  // operator can correct it if the preserved value turns out wrong.
+  _shpDgManualValue = s.dg && !openInvoiceDG;
+  _shpDgInvoiceDriven = false;
+  recomputeShpDgLiveState(); // re-derives _shpDgInvoiceDriven and re-forces checked=true if openInvoiceDG is itself true
   if(G('shf-fwd')) G('shf-fwd').value=s.forwarder||'';
   if(G('shf-fwde')) G('shf-fwde').value=s.forwarderEmail||'';
   G('shf-nt').value=s.notes||'';
   if(G('shp-docs-newtype')) G('shp-docs-newtype').value = '';
   renderShpDocsPanel(id);
+  renderShpSourceDriftWarn(s);
   G('ov-shp').classList.add('on');
 }
 
@@ -13473,22 +13625,49 @@ async function saveShp() {
   var ref = G('shf-ref').value.trim();
   var invRaw = G('shf-invs').value.trim();
   var linkedInvs = invRaw ? invRaw.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+
+  // REQ/SPEC-SHIP-002c: resolve every linked invoice (still num-keyed —
+  // linkedInvs itself is unchanged) into its real id plus a compact DG/port
+  // snapshot. An unresolvable num (typo, since-deleted invoice) is silently
+  // dropped — linkedInvs is the operator-facing source of truth; REQ §1.3
+  // never asks for a picker/dropdown or a DB FK constraint on it, so there is
+  // no mechanism here (or anywhere else in this SPEC) that could block or
+  // reject it for containing one.
+  var resolvedInvs = linkedInvs.map(function(num){ return DB.inv.find(function(i){ return i.num === num; }); })
+                                .filter(Boolean);
+  var linkedInvIds = resolvedInvs.map(function(inv){ return inv.id; });
+  var linkedInvSnapshots = resolvedInvs.map(function(inv){
+    return { invId: inv.id, dg: invHasDG(inv), pol: inv.pol || '', pod: inv.pod || '' };
+  });
+  var invoiceDG = linkedInvSnapshots.some(function(snap){ return snap.dg; });
+
+  var originPort = G('shf-op').value.trim();
+  var destPort = G('shf-dp').value.trim();
+  // Port-inheritance fallback (REQ §1.3/Decision 1): only ever fills a BLANK
+  // field from the FIRST linked invoice — never overwrites an operator's own
+  // non-blank value. A later-linked invoice disagreeing is surfaced by
+  // renderShpSourceDriftWarn(), never silently applied here.
+  if (!originPort && linkedInvSnapshots.length && linkedInvSnapshots[0].pol) originPort = linkedInvSnapshots[0].pol;
+  if (!destPort && linkedInvSnapshots.length && linkedInvSnapshots[0].pod) destPort = linkedInvSnapshots[0].pod;
+
   var shp = {
     id: EI.sh || uid(),
     ref: ref,
     blNum: G('shf-bl').value.trim(),
     vessel: G('shf-vessel').value.trim(),
     carrier: G('shf-carrier').value.trim(),
-    originPort: G('shf-op').value.trim(),
-    destPort: G('shf-dp').value.trim(),
+    originPort: originPort,
+    destPort: destPort,
     etd: G('shf-etd').value,
     eta: G('shf-eta').value,
     containerType: G('shf-ctype').value,
     containerNum: G('shf-cnum').value.trim(),
-    dg: G('shf-dg').checked,
+    dg: G('shf-dg').checked || invoiceDG,
     docsStatus: G('shf-docs').value,
     status: G('shf-st').value,
     linkedInvs: linkedInvs,
+    linkedInvIds: linkedInvIds,
+    linkedInvSnapshots: linkedInvSnapshots,
     forwarder: G('shf-fwd') ? G('shf-fwd').value.trim() : '',
     forwarderEmail: G('shf-fwde') ? G('shf-fwde').value.trim() : '',
     notes: G('shf-nt').value.trim(),
@@ -13530,6 +13709,7 @@ async function saveShp() {
       origin_port: shp.originPort || null, dest_port: shp.destPort || null, etd: shp.etd || null, eta: shp.eta || null,
       container_type: shp.containerType || null, container_num: shp.containerNum || null, dg: !!shp.dg,
       docs_status: shp.docsStatus || null, status: shp.status, linked_invs: shp.linkedInvs || [],
+      linked_inv_ids: shp.linkedInvIds || [], linked_inv_snapshots: shp.linkedInvSnapshots || [],
       trade_docs: shp.tradeDocs, auto_created_from_inv_ids: shp.autoCreatedFromInvIds,
       forwarder: shp.forwarder || null, forwarder_email: shp.forwarderEmail || null, notes: shp.notes || null,
       upd_at: shp.updAt
@@ -13583,10 +13763,7 @@ function openLoadCalc() {
   if (!DB.inv.length) { list.innerHTML = '<div style="color:var(--m);">No invoices found.</div>'; }
   else {
     list.innerHTML = DB.inv.map(function(inv){
-      var hasDG = (inv.lineItems||[]).some(function(li){
-        var cat = DB.li.find(function(x){ return x.id===li.lid; });
-        return cat && cat.dg;
-      });
+      var hasDG = invHasDG(inv);
       return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;">'
         + '<input type="checkbox" value="' + san(inv.id) + '" style="width:auto;margin:0;">'
         + ' <span style="font-weight:500;color:var(--cr);min-width:90px;">' + san(inv.num||inv.id) + '</span>'
@@ -13613,12 +13790,7 @@ function runLoadCalc() {
     invNums.push(inv.num||inv.id);
     var cbmVal = parseFloat((inv.cbm||'').replace(/[^\d.]/g,'')) || 0;
     totalCBM += cbmVal;
-    if (!hasDG) {
-      hasDG = (inv.lineItems||[]).some(function(li){
-        var cat = DB.li.find(function(x){ return x.id===li.lid; });
-        return (cat && cat.dg) || li.dg;
-      });
-    }
+    if (!hasDG) hasDG = invHasDG(inv);
     lines.push({ num: inv.num||inv.id, buyer: inv.buyer||'-', cbm: cbmVal });
   });
 
@@ -15961,6 +16133,7 @@ function initApp() {
     backfillConIds();
     migrateLinkedPOIds();
     backfillShLinkedInvs();
+    backfillShLinkedInvIds();
     backfillOrderRequests();
     backfillInvoicePOs();
     migrateQtePoShape();
