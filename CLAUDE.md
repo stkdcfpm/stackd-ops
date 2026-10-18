@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used for Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment when Cloud Data is configured — REQ/SPEC-CLOUD-001, extended to Line Item/Contact by REQ/SPEC-CLOUD-002, to Order Request by REQ/SPEC-CLOUD-003, to Quote by REQ/SPEC-CLOUD-004, to Purchase Order by REQ/SPEC-CLOUD-005 (completing Phase 2), to Invoice/Credit Note by REQ/SPEC-CLOUD-006 (Phase 3 sub-phase 1 of 3), to Shipment by REQ/SPEC-CLOUD-007 (Phase 3 sub-phase 2 of 3), and to Buyer Payment/Supplier Payment by REQ/SPEC-CLOUD-008 (Phase 3 sub-phase 3 of 3, completing Phase 3) — of the cross-platform backend migration; no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.89**  
-**Test count: 1042/1042 PASS** (`node tests/run.js`)
+**Current version: v2.9.90**  
+**Test count: 1062/1062 PASS** (`node tests/run.js`)
 
 ---
 
@@ -61,6 +61,7 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }             // active rates (editabl
 | co | st_co | Contacts (v2.9.27) |
 | events | st_ev | Activity event log (v2.9.28) |
 | ord | st_ord | Order Requests (v2.9.44) |
+| liPending | st_lip | Line Item catalogue-promotion candidates from accepted Quotes (v2.9.90, local-only, not Cloud-Data-synced) |
 
 ---
 
@@ -237,3 +238,4 @@ See `docs/known-gaps.md` for full entries.
 | 14 | Phase 1 visual redesign — depth, radius, refined interactions | ✓ done (v2.9.26) |
 | 15 | Buyer statement fixes — Total Outstanding, ISO dates, credits negative | ✓ done (v2.9.26) |
 | 16 | Contacts/Leads entity — pipeline, GDPR basis, quote integration, dedup | ✓ done (v2.9.27) |
+| 17 | Line Items catalogue — quick-add supplier, Quote-acceptance promotion queue, picker/library grouping (REQ/SPEC-LI-002) | ✓ done (v2.9.90) |

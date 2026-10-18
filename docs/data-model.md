@@ -274,3 +274,13 @@ erDiagram
 - Deleting a Supplier nulls `supplierId` on all linked Contacts before the delete completes.
 - **No Buyer record uses `uid()` for its `id`** (corrected 2026-07-11) — regular Buyers get `'BUY' + Date.now()` from `saveBuy()`/`quickAddBuyer()`; `BUY-ADHOC` is a seeded sentinel with the literal string `'BUY-ADHOC'` as its `id`. Buyers are the one entity in this data model whose internal PK is not a `uid()` output.
 - See SPEC-DATA-001 §6 for the primary-key strategy designed to make the eventual v3.0.0 Supabase migration a simple surrogate-key swap rather than a from-scratch identifier redesign.
+
+## LiPending (v2.9.90, REQ/SPEC-LI-002)
+
+`DB.liPending` / `K.lip = 'st_lip'` — local-only, never Cloud-Data-synced.
+
+```
+LiPending: id PK, status ('pending'|'approved'|'dismissed'), kind ('new'|'update'),
+  matchedLiId FK→LineItem.id (update only), quoteId FK→Quote.id, quoteNum, supId,
+  desc, uom, cost, suggestedPrice, currency, notes, createdAt
+```

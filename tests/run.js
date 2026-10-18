@@ -209,7 +209,7 @@ function assertApprox(a, b, msg) {
 }
 
 function resetDB() {
-  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [], events: [], buy: [], ord: [], supPayments: [] };
+  ctx.DB = { sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], con: [], events: [], buy: [], ord: [], supPayments: [], liPending: [] };
 }
 function loadFixtures() {
   ctx.DB = JSON.parse(JSON.stringify(fixtures));
@@ -369,7 +369,7 @@ test('rendered row has 13 <td> cells matching header', () => {
   mockEl('li-q').value = ''; mockEl('li-sf').value = '';
   ctx.rLI();
   const tdCount = (mockEl('li-tb').innerHTML.match(/<td/g) || []).length;
-  assertEqual(tdCount, 13, 'Row must have 13 <td> cells: #, SKU, Desc, Specs, HS, Supplier, Cost, Price, UOM, Margin, Cur, Invoices, Actions');
+  assertEqual(tdCount, 14, 'Row must have 13 <td> cells (#, SKU, Desc, Specs, HS, Supplier, Cost, Price, UOM, Margin, Cur, Invoices, Actions) plus 1 supplier-group header cell (REQ/SPEC-LI-002)');
 });
 
 // ── PO → Invoice linking ───────────────────────────────────────
@@ -610,7 +610,7 @@ test('saveInv records price history when invoice price deviates from catalogue',
   ctx.DB.li  = [{ id:'li-dev', sku:'SKU-DEV', desc:'Deviation Test', cost:100, price:150, priceHistory:[], uom:'pcs', cur:'USD' }];
   ctx.DB.inv = [{ id:'inv-base', num:'INV10001', status:'Draft', lineItems:[], taxRate:0, dep:0, chargesIncluded:true }];
   ctx.EI.i   = null;
-  ctx.cIL    = [{ rid:'r1', lid:'li-dev', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }]; // 120 ≠ 150
+  ctx.cIL    = [{ supId:'sup-fx', rid:'r1', lid:'li-dev', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }]; // 120 ≠ 150
 
   mockEl('if-n').value   = 'INV10002';
   mockEl('if-b').value   = 'Test Buyer';
@@ -684,7 +684,7 @@ test('saveInv stores incoterm and paymentTerms on record', () => {
   resetDB();
   ctx.DB.li  = [{ id:'li-ipt', sku:'SKU-IPT', desc:'IPT Test', cost:50, price:100, priceHistory:[], uom:'pcs', cur:'USD' }];
   ctx.EI.i   = null;
-  ctx.cIL    = [{ rid:'r1', lid:'li-ipt', desc:'IPT Test', uom:'pcs', qty:1, up:100 }];
+  ctx.cIL    = [{ supId:'sup-fx', rid:'r1', lid:'li-ipt', desc:'IPT Test', uom:'pcs', qty:1, up:100 }];
 
   mockEl('if-n').value   = 'INV10010';
   mockEl('if-b').value   = 'Test Buyer';
@@ -2346,7 +2346,7 @@ console.log('\nInvoice quick-add COGS warning (SPEC-INV-001)');
 
 test('_updQaWarn — no lid, unitCost 0 → counted', function() {
   resetDB();
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:0 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:0 }];
   ctx._updQaWarn();
   assertEqual(mockEl('inv-qa-warn').style.display, 'block');
   assertEqual(mockEl('inv-qa-warn-count').textContent, 1);
@@ -2354,7 +2354,7 @@ test('_updQaWarn — no lid, unitCost 0 → counted', function() {
 
 test('_updQaWarn — no lid, unitCost > 0 → not counted (INV10032 regression case)', function() {
   resetDB();
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 }];
   ctx._updQaWarn();
   assertEqual(mockEl('inv-qa-warn').style.display, 'none');
 });
@@ -2362,7 +2362,7 @@ test('_updQaWarn — no lid, unitCost > 0 → not counted (INV10032 regression c
 test('_updQaWarn — lid resolves to a real DB.li record → not counted regardless of unitCost', function() {
   resetDB();
   ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Widget', cost:10, price:12 }];
-  ctx.cIL = [{ rid:'r1', lid:'l1', desc:'Widget', qty:1, up:12, unitCost:0 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'l1', desc:'Widget', qty:1, up:12, unitCost:0 }];
   ctx._updQaWarn();
   assertEqual(mockEl('inv-qa-warn').style.display, 'none');
 });
@@ -2370,7 +2370,7 @@ test('_updQaWarn — lid resolves to a real DB.li record → not counted regardl
 test('_updQaWarn — dangling lid (no matching DB.li record), unitCost 0 → counted', function() {
   resetDB();
   ctx.DB.li = [];
-  ctx.cIL = [{ rid:'r1', lid:'stale-id-no-longer-exists', desc:'Widget', qty:1, up:12, unitCost:0 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'stale-id-no-longer-exists', desc:'Widget', qty:1, up:12, unitCost:0 }];
   ctx._updQaWarn();
   assertEqual(mockEl('inv-qa-warn').style.display, 'block');
   assertEqual(mockEl('inv-qa-warn-count').textContent, 1);
@@ -2379,7 +2379,7 @@ test('_updQaWarn — dangling lid (no matching DB.li record), unitCost 0 → cou
 test('_updQaWarn — dangling lid, unitCost > 0 → not counted', function() {
   resetDB();
   ctx.DB.li = [];
-  ctx.cIL = [{ rid:'r1', lid:'stale-id-no-longer-exists', desc:'Widget', qty:1, up:262, unitCost:262 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'stale-id-no-longer-exists', desc:'Widget', qty:1, up:262, unitCost:262 }];
   ctx._updQaWarn();
   assertEqual(mockEl('inv-qa-warn').style.display, 'none');
 });
@@ -2445,7 +2445,7 @@ test('quickAddLine() — product line, positive Unit Cost → succeeds unchanged
   ctx.cIL = [];
   mockEl('qal-desc').value = 'Pallets x3'; mockEl('qal-uom').value = 'pcs';
   mockEl('qal-qty').value = '3'; mockEl('qal-up').value = '57';
-  mockEl('qal-type').value = 'product'; mockEl('qal-uc').value = '57';
+  mockEl('qal-type').value = 'product'; mockEl('qal-uc').value = '57'; mockEl('qal-sup').value = 'sup-fx';
   ctx.quickAddLine();
   assertEqual(ctx.cIL.length, 1, 'line pushed');
   assertEqual(ctx.cIL[0].unitCost, 57);
@@ -2476,7 +2476,7 @@ test('quickAddLine() — charge line, blank Unit Cost → succeeds (AC-004)', fu
 test('saveInv() — product line, no lid, unitCost 0 → save refused, DB.inv unchanged (AC-005, new invoice)', function() {
   resetDB();
   ctx.EI.i = null;
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Pallets x3', uom:'pcs', qty:3, up:57, unitCost:0 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Pallets x3', uom:'pcs', qty:3, up:57, unitCost:0 }];
   setupInvForm('INV40001');
   ctx.saveInv(); // async fn — DB mutation (or lack thereof) happens synchronously before any await, per this file's own convention
   assertEqual(ctx.DB.inv.length, 0, 'no invoice created');
@@ -2487,7 +2487,7 @@ test('saveInv() — product line, no lid, unitCost 0 → save refused, existing 
   ctx.DB.inv.push({ id:'inv-f', num:'INV40002', status:'Draft',
     lineItems:[{ rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:1, up:10, unitCost:1 }], pos:[] });
   ctx.EI.i = 'inv-f';
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Pallets x9', uom:'pcs', qty:9, up:67.80, unitCost:0 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Pallets x9', uom:'pcs', qty:9, up:67.80, unitCost:0 }];
   setupInvForm('INV40002');
   ctx.saveInv();
   var inv = ctx.DB.inv.find(function(x){ return x.id === 'inv-f'; });
@@ -2498,7 +2498,7 @@ test('saveInv() — product line, resolvable lid, unitCost 0 → save succeeds (
   resetDB();
   ctx.DB.li = [{ id:'l1', sku:'ABC', desc:'Widget', cost:10, price:12 }];
   ctx.EI.i = null;
-  ctx.cIL = [{ rid:'r1', lid:'l1', desc:'Widget', uom:'pcs', qty:1, up:12, unitCost:0 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'l1', desc:'Widget', uom:'pcs', qty:1, up:12, unitCost:0 }];
   setupInvForm('INV40003');
   ctx.saveInv();
   assertEqual(ctx.DB.inv.length, 1, 'invoice created — catalogue link is a sufficient cost basis');
@@ -2507,7 +2507,7 @@ test('saveInv() — product line, resolvable lid, unitCost 0 → save succeeds (
 test('saveInv() — product line, no lid, unitCost equal to price → save succeeds, never treated as zero cost (AC-006)', function() {
   resetDB();
   ctx.EI.i = null;
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Reolink NVR Kit', uom:'pcs', qty:1, up:729.99, unitCost:729.99 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Reolink NVR Kit', uom:'pcs', qty:1, up:729.99, unitCost:729.99 }];
   setupInvForm('INV40004');
   ctx.saveInv();
   assertEqual(ctx.DB.inv.length, 1, 'invoice created — deliberate cost-equals-price is legitimate');
@@ -2517,7 +2517,7 @@ test('saveInv() — mixed invoice: valid product + zero-cost pass-through → sa
   resetDB();
   ctx.EI.i = null;
   ctx.cIL = [
-    { rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:1, up:10, unitCost:5, lineType:'product' },
+    { supId:'sup-fx', rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:1, up:10, unitCost:5, lineType:'product' },
     { rid:'r2', lid:'', desc:'Ocean Freight', uom:'pcs', qty:1, up:4600, unitCost:0, lineType:'pass-through' }
   ];
   setupInvForm('INV40005');
@@ -2544,7 +2544,7 @@ test('vInv() — credit note path unaffected by the product-line gate (AC-008)',
   // Deliberately bad by the product-line gate's own standard — no lid, unitCost 0 —
   // to prove the CN branch never even evaluates it, since vInv() returns before
   // reaching the line-item area at all when isCnForm() is true.
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Pallets x3', uom:'pcs', qty:3, up:57, unitCost:0, lineType:'product' }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Pallets x3', uom:'pcs', qty:3, up:57, unitCost:0, lineType:'product' }];
   mockEl('if-n').value = 'CN40007'; mockEl('if-b').value = 'Test Buyer';
   mockEl('if-dt').value = '2026-05-01';
   mockEl('if-cn-amount').value = '100';
@@ -2559,7 +2559,7 @@ test('saveInv() — unlock-then-edit flow: a bad product line is still refused o
     lineItems:[{ rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:1, up:10, unitCost:1 }], pos:[] });
   ctx.EI.i = 'inv-g';
   ctx._unlockedInvIds['inv-g'] = true; // simulates a successful Settings → Advanced → Unlock Invoice
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Pallets x3', uom:'pcs', qty:3, up:57, unitCost:0, lineType:'product' }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Pallets x3', uom:'pcs', qty:3, up:57, unitCost:0, lineType:'product' }];
   setupInvForm('INV40008');
   mockEl('inv-sm').value = 'Sent';
   ctx.saveInv();
@@ -2947,8 +2947,8 @@ test('invoiceRefs — saveInv adds refs to both lib items', function() {
   ctx.DB.li.push({ id:'lib2', desc:'Gadget', uom:'kg',  price:20, cur:'USD', supId:'', priceHistory:[] });
   ctx.EI.i = null;
   ctx.cIL = [
-    { rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:2, up:10 },
-    { rid:'r2', lid:'lib2', desc:'Gadget', uom:'kg',  qty:1, up:20 }
+    { supId:'sup-fx', rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:2, up:10 },
+    { supId:'sup-fx', rid:'r2', lid:'lib2', desc:'Gadget', uom:'kg',  qty:1, up:20 }
   ];
   setupInvForm('INV10051');
   ctx.saveInv();
@@ -2967,7 +2967,7 @@ test('invoiceRefs — saveInv removes stale ref when lib item removed from invoi
     lineItems:[{rid:'r0',lid:'lib1',desc:'Widget',uom:'pcs',qty:1,up:10}],
     taxRate:0, calc_grandTotal:'10' });
   ctx.EI.i = 'inv-x';
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Manual item', uom:'pcs', qty:1, up:5, unitCost:1 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Manual item', uom:'pcs', qty:1, up:5, unitCost:1 }];
   setupInvForm('INV10052');
   ctx.saveInv();
   var lib1 = ctx.DB.li.find(function(l){ return l.id==='lib1'; });
@@ -3046,7 +3046,7 @@ test('invoiceRefs — saveInv with empty cIL does not modify invoiceRefs', funct
 test('invoiceRefs — openPicker marks item in cIL with li-already-on-inv class', function() {
   resetDB();
   ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[] });
-  ctx.cIL = [{ rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:1, up:10 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:1, up:10 }];
   ctx.openPicker();
   var html = ctx.G('pick-list').innerHTML;
   assertContains(html, 'li-already-on-inv', 'picker adds li-already-on-inv class for item in cIL');
@@ -3072,7 +3072,7 @@ test('invoiceRefs — saveInv is idempotent (no duplicate refs on second save)',
   ctx.DB.li.push({ id:'lib1', desc:'Widget', uom:'pcs', price:10, cur:'USD', supId:'', priceHistory:[] });
   ctx.DB.inv.push({ id:'inv-idem', num:'INV10057', status:'Draft', lineItems:[], taxRate:0, calc_grandTotal:'0' });
   ctx.EI.i = 'inv-idem';
-  ctx.cIL = [{ rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:1, up:10 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'lib1', desc:'Widget', uom:'pcs', qty:1, up:10 }];
   setupInvForm('INV10057');
   ctx.saveInv();
   ctx.saveInv();
@@ -3092,7 +3092,7 @@ test('invoiceRefs — stale-ref removal only removes current invoice ref, preser
     lineItems:[{rid:'r0',lid:'lib1',desc:'Widget',uom:'pcs',qty:1,up:10}],
     taxRate:0, calc_grandTotal:'10' });
   ctx.EI.i = 'inv-a';
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Manual', uom:'pcs', qty:1, up:5, unitCost:1 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Manual', uom:'pcs', qty:1, up:5, unitCost:1 }];
   setupInvForm('INV10058');
   ctx.saveInv();
   var lib1 = ctx.DB.li.find(function(l){ return l.id==='lib1'; });
@@ -6476,7 +6476,7 @@ test('saveInv creates invoice_created event', function() {
   mockEl('if-wt').value   = '';
   mockEl('if-cbm').value  = '';
   mockEl('if-pk').value   = '';
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Widget', uom:'EA', qty:1, up:100, unitCost:60, lineType:'product' }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Widget', uom:'EA', qty:1, up:100, unitCost:60, lineType:'product' }];
   ctx.saveInv();
   var evts = ctx.DB.events.filter(function(e){ return e.entityType==='invoice'&&e.verb==='created'; });
   assertEqual(evts.length, 1, 'invoice created event emitted');
@@ -8568,7 +8568,7 @@ testAsync('saveInv — auto-recorded price history pushes to line_items via Supa
   ctx.DB.li  = [{ id:'li-uuid-1', num:'LI-0001', sku:'SKU-DEV', desc:'Deviation Test', cost:100, price:150, priceHistory:[], uom:'pcs', cur:'USD' }];
   ctx.DB.inv = [{ id:'inv-base', num:'INV10001', status:'Draft', lineItems:[], taxRate:0, dep:0, chargesIncluded:true }];
   ctx.EI.i   = null;
-  ctx.cIL    = [{ rid:'r1', lid:'li-uuid-1', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }]; // 120 ≠ 150
+  ctx.cIL    = [{ supId:'sup-fx', rid:'r1', lid:'li-uuid-1', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }]; // 120 ≠ 150
   ['if-n','if-b','if-ba','if-st','if-dst','if-cid','if-dt','if-ex','if-sd','if-ft','if-wt','if-cbm','if-pk','if-pol','if-pod','if-coo','if-cur','if-tx','if-lf','if-ins','if-leg','if-isp','if-oth','if-dep','if-inco','if-pt','if-terms','inv-sm'].forEach(function(id){ mockEl(id); });
   mockEl('if-n').value = 'INV10002'; mockEl('if-b').value = 'Test Buyer'; mockEl('if-dst').value = 'Barbados';
   mockEl('if-dt').value = '2026-05-01'; mockEl('if-cur').value = 'USD'; mockEl('if-tx').value = '0'; mockEl('if-lf').value = '0';
@@ -8587,7 +8587,7 @@ testAsync('saveInv — auto-recorded price history pushes to line_items via Supa
   ctx.DB.li  = [{ id:'li-dev', sku:'SKU-DEV', desc:'Deviation Test', cost:100, price:150, priceHistory:[], uom:'pcs', cur:'USD' }];
   ctx.DB.inv = [{ id:'inv-base', num:'INV10001', status:'Draft', lineItems:[], taxRate:0, dep:0, chargesIncluded:true }];
   ctx.EI.i   = null;
-  ctx.cIL    = [{ rid:'r1', lid:'li-dev', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }];
+  ctx.cIL    = [{ supId:'sup-fx', rid:'r1', lid:'li-dev', desc:'Deviation Test', uom:'pcs', qty:1, up:120 }];
   var sb2 = mockSb({});
   ctx._sb = sb2;
   await ctx.saveInv();
@@ -10421,7 +10421,7 @@ testAsync('saveInv — cloud-aware create/update when Invoice has migrated (inse
   // back to an existing calc_grandTotal>0 record either) -- saveInv() never even reaches
   // this test's Cloud Data branch without at least one real line item, matching every
   // other creation-path test's own convention (e.g. tests/run.js:2146).
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 }];
   ctx.localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
   var sb = mockSb({ invoices: { insertImpl: function(row){ return Object.assign({ id: 'real-inv-uuid' }, row); }, selectData: [] } });
   ctx._sb = sb;
@@ -10439,7 +10439,7 @@ testAsync('saveInv — cloud-aware create/update when Invoice has migrated (inse
   resetDB();
   setupInvForm('INV30002');
   ctx.EI.i = null;
-  ctx.cIL = [{ rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 }];
+  ctx.cIL = [{ supId:'sup-fx', rid:'r1', lid:'', desc:'Ocean Freight', qty:1, up:4600, unitCost:4600 }];
   ctx._sb = null;
   await ctx.saveInv();
   assertEqual(ctx.DB.inv.length, 1, 'local-only path unaffected when Invoice has not migrated');
@@ -13464,7 +13464,7 @@ console.log('\nBuyer-approval capture on Invoice (Phase 2)');
 
 test('saveInv() — brand-new invoice has all six new fields present and falsy (AC-1)', function() {
   resetDB();
-  ctx.EI.i = null; ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10, unitCost: 1 }];
+  ctx.EI.i = null; ctx.cIL = [{ supId:'sup-fx', rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10, unitCost: 1 }];
   setupInvForm('INV20001');
   ctx.saveInv();
   var inv = ctx.DB.inv[0];
@@ -13511,7 +13511,7 @@ test('saveInv() — header-only edit on an approved invoice does not clear appro
     lineItems: [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [],
     buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
   ctx.EI.i = 'inv-b';
-  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10, unitCost: 1 }];
+  ctx.cIL = [{ supId:'sup-fx', rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10, unitCost: 1 }];
   setupInvForm('INV20005');
   mockEl('inv-sm').value = 'Pro-forma';
   mockEl('if-inco').value = 'CIF'; // header field change only
@@ -13527,7 +13527,7 @@ test('saveInv() — changing a line qty/price on an approved invoice clears appr
     lineItems: [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [],
     buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
   ctx.EI.i = 'inv-c';
-  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 25, unitCost: 1 }]; // price changed
+  ctx.cIL = [{ supId:'sup-fx', rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 25, unitCost: 1 }]; // price changed
   setupInvForm('INV20006');
   mockEl('inv-sm').value = 'Pro-forma';
   ctx.saveInv();
@@ -13544,8 +13544,8 @@ test('saveInv() — adding a line to an approved invoice clears approval (AC-7)'
     buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
   ctx.EI.i = 'inv-d';
   ctx.cIL = [
-    { rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10, unitCost: 1 },
-    { rid: 'r2', lid: '', desc: 'Gadget', uom: 'pcs', qty: 1, up: 5, unitCost: 1 }
+    { supId:'sup-fx', rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10, unitCost: 1 },
+    { supId:'sup-fx', rid: 'r2', lid: '', desc: 'Gadget', uom: 'pcs', qty: 1, up: 5, unitCost: 1 }
   ];
   setupInvForm('INV20007');
   mockEl('inv-sm').value = 'Pro-forma';
@@ -13559,7 +13559,7 @@ test('saveInv() — editing lines on a never-approved invoice logs no approval_c
   ctx.DB.inv.push({ id: 'inv-e', num: 'INV20008', status: 'Pro-forma',
     lineItems: [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10 }], pos: [] });
   ctx.EI.i = 'inv-e';
-  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 5, up: 10, unitCost: 1 }];
+  ctx.cIL = [{ supId:'sup-fx', rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 5, up: 10, unitCost: 1 }];
   setupInvForm('INV20008');
   mockEl('inv-sm').value = 'Pro-forma';
   ctx.saveInv();
@@ -13662,7 +13662,7 @@ test('invLinesChanged() — rid-less legacy line items (no rid field) do not fal
     buyerApprovedAt: '2026-01-01T00:00:00.000Z', buyerApprovedBy: 'J. Smith', approvalMethod: 'Email', approvalNote: '' });
   ctx.EI.i = 'inv-l';
   // cIL mirrors the same line's content; saveInv()'s literal always mints a fresh rid when absent
-  ctx.cIL = [{ rid: '', lid: '', desc: 'Widget', uom: 'pcs', qty: 20, up: 1928.42, unitCost: 1 }];
+  ctx.cIL = [{ supId:'sup-fx', rid: '', lid: '', desc: 'Widget', uom: 'pcs', qty: 20, up: 1928.42, unitCost: 1 }];
   setupInvForm('INV20010');
   mockEl('inv-sm').value = 'Pro-forma';
   ctx.saveInv();
@@ -13926,7 +13926,7 @@ test('AC-7: fmt() call-count reflects REQ-INTEG-002-2c\'s own new, legitimate ca
   const fmtCount  = (html.match(/fmt\(/g)  || []).length;
   const fmtNCount = (html.match(/fmtN\(/g) || []).length;
   assertEqual(fmtCount, 89, 'fmt( occurs 89 times total (88 call sites + 1 definition) — up 1 from REQ-LI-001\'s 88, this REQ\'s own new renderPaymentsTab() Currency/GBP-equivalent column');
-  assertEqual(fmtNCount, 6, 'fmtN( occurs 6 times total (5 call sites + 1 definition) — untouched by this REQ');
+  assertEqual(fmtNCount, 7, 'fmtN( occurs 7 times total (6 call sites + 1 definition) — up 1 from 6, REQ/SPEC-LI-002\'s own new rLIPending() banner price');
 });
 
 // ── SEC-GAP-021: status-tag class-attribute injection fix ──────
@@ -14096,7 +14096,7 @@ testAsync('saveInv() — a brand-new Invoice saved directly with status Paid als
   resetDB();
   ctx.SS.autoCreateShipmentOnPaid = undefined;
   ctx.EI.i = null;
-  ctx.cIL = [{ rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10, unitCost: 1 }];
+  ctx.cIL = [{ supId:'sup-fx', rid: 'r1', lid: '', desc: 'Widget', uom: 'pcs', qty: 1, up: 10, unitCost: 1 }];
   setupInvForm('INV20099');
   mockEl('inv-sm').value = 'Paid';
   await ctx.saveInv();
@@ -14843,6 +14843,232 @@ testAsync('saveInvApprove() — AC-16: payload.buyer is exactly {id,name,email} 
 // (h) revert grandTotal/balanceDue to ||0   -> AC-7 test above
 // (i) revert balanceDue to cInv(inv).bal    -> AC-7 (CN fixture) test above
 // (j) remove BUY-ADHOC-id check only        -> AC-8(c) test above
+
+// ── REQ/SPEC-LI-002: Line Items catalogue — quick-add supplier, promotion queue, picker/library grouping ──
+console.log('\nREQ/SPEC-LI-002 — Line Items catalogue');
+
+function liQuickAdd(type, sup, uc) {
+  mockEl('qal-desc').value = 'Item'; mockEl('qal-uom').value = 'pcs'; mockEl('qal-qty').value = '1';
+  mockEl('qal-up').value = '20'; mockEl('qal-type').value = type; mockEl('qal-uc').value = uc == null ? '10' : String(uc);
+  mockEl('qal-sup').value = sup;
+  ctx.cIL = []; ctx.quickAddLine();
+}
+async function liAcceptQuote(lines, num) {
+  resetDB(); ctx.EI.qt = null;
+  ctx.cQL = lines.map(function(l, i){ return { rid:'lq'+i, supId:l.supId, desc:l.desc, qty:1, uom:'pcs', cost:l.cost, cbm:1, dg:false, dutyPct:0 }; });
+  saveQteSetup('lq0', 0, 0, 20, '');
+  lines.forEach(function(l, i){
+    var r = 'lq'+i;
+    mockEl('ql-supId-'+r).value = l.supId; mockEl('ql-desc-'+r).value = l.desc; mockEl('ql-qty-'+r).value = '1';
+    mockEl('ql-uom-'+r).value = 'pcs'; mockEl('ql-cost-'+r).value = String(l.cost); mockEl('ql-cbm-'+r).value = '1';
+    mockEl('ql-dg-'+r).checked = false; mockEl('ql-dutyPct-'+r).value = '0'; mockEl('ql-note-'+r).value = '';
+  });
+  mockEl('qf-num').value = num || 'QTE-LI1';
+  mockEl('qf-st').value = 'Accepted'; mockEl('qf-approved-by').value = 'Jo'; mockEl('qf-approved-note').value = '';
+}
+function liReset() { ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); mockEl('qf-st').value = 'Draft'; }
+
+test('LI-002 AC-1: quickAddLine blocks a Product line with no supplier; pass-through/charge unaffected', () => {
+  liQuickAdd('product', '');
+  assertEqual(ctx.cIL.length, 0, 'product without supplier blocked');
+  liQuickAdd('pass-through', '', 20);
+  assertEqual(ctx.cIL.length, 1, 'pass-through allowed');
+  liQuickAdd('charge', '', 0);
+  assertEqual(ctx.cIL.length, 1, 'charge allowed');
+});
+test('LI-002 AC-2: quickAddLine with supplier persists supId on cIL; rILT renders editable supplier select for every line type (AC-2b)', () => {
+  resetDB(); ctx.DB.sup = [{ id:'s1', name:'Acme' }];
+  liQuickAdd('product', 's1');
+  assertEqual(ctx.cIL[0].supId, 's1');
+  ctx.cIL.push({ rid:'x2', lid:'', desc:'Fee', uom:'pcs', qty:1, up:5, unitCost:0, lineType:'charge' });
+  mockEl('if-cur').value = 'USD'; ctx.rILT();
+  const html = mockEl('il-tb').innerHTML;
+  assertEqual((html.match(/cIL\[\d\]\.supId=this\.value/g)||[]).length, 2, 'supplier select on both rows');
+  assertContains(html, 'Acme');
+});
+test('LI-002 AC-2c: quick-add grid has 8 tracks and invoice table has Supplier header', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assertContains(html, 'grid-template-columns:90px 90px 2fr 52px 52px 88px 92px auto;');
+  assertContains(html, '<th style="width:90px">Supplier</th>');
+  assertContains(html, "['lf-sup','pf-sup','qal-sup']");
+});
+test('LI-002 AC-3: vInv rejects a Product line whose supplier was cleared after add', () => {
+  resetDB(); ctx.EI.i = null;
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'W', uom:'pcs', qty:1, up:10, unitCost:5, lineType:'product', supId:'' }];
+  setupInvForm('INV40050'); ctx.saveInv();
+  assertEqual(ctx.DB.inv.length, 0, 'blocked');
+  ctx.cIL[0].supId = 's1'; ctx.EI.i = null; setupInvForm('INV40050'); ctx.saveInv();
+  assertEqual(ctx.DB.inv.length, 1, 'saves once supplier set');
+});
+test('LI-002 vInv: catalogue-linked line satisfies supplier via the catalogue record', () => {
+  resetDB(); ctx.DB.li = [{ id:'L1', desc:'W', supId:'s9', cost:5, price:9, priceHistory:[] }];
+  assert(ctx.invLineHasSupplier({ lid:'L1' }), 'resolved lid with supId');
+  assert(!ctx.invLineHasSupplier({ lid:'nope' }), 'dangling lid, no own supId');
+  assert(ctx.invLineHasSupplier({ lid:'', supId:'s1' }), 'own supId');
+});
+
+testAsync('LI-002 AC-4: accepting a Quote queues one new candidate with verbatim sellP and quote currency', async () => {
+  await liAcceptQuote([{ supId:'s1', desc:'Gizmo', cost:100 }]);
+  await ctx.saveQte();
+  const q = ctx.DB.qt[0], line = q.lines[0];
+  assertEqual(ctx.DB.liPending.length, 1);
+  const c = ctx.DB.liPending[0];
+  assertEqual(c.kind, 'new'); assertEqual(c.status, 'pending'); assertEqual(c.supId, 's1');
+  assertEqual(c.suggestedPrice, line.priceHistory[0].sellPrice, 'suggestedPrice is the already-computed sellP');
+  assertEqual(c.currency, q.currency); assertEqual(c.quoteId, q.id); assertEqual(c.quoteNum, q.num);
+  liReset();
+});
+testAsync('LI-002 AC-5/6: matching catalogue item with same cost+price queues nothing; differing queues one update', async () => {
+  await liAcceptQuote([{ supId:'s1', desc:'Gizmo', cost:100 }]);
+  ctx.DB.li = [{ id:'L1', desc:'gizmo', supId:'s1', cost:1, price:1, priceHistory:[] }];
+  await ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 1); assertEqual(ctx.DB.liPending[0].kind, 'update');
+  assertEqual(ctx.DB.liPending[0].matchedLiId, 'L1');
+  // same cost+price -> nothing
+  const sp = ctx.DB.liPending[0].suggestedPrice;
+  await liAcceptQuote([{ supId:'s1', desc:'Gizmo', cost:100 }]);
+  ctx.DB.li = [{ id:'L1', desc:'Gizmo', supId:'s1', cost:100, price:sp, priceHistory:[] }];
+  await ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 0, 'unchanged -> not queued');
+  liReset();
+});
+testAsync('LI-002 AC-7: re-saving an already-Accepted quote queues nothing; AC-8 blank supplier never queued', async () => {
+  await liAcceptQuote([{ supId:'', desc:'NoSup', cost:5 }, { supId:'s1', desc:'Has', cost:5 }]);
+  await ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 1, 'only the supplier-attributed line');
+  ctx.DB.liPending = []; ctx.EI.qt = ctx.DB.qt[0].id; mockEl('qf-st').value = 'Accepted';
+  await ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 0, 're-save of Accepted queues nothing');
+  liReset();
+});
+testAsync('LI-002 AC-8b/c/d/e: dedup against pending (case-insensitive), update dup, and intra-quote dup', async () => {
+  await liAcceptQuote([{ supId:'s1', desc:'Gizmo', cost:100 }, { supId:'s1', desc:'GIZMO', cost:100 }], 'QTE-A');
+  await ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 1, 'intra-quote duplicates collapse');
+  const keep = ctx.DB.liPending.slice();
+  await liAcceptQuote([{ supId:'s1', desc:'gizmo', cost:100 }], 'QTE-B');
+  ctx.DB.liPending = keep; await ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 1, 'second quote skipped while first pending');
+  // update-kind dup
+  await liAcceptQuote([{ supId:'s1', desc:'Gizmo', cost:100 }, { supId:'s1', desc:'Gizmo', cost:100 }]);
+  ctx.DB.li = [{ id:'L1', desc:'Gizmo', supId:'s1', cost:1, price:1, priceHistory:[] }];
+  await ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 1, 'intra-quote update duplicates collapse');
+  liReset();
+});
+testAsync('LI-002 AC-4b: cancelled Cloud Data login queues nothing', async () => {
+  await liAcceptQuote([{ supId:'s1', desc:'Gizmo', cost:100 }]);
+  const savedSb = ctx._sb, savedAuth = ctx.ensureSbAuth;
+  ctx.localStorage.setItem('st_qt_cloud_migration_ts', '1');
+  ctx._sb = {}; ctx.ensureSbAuth = async () => false;
+  try { await ctx.saveQte(); } finally { ctx._sb = savedSb; ctx.ensureSbAuth = savedAuth; liReset(); }
+  assertEqual(ctx.DB.liPending.length, 0);
+});
+
+test('LI-002 AC-9: Approve (new) prefills form, nothing saved until saveLI; candidate -> approved; history names the Quote', () => {
+  resetDB(); ctx.DB.sup = [{ id:'s1', name:'Acme' }];
+  ctx.DB.liPending = [{ id:'c1', status:'pending', kind:'new', matchedLiId:null, quoteId:'q1', quoteNum:'QTE-9', supId:'s1', desc:'Gizmo', uom:'pcs', cost:10, suggestedPrice:15, currency:'GBP', createdAt:'x' }];
+  ctx.approveLIPending('c1');
+  assertEqual(ctx.DB.li.length, 0, 'nothing written yet');
+  assertEqual(mockEl('lf-d').value, 'Gizmo'); assertEqual(mockEl('lf-cur').value, 'GBP');
+  assertEqual(ctx.DB.liPending[0].status, 'pending');
+  // saveLI path needs the remaining required fields
+  mockEl('lf-s').value = 'SKU-9'; mockEl('lf-hs').value = '1234'; mockEl('lf-sp').value = ''; mockEl('lf-nt').value = '';
+  mockEl('lf-diml').value = ''; mockEl('lf-dimw').value = ''; mockEl('lf-dimh').value = '';
+  ctx.saveLI();
+  assertEqual(ctx.DB.li.length, 1);
+  assertContains(ctx.DB.li[0].priceHistory[0].notes, 'from Quote QTE-9');
+  assertEqual(ctx.DB.liPending[0].status, 'approved');
+  assertEqual(ctx._liApproveCtx, null);
+});
+test('LI-002 AC-9d: abandoned Approve then openLI() must not attribute a later manual save', () => {
+  resetDB(); ctx.DB.sup = [{ id:'s1', name:'Acme' }];
+  ctx.DB.liPending = [{ id:'c1', status:'pending', kind:'new', matchedLiId:null, quoteId:'q1', quoteNum:'QTE-9', supId:'s1', desc:'Gizmo', uom:'pcs', cost:10, suggestedPrice:15, currency:'USD', createdAt:'x' }];
+  ctx.approveLIPending('c1');
+  ctx.openLI();
+  assertEqual(ctx._liApproveCtx, null, 'openLI clears stale context');
+  mockEl('lf-d').value = 'Other'; mockEl('lf-sup').value = 's1'; mockEl('lf-c').value = '1'; mockEl('lf-p').value = '2';
+  mockEl('lf-s').value = 'S2'; mockEl('lf-hs').value = '1234'; mockEl('lf-u').value = 'pcs';
+  ctx.saveLI();
+  assertEqual(ctx.DB.liPending[0].status, 'pending', 'original candidate untouched');
+  assert(ctx.DB.li[0].priceHistory[0].notes.indexOf('Quote') === -1, 'no false attribution');
+});
+test('LI-002 AC-10/10b: Approve (update) changes only cost/price/currency; dangling matchedLiId auto-dismisses', () => {
+  resetDB();
+  ctx.DB.li = [{ id:'L1', desc:'G', supId:'s1', sku:'K', hs:'1', uom:'pcs', cost:1, price:2, cur:'USD', priceHistory:[] }];
+  ctx.DB.liPending = [
+    { id:'c1', status:'pending', kind:'update', matchedLiId:'L1', quoteId:'q', quoteNum:'Q1', supId:'s1', desc:'G', uom:'pcs', cost:7, suggestedPrice:9, currency:'EUR', createdAt:'x' },
+    { id:'c2', status:'pending', kind:'update', matchedLiId:'GONE', quoteId:'q', quoteNum:'Q1', supId:'s1', desc:'G', uom:'pcs', cost:7, suggestedPrice:9, currency:'EUR', createdAt:'x' }];
+  ctx.approveLIPending('c1');
+  assertEqual(mockEl('lf-c').value, 7); assertEqual(mockEl('lf-p').value, 9); assertEqual(mockEl('lf-sup').value, 's1');
+  ctx.approveLIPending('c2');
+  assertEqual(ctx.DB.liPending[1].status, 'dismissed'); assertContains(ctx.DB.liPending[1].notes, 'deleted');
+});
+test('LI-002 AC-11: Dismiss marks dismissed with no DB.li write', () => {
+  resetDB();
+  ctx.DB.liPending = [{ id:'c1', status:'pending', kind:'new', matchedLiId:null, quoteId:'q', quoteNum:'Q1', supId:'s1', desc:'G', uom:'pcs', cost:1, suggestedPrice:2, currency:'USD', createdAt:'x' }];
+  const oc2 = ctx.confirm; ctx.confirm = () => true;
+  try { ctx.dismissLIPending('c1'); } finally { ctx.confirm = oc2; }
+  assertEqual(ctx.DB.liPending[0].status, 'dismissed'); assertEqual(ctx.DB.li.length, 0);
+});
+test('LI-002 AC-12/12b: liPending not in sync lists; persisted by saveAll; exported', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assertContains(html, 'liPending: DB.liPending,');
+  assertContains(html, 'sv(K.lip,DB.liPending)');
+  assert(!/syncEnt\('liPending'|pullAll[^]{0,0}liPending/.test(html), 'not synced');
+  resetDB(); assertEqual(JSON.stringify(ctx.DB.liPending), '[]');
+});
+test('LI-002 AC-12c: doImport restores liPending', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assertContains(html, "if (data.liPending && Array.isArray(data.liPending)) { DB.liPending = data.liPending; sv(K.lip, DB.liPending); }");
+});
+test('LI-002 AC-13: delQte removes only pending candidates for that Quote', async () => {
+  resetDB();
+  ctx.DB.qt = [{ id:'q1', num:'Q1' }];
+  ctx.DB.liPending = [
+    { id:'a', status:'pending', quoteId:'q1', kind:'new' }, { id:'b', status:'approved', quoteId:'q1', kind:'new' },
+    { id:'c', status:'pending', quoteId:'q2', kind:'new' }];
+  await ctx.delQte('q1');
+  assertEqual(ctx.DB.liPending.map(function(p){return p.id;}).join(','), 'b,c');
+});
+test('LI-002 AC-13b: delLI removes pending update candidates only and names them in the confirm', async () => {
+  resetDB();
+  ctx.DB.li = [{ id:'L1', desc:'G', supId:'s1', sku:'K' }];
+  ctx.DB.liPending = [
+    { id:'a', status:'pending', kind:'update', matchedLiId:'L1', quoteNum:'Q7' },
+    { id:'b', status:'approved', kind:'update', matchedLiId:'L1', quoteNum:'Q6' }];
+  let msg = ''; const oc = ctx.confirm; ctx.confirm = function(m){ msg = m; return true; };
+  try { await ctx.delLI('L1'); } finally { ctx.confirm = oc; }
+  assertContains(msg, 'pending catalogue-update suggestion (from Quote Q7)');
+  assertEqual(ctx.DB.liPending.map(function(p){return p.id;}).join(','), 'b');
+});
+test('LI-002 AC-14: picker search + supplier grouping; selections survive filtering', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'sB', name:'Beta' }, { id:'sA', name:'Alpha' }];
+  ctx.DB.li = [
+    { id:'1', desc:'Bolt', sku:'B1', supId:'sB', price:1, cur:'USD' },
+    { id:'2', desc:'Nut',  sku:'N1', supId:'sA', price:1, cur:'USD' },
+    { id:'3', desc:'Orphan', sku:'O1', supId:'', price:1, cur:'USD' }];
+  ctx.cIL = [];
+  mockEl('pick-q').value = ''; ctx.openPicker();
+  const html = mockEl('pick-list').innerHTML;
+  assert(html.indexOf('Alpha') < html.indexOf('Beta') && html.indexOf('Beta') < html.indexOf('No Supplier'), 'sorted groups, unsupplied last');
+  ctx._pickChecked['1'] = true;
+  mockEl('pick-q').value = 'nut'; ctx.rPickList();
+  assertNotContains(mockEl('pick-list').innerHTML, 'Bolt');
+  assert(ctx._pickChecked['1'], 'selection retained while filtered out');
+});
+test('LI-002 AC-15: rLI groups by supplier with a header row and renders the pending banner', () => {
+  resetDB();
+  ctx.DB.sup = [{ id:'sA', name:'Alpha' }];
+  ctx.DB.li = [{ id:'1', desc:'Nut', sku:'N1', supId:'sA', price:2, cost:1, cur:'USD' }, { id:'2', desc:'Orphan', sku:'O', supId:'', price:2, cost:1, cur:'USD' }];
+  ctx.DB.liPending = [{ id:'c', status:'pending', kind:'new', matchedLiId:null, quoteNum:'Q1', supId:'sA', desc:'Newbie', suggestedPrice:3, currency:'USD' }];
+  mockEl('li-q').value = ''; mockEl('li-sf').value = ''; ctx.rLI();
+  const html = mockEl('li-tb').innerHTML;
+  assertEqual((html.match(/li-grp-hdr/g)||[]).length, 2);
+  assertContains(mockEl('li-pending-list').innerHTML, 'Newbie');
+  assertEqual(mockEl('li-pending-banner').style.display, 'block');
+});
 
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
