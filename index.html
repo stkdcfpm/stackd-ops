@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.89</title>
+<title>Stackd Ops v2.9.90</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -222,7 +222,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.89</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.90</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -287,6 +287,10 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div class="view" id="v-li">
+  <div id="li-pending-banner" class="banner" style="display:none;margin-bottom:10px;background:#FEF3C7;border:1px solid #D97706;border-radius:4px;padding:10px 12px;">
+    <div style="font-size:.6rem;color:#92400E;margin-bottom:6px;font-weight:600;">&#9888; Catalogue suggestions from accepted Quotes awaiting review:</div>
+    <div id="li-pending-list"></div>
+  </div>
   <div class="tb">
     <input class="sb" type="text" placeholder="Search items..." id="li-q" oninput="rLI()">
     <select class="sb" style="max-width:170px;" id="li-sf" onchange="rLI()"><option value="">All suppliers</option></select>
@@ -1193,13 +1197,14 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
         </div>
       </div>
       <div class="ms"><div class="mst r">Line Items</div>
-        <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description</th><th style="width:52px">UOM</th><th style="width:40px">Qty</th><th style="width:80px">Unit Cost</th><th style="width:83px">Unit Price</th><th style="width:62px" class="num">Margin</th><th style="width:75px" class="num">Total</th><th style="width:65px">Type</th><th style="width:22px"></th></tr></thead><tbody id="il-tb"></tbody></table>
+        <table class="lit"><thead><tr><th style="width:22px">#</th><th>Description</th><th style="width:90px">Supplier</th><th style="width:52px">UOM</th><th style="width:40px">Qty</th><th style="width:80px">Unit Cost</th><th style="width:83px">Unit Price</th><th style="width:62px" class="num">Margin</th><th style="width:75px" class="num">Total</th><th style="width:65px">Type</th><th style="width:22px"></th></tr></thead><tbody id="il-tb"></tbody></table>
         <div style="display:flex;gap:7px;margin-top:5px;">
           <button class="btn btn-o" onclick="openPicker()">Import from Library</button>
         </div>
         <!-- Quick add form -->
-        <div style="display:grid;grid-template-columns:90px 2fr 52px 52px 88px 92px auto;gap:6px;margin-top:8px;align-items:end;">
+        <div style="display:grid;grid-template-columns:90px 90px 2fr 52px 52px 88px 92px auto;gap:6px;margin-top:8px;align-items:end;">
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Type</label><select id="qal-type" onchange="qaTypeChg()" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="product">Product</option><option value="pass-through">Pass-through</option><option value="charge">Charge</option></select></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Supplier</label><select id="qal-sup" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="">Select...</option></select></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Description</label><input type="text" id="qal-desc" placeholder="e.g. Local Freight"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">UOM</label><input type="text" id="qal-uom" placeholder="pcs" value="pcs" list="dl-uom" autocomplete="off"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Qty</label><input type="number" id="qal-qty" placeholder="1" value="1" min="0" step="any"></div>
@@ -1376,9 +1381,21 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.89</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.90</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong>Invoice quick-add no longer discards supplier attribution</strong> (<code>REQ/SPEC-LI-002</code>). Quick-add has a new Supplier field, Product lines require one (or a catalogue link), the invoice line table has an editable Supplier column, and Save Invoice backstops it. Pass-thru/Charge lines are exempt. Existing invoices with Product lines that have neither a supplier nor a catalogue link must have one set before they can be re-saved.</li>
+          <li>New: <strong>Accepting a Quote queues catalogue suggestions</strong> &mdash; new or price-changed supplier-attributed lines appear in a banner on the Line Items tab. Approve opens the real Line Item form pre-filled (nothing is saved until you save); Dismiss discards. Suggestions are local-only and are removed if their Quote or target Line Item is deleted.</li>
+          <li>New: <strong>Import from Library and the Line Items tab are searchable and grouped by supplier.</strong></li>
+          <li>20 new tests (1042 &rarr; 1062 pass).</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.89</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong>Quote Insurance was silently folded into Landed with no visible breakdown</strong>, making a legitimate ~0.5%-of-cost charge look like an unexplained jump between Cost and Landed even when Freight and Duty were both $0 (user-reported: a $969.99 cost appearing to become $974.84 Landed). Added an explicit Insurance $ column/row to the Quote PDF preview, the live line-item editor grid, and the per-line price-history panel — all three places that previously went straight from Cost to Landed with no way to see the charge in between.</li>
@@ -2544,6 +2561,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 <div class="ov" id="ov-pick" onclick="if(event.target===this)closeM('ov-pick')">
   <div class="modal" style="max-width:620px;"><div class="mh"><h2>Import Line Items</h2><button class="mx" onclick="closeM('ov-pick')">&#215;</button></div>
   <div class="mb"><p style="font-size:.6rem;color:var(--m);margin-bottom:10px;">Select items to add. Quantities editable after import.</p>
+  <input class="sb" type="text" placeholder="Search items..." id="pick-q" oninput="rPickList()" style="width:100%;margin-bottom:8px;box-sizing:border-box;">
   <div id="pick-list"></div>
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn btn-g" onclick="closeM('ov-pick')">Cancel</button><button class="btn btn-s" onclick="doPick()">Add Selected</button></div>
   </div></div>
@@ -3017,7 +3035,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 // ───────────────────────────────────────────────────────────────
 
 // ── STATE ──────────────────────────────────────────────────────
-const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev', bu:'st_buy', ord:'st_ord', spm:'st_spm'};
+const K = {s:'st_s', l:'st_l', i:'st_i', p:'st_p', pm:'st_pm', sh:'st_sh', qt:'st_qt', ss:'st_ss', as:'st_as', au:'st_au', ai:'st_ai', co:'st_co', ev:'st_ev', bu:'st_buy', ord:'st_ord', spm:'st_spm', lip:'st_lip'};
 
 var _storageOK = (function() {
   try { localStorage.setItem('_stk_t','1'); localStorage.removeItem('_stk_t'); return true; }
@@ -3030,7 +3048,7 @@ function ld(k) {
 }
 function ldArr(k) { var v = ld(k); return Array.isArray(v) ? v : []; }
 
-let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev), buy: ldArr(K.bu), ord: ldArr(K.ord), supPayments: ldArr(K.spm) };
+let DB = { sup: ldArr(K.s), li: ldArr(K.l), inv: ldArr(K.i), po: ldArr(K.p), payments: ldArr(K.pm), sh: ldArr(K.sh), qt: ldArr(K.qt), con: ldArr(K.co), events: ldArr(K.ev), buy: ldArr(K.bu), ord: ldArr(K.ord), supPayments: ldArr(K.spm), liPending: ldArr(K.lip) };
 let SS = ld(K.ss) || { url:'', auto:true, pol:true, token:'' };
 let AS = ld(K.as) || { name:'', tag:'Source \u00b7 Supply \u00b7 Ship', addr:'', email:'', phone:'', web:'', bank:'', terms:'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.' };
 let EI = { s:null, l:null, i:null, cn:null, p:null, sh:null, qt:null, co:null, bu:null, ord:null };
@@ -3059,6 +3077,7 @@ var WEBHOOK_TRIGGERS = [
 ];
 var _unlockedInvIds = {}; // in-memory override set — cleared on page reload
 var _invEditSnapshot = null; // G-06: pre-edit snapshot captured at unlock, cleared on save or close
+var _liApproveCtx = null;    // REQ/SPEC-LI-002: {candidateId, quoteNum} while Approve is mid-flow; null otherwise. Set AFTER openLI()/editLI() (which clear it first), never before.
 
 function canTransitionStatus(from, to) {
   // Cancelled is a terminal state reachable from any status
@@ -4332,7 +4351,7 @@ function sv(k, d) {
     }
   }
 }
-const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); sv(K.bu,DB.buy); sv(K.ord,DB.ord); sv(K.spm,DB.supPayments); };
+const saveAll = () => { sv(K.s,DB.sup); sv(K.l,DB.li); sv(K.i,DB.inv); sv(K.p,DB.po); sv(K.pm,DB.payments); sv(K.sh,DB.sh); sv(K.qt,DB.qt); sv(K.co,DB.con); sv(K.ev,DB.events); sv(K.bu,DB.buy); sv(K.ord,DB.ord); sv(K.spm,DB.supPayments); sv(K.lip,DB.liPending); };
 function logEv(entityType, entityId, verb, summary, actor) {
   var ev = {
     id:         uid(),
@@ -5933,7 +5952,7 @@ function rSup() {
       '<td><button class="ab" onclick="editSup(\'' + s.id + '\')">&#9998;</button><button class="ab" onclick="delSup(\'' + s.id + '\')">&#10005;</button></td></tr>';
   }).join('');
   var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
-  ['lf-sup','pf-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
+  ['lf-sup','pf-sup','qal-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
   G('li-sf').innerHTML = '<option value="">All suppliers</option>' + opts;
   populateConSupDrop();
 }
@@ -7875,7 +7894,7 @@ function rLI() {
   var q = (G('li-q').value||'').toLowerCase(), sf = G('li-sf').value;
   var f = DB.li.filter(function(l){ return (!q||(l.desc||'').toLowerCase().includes(q)||(l.sku||'').toLowerCase().includes(q)) && (!sf||l.supId===sf); });
   G('li-em').style.display = f.length ? 'none' : 'block';
-  G('li-tb').innerHTML = f.map(function(li){
+  var rowHtml = function(li){
     var m = +li.price>0 ? ((+li.price||0)-(+li.cost||0))/(+li.price||1)*100 : null;
     var mc = m===null?'':(m>=20?'phi':m>=10?'pmi':'plo');
     var ph = li.priceHistory || [];
@@ -7906,7 +7925,76 @@ function rLI() {
       '<td>' + (li.invoiceRefs && li.invoiceRefs.length ? '<span style="font-size:.5rem;color:#1a7a4a;">used on ' + li.invoiceRefs.length + ' invoice(s)</span>' : '-') + '</td>' +
       '<td><button class="ab" onclick="editLI(\'' + li.id + '\')">&#9998;</button><button class="ab" onclick="delLI(\'' + li.id + '\')">&#10005;</button></td></tr>' +
       phRow;
+  };
+  var groups = {};
+  f.forEach(function(li){ var key = li.supId||''; (groups[key]=groups[key]||[]).push(li); });
+  var groupKeys = Object.keys(groups).sort(function(a,b){
+    if (!a) return 1; if (!b) return -1;
+    return gsn(a).localeCompare(gsn(b));
+  });
+  G('li-tb').innerHTML = groupKeys.map(function(key){
+    var label = key ? gsn(key) : 'No Supplier';
+    var hdr = '<tr class="li-grp-hdr"><td colspan="12" style="background:var(--bg);font-weight:600;padding:6px 10px;color:var(--m);font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;">' + san(label) + '</td></tr>';
+    return hdr + groups[key].map(rowHtml).join('');
   }).join('');
+  rLIPending();
+}
+function rLIPending() {
+  var banner = G('li-pending-banner');
+  if (!banner) return;
+  var pending = (DB.liPending||[]).filter(function(c){ return c.status === 'pending'; });
+  if (!pending.length) { banner.style.display = 'none'; return; }
+  banner.style.display = 'block';
+  G('li-pending-list').innerHTML = pending.map(function(c){
+    var kindLabel = c.kind === 'new' ? 'New item' : 'Price update';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid rgba(217,119,6,.25);font-size:.58rem;color:#92400E;">' +
+      '<span style="font-weight:600;flex:1;">' + san(c.desc) + '</span>' +
+      '<span>' + san(gsn(c.supId)) + '</span>' +
+      '<span style="font-size:.5rem;background:rgba(217,119,6,.2);padding:1px 5px;border-radius:2px;">' + kindLabel + '</span>' +
+      '<span>' + fmtN(c.suggestedPrice, c.currency, 2) + '</span>' +
+      '<span style="font-size:.52rem;color:#78350f;">from Quote ' + san(c.quoteNum) + '</span>' +
+      '<button class="btn btn-s" style="padding:2px 8px;font-size:.5rem;" onclick="approveLIPending(\'' + c.id + '\')">Approve</button>' +
+      '<button class="btn btn-g" style="padding:2px 8px;font-size:.5rem;" onclick="dismissLIPending(\'' + c.id + '\')">Dismiss</button>' +
+    '</div>';
+  }).join('');
+}
+function approveLIPending(id) {
+  var c = DB.liPending.find(function(x){ return x.id === id && x.status === 'pending'; });
+  if (!c) return;
+  if (c.kind === 'update') {
+    var target = DB.li.find(function(x){ return x.id === c.matchedLiId; });
+    if (!target) {
+      toast("This update suggestion's line item no longer exists — dismissing it.");
+      c.status = 'dismissed';
+      c.notes = 'Auto-dismissed: matched line item was deleted';
+      sv(K.lip, DB.liPending);
+      rLIPending();
+      return;
+    }
+    editLI(c.matchedLiId);
+    G('lf-c').value = c.cost;
+    G('lf-p').value = c.suggestedPrice;
+  } else {
+    openLI();
+    G('lf-d').value = c.desc;
+    G('lf-sup').value = c.supId;
+    G('lf-u').value = c.uom;
+    G('lf-c').value = c.cost;
+    G('lf-p').value = c.suggestedPrice;
+  }
+  // Set AFTER openLI()/editLI() — both just cleared it and reset lf-cur to USD.
+  _liApproveCtx = { candidateId: c.id, quoteNum: c.quoteNum };
+  G('lf-cur').value = c.currency || 'USD';
+  liMgn();
+}
+function dismissLIPending(id) {
+  var c = DB.liPending.find(function(x){ return x.id === id && x.status === 'pending'; });
+  if (!c) return;
+  if (!confirm('Dismiss this catalogue suggestion for "' + c.desc + '"? It will not be added or updated.')) return;
+  c.status = 'dismissed';
+  sv(K.lip, DB.liPending);
+  rLIPending();
+  toast('Suggestion dismissed');
 }
 function togglePH(id) {
   var row = G('ph-' + id);
@@ -7925,6 +8013,7 @@ function calcLICBM() {
   el.value = (l&&w&&h) ? (l*w*h/1000000).toFixed(6) : '';
 }
 function openLI() {
+  _liApproveCtx = null; // REQ/SPEC-LI-002: clear any stale Approve context
   EI.l=null; G('li-mt').textContent='New Line Item';
   ['lf-s','lf-d','lf-sp','lf-u','lf-nt','lf-hs'].forEach(function(f){ var e=G(f); if(e) e.value=''; });
   G('lf-c').value=''; G('lf-p').value=''; G('lf-cur').value='USD'; G('lf-sup').value='';
@@ -7934,6 +8023,7 @@ function openLI() {
   liMgn(); G('ov-li').classList.add('on'); setTimeout(function(){ G('lf-s').focus(); }, 50);
 }
 function editLI(id) {
+  _liApproveCtx = null; // REQ/SPEC-LI-002: clear before the existence check
   var li=DB.li.find(function(x){return x.id===id;}); if(!li) return;
   EI.l=id; G('li-mt').textContent='Edit Line Item' + (li.num ? ' — ' + li.num : '');
   G('lf-s').value=li.sku||''; G('lf-d').value=li.desc||''; G('lf-sp').value=li.specs||''; G('lf-hs').value=li.hs||'';
@@ -7954,9 +8044,9 @@ async function saveLI() {
 
   // Seed first history entry on create, or append when cost/price changed via catalogue edit
   if (!existing) {
-    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Initial catalogue price' });
+    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: _liApproveCtx ? ('Initial catalogue price (from Quote ' + _liApproveCtx.quoteNum + ')') : 'Initial catalogue price' });
   } else if (newCost !== (+existing.cost||0) || newPrice !== (+existing.price||0)) {
-    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: 'Catalogue price updated' });
+    history.push({ date: today(), cost: newCost, price: newPrice, invoiceRef: '', notes: _liApproveCtx ? ('Catalogue price updated (from Quote ' + _liApproveCtx.quoteNum + ')') : 'Catalogue price updated' });
   }
 
   var diml=+G('lf-diml').value||0, dimw=+G('lf-dimw').value||0, dimh=+G('lf-dimh').value||0;
@@ -7979,6 +8069,11 @@ async function saveLI() {
       result = await _sb.from('line_items').insert(row).select().single();
     }
     if (result.error) { toast('Save failed: ' + result.error.message); return; }
+    if (_liApproveCtx) {
+      var pc1 = DB.liPending.find(function(x){ return x.id === _liApproveCtx.candidateId; });
+      if (pc1) { pc1.status = 'approved'; sv(K.lip, DB.liPending); }
+      _liApproveCtx = null;
+    }
     closeM('ov-li');
     await refreshLIFromSupabase();
     audit(EI.l?'UPDATE':'CREATE','li', result.data.id, result.data);
@@ -7988,7 +8083,13 @@ async function saveLI() {
 
   var li={id:EI.l||uid(),num:existing?existing.num:nextRefNum(DB.li,'LI'),sku:G('lf-s').value.trim(),desc:G('lf-d').value.trim(),specs:G('lf-sp').value.trim(),hs:G('lf-hs').value.trim(),supId:G('lf-sup').value,uom:G('lf-u').value.trim(),cost:newCost,price:newPrice,cur:G('lf-cur').value,notes:G('lf-nt').value.trim(),priceHistory:history,invoiceRefs:existing?(existing.invoiceRefs||[]):[],dims:dims,dg:dg};
   if(EI.l){var i=DB.li.findIndex(function(x){return x.id===EI.l;});if(i>-1)DB.li[i]=li;}else DB.li.push(li);
-  sv(K.l,DB.li); closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li).catch(function(){});
+  sv(K.l,DB.li);
+  if (_liApproveCtx) {
+    var pc2 = DB.liPending.find(function(x){ return x.id === _liApproveCtx.candidateId; });
+    if (pc2) { pc2.status = 'approved'; sv(K.lip, DB.liPending); }
+    _liApproveCtx = null;
+  }
+  closeM('ov-li'); rLI(); audit(EI.l?'UPDATE':'CREATE','li',li.id,li); toast('Line item saved'); renderOnboarding(); await syncEnt('li',li).catch(function(){});
 }
 async function delLI(id) {
   var invRefs = DB.inv.filter(function(inv){
@@ -7997,9 +8098,13 @@ async function delLI(id) {
   var poRefs = DB.po.filter(function(po){
     return (po.lineItems||[]).some(function(li){ return li.lid===id; });
   });
+  var pendingUpdate = DB.liPending.find(function(p){
+    return p.matchedLiId === id && p.status === 'pending';
+  });
   var warns = [];
   if (invRefs.length) warns.push(invRefs.length + ' invoice' + (invRefs.length>1?'s':'') + ' (' + invRefs.map(function(i){return i.num||i.id;}).join(', ') + ')');
   if (poRefs.length)  warns.push(poRefs.length  + ' purchase order' + (poRefs.length>1?'s':'')  + ' (' + poRefs.map(function(p){return p.num||p.id;}).join(', ') + ')');
+  if (pendingUpdate) warns.push('1 pending catalogue-update suggestion (from Quote ' + pendingUpdate.quoteNum + ')');
   var msg = 'Delete this line item?';
   if (warns.length) msg += '\n\nWarning: This item is referenced in:\n  ' + warns.join('\n  ') + '\n\nExisting line entries on those documents will be preserved but the catalogue link will be broken.';
   if (!confirm(msg)) return;
@@ -8008,13 +8113,20 @@ async function delLI(id) {
     if (!(await ensureSbAuth())) return;
     var result = await _sb.from('line_items').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (result.error) { toast('Delete failed: ' + result.error.message); return; }
+    var cloudBeforeLen = DB.liPending.length;
+    DB.liPending = DB.liPending.filter(function(p){ return !(p.matchedLiId === id && p.status === 'pending'); });
+    if (DB.liPending.length !== cloudBeforeLen) sv(K.lip, DB.liPending);
     await refreshLIFromSupabase();
     toast('Deleted');
     return;
   }
 
   var _liSku = (DB.li.find(function(l){return l.id===id;})||{}).sku||id;
-  DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li); rLI(); toast('Deleted'); await delEnt('li',_liSku).catch(function(){});
+  DB.li=DB.li.filter(function(l){return l.id!==id;}); sv(K.l,DB.li);
+  var localBeforeLen = DB.liPending.length;
+  DB.liPending = DB.liPending.filter(function(p){ return !(p.matchedLiId === id && p.status === 'pending'); });
+  if (DB.liPending.length !== localBeforeLen) sv(K.lip, DB.liPending);
+  rLI(); toast('Deleted'); await delEnt('li',_liSku).catch(function(){});
 }
 
 // ── INVOICE MODAL ──────────────────────────────────────────────
@@ -8170,6 +8282,10 @@ function invLineHasCostBasis(li) {
   var resolved = li.lid && DB.li.find(function(x){ return x.id === li.lid; });
   return !!resolved || (+li.unitCost > 0);
 }
+function invLineHasSupplier(li) {
+  var resolved = li.lid && DB.li.find(function(x){ return x.id === li.lid; });
+  return !!(resolved && resolved.supId) || !!li.supId;
+}
 function quickAddLine() {
   var desc = G('qal-desc') ? G('qal-desc').value.trim() : '';
   var uom  = G('qal-uom')  ? G('qal-uom').value.trim()  : 'pcs';
@@ -8177,19 +8293,25 @@ function quickAddLine() {
   var up   = G('qal-up')   ? +G('qal-up').value   : 0;
   var lt   = G('qal-type') ? G('qal-type').value   : 'product';
   var uc   = lt === 'pass-through' ? up : (G('qal-uc') ? +G('qal-uc').value : 0);
+  var sup  = G('qal-sup')  ? G('qal-sup').value    : '';
   if (!desc) { toast('⚠ Enter a description'); return; }
   if (lt === 'product' && !invLineHasCostBasis({ lid:'', unitCost:uc })) {
     toast('⚠ Product lines need a Unit Cost greater than 0 — enter a real cost, or set Type to Pass-thru/Charge if there\'s no separate cost to record');
     return;
   }
+  if (lt === 'product' && !invLineHasSupplier({ lid:'', supId:sup })) {
+    toast('⚠ Product lines need a Supplier — select one, or set Type to Pass-thru/Charge if there\'s no supplier to record');
+    return;
+  }
   if (qty === 0) qty = 1;
-  cIL.push({ rid:uid(), lid:'', desc:desc, uom:uom, qty:qty, up:up, unitCost:uc, lineType:lt });
+  cIL.push({ rid:uid(), lid:'', desc:desc, uom:uom, qty:qty, up:up, unitCost:uc, supId:sup, lineType:lt });
   rILT(); calcInv();
   // Clear form
   if (G('qal-desc')) G('qal-desc').value = '';
   if (G('qal-up'))   G('qal-up').value   = '';
   if (G('qal-uc'))   G('qal-uc').value   = '';
   if (G('qal-qty'))  G('qal-qty').value  = '1';
+  if (G('qal-sup'))  G('qal-sup').value  = '';
   if (G('qal-type')) { G('qal-type').value = 'product'; qaTypeChg(); }
   toast('✓ Line item added — click Save Invoice to keep');
 }
@@ -8214,7 +8336,7 @@ function addILI(lid, desc, uom, qty, up) {
 function remILI(rid) { cIL=cIL.filter(function(x){return x.rid!==rid;}); rILT(); calcInv(); }
 function rILT() {
   var tb=G('il-tb'), cur=G('if-cur').value||'USD';
-  if(!cIL.length){ tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--m);font-size:.58rem;padding:12px;">No line items - add manually or import from library</td></tr>'; return; }
+  if(!cIL.length){ tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--m);font-size:.58rem;padding:12px;">No line items - add manually or import from library</td></tr>'; return; }
   tb.innerHTML=cIL.map(function(li,i){
     var lt = li.lineType || 'product';
     var libItem = li.lid ? DB.li.find(function(x){return x.id===li.lid;}) : null;
@@ -8237,9 +8359,13 @@ function rILT() {
     var priceOninput = lt==='pass-through'
       ? 'cIL['+i+'].up=+this.value;cIL['+i+'].unitCost=+this.value;calcInv()'
       : 'cIL['+i+'].up=+this.value;calcInv()';
+    var supOpts = '<option value="">-</option>' + DB.sup.map(function(s){
+      return '<option value="' + s.id + '"' + (li.supId===s.id?' selected':'') + '>' + san(s.name) + '</option>';
+    }).join('');
     return '<tr>' +
       '<td style="color:var(--m);font-size:.52rem;">' + (i+1) + '</td>' +
       '<td><input type="text" value="' + (li.desc||'').replace(/"/g,'&quot;') + '" oninput="cIL['+i+'].desc=this.value;calcInv()" placeholder="Description"></td>' +
+      '<td><select style="font-size:.56rem;border:none;background:transparent;width:100%;" onchange="cIL['+i+'].supId=this.value;">' + supOpts + '</select></td>' +
       '<td><input type="text" value="' + (li.uom||'') + '" oninput="cIL['+i+'].uom=this.value" placeholder="pcs" style="width:47px;"></td>' +
       '<td><input type="number" value="' + (li.qty||1) + '" min="0" step="any" oninput="cIL['+i+'].qty=+this.value;calcInv()" style="width:36px;"></td>' +
       '<td><input type="number" value="' + uc + '" min="0" step="0.01" '+(ucReadonly?'readonly ':'')+' oninput="cIL['+i+'].unitCost=+this.value;calcInv()" style="'+ucStyle+'"></td>' +
@@ -8252,21 +8378,42 @@ function rILT() {
   }).join('');
   _updQaWarn();
 }
+var _pickChecked = {};
 function openPicker() {
   if(!DB.li.length){toast('No items in library yet.');return;}
-  G('pick-list').innerHTML=DB.li.map(function(li){
-    var onInv = cIL.some(function(c){ return c.lid === li.id; });
-    var refCount = (li.invoiceRefs||[]).length;
-    return '<label class="' + (onInv ? 'li-already-on-inv' : '') + '" style="display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--ln);margin-bottom:3px;cursor:pointer;font-size:.6rem;' + (onInv ? 'background:#f0fdf4;' : '') + '">' +
-      '<input type="checkbox" value="' + li.id + '" style="flex-shrink:0;">' +
-      '<div style="flex:1;"><div style="font-weight:500;">' + (san(li.desc)||'-') + (onInv ? ' <span style="color:#1a7a4a;font-size:.5rem;">&#10003; on this invoice</span>' : '') + '</div>' +
-      '<div style="color:var(--m);font-size:.54rem;">' + gsn(li.supId) + ' - ' + (li.uom||'-') + ' - ' + fmtN(li.price,li.cur,3) + (refCount ? ' &nbsp;&middot;&nbsp; used on ' + refCount + ' invoice(s)' : '') + '</div></div></label>';
-  }).join('');
+  _pickChecked = {};
+  if (G('pick-q')) G('pick-q').value = '';
+  rPickList();
   G('ov-pick').classList.add('on');
 }
+function rPickList() {
+  var q = (G('pick-q') ? G('pick-q').value : '').toLowerCase();
+  var f = DB.li.filter(function(li){ return !q || (li.desc||'').toLowerCase().includes(q) || (li.sku||'').toLowerCase().includes(q); });
+  var groups = {};
+  f.forEach(function(li){ var key = li.supId||''; (groups[key]=groups[key]||[]).push(li); });
+  var keys = Object.keys(groups).sort(function(a,b){
+    if (!a) return 1; if (!b) return -1;
+    return gsn(a).localeCompare(gsn(b));
+  });
+  G('pick-list').innerHTML = keys.map(function(key){
+    var label = key ? gsn(key) : 'No Supplier';
+    var hdr = '<div style="font-weight:600;font-size:.56rem;color:var(--m);text-transform:uppercase;letter-spacing:.04em;padding:6px 2px 3px;">' + san(label) + '</div>';
+    var rows = groups[key].map(function(li){
+      var onInv = cIL.some(function(c){ return c.lid === li.id; });
+      var refCount = (li.invoiceRefs||[]).length;
+      var checked = _pickChecked[li.id] ? ' checked' : '';
+      return '<label class="' + (onInv ? 'li-already-on-inv' : '') + '" style="display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--ln);margin-bottom:3px;cursor:pointer;font-size:.6rem;' + (onInv ? 'background:#f0fdf4;' : '') + '">' +
+        '<input type="checkbox" value="' + li.id + '"' + checked + ' onchange="_pickChecked[\'' + li.id + '\']=this.checked;" style="flex-shrink:0;">' +
+        '<div style="flex:1;"><div style="font-weight:500;">' + (san(li.desc)||'-') + (onInv ? ' <span style="color:#1a7a4a;font-size:.5rem;">&#10003; on this invoice</span>' : '') + '</div>' +
+        '<div style="color:var(--m);font-size:.54rem;">' + gsn(li.supId) + ' - ' + (li.uom||'-') + ' - ' + fmtN(li.price,li.cur,3) + (refCount ? ' &nbsp;&middot;&nbsp; used on ' + refCount + ' invoice(s)' : '') + '</div></div></label>';
+    }).join('');
+    return hdr + rows;
+  }).join('');
+}
 function doPick() {
-  var ck=[].slice.call(G('pick-list').querySelectorAll('input:checked')).map(function(c){return c.value;});
+  var ck = Object.keys(_pickChecked).filter(function(id){ return _pickChecked[id]; });
   ck.forEach(function(id){ var li=DB.li.find(function(x){return x.id===id;}); if(li) addILI(li.id,li.desc,li.uom,1,li.price); });
+  _pickChecked = {};
   closeM('ov-pick'); toast(ck.length+' item'+(ck.length!==1?'s':'')+' added');
 }
 
@@ -10677,6 +10824,15 @@ function vInv() {
     toast('⚠ One or more Product lines has no Unit Cost and no linked catalogue item — enter a cost, link a catalogue item, or change that line\'s Type');
     return false;
   }
+  // REQ/SPEC-LI-002: supplier-attribution backstop, mirrors the cost-basis backstop above.
+  var badSupplierLine = cIL.some(function(li){
+    var lt = li.lineType || 'product';
+    return lt === 'product' && !invLineHasSupplier(li);
+  });
+  if (badSupplierLine) {
+    toast('⚠ One or more Product lines has no Supplier and no linked catalogue item — select a supplier, link a catalogue item, or change that line\'s Type');
+    return false;
+  }
   if (dep !== '' && !RX.currency(dep)) return vErr('if-dep', 'Buyer deposit must be a non-negative number with at most 2 decimal places');
   if (+dep < 0)                    return vErr('if-dep', 'Buyer deposit cannot be negative');
   vOk('if-dep');
@@ -11852,7 +12008,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.89).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.90).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -11892,6 +12048,7 @@ var AI_SYSTEM_PROMPT = [
   'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX.',
   'Overhead charges (Origin Charges, Dest Charges, FPM Admin — v2.9.68, REQ/SPEC-QTE-002): three fixed dollar amounts added to every quote\'s total, unmarked-up (added at cost, never scaled by margin). Global defaults are set in Settings → Rates & FX; each quote can override any of the three individually — three optional fields on the quote form (blank = inherit the current global default, any typed number including 0 = override just this quote). An overridden quote is unaffected by later changes to the global default for that specific field; an un-overridden quote keeps tracking the global default live. Setting a field to 0 removes that charge from just that one quote.',
   'Insurance Rate % override (v2.9.89, REQ/SPEC-QTE-003): insurance (default 0.5% of cost+freight per line, set in Settings → Rates & FX) is editable per quote AND per line, the same two-tier cascade as Margin %. The quote form has an "Insurance % Override" field (blank = inherit the global default). Each line in the editor grid also has its own "Ins %" field (blank = inherit the quote-level value, which itself may be inheriting the global default) — a line-level value always wins over the quote-level value. The editor grid and the PDF preview both show the computed Insurance $ amount as its own column/row, separate from Landed, so it is never a silent, unexplained jump between Cost and Landed.',
+  'Line Items catalogue (v2.9.90, REQ/SPEC-LI-002): invoice quick-add has a Supplier field; Product lines require a Supplier (or a catalogue link) in addition to a Unit Cost, Pass-through/Charge lines are exempt, and the invoice line table has an editable Supplier column. Accepting a Quote queues catalogue suggestions (new item or price update, supplier-attributed lines only) shown as a banner on the Line Items tab: Approve opens the real Line Item form pre-filled and nothing is saved until the operator saves; Dismiss discards. Suggestions are local-only. Import from Library and the Line Items tab are searchable and grouped by supplier.',
   'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
   'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
   'Convert to PO: only available when quote status is Accepted. Set the status dropdown to Accepted — the Convert to PO button appears automatically. Clicking it creates one PO per distinct supplier on the quote\'s lines (v2.9.44 — fixes PO-GAP-001, which previously misattributed every line to the first supplier on a multi-supplier quote); the quote modal title then shows a "PO RAISED" badge and the button is hidden. Each PO carries the Quote ID for traceability; PO numbers get a -1/-2 suffix when a quote splits across multiple suppliers.',
@@ -13086,6 +13243,7 @@ function expAll() {
     buy: DB.buy,
     ord: DB.ord,
     supPayments: DB.supPayments,
+    liPending: DB.liPending,
     settings: { url: SS.url, auto: SS.auto, pol: SS.pol }, // token excluded — credential, not config
     company: AS,
     branding: getCoBrand(),
@@ -13146,6 +13304,7 @@ function doImport(e) {
     if (data.buy && Array.isArray(data.buy)) { DB.buy = data.buy; sv(K.bu, DB.buy); }
     if (data.ord && Array.isArray(data.ord)) { DB.ord = data.ord; sv(K.ord, DB.ord); }
     if (data.supPayments && Array.isArray(data.supPayments)) { DB.supPayments = data.supPayments; sv(K.spm, DB.supPayments); }
+    if (data.liPending && Array.isArray(data.liPending)) { DB.liPending = data.liPending; sv(K.lip, DB.liPending); }
     seedAdHocBuyer();
     backfillRefNums();
     backfillConIds();
@@ -14226,6 +14385,7 @@ async function saveQte() {
   var totalLanded = lineCalcs.reduce(function(s,c){ return s+c.landed; }, 0);
   var markup = +G('qf-mkp').value||0;
   var existQ = EI.qt ? DB.qt.find(function(x){ return x.id===EI.qt; }) : null;
+  var sellPByRid = {};
   lines.forEach(function(l, i) {
     var existLine = existQ ? (existQ.lines||[]).find(function(x){ return x.rid===l.rid; }) : null;
     var history = existLine && existLine.priceHistory ? existLine.priceHistory.slice() : [];
@@ -14233,6 +14393,7 @@ async function saveQte() {
     var calcR = lineCalcs[i];
     var effM = qteEffectiveMargin(l, markup);
     var sellP = +(calcR.landed * (1 + effM/100)).toFixed(2);
+    sellPByRid[l.rid] = sellP;
     var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== effM || lastV.insRate !== calcR.insPct;
     if (changed) {
       history.push({ v: lastV ? lastV.v+1 : 1, ts: new Date().toISOString(), cost: l.cost, dutyPct: l.dutyPct, markup: effM, insRate: calcR.insPct, ins: +fn(calcR.ins,2), landed: +fn(calcR.landed,2), sellPrice: sellP, note: qlFld(l.rid,'note') });
@@ -14333,6 +14494,46 @@ async function saveQte() {
     }
     cConvertOrdId = null;
   }
+
+  // REQ/SPEC-LI-002 LI-002d: queue catalogue promotion candidates on the genuine
+  // Accepted-transition only, after persistence so qt.id/num/currency are final.
+  if (isAccepted && !wasAccepted) {
+    lines.forEach(function(l) {
+      if (!l.supId) return;
+      var existingLi = DB.li.find(function(x){
+        return (x.desc||'').toLowerCase() === (l.desc||'').toLowerCase() && x.supId === l.supId;
+      });
+      var sellP = sellPByRid[l.rid];
+      if (existingLi) {
+        if (+existingLi.cost === +l.cost && +existingLi.price === sellP) return;
+        var dupUpdate = DB.liPending.some(function(p){
+          return p.status === 'pending' && p.kind === 'update' && p.matchedLiId === existingLi.id;
+        });
+        if (dupUpdate) return;
+        DB.liPending.push({
+          id: uid(), status: 'pending', kind: 'update', matchedLiId: existingLi.id,
+          quoteId: qt.id, quoteNum: qt.num, supId: l.supId, desc: l.desc, uom: l.uom,
+          cost: l.cost, suggestedPrice: sellP, currency: qt.currency,
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        var dupNew = DB.liPending.some(function(p){
+          return p.status === 'pending' && p.kind === 'new' &&
+            (p.desc||'').toLowerCase() === (l.desc||'').toLowerCase() && p.supId === l.supId;
+        });
+        if (dupNew) return;
+        DB.liPending.push({
+          id: uid(), status: 'pending', kind: 'new', matchedLiId: null,
+          quoteId: qt.id, quoteNum: qt.num, supId: l.supId, desc: l.desc, uom: l.uom,
+          cost: l.cost, suggestedPrice: sellP, currency: qt.currency,
+          createdAt: new Date().toISOString()
+        });
+      }
+    });
+    sv(K.lip, DB.liPending);
+    rLIPending();
+  }
+
   closeM('ov-qt');
   rQte();
   toast('Quote ' + qt.num + ' saved');
@@ -14363,6 +14564,9 @@ async function delQte(id) {
       }
     }
   }
+  var beforeLen = DB.liPending.length;
+  DB.liPending = DB.liPending.filter(function(p){ return !(p.quoteId === id && p.status === 'pending'); });
+  if (DB.liPending.length !== beforeLen) { sv(K.lip, DB.liPending); rLIPending(); }
   rQte();
   toast('Quote deleted');
 }
