@@ -93,11 +93,26 @@ Shipment (DB.sh / K.sh = 'st_sh')
   ref               Business key — user-typed (pre-existing), required, unique-validated
   linkedInvs[]       FK → Invoice.num — an ARRAY OF BUSINESS KEYS, not internal ids
                        (see §3 note)
+  linkedInvIds[]     FK → Invoice.id — real ids, resolved from linkedInvs[] at save time.
+                       NOT positionally parallel to linkedInvs — matched by invId inside
+                       linkedInvSnapshots, never by array position (REQ/SPEC-SHIP-002, v2.9.91)
+  linkedInvSnapshots[]  Compact, self-identifying: {invId, dg, pol, pod} — a point-in-time
+                       capture of the linked invoice's DG/port state at save time, compared
+                       against the invoice's live state by renderShpSourceDriftWarn()
+                       (REQ/SPEC-SHIP-002, v2.9.91)
 
 Event (DB.events / K.ev = 'st_ev')
   id                PK — uid()
   entityType, entityId   Loose, untyped reference to any entity's id — not a real FK,
                            no referential integrity enforced
+
+LiPending (DB.liPending / K.lip = 'st_lip')  — local-only, never Cloud-Data-synced (REQ/SPEC-LI-002)
+  id                PK — uid()
+  status            'pending' | 'approved' | 'dismissed'
+  kind              'new' | 'update'
+  matchedLiId       FK → LineItem.id   (only for kind:'update')
+  quoteId           FK → Quote.id
+  quoteNum, supId, desc, uom, cost, suggestedPrice, currency, notes, createdAt
 ```
 
 ### Relationships (arrows read "references")
@@ -114,7 +129,10 @@ Invoice        ──(buyerId)────────→ Buyer
 CreditNote     ──(linkedInvId)────→ Invoice              (id-based FK)
 CreditNote     ──(linkedInvNum)───→ Invoice.num           (business-key FK, redundant with above)
 Shipment       ──(linkedInvs[])───→ Invoice.num           (business-key FK, array)
+Shipment       ──(linkedInvIds[])──→ Invoice.id            (real FK, array, v2.9.91)
 Event          ──(entityId)───────→ * any entity (untyped, no referential integrity)
+LiPending      ──(matchedLiId)────→ LineItem              (optional, kind:'update' only)
+LiPending      ──(quoteId)────────→ Quote
 ```
 
 ---
@@ -126,7 +144,7 @@ The codebase currently uses **two different conventions** for cross-entity refer
 - **Internal-ID-based FKs:** `supId`, `buyerId`, `sourceContactId`, `linkedPOId`, `linkedInvId` — reference the target's opaque `id`
 - **Business-key-based FKs:** `linkedInvNum` (Credit Note → Invoice), `sh.linkedInvs[]` (Shipment → Invoice) — reference the target's human-facing `num`
 
-Credit Notes even store **both** (`linkedInvId` and `linkedInvNum`) for the same relationship, redundantly.
+Credit Notes even store **both** (`linkedInvId` and `linkedInvNum`) for the same relationship, redundantly. Shipment (`sh.linkedInvs[]` + `sh.linkedInvIds[]`, REQ/SPEC-SHIP-002, v2.9.91) now does the same — not a new instance of the inconsistency, but a second, independent confirmation that storing both is this codebase's actual working pattern for an additive, non-breaking fix to a business-key-only FK, not an oversight to eventually clean up. `linkedInvIds[]` is the one actually dereferenced for drift detection (`renderShpSourceDriftWarn()`); `linkedInvs[]` remains the operator-facing, editable field.
 
 This spec does not reconcile this — doing so would mean changing existing, working FK fields on live transactional data, which is a materially different (and riskier) class of change than the purely additive `num` field introduced here. It is recorded here so the decision is visible to whoever plans the v3.0.0 Supabase schema: a real relational database should pick one convention (canonically, foreign keys should reference the internal PK, now a Postgres UUID) and can migrate the business-key-based FKs to id-based ones as part of that cutover, once and cleanly, rather than patching it piecemeal on the localStorage stack under FM-1.
 
@@ -225,6 +243,7 @@ erDiagram
     SHIPMENT {
         string id PK "uid() output"
         string ref UK "user-typed, pre-existing"
+        string linkedInvIds FK "array -- real ids, v2.9.91 (see §3 note)"
     }
 
     PAYMENT {
@@ -253,6 +272,7 @@ erDiagram
     INVOICE ||--o{ INVOICE : "linkedInvId + linkedInvNum -- Credit Note credits an Invoice (same table, type-discriminated)"
 
     INVOICE }o--o{ SHIPMENT : "sh.linkedInvs[] -- business-key array FK, NOT id-based (mixed convention, see §3)"
+    INVOICE }o--o{ SHIPMENT : "sh.linkedInvIds[] -- real id-based array FK, v2.9.91 (see §3 note)"
 
     EVENT }o--o{ SUPPLIER : "entityId (untyped, no referential integrity)"
     EVENT }o--o{ LINE_ITEM : "entityId (untyped)"

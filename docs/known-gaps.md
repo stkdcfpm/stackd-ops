@@ -796,3 +796,35 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Area:** `quickAddLine()`, `vInv()` (`index.html`, REQ/SPEC-INV-002).
 **Found:** live, on real production data, during a user-initiated COGS/GP/NP discrepancy investigation this session — not a hypothetical.
 **Detail:** `quickAddLine()` let an operator add a `lineType:'product'` line with `unitCost` defaulting to `0` when the Unit Cost field was left blank, and manual entry never sets a catalogue `lid` either. Nothing at save time checked for this — `_updQaWarn()` (REQ/SPEC-INV-001) already detected the exact condition accurately but was advisory-only, a banner, not an enforcement. Confirmed live: **INV10031** (Sent) had "Pallets x3" ($171 revenue) at `unitCost:0`; **INV10028** (Paid) had "Pallets x9" ($610.20) and a $5,540.07 Qingdao→Barbados container/customs charge entered as a full-margin product line rather than a pass-through cost — $6,321.27 combined revenue misreported as 100% margin across the two, both already Paid/Sent and already reported. A third invoice investigated as a candidate (INV10029, three Reolink camera-kit SKUs at cost-equals-price) was confirmed by the operator to be a deliberate zero-markup Amazon resale, not this defect — left unchanged. **Fixed:** a new shared `invLineHasCostBasis()` helper (extracted from `_updQaWarn()`'s own logic, so the three call sites can never diverge) backs both a `quickAddLine()` entry gate and a `vInv()` save-time backstop — the latter is the real enforcement point, since an operator can zero out an already-added line's cost directly in the live line-item table, bypassing `quickAddLine()` entirely; `quickAddLine()`'s gate alone would have missed that path. Scoped to `lineType==='product'` only — Pass-through and Charge lines carry no such requirement, `$0` is their normal value. The two real affected invoices (INV10031, INV10028) were corrected via Settings → Advanced → Unlock Invoice; **no retroactive fix or audit of any other historical invoice was performed as part of this REQ** beyond the full scan already run this session (confirmed clean — no other invoice in production data carries this pattern at time of fix).
+
+## Line Items / Promotion Queue (v2.9.90, REQ/SPEC-LI-002)
+
+### LI-GAP-001 — A pending `'new'` candidate isn't re-validated against the catalogue at approval time
+**Area:** `approveLIPending()` (`index.html`, REQ/SPEC-LI-002).
+**Logged:** v2.9.90, at ship time — an explicit, disclosed limitation, not a defect discovered later.
+**Detail:** If an operator manually adds a matching catalogue item (via the ordinary `saveLI()` form) while a `'new'`-kind candidate for the same desc+supplier is still pending, approving that candidate afterward does not detect the now-existing duplicate — it still runs the "create" path, producing two catalogue records for the same item. Not fixed: re-validating at approval time would need the same desc+supplier match logic `saveQte()` already runs at queue time, re-run a second time with no new information to act on differently, and the realistic window (operator adds the record manually, then separately clicks Approve on an unrelated candidate for the same item, without dismissing it first) is narrow.
+
+### LI-GAP-006 — A pending `'update'` candidate's queued cost/price/currency are applied blindly at approval
+**Area:** `approveLIPending()` (`index.html`, REQ/SPEC-LI-002).
+**Logged:** v2.9.90, at ship time.
+**Detail:** The candidate's `cost`/`suggestedPrice`/`currency` are pre-filled into the Line Item form exactly as queued, with no comparison against the live record's current values at approval time (which may have changed since the candidate was queued, via a separate manual edit). The operator sees the pre-filled values in the form before saving and can edit or cancel, so this is a review-UI gap, not a silent-write one — but there is no explicit "this record has changed since this suggestion was queued" warning.
+
+### LI-GAP-003 — A dismissed candidate is never automatically re-queued
+**Area:** `saveQte()` (`index.html`, REQ/SPEC-LI-002).
+**Detail:** Dismissing a candidate sets `status:'dismissed'` permanently; if a later Quote targets the exact same desc+supplier combination again, the dedup logic only checks `status==='pending'` entries, so a new candidate IS queued again (this is correct, intended behavior) — but the operator has no way to tell, from the new candidate alone, that an earlier suggestion for the same item was previously dismissed. The operator must use the ordinary `saveLI()` form to add it manually if they want it in the catalogue after dismissing.
+
+### LI-GAP-004 — No multi-source tracking on a pending candidate
+**Area:** `saveQte()` (`index.html`, REQ/SPEC-LI-002).
+**Detail:** If a third Quote later targets the same not-yet-reviewed desc+supId as an already-pending candidate, it is silently skipped (Decision 7, REQ-LI-002 §1.2) — not merged, not counted, and the original candidate's `quoteId`/`quoteNum` still only names the first Quote that triggered it. An operator reviewing the banner has no way to know a second or third Quote also wanted this same catalogue change.
+
+### LI-GAP-005 — `doImport()`'s restore `confirm()` dialog does not mention `liPending` counts
+**Area:** `doImport()` (`index.html`, REQ/SPEC-LI-002).
+**Detail:** Same, already-accepted precedent as `DB.events`/`DB.buy`/`DB.supPayments` — the restore confirmation dialog lists counts for only a subset of entities; `liPending` is restored correctly but not named in that dialog's message.
+
+## Shipment / Invoice Linking (v2.9.91, REQ/SPEC-SHIP-002)
+
+### SHIP-GAP-002 — DG manual-vs-invoice-derived tracking is session-scoped only, not cross-session *(Open, accepted, by design)*
+
+**Area:** `editShp()`'s initialization formula, `recomputeShpDgLiveState()`/`shpDgManualToggle()` (`index.html`, REQ/SPEC-SHIP-002).
+**Logged:** v2.9.91, at ship time — an explicit, disclosed limitation, not a defect discovered later.
+**Detail:** `_shpDgManualValue`/`_shpDgInvoiceDriven` correctly distinguish an operator's own independent DG confirmation from an invoice-derived one WITHIN one continuous modal-open editing session (the exact scenario REQ-SHIP-002's own requirements-gate round 4 found and round 5 fixed). They do not and cannot reconstruct that distinction from a `dg` value already saved in a PRIOR session, since the single `dg` boolean persisted to `DB.sh`/Supabase has never recorded which source set it. `editShp()`'s own initialization formula makes the conservative choice — preserve `dg:true` as if independently confirmed whenever no currently-linked invoice explains it right now, rather than silently drop it — but this is a best-effort inference, not a reconstruction of real history. A fully cross-session-correct version would need a new persisted field (e.g. `shp.dgManual`) — explicitly out of scope here, logged as a candidate for a future REQ if this proves insufficient in practice. Note: unrelated to the existing `SHIP-GAP-001` (async double-submit race, v2.9.86) — this is a new, independent gap.
