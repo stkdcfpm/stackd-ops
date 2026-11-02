@@ -15742,6 +15742,20 @@ test('prevInv() — unsaved preview shows the Buyer NAME, never the buyer-select
   assertEqual(got.buyer, 'Acme Trading Ltd', 'preview receives the name, not the id');
 });
 
+test('calcInv() live form — Net Profit excludes tax (buyer pass-through) and matches cInv()', () => {
+  resetDB(); ctx.DB.li = [];
+  setupInvForm('INV40061');
+  mockEl('if-tx').value = '7.5'; mockEl('if-lf').value = '28'; mockEl('if-chi').checked = true;
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Kit', uom:'pcs', qty:1, up:2959, unitCost:2959, lineType:'product', supId:'s' }];
+  ctx.calcInv();
+  const html = mockEl('pnl-bd').innerHTML;
+  const c = ctx.cInv({ lineItems:ctx.cIL, taxRate:ctx.getTR(), lf:28, chargesIncluded:true, num:'INV40061' });
+  assertContains(html, ctx.fmt(c.np, 'USD'), 'form Net Profit equals cInv().np');
+  assert(c.np < 100, 'sanity: np is freight margin only, not freight + tax');
+  mockEl('if-chi').checked = false; ctx.calcInv();
+  assertContains(mockEl('pnl-bd').innerHTML, ctx.fmt(0, 'USD'), 'charges billed separately -> net 0 here');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));

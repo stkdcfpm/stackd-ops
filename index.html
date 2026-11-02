@@ -8473,7 +8473,7 @@ function calcInv() {
   var lf=+G('if-lf').value||0, ins=+G('if-ins').value||0, leg=+G('if-leg').value||0, isp=+G('if-isp').value||0, oth=+G('if-oth').value||0;
   var chgs=lf+ins+leg+isp+oth, grand=liT+tax+chgs, dep=+G('if-dep').value||0, bal=grand-dep;
   var cogs=cIL.reduce(function(s,li){var r=DB.li.find(function(x){return x.id===li.lid;});if(r)return s+(+r.cost||0)*(+li.qty||0);return s+(+li.unitCost||0)*(+li.qty||0);},0);
-  var gp=liT-cogs, np=(G('if-chi').checked!==false)?(grand-cogs):(grand-cogs-chgs), mgn=grand>0?(np/grand)*100:null;
+  var gp=liT-cogs, np=(G('if-chi').checked!==false)?(grand-tax-cogs):(grand-tax-cogs-chgs), mgn=grand>0?(np/grand)*100:null; // tax is a buyer pass-through, never income — mirrors cInv()
 
   G('chg-bd').innerHTML =
     '<div class="crow"><span class="clbl">Items Subtotal</span><span class="cval hi">' + fmt(liT,cur) + '</span></div>' +
