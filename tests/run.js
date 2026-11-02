@@ -15725,6 +15725,23 @@ test('AI_SYSTEM_PROMPT coverage — new DG-inheritance/port-inheritance/drift-wa
   assertContains(ctx.AI_SYSTEM_PROMPT, 'Linking an Invoice also inherits its Origin', 'new port-inheritance/drift-warning bullet present in AI_SYSTEM_PROMPT');
 });
 
+test('prevInv() — unsaved preview shows the Buyer NAME, never the buyer-select id (UUID leak)', () => {
+  resetDB();
+  ctx.DB.buy = [{ id:'e8d0dfda-8e89-418c-b573-5a1885baae39', name:'Acme Trading Ltd' }];
+  setupInvForm('INV40060');
+  mockEl('if-b').value = 'e8d0dfda-8e89-418c-b573-5a1885baae39';
+  assertEqual(ctx.ifBuyerName(), 'Acme Trading Ltd');
+  mockEl('if-b').value = 'not-a-known-buyer';
+  assertEqual(ctx.ifBuyerName(), 'not-a-known-buyer', 'unknown id falls back rather than blanking');
+  // wiring: prevInv() must hand prevInvDoc() the name
+  mockEl('if-b').value = 'e8d0dfda-8e89-418c-b573-5a1885baae39';
+  ctx.cIL = [];
+  let got = null; const orig = ctx.prevInvDoc; ctx.prevInvDoc = function(o){ got = o; };
+  try { ctx.prevInv(); } finally { ctx.prevInvDoc = orig; }
+  assert(got, 'prevInvDoc called');
+  assertEqual(got.buyer, 'Acme Trading Ltd', 'preview receives the name, not the id');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));

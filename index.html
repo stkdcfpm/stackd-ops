@@ -10358,17 +10358,23 @@ async function delPO(id) {
 }
 
 // ── PRINT PREVIEWS ─────────────────────────────────────────────
+// The buyer <select> holds the Buyer's id, not its name — resolve to the name for display.
+function ifBuyerName() {
+  var v = G('if-b').value;
+  var b = DB.buy.find(function(x){ return x.id === v; });
+  return b ? b.name : v;
+}
 function prevInv() {
   document.activeElement && document.activeElement.blur && document.activeElement.blur();
   window._lastPO=null;
   var num=G('if-n').value||'DRAFT';
   if (isCN(num)) {
     var gwCb=G('if-cn-goodwill'); var isGW=gwCb&&gwCb.checked;
-    prevCNDoc({ num:num, buyer:G('if-b').value, buyerAddr:G('if-ba').value, cur:G('if-cur').value, date:G('if-dt').value, status:G('inv-sm').value, cnReason:G('if-cn-reason')?G('if-cn-reason').value:'', cnAmount:G('if-cn-amount')?-(Math.abs(+G('if-cn-amount').value||0)):0, linkedInvNum:G('if-linked')?G('if-linked').value:'', type:isGW?'goodwill_credit':'credit_note' });
+    prevCNDoc({ num:num, buyer:ifBuyerName(), buyerAddr:G('if-ba').value, cur:G('if-cur').value, date:G('if-dt').value, status:G('inv-sm').value, cnReason:G('if-cn-reason')?G('if-cn-reason').value:'', cnAmount:G('if-cn-amount')?-(Math.abs(+G('if-cn-amount').value||0)):0, linkedInvNum:G('if-linked')?G('if-linked').value:'', type:isGW?'goodwill_credit':'credit_note' });
     return;
   }
   var tx=getTR();
-  prevInvDoc({num:num,status:G('inv-sm')?G('inv-sm').value:'',buyer:G('if-b').value,buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,incoterm:G('if-inco').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,paymentTerms:G('if-pt').value,terms:G('if-terms').value,lineItems:cIL.slice()});
+  prevInvDoc({num:num,status:G('inv-sm')?G('inv-sm').value:'',buyer:ifBuyerName(),buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,incoterm:G('if-inco').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,paymentTerms:G('if-pt').value,terms:G('if-terms').value,lineItems:cIL.slice()});
 }
 function prevInvId(id) { var inv=DB.inv.find(function(x){return x.id===id;}); if(inv){ window._lastInv=inv; window._lastPO=null; if(inv.type==='credit_note'||inv.type==='goodwill_credit'||(!inv.type&&isCN(inv.num))) prevCNDoc(inv); else prevInvDoc(inv); } }
 function prevPO() {
