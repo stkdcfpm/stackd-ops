@@ -15756,6 +15756,37 @@ test('calcInv() live form — Net Profit excludes tax (buyer pass-through) and m
   assertContains(mockEl('pnl-bd').innerHTML, ctx.fmt(0, 'USD'), 'charges billed separately -> net 0 here');
 });
 
+test('CSV invoice import (both paths) stores Net Profit excluding tax', () => {
+  resetDB();
+  const row = { 'Invoice #':'INV50001', 'Buyer':'Acme', 'Grand Total':'3209', 'Items Subtotal':'2959', 'COGS':'2959', 'Tax Rate (decimal)':'0.075', 'Local Freight':'28' };
+  ctx.processImport('inv', 'Invoice #,Buyer,Grand Total,Items Subtotal,COGS,Tax Rate (decimal),Local Freight\nINV50001,Acme,3209,2959,2959,0.075,28\n');
+  const a = ctx.DB.inv.find(i => i.num === 'INV50001');
+  assertApprox(parseFloat(a.calc_netProfit), 3209 - 2959*0.075 - 2959, 'processImport np = grand - tax - cogs');
+  resetDB();
+  ctx.processImportRecords('inv', [Object.assign({}, row, { 'Invoice #':'INV50002' })], function(){});
+  const b = ctx.DB.inv.find(i => i.num === 'INV50002');
+  assertApprox(parseFloat(b.calc_netProfit), 3209 - 2959*0.075 - 2959, 'processImportRecords np = grand - tax - cogs');
+  assertApprox(parseFloat(b.calc_margin), (parseFloat(b.calc_netProfit)/3209)*100, 'margin consistent with corrected np');
+});
+test('healImportedInvNetProfit() corrects only the bug signature, idempotently; hand-set figures untouched', () => {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'h1', num:'INV1', status:'Paid', lineItems:[], calc_grandTotal:'3209', calc_cogs:'2959', calc_taxAmt:'221.93', calc_netProfit:'250', calc_margin:'7.79' },
+    { id:'h2', num:'INV2', status:'Paid', lineItems:[], calc_grandTotal:'957.08', calc_cogs:'894.47', calc_taxAmt:'60', calc_netProfit:'0', calc_margin:'0' },
+    { id:'h3', num:'INV3', status:'Paid', lineItems:[], calc_grandTotal:'1000', calc_cogs:'600', calc_taxAmt:'0', calc_netProfit:'400', calc_margin:'40' },
+    { id:'h4', num:'INV4', status:'Paid', lineItems:[], chargesIncluded:false, calc_grandTotal:'1000', calc_cogs:'600', calc_taxAmt:'50', calc_netProfit:'400', calc_margin:'40' }
+  ];
+  const fixed = ctx.healImportedInvNetProfit();
+  assertEqual(fixed.length, 1, 'only the signature match is corrected');
+  assertApprox(parseFloat(ctx.DB.inv[0].calc_netProfit), 28.07, 'h1 np = 250 - 221.93');
+  assertApprox(parseFloat(ctx.DB.inv[0].calc_margin), 28.07/3209*100, 'h1 margin recomputed');
+  assertEqual(ctx.DB.inv[1].calc_netProfit, '0', 'hand-set 0 untouched');
+  assertEqual(ctx.DB.inv[2].calc_netProfit, '400', 'zero-tax untouched');
+  assertEqual(ctx.DB.inv[3].calc_netProfit, '400', 'chargesIncluded=false untouched');
+  assertEqual(ctx.healImportedInvNetProfit().length, 0, 'second run is a no-op (no double subtraction)');
+  assertApprox(parseFloat(ctx.DB.inv[0].calc_netProfit), 28.07, 'still 28.07 after re-run');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
