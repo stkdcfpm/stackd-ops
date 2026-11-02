@@ -15787,6 +15787,37 @@ test('healImportedInvNetProfit() corrects only the bug signature, idempotently; 
   assertApprox(parseFloat(ctx.DB.inv[0].calc_netProfit), 28.07, 'still 28.07 after re-run');
 });
 
+test('quickAddSupplier() — creates a name-only supplier from the invoice quick-add row and selects it', async () => {
+  resetDB(); ctx.DB.sup = [];
+  const oprompt = ctx.prompt; ctx.prompt = () => 'Shenzhen Widgets Ltd';
+  try { await ctx.quickAddSupplier(); } finally { ctx.prompt = oprompt; }
+  assertEqual(ctx.DB.sup.length, 1, 'supplier created');
+  assertEqual(ctx.DB.sup[0].name, 'Shenzhen Widgets Ltd');
+  assert(ctx.DB.sup[0].num, 'gets a SUP- number');
+  assertEqual(mockEl('qal-sup').value, ctx.DB.sup[0].id, 'new supplier is selected');
+  assertContains(mockEl('qal-sup').innerHTML, 'Shenzhen Widgets Ltd');
+});
+test('quickAddSupplier() — duplicate name (case-insensitive) selects the existing one, cancel selects nothing', async () => {
+  resetDB(); ctx.DB.sup = [{ id:'sX', num:'SUP-0001', name:'Acme Co', cur:'USD' }];
+  const op = ctx.prompt, oa = ctx.alert; ctx.alert = () => {};
+  try {
+    ctx.prompt = () => '  acme co '; await ctx.quickAddSupplier();
+    assertEqual(ctx.DB.sup.length, 1, 'no duplicate created');
+    assertEqual(mockEl('qal-sup').value, 'sX', 'existing supplier selected');
+    ctx.prompt = () => null; await ctx.quickAddSupplier();
+    assertEqual(ctx.DB.sup.length, 1, 'cancel creates nothing');
+    assertEqual(mockEl('qal-sup').value, '', 'cancel clears the sentinel');
+  } finally { ctx.prompt = op; ctx.alert = oa; }
+});
+test('quickAddLine() — the "New Supplier" sentinel never counts as a supplier', () => {
+  resetDB(); ctx.cIL = [];
+  mockEl('qal-desc').value = 'Item'; mockEl('qal-uom').value = 'pcs'; mockEl('qal-qty').value = '1';
+  mockEl('qal-up').value = '20'; mockEl('qal-type').value = 'product'; mockEl('qal-uc').value = '10'; mockEl('qal-sup').value = '__new__';
+  ctx.quickAddLine();
+  assertEqual(ctx.cIL.length, 0, 'blocked while the sentinel is selected');
+  mockEl('qal-sup').value = '';
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));

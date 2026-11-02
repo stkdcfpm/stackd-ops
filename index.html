@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.92</title>
+<title>Stackd Ops v2.9.93</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -222,7 +222,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.92</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.93</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1204,7 +1204,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
         <!-- Quick add form -->
         <div style="display:grid;grid-template-columns:90px 90px 2fr 52px 52px 88px 92px auto;gap:6px;margin-top:8px;align-items:end;">
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Type</label><select id="qal-type" onchange="qaTypeChg()" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="product">Product</option><option value="pass-through">Pass-through</option><option value="charge">Charge</option></select></div>
-          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Supplier</label><select id="qal-sup" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="">Select...</option></select></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Supplier</label><select id="qal-sup" onchange="if(this.value==='__new__') quickAddSupplier()" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="">Select...</option></select></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Description</label><input type="text" id="qal-desc" placeholder="e.g. Local Freight"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">UOM</label><input type="text" id="qal-uom" placeholder="pcs" value="pcs" list="dl-uom" autocomplete="off"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Qty</label><input type="number" id="qal-qty" placeholder="1" value="1" min="0" step="any"></div>
@@ -1381,9 +1381,19 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.92</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.93</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>&ldquo;＋ New Supplier…&rdquo; on the invoice quick-add row</strong>, mirroring &ldquo;＋ New Buyer…&rdquo;. Type a name and the Supplier is created (name only, USD) and selected, and appears in the Suppliers tab where you can fill in the rest. Duplicate names select the existing Supplier instead; works with Cloud Data. Needed because Product lines now require a Supplier.</li>
+          <li>3 new tests (1103 &rarr; 1106 pass).</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.92</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>Fix: <strong>sales tax was counted as Net Profit</strong> on the invoice form&rsquo;s live totals and on both CSV invoice import paths (<code>INV-GAP-007</code>). Reports read the stored figure, so CSV-imported invoices with tax were overstated by their tax amount. Imports now store Net Profit excluding tax, and a one-time self-healing correction (<code>healImportedInvNetProfit()</code>) repairs invoices already imported &mdash; it only touches records whose stored Net Profit exactly equals Grand Total &minus; COGS, so hand-set figures are left alone, and it is safe to re-run.</li>
@@ -6023,7 +6033,9 @@ function rSup() {
       '<td><button class="ab" onclick="editSup(\'' + s.id + '\')">&#9998;</button><button class="ab" onclick="delSup(\'' + s.id + '\')">&#10005;</button></td></tr>';
   }).join('');
   var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
-  ['lf-sup','pf-sup','qal-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
+  ['lf-sup','pf-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
+  var qalSup = G('qal-sup');
+  if (qalSup) { var qalPrev = qalSup.value === '__new__' ? '' : qalSup.value; qalSup.innerHTML = '<option value="">Select...</option><option value="__new__">＋ New Supplier…</option>'+opts; qalSup.value = qalPrev; }
   G('li-sf').innerHTML = '<option value="">All suppliers</option>' + opts;
   populateConSupDrop();
 }
@@ -8373,6 +8385,31 @@ function invLineHasSupplier(li) {
   var resolved = li.lid && DB.li.find(function(x){ return x.id === li.lid; });
   return !!(resolved && resolved.supId) || !!li.supId;
 }
+async function quickAddSupplier() {
+  // Mirrors quickAddBuyer(): name-only create from the invoice quick-add row. Everything else
+  // (country, contact, payment terms, ...) is completed later in the Suppliers tab.
+  var sel = G('qal-sup');
+  var qName = prompt('New supplier name:');
+  if (!qName || !qName.trim()) { if (sel) sel.value = ''; return; }
+  qName = qName.trim();
+  var dup = DB.sup.find(function(x){ return (x.name||'').trim().toLowerCase() === qName.toLowerCase(); });
+  if (dup) { alert('A supplier with this name already exists.'); rSup(); if (sel) sel.value = dup.id; return; }
+  if (_sb) {
+    if (!(await ensureSbAuth())) { if (sel) sel.value = ''; return; }
+    var result = await _sb.from('suppliers').insert({ num: nextRefNum(DB.sup,'SUP'), name: qName, country: '', contact_name: '', email: '', phone: '', currency: 'USD', notes: '' }).select().single();
+    if (result.error) { toast('Could not create supplier: ' + result.error.message); if (sel) sel.value = ''; return; }
+    await refreshSupFromSupabase();
+    logEv('supplier', result.data.id, 'created', 'Supplier ' + result.data.name + ' quick-created', 'operator');
+    rSup(); if (sel) sel.value = result.data.id;
+    return;
+  }
+  var ns = { id:uid(), num:nextRefNum(DB.sup,'SUP'), name:qName, country:'', ct:'', email:'', phone:'', cur:'USD', notes:'' };
+  DB.sup.push(ns);
+  sv(K.s, DB.sup);
+  logEv('supplier', ns.id, 'created', 'Supplier ' + ns.name + ' quick-created', 'operator');
+  rSup(); if (sel) sel.value = ns.id;
+  await syncEnt('sup', ns).catch(function(){});
+}
 function quickAddLine() {
   var desc = G('qal-desc') ? G('qal-desc').value.trim() : '';
   var uom  = G('qal-uom')  ? G('qal-uom').value.trim()  : 'pcs';
@@ -8381,6 +8418,7 @@ function quickAddLine() {
   var lt   = G('qal-type') ? G('qal-type').value   : 'product';
   var uc   = lt === 'pass-through' ? up : (G('qal-uc') ? +G('qal-uc').value : 0);
   var sup  = G('qal-sup')  ? G('qal-sup').value    : '';
+  if (sup === '__new__') sup = ''; // the "＋ New Supplier…" sentinel is never a real supplier id
   if (!desc) { toast('⚠ Enter a description'); return; }
   if (lt === 'product' && !invLineHasCostBasis({ lid:'', unitCost:uc })) {
     toast('⚠ Product lines need a Unit Cost greater than 0 — enter a real cost, or set Type to Pass-thru/Charge if there\'s no separate cost to record');
@@ -12194,7 +12232,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.92).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.93).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12320,6 +12358,7 @@ var AI_SYSTEM_PROMPT = [
   '## Dashboard KPIs',
   '- Invoice Revenue: sum of grand totals (non-cancelled invoices)',
   '- Net Profit: grand total minus COGS minus tax per invoice',
+  'Invoice quick-add Supplier dropdown has a "＋ New Supplier…" option (v2.9.93) that creates a name-only Supplier (USD) and selects it, like "＋ New Buyer…"; complete its details in the Suppliers tab.',
   '- Net Profit never includes sales tax (a buyer pass-through). v2.9.92 fixed the invoice form\'s live totals and both CSV invoice import paths, which used to count tax as profit; previously imported invoices self-correct on load.',
   '- Avg Margin: net profit ÷ revenue × 100',
   '- Outstanding: balance due on unpaid / partially paid invoices',
