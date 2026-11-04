@@ -15824,6 +15824,7 @@ test('margin vs markup labels (v2.9.94): Quote per-line column is Markup, Line I
   assertNotContains(html, '<th>Duty %</th><th>Margin %</th>', 'old mislabelled header is gone');
   assertContains(html, 'Markup % <span style="font-size:.44rem;color:var(--m);">(on landed cost)</span>', 'quote-level field states its basis');
   assertContains(html, '(on price, before freight &amp; duty)', 'Line Item margin states its basis');
+});
 
 // ── Sort/filter on list tabs + Buyer autofill on the invoice form (v2.9.95) ──
 console.log('\nList sort/filter + Buyer autofill');
