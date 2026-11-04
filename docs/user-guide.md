@@ -69,6 +69,8 @@ Add a supplier manually (name, country, contact person, email, phone, currency, 
 
 Your product catalogue — SKU, description, specs, HS code, linked supplier, unit of measure, unit cost, unit price, currency, dimensions, and a dangerous-goods flag. Add manually or via CSV upload (Import Data → Line Items step, after Suppliers). A Line Item's cost feeds Invoice COGS (cost of goods sold) automatically whenever an invoice line is created via "Import from Library." If you instead quick-add a line directly on an invoice (without linking it to the catalogue) as a **Product**-type line, the portal now requires you to enter a Unit Cost before it will let you save — a Product line can no longer be saved with no cost basis at all (v2.9.88). This also applies if you edit an already-added line's Unit Cost back down to zero directly in the line-item table before saving. **Pass-through** and **Charge** line types are exempt — a Unit Cost of 0 is the normal, expected value for those (freight/customs billed at cost, bank fees, etc.), not a sign of missing data.
 
+**Margin vs markup (v2.9.94):** the Line Item form's *Margin %* is `(price − cost) ÷ price` on the supplier cost only — before freight, duty and insurance. A Quote's *Markup %* (quote-level and the per-line column) is applied on top of **landed** cost, so a 20% markup is a 16.7% margin. Don't type a margin figure into a markup field.
+
 Opening a Supplier's record shows a **Price History** panel aggregating every price point recorded for that supplier — from Line Items, Quote lines, and PO lines — newest first, flagged if a price point is older than your configured staleness threshold (Settings).
 
 ## Buyers

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.93</title>
+<title>Stackd Ops v2.9.94</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -222,7 +222,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.93</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.94</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1144,7 +1144,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
     </div>
     <div style="background:var(--ink);padding:10px 14px;display:flex;gap:20px;margin-bottom:12px;">
       <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Unit Margin</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gold);" id="lmv">-</div></div>
-      <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Margin %</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;" id="lmp">-</div></div>
+      <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;" title="Margin on price: (price &minus; cost) &divide; price. Supplier cost only &mdash; before freight, duty and insurance.">Margin % <span style="text-transform:none;letter-spacing:0;">(on price, before freight &amp; duty)</span></div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;" id="lmp">-</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:12px;">
       <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Length (cm)</label><input type="number" id="lf-diml" placeholder="0" step="0.1" min="0" oninput="calcLICBM()"></div>
@@ -1381,9 +1381,18 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.93</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.94</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix (labels only, no calculation changed): <strong>margin vs markup wording</strong>. The Quote editor&rsquo;s per-line column was headed &ldquo;Margin %&rdquo; but is a <em>markup</em> on landed cost (a 20% markup is only a 16.7% margin); it now reads &ldquo;Markup %&rdquo;, and the quote-level field says &ldquo;(on landed cost)&rdquo;. The Line Item form&rsquo;s Margin % now states it is on price and before freight, duty and insurance.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.93</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>&ldquo;＋ New Supplier…&rdquo; on the invoice quick-add row</strong>, mirroring &ldquo;＋ New Buyer…&rdquo;. Type a name and the Supplier is created (name only, USD) and selected, and appears in the Suppliers tab where you can fill in the rest. Duplicate names select the existing Supplier instead; works with Cloud Data. Needed because Product lines now require a Supplier.</li>
@@ -2817,7 +2826,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
             <option value="FCL 40HQ">FCL 40HQ</option>
           </select>
         </div>
-        <div class="fld"><label>Markup %</label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
+        <div class="fld"><label>Markup % <span style="font-size:.44rem;color:var(--m);">(on landed cost)</span></label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
         <div class="fld"><label>Origin Charges Override ($)</label><input type="number" id="qf-origOv" min="0" step="5" oninput="calcQte()"></div>
         <div class="fld"><label>Dest Charges Override ($)</label><input type="number" id="qf-destOv" min="0" step="5" oninput="calcQte()"></div>
         <div class="fld"><label>FPM Admin Override ($)</label><input type="number" id="qf-admOv" min="0" step="5" oninput="calcQte()"></div>
@@ -12232,7 +12241,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.93).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.94).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12358,6 +12367,7 @@ var AI_SYSTEM_PROMPT = [
   '## Dashboard KPIs',
   '- Invoice Revenue: sum of grand totals (non-cancelled invoices)',
   '- Net Profit: grand total minus COGS minus tax per invoice',
+  'Margin vs markup (v2.9.94, labels only): Line Item "Margin %" = (price - cost) / price, on supplier cost only (before freight/duty/insurance). Quote "Markup %" (quote-level and per-line) is applied on top of LANDED cost: sell = landed x (1 + markup/100), so a 20% markup is a 16.7% margin. Do not enter a margin figure as a markup.',
   'Invoice quick-add Supplier dropdown has a "＋ New Supplier…" option (v2.9.93) that creates a name-only Supplier (USD) and selects it, like "＋ New Buyer…"; complete its details in the Suppliers tab.',
   '- Net Profit never includes sales tax (a buyer pass-through). v2.9.92 fixed the invoice form\'s live totals and both CSV invoice import paths, which used to count tax as profit; previously imported invoices self-correct on load.',
   '- Avg Margin: net profit ÷ revenue × 100',
@@ -14452,7 +14462,7 @@ function rQLT() {
   var quoteInsPct = (quoteInsRateRaw === '') ? QR.insRate * 100 : +quoteInsRateRaw;
   var totalCBM = cQL.reduce(function(s,l){ return s+(+l.cbm||0); }, 0);
   el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:1080px;">'
-    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th>Margin %</th><th>Ins %</th><th>Ins $</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
+    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th title="Markup on the landed cost of this line; overrides the quote-level Markup %. Blank inherits it.">Markup %</th><th>Ins %</th><th>Ins $</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
     + '<tbody>'
     + cQL.map(function(l){
         var calcR = cQteLine(l, QR, mode, totalCBM, quoteInsRateRaw);

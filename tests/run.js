@@ -15818,6 +15818,14 @@ test('quickAddLine() — the "New Supplier" sentinel never counts as a supplier'
   mockEl('qal-sup').value = '';
 });
 
+test('margin vs markup labels (v2.9.94): Quote per-line column is Markup, Line Item margin states its basis', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assertContains(html, '<th>Duty %</th><th title="Markup on the landed cost of this line', 'quote grid per-line column header says Markup');
+  assertNotContains(html, '<th>Duty %</th><th>Margin %</th>', 'old mislabelled header is gone');
+  assertContains(html, 'Markup % <span style="font-size:.44rem;color:var(--m);">(on landed cost)</span>', 'quote-level field states its basis');
+  assertContains(html, '(on price, before freight &amp; duty)', 'Line Item margin states its basis');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
