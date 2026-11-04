@@ -15725,6 +15725,107 @@ test('AI_SYSTEM_PROMPT coverage — new DG-inheritance/port-inheritance/drift-wa
   assertContains(ctx.AI_SYSTEM_PROMPT, 'Linking an Invoice also inherits its Origin', 'new port-inheritance/drift-warning bullet present in AI_SYSTEM_PROMPT');
 });
 
+test('prevInv() — unsaved preview shows the Buyer NAME, never the buyer-select id (UUID leak)', () => {
+  resetDB();
+  ctx.DB.buy = [{ id:'e8d0dfda-8e89-418c-b573-5a1885baae39', name:'Acme Trading Ltd' }];
+  setupInvForm('INV40060');
+  mockEl('if-b').value = 'e8d0dfda-8e89-418c-b573-5a1885baae39';
+  assertEqual(ctx.ifBuyerName(), 'Acme Trading Ltd');
+  mockEl('if-b').value = 'not-a-known-buyer';
+  assertEqual(ctx.ifBuyerName(), 'not-a-known-buyer', 'unknown id falls back rather than blanking');
+  // wiring: prevInv() must hand prevInvDoc() the name
+  mockEl('if-b').value = 'e8d0dfda-8e89-418c-b573-5a1885baae39';
+  ctx.cIL = [];
+  let got = null; const orig = ctx.prevInvDoc; ctx.prevInvDoc = function(o){ got = o; };
+  try { ctx.prevInv(); } finally { ctx.prevInvDoc = orig; }
+  assert(got, 'prevInvDoc called');
+  assertEqual(got.buyer, 'Acme Trading Ltd', 'preview receives the name, not the id');
+});
+
+test('calcInv() live form — Net Profit excludes tax (buyer pass-through) and matches cInv()', () => {
+  resetDB(); ctx.DB.li = [];
+  setupInvForm('INV40061');
+  mockEl('if-tx').value = '7.5'; mockEl('if-lf').value = '28'; mockEl('if-chi').checked = true;
+  ctx.cIL = [{ rid:'r1', lid:'', desc:'Kit', uom:'pcs', qty:1, up:2959, unitCost:2959, lineType:'product', supId:'s' }];
+  ctx.calcInv();
+  const html = mockEl('pnl-bd').innerHTML;
+  const c = ctx.cInv({ lineItems:ctx.cIL, taxRate:ctx.getTR(), lf:28, chargesIncluded:true, num:'INV40061' });
+  assertContains(html, ctx.fmt(c.np, 'USD'), 'form Net Profit equals cInv().np');
+  assert(c.np < 100, 'sanity: np is freight margin only, not freight + tax');
+  mockEl('if-chi').checked = false; ctx.calcInv();
+  assertContains(mockEl('pnl-bd').innerHTML, ctx.fmt(0, 'USD'), 'charges billed separately -> net 0 here');
+});
+
+test('CSV invoice import (both paths) stores Net Profit excluding tax', () => {
+  resetDB();
+  const row = { 'Invoice #':'INV50001', 'Buyer':'Acme', 'Grand Total':'3209', 'Items Subtotal':'2959', 'COGS':'2959', 'Tax Rate (decimal)':'0.075', 'Local Freight':'28' };
+  ctx.processImport('inv', 'Invoice #,Buyer,Grand Total,Items Subtotal,COGS,Tax Rate (decimal),Local Freight\nINV50001,Acme,3209,2959,2959,0.075,28\n');
+  const a = ctx.DB.inv.find(i => i.num === 'INV50001');
+  assertApprox(parseFloat(a.calc_netProfit), 3209 - 2959*0.075 - 2959, 'processImport np = grand - tax - cogs');
+  resetDB();
+  ctx.processImportRecords('inv', [Object.assign({}, row, { 'Invoice #':'INV50002' })], function(){});
+  const b = ctx.DB.inv.find(i => i.num === 'INV50002');
+  assertApprox(parseFloat(b.calc_netProfit), 3209 - 2959*0.075 - 2959, 'processImportRecords np = grand - tax - cogs');
+  assertApprox(parseFloat(b.calc_margin), (parseFloat(b.calc_netProfit)/3209)*100, 'margin consistent with corrected np');
+});
+test('healImportedInvNetProfit() corrects only the bug signature, idempotently; hand-set figures untouched', () => {
+  resetDB();
+  ctx.DB.inv = [
+    { id:'h1', num:'INV1', status:'Paid', lineItems:[], calc_grandTotal:'3209', calc_cogs:'2959', calc_taxAmt:'221.93', calc_netProfit:'250', calc_margin:'7.79' },
+    { id:'h2', num:'INV2', status:'Paid', lineItems:[], calc_grandTotal:'957.08', calc_cogs:'894.47', calc_taxAmt:'60', calc_netProfit:'0', calc_margin:'0' },
+    { id:'h3', num:'INV3', status:'Paid', lineItems:[], calc_grandTotal:'1000', calc_cogs:'600', calc_taxAmt:'0', calc_netProfit:'400', calc_margin:'40' },
+    { id:'h4', num:'INV4', status:'Paid', lineItems:[], chargesIncluded:false, calc_grandTotal:'1000', calc_cogs:'600', calc_taxAmt:'50', calc_netProfit:'400', calc_margin:'40' }
+  ];
+  const fixed = ctx.healImportedInvNetProfit();
+  assertEqual(fixed.length, 1, 'only the signature match is corrected');
+  assertApprox(parseFloat(ctx.DB.inv[0].calc_netProfit), 28.07, 'h1 np = 250 - 221.93');
+  assertApprox(parseFloat(ctx.DB.inv[0].calc_margin), 28.07/3209*100, 'h1 margin recomputed');
+  assertEqual(ctx.DB.inv[1].calc_netProfit, '0', 'hand-set 0 untouched');
+  assertEqual(ctx.DB.inv[2].calc_netProfit, '400', 'zero-tax untouched');
+  assertEqual(ctx.DB.inv[3].calc_netProfit, '400', 'chargesIncluded=false untouched');
+  assertEqual(ctx.healImportedInvNetProfit().length, 0, 'second run is a no-op (no double subtraction)');
+  assertApprox(parseFloat(ctx.DB.inv[0].calc_netProfit), 28.07, 'still 28.07 after re-run');
+});
+
+test('quickAddSupplier() — creates a name-only supplier from the invoice quick-add row and selects it', async () => {
+  resetDB(); ctx.DB.sup = [];
+  const oprompt = ctx.prompt; ctx.prompt = () => 'Shenzhen Widgets Ltd';
+  try { await ctx.quickAddSupplier(); } finally { ctx.prompt = oprompt; }
+  assertEqual(ctx.DB.sup.length, 1, 'supplier created');
+  assertEqual(ctx.DB.sup[0].name, 'Shenzhen Widgets Ltd');
+  assert(ctx.DB.sup[0].num, 'gets a SUP- number');
+  assertEqual(mockEl('qal-sup').value, ctx.DB.sup[0].id, 'new supplier is selected');
+  assertContains(mockEl('qal-sup').innerHTML, 'Shenzhen Widgets Ltd');
+});
+test('quickAddSupplier() — duplicate name (case-insensitive) selects the existing one, cancel selects nothing', async () => {
+  resetDB(); ctx.DB.sup = [{ id:'sX', num:'SUP-0001', name:'Acme Co', cur:'USD' }];
+  const op = ctx.prompt, oa = ctx.alert; ctx.alert = () => {};
+  try {
+    ctx.prompt = () => '  acme co '; await ctx.quickAddSupplier();
+    assertEqual(ctx.DB.sup.length, 1, 'no duplicate created');
+    assertEqual(mockEl('qal-sup').value, 'sX', 'existing supplier selected');
+    ctx.prompt = () => null; await ctx.quickAddSupplier();
+    assertEqual(ctx.DB.sup.length, 1, 'cancel creates nothing');
+    assertEqual(mockEl('qal-sup').value, '', 'cancel clears the sentinel');
+  } finally { ctx.prompt = op; ctx.alert = oa; }
+});
+test('quickAddLine() — the "New Supplier" sentinel never counts as a supplier', () => {
+  resetDB(); ctx.cIL = [];
+  mockEl('qal-desc').value = 'Item'; mockEl('qal-uom').value = 'pcs'; mockEl('qal-qty').value = '1';
+  mockEl('qal-up').value = '20'; mockEl('qal-type').value = 'product'; mockEl('qal-uc').value = '10'; mockEl('qal-sup').value = '__new__';
+  ctx.quickAddLine();
+  assertEqual(ctx.cIL.length, 0, 'blocked while the sentinel is selected');
+  mockEl('qal-sup').value = '';
+});
+
+test('margin vs markup labels (v2.9.94): Quote per-line column is Markup, Line Item margin states its basis', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assertContains(html, '<th>Duty %</th><th title="Markup on the landed cost of this line', 'quote grid per-line column header says Markup');
+  assertNotContains(html, '<th>Duty %</th><th>Margin %</th>', 'old mislabelled header is gone');
+  assertContains(html, 'Markup % <span style="font-size:.44rem;color:var(--m);">(on landed cost)</span>', 'quote-level field states its basis');
+  assertContains(html, '(on price, before freight &amp; duty)', 'Line Item margin states its basis');
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));

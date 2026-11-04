@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.91</title>
+<title>Stackd Ops v2.9.94</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -223,7 +223,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.91</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.94</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1145,7 +1145,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
     </div>
     <div style="background:var(--ink);padding:10px 14px;display:flex;gap:20px;margin-bottom:12px;">
       <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Unit Margin</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gold);" id="lmv">-</div></div>
-      <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;">Margin %</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;" id="lmp">-</div></div>
+      <div><div style="font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:1px;" title="Margin on price: (price &minus; cost) &divide; price. Supplier cost only &mdash; before freight, duty and insurance.">Margin % <span style="text-transform:none;letter-spacing:0;">(on price, before freight &amp; duty)</span></div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;" id="lmp">-</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:12px;">
       <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Length (cm)</label><input type="number" id="lf-diml" placeholder="0" step="0.1" min="0" oninput="calcLICBM()"></div>
@@ -1205,7 +1205,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
         <!-- Quick add form -->
         <div style="display:grid;grid-template-columns:90px 90px 2fr 52px 52px 88px 92px auto;gap:6px;margin-top:8px;align-items:end;">
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Type</label><select id="qal-type" onchange="qaTypeChg()" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="product">Product</option><option value="pass-through">Pass-through</option><option value="charge">Charge</option></select></div>
-          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Supplier</label><select id="qal-sup" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="">Select...</option></select></div>
+          <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Supplier</label><select id="qal-sup" onchange="if(this.value==='__new__') quickAddSupplier()" style="font-size:.6rem;border:none;border-bottom:1px dashed var(--ln);padding:2px 0;background:transparent;outline:none;width:100%;"><option value="">Select...</option></select></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Description</label><input type="text" id="qal-desc" placeholder="e.g. Local Freight"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">UOM</label><input type="text" id="qal-uom" placeholder="pcs" value="pcs" list="dl-uom" autocomplete="off"></div>
           <div class="fld" style="margin:0;"><label style="font-size:.44rem;">Qty</label><input type="number" id="qal-qty" placeholder="1" value="1" min="0" step="any"></div>
@@ -1382,9 +1382,39 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.91</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.94</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
           <span style="background:var(--cr);color:white;font-size:.44rem;padding:1px 6px;border-radius:2px;">LATEST</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix (labels only, no calculation changed): <strong>margin vs markup wording</strong>. The Quote editor&rsquo;s per-line column was headed &ldquo;Margin %&rdquo; but is a <em>markup</em> on landed cost (a 20% markup is only a 16.7% margin); it now reads &ldquo;Markup %&rdquo;, and the quote-level field says &ldquo;(on landed cost)&rdquo;. The Line Item form&rsquo;s Margin % now states it is on price and before freight, duty and insurance.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.93</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>&ldquo;＋ New Supplier…&rdquo; on the invoice quick-add row</strong>, mirroring &ldquo;＋ New Buyer…&rdquo;. Type a name and the Supplier is created (name only, USD) and selected, and appears in the Suppliers tab where you can fill in the rest. Duplicate names select the existing Supplier instead; works with Cloud Data. Needed because Product lines now require a Supplier.</li>
+          <li>3 new tests (1103 &rarr; 1106 pass).</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.92</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong>sales tax was counted as Net Profit</strong> on the invoice form&rsquo;s live totals and on both CSV invoice import paths (<code>INV-GAP-007</code>). Reports read the stored figure, so CSV-imported invoices with tax were overstated by their tax amount. Imports now store Net Profit excluding tax, and a one-time self-healing correction (<code>healImportedInvNetProfit()</code>) repairs invoices already imported &mdash; it only touches records whose stored Net Profit exactly equals Grand Total &minus; COGS, so hand-set figures are left alone, and it is safe to re-run.</li>
+          <li>Fix: <strong>previewing an unsaved invoice or credit note showed the Buyer&rsquo;s internal id (a UUID) under the customer name</strong> instead of the Buyer&rsquo;s name.</li>
+          <li>4 new tests (1099 &rarr; 1103 pass).</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.91</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New/Fix: <strong>Shipment↔Invoice relationship — real id-based linking, DG/port inheritance, source-drift detection</strong> (<code>REQ/SPEC-SHIP-002</code>) — <code>linkedInvs[]</code> was a bare array of invoice-number strings, never dereferenced against <code>DB.inv</code>, and DG status was hardcoded <code>false</code> at Shipment auto-creation regardless of the source invoice's own DG-flagged lines. New <code>linkedInvIds[]</code>/<code>linkedInvSnapshots[]</code> fields (not positionally parallel to <code>linkedInvs[]</code> — matched by <code>invId</code> only) and a shared <code>invHasDG(inv)</code> helper fix both: <code>autoCreateShipmentFromInvoice()</code>/<code>saveShp()</code> now inherit DG (additive, never replacing the operator's own checkbox) and fill a blank Origin/Dest Port from the first linked invoice, never overwriting one already set.</li>
@@ -2797,7 +2827,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
             <option value="FCL 40HQ">FCL 40HQ</option>
           </select>
         </div>
-        <div class="fld"><label>Markup %</label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
+        <div class="fld"><label>Markup % <span style="font-size:.44rem;color:var(--m);">(on landed cost)</span></label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
         <div class="fld"><label>Origin Charges Override ($)</label><input type="number" id="qf-origOv" min="0" step="5" oninput="calcQte()"></div>
         <div class="fld"><label>Dest Charges Override ($)</label><input type="number" id="qf-destOv" min="0" step="5" oninput="calcQte()"></div>
         <div class="fld"><label>FPM Admin Override ($)</label><input type="number" id="qf-admOv" min="0" step="5" oninput="calcQte()"></div>
@@ -3192,6 +3222,29 @@ function migrateLinkedPOIds() {
     }
   });
   if (changed) saveAll();
+}
+function healImportedInvNetProfit() {
+  // v2.9.92: CSV invoice imports before this version stored calc_netProfit = grand - cogs, i.e. counted
+  // sales tax as profit (cInv() correctly treats tax as a buyer pass-through). iCalc() prefers the stored
+  // value, so every report overstated those invoices by their tax amount. Idempotent, no device marker:
+  // only a record whose stored net profit equals exactly grand - cogs (the bug's signature) with a
+  // positive stored tax is corrected; once corrected it no longer matches, so a re-run (or another
+  // device pulling the corrected value) is a no-op. Hand-corrected figures never match, so are untouched.
+  // Returns the corrected records so a caller can push them to Cloud Data.
+  var fixed = [];
+  DB.inv.forEach(function(inv) {
+    if (inv.type === 'credit_note' || inv.type === 'goodwill_credit') return;
+    if (inv.calc_netProfit === undefined || inv.calc_netProfit === '' || inv.chargesIncluded === false) return;
+    var grand = parseFloat(inv.calc_grandTotal), cogs = parseFloat(inv.calc_cogs) || 0, tax = parseFloat(inv.calc_taxAmt);
+    var np = parseFloat(inv.calc_netProfit);
+    if (!(grand > 0) || !(tax > 0.005) || isNaN(np)) return;
+    if (Math.abs(np - (grand - cogs)) > 0.005) return;
+    var fixedNp = np - tax;
+    inv.calc_netProfit = String(+fixedNp.toFixed(2));
+    inv.calc_margin = (fixedNp / grand * 100).toFixed(2);
+    fixed.push(inv);
+  });
+  return fixed;
 }
 function backfillShLinkedInvs() {
   // SH-GAP-002: heals Shipment records already corrupted (linkedInvs coerced from array to
@@ -5260,6 +5313,7 @@ async function pullAll() {
   backfillConIds();
   backfillInvoicePOs();
   migrateQtePoShape();
+  healImportedInvNetProfit();
   saveAll(); renderAll();
   if (failed.length) {
     setSyncStatus('err');
@@ -5989,7 +6043,9 @@ function rSup() {
       '<td><button class="ab" onclick="editSup(\'' + s.id + '\')">&#9998;</button><button class="ab" onclick="delSup(\'' + s.id + '\')">&#10005;</button></td></tr>';
   }).join('');
   var opts = DB.sup.map(function(s){ return '<option value="' + s.id + '">' + san(s.name) + '</option>'; }).join('');
-  ['lf-sup','pf-sup','qal-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
+  ['lf-sup','pf-sup'].forEach(function(id){ var el=G(id); if(el) el.innerHTML='<option value="">Select...</option>'+opts; });
+  var qalSup = G('qal-sup');
+  if (qalSup) { var qalPrev = qalSup.value === '__new__' ? '' : qalSup.value; qalSup.innerHTML = '<option value="">Select...</option><option value="__new__">＋ New Supplier…</option>'+opts; qalSup.value = qalPrev; }
   G('li-sf').innerHTML = '<option value="">All suppliers</option>' + opts;
   populateConSupDrop();
 }
@@ -6431,9 +6487,12 @@ async function refreshInvFromSupabase() {
     }
     return rec;
   });
+  var _npFixed = healImportedInvNetProfit();
   sv(K.i, DB.inv);
   if (!localStorage.getItem('st_inv_cloud_migration_ts')) localStorage.setItem('st_inv_cloud_migration_ts', new Date().toISOString());
   rInv(); rDash();
+  // Push the corrected figures back so the next refresh doesn't restore the wrong stored values.
+  _npFixed.forEach(function(inv){ persistInvChange(inv, true).catch(function(){}); });
 }
 
 async function refreshPmtFromSupabase() {
@@ -8336,6 +8395,31 @@ function invLineHasSupplier(li) {
   var resolved = li.lid && DB.li.find(function(x){ return x.id === li.lid; });
   return !!(resolved && resolved.supId) || !!li.supId;
 }
+async function quickAddSupplier() {
+  // Mirrors quickAddBuyer(): name-only create from the invoice quick-add row. Everything else
+  // (country, contact, payment terms, ...) is completed later in the Suppliers tab.
+  var sel = G('qal-sup');
+  var qName = prompt('New supplier name:');
+  if (!qName || !qName.trim()) { if (sel) sel.value = ''; return; }
+  qName = qName.trim();
+  var dup = DB.sup.find(function(x){ return (x.name||'').trim().toLowerCase() === qName.toLowerCase(); });
+  if (dup) { alert('A supplier with this name already exists.'); rSup(); if (sel) sel.value = dup.id; return; }
+  if (_sb) {
+    if (!(await ensureSbAuth())) { if (sel) sel.value = ''; return; }
+    var result = await _sb.from('suppliers').insert({ num: nextRefNum(DB.sup,'SUP'), name: qName, country: '', contact_name: '', email: '', phone: '', currency: 'USD', notes: '' }).select().single();
+    if (result.error) { toast('Could not create supplier: ' + result.error.message); if (sel) sel.value = ''; return; }
+    await refreshSupFromSupabase();
+    logEv('supplier', result.data.id, 'created', 'Supplier ' + result.data.name + ' quick-created', 'operator');
+    rSup(); if (sel) sel.value = result.data.id;
+    return;
+  }
+  var ns = { id:uid(), num:nextRefNum(DB.sup,'SUP'), name:qName, country:'', ct:'', email:'', phone:'', cur:'USD', notes:'' };
+  DB.sup.push(ns);
+  sv(K.s, DB.sup);
+  logEv('supplier', ns.id, 'created', 'Supplier ' + ns.name + ' quick-created', 'operator');
+  rSup(); if (sel) sel.value = ns.id;
+  await syncEnt('sup', ns).catch(function(){});
+}
 function quickAddLine() {
   var desc = G('qal-desc') ? G('qal-desc').value.trim() : '';
   var uom  = G('qal-uom')  ? G('qal-uom').value.trim()  : 'pcs';
@@ -8344,6 +8428,7 @@ function quickAddLine() {
   var lt   = G('qal-type') ? G('qal-type').value   : 'product';
   var uc   = lt === 'pass-through' ? up : (G('qal-uc') ? +G('qal-uc').value : 0);
   var sup  = G('qal-sup')  ? G('qal-sup').value    : '';
+  if (sup === '__new__') sup = ''; // the "＋ New Supplier…" sentinel is never a real supplier id
   if (!desc) { toast('⚠ Enter a description'); return; }
   if (lt === 'product' && !invLineHasCostBasis({ lid:'', unitCost:uc })) {
     toast('⚠ Product lines need a Unit Cost greater than 0 — enter a real cost, or set Type to Pass-thru/Charge if there\'s no separate cost to record');
@@ -8474,7 +8559,7 @@ function calcInv() {
   var lf=+G('if-lf').value||0, ins=+G('if-ins').value||0, leg=+G('if-leg').value||0, isp=+G('if-isp').value||0, oth=+G('if-oth').value||0;
   var chgs=lf+ins+leg+isp+oth, grand=liT+tax+chgs, dep=+G('if-dep').value||0, bal=grand-dep;
   var cogs=cIL.reduce(function(s,li){var r=DB.li.find(function(x){return x.id===li.lid;});if(r)return s+(+r.cost||0)*(+li.qty||0);return s+(+li.unitCost||0)*(+li.qty||0);},0);
-  var gp=liT-cogs, np=(G('if-chi').checked!==false)?(grand-cogs):(grand-cogs-chgs), mgn=grand>0?(np/grand)*100:null;
+  var gp=liT-cogs, np=(G('if-chi').checked!==false)?(grand-tax-cogs):(grand-tax-cogs-chgs), mgn=grand>0?(np/grand)*100:null; // tax is a buyer pass-through, never income — mirrors cInv()
 
   G('chg-bd').innerHTML =
     '<div class="crow"><span class="clbl">Items Subtotal</span><span class="cval hi">' + fmt(liT,cur) + '</span></div>' +
@@ -10359,17 +10444,23 @@ async function delPO(id) {
 }
 
 // ── PRINT PREVIEWS ─────────────────────────────────────────────
+// The buyer <select> holds the Buyer's id, not its name — resolve to the name for display.
+function ifBuyerName() {
+  var v = G('if-b').value;
+  var b = DB.buy.find(function(x){ return x.id === v; });
+  return b ? b.name : v;
+}
 function prevInv() {
   document.activeElement && document.activeElement.blur && document.activeElement.blur();
   window._lastPO=null;
   var num=G('if-n').value||'DRAFT';
   if (isCN(num)) {
     var gwCb=G('if-cn-goodwill'); var isGW=gwCb&&gwCb.checked;
-    prevCNDoc({ num:num, buyer:G('if-b').value, buyerAddr:G('if-ba').value, cur:G('if-cur').value, date:G('if-dt').value, status:G('inv-sm').value, cnReason:G('if-cn-reason')?G('if-cn-reason').value:'', cnAmount:G('if-cn-amount')?-(Math.abs(+G('if-cn-amount').value||0)):0, linkedInvNum:G('if-linked')?G('if-linked').value:'', type:isGW?'goodwill_credit':'credit_note' });
+    prevCNDoc({ num:num, buyer:ifBuyerName(), buyerAddr:G('if-ba').value, cur:G('if-cur').value, date:G('if-dt').value, status:G('inv-sm').value, cnReason:G('if-cn-reason')?G('if-cn-reason').value:'', cnAmount:G('if-cn-amount')?-(Math.abs(+G('if-cn-amount').value||0)):0, linkedInvNum:G('if-linked')?G('if-linked').value:'', type:isGW?'goodwill_credit':'credit_note' });
     return;
   }
   var tx=getTR();
-  prevInvDoc({num:num,status:G('inv-sm')?G('inv-sm').value:'',buyer:G('if-b').value,buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,incoterm:G('if-inco').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,paymentTerms:G('if-pt').value,terms:G('if-terms').value,lineItems:cIL.slice()});
+  prevInvDoc({num:num,status:G('inv-sm')?G('inv-sm').value:'',buyer:ifBuyerName(),buyerAddr:G('if-ba').value,shipTo:G('if-st').value,dst:G('if-dst').value,custId:G('if-cid').value,date:G('if-dt').value,expiry:G('if-ex').value,shipDate:G('if-sd').value,ft:G('if-ft').value,wt:G('if-wt').value,cbm:G('if-cbm').value,pk:G('if-pk').value,pol:G('if-pol').value,pod:G('if-pod').value,coo:G('if-coo').value,incoterm:G('if-inco').value,cur:G('if-cur').value,taxRate:tx,lf:+G('if-lf').value||0,ins:+G('if-ins').value||0,leg:+G('if-leg').value||0,isp:+G('if-isp').value||0,oth:+G('if-oth').value||0,dep:+G('if-dep').value||0,paymentTerms:G('if-pt').value,terms:G('if-terms').value,lineItems:cIL.slice()});
 }
 function prevInvId(id) { var inv=DB.inv.find(function(x){return x.id===id;}); if(inv){ window._lastInv=inv; window._lastPO=null; if(inv.type==='credit_note'||inv.type==='goodwill_credit'||(!inv.type&&isCN(inv.num))) prevCNDoc(inv); else prevInvDoc(inv); } }
 function prevPO() {
@@ -11246,7 +11337,7 @@ async function processImport(entity, csvText) {
       var tx=+r['Tax Rate (decimal)']||+r['taxRate']||0;
       var lf=+r['Local Freight']||+r['lf']||0;
       var ins=+r['Insurance']||+r['ins']||0;
-      var gp=liT-cogs; var np=gt-cogs; // chargesIncluded=true default
+      var gp=liT-cogs; var np=gt-(liT*tx)-cogs; // chargesIncluded=true default; tax is a buyer pass-through, never profit (mirrors cInv())
       var mgn=gt>0?((np/gt)*100).toFixed(2):'0';
       var status=(function(s){
         var m={'paid':'Paid','partially paid':'Partially Paid','part paid':'Partially Paid',
@@ -11315,6 +11406,7 @@ async function processImport(entity, csvText) {
     sv(K.p,DB.po);
     backfillInvoicePOs();
     migrateQtePoShape();
+    healImportedInvNetProfit();
     var msg='POs: '+added+' added, '+updated+' updated, '+skipped+' skipped'+(errors.length?' | '+errors.join('; '):'');
     G('imp-po-result').textContent=msg; impLog(msg); rPO(); rDash();
   }
@@ -11579,7 +11671,7 @@ function processImportRecords(entity, records, callback) {
       var lf=cleanNum(r['Local Freight']);
       var ins=cleanNum(r['Insurance']);
       if (!liT && gt) liT = (tx>0) ? gt/(1+tx) : gt;
-      var gp=liT-cogs; var np=gt-cogs;
+      var gp=liT-cogs; var np=gt-(liT*tx)-cogs; // tax is a buyer pass-through, never profit (mirrors cInv())
       var mgn=gt>0?((np/gt)*100).toFixed(2):'0';
       var status=(function(s){
         var m={'paid':'Paid','partially paid':'Partially Paid','part paid':'Partially Paid',
@@ -11667,6 +11759,7 @@ function processImportRecords(entity, records, callback) {
     sv(K.p, DB.po);
     backfillInvoicePOs();
     migrateQtePoShape();
+    healImportedInvNetProfit();
     rPO(); rDash();
   }
 
@@ -12149,7 +12242,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.91).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.94).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12275,6 +12368,9 @@ var AI_SYSTEM_PROMPT = [
   '## Dashboard KPIs',
   '- Invoice Revenue: sum of grand totals (non-cancelled invoices)',
   '- Net Profit: grand total minus COGS minus tax per invoice',
+  'Margin vs markup (v2.9.94, labels only): Line Item "Margin %" = (price - cost) / price, on supplier cost only (before freight/duty/insurance). Quote "Markup %" (quote-level and per-line) is applied on top of LANDED cost: sell = landed x (1 + markup/100), so a 20% markup is a 16.7% margin. Do not enter a margin figure as a markup.',
+  'Invoice quick-add Supplier dropdown has a "＋ New Supplier…" option (v2.9.93) that creates a name-only Supplier (USD) and selects it, like "＋ New Buyer…"; complete its details in the Suppliers tab.',
+  '- Net Profit never includes sales tax (a buyer pass-through). v2.9.92 fixed the invoice form\'s live totals and both CSV invoice import paths, which used to count tax as profit; previously imported invoices self-correct on load.',
   '- Avg Margin: net profit ÷ revenue × 100',
   '- Outstanding: balance due on unpaid / partially paid invoices',
   '- PO Balance Due: outstanding on active POs',
@@ -13457,6 +13553,7 @@ function doImport(e) {
     backfillOrderRequests();
     backfillInvoicePOs();
     migrateQtePoShape();
+    healImportedInvNetProfit();
     saveAll();
     renderAll();
     rCfg();
@@ -14366,7 +14463,7 @@ function rQLT() {
   var quoteInsPct = (quoteInsRateRaw === '') ? QR.insRate * 100 : +quoteInsRateRaw;
   var totalCBM = cQL.reduce(function(s,l){ return s+(+l.cbm||0); }, 0);
   el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:1080px;">'
-    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th>Margin %</th><th>Ins %</th><th>Ins $</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
+    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th title="Markup on the landed cost of this line; overrides the quote-level Markup %. Blank inherits it.">Markup %</th><th>Ins %</th><th>Ins $</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
     + '<tbody>'
     + cQL.map(function(l){
         var calcR = cQteLine(l, QR, mode, totalCBM, quoteInsRateRaw);
@@ -16138,6 +16235,7 @@ function initApp() {
     backfillOrderRequests();
     backfillInvoicePOs();
     migrateQtePoShape();
+    healImportedInvNetProfit();
     cleanupExpiredMigrationArchive();
     if (SS.url) {
       G('banner').style.display='none';
