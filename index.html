@@ -280,6 +280,8 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 <div class="view" id="v-sup">
   <div class="tb">
     <input class="sb" type="text" placeholder="Search suppliers..." id="sup-q" oninput="rSup()">
+    <select class="sb" style="max-width:150px;" id="sup-cf" onchange="rSup()"><option value="">All countries</option></select>
+    <select class="sb" style="max-width:130px;" id="sup-sort" onchange="rSup()"><option value="">Sort: default</option><option value="az">Name A&ndash;Z</option><option value="za">Name Z&ndash;A</option></select>
     <button class="btn btn-s" data-en="+ New Supplier" data-zh="+ 新建供应商" onclick="openSup()">+ New Supplier</button>
   </div>
   <div class="tw"><table class="tbl"><thead><tr><th>#</th><th>Name</th><th>Country</th><th>Contact</th><th>Email</th><th>Phone</th><th>Cur.</th><th>Notes</th><th></th></tr></thead><tbody id="sup-tb"></tbody></table></div>
@@ -294,6 +296,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
   <div class="tb">
     <input class="sb" type="text" placeholder="Search items..." id="li-q" oninput="rLI()">
     <select class="sb" style="max-width:170px;" id="li-sf" onchange="rLI()"><option value="">All suppliers</option></select>
+    <select class="sb" style="max-width:130px;" id="li-sort" onchange="rLI()"><option value="">Sort: default</option><option value="az">Name A&ndash;Z</option><option value="za">Name Z&ndash;A</option></select>
     <button class="btn btn-s" data-en="+ New Line Item" data-zh="+ 新建商品" onclick="openLI()">+ New Line Item</button>
     <button class="btn btn-g" onclick="expPriceHistoryCSV()" title="Export price history for all line items">&#8595; Price History CSV</button>
   </div>
@@ -308,6 +311,8 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
   <div class="tb">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">INVOICES</div>
     <input class="sb" type="text" placeholder="Search invoices..." id="inv-q" oninput="rInv()">
+    <select class="sb" style="max-width:150px;" id="inv-bf" onchange="rInv()"><option value="">All buyers</option></select>
+    <select class="sb" style="max-width:150px;" id="inv-sort" onchange="rInv()"><option value="">Sort: newest entered</option><option value="dnew">Date: newest</option><option value="dold">Date: oldest</option><option value="baz">Buyer A&ndash;Z</option><option value="bza">Buyer Z&ndash;A</option></select>
     <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
     <button class="btn btn-s" data-en="+ New Invoice" data-zh="+ 新建发票" onclick="openInv()">+ New Invoice</button>
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
@@ -478,6 +483,8 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 <div class="view" id="v-buy">
   <div class="tb">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.1em;color:var(--ink);">BUYERS</div>
+    <input class="sb" type="text" placeholder="Search buyers..." id="buy-q" oninput="renderBuyers()">
+    <select class="sb" style="max-width:130px;" id="buy-sort" onchange="renderBuyers()"><option value="">Sort: default</option><option value="az">Name A&ndash;Z</option><option value="za">Name Z&ndash;A</option></select>
     <button class="btn btn-s" onclick="openBuy(null)">+ New Buyer</button>
   </div>
   <div id="buy-fx-warn"></div>
@@ -1177,7 +1184,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
           <div class="fld"><label>Date</label><input type="date" id="if-dt"></div>
           <div class="fld"><label>Expiry / Due Date</label><input type="date" id="if-ex"></div>
           <div class="fld"><label>Customer ID</label><input type="text" id="if-cid"></div>
-          <div class="fld" style="grid-column:span 2"><label id="lbl-inv-buyer">Buyer / Company</label><select id="if-b" onchange="if(this.value==='__new__') quickAddBuyer()" style="font-family:'DM Mono',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px 0;background:transparent;width:100%;outline:none;cursor:pointer;"></select><span id="if-b-err" class="verr"></span></div>
+          <div class="fld" style="grid-column:span 2"><label id="lbl-inv-buyer">Buyer / Company</label><select id="if-b" onchange="if(this.value==='__new__') quickAddBuyer(); else applyBuyerToInvForm(this.value)" style="font-family:'DM Mono',monospace;font-size:.6rem;border:none;border-bottom:1px solid var(--ln);padding:4px 0;background:transparent;width:100%;outline:none;cursor:pointer;"></select><span id="if-b-err" class="verr"></span></div>
           <div class="fld" style="grid-column:span 2"><label>Buyer Address</label><input type="text" id="if-ba"></div>
           <div class="fld" style="grid-column:span 2"><label>Ship To (if different)</label><input type="text" id="if-st"></div>
           <div class="fld"><label id="lbl-inv-dst">Destination</label><input type="text" id="if-dst" placeholder="Barbados" list="dl-countries" autocomplete="off"></div>
@@ -4518,6 +4525,13 @@ function fmt(n, c) {
 function fn(n, d) { d = d||2; return isNaN(+n) ? '0.00' : (+n).toFixed(d); }
 function fmtN(n, c, d) { d = d==null?2:d; if (n===null||isNaN(+n)) return '-'; return (c||'USD') + ' ' + (+n).toFixed(d); }
 function fp(n) { return (n === null || isNaN(+n)) ? '-' : (+n).toFixed(1) + '%'; }
+// Case-insensitive, number-aware name comparator for the list-tab sort dropdowns ('az' | 'za').
+function nameCmp(dir) {
+  return function(a, b) {
+    var r = String(a||'').localeCompare(String(b||''), undefined, { numeric:true, sensitivity:'base' });
+    return dir === 'za' ? -r : r;
+  };
+}
 function gsn(id) { var s = DB.sup.find(function(x){return x.id===id;}); return s ? s.name : (id || '?'); }
 
 function san(str) {
@@ -6026,7 +6040,15 @@ function renderAccts() {
 // ── SUPPLIERS ──────────────────────────────────────────────────
 function rSup() {
   var q = (G('sup-q').value||'').toLowerCase();
-  var f = DB.sup.filter(function(s){ return !q || (s.name||'').toLowerCase().includes(q) || (s.country||'').toLowerCase().includes(q); });
+  var cf = G('sup-cf'), cfPrev = cf ? cf.value : '';
+  var f = DB.sup.filter(function(s){ return (!q || (s.name||'').toLowerCase().includes(q) || (s.country||'').toLowerCase().includes(q)) && (!cfPrev || (s.country||'') === cfPrev); });
+  var supSort = G('sup-sort') ? G('sup-sort').value : '';
+  if (supSort === 'az' || supSort === 'za') f = f.slice().sort(function(a,b){ return nameCmp(supSort)(a.name, b.name); });
+  if (cf) {
+    var countries = DB.sup.map(function(s){ return s.country||''; }).filter(function(c, i, arr){ return c && arr.indexOf(c) === i; }).sort(nameCmp('az'));
+    cf.innerHTML = '<option value="">All countries</option>' + countries.map(function(c){ return '<option value="' + san(c) + '">' + san(c) + '</option>'; }).join('');
+    cf.value = cfPrev;
+  }
   G('sup-em').style.display = f.length ? 'none' : 'block';
   G('sup-tb').innerHTML = f.map(function(s){
     return '<tr><td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(s.num||'-') + '</td><td style="font-weight:500;color:var(--cr)">' + san(s.name||'-') + (s._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td><td>' + san(s.country||'-') + '</td><td>' + san(s.ct||'-') + '</td><td>' + san(s.email||'-') + '</td><td>' + san(s.phone||'-') + '</td><td>' + san(s.cur||'-') + '</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + san(s.notes||'') + '</td>' +
@@ -7990,6 +8012,17 @@ function rLI() {
     if (!a) return 1; if (!b) return -1;
     return gsn(a).localeCompare(gsn(b));
   });
+  var liSort = G('li-sort') ? G('li-sort').value : '';
+  if (liSort === 'az' || liSort === 'za') {
+    // Name sort orders the items within each supplier group; Z-A also reverses the group order
+    // (the "No Supplier" group stays last either way).
+    var byDesc = nameCmp(liSort);
+    Object.keys(groups).forEach(function(k){ groups[k].sort(function(a,b){ return byDesc(a.desc, b.desc); }); });
+    if (liSort === 'za') {
+      var named = groupKeys.filter(function(k){ return k; }).reverse();
+      groupKeys = groupKeys.indexOf('') !== -1 ? named.concat(['']) : named;
+    }
+  }
   G('li-tb').innerHTML = groupKeys.map(function(key){
     var label = key ? gsn(key) : 'No Supplier';
     var hdr = '<tr class="li-grp-hdr"><td colspan="12" style="background:var(--bg);font-weight:600;padding:6px 10px;color:var(--m);font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;">' + san(label) + '</td></tr>';
@@ -8260,6 +8293,7 @@ function openInv() {
   var gcb=G('if-cn-goodwill'); if(gcb) gcb.checked=false;
   ['fld-linked-inv','fld-cn-reason','fld-cn-amount','fld-cn-goodwill'].forEach(function(f){var e=G(f);if(e)e.style.display='none';});
   populateBuyDropdown('if-b', 'BUY-ADHOC');
+  ifSnapBuyerFields();
   rILT(); calcInv(); _updQaWarn(); G('ov-inv').classList.add('on'); setTimeout(function(){G('if-n').focus();},50);
 }
 function showInvReadOnly(inv) {
@@ -8325,6 +8359,7 @@ function editInv(id) {
   G('if-isp').value=inv.isp||''; G('if-oth').value=inv.oth||''; G('if-dep').value=inv.dep||'';
   G('if-inco').value=inv.incoterm||''; G('if-pt').value=inv.paymentTerms||'';
   G('if-terms').value=inv.terms||AS.terms||''; G('if-chi').checked=inv.chargesIncluded!==false;
+  ifSnapBuyerFields();
   // Restore CN fields when editing a credit note or goodwill credit
   var editIsCN = inv.type==='credit_note' || inv.type==='goodwill_credit' || (!inv.type && isCN(inv.num));
   if (editIsCN) {
@@ -9547,9 +9582,21 @@ function rInv() {
   var invRecs = DB.inv.filter(function(i){ return !isCnRec(i); });
   var cnRecs  = DB.inv.filter(function(i){ return isCnRec(i); });
   // Filter invoices
-  var fi=invRecs.filter(function(i){ return (!q||(i.num||'').toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.dst||'').toLowerCase().includes(q)) && (!sf||i.status===sf); });
+  var ibf = G('inv-bf'), bfPrev = ibf ? ibf.value : '';
+  var fi=invRecs.filter(function(i){ return (!q||(i.num||'').toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.dst||'').toLowerCase().includes(q)) && (!sf||i.status===sf) && (!bfPrev||i.buyer===bfPrev); });
+  if (ibf) {
+    var buyerNames = invRecs.map(function(i){ return i.buyer||''; }).filter(function(b, i, arr){ return b && arr.indexOf(b) === i; }).sort(nameCmp('az'));
+    ibf.innerHTML = '<option value="">All buyers</option>' + buyerNames.map(function(b){ return '<option value="' + san(b) + '">' + san(b) + '</option>'; }).join('');
+    ibf.value = bfPrev;
+  }
+  var invSort = G('inv-sort') ? G('inv-sort').value : '';
+  var ordered = fi.slice();
+  if (invSort === 'baz' || invSort === 'bza') ordered.sort(function(a,b){ return nameCmp(invSort === 'bza' ? 'za' : 'az')(a.buyer, b.buyer); });
+  else if (invSort === 'dnew') ordered.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
+  else if (invSort === 'dold') ordered.sort(function(a,b){ return String(a.date||'').localeCompare(String(b.date||'')); });
+  else ordered.reverse(); // default: newest entered first, as before
   var invTb = G('inv-tb'), invEm = G('inv-em');
-  if(invTb) invTb.innerHTML=fi.slice().reverse().map(function(inv){
+  if(invTb) invTb.innerHTML=ordered.map(function(inv){
     var c=iCalc(inv), cur=inv.cur||'USD';
     var mc=c.mgn===null||isNaN(c.mgn)?'':(c.mgn>=20?'phi':c.mgn>=10?'pmi':'plo');
     var sc = invStatusClass(inv.status);
@@ -9890,6 +9937,7 @@ async function quickAddBuyer() {
     await refreshBuyFromSupabase();
     logEv('buyer', result.data.id, 'created', 'Buyer quick-created: ' + result.data.name, 'operator');
     populateBuyDropdown('if-b', result.data.id);
+    applyBuyerToInvForm(result.data.id);
     return;
   }
   var nb = { id:'BUY' + Date.now(), num:nextRefNum(DB.buy,'BUY'), name:qName, contactName:'', email:'', phone:'', address:'', currency:'GBP', paymentTerms:'', creditLimit:null, notes:'', createdAt:new Date().toISOString() };
@@ -9897,13 +9945,20 @@ async function quickAddBuyer() {
   sv(K.bu, DB.buy);
   logEv('buyer', nb.id, 'created', 'Buyer quick-created: ' + nb.name, 'operator');
   populateBuyDropdown('if-b', nb.id);
+  applyBuyerToInvForm(nb.id);
 }
 
 function renderBuyers() {
   if (!G('buy-tbody')) return;
   renderDispCurWarn('buy-fx-warn');
   var dispCur = QR.displayCurrency || 'GBP';
-  var rows = DB.buy.map(function(b) {
+  var bq = (G('buy-q') ? G('buy-q').value : '').toLowerCase();
+  var buyList = DB.buy.filter(function(b){
+    return !bq || (b.name||'').toLowerCase().includes(bq) || (b.num||'').toLowerCase().includes(bq) || (b.email||'').toLowerCase().includes(bq) || (b.contactName||'').toLowerCase().includes(bq);
+  });
+  var buySort = G('buy-sort') ? G('buy-sort').value : '';
+  if (buySort === 'az' || buySort === 'za') buyList = buyList.slice().sort(function(a,b){ return nameCmp(buySort)(a.name, b.name); });
+  var rows = buyList.map(function(b) {
     var outDisp = DB.inv.filter(function(i){ return i.buyerId === b.id; })
       .reduce(function(s,i){ return s + toDisp(iCalc(i).bal, i.cur||'USD'); }, 0);
     return '<tr>'
@@ -10435,6 +10490,43 @@ async function delPO(id) {
 
 // ── PRINT PREVIEWS ─────────────────────────────────────────────
 // The buyer <select> holds the Buyer's id, not its name — resolve to the name for display.
+// Picking a Buyer fills Customer ID, Buyer Address, Payment Terms and (new invoices with no lines yet only)
+// Currency from the Buyer record. A field is only overwritten while the operator has not changed it:
+// still blank, still what the form opened with, or still what the previous Buyer pick filled in. Switching
+// to the Ad-Hoc buyer (or to a Buyer with nothing for a field) puts back what the form opened with.
+var _ifBuyerFill = { snap:{}, filled:{} };
+function ifSnapBuyerFields() {
+  _ifBuyerFill = { snap:{ cid:G('if-cid').value, ba:G('if-ba').value, pt:G('if-pt').value, cur:G('if-cur').value }, filled:{} };
+}
+function applyBuyerToInvForm(buyerId) {
+  var b = DB.buy.find(function(x){ return x.id === buyerId; });
+  var adhoc = !b || b.id === 'BUY-ADHOC';
+  var want = adhoc ? {} : { cid:b.num||'', ba:b.address||'', pt:b.paymentTerms||'', cur:b.currency||'' };
+  var fields = { cid:['if-cid','Customer ID'], ba:['if-ba','Address'], pt:['if-pt','Payment terms'], cur:['if-cur','Currency'] };
+  var allowCur = !EI.i && !cIL.length;
+  var filledNow = [], curChanged = false;
+  Object.keys(fields).forEach(function(key){
+    var el = G(fields[key][0]); if (!el) return;
+    var now = el.value, snap = _ifBuyerFill.snap[key], last = _ifBuyerFill.filled[key];
+    var untouched = now === '' || now === snap || (last !== undefined && now === last);
+    if (!untouched) return;
+    if (key === 'cur' && !allowCur) return;
+    var val = want[key];
+    if (val) {
+      el.value = val;
+      if (el.value !== val) { el.value = now; return; } // not a valid option in this select (e.g. unlisted payment term)
+      _ifBuyerFill.filled[key] = val;
+      filledNow.push(fields[key][1] + ' ' + val);
+      if (key === 'cur') curChanged = true;
+    } else if (last !== undefined && now === last) {
+      el.value = snap === undefined ? '' : snap; // previous pick filled this and the new Buyer has nothing: put it back
+      delete _ifBuyerFill.filled[key];
+      if (key === 'cur') curChanged = true;
+    }
+  });
+  if (curChanged) calcInv();
+  if (filledNow.length) toast('Filled from buyer: ' + filledNow.join(', '));
+}
 function ifBuyerName() {
   var v = G('if-b').value;
   var b = DB.buy.find(function(x){ return x.id === v; });

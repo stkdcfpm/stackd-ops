@@ -15818,6 +15818,131 @@ test('quickAddLine() — the "New Supplier" sentinel never counts as a supplier'
   mockEl('qal-sup').value = '';
 });
 
+// ── Sort/filter on list tabs + Buyer autofill on the invoice form (v2.9.95) ──
+console.log('\nList sort/filter + Buyer autofill');
+function resetListControls() {
+  ['li-q','li-sf','li-sort','sup-q','sup-cf','sup-sort','buy-q','buy-sort','inv-q','inv-sf','inv-bf','inv-sort'].forEach(function(id){ mockEl(id).value = ''; });
+  ['if-cid','if-ba','if-pt'].forEach(function(id){ mockEl(id).value = ''; });
+  mockEl('if-cur').value = 'USD'; ctx.EI.i = null; ctx.cIL = [];
+}
+function pos(html, text) { return html.indexOf(text); }
+
+test('Line Items sort: A-Z / Z-A orders items inside each supplier group; Z-A also reverses groups, No Supplier stays last', () => {
+  resetDB(); resetListControls();
+  ctx.DB.sup = [{ id:'sA', name:'Alpha Co' }, { id:'sB', name:'Beta Co' }];
+  ctx.DB.li = [
+    { id:'1', desc:'Zebra widget', supId:'sA', cost:1, price:2, cur:'USD' },
+    { id:'2', desc:'Apple widget', supId:'sA', cost:1, price:2, cur:'USD' },
+    { id:'3', desc:'Mango widget', supId:'sB', cost:1, price:2, cur:'USD' },
+    { id:'4', desc:'Orphan widget', supId:'',  cost:1, price:2, cur:'USD' }];
+  mockEl('li-sort').value = 'az'; ctx.rLI();
+  let h = mockEl('li-tb').innerHTML;
+  assert(pos(h,'Apple') < pos(h,'Zebra'), 'A-Z within Alpha group');
+  assert(pos(h,'Alpha Co') < pos(h,'Beta Co') && pos(h,'Beta Co') < pos(h,'No Supplier'), 'groups ascending, blank last');
+  mockEl('li-sort').value = 'za'; ctx.rLI();
+  h = mockEl('li-tb').innerHTML;
+  assert(pos(h,'Zebra') < pos(h,'Apple'), 'Z-A within Alpha group');
+  assert(pos(h,'Beta Co') < pos(h,'Alpha Co') && pos(h,'Alpha Co') < pos(h,'No Supplier'), 'groups reversed, blank still last');
+  resetListControls();
+});
+test('Suppliers: country filter + A-Z/Z-A sort, filter list built from the data', () => {
+  resetDB(); resetListControls();
+  ctx.DB.sup = [
+    { id:'s1', num:'SUP-0001', name:'Charlie Ltd', country:'China', cur:'USD' },
+    { id:'s2', num:'SUP-0002', name:'Alpha Ltd',   country:'China', cur:'USD' },
+    { id:'s3', num:'SUP-0003', name:'Bravo Ltd',   country:'India', cur:'USD' }];
+  mockEl('sup-sort').value = 'az'; ctx.rSup();
+  let h = mockEl('sup-tb').innerHTML;
+  assert(pos(h,'Alpha') < pos(h,'Bravo') && pos(h,'Bravo') < pos(h,'Charlie'), 'A-Z');
+  assertContains(mockEl('sup-cf').innerHTML, 'China'); assertContains(mockEl('sup-cf').innerHTML, 'India');
+  mockEl('sup-sort').value = 'za'; ctx.rSup();
+  h = mockEl('sup-tb').innerHTML;
+  assert(pos(h,'Charlie') < pos(h,'Bravo') && pos(h,'Bravo') < pos(h,'Alpha'), 'Z-A');
+  mockEl('sup-cf').value = 'India'; ctx.rSup();
+  h = mockEl('sup-tb').innerHTML;
+  assertContains(h, 'Bravo'); assertNotContains(h, 'Alpha'); assertNotContains(h, 'Charlie');
+  assertEqual(mockEl('sup-cf').value, 'India', 'selected country survives the dropdown rebuild');
+  resetListControls();
+});
+test('Buyers: search and A-Z/Z-A sort', () => {
+  resetDB(); resetListControls();
+  ctx.DB.buy = [
+    { id:'b1', num:'BUY-0001', name:'Zed Imports', currency:'USD' },
+    { id:'b2', num:'BUY-0002', name:'Acme Trading', email:'sales@acme.example', currency:'USD' },
+    { id:'b3', num:'BUY-0003', name:'Mid Corp', currency:'USD' }];
+  mockEl('buy-sort').value = 'az'; ctx.renderBuyers();
+  let h = mockEl('buy-tbody').innerHTML;
+  assert(pos(h,'Acme') < pos(h,'Mid') && pos(h,'Mid') < pos(h,'Zed'), 'A-Z');
+  mockEl('buy-sort').value = 'za'; ctx.renderBuyers();
+  h = mockEl('buy-tbody').innerHTML;
+  assert(pos(h,'Zed') < pos(h,'Mid') && pos(h,'Mid') < pos(h,'Acme'), 'Z-A');
+  mockEl('buy-q').value = 'acme.example'; ctx.renderBuyers();
+  h = mockEl('buy-tbody').innerHTML;
+  assertContains(h, 'Acme Trading'); assertNotContains(h, 'Zed Imports');
+  resetListControls();
+});
+test('Invoices: date and buyer sorts plus buyer filter; default order unchanged (newest entered first)', () => {
+  resetDB(); resetListControls();
+  const mk = (id, num, buyer, date) => ({ id, num, buyer, date, status:'Draft', cur:'USD', lineItems:[], taxRate:0, chargesIncluded:true, dst:'X' });
+  ctx.DB.inv = [mk('i1','INV10001','Mango Ltd','2026-03-01'), mk('i2','INV10002','Apple Ltd','2026-01-01'), mk('i3','INV10003','Zulu Ltd','2026-02-01')];
+  ctx.rInv(); let h = mockEl('inv-tb').innerHTML;
+  assert(pos(h,'INV10003') < pos(h,'INV10002') && pos(h,'INV10002') < pos(h,'INV10001'), 'default = reverse entry order');
+  mockEl('inv-sort').value = 'dnew'; ctx.rInv(); h = mockEl('inv-tb').innerHTML;
+  assert(pos(h,'INV10001') < pos(h,'INV10003') && pos(h,'INV10003') < pos(h,'INV10002'), 'date newest first');
+  mockEl('inv-sort').value = 'dold'; ctx.rInv(); h = mockEl('inv-tb').innerHTML;
+  assert(pos(h,'INV10002') < pos(h,'INV10003') && pos(h,'INV10003') < pos(h,'INV10001'), 'date oldest first');
+  mockEl('inv-sort').value = 'baz'; ctx.rInv(); h = mockEl('inv-tb').innerHTML;
+  assert(pos(h,'Apple') < pos(h,'Mango') && pos(h,'Mango') < pos(h,'Zulu'), 'buyer A-Z');
+  mockEl('inv-sort').value = 'bza'; ctx.rInv(); h = mockEl('inv-tb').innerHTML;
+  assert(pos(h,'Zulu') < pos(h,'Mango') && pos(h,'Mango') < pos(h,'Apple'), 'buyer Z-A');
+  assertContains(mockEl('inv-bf').innerHTML, 'Apple Ltd'); assertContains(mockEl('inv-bf').innerHTML, 'Zulu Ltd');
+  mockEl('inv-bf').value = 'Mango Ltd'; ctx.rInv(); h = mockEl('inv-tb').innerHTML;
+  assertContains(h, 'INV10001'); assertNotContains(h, 'INV10002'); assertNotContains(h, 'INV10003');
+  resetListControls();
+});
+
+function newInvForm() { resetDB(); resetListControls(); ctx.DB.buy = [
+  { id:'bX', num:'BUY-0007', name:'Xavier Foods', address:'1 High St, Bridgetown', paymentTerms:'Net 30', currency:'GBP' },
+  { id:'bY', num:'BUY-0008', name:'Yara Retail',  address:'', paymentTerms:'', currency:'' },
+  { id:'BUY-ADHOC', num:'', name:'Ad-Hoc Buyer' }];
+  ctx.ifSnapBuyerFields(); }
+test('Buyer autofill: picking a Buyer fills Customer ID, address, payment terms and (new invoice, no lines) currency', () => {
+  newInvForm();
+  ctx.applyBuyerToInvForm('bX');
+  assertEqual(mockEl('if-cid').value, 'BUY-0007');
+  assertEqual(mockEl('if-ba').value, '1 High St, Bridgetown');
+  assertEqual(mockEl('if-pt').value, 'Net 30');
+  assertEqual(mockEl('if-cur').value, 'GBP');
+  resetListControls();
+});
+test('Buyer autofill: switching Buyers replaces what the last pick filled; Buyer with blank fields restores the originals; Ad-Hoc clears', () => {
+  newInvForm();
+  ctx.applyBuyerToInvForm('bX');
+  ctx.applyBuyerToInvForm('bY');
+  assertEqual(mockEl('if-cid').value, 'BUY-0008', 'customer id follows the new buyer');
+  assertEqual(mockEl('if-ba').value, '', 'address put back to blank, not left as the previous buyer\'s');
+  assertEqual(mockEl('if-pt').value, '', 'terms put back');
+  assertEqual(mockEl('if-cur').value, 'USD', 'currency put back to the form default');
+  ctx.applyBuyerToInvForm('bX'); ctx.applyBuyerToInvForm('BUY-ADHOC');
+  assertEqual(mockEl('if-cid').value, '', 'Ad-Hoc buyer leaves no customer id behind');
+  resetListControls();
+});
+test('Buyer autofill: never overwrites what the operator typed; currency untouched when lines exist or when editing', () => {
+  newInvForm();
+  mockEl('if-ba').value = 'Typed by operator';
+  ctx.applyBuyerToInvForm('bX');
+  assertEqual(mockEl('if-ba').value, 'Typed by operator', 'typed address kept');
+  assertEqual(mockEl('if-cid').value, 'BUY-0007', 'untouched fields still fill');
+  newInvForm(); ctx.cIL = [{ rid:'r', desc:'x', qty:1, up:5 }];
+  ctx.applyBuyerToInvForm('bX');
+  assertEqual(mockEl('if-cur').value, 'USD', 'currency not changed under existing priced lines');
+  newInvForm(); ctx.EI.i = 'some-existing';
+  ctx.applyBuyerToInvForm('bX');
+  assertEqual(mockEl('if-cur').value, 'USD', 'currency not changed when editing a saved invoice');
+  assertEqual(mockEl('if-cid').value, 'BUY-0007', 'but customer id still follows the buyer');
+  resetListControls();
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
