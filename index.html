@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.94</title>
+<title>Stackd Ops v2.9.95</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -223,7 +223,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.94</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.95</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1379,6 +1379,17 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <button class="mx" onclick="closeM('ov-changelog')">&#215;</button>
     </div>
     <div class="mb" style="max-height:480px;overflow-y:auto;">
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.95</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong>saving an invoice dropped each line&rsquo;s Supplier</strong> (INV-GAP-009). A quick-added Product line looked fine until the invoice was reopened and re-saved, when the supplier gate blocked it because the Supplier had never been stored. It is now persisted.</li>
+          <li>Fix: <strong>re-saving an invoice wiped its earlier edit history</strong> (INV-GAP-010). Each save kept only its own entry; earlier entries are now carried forward.</li>
+          <li>4 new tests (1107 &rarr; 1111 pass).</li>
+        </ul>
+      </div>
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -8623,7 +8634,7 @@ async function saveInv() {
     isp:+G('if-isp').value||0, oth:+G('if-oth').value||0, dep:+G('if-dep').value||0,
     incoterm:G('if-inco').value, paymentTerms:G('if-pt').value.trim(),
     terms:G('if-terms').value.trim(), chargesIncluded:G('if-chi').checked, status:G('inv-sm').value,
-    lineItems:cIL.map(function(li){ return {rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0,unitCost:+li.unitCost||0,lineType:li.lineType||'product'}; }), pos:[],
+    lineItems:cIL.map(function(li){ var ln={rid:li.rid||uid(),lid:li.lid||'',desc:li.desc||'',uom:li.uom||'',qty:+li.qty||0,up:+li.up||0,unitCost:+li.unitCost||0,lineType:li.lineType||'product'}; if(li.supId) ln.supId=li.supId; /* INV-GAP-009: persist the line's Supplier or vInv()'s supplier gate fails on every re-save */ return ln; }), pos:[],
     buyerApprovedAt: '', buyerApprovedBy: '', approvalMethod: '', approvalNote: '',
     linkedQuoteId: '', linkedQuoteNum: '',
     type:(function(){ if(!isCN(G('if-n').value.trim())) return 'invoice'; return (G('if-cn-goodwill')&&G('if-cn-goodwill').checked)?'goodwill_credit':'credit_note'; })(),
@@ -8654,6 +8665,7 @@ async function saveInv() {
       inv.approvalNote=existing.approvalNote||'';
       inv.linkedQuoteId=existing.linkedQuoteId||'';
       inv.linkedQuoteNum=existing.linkedQuoteNum||'';
+      if (existing.editHistory) inv.editHistory = existing.editHistory.slice(); // INV-GAP-010: carry the audit trail forward, or each re-save keeps only its own entry
       // If no live line items in this save, preserve existing calc_ fields and lineItems
       if(cIL.length===0) {
         inv.calc_grandTotal = existing.calc_grandTotal||inv.calc_grandTotal||'0';
@@ -12242,7 +12254,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.94).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.95).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',

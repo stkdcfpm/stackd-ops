@@ -835,3 +835,16 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Found:** live, via a user question about an invoice form showing Net Profit $250 on a $2,959 zero-markup resale ($222 tax + $28 freight shown as profit).
 **Detail:** `cInv()` (the saved-invoice calculation) correctly treats tax as a buyer pass-through; `calcInv()` and both import paths used `grand − cogs`. Imports persisted that into `calc_netProfit`/`calc_margin`, which `iCalc()` prefers over recomputing, so dashboard/P&L/Order Request margins overstated CSV-imported invoices by their tax. **Fix:** all three sites now subtract tax; `healImportedInvNetProfit()` corrects existing records matching exactly `calc_netProfit == calc_grandTotal − calc_cogs` with `calc_taxAmt > 0` and `chargesIncluded !== false` (idempotent; hand-set figures untouched).
 **Residual, not fixed:** (1) `processImport('inv')` reads `tx` before it is assigned, so when Items Subtotal is absent the subtotal derivation always falls through to `liT = gt` (tax and charges not stripped). (2) With "charges included" ticked, freight/insurance count as profit because no cost for them is recorded — design assumption, operator must untick the box for pass-through freight. (3) Stale `calc_netProfit` values still appear in raw exports/Sheets until the heal has run and synced.
+
+## INV-GAP-009 / INV-GAP-010 — `saveInv()` dropped line `supId` and earlier `editHistory` (Fixed v2.9.95)
+
+**Area:** `saveInv()` (`index.html`).
+**Found:** while specifying `REQ-INV-003`; both proved by probe against the live code.
+**Detail:** (009) the `lineItems` map whitelisted `rid,lid,desc,uom,qty,up,unitCost,lineType`, so a line's `supId` never reached the saved record and `vInv()`'s supplier gate (v2.9.90) blocked every re-save of a quick-added Product line until the Supplier was re-selected. (010) `saveInv()` rebuilt the record and only appended the current G-06 entry, so `editHistory` held at most one entry.
+**Fix:** `supId` persisted when non-blank; `editHistory` carried forward in the preserve block. 4 tests; mutation-tested.
+
+## INV-GAP-012 — `saveInv()` drops any field not in its literal (open)
+
+**Area:** `saveInv()` (`index.html`).
+**Detail:** same root cause as 009/010. Probed as dropped on re-save: `notes`, `_demo`, `creAt`, `depRecoveredAt`, `fpmFunded`, `sourceQuoteId`, `shipId`, `paidAt`, and any custom key. Not all are necessarily wrong to drop (some are form-owned); each needs a per-field decision.
+**Status:** open, not fixed. Cheapest structural fix is to start from a clone of the existing record and overlay form values, but that changes the save contract for every field and needs its own REQ.

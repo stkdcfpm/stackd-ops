@@ -15826,6 +15826,50 @@ test('margin vs markup labels (v2.9.94): Quote per-line column is Markup, Line I
   assertContains(html, '(on price, before freight &amp; duty)', 'Line Item margin states its basis');
 });
 
+// ── INV-GAP-009 / INV-GAP-010: saveInv() must not drop a line's supId or earlier editHistory ──
+console.log('\nsaveInv() — line supId and editHistory survive a re-save');
+function giSaveFresh(num, lines) {
+  resetDB(); ctx.EI.i = null; ctx._invEditSnapshot = null;
+  ctx.cIL = lines; setupInvForm(num); ctx.saveInv();
+  return ctx.DB.inv[0];
+}
+test('INV-GAP-009: a line\'s supId is persisted by saveInv(); a line without one gains no supId key', () => {
+  const inv = giSaveFresh('INV40201', [
+    { rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:1, up:10, unitCost:5, lineType:'product', supId:'s-keep' },
+    { rid:'r2', lid:'', desc:'Ocean Freight', uom:'pcs', qty:1, up:300, unitCost:300, lineType:'pass-through' }]);
+  assertEqual(inv.lineItems[0].supId, 's-keep', 'supplier kept on the product line');
+  assert(!('supId' in inv.lineItems[1]), 'no supId key invented for a line that had none');
+});
+test('INV-GAP-009: save → reopen (JSON clone, as editInv() loads it) → vInv() passes and the next save keeps the supplier', () => {
+  const inv = giSaveFresh('INV40202', [{ rid:'r1', lid:'', desc:'Widget', uom:'pcs', qty:1, up:10, unitCost:5, lineType:'product', supId:'s-keep' }]);
+  ctx.EI.i = inv.id; ctx.cIL = JSON.parse(JSON.stringify(inv.lineItems)); setupInvForm('INV40202');
+  assertEqual(ctx.vInv(), true, 'reloaded line still satisfies the supplier gate');
+  ctx.saveInv();
+  assertEqual(ctx.DB.inv[0].lineItems[0].supId, 's-keep', 'supplier survives a second save');
+  ctx.EI.i = null;
+});
+test('INV-GAP-010: earlier editHistory entries are carried forward and a new unlock-and-save appends to them', () => {
+  const inv = giSaveFresh('INV40203', [{ rid:'r1', lid:'', desc:'W', uom:'pcs', qty:1, up:10, unitCost:5, lineType:'product', supId:'s' }]);
+  assert(!('editHistory' in inv), 'a never-unlocked invoice carries no editHistory key');
+  inv.editHistory = [{ ts:'2026-01-01T00:00:00Z', reason:'first fix', actor:'operator', changes:[] }];
+  ctx.EI.i = inv.id; ctx.cIL = JSON.parse(JSON.stringify(inv.lineItems)); setupInvForm('INV40203');
+  ctx._invEditSnapshot = { invId:inv.id, reason:'second fix', status:inv.status, buyer:inv.buyer, calc_grandTotal:inv.calc_grandTotal, dep:inv.dep, taxRate:inv.taxRate, lf:inv.lf, liCount:1, liTotal:10 };
+  ctx.saveInv();
+  const h = ctx.DB.inv[0].editHistory;
+  assertEqual(h.length, 2, 'both entries present');
+  assertEqual(h[0].reason, 'first fix', 'earlier entry intact and first');
+  assertEqual(h[1].reason, 'second fix', 'new entry appended');
+  ctx.EI.i = null; ctx._invEditSnapshot = null;
+});
+test('INV-GAP-010: an ordinary re-save (no unlock) leaves existing editHistory exactly as it was', () => {
+  const inv = giSaveFresh('INV40204', [{ rid:'r1', lid:'', desc:'W', uom:'pcs', qty:1, up:10, unitCost:5, lineType:'product', supId:'s' }]);
+  inv.editHistory = [{ ts:'2026-01-01T00:00:00Z', reason:'only', actor:'operator', changes:[] }];
+  ctx.EI.i = inv.id; ctx.cIL = JSON.parse(JSON.stringify(inv.lineItems)); setupInvForm('INV40204');
+  ctx.saveInv();
+  assertEqual(JSON.stringify(ctx.DB.inv[0].editHistory), JSON.stringify([{ ts:'2026-01-01T00:00:00Z', reason:'only', actor:'operator', changes:[] }]));
+  ctx.EI.i = null;
+});
+
 // ── SUMMARY ────────────────────────────────────────────────────
 _runAsyncTests().then(function() {
   console.log('\n' + '─'.repeat(48));
