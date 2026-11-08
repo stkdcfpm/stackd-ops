@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used for Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment when Cloud Data is configured — REQ/SPEC-CLOUD-001, extended to Line Item/Contact by REQ/SPEC-CLOUD-002, to Order Request by REQ/SPEC-CLOUD-003, to Quote by REQ/SPEC-CLOUD-004, to Purchase Order by REQ/SPEC-CLOUD-005 (completing Phase 2), to Invoice/Credit Note by REQ/SPEC-CLOUD-006 (Phase 3 sub-phase 1 of 3), to Shipment by REQ/SPEC-CLOUD-007 (Phase 3 sub-phase 2 of 3), and to Buyer Payment/Supplier Payment by REQ/SPEC-CLOUD-008 (Phase 3 sub-phase 3 of 3, completing Phase 3) — of the cross-platform backend migration; no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.94**  
-**Test count: 1107/1107 PASS** (`node tests/run.js`)
+**Current version: v2.9.95**  
+**Test count: 1111/1111 PASS** (`node tests/run.js`)
 
 ---
 
@@ -227,6 +227,8 @@ See `docs/known-gaps.md` for full entries.
 | INV-GAP-005 | Cloud Data / Invoice | Outbound webhook can fire for a Buyer Approval that `persistInvChange()` silently failed to persist (cancelled Cloud Data login or failed `.update()`) — disclosed not fixed, `persistInvChange()` shared by 12+ pre-existing call sites with the same gap |
 | INV-GAP-006 | Invoices / COGS integrity | `quickAddLine()`/`saveInv()` allowed a Product line to be saved with no cost basis (no catalogue link, no Unit Cost) — confirmed live as $6,321.27 of real revenue misreported at 100% margin across two production invoices — Fixed v2.9.88 (REQ/SPEC-INV-002) |
 | INV-GAP-007 | Invoices / Net Profit | Sales tax was counted as Net Profit in `calcInv()` and both CSV invoice import paths (stored `calc_netProfit = grand − cogs`, which `iCalc()` prefers) — Fixed v2.9.92 incl. self-healing `healImportedInvNetProfit()`; residuals (`processImport('inv')` reads `tx` before assignment; freight counts as profit when "charges included" is ticked) disclosed not fixed |
+| INV-GAP-009 / INV-GAP-010 | Invoices / line persistence + audit trail | `saveInv()` dropped each line's `supId` (reopened quick-added Product lines failed the supplier gate) and all earlier `editHistory` — Fixed v2.9.95 |
+| INV-GAP-012 | Invoices / `saveInv()` full-object-replace | `saveInv()` rebuilds the record from a whitelist literal, silently dropping any other field on every re-save (probed: `notes`, `_demo`, `creAt`, `depRecoveredAt`, `fpmFunded`, `sourceQuoteId`, `shipId`, `paidAt`, custom keys) — open, not fixed beyond `supId`/`editHistory`; each field needs a decision on whether it is form-owned or must be carried forward |
 | LI-GAP-001 | Line Items / Promotion Queue | `approveLIPending()` doesn't re-validate a `'new'`-kind candidate against the catalogue at approval time — a manually-added duplicate record can coexist with an approved candidate for the same item — disclosed not fixed (v2.9.90, REQ/SPEC-LI-002) |
 | LI-GAP-003 | Line Items / Promotion Queue | A dismissed candidate is never automatically re-queued if a later Quote targets the same desc+supplier again — operator has no way to tell a prior suggestion was dismissed — disclosed not fixed (v2.9.90) |
 | LI-GAP-004 | Line Items / Promotion Queue | No multi-source tracking on a pending candidate — a third Quote targeting an already-pending desc+supId is silently skipped, not merged or counted — disclosed not fixed (v2.9.90) |
