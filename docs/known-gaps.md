@@ -840,7 +840,7 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 **Area:** `cInv()`, `calcInv()`, `rILT()`, `iCalc()`, `autoPos()` (`index.html`).
 **Found:** live, reconciling INV10030 and INV10028 against the operator's supplier cost sheets.
-**Detail:** (1) COGS for a catalogue-linked line is qty × the item's *current* catalogue cost; the line's own `unitCost` is ignored and its cost cell is read-only, so a one-off supplier price (INV10028 34mm foam: 19.44 paid vs 25 catalogue) cannot be recorded without editing the catalogue, which would rewrite every other invoice using the item (INV10031 shares it). (2) `iCalc()` prefers stored `calc_*` over live line items, so INV10030's dashboard net profit was overstated by 2,205.68 (stored COGS 9,527.82 vs real 11,733.50). (3) Freight/delivery cost is not recorded at all; with "charges included" ticked billed freight counts as 100% margin. **Stopgap given to the operator:** a one-off console edit of the stored `calc_*` fields on the two invoices. **Proper fix:** `docs/REQ-INV-003-v3.md` (draft; requirements-gate round 1 FAILED with 11 blocking findings, all verified and answered in v3; round 2 pending).
+**Detail:** (1) COGS for a catalogue-linked line is qty × the item's *current* catalogue cost; the line's own `unitCost` is ignored and its cost cell is read-only, so a one-off supplier price (INV10028 34mm foam: 19.44 paid vs 25 catalogue) cannot be recorded without editing the catalogue, which would rewrite every other invoice using the item (INV10031 shares it). (2) `iCalc()` prefers stored `calc_*` over live line items, so INV10030's dashboard net profit was overstated by 2,205.68 (stored COGS 9,527.82 vs real 11,733.50). (3) Freight/delivery cost is not recorded at all; with "charges included" ticked billed freight counts as 100% margin. **Stopgap given to the operator:** a one-off console edit of the stored `calc_*` fields on the two invoices. **Proper fix:** `docs/REQ-INV-003-v4.md` (draft; requirements-gate rounds 1 and 2 FAILED, every finding verified and answered; round 3 pending).
 
 ### INV-GAP-009 — `saveInv()` drops each line's `supId`, so quick-added Product lines fail the supplier gate on every later re-save *(open)*
 
@@ -853,3 +853,9 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Area:** `saveInv()` (`index.html:8702`), G-06 edit-history.
 **Found:** same review and probe as INV-GAP-009.
 **Detail:** the rebuilt invoice literal carries no `editHistory`; `saveInv()` starts from `[]` and pushes only the latest entry, so each unlock-and-save leaves a history of one entry (probe: expected 2, got 1). The audit trail promised by G-06 does not accumulate. **Fix:** carry `existing.editHistory` forward + test. REQ-INV-016's audit design depends on it (REQ-INV-026).
+
+### INV-GAP-011 — A catalogue link outranks a line's own type and cost in `cInv()`/`calcInv()` *(open, preserved by REQ-INV-003)*
+
+**Area:** `cInv()` (`index.html:5473-5474`), `calcInv()` (`:8561`) vs `rILT()` (`:8478`).
+**Found:** requirements-gate round 2 of REQ-INV-003; proved by probe.
+**Detail:** both calculations ignore `lineType`: any line whose `lid` resolves uses the catalogue item's cost. A library line switched to **Pass-through** (which should cost its own price) but still carrying its `lid` gets the catalogue cost instead (probe: price 100, catalogue cost 60 → COGS 60, not 100), while `rILT()` displays the price as its cost, so the form and the reports disagree. Related exposure: a deleted catalogue item leaves linked lines with COGS 0 (100% margin) because `delLI()` only warns. Not fixed here; REQ-INV-003 reproduces today's behaviour and its RAC protects lines that carry one.
