@@ -219,7 +219,6 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2
 
 | Item | Notes |
 |------|-------|
-| SEC-GAP-027 (operator step) | Code fix merged in repo (`safeCell`/`unsafeCell` in `apps-script/Code.gs`) but Apps Script is deployed by hand: paste Code.gs, Deploy → Manage deployments → New version, then run `selfTestFormulaSafety()` (expect PASS) and `auditSheetFormulas()` (lists addresses of any pre-existing formula cells). Until done the Sheet is still exposed. Steps in `docs/known-gaps.md` SEC-GAP-027. |
 | ACCT-GAP-004 / post-deploy check (v2.9.96) | After v2.9.96 is deployed, ask for the read-only console recipe defined in `docs/REQ-RPT-003-v13.md` REQ-8 (it needs `acctExportSets()`), run it in the real profile, paste the output (ordinal index, class, COGS sums and drift-line counts only; no invoice numbers) into the session, then record ONLY aggregate counts in `docs/known-gaps.md` via a docs-only follow-up PR (no version bump) and close or update ACCT-GAP-004. Not a merge gate. |
 | ACCT-GAP-005 | Line-level accounting CSVs omit invoice-level charges (`lf`,`ins`,`leg`,`isp`,`oth`), deposit and tax on charges, so Xero/QuickBooks imports can total less than the app. Disclosed, not fixed; needs its own REQ if the operator wants a single total line per invoice. |
 | RPT-GAP-001 | `openAgingReport`, `openPLReport`, `expCSV` have no direct tests (27 other `open*` handlers unaudited). Same defect class as the Accounting Export opener. |
