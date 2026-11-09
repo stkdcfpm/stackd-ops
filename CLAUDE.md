@@ -7,8 +7,8 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 ## What this project is
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used for Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment when Cloud Data is configured — REQ/SPEC-CLOUD-001, extended to Line Item/Contact by REQ/SPEC-CLOUD-002, to Order Request by REQ/SPEC-CLOUD-003, to Quote by REQ/SPEC-CLOUD-004, to Purchase Order by REQ/SPEC-CLOUD-005 (completing Phase 2), to Invoice/Credit Note by REQ/SPEC-CLOUD-006 (Phase 3 sub-phase 1 of 3), to Shipment by REQ/SPEC-CLOUD-007 (Phase 3 sub-phase 2 of 3), and to Buyer Payment/Supplier Payment by REQ/SPEC-CLOUD-008 (Phase 3 sub-phase 3 of 3, completing Phase 3) — of the cross-platform backend migration; no CDN, no auto-update). Deployed via GitHub Pages.
 
-**Current version: v2.9.95**  
-**Test count: 1111/1111 PASS** (`node tests/run.js`)
+**Current version: v2.9.96**  
+**Test count: 1151/1151 PASS** (`node tests/run.js`)
 
 ---
 
@@ -19,7 +19,7 @@ Trade operations portal for FPM (Freight + Procurement Management). Single-file 
 | All code | `index.html` — HTML + `<style>` + `<script>` in one file |
 | Companion tools | `triage.html` — standalone "FPM Enquiry Triage — 10 Minute Screen", served at `app.getstackdops.com/triage.html`. Not linked from the main app nav. Exports a CSV matching `TEMPLATES.ord`'s exact header contract (`index.html:6312`) on a "Cleared for study" verdict, importable via the Import Data tab's Order Requests step. The two files are kept in sync manually — no build step connects them; if `TEMPLATES.ord.headers` changes, `triage.html`'s duplicated `ORD_HEADERS` literal must be updated by hand. |
 | Persistence | `localStorage` only — no server, no API |
-| **Public repo policy** | **GitHub Pages serves the ENTIRE repo at app.getstackdops.com. Every committed file is publicly readable. Never commit live data exports, backups, personal contact details, or credentials (SEC-GAP-020). `.gitignore` blocks `Test-data/` and `Stackd-*.json`.** |
+| **Public repo policy** | **GitHub Pages serves the ENTIRE repo at app.getstackdops.com. Every committed file is publicly readable. Never commit live data exports, backups, personal contact details, or credentials (SEC-GAP-020). `.gitignore` blocks `Test-data/`, `*.backup.json`, `.DS_Store` and the export patterns `Stackd-*.csv`, `Stackd-*.json`, `VAT-*.csv`, `aging-report-*.csv`, `pl-report-*.csv`, `stackd-load-summary-*.txt`, `triage-order-request-*.csv`; this is a guard against accidentally committing a downloaded file, not a transmission control.** |
 | Tests | `tests/run.js` — Node.js VM sandbox, run with `node tests/run.js` |
 | Known gaps log | `docs/known-gaps.md` |
 | Version history | `docs/version-history.md` |
@@ -229,6 +229,10 @@ See `docs/known-gaps.md` for full entries.
 | INV-GAP-007 | Invoices / Net Profit | Sales tax was counted as Net Profit in `calcInv()` and both CSV invoice import paths (stored `calc_netProfit = grand − cogs`, which `iCalc()` prefers) — Fixed v2.9.92 incl. self-healing `healImportedInvNetProfit()`; residuals (`processImport('inv')` reads `tx` before assignment; freight counts as profit when "charges included" is ticked) disclosed not fixed |
 | INV-GAP-009 / INV-GAP-010 | Invoices / line persistence + audit trail | `saveInv()` dropped each line's `supId` (reopened quick-added Product lines failed the supplier gate) and all earlier `editHistory` — Fixed v2.9.95 |
 | INV-GAP-012 | Invoices / `saveInv()` full-object-replace | `saveInv()` rebuilds the record from a whitelist literal, silently dropping any other field on every re-save (probed: `notes`, `_demo`, `creAt`, `depRecoveredAt`, `fpmFunded`, `sourceQuoteId`, `shipId`, `paidAt`, custom keys) — open, not fixed beyond `supId`/`editHistory`; each field needs a decision on whether it is form-owned or must be carried forward |
+| ACCT-GAP-002 / ACCT-GAP-003 | Accounting Export | Modal never opened (`openM` undefined, no test on the entry point) and exporters read `lines`/`cu` instead of `lineItems`/`unitCost` — Fixed v2.9.96 (REQ/SPEC-RPT-003) |
+| ACCT-GAP-004 | Accounting Export / cost drift | Catalogue-versus-stored cost drift on real invoices: Open, undetermined until the post-deploy operator-run check (linked to INV-GAP-008) |
+| ACCT-GAP-005 | Accounting Export | Line-level CSVs omit invoice-level charges, deposit and tax on charges — Open, disclosed in the user guide |
+| RPT-GAP-001 | Reports / tests | `openAgingReport`, `openPLReport`, `expCSV` have no direct tests; 27 other `open*` handlers unaudited — Open |
 | LI-GAP-001 | Line Items / Promotion Queue | `approveLIPending()` doesn't re-validate a `'new'`-kind candidate against the catalogue at approval time — a manually-added duplicate record can coexist with an approved candidate for the same item — disclosed not fixed (v2.9.90, REQ/SPEC-LI-002) |
 | LI-GAP-003 | Line Items / Promotion Queue | A dismissed candidate is never automatically re-queued if a later Quote targets the same desc+supplier again — operator has no way to tell a prior suggestion was dismissed — disclosed not fixed (v2.9.90) |
 | LI-GAP-004 | Line Items / Promotion Queue | No multi-source tracking on a pending candidate — a third Quote targeting an already-pending desc+supId is silently skipped, not merged or counted — disclosed not fixed (v2.9.90) |

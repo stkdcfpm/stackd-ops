@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.95</title>
+<title>Stackd Ops v2.9.96</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -223,7 +223,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.95</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.96</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1061,7 +1061,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <div class="fg fg2">
         <div class="fld">
           <label>Entity</label>
-          <select id="acct-exp-entity">
+          <select id="acct-exp-entity" onchange="acctExpEntityChanged()">
             <option value="inv">Invoices</option>
             <option value="pmt">Payments</option>
           </select>
@@ -1070,13 +1070,14 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <div style="margin-top:12px;">
         <div style="font-size:.52rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink);margin-bottom:8px;">Format</div>
         <div style="display:flex;flex-wrap:wrap;gap:10px;">
-          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="generic-csv"> Generic CSV</label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="generic-json"> Generic JSON</label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="xero"> Xero (Invoices only)</label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="qb"> QuickBooks (Invoices only)</label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" name="acct-fmt" value="fa"> FreeAgent Bills (Payments only)</label>
+          <label id="acct-fmt-label-generic-csv" style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" id="acct-fmt-generic-csv" name="acct-fmt" value="generic-csv" onchange="acctExpFormatChanged()"> Generic CSV</label>
+          <label id="acct-fmt-label-generic-json" style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" id="acct-fmt-generic-json" name="acct-fmt" value="generic-json" onchange="acctExpFormatChanged()"> Generic JSON</label>
+          <label id="acct-fmt-label-xero" style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" id="acct-fmt-xero" name="acct-fmt" value="xero" onchange="acctExpFormatChanged()"> Xero (Invoices only)</label>
+          <label id="acct-fmt-label-qb" style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" id="acct-fmt-qb" name="acct-fmt" value="qb" onchange="acctExpFormatChanged()"> QuickBooks (Invoices only)</label>
+          <label id="acct-fmt-label-fa" style="display:flex;align-items:center;gap:5px;font-size:.54rem;"><input type="radio" id="acct-fmt-fa" name="acct-fmt" value="fa" onchange="acctExpFormatChanged()"> FreeAgent Bills (Payments only)</label>
         </div>
       </div>
+      <div id="acct-exp-cancel-note" style="display:none;margin-top:10px;background:var(--gold);padding:6px 8px;border-radius:4px;font-size:.5rem;">Cancelled invoices are included in this export. Xero and QuickBooks have no status column, so exclude them in your accounting package.</div>
       <div style="margin-top:14px;display:flex;gap:8px;">
         <button class="btn btn-s" onclick="doAcctExport()">&#8595; Download</button>
         <button class="btn btn-g" onclick="closeM('ov-acct-exp')">Cancel</button>
@@ -1379,6 +1380,21 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <button class="mx" onclick="closeM('ov-changelog')">&#215;</button>
     </div>
     <div class="mb" style="max-height:480px;overflow-y:auto;">
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.96</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong>Accounting Export did not open</strong> (ACCT-GAP-002). Both buttons (Invoices tab, Payments view) called a function that did not exist. They now open the modal, and Generic CSV is pre-selected each time.</li>
+          <li>Fix: <strong>Accounting Export read the wrong invoice line shape</strong> (ACCT-GAP-003). Generic CSV, Xero and QuickBooks now export one row per saved invoice line. Generic CSV gains Unit Cost (stored on line), Unit Cost (catalogue now), Line Type and Supplier, and COGS follows the same rule the app uses for invoice COGS.</li>
+          <li>Demo records are never exported. Cancelled invoices are exported; Xero and QuickBooks have no status column, so exclude them in your accounting package (a notice shows in the modal). Credit notes appear in the JSON export only.</li>
+          <li>Xero/QuickBooks/FreeAgent options that do not apply to the chosen Entity are now disabled instead of failing after a click.</li>
+          <li>Known limitation (ACCT-GAP-005): line-level CSVs do not include invoice-level charges, the deposit or tax on charges.</li>
+          <li><code>.gitignore</code> now also blocks every app-generated export (accounting, price history, invoices, VAT, aging, P&amp;L, load summary and triage CSVs). Never commit downloaded files to this public repo.</li>
+          <li>40 new tests (1111 &rarr; 1151 pass).</li>
+        </ul>
+      </div>
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -12254,7 +12270,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.95).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.96).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12381,6 +12397,7 @@ var AI_SYSTEM_PROMPT = [
   '- Invoice Revenue: sum of grand totals (non-cancelled invoices)',
   '- Net Profit: grand total minus COGS minus tax per invoice',
   'Margin vs markup (v2.9.94, labels only): Line Item "Margin %" = (price - cost) / price, on supplier cost only (before freight/duty/insurance). Quote "Markup %" (quote-level and per-line) is applied on top of LANDED cost: sell = landed x (1 + markup/100), so a 20% markup is a 16.7% margin. Do not enter a margin figure as a markup.',
+  'Accounting Export (v2.9.96, REQ/SPEC-RPT-003): opens from the Invoices tab (Accounting Export) and the Payments view (Export). It defaults to Generic CSV. Xero and QuickBooks are invoices-only and FreeAgent is payments-only, and the options that do not apply to the chosen Entity are disabled. Demo records are never exported. Cancelled invoices ARE exported; Xero and QuickBooks have no status column, so exclude cancelled invoices in the accounting package. Credit notes appear in the JSON export only. Generic CSV gains four columns after the original 19: Unit Cost (stored on line), Unit Cost (catalogue now), Line Type and Supplier, so catalogue-versus-stored cost drift is visible per line. Known limitation (ACCT-GAP-005): the line-level CSVs do not include freight/insurance/other invoice-level charges, the deposit or tax on charges, so Xero and QuickBooks totals will differ from the app total.',
   'Invoice quick-add Supplier dropdown has a "＋ New Supplier…" option (v2.9.93) that creates a name-only Supplier (USD) and selects it, like "＋ New Buyer…"; complete its details in the Suppliers tab.',
   '- Net Profit never includes sales tax (a buyer pass-through). v2.9.92 fixed the invoice form\'s live totals and both CSV invoice import paths, which used to count tax as profit; previously imported invoices self-correct on load.',
   '- Avg Margin: net profit ÷ revenue × 100',
@@ -13311,28 +13328,69 @@ function dlText(filename, content, mime) {
   a.click();
 }
 
+// ── ACCOUNTING EXPORT HELPERS (REQ/SPEC-RPT-003) ───────────────
+function acctNum(x) { return +x || 0; }                       // same coercion as cInv()
+function acctIsFiniteNum(x) { return typeof x === 'number' && isFinite(x); }
+function acctIsCnRec(r) {
+  return !!(r && (r.type === 'credit_note' || r.type === 'goodwill_credit' || (!r.type && isCN(r.num))));
+}
+function acctIsDemo(r) {   // flag OR immutable demo- id: saveInv() drops _demo on re-save but keeps id (INV-GAP-012)
+  return !!(r && (r._demo || (typeof r.id === 'string' && r.id.indexOf('demo-') === 0)));
+}
+function acctExportSets() {
+  return {
+    invoices: (DB.inv || []).filter(function(i) { return !acctIsDemo(i); }),
+    payments: (DB.payments || []).filter(function(p) { return !acctIsDemo(p); })
+  };
+}
+function acctInvLines(inv) {   // single line-source rule: lineItems, else legacy lines, else none
+  if (Array.isArray(inv.lineItems) && inv.lineItems.length) return { lines: inv.lineItems, legacy: false };
+  if (Array.isArray(inv.lines) && inv.lines.length)         return { lines: inv.lines,     legacy: true  };
+  return { lines: [], legacy: false };
+}
+function acctSupName(id) {
+  if (!id) return '';
+  var s = DB.sup.find(function(x) { return x.id === id; });
+  return (s && s.name) ? s.name : '';
+}
+function acctLineCalc(l, legacy) {
+  var cat = l.lid ? DB.li.find(function(x) { return x.id === l.lid; }) : undefined; // blank lid never resolves; first match, as cInv()
+  var qty = acctNum(l.qty), up = acctNum(l.up);
+  var storedRaw = legacy ? l.cu : l.unitCost;
+  var cost = legacy ? acctNum(l.cu) : (cat ? acctNum(cat.cost) : acctNum(l.unitCost));
+  var sku = (cat && cat.sku) ? cat.sku : ((legacy && l.sku) ? l.sku : '');
+  var supplier = acctSupName(l.supId) || (cat ? acctSupName(cat.supId) : '');
+  return {
+    qty: qty, up: up, cost: cost, sku: sku, supplier: supplier,
+    lineType: l.lineType || 'product',
+    storedCol: acctIsFiniteNum(storedRaw) ? storedRaw : '',
+    catalogueCol: (cat && acctIsFiniteNum(cat.cost)) ? cat.cost : '',
+    total: qty * up, cogs: qty * cost
+  };
+}
+
 function acctInvCSV(invoices) {
   var h = ['Invoice #','Invoice Date','Status','Currency','Buyer','Destination','Incoterm','Payment Terms','Tax Rate %',
-           'Line #','Description','SKU','Qty','UOM','Unit Price','Line Total','COGS','Gross Profit','Tax Amount'];
+           'Line #','Description','SKU','Qty','UOM','Unit Price','Line Total','COGS','Gross Profit','Tax Amount',
+           'Unit Cost (stored on line)','Unit Cost (catalogue now)','Line Type','Supplier'];
   var rows = [csvRow(h)];
   invoices.forEach(function(inv) {
+    if (acctIsCnRec(inv)) return;
     var taxRate = +(inv.taxRate || 0);
-    (inv.lines || []).forEach(function(l, idx) {
-      var qty = +(l.qty || 0), up = +(l.up || 0), cu = +(l.cu || 0);
-      var lineTotal = (qty * up).toFixed(2);
-      var lineCOGS  = (qty * cu).toFixed(2);
-      var lineGP    = (qty * up - qty * cu).toFixed(2);
-      var lineTax   = (qty * up * taxRate).toFixed(2);
+    var src = acctInvLines(inv);
+    src.lines.forEach(function(l, idx) {
+      var c = acctLineCalc(l, src.legacy);
       rows.push(csvRow([
         inv.num || '', inv.date || '', inv.status || '', inv.cur || 'USD',
         inv.buyer || '', inv.dst || '', inv.incoterm || '', inv.paymentTerms || '',
         (taxRate * 100).toFixed(2),
-        idx + 1, l.desc || '', l.sku || '', qty, l.uom || '',
-        up, lineTotal, lineCOGS, lineGP, lineTax
+        idx + 1, l.desc || '', c.sku, c.qty, l.uom || '',
+        c.up, c.total.toFixed(2), c.cogs.toFixed(2), (c.total - c.cogs).toFixed(2), (c.total * taxRate).toFixed(2),
+        c.storedCol, c.catalogueCol, c.lineType, c.supplier
       ]));
     });
   });
-  return '﻿' + rows.join('\n');
+  return '\uFEFF' + rows.join('\n');
 }
 
 function acctPmtCSV(payments) {
@@ -13363,9 +13421,10 @@ function acctXeroCSV(invoices) {
            'Discount','AccountCode','TaxType','TaxAmount','TrackingName1','TrackingOption1','Currency'];
   var rows = [csvRow(h)];
   invoices.forEach(function(inv) {
+    if (acctIsCnRec(inv)) return;
     var taxRate = +(inv.taxRate || 0);
-    (inv.lines || []).forEach(function(l) {
-      var qty = +(l.qty || 0), up = +(l.up || 0);
+    acctInvLines(inv).lines.forEach(function(l) {
+      var qty = acctNum(l.qty), up = acctNum(l.up);
       var taxType = taxRate > 0 ? 'TAX001' : 'NONE';
       var taxAmt  = +(qty * up * taxRate).toFixed(2);
       rows.push(csvRow([
@@ -13377,7 +13436,7 @@ function acctXeroCSV(invoices) {
       ]));
     });
   });
-  return '﻿' + rows.join('\n');
+  return '\uFEFF' + rows.join('\n');
 }
 
 function acctQBCSV(invoices) {
@@ -13385,8 +13444,9 @@ function acctQBCSV(invoices) {
            'Qty','Rate','Amount','Currency'];
   var rows = [csvRow(h)];
   invoices.forEach(function(inv) {
-    (inv.lines || []).forEach(function(l) {
-      var qty = +(l.qty || 0), rate = +(l.up || 0);
+    if (acctIsCnRec(inv)) return;
+    acctInvLines(inv).lines.forEach(function(l) {
+      var qty = acctNum(l.qty), rate = acctNum(l.up);
       var amt = (qty * rate).toFixed(2);
       rows.push(csvRow([
         inv.buyer || '', inv.date || '', '',
@@ -13395,7 +13455,7 @@ function acctQBCSV(invoices) {
       ]));
     });
   });
-  return '﻿' + rows.join('\n');
+  return '\uFEFF' + rows.join('\n');
 }
 
 function acctFACSV(payments) {
@@ -13416,53 +13476,101 @@ function acctFACSV(payments) {
 function acctQualityCheck(invoices, payments) {
   var warns = [];
   invoices.forEach(function(inv) {
+    if (acctIsCnRec(inv)) return;
     if (!inv.incoterm)      warns.push('Invoice ' + inv.num + ': missing Incoterm');
     if (!inv.paymentTerms)  warns.push('Invoice ' + inv.num + ': missing Payment Terms');
-    (inv.lines || []).forEach(function(l, i) {
-      if (!(+(l.qty || 0) * +(l.up || 0))) warns.push('Invoice ' + inv.num + ' line ' + (i + 1) + ': zero-value line item');
-    });
+    var src = acctInvLines(inv);
+    if (!src.lines.length) {
+      warns.push('Invoice ' + inv.num + ': no line items, not included in line-level CSV exports');
+    } else {
+      src.lines.forEach(function(l, i) {
+        if (!(acctNum(l.qty) * acctNum(l.up))) warns.push('Invoice ' + inv.num + ' line ' + (i + 1) + ': zero-value line item');
+      });
+    }
     var hasPmt = (payments || []).some(function(p) { return p.invId === inv.id; });
     if (!hasPmt) warns.push('Invoice ' + inv.num + ': no payments recorded');
   });
   return warns;
 }
 
-function openAcctExport(entity) {
-  var warns = acctQualityCheck(DB.inv, DB.payments);
-  var wHtml = warns.length
+var ACCT_FMT_ENTITIES = { 'generic-csv':['inv','pmt'], 'generic-json':['inv','pmt'], 'xero':['inv'], 'qb':['inv'], 'fa':['pmt'] };
+function acctExpEntity() { var e = G('acct-exp-entity'); return (e && e.value === 'pmt') ? 'pmt' : 'inv'; }
+function acctExpSelectedFmt() {
+  var f = '';
+  document.querySelectorAll('input[name="acct-fmt"]').forEach(function(r) { if (r.checked) f = r.value; });
+  return f;
+}
+function acctExpSetFmt(v) {
+  Object.keys(ACCT_FMT_ENTITIES).forEach(function(k) { var r = G('acct-fmt-' + k); if (r) r.checked = (k === v); });
+}
+function acctExpApplyFormatState() {
+  var entity = acctExpEntity();
+  Object.keys(ACCT_FMT_ENTITIES).forEach(function(v) {
+    var ok = ACCT_FMT_ENTITIES[v].indexOf(entity) >= 0, r = G('acct-fmt-' + v), lbl = G('acct-fmt-label-' + v);
+    if (r) r.disabled = !ok;
+    if (lbl) {
+      lbl.title = ok ? '' : (ACCT_FMT_ENTITIES[v][0] === 'inv' ? 'Invoices only' : 'Payments only');
+      lbl.style.opacity = ok ? '1' : '0.5';
+    }
+  });
+  var cur = acctExpSelectedFmt();
+  if (!cur || ACCT_FMT_ENTITIES[cur].indexOf(entity) < 0) acctExpSetFmt('generic-csv');
+}
+function acctExpRefreshWarnings() {
+  var el = G('acct-exp-warnings'); if (!el) return;
+  var warns = [];
+  if (acctExpEntity() === 'inv') { var sets = acctExportSets(); warns = acctQualityCheck(sets.invoices, sets.payments); }
+  el.innerHTML = warns.length
     ? '<div style="background:var(--gold);padding:8px 10px;border-radius:4px;font-size:.5rem;margin-bottom:10px;">' +
       '<strong style="font-size:.52rem;">&#9888; Data Quality Warnings</strong>' +
       '<ul style="margin:4px 0 0;padding-left:16px;">' +
       warns.map(function(w) { return '<li>' + san(w) + '</li>'; }).join('') +
       '</ul></div>'
     : '';
-  var el = G('acct-exp-warnings');
-  if (el) el.innerHTML = wHtml;
+}
+function acctExpFormatChanged() {
+  var n = G('acct-exp-cancel-note'); if (!n) return;
+  var f = acctExpSelectedFmt();
+  n.style.display = (acctExpEntity() === 'inv' && (f === 'xero' || f === 'qb')) ? 'block' : 'none';
+}
+function acctExpEntityChanged() {
+  acctExpApplyFormatState();
+  acctExpRefreshWarnings();
+  acctExpFormatChanged();
+}
+
+function openAcctExport(entity) {
   var entEl = G('acct-exp-entity');
-  if (entEl) entEl.value = entity || 'inv';
-  openM('ov-acct-exp');
+  if (entEl) entEl.value = (entity === 'pmt') ? 'pmt' : 'inv';
+  acctExpSetFmt('generic-csv');
+  acctExpEntityChanged();
+  G('ov-acct-exp').classList.add('on');
 }
 
 function doAcctExport() {
-  var entity = G('acct-exp-entity') ? G('acct-exp-entity').value : 'inv';
-  var fmt = '';
-  var fmtEls = document.querySelectorAll('input[name="acct-fmt"]');
-  fmtEls.forEach(function(r) { if (r.checked) fmt = r.value; });
+  var entity = acctExpEntity();
+  var fmt = acctExpSelectedFmt();
   if (!fmt) { toast('Select a format'); return; }
+  var sets = acctExportSets();
+  var list = entity === 'inv' ? sets.invoices : sets.payments;
+  if (!list.length) { toast(entity === 'inv' ? 'No invoices to export' : 'No payments to export'); return; }
+  var okFmts = entity === 'inv' ? ['generic-csv','generic-json','xero','qb'] : ['generic-csv','generic-json','fa'];
+  if (okFmts.indexOf(fmt) < 0) { toast('Unsupported format for this entity'); return; }
   var content, filename, mime;
   if (entity === 'inv') {
-    if (!DB.inv.length) { toast('No invoices to export'); return; }
-    if      (fmt === 'generic-csv')  { content = acctInvCSV(DB.inv);  filename = 'Stackd-Acct-Invoices-' + today() + '.csv';  mime = 'text/csv'; }
-    else if (fmt === 'generic-json') { content = acctInvJSON(DB.inv); filename = 'Stackd-Acct-Invoices-' + today() + '.json'; mime = 'application/json'; }
-    else if (fmt === 'xero')         { content = acctXeroCSV(DB.inv); filename = 'Stackd-Xero-Invoices-'  + today() + '.csv';  mime = 'text/csv'; }
-    else if (fmt === 'qb')           { content = acctQBCSV(DB.inv);   filename = 'Stackd-QB-Invoices-'    + today() + '.csv';  mime = 'text/csv'; }
+    var lineFmt = (fmt === 'generic-csv' || fmt === 'xero' || fmt === 'qb');
+    if (lineFmt && !list.some(function(i) { return !acctIsCnRec(i) && acctInvLines(i).lines.length; })) {
+      toast('No invoice lines to export (see warnings)'); return;
+    }
+    if      (fmt === 'generic-csv')  { content = acctInvCSV(list);  filename = 'Stackd-Acct-Invoices-' + today() + '.csv';  mime = 'text/csv'; }
+    else if (fmt === 'generic-json') { content = acctInvJSON(list); filename = 'Stackd-Acct-Invoices-' + today() + '.json'; mime = 'application/json'; }
+    else if (fmt === 'xero')         { content = acctXeroCSV(list); filename = 'Stackd-Xero-Invoices-'  + today() + '.csv';  mime = 'text/csv'; }
+    else                             { content = acctQBCSV(list);   filename = 'Stackd-QB-Invoices-'    + today() + '.csv';  mime = 'text/csv'; }
   } else {
-    if (!DB.payments.length) { toast('No payments to export'); return; }
-    if      (fmt === 'generic-csv')  { content = acctPmtCSV(DB.payments);  filename = 'Stackd-Acct-Payments-'      + today() + '.csv';  mime = 'text/csv'; }
-    else if (fmt === 'generic-json') { content = acctPmtJSON(DB.payments); filename = 'Stackd-Acct-Payments-'      + today() + '.json'; mime = 'application/json'; }
-    else if (fmt === 'fa')           { content = acctFACSV(DB.payments);   filename = 'Stackd-FreeAgent-Payments-' + today() + '.csv';  mime = 'text/csv'; }
+    if      (fmt === 'generic-csv')  { content = acctPmtCSV(list);  filename = 'Stackd-Acct-Payments-'      + today() + '.csv';  mime = 'text/csv'; }
+    else if (fmt === 'generic-json') { content = acctPmtJSON(list); filename = 'Stackd-Acct-Payments-'      + today() + '.json'; mime = 'application/json'; }
+    else                             { content = acctFACSV(list);   filename = 'Stackd-FreeAgent-Payments-' + today() + '.csv';  mime = 'text/csv'; }
   }
-  if (!content) { toast('Unsupported format for this entity'); return; }
   dlText(filename, content, mime);
   toast('Export downloaded');
   closeM('ov-acct-exp');

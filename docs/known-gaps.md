@@ -848,3 +848,34 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Area:** `saveInv()` (`index.html`).
 **Detail:** same root cause as 009/010. Probed as dropped on re-save: `notes`, `_demo`, `creAt`, `depRecoveredAt`, `fpmFunded`, `sourceQuoteId`, `shipId`, `paidAt`, and any custom key. Not all are necessarily wrong to drop (some are form-owned); each needs a per-field decision.
 **Status:** open, not fixed. Cheapest structural fix is to start from a clone of the existing record and overlay form values, but that changes the save contract for every field and needs its own REQ.
+
+## ACCT-GAP-002 — Accounting Export modal never opened (Fixed v2.9.96)
+
+**Area:** `openAcctExport()` (`index.html`).
+**Detail:** `openAcctExport()` ended with a call to `openM('ov-acct-exp')`, a function that does not exist anywhere in the app, so both entry buttons (Invoices tab, Payments view) threw `ReferenceError` and the modal never opened. No test covered the entry point (only the pure formatters were tested), which is why it shipped.
+**Fix:** opens via `classList.add('on')` like the other report modals. REQ/SPEC-RPT-003; AC1 and the static markup/wiring check AC17 now guard the entry point.
+
+## ACCT-GAP-003 — Accounting exporters read a line shape the app never saves (Fixed v2.9.96)
+
+**Area:** `acctInvCSV`, `acctXeroCSV`, `acctQBCSV`, `acctQualityCheck` (`index.html`).
+**Detail:** the exporters iterated `inv.lines` and read `cu`; `saveInv()` writes `inv.lineItems` and `unitCost`, so every real invoice exported as a header-only file. The old tests used fixtures in the same wrong shape (same defect class as PO-GAP-005).
+**Fix:** one line-source rule (`lineItems`, else legacy `lines`, else none), COGS following `cInv()`'s rule, tests rebuilt on the saved shape with one legacy-shape test per exporter retained.
+
+## ACCT-GAP-004 — Catalogue-versus-stored cost drift on real invoices (Open, description: undetermined)
+
+**Area:** exported `Unit Cost (stored on line)` vs `Unit Cost (catalogue now)`.
+**Detail:** the app computes COGS from the current catalogue cost, not the price paid on the line, so catalogue edits can silently change historical profit. Whether any real invoice is affected is not known until a post-deploy, read-only, operator-run check (recipe defined in REQ-RPT-003 REQ-8). Linked to the price-versioning item on the v2.9.x roadmap and to INV-GAP-008.
+**Status:** open; to be closed as not-found or updated with an aggregate count after the post-deploy run.
+
+## ACCT-GAP-005 — Line-level accounting CSVs omit invoice-level charges, deposit and tax on charges (Open)
+
+**Area:** `acctInvCSV`, `acctXeroCSV`, `acctQBCSV`.
+**Detail:** `cInv()` includes freight, insurance and other charges (`lf`, `ins`, `leg`, `isp`, `oth`) and tax on them in the invoice grand total; the line-level CSVs export lines only, so Xero/QuickBooks imports can total less than the app. First observable now that the exporters emit rows. Disclosed in the user guide; not fixed.
+**Status:** open.
+
+## RPT-GAP-001 — Report/export entry points without direct tests (Open)
+
+**Area:** `tests/run.js`.
+**Detail:** `openAgingReport`, `openPLReport` and `expCSV` have no direct test (reading them shows no `openM`-class defect). 27 other `open*` handlers were not audited. Logged, not fixed.
+**Status:** open.
+
