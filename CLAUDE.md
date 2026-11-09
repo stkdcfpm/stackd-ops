@@ -233,6 +233,7 @@ See `docs/known-gaps.md` for full entries.
 | ACCT-GAP-002 / ACCT-GAP-003 | Accounting Export | Modal never opened (`openM` undefined, no test on the entry point) and exporters read `lines`/`cu` instead of `lineItems`/`unitCost` — Fixed v2.9.96 (REQ/SPEC-RPT-003) |
 | SEC-GAP-026 | Security / CSV export | CSV formula injection (cells starting with `=`, `+`, `-`, `@`, tab, CR evaluated by spreadsheets) — Fixed v2.9.96 via `csvSafe()` in `csvRow()`, every other CSV writer and `triage.html`'s download; `expCSV()` now routes through `csvRow()` |
 | SEC-GAP-027 | Security / Sheets sync | `apps-script/Code.gs` writes synced values with `setValues`, so text starting with `=` becomes a live formula in the linked Sheet — Open, needs an Apps Script redeploy |
+| SORT-GAP-001 | List tabs / UX | Sort/filter covers Line Items, Suppliers, Buyers, Invoices only; choices not remembered across reloads — disclosed not fixed (v2.9.97) |
 | ACCT-GAP-004 | Accounting Export / cost drift | Catalogue-versus-stored cost drift on real invoices: Open, undetermined until the post-deploy operator-run check (linked to INV-GAP-008) |
 | ACCT-GAP-005 | Accounting Export | Line-level CSVs omit invoice-level charges, deposit and tax on charges — Open, disclosed in the user guide |
 | RPT-GAP-001 | Reports / tests | `openAgingReport`, `openPLReport`, `expCSV` have no direct tests; 27 other `open*` handlers unaudited — Open |
