@@ -125,7 +125,7 @@ function handleBulkUpsert(payload, ss) {
       var v = rec[h];
       if (v === null || v === undefined) return '';
       if (typeof v === 'object') return JSON.stringify(v);
-      return v;
+      return safeCell(v);
     });
   });
 
@@ -161,14 +161,14 @@ function handleUpsert(payload) {
     var v = record[h];
     if (v === null || v === undefined) return '';
     if (typeof v === 'object') return JSON.stringify(v);
-    return v;
+    return safeCell(v);
   });
 
   // Find existing row by business key
   var data = sheet.getDataRange().getValues();
   var rowIdx = -1;
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][bizColIdx]) === keyVal) { rowIdx = i + 1; break; }
+    if (String(unsafeCell(data[i][bizColIdx])) === keyVal) { rowIdx = i + 1; break; }
   }
 
   if (rowIdx === -1) {
@@ -203,7 +203,7 @@ function handleDelete(payload) {
   if (bizColIdx === -1) return { status: 'error', message: 'Business key column "' + bizKey + '" not found in sheet' };
 
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][bizColIdx]) === keyVal) {
+    if (String(unsafeCell(data[i][bizColIdx])) === keyVal) {
       sheet.deleteRow(i + 1);
       return { status: 'ok', deleted: true, key: keyVal };
     }
@@ -241,7 +241,7 @@ function handlePushEntity(payload) {
       var v = rec[h];
       if (v === null || v === undefined) return '';
       if (typeof v === 'object') return JSON.stringify(v);
-      return v;
+      return safeCell(v);
     });
   });
 
@@ -268,7 +268,7 @@ function handlePullEntity(payload, ss) {
     var row = data[i];
     var rec = {};
     for (var j = 0; j < headers.length; j++) {
-      var v = row[j];
+      var v = unsafeCell(row[j]);
       if (typeof v === 'string' && (v.charAt(0) === '[' || v.charAt(0) === '{')) {
         try { v = JSON.parse(v); } catch (err) {}
       }
@@ -357,7 +357,7 @@ function handleUpdateShipment(payload) {
 
   var rowIdx = -1;
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][refCol]) === String(payload.shipmentRef)) { rowIdx = i; break; }
+    if (String(unsafeCell(data[i][refCol])) === String(payload.shipmentRef)) { rowIdx = i; break; }
   }
   if (rowIdx === -1) return { status: 'error', message: 'Shipment not found: ' + payload.shipmentRef };
 
@@ -381,7 +381,7 @@ function handleUpdateShipment(payload) {
     if (colIdx === -1) return;
     var val = payload[key];
     if (val !== null && val !== undefined && typeof val === 'object') val = JSON.stringify(val);
-    sheet.getRange(rowIdx + 1, colIdx + 1).setValue(val);
+    sheet.getRange(rowIdx + 1, colIdx + 1).setValue(safeCell(val));
   });
 
   return { status: 'ok', success: true, updated: payload.shipmentRef };
@@ -425,7 +425,7 @@ function handleTrackerUpdate(payload, sheetId, sheetName) {
     if (!rowNum) { errors.push({ id: u.id, field: u.field, error: 'Row ID ' + u.id + ' not found' }); return; }
     var colIdx = headers.indexOf(u.field);
     if (colIdx === -1) { errors.push({ id: u.id, field: u.field, error: 'Column "' + u.field + '" not found' }); return; }
-    sheet.getRange(rowNum, colIdx + 1).setValue(u.value);
+    sheet.getRange(rowNum, colIdx + 1).setValue(safeCell(u.value));
     updated.push({ id: u.id, field: u.field });
   });
 
@@ -433,6 +433,69 @@ function handleTrackerUpdate(payload, sheetId, sheetName) {
   var result = { success: true, updated: updated };
   if (errors.length) result.errors = errors;
   return result;
+}
+
+// ── Formula-injection protection (SEC-GAP-027) ────────────────────
+// Google Sheets treats a string that starts with = (and + - @) as a live formula when written with
+// setValue(s). Text in synced records (a buyer name, a description from an imported supplier file)
+// is not trusted, so every free-text value is passed through safeCell() on the way IN and
+// unsafeCell() on the way OUT. The apostrophe is Sheets' own text marker. Whether Sheets hides it
+// (consumes it) or keeps it as literal text, the round trip is lossless because unsafeCell() only
+// strips an apostrophe that was put in front of a trigger character. Numbers and plain numeric
+// strings (e.g. '-5.00') are left alone. Keep this in step with csvSafe() in index.html.
+var FORMULA_TRIGGER = /^[=+\-@\t\r]/;
+var NUMERIC_TEXT    = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?%?$/;
+
+function safeCell(v) {
+  if (typeof v !== 'string') return v;
+  if (FORMULA_TRIGGER.test(v) && !NUMERIC_TEXT.test(v)) return "'" + v;
+  return v;
+}
+
+function unsafeCell(v) {
+  if (typeof v !== 'string' || v.charAt(0) !== "'") return v;
+  var rest = v.slice(1);
+  if (FORMULA_TRIGGER.test(rest) && !NUMERIC_TEXT.test(rest)) return rest;
+  return v;
+}
+
+// Operator-run, read-only after the redeploy: proves on the REAL Sheets runtime that a hostile
+// string is stored as text (not a formula) and reads back unchanged. Uses a scratch sheet that it
+// deletes again; logs pass/fail only, never cell contents beyond its own test strings.
+function selfTestFormulaSafety() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var name = 'ZZ_formula_selftest';
+  var old = ss.getSheetByName(name); if (old) ss.deleteSheet(old);
+  var sh = ss.insertSheet(name);
+  var samples = ['=1+1', '+cmd', '-2+3', '@SUM(1)', '=HYPERLINK("http://example.invalid","x")', '-5.00', 'plain'];
+  try {
+    sh.getRange(1, 1, 1, samples.length).setValues([samples.map(safeCell)]);
+    var formulas = sh.getRange(1, 1, 1, samples.length).getFormulas()[0];
+    var values   = sh.getRange(1, 1, 1, samples.length).getValues()[0].map(unsafeCell).map(String);
+    var results = samples.map(function(s, i) {
+      return { sample: s, isFormula: formulas[i] !== '', roundTrip: values[i] === String(s) };
+    });
+    var bad = results.filter(function(r) { return r.isFormula || !r.roundTrip; });
+    Logger.log(bad.length === 0 ? 'PASS: all ' + samples.length + ' samples stored as text and read back unchanged'
+                                : 'FAIL: ' + JSON.stringify(bad));
+    return bad.length === 0;
+  } finally { ss.deleteSheet(sh); }
+}
+
+// Operator-run, read-only: lists WHERE (sheet!A1 addresses only, no cell contents) any cell in the
+// entity tabs currently holds a formula. Run once after the redeploy to find anything written
+// before this fix.
+function auditSheetFormulas() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var found = [];
+  Object.keys(HEADERS).forEach(function(entity) {
+    var sheet = getSheet(entity, ss); if (!sheet) return;
+    var rng = sheet.getDataRange(); var f = rng.getFormulas();
+    for (var r = 0; r < f.length; r++) for (var c = 0; c < f[r].length; c++)
+      if (f[r][c] !== '') found.push(sheet.getName() + '!' + rng.getCell(r + 1, c + 1).getA1Notation());
+  });
+  Logger.log(found.length === 0 ? 'No formula cells found in the entity tabs.' : found.length + ' formula cell(s): ' + found.join(', '));
+  return found;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
