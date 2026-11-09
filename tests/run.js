@@ -2378,6 +2378,125 @@ test('SEC-GAP-026: triage.html neutralises formulas in its CSV download with the
   assertContains(th, "csvSafe(v) + '\"'", 'downloadOrdCsv applies csvSafe to every cell');
 });
 
+// ══ SEC-GAP-027: Apps Script (Code.gs) formula-injection protection, tested in a mock Sheets runtime ══
+function loadCodeGs(mode) {            // mode: 'consume' (Sheets hides the leading apostrophe) | 'literal' (keeps it as text)
+  const src = fs.readFileSync(path.join(__dirname, '../apps-script/Code.gs'), 'utf8');
+  const books = {};                    // spreadsheet id -> { sheets: {name: grid} }
+  const NUM = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?%?$/;
+  const store = v => {
+    if (typeof v === 'string') {
+      if (v.charAt(0) === "'") return { t: mode === 'consume' ? v.slice(1) : v };
+      if (/^[=+\-@]/.test(v) && !NUM.test(v)) return { f: v };            // Sheets would evaluate this as a formula
+    }
+    return { t: v };
+  };
+  const val = c => c === undefined ? '' : (c.f !== undefined ? '#ERROR!' : (c.t === undefined || c.t === null ? '' : c.t));
+  const A1 = (r, c) => { let s = ''; for (let n = c; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s; return s + r; };
+  function mkSheet(name) {
+    const g = [];                      // g[r-1][c-1] = {t|f}
+    const filled = c => c !== undefined && (c.f !== undefined || (c.t !== '' && c.t !== undefined && c.t !== null));
+    const lastRow = () => { for (let r = g.length; r > 0; r--) if ((g[r - 1] || []).some(filled)) return r; return 0; };
+    const lastCol = () => { let m = 0; g.forEach(row => (row || []).forEach((c, i) => { if (filled(c)) m = Math.max(m, i + 1); })); return m; };
+    const put = (r, c, v) => { while (g.length < r) g.push([]); g[r - 1][c - 1] = store(v); };
+    const rng = (r, c, nr, nc) => ({
+      setValues: rows => { rows.forEach((row, i) => row.forEach((v, j) => put(r + i, c + j, v))); },
+      setValue: v => { put(r, c, v); },
+      getValues: () => Array.from({ length: nr }, (_, i) => Array.from({ length: nc }, (_, j) => val((g[r - 1 + i] || [])[c - 1 + j]))),
+      getFormulas: () => Array.from({ length: nr }, (_, i) => Array.from({ length: nc }, (_, j) => { const x = (g[r - 1 + i] || [])[c - 1 + j]; return x && x.f !== undefined ? x.f : ''; })),
+      clearContent: () => { for (let i = 0; i < nr; i++) for (let j = 0; j < nc; j++) if (g[r - 1 + i]) g[r - 1 + i][c - 1 + j] = { t: '' }; },
+      getCell: (i, j) => ({ getA1Notation: () => A1(r + i - 1, c + j - 1) }),
+    });
+    return { name, g, getName: () => name, getLastRow: lastRow, getLastColumn: lastCol,
+      getRange: (r, c, nr, nc) => rng(r, c, nr || 1, nc || 1),
+      getDataRange: () => rng(1, 1, Math.max(lastRow(), 1), Math.max(lastCol(), 1)),
+      appendRow: row => { const r = lastRow() + 1; row.forEach((v, j) => put(r, j + 1, v)); },
+      deleteRow: r => { g.splice(r - 1, 1); } };
+  }
+  const openById = id => {
+    books[id] = books[id] || { sheets: {} };
+    const b = books[id];
+    return { getSheetByName: n => b.sheets[n] || null, insertSheet: n => (b.sheets[n] = mkSheet(n)), deleteSheet: s => { delete b.sheets[s.name]; }, getSheets: () => Object.values(b.sheets) };
+  };
+  const logs = [];
+  const sbx = vm.createContext({
+    PropertiesService: { getScriptProperties: () => ({ getProperty: k => ({ SPREADSHEET_ID: 'SS', TOKEN: 'tok', REQUIREMENTS_TRACKER_ID: 'RT', PROJECT_TRACKER_ID: 'PT' }[k]) }) },
+    SpreadsheetApp: { openById }, ContentService: { createTextOutput: s => ({ s, setMimeType() { return this; } }), MimeType: { JSON: 'json' } },
+    Logger: { log: m => logs.push(String(m)) }, JSON, Object, Array, String, Number, Math, Date, RegExp, Error,
+  });
+  vm.runInContext(src, sbx, { filename: 'Code.gs' });
+  const run = code => vm.runInContext(code, sbx);
+  return { sbx, run, books, logs, ss: id => openById(id || 'SS') };
+}
+const HOSTILE = ['=1+1', '+cmd|calc', '-2+3+cmd', '@SUM(1)', '=HYPERLINK("http://x.invalid","click")', '\tTAB', '\rCR'];
+const anyFormula = sheet => sheet.g.some(row => (row || []).some(c => c && c.f !== undefined));
+
+['consume', 'literal'].forEach(mode => {
+  test('SEC-GAP-027 [' + mode + ']: safeCell/unsafeCell round-trip every hostile string, leave numbers and plain text alone', () => {
+    const cg = loadCodeGs(mode);
+    HOSTILE.concat(['-5.00', '+5', '12', '1.5e3', '-12.3%', 'plain', '', 'Acme, Inc']).forEach(v => {
+      const safe = cg.sbx.safeCell(v);
+      assertEqual(cg.sbx.unsafeCell(safe), v, 'round trip: ' + JSON.stringify(v));
+    });
+    HOSTILE.forEach(v => assertEqual(cg.sbx.safeCell(v), "'" + v, 'prefixed: ' + JSON.stringify(v)));
+    ['-5.00', '+5', '12', '-12.3%', 'plain'].forEach(v => assertEqual(cg.sbx.safeCell(v), v, 'untouched: ' + v));
+    [5, -5, null, undefined, true].forEach(v => assertEqual(cg.sbx.safeCell(v), v, 'non-string untouched: ' + String(v)));
+  });
+  test('SEC-GAP-027 [' + mode + ']: bulk_upsert and push_entity store hostile text as text (no formula cells) and pull returns it unchanged', () => {
+    const cg = loadCodeGs(mode);
+    const recs = HOSTILE.map((h, i) => ({ 'Supplier ID': 'S' + i, Name: h, Notes: 'n' + i, Email: h }));
+    cg.sbx.handleBulkUpsert({ entity: 'sup', records: recs });
+    const sh = cg.ss().getSheetByName('Suppliers');
+    assert(!anyFormula(sh), 'no formula cells after bulk_upsert');
+    const pulled = cg.sbx.handlePullEntity({ entity: 'sup' }).records;
+    assertEqual(pulled.length, HOSTILE.length, 'row count');
+    pulled.forEach((r, i) => { assertEqual(r.Name, HOSTILE[i], 'Name round trip ' + i); assertEqual(r.Email, HOSTILE[i], 'Email round trip ' + i); });
+    cg.sbx.handlePushEntity({ entity: 'sup', records: recs });
+    assert(!anyFormula(cg.ss().getSheetByName('Suppliers')), 'no formula cells after push_entity');
+    assertEqual(cg.sbx.handlePullEntity({ entity: 'sup' }).records[0].Name, HOSTILE[0], 'push_entity round trip');
+  });
+  test('SEC-GAP-027 [' + mode + ']: upsert/delete/update_shipment find rows whose business key itself starts with a trigger character (no duplicate rows)', () => {
+    const cg = loadCodeGs(mode);
+    cg.sbx.handleUpsert({ entity: 'sup', record: { 'Supplier ID': '-S1', Name: '=evil' } });
+    cg.sbx.handleUpsert({ entity: 'sup', record: { 'Supplier ID': '-S1', Name: '+evil2' } });
+    const sh = cg.ss().getSheetByName('Suppliers');
+    assertEqual(sh.getLastRow(), 2, 'second upsert updated the existing row instead of appending');
+    assert(!anyFormula(sh), 'no formula cells after upsert');
+    assertEqual(cg.sbx.handlePullEntity({ entity: 'sup' }).records[0].Name, '+evil2', 'updated value round trips');
+    assertEqual(cg.sbx.handleDelete({ entity: 'sup', keyVal: '-S1' }).deleted, true, 'delete found the trigger-character key');
+    cg.sbx.handleUpsert({ entity: 'sh', record: { 'Shipment Ref': '+SH1', Status: 'Booked' } });
+    const r = cg.sbx.handleUpdateShipment({ shipmentRef: '+SH1', notes: '=HYPERLINK("http://x.invalid")', blNum: '@BL' });
+    assertEqual(r.status, 'ok', 'update_shipment found the key');
+    assert(!anyFormula(cg.ss().getSheetByName('Shipments')), 'no formula cells after update_shipment');
+    const pulled = cg.sbx.handlePullEntity({ entity: 'sh' }).records[0];
+    assertEqual(pulled.Notes, '=HYPERLINK("http://x.invalid")', 'notes round trip'); assertEqual(pulled['BL Number'], '@BL', 'BL round trip');
+  });
+  test('SEC-GAP-027 [' + mode + ']: tracker updates store hostile values as text', () => {
+    const cg = loadCodeGs(mode);
+    const book = cg.ss('RT'); const sheet = book.insertSheet('Requirements');
+    sheet.getRange(1, 1, 1, 2).setValues([['ID', 'Status']]); sheet.getRange(2, 1, 1, 2).setValues([[1, 'Backlog']]);
+    const r = cg.sbx.handleTrackerUpdate({ updates: [{ id: 1, field: 'Status', value: '=1+1' }] }, 'RT', 'Requirements');
+    assert(r.success, 'tracker update ok'); assert(!anyFormula(sheet), 'no formula cells after tracker update');
+  });
+  test('SEC-GAP-027 [' + mode + ']: selfTestFormulaSafety() passes on the runtime and auditSheetFormulas() reports addresses only', () => {
+    const cg = loadCodeGs(mode);
+    assertEqual(cg.run('selfTestFormulaSafety()'), true, 'self-test passes');
+    assertContains(cg.logs.join('|'), 'PASS', 'logs PASS');
+    assert(!cg.books.SS.sheets.ZZ_formula_selftest, 'scratch sheet removed');
+    const sh = cg.ss().insertSheet('Invoices');                       // plant a pre-fix formula cell
+    sh.getRange(1, 1, 1, 2).setValues([['Invoice #', 'Buyer']]); sh.getRange(2, 1, 1, 2).setValues([['INV1', '=HYPERLINK("http://x.invalid")']]);
+    const found = cg.run('auditSheetFormulas()');
+    assertEqual(found.join(','), 'Invoices!B2', 'reports the address only');
+    assertNotContains(cg.logs.join('|'), 'HYPERLINK', 'no cell contents logged');
+  });
+});
+test('SEC-GAP-027: every record-data write path in Code.gs goes through safeCell, every read path through unsafeCell (static check)', () => {
+  const src = fs.readFileSync(path.join(__dirname, '../apps-script/Code.gs'), 'utf8');
+  assertEqual((src.match(/return safeCell\(v\);/g) || []).length, 3, 'three row builders (bulk_upsert, upsert, push_entity)');
+  assertContains(src, 'setValue(safeCell(val))', 'update_shipment'); assertContains(src, 'setValue(safeCell(u.value))', 'tracker update');
+  assertEqual((src.match(/unsafeCell\(/g) || []).length >= 6, true, 'pull + 3 business-key comparisons + helper use');
+  assertNotContains(src, 'setValue(val);', 'no raw setValue(val) left'); assertNotContains(src, 'setValue(u.value);', 'no raw tracker setValue left');
+});
+
 // ── PREVIEW DOCUMENT TESTS ─────────────────────────────────────
 function makePreviewMock() {
   var captured = '';
