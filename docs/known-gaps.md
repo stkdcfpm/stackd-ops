@@ -848,3 +848,51 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Area:** `saveInv()` (`index.html`).
 **Detail:** same root cause as 009/010. Probed as dropped on re-save: `notes`, `_demo`, `creAt`, `depRecoveredAt`, `fpmFunded`, `sourceQuoteId`, `shipId`, `paidAt`, and any custom key. Not all are necessarily wrong to drop (some are form-owned); each needs a per-field decision.
 **Status:** open, not fixed. Cheapest structural fix is to start from a clone of the existing record and overlay form values, but that changes the save contract for every field and needs its own REQ.
+
+## ACCT-GAP-002 — Accounting Export modal never opened (Fixed v2.9.96)
+
+**Area:** `openAcctExport()` (`index.html`).
+**Detail:** `openAcctExport()` ended with a call to `openM('ov-acct-exp')`, a function that does not exist anywhere in the app, so both entry buttons (Invoices tab, Payments view) threw `ReferenceError` and the modal never opened. No test covered the entry point (only the pure formatters were tested), which is why it shipped.
+**Fix:** opens via `classList.add('on')` like the other report modals. REQ/SPEC-RPT-003; AC1 and the static markup/wiring check AC17 now guard the entry point.
+
+## ACCT-GAP-003 — Accounting exporters read a line shape the app never saves (Fixed v2.9.96)
+
+**Area:** `acctInvCSV`, `acctXeroCSV`, `acctQBCSV`, `acctQualityCheck` (`index.html`).
+**Detail:** the exporters iterated `inv.lines` and read `cu`; `saveInv()` writes `inv.lineItems` and `unitCost`, so every real invoice exported as a header-only file. The old tests used fixtures in the same wrong shape (same defect class as PO-GAP-005).
+**Fix:** one line-source rule (`lineItems`, else legacy `lines`, else none), COGS following `cInv()`'s rule, tests rebuilt on the saved shape with one legacy-shape test per exporter retained.
+
+## ACCT-GAP-004 — Catalogue-versus-stored cost drift on real invoices (Open, description: undetermined)
+
+**Area:** exported `Unit Cost (stored on line)` vs `Unit Cost (catalogue now)`.
+**Detail:** the app computes COGS from the current catalogue cost, not the price paid on the line, so catalogue edits can silently change historical profit. Whether any real invoice is affected is not known until a post-deploy, read-only, operator-run check (recipe defined in REQ-RPT-003 REQ-8). Linked to the price-versioning item on the v2.9.x roadmap and to INV-GAP-008.
+**Status:** open; to be closed as not-found or updated with an aggregate count after the post-deploy run.
+
+## ACCT-GAP-005 — Line-level accounting CSVs omit invoice-level charges, deposit and tax on charges (Open)
+
+**Area:** `acctInvCSV`, `acctXeroCSV`, `acctQBCSV`.
+**Detail:** `cInv()` includes freight, insurance and other charges (`lf`, `ins`, `leg`, `isp`, `oth`) and tax on them in the invoice grand total; the line-level CSVs export lines only, so Xero/QuickBooks imports can total less than the app. First observable now that the exporters emit rows. Disclosed in the user guide; not fixed.
+**Status:** open.
+
+## RPT-GAP-001 — Report/export entry points without direct tests (Open)
+
+**Area:** `tests/run.js`.
+**Detail:** `openAgingReport`, `openPLReport` and `expCSV` have no direct test (reading them shows no `openM`-class defect). 27 other `open*` handlers were not audited. Logged, not fixed.
+**Status:** open.
+
+## SEC-GAP-026 — CSV formula injection in the app's CSV exports (Fixed v2.9.96; was newly reachable for invoice rows)
+
+**Area:** `csvRow()` and all its call sites (`index.html`): accounting exports, price history, invoices, VAT, aging, P&L.
+**Found:** security-gate review of v2.9.96 (MEDIUM).
+**Detail:** `csvRow()` quotes cells containing `"`, `,`, `\n` or `\r` but does not neutralise cells starting with `=`, `+`, `-`, `@` or a tab, so text that begins that way can be evaluated as a formula when the file is opened in Excel/Sheets. Pre-existing, but until v2.9.96 the invoice accounting exporters emitted no rows for real invoices; now line descriptions, buyer, address, destination and Supplier reach cells for the first time. Needs untrusted text in a record (supplier quote file import, CSV import, Sheets pull, AI-created invoice) plus the file opened in a spreadsheet; Xero/QuickBooks imports do not evaluate formulas.
+**Fix (v2.9.96, same PR):** new `csvSafe()` prefixes a single quote to TEXT cells starting with `=`, `+`, `-`, `@`, tab or CR; real numbers and plain numeric strings (e.g. a negative `-5.00` from `toFixed`) are left alone. Applied in `csvRow()` and in every other CSV writer that quotes cells itself: VAT Return and VAT Transactions, aging report, P&L report, price history. `expCSV()` (invoice list export) now goes through `csvRow()`, which also fixes its unescaped embedded double quotes. 6 tests; 9 of 10 mutations caught (the VAT Return writer holds only constant box text and numbers, so its guard is defensive).
+**Also fixed (security-gate re-check):** `triage.html`'s own CSV download (`downloadOrdCsv`) had the same exposure (Contact Name, Order Description, Category and Item/Spec are free text); it now carries a copy of `csvSafe()` (kept in sync by hand, a test compares the two). The numeric exemption also allows a trailing `%` so negative margins such as `-12.3%` in the P&L export stay unprefixed.
+**Accepted trade-off:** re-importing an exported CSV (a manual round-trip; nothing in the app does this) keeps the leading apostrophe on text cells that began with `= + - @`, for example a phone number `+44...` becomes `'+44...`; and a triage CSV imported through Import Data → Order Requests carries the apostrophe on such free-text cells. `parseImportCSV` does not strip it.
+**Residual:** the blank import templates (`stackd-<entity>-template.csv`) are static and unchanged; a JSON export can still carry the raw text (JSON is not evaluated by spreadsheets).
+
+## SEC-GAP-027 — Sheets sync writes cell values without neutralising formulas (Open)
+
+**Area:** `apps-script/Code.gs` (`setValues` in the bulk-upsert write path, lines ~123-132).
+**Found:** security-gate re-check of the SEC-GAP-026 fix (out of that diff).
+**Detail:** records pushed to the linked Google Sheet are written with `sheet.getRange(...).setValues(rows)`; a string value beginning with `=` is stored as a formula by Google Sheets, so hostile text in a synced field (a buyer name, a description from an imported supplier quote file) could become an executing formula in the operator's Sheet. Sync is opt-in (SEC-GAP-002). Not fixed: it needs a change to Apps Script and a redeploy, and the pull path must then strip the neutraliser so round-trips stay lossless. Separate surface from the CSV exports.
+**Status:** open.
+

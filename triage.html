@@ -383,6 +383,12 @@ document.getElementById('reset').addEventListener('click', ()=>{
 const ORD_HEADERS = ['Submission ID','Contact Name','Contact Email','Order Description','Category','Item/Spec','Order Volume Qty','Order Volume Unit','Packing Spec','Base UOM','Base Qty','Qty Status','Source Country','Variant/Option'];
 
 function stripQuotes(v) { return String(v||'').replace(/"/g, ''); }
+// SEC-GAP-026: keep in sync with csvSafe() in index.html (no build step links the two files).
+function csvSafe(v) {
+  if (typeof v !== 'string') return v;
+  if (/^[=+\-@\t\r]/.test(v) && !/^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?%?$/.test(v)) return "'" + v;
+  return v;
+}
 
 function genSubmissionId() {
   const d = new Date();
@@ -418,7 +424,7 @@ function buildOrdCsvRow(risks) {
 
 function downloadOrdCsv(risks) {
   const dataRow = buildOrdCsvRow(risks);
-  const csv = ORD_HEADERS.join(',') + '\n' + dataRow.map(function(v){ return '"' + v + '"'; }).join(',');
+  const csv = ORD_HEADERS.join(',') + '\n' + dataRow.map(function(v){ return '"' + csvSafe(v) + '"'; }).join(',');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = 'triage-order-request-' + dataRow[0] + '.csv';

@@ -1604,14 +1604,14 @@ test('csvRow does not quote plain values', () => {
   assertEqual(out, 'foo,bar,123', 'plain values need no quoting');
 });
 
-test('acctInvCSV includes expected header columns', () => {
+test('acctInvCSV includes expected header columns (legacy shape)', () => {
   const out = ctx.acctInvCSV([]);
   assertContains(out, 'Invoice #', 'header must include Invoice #');
   assertContains(out, 'Line Total', 'header must include Line Total');
   assertContains(out, 'Tax Amount', 'header must include Tax Amount');
 });
 
-test('acctInvCSV emits one row per line item with invoice fields repeated', () => {
+test('acctInvCSV emits one row per line item with invoice fields repeated (legacy shape)', () => {
   const inv = {
     id: 'i1', num: 'INV-001', date: '2026-01-01', status: 'Sent', cur: 'USD',
     buyer: 'Acme', dst: 'UK', incoterm: 'FOB', paymentTerms: 'Net 30', taxRate: 0,
@@ -1630,7 +1630,7 @@ test('acctInvCSV emits one row per line item with invoice fields repeated', () =
   assertContains(lines[2], 'Widget B', 'second row has second line desc');
 });
 
-test('acctInvCSV calculates line total correctly', () => {
+test('acctInvCSV calculates line total correctly (legacy shape)', () => {
   const inv = {
     id: 'i2', num: 'INV-002', date: '2026-01-02', status: 'Draft', cur: 'GBP',
     buyer: 'Bob', dst: 'US', incoterm: '', paymentTerms: '', taxRate: 0.2,
@@ -1661,7 +1661,7 @@ test('acctInvJSON returns parseable JSON with invoices array', () => {
   assert(parsed._exported, '_exported timestamp present');
 });
 
-test('acctXeroCSV maps ContactName from inv.buyer', () => {
+test('acctXeroCSV maps ContactName from inv.buyer (legacy shape)', () => {
   const inv = {
     id: 'x1', num: 'XINV-001', date: '2026-03-01', cur: 'GBP', buyer: 'Xero Client',
     buyerAddr: '1 High St', taxRate: 0,
@@ -1672,7 +1672,7 @@ test('acctXeroCSV maps ContactName from inv.buyer', () => {
   assertContains(out, 'XINV-001',    'InvoiceNumber must be inv.num');
 });
 
-test('acctXeroCSV sets TaxType NONE when taxRate is 0', () => {
+test('acctXeroCSV sets TaxType NONE when taxRate is 0 (legacy shape)', () => {
   const inv = {
     id: 'x2', num: 'XINV-002', date: '2026-03-01', cur: 'USD', buyer: 'Co',
     taxRate: 0, lines: [{ desc: 'A', qty: 2, up: 50 }]
@@ -1680,7 +1680,7 @@ test('acctXeroCSV sets TaxType NONE when taxRate is 0', () => {
   assertContains(ctx.acctXeroCSV([inv]), 'NONE', 'TaxType NONE when taxRate=0');
 });
 
-test('acctXeroCSV sets TaxType TAX001 when taxRate is greater than 0', () => {
+test('acctXeroCSV sets TaxType TAX001 when taxRate is greater than 0 (legacy shape)', () => {
   const inv = {
     id: 'x3', num: 'XINV-003', date: '2026-03-01', cur: 'USD', buyer: 'Co',
     taxRate: 0.2, lines: [{ desc: 'A', qty: 1, up: 100 }]
@@ -1688,7 +1688,7 @@ test('acctXeroCSV sets TaxType TAX001 when taxRate is greater than 0', () => {
   assertContains(ctx.acctXeroCSV([inv]), 'TAX001', 'TaxType TAX001 when taxRate>0');
 });
 
-test('acctQBCSV maps Customer and Amount correctly', () => {
+test('acctQBCSV maps Customer and Amount correctly (legacy shape)', () => {
   const inv = {
     id: 'q1', num: 'QB-001', date: '2026-04-01', cur: 'USD', buyer: 'QB Customer',
     lines: [{ desc: 'Service', qty: 4, up: 25 }]
@@ -1698,34 +1698,684 @@ test('acctQBCSV maps Customer and Amount correctly', () => {
   assertContains(out, '100.00',      'Amount = 4 * 25 = 100');
 });
 
-test('acctQualityCheck flags missing Incoterm', () => {
+test('acctQualityCheck flags missing Incoterm (legacy shape)', () => {
   const inv = { id: 'c1', num: 'C-001', incoterm: '', paymentTerms: 'Net 30', lines: [{ qty: 1, up: 10 }] };
   const warns = ctx.acctQualityCheck([inv], [{ invId: 'c1' }]);
   assert(warns.some(function(w) { return w.includes('Incoterm'); }), 'should warn missing Incoterm');
 });
 
-test('acctQualityCheck flags missing Payment Terms', () => {
+test('acctQualityCheck flags missing Payment Terms (legacy shape)', () => {
   const inv = { id: 'c2', num: 'C-002', incoterm: 'FOB', paymentTerms: '', lines: [{ qty: 1, up: 10 }] };
   const warns = ctx.acctQualityCheck([inv], [{ invId: 'c2' }]);
   assert(warns.some(function(w) { return w.includes('Payment Terms'); }), 'should warn missing Payment Terms');
 });
 
-test('acctQualityCheck flags zero-value line items', () => {
+test('acctQualityCheck flags zero-value line items (legacy shape)', () => {
   const inv = { id: 'c3', num: 'C-003', incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ qty: 0, up: 0 }] };
   const warns = ctx.acctQualityCheck([inv], [{ invId: 'c3' }]);
   assert(warns.some(function(w) { return w.includes('zero-value'); }), 'should warn zero-value line');
 });
 
-test('acctQualityCheck flags invoice with no payments', () => {
+test('acctQualityCheck flags invoice with no payments (legacy shape)', () => {
   const inv = { id: 'c4', num: 'C-004', incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ qty: 1, up: 50 }] };
   const warns = ctx.acctQualityCheck([inv], []);
   assert(warns.some(function(w) { return w.includes('no payments'); }), 'should warn no payments recorded');
 });
 
-test('acctQualityCheck returns no warnings when data is complete', () => {
+test('acctQualityCheck returns no warnings when data is complete (legacy shape)', () => {
   const inv = { id: 'c5', num: 'C-005', incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ qty: 2, up: 25 }] };
   const warns = ctx.acctQualityCheck([inv], [{ invId: 'c5' }]);
   assertEqual(warns.length, 0, 'no warnings when all fields present');
+});
+
+
+// Same assertions, fixtures rebuilt in the shape saveInv() actually writes (lineItems/unitCost)
+test('acctInvCSV includes expected header columns (real saved shape)', () => {
+  const out = ctx.acctInvCSV([]);
+  assertContains(out, 'Invoice #', 'header must include Invoice #');
+  assertContains(out, 'Line Total', 'header must include Line Total');
+  assertContains(out, 'Tax Amount', 'header must include Tax Amount');
+});
+
+test('acctInvCSV emits one row per line item with invoice fields repeated (real saved shape)', () => {
+  const inv = {
+    id: 'i1', num: 'INV-001', date: '2026-01-01', status: 'Sent', cur: 'USD',
+    buyer: 'Acme', dst: 'UK', incoterm: 'FOB', paymentTerms: 'Net 30', taxRate: 0,
+    lineItems: [
+      { desc: 'Widget A', sku: 'WA1', qty: 2, up: 10, unitCost: 6, uom: 'pcs' },
+      { desc: 'Widget B', sku: 'WB1', qty: 5, up: 4,  unitCost: 2, uom: 'pcs' },
+    ]
+  };
+  const out = ctx.acctInvCSV([inv]);
+  const lines = out.split('\n');
+  // BOM line + header + 2 data rows = 3 lines (BOM is prepended to header row)
+  assertEqual(lines.length, 3, 'one header + two data rows');
+  assertContains(lines[1], 'INV-001', 'first data row has invoice number');
+  assertContains(lines[2], 'INV-001', 'second data row has invoice number repeated');
+  assertContains(lines[1], 'Widget A', 'first row has first line desc');
+  assertContains(lines[2], 'Widget B', 'second row has second line desc');
+});
+
+test('acctInvCSV calculates line total correctly (real saved shape)', () => {
+  const inv = {
+    id: 'i2', num: 'INV-002', date: '2026-01-02', status: 'Draft', cur: 'GBP',
+    buyer: 'Bob', dst: 'US', incoterm: '', paymentTerms: '', taxRate: 0.2,
+    lineItems: [{ desc: 'Item', sku: '', qty: 3, up: 50, unitCost: 30, uom: 'pcs' }]
+  };
+  const out = ctx.acctInvCSV([inv]);
+  assertContains(out, '150.00', 'line total = 3 * 50 = 150');
+  assertContains(out, '30.00',  'tax = 150 * 0.2 = 30');
+});
+
+test('acctXeroCSV maps ContactName from inv.buyer (real saved shape)', () => {
+  const inv = {
+    id: 'x1', num: 'XINV-001', date: '2026-03-01', cur: 'GBP', buyer: 'Xero Client',
+    buyerAddr: '1 High St', taxRate: 0,
+    lineItems: [{ desc: 'Product X', qty: 1, up: 100 }]
+  };
+  const out = ctx.acctXeroCSV([inv]);
+  assertContains(out, 'Xero Client', 'ContactName must be inv.buyer');
+  assertContains(out, 'XINV-001',    'InvoiceNumber must be inv.num');
+});
+
+test('acctXeroCSV sets TaxType NONE when taxRate is 0 (real saved shape)', () => {
+  const inv = {
+    id: 'x2', num: 'XINV-002', date: '2026-03-01', cur: 'USD', buyer: 'Co',
+    taxRate: 0, lineItems: [{ desc: 'A', qty: 2, up: 50 }]
+  };
+  assertContains(ctx.acctXeroCSV([inv]), 'NONE', 'TaxType NONE when taxRate=0');
+});
+
+test('acctXeroCSV sets TaxType TAX001 when taxRate is greater than 0 (real saved shape)', () => {
+  const inv = {
+    id: 'x3', num: 'XINV-003', date: '2026-03-01', cur: 'USD', buyer: 'Co',
+    taxRate: 0.2, lineItems: [{ desc: 'A', qty: 1, up: 100 }]
+  };
+  assertContains(ctx.acctXeroCSV([inv]), 'TAX001', 'TaxType TAX001 when taxRate>0');
+});
+
+test('acctQBCSV maps Customer and Amount correctly (real saved shape)', () => {
+  const inv = {
+    id: 'q1', num: 'QB-001', date: '2026-04-01', cur: 'USD', buyer: 'QB Customer',
+    lineItems: [{ desc: 'Service', qty: 4, up: 25 }]
+  };
+  const out = ctx.acctQBCSV([inv]);
+  assertContains(out, 'QB Customer', 'Customer must be inv.buyer');
+  assertContains(out, '100.00',      'Amount = 4 * 25 = 100');
+});
+
+test('acctQualityCheck flags missing Incoterm (real saved shape)', () => {
+  const inv = { id: 'c1', num: 'C-001', incoterm: '', paymentTerms: 'Net 30', lineItems: [{ qty: 1, up: 10 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c1' }]);
+  assert(warns.some(function(w) { return w.includes('Incoterm'); }), 'should warn missing Incoterm');
+});
+
+test('acctQualityCheck flags missing Payment Terms (real saved shape)', () => {
+  const inv = { id: 'c2', num: 'C-002', incoterm: 'FOB', paymentTerms: '', lineItems: [{ qty: 1, up: 10 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c2' }]);
+  assert(warns.some(function(w) { return w.includes('Payment Terms'); }), 'should warn missing Payment Terms');
+});
+
+test('acctQualityCheck flags zero-value line items (real saved shape)', () => {
+  const inv = { id: 'c3', num: 'C-003', incoterm: 'FOB', paymentTerms: 'Net 30', lineItems: [{ qty: 0, up: 0 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c3' }]);
+  assert(warns.some(function(w) { return w.includes('zero-value'); }), 'should warn zero-value line');
+});
+
+test('acctQualityCheck flags invoice with no payments (real saved shape)', () => {
+  const inv = { id: 'c4', num: 'C-004', incoterm: 'FOB', paymentTerms: 'Net 30', lineItems: [{ qty: 1, up: 50 }] };
+  const warns = ctx.acctQualityCheck([inv], []);
+  assert(warns.some(function(w) { return w.includes('no payments'); }), 'should warn no payments recorded');
+});
+
+test('acctQualityCheck returns no warnings when data is complete (real saved shape)', () => {
+  const inv = { id: 'c5', num: 'C-005', incoterm: 'FOB', paymentTerms: 'Net 30', lineItems: [{ qty: 2, up: 25 }] };
+  const warns = ctx.acctQualityCheck([inv], [{ invId: 'c5' }]);
+  assertEqual(warns.length, 0, 'no warnings when all fields present');
+});
+
+
+// ══ REQ/SPEC-RPT-003: ACCOUNTING EXPORT (real saved shape, modal wiring, demo/cancelled/credit-note rules) ══
+const ACCT_FMTS = ['generic-csv', 'generic-json', 'xero', 'qb', 'fa'];
+function acctHarness(fn) {
+  // radios share ONE state with mockElements AND document.querySelectorAll; one-checked-per-group enforced (AC14)
+  const state = { checked: null };
+  const radios = ACCT_FMTS.map(v => {
+    const r = mockEl('acct-fmt-' + v);
+    delete r.checked;
+    Object.defineProperty(r, 'checked', { configurable: true, enumerable: true,
+      get() { return state.checked === v; },
+      set(val) { if (val) state.checked = v; else if (state.checked === v) state.checked = null; } });
+    r.value = v; r.disabled = false;
+    const l = mockEl('acct-fmt-label-' + v); l.title = ''; l.style.opacity = '';
+    return r;
+  });
+  const ent = mockEl('acct-exp-entity'); ent.value = 'inv';
+  mockEl('acct-exp-warnings').innerHTML = '';
+  mockEl('acct-exp-cancel-note').style.display = 'none';
+  mockEl('ov-acct-exp').classList.remove('on');
+  const origQSA = ctx.document.querySelectorAll, origCE = ctx.document.createElement, origToast = ctx.toast;
+  const cap = { toasts: [], dls: [] };
+  ctx.document.querySelectorAll = sel => sel === 'input[name="acct-fmt"]' ? radios : { forEach() {} };
+  ctx.document.createElement = tag => { const a = origCE(tag); a.click = function() { cap.dls.push({ name: a.download, text: decodeURIComponent(String(a.href).replace(/^data:[^,]*,/, '')) }); }; return a; };
+  ctx.toast = m => { cap.toasts.push(m); };
+  const h = {
+    cap, radios, state,
+    entity: v => { ent.value = v; },
+    fmt: v => { radios.find(r => r.value === v).checked = true; },
+    fmtNow: () => state.checked,
+    exp: () => { cap.toasts.length = 0; cap.dls.length = 0; ctx.doAcctExport(); return { toast: cap.toasts[cap.toasts.length - 1] || '', dl: cap.dls[0] || null }; },
+    dis: v => mockEl('acct-fmt-' + v).disabled,
+    lbl: v => mockEl('acct-fmt-label-' + v),
+    note: () => mockEl('acct-exp-cancel-note').style.display,
+    warnHtml: () => mockEl('acct-exp-warnings').innerHTML,
+    isOpen: () => mockEl('ov-acct-exp').classList.contains('on'),
+  };
+  try { return fn(h); }
+  finally {
+    ctx.document.querySelectorAll = origQSA; ctx.document.createElement = origCE; ctx.toast = origToast;
+    ACCT_FMTS.forEach(v => { const r = mockEl('acct-fmt-' + v); delete r.checked; r.checked = false; r.disabled = false; mockEl('acct-fmt-label-' + v).title = ''; mockEl('acct-fmt-label-' + v).style.opacity = ''; });
+    ent.value = ''; mockEl('acct-exp-warnings').innerHTML = ''; mockEl('acct-exp-cancel-note').style.display = '';
+    mockEl('ov-acct-exp').classList.remove('on');
+  }
+}
+function acctSeed() {
+  resetDB();
+  ctx.DB.sup = [{ id: 'S1', name: 'Acme Supply' }, { id: 'S2', name: '' }];
+  ctx.DB.li = [{ id: 'L1', cost: 19.44, sku: 'SKU-1', supId: 'S1' }, { id: 'L2', cost: 7, sku: '', supId: 'S1' }];
+}
+function realInv(over, lines) {
+  return Object.assign({ id: 'i1', num: 'INV-R1', date: '2026-02-01', status: 'Paid', cur: 'USD', buyer: 'Buyer', dst: 'BB', incoterm: 'FOB',
+    paymentTerms: 'Net 30', taxRate: 0.1, lineItems: lines || [
+      { rid: 'r1', lid: 'L1', desc: 'Foam', uom: 'pcs', qty: 10, up: 25, unitCost: 18, lineType: 'product', supId: 'S1' },
+      { rid: 'r2', lid: '', desc: 'Freight', uom: '', qty: 1, up: 50, unitCost: 50, lineType: 'pass-through' }] }, over || {});
+}
+const csvCells = t => t.replace(/^﻿/, '').split('\n').map(l => l.split(','));
+function colOf(t, name) { const c = csvCells(t); const i = c[0].indexOf(name); return c.slice(1).map(r => r[i]); }
+
+// ---- AC1 / AC2 / AC15 : opener, defaults, entity-aware state
+test('RPT-003 AC1: openAcctExport(inv) and (pmt) do not throw and open ov-acct-exp (fails on baseline: openM undefined)', () => {
+  acctSeed();
+  acctHarness(h => {
+    ctx.openAcctExport('inv'); assert(h.isOpen(), 'inv opens');
+    mockEl('ov-acct-exp').classList.remove('on');
+    ctx.openAcctExport('pmt'); assert(h.isOpen(), 'pmt opens');
+  });
+});
+test('RPT-003 AC2: opening resets a previously chosen non-default format to Generic CSV', () => {
+  acctSeed();
+  acctHarness(h => { h.fmt('xero'); ctx.openAcctExport('inv'); assertEqual(h.fmtNow(), 'generic-csv', 'reset'); h.fmt('qb'); ctx.openAcctExport('inv'); assertEqual(h.fmtNow(), 'generic-csv', 'reset again'); });
+});
+test('RPT-003 AC25: openAcctExport(pmt) sets the entity to pmt and applies the Xero/QB-disabled state at open', () => {
+  acctSeed();
+  acctHarness(h => {
+    ctx.openAcctExport('pmt');
+    assertEqual(mockEl('acct-exp-entity').value, 'pmt', 'entity set');
+    assert(h.dis('xero') && h.dis('qb') && !h.dis('fa') && !h.dis('generic-csv'), 'disabled state applied on open');
+  });
+});
+test('RPT-003 AC15: switching Entity disables/enables formats with title+opacity and falls back to Generic CSV', () => {
+  acctSeed();
+  acctHarness(h => {
+    ctx.openAcctExport('inv');
+    assert(h.dis('fa') && !h.dis('xero') && !h.dis('qb'), 'invoices: FreeAgent disabled');
+    assertEqual(h.lbl('fa').title, 'Payments only', 'fa title'); assertEqual(h.lbl('fa').style.opacity, '0.5', 'fa opacity');
+    assertEqual(h.lbl('xero').title, '', 'xero title cleared'); assertEqual(h.lbl('xero').style.opacity, '1', 'xero opacity restored');
+    h.fmt('xero'); h.entity('pmt'); ctx.acctExpEntityChanged();
+    assert(h.dis('xero') && h.dis('qb') && !h.dis('fa'), 'payments: Xero/QB disabled');
+    assertEqual(h.lbl('xero').title, 'Invoices only', 'xero title'); assertEqual(h.lbl('qb').title, 'Invoices only', 'qb title');
+    assertEqual(h.lbl('xero').style.opacity, '0.5', 'xero opacity');
+    assertEqual(h.fmtNow(), 'generic-csv', 'checked Xero became disabled -> falls back to Generic CSV');
+    h.entity('inv'); ctx.acctExpEntityChanged();
+    assert(!h.dis('xero') && !h.dis('qb') && h.dis('fa'), 're-enabled/disabled again');
+    assertEqual(h.lbl('xero').title, '', 're-enabled title is empty string'); assertEqual(h.lbl('xero').style.opacity, '1', 're-enabled opacity 1');
+    assertEqual(h.lbl('fa').title, 'Payments only', 'fa titled again');
+  });
+});
+test('RPT-003 AC15: cancelled-invoice notice shows only for Invoices + Xero/QuickBooks and hides otherwise (incl. Generic JSON)', () => {
+  acctSeed();
+  acctHarness(h => {
+    ctx.openAcctExport('inv'); assertEqual(h.note(), 'none', 'hidden on open (Generic CSV)');
+    h.fmt('xero'); ctx.acctExpFormatChanged(); assertEqual(h.note(), 'block', 'xero shows');
+    h.fmt('qb'); ctx.acctExpFormatChanged(); assertEqual(h.note(), 'block', 'qb shows');
+    h.fmt('generic-json'); ctx.acctExpFormatChanged(); assertEqual(h.note(), 'none', 'json hides');
+    h.fmt('generic-csv'); ctx.acctExpFormatChanged(); assertEqual(h.note(), 'none', 'csv hides');
+    h.fmt('xero'); ctx.acctExpFormatChanged(); h.entity('pmt'); ctx.acctExpEntityChanged(); assertEqual(h.note(), 'none', 'switching to Payments hides');
+  });
+});
+test('RPT-003 AC15: warnings panel is computed over the filtered set, empty for Payments, no text for a demo invoice, no-line warning shown', () => {
+  acctSeed();
+  ctx.DB.inv = [realInv({ id: 'iA', num: 'INV-A' }), { id: 'demo-inv-1', num: 'DINV-X', _demo: true, lineItems: [{ qty: 0, up: 0 }] },
+    realInv({ id: 'iB', num: 'INV-NOLINES', lineItems: [] }), { id: 'cn1', num: 'CN-1', type: 'credit_note', cnAmount: 5, lineItems: [] }];
+  acctHarness(h => {
+    ctx.openAcctExport('inv');
+    const w = h.warnHtml();
+    assertContains(w, 'INV-NOLINES: no line items', 'no-line warning');
+    assertNotContains(w, 'DINV-X', 'demo invoice produces no warning text');
+    assertNotContains(w, 'CN-1', 'credit note produces no warning text');
+    h.entity('pmt'); ctx.acctExpEntityChanged(); assertEqual(h.warnHtml(), '', 'empty for Payments');
+  });
+});
+
+// ---- AC3 / AC4 / AC8 : downloads from real-shape data
+test('RPT-003 AC3/AC4: default format downloads; one row per line in Generic CSV, Xero and QuickBooks from real-shape data', () => {
+  acctSeed(); ctx.DB.inv = [realInv()];
+  acctHarness(h => {
+    ctx.openAcctExport('inv');
+    let r = h.exp(); assert(r.dl, 'default Generic CSV downloads with no extra clicks'); assertEqual(r.toast, 'Export downloaded', 'toast');
+    assertEqual(csvCells(r.dl.text).length - 1, 2, 'Generic CSV: two data rows');
+    h.fmt('xero'); r = h.exp(); assertEqual(csvCells(r.dl.text).length - 1, 2, 'Xero: two data rows');
+    h.fmt('qb'); r = h.exp(); assertEqual(csvCells(r.dl.text).length - 1, 2, 'QuickBooks: two data rows');
+    h.fmt('generic-json'); r = h.exp(); assert(JSON.parse(r.dl.text).invoices[0].lineItems.length === 2, 'JSON holds lineItems');
+    assertEqual(r.dl.name, 'Stackd-Acct-Invoices-' + ctx.today() + '.json', 'json filename');
+  });
+});
+test('RPT-003 AC4: payments export via fa and generic-csv downloads; JSON too', () => {
+  acctSeed(); ctx.DB.inv = [realInv()]; ctx.DB.payments = [{ id: 'p1', invId: 'i1', date: '2026-02-02', amount: 100, method: 'Bank' }];
+  acctHarness(h => {
+    ctx.openAcctExport('pmt');
+    let r = h.exp(); assert(r.dl && /Stackd-Acct-Payments-.*\.csv$/.test(r.dl.name), 'generic csv');
+    h.fmt('fa'); r = h.exp(); assert(r.dl && /Stackd-FreeAgent-Payments-.*\.csv$/.test(r.dl.name), 'fa');
+    h.fmt('generic-json'); r = h.exp(); assert(r.dl && /\.json$/.test(r.dl.name), 'json');
+  });
+});
+test('RPT-003 AC8: an invoice built through the real saveInv() path exports line rows', () => {
+  acctSeed();
+  ctx.cIL = [{ rid: 'ra', lid: 'L1', desc: 'Foam', uom: 'pcs', qty: 4, up: 30, unitCost: 18, lineType: 'product', supId: 'S1' }];
+  ctx.EI.i = null;
+  ctx.DB.li = [{ id: 'L1', desc: 'Foam', uom: 'pcs', cost: 19.44, price: 30, cur: 'USD', sku: 'SKU-1', supId: 'S1', priceHistory: [] }]; // real catalogue records always carry priceHistory (saveInv() pushes onto it)
+  ctx._invEditSnapshot = null; setupInvForm('INV40301'); ctx.saveInv();
+  const saved = ctx.DB.inv.find(i => i.num === 'INV40301');
+  assert(saved && saved.lineItems && saved.lineItems.length === 1, 'invoice saved through saveInv() with lineItems');
+  assert(!saved.lines, 'saveInv() never writes a `lines` array');
+  const out = ctx.acctInvCSV([saved]);
+  assertEqual(csvCells(out).length - 1, 1, 'one row per saved line');
+  assertContains(out, 'Foam', 'line description exported');
+});
+
+// ---- AC5 / AC6 / AC22 / AC24 : SKU, cost columns, columns by value
+test('RPT-003 AC6: Generic CSV header is the existing 19 columns in order followed by the four new ones; Xero/QB headers unchanged', () => {
+  const first = ctx.acctInvCSV([]).replace(/^﻿/, '').split('\n')[0];
+  assertEqual(first, 'Invoice #,Invoice Date,Status,Currency,Buyer,Destination,Incoterm,Payment Terms,Tax Rate %,Line #,Description,SKU,Qty,UOM,Unit Price,Line Total,COGS,Gross Profit,Tax Amount,Unit Cost (stored on line),Unit Cost (catalogue now),Line Type,Supplier', 'exact header');
+  assertEqual(ctx.acctXeroCSV([]).replace(/^﻿/, ''), 'ContactName,EmailAddress,POAddressLine1,InvoiceNumber,Reference,InvoiceDate,DueDate,Description,Quantity,UnitAmount,Discount,AccountCode,TaxType,TaxAmount,TrackingName1,TrackingOption1,Currency', 'xero header unchanged');
+  assertEqual(ctx.acctQBCSV([]).replace(/^﻿/, ''), 'Customer,Invoice Date,Due Date,Item (Product/Service),Description,Qty,Rate,Amount,Currency', 'qb header unchanged');
+});
+test('RPT-003 AC6/AC24: line values by value for linked, unlinked and pass-through lines (COGS from catalogue, Gross Profit and Tax from the same cost)', () => {
+  acctSeed();
+  const out = ctx.acctInvCSV([realInv()]);
+  assertEqual(colOf(out, 'Line Total').join('|'), '250.00|50.00', 'line totals');
+  assertEqual(colOf(out, 'COGS').join('|'), '194.40|50.00', 'COGS: catalogue cost for the linked line, unitCost for pass-through');
+  assertEqual(colOf(out, 'Gross Profit').join('|'), '55.60|0.00', 'gross profit uses the REQ-5.1 COGS, not the stale stored unitCost');
+  assertEqual(colOf(out, 'Tax Amount').join('|'), '25.00|5.00', 'tax amount');
+  assertEqual(colOf(out, 'SKU').join('|'), 'SKU-1|', 'catalogue SKU; empty for the unlinked line');
+  assertEqual(colOf(out, 'Unit Cost (stored on line)').join('|'), '18|50', 'stored cost raw');
+  assertEqual(colOf(out, 'Unit Cost (catalogue now)').join('|'), '19.44|', 'catalogue cost raw; empty when lid blank');
+  assertEqual(colOf(out, 'Line Type').join('|'), 'product|pass-through', 'line type');
+  assertEqual(colOf(out, 'Supplier').join('|'), 'Acme Supply|', 'supplier name');
+});
+test('RPT-003 AC22: cost columns are raw/unrounded; empty rules for undefined, null, non-numeric and string values', () => {
+  acctSeed();
+  const mk = (lid, uc) => realInv({ taxRate: 0 }, [{ rid: 'a', lid, desc: 'x', qty: 1, up: 10, unitCost: uc, lineType: 'product' }]);
+  assertEqual(colOf(ctx.acctInvCSV([mk('', 3.14159)]), 'Unit Cost (stored on line)')[0], '3.14159', 'raw, no toFixed');
+  ['undefined', 'null', 'abc', '3.5'].forEach(k => {
+    const uc = k === 'undefined' ? undefined : k === 'null' ? null : k;
+    assertEqual(colOf(ctx.acctInvCSV([mk('', uc)]), 'Unit Cost (stored on line)')[0], '', 'empty stored column for ' + k);
+  });
+  assertEqual(colOf(ctx.acctInvCSV([mk('', '3.5')]), 'COGS')[0], '3.50', 'numeric string still coerced for COGS (accepted edge)');
+  assertEqual(colOf(ctx.acctInvCSV([mk('', 'abc')]), 'COGS')[0], '0.00', 'non-numeric string gives 0, never NaN');
+  ctx.DB.li.push({ id: 'LS', cost: '4.5', sku: 'S' }, { id: 'LA', sku: 'T' });
+  assertEqual(colOf(ctx.acctInvCSV([mk('LS', 1)]), 'Unit Cost (catalogue now)')[0], '', 'string catalogue cost -> empty column');
+  assertEqual(colOf(ctx.acctInvCSV([mk('LS', 1)]), 'COGS')[0], '4.50', '...but coerced for COGS (accepted edge)');
+  assertEqual(colOf(ctx.acctInvCSV([mk('LA', 1)]), 'Unit Cost (catalogue now)')[0], '', 'absent catalogue cost -> empty');
+  assertEqual(colOf(ctx.acctInvCSV([mk('LA', 1)]), 'COGS')[0], '0.00', '...and COGS uses 0 like cInv()');
+  assertEqual(colOf(ctx.acctInvCSV([mk('DANGLING', 6)]), 'COGS')[0], '6.00', 'dangling lid falls back to unitCost');
+  assertEqual(colOf(ctx.acctInvCSV([mk('DANGLING', 6)]), 'Unit Cost (catalogue now)')[0], '', 'dangling lid: empty catalogue column');
+  ctx.DB.li.push({ id: 'L1', cost: 99, sku: 'DUP' });
+  assertEqual(colOf(ctx.acctInvCSV([mk('L1', 1)]), 'COGS')[0], '19.44', 'duplicate catalogue ids resolve first-match, as cInv()');
+});
+test('RPT-003 AC24: non-numeric qty/up give 0, never NaN, in Generic CSV, Xero and QuickBooks', () => {
+  acctSeed();
+  const inv = realInv({ taxRate: 0.1 }, [{ rid: 'a', lid: '', desc: 'x', qty: 'abc', up: 'xyz', unitCost: 1, lineType: 'product' }]);
+  [ctx.acctInvCSV([inv]), ctx.acctXeroCSV([inv]), ctx.acctQBCSV([inv])].forEach(o => assertNotContains(o, 'NaN', 'no NaN anywhere'));
+  const x = csvCells(ctx.acctXeroCSV([inv]))[1];
+  assertEqual(x[8] + '|' + x[9] + '|' + x[13], '0|0|0', 'Xero Quantity|UnitAmount|TaxAmount are 0');
+  const q = csvCells(ctx.acctQBCSV([inv]))[1];
+  assertEqual(q[5] + '|' + q[6] + '|' + q[7], '0|0|0.00', 'QB Qty|Rate|Amount');
+});
+test('RPT-003 AC5: SKU rules (catalogue wins; blank-SKU record; stray sku ignored on real-shape; legacy own sku; dangling legacy lid)', () => {
+  acctSeed();
+  const rs = (lid) => realInv({}, [{ rid: 'a', lid, desc: 'x', sku: 'STRAY', cu: 99, qty: 1, up: 1, unitCost: 2, lineType: 'product' }]);
+  assertEqual(colOf(ctx.acctInvCSV([rs('')]), 'SKU')[0], '', 'real-shape: stray sku ignored, empty');
+  assertEqual(colOf(ctx.acctInvCSV([rs('L2')]), 'SKU')[0], '', 'real-shape: resolving lid but blank catalogue sku -> empty');
+  assertEqual(colOf(ctx.acctInvCSV([rs('L1')]), 'SKU')[0], 'SKU-1', 'real-shape: catalogue sku');
+  assertEqual(colOf(ctx.acctInvCSV([rs('')]), 'COGS')[0], '2.00', 'real-shape: cu is ignored, cost from unitCost');
+  const lg = (lid) => ({ id: 'L9', num: 'LG', lines: [{ desc: 'x', sku: 'OWN', cu: 5, qty: 2, up: 9, lid }] });
+  assertEqual(colOf(ctx.acctInvCSV([lg('')]), 'SKU')[0], 'OWN', 'legacy: own sku with no lid');
+  assertEqual(colOf(ctx.acctInvCSV([lg('L2')]), 'SKU')[0], 'OWN', 'legacy: resolving lid with blank catalogue sku -> own sku');
+  assertEqual(colOf(ctx.acctInvCSV([lg('L1')]), 'SKU')[0], 'SKU-1', 'legacy: catalogue sku wins when it resolves');
+  assertEqual(colOf(ctx.acctInvCSV([lg('NOPE')]), 'SKU')[0], 'OWN', 'legacy: dangling lid -> own sku');
+  assertEqual(colOf(ctx.acctInvCSV([lg('L1')]), 'COGS')[0], '10.00', 'legacy: COGS uses cu even when lid resolves');
+  assertEqual(colOf(ctx.acctInvCSV([lg('L1')]), 'Unit Cost (catalogue now)')[0], '19.44', 'legacy: catalogue column still resolves');
+});
+test('RPT-003 REQ-6: Supplier resolution (line supId, unresolved/blank-name fall to catalogue supplier), Line Type default', () => {
+  acctSeed();
+  const mk = (l) => realInv({ taxRate: 0 }, [Object.assign({ rid: 'a', desc: 'x', qty: 1, up: 1, unitCost: 1 }, l)]);
+  assertEqual(colOf(ctx.acctInvCSV([mk({ lid: '', supId: 'S1' })]), 'Supplier')[0], 'Acme Supply', 'line supId');
+  assertEqual(colOf(ctx.acctInvCSV([mk({ lid: 'L1', supId: 'GONE' })]), 'Supplier')[0], 'Acme Supply', 'unresolved supId -> catalogue supplier');
+  assertEqual(colOf(ctx.acctInvCSV([mk({ lid: 'L1', supId: 'S2' })]), 'Supplier')[0], 'Acme Supply', 'blank-name supplier counts as unresolved');
+  assertEqual(colOf(ctx.acctInvCSV([mk({ lid: '', supId: '' })]), 'Supplier')[0], '', 'nothing resolves -> empty');
+  ['', null, undefined].forEach(t => assertEqual(colOf(ctx.acctInvCSV([mk({ lid: '', lineType: t })]), 'Line Type')[0], 'product', 'lineType default for ' + String(t)));
+});
+
+// ---- AC7 : legacy fixtures
+test('RPT-003 AC7: legacy-shape invoices (lineItems absent AND lineItems: []) export through the fallback and get no no-line warning', () => {
+  acctSeed();
+  const base = { id: 'lg', num: 'LEG-1', cur: 'USD', buyer: 'B', taxRate: 0, incoterm: 'FOB', paymentTerms: 'Net 30', lines: [{ desc: 'Old', sku: 'OLDSKU', cu: 6, qty: 2, up: 10 }] };
+  [base, Object.assign({}, base, { lineItems: [] })].forEach(inv => {
+    assertEqual(colOf(ctx.acctInvCSV([inv]), 'COGS')[0], '12.00', 'COGS from cu');
+    assertEqual(csvCells(ctx.acctXeroCSV([inv])).length - 1, 1, 'xero row');
+    assertEqual(csvCells(ctx.acctQBCSV([inv])).length - 1, 1, 'qb row');
+    const w = ctx.acctQualityCheck([inv], [{ invId: 'lg' }]);
+    assert(!w.some(x => x.includes('no line items')), 'no no-line warning');
+  });
+  const z = ctx.acctQualityCheck([Object.assign({}, base, { lines: [{ qty: 0, up: 0 }] })], [{ invId: 'lg' }]);
+  assert(z.some(x => x.includes('zero-value')), 'quality check reads legacy lines');
+});
+
+// ---- AC9 / AC25 / AC23 / REQ-7.6a : selection rules
+test('RPT-003 AC9: demo invoices/payments excluded by flag, by demo- id with flag stripped, absent/non-string id is not demo; negative ids stay in', () => {
+  acctSeed();
+  ctx.DB.inv = [realInv({ id: 'iOK', num: 'REAL' }), realInv({ id: 'x1', num: 'FLAG', _demo: true }), realInv({ id: 'demo-inv-77', num: 'IDONLY' }),
+    realInv({ id: undefined, num: 'NOID' }), realInv({ id: 12345, num: 'NUMID' }), realInv({ id: 'my-demo-1', num: 'NEG1' }), realInv({ id: 'demo1', num: 'NEG2' }), realInv({ id: 'Demo-x', num: 'NEG3' })];
+  ctx.DB.payments = [{ id: 'pOK', invId: 'iOK' }, { id: 'demo-pm-9', invId: 'iOK' }, { id: 'p2', _demo: true }];
+  const s = ctx.acctExportSets();
+  assertEqual(s.invoices.map(i => i.num).join(','), 'REAL,NOID,NUMID,NEG1,NEG2,NEG3', 'only flag/demo- id removed');
+  assertEqual(s.payments.map(p => p.id).join(','), 'pOK', 'payments classified on their own flag/id');
+  acctHarness(h => {
+    ctx.openAcctExport('inv'); h.fmt('generic-json'); const r = h.exp();
+    const nums = JSON.parse(r.dl.text).invoices.map(i => i.num);
+    assert(nums.indexOf('FLAG') < 0 && nums.indexOf('IDONLY') < 0, 'no demo record in JSON either');
+  });
+});
+test('RPT-003 AC9: cancelled retained everywhere with Status visible; credit notes only in JSON; demo-only dataset -> empty toast', () => {
+  acctSeed();
+  ctx.DB.inv = [realInv({ id: 'c1', num: 'CANC', status: 'Cancelled' }), { id: 'cn9', num: 'CN-9', type: 'credit_note', cnAmount: 5, lineItems: [{ qty: 1, up: 5, unitCost: 0 }] }];
+  acctHarness(h => {
+    ctx.openAcctExport('inv');
+    let r = h.exp(); assertContains(r.dl.text, 'Cancelled', 'status visible in Generic CSV'); assertNotContains(r.dl.text, 'CN-9', 'credit note (with lineItems) skipped in Generic CSV');
+    h.fmt('xero'); r = h.exp(); assertNotContains(r.dl.text, 'CN-9', 'skipped in Xero'); assertContains(r.dl.text, 'CANC', 'cancelled in Xero');
+    h.fmt('qb'); r = h.exp(); assertNotContains(r.dl.text, 'CN-9', 'skipped in QB');
+    h.fmt('generic-json'); r = h.exp(); assertContains(r.dl.text, 'CN-9', 'credit note present in JSON');
+    ctx.DB.inv = [realInv({ id: 'demo-inv-5', num: 'D', _demo: true })]; h.fmt('generic-csv'); r = h.exp();
+    assertEqual(r.toast, 'No invoices to export', 'demo-only dataset'); assertEqual(r.dl, null, 'nothing downloaded');
+  });
+});
+test('RPT-003 REQ-7.6a/AC9/AC23: credit-note-only or no-line datasets give the no-lines toast with no download and the modal stays open; JSON still downloads', () => {
+  acctSeed();
+  [[{ id: 'cn1', num: 'CN-1', type: 'credit_note', cnAmount: 5, lineItems: [] }], [realInv({ lineItems: [] })]].forEach(set => {
+    ctx.DB.inv = set;
+    acctHarness(h => {
+      ctx.openAcctExport('inv');
+      ['generic-csv', 'xero', 'qb'].forEach(f => {
+        h.fmt(f); const r = h.exp();
+        assertEqual(r.toast, 'No invoice lines to export (see warnings)', f + ' toast'); assertEqual(r.dl, null, f + ' no download'); assert(h.isOpen(), f + ' modal stays open');
+      });
+      h.fmt('generic-json'); assert(h.exp().dl, 'JSON still downloads');
+    });
+  });
+});
+test('RPT-003 AC20/AC23: toast precedence and the unsupported-format backstop', () => {
+  acctSeed();
+  acctHarness(h => {
+    ctx.DB.payments = []; h.entity('pmt'); h.fmt('xero'); assertEqual(h.exp().toast, 'No payments to export', 'empty set first (payments)');
+    ctx.DB.payments = [{ id: 'p1', invId: 'i1' }]; assertEqual(h.exp().toast, 'Unsupported format for this entity', 'unsupported next (payments+xero)');
+    ctx.DB.inv = []; h.entity('inv'); h.fmt('fa'); assertEqual(h.exp().toast, 'No invoices to export', 'empty set first (invoices)');
+    ctx.DB.inv = [realInv()]; assertEqual(h.exp().toast, 'Unsupported format for this entity', 'unsupported (invoices+fa)'); assertEqual(h.exp().dl, null, 'nothing downloaded');
+    ctx.DB.inv = [realInv()]; h.radios.forEach(r => { r.checked = false; });
+    assertEqual(h.exp().toast, 'Select a format', 'no format selected');
+  });
+});
+
+test('RPT-003 AC23: cancelled-invoice notice text is exactly as specified (static markup)', () => {
+  const b = acctModalBlock();
+  assertContains(b, '>Cancelled invoices are included in this export. Xero and QuickBooks have no status column, so exclude them in your accounting package.</div>', 'notice text');
+});
+test('RPT-003 AC23: duplicate supplier ids resolve first-match; a dangling lid on a real-shape line gives empty SKU and falls to line supplier', () => {
+  acctSeed();
+  ctx.DB.sup.push({ id: 'S1', name: 'Second Acme' });
+  const l = (lid) => realInv({ taxRate: 0 }, [{ rid: 'a', lid, desc: 'x', qty: 1, up: 1, unitCost: 4, lineType: 'product', supId: 'S1' }]);
+  assertEqual(colOf(ctx.acctInvCSV([l('')]), 'Supplier')[0], 'Acme Supply', 'first-match supplier (not the later duplicate)');
+  assertEqual(colOf(ctx.acctInvCSV([l('GONE')]), 'SKU')[0], '', 'dangling lid: empty SKU');
+  assertEqual(colOf(ctx.acctInvCSV([l('GONE')]), 'Supplier')[0], 'Acme Supply', 'dangling lid: line supplier still used');
+  const leg = { id: 'lg', num: 'LG', lines: [{ desc: 'x', cu: 6, qty: 2, up: 9, lid: 'GONE' }] };
+  assertEqual(colOf(ctx.acctInvCSV([leg]), 'COGS')[0], '12.00', 'legacy dangling lid: COGS from cu');
+});
+
+// ---- AC10 / REQ-8 parity classes (test-local helper; no production helper exists)
+function acctParityClass(inv) {
+  if (ctx.acctIsCnRec(inv)) return { cls: 1 };
+  const src = ctx.acctInvLines(inv);
+  if (!src.lines.length) return { cls: 2 };
+  if (src.legacy) return { cls: 3 };
+  const anyLid = inv.lineItems.some(l => l.lid && ctx.DB.li.find(x => x.id === l.lid));
+  const anyExplicit = inv.lineItems.some(l => l.unitCost !== undefined);
+  if (!anyLid && !anyExplicit && +inv.calc_cogs > 0) return { cls: 4 };
+  const sum = colOf(ctx.acctInvCSV([inv]), 'COGS').reduce((a, b) => a + parseFloat(b), 0);
+  const live = ctx.cInv(inv).cogs;
+  return { cls: 5, sum, live, ok: Math.abs(sum - live) <= 0.005 * inv.lineItems.length + 1e-9 };
+}
+test('RPT-003 AC10: parity holds for catalogue-linked, unlinked, pass-through fixtures; each class is classified correctly', () => {
+  acctSeed();
+  assert(acctParityClass(realInv()).ok, 'mixed linked/pass-through parity'); assertEqual(acctParityClass(realInv()).cls, 5, 'class 5');
+  const pt = realInv({}, [{ rid: 'a', lid: 'L1', desc: 'pass with lid', qty: 3, up: 9, unitCost: 9, lineType: 'pass-through' }]);
+  assert(acctParityClass(pt).ok, 'pass-through WITH lid uses catalogue cost in both');
+  assert(acctParityClass(realInv({}, [{ rid: 'a', lid: '', desc: 'u', qty: 3, up: 9, unitCost: 4, lineType: 'product' }])).ok, 'unlinked line parity');
+  assertEqual(acctParityClass({ id: 'cn', num: 'CN-1', type: 'credit_note', cnAmount: 1 }).cls, 1, 'class 1');
+  assertEqual(acctParityClass(realInv({ lineItems: [] })).cls, 2, 'class 2 no-line');
+  assertEqual(acctParityClass({ id: 'g', lines: [{ qty: 1, up: 1, cu: 1 }] }).cls, 3, 'class 3 legacy');
+  assertEqual(acctParityClass({ id: 'g2', lineItems: [], lines: [{ qty: 1, up: 1, cu: 1 }] }).cls, 3, 'class 3: lineItems [] + lines');
+  const sc = (extra) => realInv(Object.assign({ calc_cogs: 500 }, extra), [{ rid: 'a', lid: '', desc: 'legacy-imported', qty: 2, up: 10 }]);
+  assertEqual(acctParityClass(sc()).cls, 4, 'class 4 stored-COGS exception');
+  assertEqual(acctParityClass(sc({ calc_cogs: 0 })).cls, 5, 'calc_cogs 0 is NOT an exception (control)');
+  assertEqual(acctParityClass(sc({ calc_cogs: undefined })).cls, 5, 'calc_cogs absent is NOT an exception (control)');
+  const nullCost = realInv({ calc_cogs: 500 }, [{ rid: 'a', lid: '', desc: 'n', qty: 2, up: 10, unitCost: null }]);
+  assertEqual(acctParityClass(nullCost).cls, 5, 'unitCost:null counts as explicit -> not an exception (control)');
+  assert(acctParityClass(nullCost).ok, 'null cost parity: both 0');
+});
+test('RPT-003 AC10: displayed (iCalc) COGS can differ from the live (cInv) figure a parity-tested export matches', () => {
+  acctSeed();
+  const inv = realInv({ calc_cogs: 9527.82 }, [{ rid: 'a', lid: '', desc: 'x', qty: 10, up: 25, unitCost: 1180, lineType: 'product' }]);
+  const p = acctParityClass(inv);
+  assertEqual(p.cls, 5, 'parity-tested'); assert(p.ok, 'export equals live cInv');
+  assert(Math.abs(ctx.iCalc(inv).cogs - p.live) > 0.005, 'displayed iCalc figure differs from the live/exported one');
+});
+
+// ---- AC16 / AC19 : payments unchanged, read-only
+test('RPT-003 AC16: acctPmtCSV and acctFACSV output is byte-identical to the pre-change baseline', () => {
+  resetDB(); ctx.DB.inv = [{ id: 'i1', num: 'INV-A', buyer: 'Buyer A', cur: 'USD' }];
+  const pm = [{ id: 'p1', invId: 'i1', date: '2026-01-02', amount: 100.5, method: 'Bank', reference: 'R1', notes: 'N1', currency: 'USD', purpose: 'Deposit' },
+    { id: 'p2', invId: 'missing', date: '2026-01-03', amount: 20, method: 'Card', reference: '', notes: '', purpose: '' }];
+  assertEqual(ctx.acctPmtCSV(pm), '﻿Payment ID,Invoice #,Date,Amount,Method,Reference,Notes,Currency,Purpose\np1,INV-A,2026-01-02,100.5,Bank,R1,N1,USD,Deposit\np2,missing,2026-01-03,20,Card,,,,', 'acctPmtCSV baseline');
+  assertEqual(ctx.acctFACSV(pm), '﻿Date,Payee,Description,Net Amount,Tax Rate,Currency,Reference,Purpose\n2026-01-02,Buyer A,N1,100.5,,USD,R1,Deposit\n2026-01-03,,Card,20,,,,', 'acctFACSV baseline');
+});
+test('RPT-003 AC19: opening and exporting never mutate DB or localStorage', () => {
+  acctSeed(); ctx.DB.inv = [realInv(), realInv({ id: 'demo-inv-1', num: 'D' })]; ctx.DB.payments = [{ id: 'p1', invId: 'i1' }];
+  const before = JSON.stringify(ctx.DB) + JSON.stringify(mockStorage);
+  acctHarness(h => {
+    ['inv', 'pmt'].forEach(e => { ctx.openAcctExport(e); ACCT_FMTS.forEach(f => { if (!h.dis(f)) { h.fmt(f); h.exp(); } }); });
+  });
+  assertEqual(JSON.stringify(ctx.DB) + JSON.stringify(mockStorage), before, 'DB and storage unchanged');
+});
+
+// ---- AC17 : static markup and wiring check against index.html text
+function acctModalBlock() {
+  const start = html.indexOf('<div class="ov" id="ov-acct-exp"');
+  if (start < 0) return null;
+  let depth = 0, i = start; const re = /<div\b|<\/div>/g; re.lastIndex = start; let m;
+  while ((m = re.exec(html))) { depth += m[0] === '</div>' ? -1 : 1; if (depth === 0) { i = re.lastIndex; break; } }
+  return html.slice(start, i);
+}
+test('RPT-003 AC17: ov-acct-exp markup and inline-handler wiring are correct in the REAL index.html (not the mock DOM)', () => {
+  const b = acctModalBlock(); assert(b && b.length > 500, 'overlay block found');
+  const ids = (b.match(/\bid="([^"]+)"/g) || []).map(s => s.slice(4, -1));
+  assertEqual(ids.length, new Set(ids).size, 'no duplicate ids in the block');
+  ACCT_FMTS.forEach(v => {
+    assert(new RegExp('<input type="radio" id="acct-fmt-' + v + '" name="acct-fmt" value="' + v + '" onchange="acctExpFormatChanged\\(\\)">').test(b), 'radio triple for ' + v);
+    const lab = new RegExp('<label id="acct-fmt-label-' + v + '"[^>]*>\\s*<input[^>]*value="' + v + '"').test(b); assert(lab, 'label wraps radio ' + v);
+  });
+  assert(/id="acct-exp-warnings"/.test(b) && /id="acct-exp-cancel-note"/.test(b), 'warnings panel and cancel note exist');
+  assert(/<select id="acct-exp-entity" onchange="acctExpEntityChanged\(\)">\s*<option value="inv">Invoices<\/option>\s*<option value="pmt">Payments<\/option>\s*<\/select>/.test(b), 'entity select with exactly inv/pmt and handler');
+  assert(/onclick="doAcctExport\(\)"[^>]*>[^<]*Download/.test(b) || /<button[^>]*onclick="doAcctExport\(\)"/.test(b), 'Download calls doAcctExport()');
+  assert(b.indexOf("closeM('ov-acct-exp')") >= 0, 'close wired');
+  ['Generic CSV', 'Generic JSON', 'Xero (Invoices only)', 'QuickBooks (Invoices only)', 'FreeAgent Bills (Payments only)'].forEach(t => assertContains(b, ' ' + t + '</label>', 'label text ' + t));
+  const skip = new Set(['if', 'event', 'this', 'return']);
+  const calls = new Set(); (b.match(/on(?:click|change)="[^"]*"/g) || []).forEach(a => { let m2; const r2 = /([A-Za-z_$][\w$]*)\s*\(/g; while ((m2 = r2.exec(a.replace(/^on\w+="/, '')))) { if (!skip.has(m2[1])) calls.add(m2[1]); } });
+  assert(calls.size > 0, 'handlers extracted');
+  calls.forEach(n => assertEqual(typeof ctx[n], 'function', 'inline handler target is a defined function: ' + n));
+  assert(/<button class="btn btn-g" onclick="openAcctExport\('inv'\)">/.test(html), 'Invoices-tab entry button calls openAcctExport(inv)');
+  assert(/onclick="openAcctExport\(\\'pmt\\'\)"/.test(html), 'Payments-view entry button calls openAcctExport(pmt) (escaped inside a JS string)');
+});
+
+// ---- AC21 : .gitignore
+const _cp = require('child_process');
+function gitIgnored(name) {
+  try { _cp.execSync('git check-ignore -q -- ' + JSON.stringify(name), { cwd: path.join(__dirname, '..'), stdio: 'ignore' }); return true; }
+  catch (e) { return e.status === 1 ? false : null; }
+}
+test('RPT-003 AC21: every export family (and the filenames doAcctExport produces) is git-ignored; non-sensitive files are not', () => {
+  const probe = gitIgnored('Stackd-Acct-Invoices-2026-01-01.csv');
+  if (probe === null) { console.log('  (AC21 NOT RUN: git unavailable)'); return; }
+  ['Stackd-Acct-Invoices-2026-01-01.csv', 'Stackd-Acct-Invoices-2026-01-01.json', 'Stackd-Xero-Invoices-2026-01-01.csv', 'Stackd-QB-Invoices-2026-01-01.csv',
+    'Stackd-Acct-Payments-2026-01-01.csv', 'Stackd-Acct-Payments-2026-01-01.json', 'Stackd-FreeAgent-Payments-2026-01-01.csv', 'Stackd-PriceHistory-2026-01-01.csv',
+    'Stackd-Invoices-2026-01-01.csv', 'VAT-Return-x.csv', 'VAT-Transactions-x.csv', 'aging-report-2026-01-01.csv', 'pl-report-x-2026-01-01.csv',
+    'stackd-load-summary-2026-01-01.txt', 'triage-order-request-SUB123.csv'].forEach(n => assertEqual(gitIgnored(n), true, 'ignored: ' + n));
+  ['stackd-compliance-reviewer-prompt.md', 'index.html'].forEach(n => assertEqual(gitIgnored(n), false, 'NOT ignored: ' + n));
+  acctSeed(); ctx.DB.inv = [realInv()]; ctx.DB.payments = [{ id: 'p1', invId: 'i1' }];
+  acctHarness(h => {
+    [['inv', 'generic-csv'], ['inv', 'generic-json'], ['inv', 'xero'], ['inv', 'qb'], ['pmt', 'generic-csv'], ['pmt', 'generic-json'], ['pmt', 'fa']].forEach(([e, f]) => {
+      h.entity(e); ctx.acctExpEntityChanged(); h.fmt(f); const r = h.exp(); assert(r.dl, 'download for ' + e + '/' + f); assertEqual(gitIgnored(r.dl.name), true, 'captured filename ignored: ' + r.dl.name);
+    });
+  });
+});
+test('RPT-003 AC21: CLAUDE.md public-repo row lists the seven patterns and no longer claims Stackd-*.json alone is blocked', () => {
+  const md = fs.readFileSync(path.join(__dirname, '../CLAUDE.md'), 'utf8');
+  ['Stackd-*.csv', 'Stackd-*.json', 'VAT-*.csv', 'aging-report-*.csv', 'pl-report-*.csv', 'stackd-load-summary-*.txt', 'triage-order-request-*.csv'].forEach(p => assertContains(md, p, 'CLAUDE.md lists ' + p));
+  assertNotContains(md, '`.gitignore` blocks `Test-data/` and `Stackd-*.json`', 'old inaccurate claim removed');
+});
+
+test('RPT-003 AC18/AC26: gap rows and the ACCT-GAP-005 caveat exist in known-gaps, tracker-adjacent docs, CLAUDE.md and the user guide', () => {
+  const rd = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  const kg = rd('docs/known-gaps.md'), md = rd('CLAUDE.md'), ug = rd('docs/user-guide.md'), tr = rd('docs/requirements-tracker.md'), vh = rd('docs/version-history.md');
+  ['ACCT-GAP-002', 'ACCT-GAP-003', 'ACCT-GAP-004', 'ACCT-GAP-005', 'RPT-GAP-001', 'SEC-GAP-026', 'SEC-GAP-027'].forEach(id => { assertContains(kg, '## ' + id, 'known-gaps has ' + id); assertContains(md, id, 'CLAUDE.md summary has ' + id); });
+  assertContains(kg, 'Fixed v2.9.96', 'ACCT-GAP-002/003 recorded as Fixed');
+  assertContains(kg, 'SEC-GAP-026 — CSV formula injection in the app\'s CSV exports (Fixed v2.9.96', 'SEC-GAP-026 recorded as Fixed');
+  assertContains(kg, 'No test covered the entry point', 'entry-point test gap noted');
+  assertContains(kg, 'ACCT-GAP-004 — Catalogue-versus-stored cost drift on real invoices (Open, description: undetermined)', 'ACCT-GAP-004 is Open with "undetermined" in the description only');
+  assertContains(ug, '## Accounting Export', 'user guide has the Accounting Export section');
+  assertContains(ug, 'ACCT-GAP-005', 'user guide carries the charges/deposit/tax-on-charges caveat');
+  assertContains(ug, 'never commit', 'user guide says never to commit exports');
+  assertContains(tr, 'REQ-RPT-003', 'tracker row'); assertContains(vh, '| v2.9.96 |', 'version-history row');
+  ['ACCT-GAP-002', 'ACCT-GAP-003', 'ACCT-GAP-004', 'ACCT-GAP-005', 'RPT-GAP-001', 'SEC-GAP-026'].forEach(id => assertContains(tr, '| ' + id + ' |', 'tracker has a row for ' + id));
+  assert(/\| ACCT-GAP-005 \|[^\n]*\*\*Open\*\*/.test(tr), 'tracker shows ACCT-GAP-005 as Open');
+  assert(/\| ACCT-GAP-004 \|[^\n]*\*\*Open\*\*/.test(tr), 'tracker shows ACCT-GAP-004 as Open');
+  assertContains(md, '| Branch for new work | `fix/acct-export-shape` |', 'CLAUDE.md branch row updated');
+});
+
+// ══ SEC-GAP-026: CSV formula injection — csvSafe() and every CSV writer ══
+function csvParseLoose(text) {            // minimal RFC 4180 parser (quotes, "" escapes, newlines inside quotes)
+  const out = []; let row = [], cell = '', q = false;
+  text = text.replace(/^﻿/, '');
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n') { row.push(cell); out.push(row); row = []; cell = ''; }
+    else cell += ch;
+  }
+  row.push(cell); out.push(row); return out;
+}
+const CSV_NUMERIC = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/;
+function assertNoFormulaCells(text, label) {
+  csvParseLoose(text).forEach((r, ri) => r.forEach((c, ci) => {
+    if (/^[=+\-@\t\r]/.test(c) && !CSV_NUMERIC.test(c)) throw new Error(label + ': unneutralised formula cell "' + c.replace(/[\t\r]/g, '?') + '" at row ' + ri + ' col ' + ci);
+  }));
+}
+function csvCapture(fn) {                  // run an exporter that downloads through document.createElement('a') and return the CSV text
+  const orig = ctx.document.createElement, origToast = ctx.toast; let href = '';
+  ctx.document.createElement = tag => { const a = orig(tag); a.click = function() { href = a.href; }; return a; };
+  ctx.toast = () => {};
+  try { fn(); } finally { ctx.document.createElement = orig; ctx.toast = origToast; }
+  return decodeURIComponent(String(href).replace(/^data:[^,]*,/, ''));
+}
+test('SEC-GAP-026: csvSafe prefixes text starting with = + - @ tab CR; leaves numbers, numeric strings and ordinary text alone', () => {
+  ['=1+1', '+cmd', '-2+3', '@SUM(1)', '\tTAB', '\rCR', '=HYPERLINK("x")', '-cmd|calc'].forEach(v => assertEqual(ctx.csvSafe(v), "'" + v, 'prefixed: ' + JSON.stringify(v)));
+  ['-5.00', '+5', '12', '0', '1.5e3', '-1.25E-2', '-12.3%', '5%', '', 'normal text', 'Acme, Inc', 'a=b', 'x-y', ' =lead space'].forEach(v => assertEqual(ctx.csvSafe(v), v, 'untouched: ' + JSON.stringify(v)));
+  [-5, 0, 7.5, null, undefined, true].forEach(v => assertEqual(ctx.csvSafe(v), v, 'non-strings untouched: ' + String(v)));
+});
+test('SEC-GAP-026: csvRow neutralises formula text, keeps quoting rules, and does not corrupt negative numbers', () => {
+  assertEqual(ctx.csvRow(['=cmd|a', 'plain', '-5.00', -5, 'Acme, Inc', 'say "hi"', null]), "'=cmd|a,plain,-5.00,-5,\"Acme, Inc\",\"say \"\"hi\"\"\",", 'row');
+  assertEqual(ctx.csvRow(['@x,y']), "\"'@x,y\"", 'prefix applied before quoting');
+});
+test('SEC-GAP-026: all five accounting exporters neutralise hostile buyer/description/destination/incoterm/reference/supplier text', () => {
+  acctSeed();
+  ctx.DB.sup = [{ id: 'S1', name: '=SUPPLIER' }];
+  ctx.DB.li = [{ id: 'L1', cost: 5, sku: '+SKU', supId: 'S1' }];
+  const inv = realInv({ id: 'iH', num: '=INV', buyer: '=1+1', buyerAddr: '@addr', dst: '+dest', incoterm: '-2+3', paymentTerms: '=PT', lineItems: [
+    { rid: 'a', lid: 'L1', desc: '@SUM(1)', uom: '=u', qty: 1, up: 10, unitCost: 5, lineType: '=type', supId: 'S1' }] });
+  const pm = [{ id: 'pH', invId: 'iH', date: '2026-01-02', amount: 100, method: '=M', reference: '+R', notes: '-N', currency: 'USD', purpose: '@P' }];
+  ctx.DB.inv = [inv]; ctx.DB.payments = pm;
+  [['Generic CSV', ctx.acctInvCSV([inv])], ['Xero', ctx.acctXeroCSV([inv])], ['QuickBooks', ctx.acctQBCSV([inv])], ['Payments CSV', ctx.acctPmtCSV(pm)], ['FreeAgent', ctx.acctFACSV(pm)]]
+    .forEach(([n, csv]) => assertNoFormulaCells(csv, n));
+  assertContains(ctx.acctInvCSV([inv]), "'=1+1", 'neutralised text is still present, as text');
+  assertContains(ctx.acctInvCSV([inv]), "'=SUPPLIER", 'Supplier column neutralised');
+});
+test('SEC-GAP-026: numeric columns are not corrupted — a negative Gross Profit and negative payment amounts stay numeric', () => {
+  acctSeed();
+  const inv = realInv({ taxRate: 0 }, [{ rid: 'a', lid: '', desc: 'loss line', qty: 2, up: 5, unitCost: 8, lineType: 'product' }]);
+  assertEqual(colOf(ctx.acctInvCSV([inv]), 'Gross Profit')[0], '-6.00', 'negative gross profit untouched');
+  assertEqual(colOf(ctx.acctInvCSV([inv]), 'COGS')[0], '16.00', 'COGS untouched');
+  const csv = ctx.acctPmtCSV([{ id: 'p', invId: 'x', date: '2026-01-01', amount: -50, method: 'Refund' }, { id: 'q', invId: 'x', date: '2026-01-01', amount: '-50.00', method: 'Refund' }]);
+  assertEqual((csv.match(/,-50,/g) || []).length, 2, 'both -50 amounts untouched (the exporter already coerces amounts to numbers)');
+});
+test('SEC-GAP-026: the writers that do not use csvRow are covered — invoice list export, price history, VAT transactions, aging, P&L', () => {
+  acctSeed();
+  const hostile = { id: 'iX', num: 'INV40601', buyer: '=1+1', dst: '+dest', date: '2026-01-01', status: 'Sent', cur: 'USD', paymentTerms: 'Net 30', incoterm: '-2+3', taxRate: 0,
+    lineItems: [{ rid: 'a', lid: '', desc: 'x', qty: 1, up: 100, unitCost: 50, lineType: 'product' }] };
+  ctx.DB.inv = [hostile];
+  assertNoFormulaCells(csvCapture(() => ctx.expCSV()), 'expCSV'); assertContains(csvCapture(() => ctx.expCSV()), "'=1+1", 'expCSV neutralised text present');
+  ctx.DB.li = [{ id: 'LP', sku: '=SKU', desc: '@desc', cur: 'USD', cost: 1, price: 2, priceHistory: [{ date: '2026-01-01', cost: 1, price: 2, invoiceRef: '+INV', notes: '-note' }] }];
+  assertNoFormulaCells(csvCapture(() => ctx.expPriceHistoryCSV()), 'expPriceHistoryCSV');
+  ctx.window._vatResult = { from: '2026-01-01', to: '2026-03-31', result: { rows: [{ num: '=N', date: '2026-01-01', buyer: '@B', dst: '+D', type: '-T', status: '=S', cur: 'USD', grossOrig: 1, netOrig: 1, taxOrig: 0, netGBP: 1, taxGBP: 0 }] } };
+  assertNoFormulaCells(csvCapture(() => ctx.exportVATTransactions()), 'exportVATTransactions');
+  delete ctx.window._vatResult;
+  assertNoFormulaCells(csvCapture(() => ctx.exportAgingCSV()), 'exportAgingCSV'); assertContains(csvCapture(() => ctx.exportAgingCSV()), '=1+1', 'aging export produced a row for the hostile buyer');
+  mockEl('pl-dim').value = 'buyer'; mockEl('pl-from').value = ''; mockEl('pl-to').value = '';
+  try { assertNoFormulaCells(csvCapture(() => ctx.exportPLCSV()), 'exportPLCSV'); assertContains(csvCapture(() => ctx.exportPLCSV()), "'=1+1", 'P&L grouped by the hostile buyer, neutralised'); }
+  finally { mockEl('pl-dim').value = ''; }
+});
+test('SEC-GAP-026: expCSV routes through csvRow — commas and embedded double quotes survive (the old per-cell quoting did not escape quotes) and the column count is kept', () => {
+  acctSeed();
+  ctx.DB.inv = [{ id: 'iC', num: 'INV40602', buyer: 'Acme, "Inc"', dst: 'Port, Place', date: '2026-01-01', status: 'Sent', cur: 'USD', taxRate: 0, lineItems: [{ rid: 'a', lid: '', desc: 'x', qty: 1, up: 10, unitCost: 4, lineType: 'product' }] }];
+  const rows = csvParseLoose(csvCapture(() => ctx.expCSV()));
+  assertEqual(rows[1].length, rows[0].length, 'data row has the same column count as the header');
+  assertEqual(rows[1][1], 'Acme, "Inc"', 'comma and embedded quotes preserved in one cell');
+});
+
+test('SEC-GAP-026: P&L negative margins keep their sign as numbers-with-percent (not prefixed); loss-making groups export cleanly', () => {
+  acctSeed();
+  ctx.DB.inv = [{ id: 'iL', num: 'INV40801', buyer: 'LossCo', date: '2026-01-01', status: 'Sent', cur: 'USD', taxRate: 0, calc_cogs: 200, calc_grandTotal: 100, calc_netProfit: -100, lineItems: [{ rid: 'a', lid: '', desc: 'x', qty: 1, up: 100, unitCost: 200, lineType: 'product' }] }];
+  mockEl('pl-dim').value = 'buyer'; mockEl('pl-from').value = ''; mockEl('pl-to').value = '';
+  try { const csv = csvCapture(() => ctx.exportPLCSV()); assertContains(csv, '-100.0%', 'negative margin string untouched'); assertNotContains(csv, "'-100.0%", 'no apostrophe on a signed percentage'); }
+  finally { mockEl('pl-dim').value = ''; }
+});
+test('SEC-GAP-026: triage.html neutralises formulas in its CSV download with the same rules as index.html', () => {
+  const th = fs.readFileSync(path.join(__dirname, '../triage.html'), 'utf8');
+  const m = th.match(/function csvSafe\(v\) \{[\s\S]*?\n\}/);
+  assert(m, 'triage.html defines csvSafe');
+  const tsafe = new Function(m[0] + '; return csvSafe;')();
+  ['=1+1', '+cmd', '-2+3', '@SUM(1)', '\tTAB', '\rCR', '-cmd|calc', '-5.00', '+5', '-12.3%', 'plain', '', 'a=b'].forEach(v => assertEqual(tsafe(v), ctx.csvSafe(v), 'same result as index.html for ' + JSON.stringify(v)));
+  assertContains(th, "csvSafe(v) + '\"'", 'downloadOrdCsv applies csvSafe to every cell');
 });
 
 // ── PREVIEW DOCUMENT TESTS ─────────────────────────────────────

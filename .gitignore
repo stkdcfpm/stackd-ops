@@ -6,3 +6,12 @@ Stackd-Clean-*.json
 
 # OS cruft — accidentally tracked twice before (SEC-GAP-020-class hygiene miss)
 .DS_Store
+
+# App-generated exports and triage downloads — this repo is publicly served, never commit these (SEC-GAP-020)
+Stackd-*.csv
+Stackd-*.json
+VAT-*.csv
+aging-report-*.csv
+pl-report-*.csv
+stackd-load-summary-*.txt
+triage-order-request-*.csv
