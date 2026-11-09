@@ -2251,7 +2251,7 @@ test('RPT-003 AC21: CLAUDE.md public-repo row lists the seven patterns and no lo
 test('RPT-003 AC18/AC26: gap rows and the ACCT-GAP-005 caveat exist in known-gaps, tracker-adjacent docs, CLAUDE.md and the user guide', () => {
   const rd = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   const kg = rd('docs/known-gaps.md'), md = rd('CLAUDE.md'), ug = rd('docs/user-guide.md'), tr = rd('docs/requirements-tracker.md'), vh = rd('docs/version-history.md');
-  ['ACCT-GAP-002', 'ACCT-GAP-003', 'ACCT-GAP-004', 'ACCT-GAP-005', 'RPT-GAP-001'].forEach(id => { assertContains(kg, '## ' + id, 'known-gaps has ' + id); assertContains(md, id, 'CLAUDE.md summary has ' + id); });
+  ['ACCT-GAP-002', 'ACCT-GAP-003', 'ACCT-GAP-004', 'ACCT-GAP-005', 'RPT-GAP-001', 'SEC-GAP-026'].forEach(id => { assertContains(kg, '## ' + id, 'known-gaps has ' + id); assertContains(md, id, 'CLAUDE.md summary has ' + id); });
   assertContains(kg, 'Fixed v2.9.96', 'ACCT-GAP-002/003 recorded as Fixed');
   assertContains(kg, 'No test covered the entry point', 'entry-point test gap noted');
   assertContains(kg, 'ACCT-GAP-004 — Catalogue-versus-stored cost drift on real invoices (Open, description: undetermined)', 'ACCT-GAP-004 is Open with "undetermined" in the description only');
