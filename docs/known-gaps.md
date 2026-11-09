@@ -896,3 +896,7 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Detail:** records pushed to the linked Google Sheet are written with `sheet.getRange(...).setValues(rows)`; a string value beginning with `=` is stored as a formula by Google Sheets, so hostile text in a synced field (a buyer name, a description from an imported supplier quote file) could become an executing formula in the operator's Sheet. Sync is opt-in (SEC-GAP-002). Not fixed: it needs a change to Apps Script and a redeploy, and the pull path must then strip the neutraliser so round-trips stay lossless. Separate surface from the CSV exports.
 **Status:** open.
 
+
+### SORT-GAP-001 — Sort/filter covers four tabs only; choices not remembered *(v2.9.97, disclosed not fixed)*
+
+Sort/filter was added to Line Items, Suppliers, Buyers and Invoices only. Quotes, Purchase Orders, Shipments, Contacts, Order Requests and Payments are unchanged (Payments has no search at all), and a sort/filter choice resets on reload. The Buyer autofill also means a Buyer created via ＋ New Buyer… (default currency GBP) switches a new invoice from the USD default to GBP; the toast names every filled field. Credit-note rows in the Invoices tab are not sorted by the new control.
