@@ -861,11 +861,19 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Detail:** the exporters iterated `inv.lines` and read `cu`; `saveInv()` writes `inv.lineItems` and `unitCost`, so every real invoice exported as a header-only file. The old tests used fixtures in the same wrong shape (same defect class as PO-GAP-005).
 **Fix:** one line-source rule (`lineItems`, else legacy `lines`, else none), COGS following `cInv()`'s rule, tests rebuilt on the saved shape with one legacy-shape test per exporter retained.
 
-## ACCT-GAP-004 — Catalogue-versus-stored cost drift on real invoices (Open, description: undetermined)
+## ACCT-GAP-004 — Catalogue-versus-stored cost drift on real invoices (Checked 2026-11-09: no value drift found)
 
 **Area:** exported `Unit Cost (stored on line)` vs `Unit Cost (catalogue now)`.
-**Detail:** the app computes COGS from the current catalogue cost, not the price paid on the line, so catalogue edits can silently change historical profit. Whether any real invoice is affected is not known until a post-deploy, read-only, operator-run check (recipe defined in REQ-RPT-003 REQ-8). Linked to the price-versioning item on the v2.9.x roadmap and to INV-GAP-008.
-**Status:** open; to be closed as not-found or updated with an aggregate count after the post-deploy run.
+**Detail:** the app computes COGS from the current catalogue cost, not the price paid on the line, so catalogue edits can silently change historical profit.
+**Result of the operator-run read-only check (2026-11-09):** across all non-demo, non-credit-note invoices, every catalogue-linked line that carries a stored cost matches today's catalogue cost (0 drifted lines). One invoice has 5 catalogue-linked lines with no stored cost at all, so its profit depends entirely on the current catalogue cost and cannot be compared. Unlinked lines cannot drift and were not assessed for correctness by this check.
+**Status:** closed as "no drift found"; the one no-stored-cost invoice is tracked under INV-GAP-008 / INV-GAP-013. A correction approach is being worked out (a normal UI re-save is NOT safe, see INV-GAP-013).
+
+## INV-GAP-013 — Re-saving an invoice drops all stored `calc_*` figures, and the P&L report reads stored COGS only (Open, found by code reading, not yet confirmed against live data)
+
+**Area:** `saveInv()` (`index.html`, the `inv` literal), `renderPLReport()` and `exportPLCSV()`.
+**Detail:** (1) `saveInv()` builds the replacement record without any `calc_grandTotal`/`calc_cogs`/`calc_grossProfit`/`calc_netProfit`/`calc_margin`/`calc_balanceDue`/`calc_liTotal`/`calc_taxAmt` field; they are carried forward only when the save has zero live line items. A normal re-save of an invoice that has line items therefore deletes all eight (locally, and as nulls in the Cloud Data row). Screens that use `iCalc()` then fall back to the live calculation. (2) `renderPLReport()` and `exportPLCSV()` take COGS from `+inv.calc_cogs || 0` directly, not from `iCalc()`/`cInv()`, so any invoice without a stored `calc_cogs` shows COGS of 0 and gross profit equal to revenue in that report, even when its lines are catalogue-linked. Invoices created through the form never get `calc_*` written, so this may already affect them; to be confirmed against the live P&L report. (3) `runFPMMigration()` hard-codes stored `calc_*` figures for five named invoices behind the `st_fpm_repair_v1` flag; on a browser profile where that flag is absent (new device, cleared site data) it re-stamps those figures over current data.
+**Consequence for corrections:** correcting an affected invoice by editing and re-saving it in the UI would improve the screens that use `iCalc()` but could zero that invoice's COGS in the P&L report. Use a targeted, backed-up data patch instead until this is fixed.
+**Status:** open; fix candidates: make the P&L report use `iCalc()` COGS, or have `saveInv()` write fresh `calc_*` values. Needs a REQ before building (touches reported profit).
 
 ## ACCT-GAP-005 — Line-level accounting CSVs omit invoice-level charges, deposit and tax on charges (Open)
 
