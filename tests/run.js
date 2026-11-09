@@ -2266,7 +2266,7 @@ test('RPT-003 AC21: CLAUDE.md public-repo row lists the seven patterns and no lo
 test('RPT-003 AC18/AC26: gap rows and the ACCT-GAP-005 caveat exist in known-gaps, tracker-adjacent docs, CLAUDE.md and the user guide', () => {
   const rd = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   const kg = rd('docs/known-gaps.md'), md = rd('CLAUDE.md'), ug = rd('docs/user-guide.md'), tr = rd('docs/requirements-tracker.md'), vh = rd('docs/version-history.md');
-  ['ACCT-GAP-002', 'ACCT-GAP-003', 'ACCT-GAP-004', 'ACCT-GAP-005', 'RPT-GAP-001', 'SEC-GAP-026'].forEach(id => { assertContains(kg, '## ' + id, 'known-gaps has ' + id); assertContains(md, id, 'CLAUDE.md summary has ' + id); });
+  ['ACCT-GAP-002', 'ACCT-GAP-003', 'ACCT-GAP-004', 'ACCT-GAP-005', 'RPT-GAP-001', 'SEC-GAP-026', 'SEC-GAP-027'].forEach(id => { assertContains(kg, '## ' + id, 'known-gaps has ' + id); assertContains(md, id, 'CLAUDE.md summary has ' + id); });
   assertContains(kg, 'Fixed v2.9.96', 'ACCT-GAP-002/003 recorded as Fixed');
   assertContains(kg, 'SEC-GAP-026 — CSV formula injection in the app\'s CSV exports (Fixed v2.9.96', 'SEC-GAP-026 recorded as Fixed');
   assertContains(kg, 'No test covered the entry point', 'entry-point test gap noted');
@@ -2310,7 +2310,7 @@ function csvCapture(fn) {                  // run an exporter that downloads thr
 }
 test('SEC-GAP-026: csvSafe prefixes text starting with = + - @ tab CR; leaves numbers, numeric strings and ordinary text alone', () => {
   ['=1+1', '+cmd', '-2+3', '@SUM(1)', '\tTAB', '\rCR', '=HYPERLINK("x")', '-cmd|calc'].forEach(v => assertEqual(ctx.csvSafe(v), "'" + v, 'prefixed: ' + JSON.stringify(v)));
-  ['-5.00', '+5', '12', '0', '1.5e3', '-1.25E-2', '', 'normal text', 'Acme, Inc', 'a=b', 'x-y', ' =lead space'].forEach(v => assertEqual(ctx.csvSafe(v), v, 'untouched: ' + JSON.stringify(v)));
+  ['-5.00', '+5', '12', '0', '1.5e3', '-1.25E-2', '-12.3%', '5%', '', 'normal text', 'Acme, Inc', 'a=b', 'x-y', ' =lead space'].forEach(v => assertEqual(ctx.csvSafe(v), v, 'untouched: ' + JSON.stringify(v)));
   [-5, 0, 7.5, null, undefined, true].forEach(v => assertEqual(ctx.csvSafe(v), v, 'non-strings untouched: ' + String(v)));
 });
 test('SEC-GAP-026: csvRow neutralises formula text, keeps quoting rules, and does not corrupt negative numbers', () => {
@@ -2360,6 +2360,22 @@ test('SEC-GAP-026: expCSV routes through csvRow — commas and embedded double q
   const rows = csvParseLoose(csvCapture(() => ctx.expCSV()));
   assertEqual(rows[1].length, rows[0].length, 'data row has the same column count as the header');
   assertEqual(rows[1][1], 'Acme, "Inc"', 'comma and embedded quotes preserved in one cell');
+});
+
+test('SEC-GAP-026: P&L negative margins keep their sign as numbers-with-percent (not prefixed); loss-making groups export cleanly', () => {
+  acctSeed();
+  ctx.DB.inv = [{ id: 'iL', num: 'INV40801', buyer: 'LossCo', date: '2026-01-01', status: 'Sent', cur: 'USD', taxRate: 0, calc_cogs: 200, calc_grandTotal: 100, calc_netProfit: -100, lineItems: [{ rid: 'a', lid: '', desc: 'x', qty: 1, up: 100, unitCost: 200, lineType: 'product' }] }];
+  mockEl('pl-dim').value = 'buyer'; mockEl('pl-from').value = ''; mockEl('pl-to').value = '';
+  try { const csv = csvCapture(() => ctx.exportPLCSV()); assertContains(csv, '-100.0%', 'negative margin string untouched'); assertNotContains(csv, "'-100.0%", 'no apostrophe on a signed percentage'); }
+  finally { mockEl('pl-dim').value = ''; }
+});
+test('SEC-GAP-026: triage.html neutralises formulas in its CSV download with the same rules as index.html', () => {
+  const th = fs.readFileSync(path.join(__dirname, '../triage.html'), 'utf8');
+  const m = th.match(/function csvSafe\(v\) \{[\s\S]*?\n\}/);
+  assert(m, 'triage.html defines csvSafe');
+  const tsafe = new Function(m[0] + '; return csvSafe;')();
+  ['=1+1', '+cmd', '-2+3', '@SUM(1)', '\tTAB', '\rCR', '-cmd|calc', '-5.00', '+5', '-12.3%', 'plain', '', 'a=b'].forEach(v => assertEqual(tsafe(v), ctx.csvSafe(v), 'same result as index.html for ' + JSON.stringify(v)));
+  assertContains(th, "csvSafe(v) + '\"'", 'downloadOrdCsv applies csvSafe to every cell');
 });
 
 // ── PREVIEW DOCUMENT TESTS ─────────────────────────────────────

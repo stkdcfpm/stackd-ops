@@ -1393,7 +1393,8 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
           <li>Known limitation (ACCT-GAP-005): line-level CSVs do not include invoice-level charges, the deposit or tax on charges.</li>
           <li><code>.gitignore</code> now also blocks the app&rsquo;s sensitive exports (accounting, price history, invoices, VAT, aging, P&amp;L, load summary and triage CSVs; the blank import templates are not blocked). Never commit downloaded files to this public repo.</li>
           <li>Security fix (SEC-GAP-026): <strong>CSV formula injection</strong>. Text in exported CSV cells that starts with <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> (for example a line description or buyer name) is now prefixed with an apostrophe so Excel/Sheets show it as text instead of running it. Applies to the accounting exports, VAT, aging, P&amp;L, price history and the invoice list export; numbers, including negatives, are unchanged. The invoice list export also now escapes embedded double quotes.</li>
-          <li>48 new tests (1111 &rarr; 1159 pass).</li>
+          <li>The same protection is applied to the Triage tool&rsquo;s CSV download. Re-importing an exported CSV keeps the leading apostrophe on such cells.</li>
+          <li>50 new tests (1111 &rarr; 1161 pass).</li>
         </ul>
       </div>
 
@@ -13316,10 +13317,10 @@ function expCSV() {
 // ── ACCOUNTING EXPORT ───────────────────────────────────────────
 // SEC-GAP-026: neutralise spreadsheet formula injection in TEXT cells. A string starting with = + - @ tab or CR
 // is prefixed with an apostrophe so Excel/Sheets treat it as text. Real numbers and plain numeric strings
-// (e.g. a negative '-5.00' produced by toFixed) are left alone so numeric columns are not corrupted.
+// (e.g. a negative '-5.00' produced by toFixed, or a negative margin '-12.3%') are left alone so numeric columns are not corrupted.
 function csvSafe(v) {
   if (typeof v !== 'string') return v;
-  if (/^[=+\-@\t\r]/.test(v) && !/^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(v)) return "'" + v;
+  if (/^[=+\-@\t\r]/.test(v) && !/^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?%?$/.test(v)) return "'" + v;
   return v;
 }
 function csvRow(cells) {
