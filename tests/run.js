@@ -2136,6 +2136,21 @@ test('RPT-003 AC20/AC23: toast precedence and the unsupported-format backstop', 
   });
 });
 
+test('RPT-003 AC23: cancelled-invoice notice text is exactly as specified (static markup)', () => {
+  const b = acctModalBlock();
+  assertContains(b, '>Cancelled invoices are included in this export. Xero and QuickBooks have no status column, so exclude them in your accounting package.</div>', 'notice text');
+});
+test('RPT-003 AC23: duplicate supplier ids resolve first-match; a dangling lid on a real-shape line gives empty SKU and falls to line supplier', () => {
+  acctSeed();
+  ctx.DB.sup.push({ id: 'S1', name: 'Second Acme' });
+  const l = (lid) => realInv({ taxRate: 0 }, [{ rid: 'a', lid, desc: 'x', qty: 1, up: 1, unitCost: 4, lineType: 'product', supId: 'S1' }]);
+  assertEqual(colOf(ctx.acctInvCSV([l('')]), 'Supplier')[0], 'Acme Supply', 'first-match supplier (not the later duplicate)');
+  assertEqual(colOf(ctx.acctInvCSV([l('GONE')]), 'SKU')[0], '', 'dangling lid: empty SKU');
+  assertEqual(colOf(ctx.acctInvCSV([l('GONE')]), 'Supplier')[0], 'Acme Supply', 'dangling lid: line supplier still used');
+  const leg = { id: 'lg', num: 'LG', lines: [{ desc: 'x', cu: 6, qty: 2, up: 9, lid: 'GONE' }] };
+  assertEqual(colOf(ctx.acctInvCSV([leg]), 'COGS')[0], '12.00', 'legacy dangling lid: COGS from cu');
+});
+
 // ---- AC10 / REQ-8 parity classes (test-local helper; no production helper exists)
 function acctParityClass(inv) {
   if (ctx.acctIsCnRec(inv)) return { cls: 1 };
@@ -2259,6 +2274,10 @@ test('RPT-003 AC18/AC26: gap rows and the ACCT-GAP-005 caveat exist in known-gap
   assertContains(ug, 'ACCT-GAP-005', 'user guide carries the charges/deposit/tax-on-charges caveat');
   assertContains(ug, 'never commit', 'user guide says never to commit exports');
   assertContains(tr, 'REQ-RPT-003', 'tracker row'); assertContains(vh, '| v2.9.96 |', 'version-history row');
+  ['ACCT-GAP-002', 'ACCT-GAP-003', 'ACCT-GAP-004', 'ACCT-GAP-005', 'RPT-GAP-001', 'SEC-GAP-026'].forEach(id => assertContains(tr, '| ' + id + ' |', 'tracker has a row for ' + id));
+  assert(/\| ACCT-GAP-005 \|[^\n]*\*\*Open\*\*/.test(tr), 'tracker shows ACCT-GAP-005 as Open');
+  assert(/\| ACCT-GAP-004 \|[^\n]*\*\*Open\*\*/.test(tr), 'tracker shows ACCT-GAP-004 as Open');
+  assertContains(md, '| Branch for new work | `fix/acct-export-shape` |', 'CLAUDE.md branch row updated');
 });
 
 // ── PREVIEW DOCUMENT TESTS ─────────────────────────────────────

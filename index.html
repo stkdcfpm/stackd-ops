@@ -1391,8 +1391,8 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
           <li>Demo records are never exported. Cancelled invoices are exported; Xero and QuickBooks have no status column, so exclude them in your accounting package (a notice shows in the modal). Credit notes appear in the JSON export only.</li>
           <li>Xero/QuickBooks/FreeAgent options that do not apply to the chosen Entity are now disabled instead of failing after a click.</li>
           <li>Known limitation (ACCT-GAP-005): line-level CSVs do not include invoice-level charges, the deposit or tax on charges.</li>
-          <li><code>.gitignore</code> now also blocks every app-generated export (accounting, price history, invoices, VAT, aging, P&amp;L, load summary and triage CSVs). Never commit downloaded files to this public repo.</li>
-          <li>40 new tests (1111 &rarr; 1151 pass).</li>
+          <li><code>.gitignore</code> now also blocks the app&rsquo;s sensitive exports (accounting, price history, invoices, VAT, aging, P&amp;L, load summary and triage CSVs; the blank import templates are not blocked). Never commit downloaded files to this public repo.</li>
+          <li>42 new tests (1111 &rarr; 1153 pass).</li>
         </ul>
       </div>
 
