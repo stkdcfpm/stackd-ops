@@ -889,14 +889,12 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Accepted trade-off:** re-importing an exported CSV (a manual round-trip; nothing in the app does this) keeps the leading apostrophe on text cells that began with `= + - @`, for example a phone number `+44...` becomes `'+44...`; and a triage CSV imported through Import Data → Order Requests carries the apostrophe on such free-text cells. `parseImportCSV` does not strip it.
 **Residual:** the blank import templates (`stackd-<entity>-template.csv`) are static and unchanged; a JSON export can still carry the raw text (JSON is not evaluated by spreadsheets).
 
-## SEC-GAP-027 — Sheets sync writes cell values without neutralising formulas (Open)
+## SEC-GAP-027 — Sheets sync writes cell values without neutralising formulas (Fixed and live — PR #160, deployed and verified 2026-11-09)
 
-**Area:** `apps-script/Code.gs` (`setValues` in the bulk-upsert write path, lines ~123-132).
-**Found:** security-gate re-check of the SEC-GAP-026 fix (out of that diff).
-**Detail:** records pushed to the linked Google Sheet are written with `sheet.getRange(...).setValues(rows)`; a string value beginning with `=` is stored as a formula by Google Sheets, so hostile text in a synced field (a buyer name, a description from an imported supplier quote file) could become an executing formula in the operator's Sheet. Sync is opt-in (SEC-GAP-002). Not fixed: it needs a change to Apps Script and a redeploy, and the pull path must then strip the neutraliser so round-trips stay lossless. Separate surface from the CSV exports.
-**Status:** open.
-
-
-### SORT-GAP-001 — Sort/filter covers four tabs only; choices not remembered *(v2.9.97, disclosed not fixed)*
-
-Sort/filter was added to Line Items, Suppliers, Buyers and Invoices only. Quotes, Purchase Orders, Shipments, Contacts, Order Requests and Payments are unchanged (Payments has no search at all), and a sort/filter choice resets on reload. The Buyer autofill also means a Buyer created via ＋ New Buyer… (default currency GBP) switches a new invoice from the USD default to GBP; the toast names every filled field. Credit-note rows in the Invoices tab are not sorted by the new control.
+**Area:** `apps-script/Code.gs` (`handleBulkUpsert`, `handleUpsert`, `handlePushEntity`, `handleUpdateShipment`, `handleTrackerUpdate`; read side `handlePullEntity` and the business-key comparisons).
+**Found:** security-gate re-check of the SEC-GAP-026 fix.
+**Detail:** records pushed to the linked Google Sheet were written with `setValue(s)`; a string beginning with `=` is stored as a formula by Google Sheets, so hostile text in a synced field (a buyer name, a description from an imported supplier file) could become an executing formula in the operator's Sheet. Sync is opt-in (SEC-GAP-002).
+**Fix:** new `safeCell()` prefixes an apostrophe (Sheets' own text marker) to text starting with `=`, `+`, `-`, `@`, tab or CR on every write path; new `unsafeCell()` strips it again on pull and in the business-key comparisons (upsert, delete, update_shipment). Numbers and plain numeric strings are untouched. Because the sources disagree on whether Sheets hides the apostrophe or keeps it as literal text, the code is lossless under BOTH behaviours (tested against a mock Sheets runtime modelling each). 11 tests; 12 of 12 mutations caught.
+**Deployed 2026-11-09:** operator pasted the new Code.gs and created a new version of the existing deployment; `selfTestFormulaSafety()` logged PASS (7 samples stored as text and read back unchanged on the real Sheets runtime); `auditSheetFormulas()` found no formula cells in the entity tabs; a normal portal sync afterwards worked. Not covered by the live self-test: update_shipment/tracker paths, tab/CR/leading-space inputs (covered by mock tests only).
+**Residual:** text that literally starts with an apostrophe followed by `=`, `+`, `-` or `@` loses that apostrophe on pull (indistinguishable from the neutraliser). Formulas already in the Sheet are not removed by the redeploy itself (a later Push All rewrites the rows it covers; the audit finds the rest). "Lossless" applies to hostile text; numeric-looking business keys are coerced by Sheets regardless (pre-existing).
+**Status:** Fixed and live.
