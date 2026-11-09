@@ -55,7 +55,7 @@ var BIZ_KEYS = {
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
-    if (payload._token !== TOKEN) return respond({ status: 'error', message: 'Unauthorised' });
+    if (!TOKEN || payload._token !== TOKEN) return respond({ status: 'error', message: 'Unauthorised' });
 
     var action = payload.action;
 
@@ -231,7 +231,7 @@ function handlePushEntity(payload) {
   var headers = Object.keys(records[0]);
   var existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String).filter(function(h){ return h !== ''; });
   if (existingHeaders.length === 0) {
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers.map(safeCell)]);
   } else {
     headers = existingHeaders;
   }
@@ -473,7 +473,8 @@ function selfTestFormulaSafety() {
     var formulas = sh.getRange(1, 1, 1, samples.length).getFormulas()[0];
     var values   = sh.getRange(1, 1, 1, samples.length).getValues()[0].map(unsafeCell).map(String);
     var results = samples.map(function(s, i) {
-      return { sample: s, isFormula: formulas[i] !== '', roundTrip: values[i] === String(s) };
+      var exempt = NUMERIC_TEXT.test(s); // real Sheets coerces numeric-looking text to a number, so compare numerically
+      return { sample: s, isFormula: formulas[i] !== '', roundTrip: exempt ? Number(values[i]) === Number(s) : values[i] === String(s) };
     });
     var bad = results.filter(function(r) { return r.isFormula || !r.roundTrip; });
     Logger.log(bad.length === 0 ? 'PASS: all ' + samples.length + ' samples stored as text and read back unchanged'
@@ -488,7 +489,7 @@ function selfTestFormulaSafety() {
 function auditSheetFormulas() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var found = [];
-  Object.keys(HEADERS).forEach(function(entity) {
+  Object.keys(SHEET_NAMES).forEach(function(entity) {
     var sheet = getSheet(entity, ss); if (!sheet) return;
     var rng = sheet.getDataRange(); var f = rng.getFormulas();
     for (var r = 0; r < f.length; r++) for (var c = 0; c < f[r].length; c++)
@@ -501,14 +502,14 @@ function auditSheetFormulas() {
 // ── Helpers ───────────────────────────────────────────────────────
 
 function getSheet(entity, ss) {
-  var name = SHEET_NAMES[entity];
+  var name = Object.prototype.hasOwnProperty.call(SHEET_NAMES, entity) ? SHEET_NAMES[entity] : null;
   if (!name) return null;
   ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   return ss.getSheetByName(name);
 }
 
 function getOrCreateSheet(entity, ss) {
-  var name = SHEET_NAMES[entity];
+  var name = Object.prototype.hasOwnProperty.call(SHEET_NAMES, entity) ? SHEET_NAMES[entity] : null;
   if (!name) return null;
   ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(name);
@@ -522,12 +523,12 @@ function ensureHeaders(sheet, entity, records) {
   var sheetHeaders;
   if (lastCol === 0) {
     sheetHeaders = HEADERS[entity] || (records.length ? Object.keys(records[0]) : []);
-    if (sheetHeaders.length) sheet.getRange(1, 1, 1, sheetHeaders.length).setValues([sheetHeaders]);
+    if (sheetHeaders.length) sheet.getRange(1, 1, 1, sheetHeaders.length).setValues([sheetHeaders.map(safeCell)]);
   } else {
     sheetHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String).filter(function(h){ return h !== ''; });
     if (!sheetHeaders.length) {
       sheetHeaders = HEADERS[entity] || (records.length ? Object.keys(records[0]) : []);
-      if (sheetHeaders.length) sheet.getRange(1, 1, 1, sheetHeaders.length).setValues([sheetHeaders]);
+      if (sheetHeaders.length) sheet.getRange(1, 1, 1, sheetHeaders.length).setValues([sheetHeaders.map(safeCell)]);
     }
   }
   return sheetHeaders;
