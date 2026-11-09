@@ -2268,6 +2268,7 @@ test('RPT-003 AC18/AC26: gap rows and the ACCT-GAP-005 caveat exist in known-gap
   const kg = rd('docs/known-gaps.md'), md = rd('CLAUDE.md'), ug = rd('docs/user-guide.md'), tr = rd('docs/requirements-tracker.md'), vh = rd('docs/version-history.md');
   ['ACCT-GAP-002', 'ACCT-GAP-003', 'ACCT-GAP-004', 'ACCT-GAP-005', 'RPT-GAP-001', 'SEC-GAP-026'].forEach(id => { assertContains(kg, '## ' + id, 'known-gaps has ' + id); assertContains(md, id, 'CLAUDE.md summary has ' + id); });
   assertContains(kg, 'Fixed v2.9.96', 'ACCT-GAP-002/003 recorded as Fixed');
+  assertContains(kg, 'SEC-GAP-026 — CSV formula injection in the app\'s CSV exports (Fixed v2.9.96', 'SEC-GAP-026 recorded as Fixed');
   assertContains(kg, 'No test covered the entry point', 'entry-point test gap noted');
   assertContains(kg, 'ACCT-GAP-004 — Catalogue-versus-stored cost drift on real invoices (Open, description: undetermined)', 'ACCT-GAP-004 is Open with "undetermined" in the description only');
   assertContains(ug, '## Accounting Export', 'user guide has the Accounting Export section');
@@ -2278,6 +2279,87 @@ test('RPT-003 AC18/AC26: gap rows and the ACCT-GAP-005 caveat exist in known-gap
   assert(/\| ACCT-GAP-005 \|[^\n]*\*\*Open\*\*/.test(tr), 'tracker shows ACCT-GAP-005 as Open');
   assert(/\| ACCT-GAP-004 \|[^\n]*\*\*Open\*\*/.test(tr), 'tracker shows ACCT-GAP-004 as Open');
   assertContains(md, '| Branch for new work | `fix/acct-export-shape` |', 'CLAUDE.md branch row updated');
+});
+
+// ══ SEC-GAP-026: CSV formula injection — csvSafe() and every CSV writer ══
+function csvParseLoose(text) {            // minimal RFC 4180 parser (quotes, "" escapes, newlines inside quotes)
+  const out = []; let row = [], cell = '', q = false;
+  text = text.replace(/^﻿/, '');
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n') { row.push(cell); out.push(row); row = []; cell = ''; }
+    else cell += ch;
+  }
+  row.push(cell); out.push(row); return out;
+}
+const CSV_NUMERIC = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/;
+function assertNoFormulaCells(text, label) {
+  csvParseLoose(text).forEach((r, ri) => r.forEach((c, ci) => {
+    if (/^[=+\-@\t\r]/.test(c) && !CSV_NUMERIC.test(c)) throw new Error(label + ': unneutralised formula cell "' + c.replace(/[\t\r]/g, '?') + '" at row ' + ri + ' col ' + ci);
+  }));
+}
+function csvCapture(fn) {                  // run an exporter that downloads through document.createElement('a') and return the CSV text
+  const orig = ctx.document.createElement, origToast = ctx.toast; let href = '';
+  ctx.document.createElement = tag => { const a = orig(tag); a.click = function() { href = a.href; }; return a; };
+  ctx.toast = () => {};
+  try { fn(); } finally { ctx.document.createElement = orig; ctx.toast = origToast; }
+  return decodeURIComponent(String(href).replace(/^data:[^,]*,/, ''));
+}
+test('SEC-GAP-026: csvSafe prefixes text starting with = + - @ tab CR; leaves numbers, numeric strings and ordinary text alone', () => {
+  ['=1+1', '+cmd', '-2+3', '@SUM(1)', '\tTAB', '\rCR', '=HYPERLINK("x")', '-cmd|calc'].forEach(v => assertEqual(ctx.csvSafe(v), "'" + v, 'prefixed: ' + JSON.stringify(v)));
+  ['-5.00', '+5', '12', '0', '1.5e3', '-1.25E-2', '', 'normal text', 'Acme, Inc', 'a=b', 'x-y', ' =lead space'].forEach(v => assertEqual(ctx.csvSafe(v), v, 'untouched: ' + JSON.stringify(v)));
+  [-5, 0, 7.5, null, undefined, true].forEach(v => assertEqual(ctx.csvSafe(v), v, 'non-strings untouched: ' + String(v)));
+});
+test('SEC-GAP-026: csvRow neutralises formula text, keeps quoting rules, and does not corrupt negative numbers', () => {
+  assertEqual(ctx.csvRow(['=cmd|a', 'plain', '-5.00', -5, 'Acme, Inc', 'say "hi"', null]), "'=cmd|a,plain,-5.00,-5,\"Acme, Inc\",\"say \"\"hi\"\"\",", 'row');
+  assertEqual(ctx.csvRow(['@x,y']), "\"'@x,y\"", 'prefix applied before quoting');
+});
+test('SEC-GAP-026: all five accounting exporters neutralise hostile buyer/description/destination/incoterm/reference/supplier text', () => {
+  acctSeed();
+  ctx.DB.sup = [{ id: 'S1', name: '=SUPPLIER' }];
+  ctx.DB.li = [{ id: 'L1', cost: 5, sku: '+SKU', supId: 'S1' }];
+  const inv = realInv({ id: 'iH', num: '=INV', buyer: '=1+1', buyerAddr: '@addr', dst: '+dest', incoterm: '-2+3', paymentTerms: '=PT', lineItems: [
+    { rid: 'a', lid: 'L1', desc: '@SUM(1)', uom: '=u', qty: 1, up: 10, unitCost: 5, lineType: '=type', supId: 'S1' }] });
+  const pm = [{ id: 'pH', invId: 'iH', date: '2026-01-02', amount: 100, method: '=M', reference: '+R', notes: '-N', currency: 'USD', purpose: '@P' }];
+  ctx.DB.inv = [inv]; ctx.DB.payments = pm;
+  [['Generic CSV', ctx.acctInvCSV([inv])], ['Xero', ctx.acctXeroCSV([inv])], ['QuickBooks', ctx.acctQBCSV([inv])], ['Payments CSV', ctx.acctPmtCSV(pm)], ['FreeAgent', ctx.acctFACSV(pm)]]
+    .forEach(([n, csv]) => assertNoFormulaCells(csv, n));
+  assertContains(ctx.acctInvCSV([inv]), "'=1+1", 'neutralised text is still present, as text');
+  assertContains(ctx.acctInvCSV([inv]), "'=SUPPLIER", 'Supplier column neutralised');
+});
+test('SEC-GAP-026: numeric columns are not corrupted — a negative Gross Profit and negative payment amounts stay numeric', () => {
+  acctSeed();
+  const inv = realInv({ taxRate: 0 }, [{ rid: 'a', lid: '', desc: 'loss line', qty: 2, up: 5, unitCost: 8, lineType: 'product' }]);
+  assertEqual(colOf(ctx.acctInvCSV([inv]), 'Gross Profit')[0], '-6.00', 'negative gross profit untouched');
+  assertEqual(colOf(ctx.acctInvCSV([inv]), 'COGS')[0], '16.00', 'COGS untouched');
+  const csv = ctx.acctPmtCSV([{ id: 'p', invId: 'x', date: '2026-01-01', amount: -50, method: 'Refund' }, { id: 'q', invId: 'x', date: '2026-01-01', amount: '-50.00', method: 'Refund' }]);
+  assertEqual((csv.match(/,-50,/g) || []).length, 2, 'both -50 amounts untouched (the exporter already coerces amounts to numbers)');
+});
+test('SEC-GAP-026: the writers that do not use csvRow are covered — invoice list export, price history, VAT transactions, aging, P&L', () => {
+  acctSeed();
+  const hostile = { id: 'iX', num: 'INV40601', buyer: '=1+1', dst: '+dest', date: '2026-01-01', status: 'Sent', cur: 'USD', paymentTerms: 'Net 30', incoterm: '-2+3', taxRate: 0,
+    lineItems: [{ rid: 'a', lid: '', desc: 'x', qty: 1, up: 100, unitCost: 50, lineType: 'product' }] };
+  ctx.DB.inv = [hostile];
+  assertNoFormulaCells(csvCapture(() => ctx.expCSV()), 'expCSV'); assertContains(csvCapture(() => ctx.expCSV()), "'=1+1", 'expCSV neutralised text present');
+  ctx.DB.li = [{ id: 'LP', sku: '=SKU', desc: '@desc', cur: 'USD', cost: 1, price: 2, priceHistory: [{ date: '2026-01-01', cost: 1, price: 2, invoiceRef: '+INV', notes: '-note' }] }];
+  assertNoFormulaCells(csvCapture(() => ctx.expPriceHistoryCSV()), 'expPriceHistoryCSV');
+  ctx.window._vatResult = { from: '2026-01-01', to: '2026-03-31', result: { rows: [{ num: '=N', date: '2026-01-01', buyer: '@B', dst: '+D', type: '-T', status: '=S', cur: 'USD', grossOrig: 1, netOrig: 1, taxOrig: 0, netGBP: 1, taxGBP: 0 }] } };
+  assertNoFormulaCells(csvCapture(() => ctx.exportVATTransactions()), 'exportVATTransactions');
+  delete ctx.window._vatResult;
+  assertNoFormulaCells(csvCapture(() => ctx.exportAgingCSV()), 'exportAgingCSV'); assertContains(csvCapture(() => ctx.exportAgingCSV()), '=1+1', 'aging export produced a row for the hostile buyer');
+  mockEl('pl-dim').value = 'buyer'; mockEl('pl-from').value = ''; mockEl('pl-to').value = '';
+  try { assertNoFormulaCells(csvCapture(() => ctx.exportPLCSV()), 'exportPLCSV'); assertContains(csvCapture(() => ctx.exportPLCSV()), "'=1+1", 'P&L grouped by the hostile buyer, neutralised'); }
+  finally { mockEl('pl-dim').value = ''; }
+});
+test('SEC-GAP-026: expCSV routes through csvRow — commas and embedded double quotes survive (the old per-cell quoting did not escape quotes) and the column count is kept', () => {
+  acctSeed();
+  ctx.DB.inv = [{ id: 'iC', num: 'INV40602', buyer: 'Acme, "Inc"', dst: 'Port, Place', date: '2026-01-01', status: 'Sent', cur: 'USD', taxRate: 0, lineItems: [{ rid: 'a', lid: '', desc: 'x', qty: 1, up: 10, unitCost: 4, lineType: 'product' }] }];
+  const rows = csvParseLoose(csvCapture(() => ctx.expCSV()));
+  assertEqual(rows[1].length, rows[0].length, 'data row has the same column count as the header');
+  assertEqual(rows[1][1], 'Acme, "Inc"', 'comma and embedded quotes preserved in one cell');
 });
 
 // ── PREVIEW DOCUMENT TESTS ─────────────────────────────────────

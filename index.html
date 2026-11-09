@@ -1392,7 +1392,8 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
           <li>Xero/QuickBooks/FreeAgent options that do not apply to the chosen Entity are now disabled instead of failing after a click.</li>
           <li>Known limitation (ACCT-GAP-005): line-level CSVs do not include invoice-level charges, the deposit or tax on charges.</li>
           <li><code>.gitignore</code> now also blocks the app&rsquo;s sensitive exports (accounting, price history, invoices, VAT, aging, P&amp;L, load summary and triage CSVs; the blank import templates are not blocked). Never commit downloaded files to this public repo.</li>
-          <li>42 new tests (1111 &rarr; 1153 pass).</li>
+          <li>Security fix (SEC-GAP-026): <strong>CSV formula injection</strong>. Text in exported CSV cells that starts with <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> (for example a line description or buyer name) is now prefixed with an apostrophe so Excel/Sheets show it as text instead of running it. Applies to the accounting exports, VAT, aging, P&amp;L, price history and the invoice list export; numbers, including negatives, are unchanged. The invoice list export also now escapes embedded double quotes.</li>
+          <li>48 new tests (1111 &rarr; 1159 pass).</li>
         </ul>
       </div>
 
@@ -9554,7 +9555,7 @@ function exportVATSummary() {
     ['Box 9', 'Total value of goods acquired from EC (post-Brexit £0)', res.box9.toFixed(2)]
   ];
   var csv = rows.map(function(row) {
-    return row.map(function(c){ return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+    return row.map(function(c){ return '"' + String(csvSafe(c)).replace(/"/g, '""') + '"'; }).join(',');
   }).join('\n');
   dlText('VAT-Return-' + r.from + '-to-' + r.to + '.csv', csv, 'text/csv');
 }
@@ -9571,7 +9572,7 @@ function exportVATTransactions() {
     ];
   });
   var csv = [header].concat(dataRows).map(function(row) {
-    return row.map(function(c){ return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+    return row.map(function(c){ return '"' + String(csvSafe(c)).replace(/"/g, '""') + '"'; }).join(',');
   }).join('\n');
   dlText('VAT-Transactions-' + r.from + '-to-' + r.to + '.csv', csv, 'text/csv');
 }
@@ -9748,7 +9749,7 @@ function exportAgingCSV() {
     var bucket = daysOverdue<=0?'Current':daysOverdue<=30?'0–30':daysOverdue<=60?'31–60':daysOverdue<=90?'61–90':'90+';
     rows.push([inv.num,inv.buyer||'',inv.date||'',dueDate.toISOString().slice(0,10),inv.cur||'USD',c.bal.toFixed(2),bucket,Math.max(0,daysOverdue)]);
   });
-  var csv = rows.map(function(r){ return r.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var csv = rows.map(function(r){ return r.map(function(v){ return '"'+String(csvSafe(v)).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
   var a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = 'aging-report-' + new Date().toISOString().slice(0,10) + '.csv';
@@ -9888,7 +9889,7 @@ function exportPLCSV() {
   var totMgn=totals.revenue>0?(totals.np/totals.revenue*100).toFixed(1)+'%':'—';
   rows.push(['TOTAL',totals.revenue.toFixed(2),totals.cogs.toFixed(2),totals.gp.toFixed(2),totals.np.toFixed(2),totMgn]);
 
-  var csv = rows.map(function(r){ return r.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var csv = rows.map(function(r){ return r.map(function(v){ return '"'+String(csvSafe(v)).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
   var a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = 'pl-report-' + dim + '-' + new Date().toISOString().slice(0,10) + '.csv';
@@ -12397,7 +12398,7 @@ var AI_SYSTEM_PROMPT = [
   '- Invoice Revenue: sum of grand totals (non-cancelled invoices)',
   '- Net Profit: grand total minus COGS minus tax per invoice',
   'Margin vs markup (v2.9.94, labels only): Line Item "Margin %" = (price - cost) / price, on supplier cost only (before freight/duty/insurance). Quote "Markup %" (quote-level and per-line) is applied on top of LANDED cost: sell = landed x (1 + markup/100), so a 20% markup is a 16.7% margin. Do not enter a margin figure as a markup.',
-  'Accounting Export (v2.9.96, REQ/SPEC-RPT-003): opens from the Invoices tab (Accounting Export) and the Payments view (Export). It defaults to Generic CSV. Xero and QuickBooks are invoices-only and FreeAgent is payments-only, and the options that do not apply to the chosen Entity are disabled. Demo records are never exported. Cancelled invoices ARE exported; Xero and QuickBooks have no status column, so exclude cancelled invoices in the accounting package. Credit notes appear in the JSON export only. Generic CSV gains four columns after the original 19: Unit Cost (stored on line), Unit Cost (catalogue now), Line Type and Supplier, so catalogue-versus-stored cost drift is visible per line. Known limitation (ACCT-GAP-005): the line-level CSVs do not include freight/insurance/other invoice-level charges, the deposit or tax on charges, so Xero and QuickBooks totals will differ from the app total.',
+  'Accounting Export (v2.9.96, REQ/SPEC-RPT-003): opens from the Invoices tab (Accounting Export) and the Payments view (Export). It defaults to Generic CSV. Xero and QuickBooks are invoices-only and FreeAgent is payments-only, and the options that do not apply to the chosen Entity are disabled. Demo records are never exported. Cancelled invoices ARE exported; Xero and QuickBooks have no status column, so exclude cancelled invoices in the accounting package. Credit notes appear in the JSON export only. Generic CSV gains four columns after the original 19: Unit Cost (stored on line), Unit Cost (catalogue now), Line Type and Supplier, so catalogue-versus-stored cost drift is visible per line. CSV exports (all of them) prefix text cells starting with = + - @ with an apostrophe so spreadsheets do not run them as formulas (SEC-GAP-026). Known limitation (ACCT-GAP-005): the line-level CSVs do not include freight/insurance/other invoice-level charges, the deposit or tax on charges, so Xero and QuickBooks totals will differ from the app total.',
   'Invoice quick-add Supplier dropdown has a "＋ New Supplier…" option (v2.9.93) that creates a name-only Supplier (USD) and selects it, like "＋ New Buyer…"; complete its details in the Suppliers tab.',
   '- Net Profit never includes sales tax (a buyer pass-through). v2.9.92 fixed the invoice form\'s live totals and both CSV invoice import paths, which used to count tax as profit; previously imported invoices self-correct on load.',
   '- Avg Margin: net profit ÷ revenue × 100',
@@ -13293,7 +13294,7 @@ function expPriceHistoryCSV() {
     }
   });
   if (!rows.length) { toast('No line items to export'); return; }
-  var csv = [h].concat(rows).map(function(r){ return r.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
+  var csv = [h].concat(rows).map(function(r){ return r.map(function(v){ return '"' + String(csvSafe(v)).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
   var a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = 'Stackd-PriceHistory-' + today() + '.csv';
@@ -13305,17 +13306,25 @@ function expCSV() {
   var h=['Invoice #','Buyer','Destination','Date','Status','Currency','Grand Total','COGS','Gross Profit','Net Profit','Margin %','Tax Rate %','Buyer Deposit','Balance Due','Incoterm','Payment Terms'];
   var rows=DB.inv.map(function(inv){
     var c=cInv(inv);
-    return [inv.num,inv.buyer,inv.dst,inv.date,inv.status,inv.cur,fn(c.grand),fn(c.cogs),fn(c.gp),fn(c.np),(c.mgn||0).toFixed(1),((+c.taxRate||0)*100).toFixed(1),fn(c.dep),fn(c.bal),inv.incoterm||'',inv.paymentTerms||''].map(function(v){return '"'+v+'"';}).join(',');
+    return [inv.num,inv.buyer,inv.dst,inv.date,inv.status,inv.cur,fn(c.grand),fn(c.cogs),fn(c.gp),fn(c.np),(c.mgn||0).toFixed(1),((+c.taxRate||0)*100).toFixed(1),fn(c.dep),fn(c.bal),inv.incoterm||'',inv.paymentTerms||''];
   });
   var a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent([h.join(',')].concat(rows).join('\n'));
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent([csvRow(h)].concat(rows.map(csvRow)).join('\n'));
   a.download='Stackd-Invoices-'+today()+'.csv'; a.click(); toast('Exported');
 }
 
 // ── ACCOUNTING EXPORT ───────────────────────────────────────────
+// SEC-GAP-026: neutralise spreadsheet formula injection in TEXT cells. A string starting with = + - @ tab or CR
+// is prefixed with an apostrophe so Excel/Sheets treat it as text. Real numbers and plain numeric strings
+// (e.g. a negative '-5.00' produced by toFixed) are left alone so numeric columns are not corrupted.
+function csvSafe(v) {
+  if (typeof v !== 'string') return v;
+  if (/^[=+\-@\t\r]/.test(v) && !/^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(v)) return "'" + v;
+  return v;
+}
 function csvRow(cells) {
   return cells.map(function(v) {
-    var s = v == null ? '' : String(v);
+    var s = v == null ? '' : String(csvSafe(v));
     if (/[",\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
     return s;
   }).join(',');

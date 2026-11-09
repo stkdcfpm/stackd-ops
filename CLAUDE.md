@@ -8,7 +8,7 @@ For operator-facing workflow detail (how to use each tab/feature today), read do
 Trade operations portal for FPM (Freight + Procurement Management). Single-file browser app — all code lives in `index.html`. No build step, no framework, no dependencies (one acknowledged exception: `vendor/supabase-js-v2.min.js`, a vendored same-origin static file used for Supplier/Buyer, Line Item, Contact, Order Request, Quote, Purchase Order, Invoice, Credit Note, Shipment, Buyer Payment, and Supplier Payment when Cloud Data is configured — REQ/SPEC-CLOUD-001, extended to Line Item/Contact by REQ/SPEC-CLOUD-002, to Order Request by REQ/SPEC-CLOUD-003, to Quote by REQ/SPEC-CLOUD-004, to Purchase Order by REQ/SPEC-CLOUD-005 (completing Phase 2), to Invoice/Credit Note by REQ/SPEC-CLOUD-006 (Phase 3 sub-phase 1 of 3), to Shipment by REQ/SPEC-CLOUD-007 (Phase 3 sub-phase 2 of 3), and to Buyer Payment/Supplier Payment by REQ/SPEC-CLOUD-008 (Phase 3 sub-phase 3 of 3, completing Phase 3) — of the cross-platform backend migration; no CDN, no auto-update). Deployed via GitHub Pages.
 
 **Current version: v2.9.96**  
-**Test count: 1153/1153 PASS** (`node tests/run.js`)
+**Test count: 1159/1159 PASS** (`node tests/run.js`)
 
 ---
 
@@ -230,7 +230,7 @@ See `docs/known-gaps.md` for full entries.
 | INV-GAP-009 / INV-GAP-010 | Invoices / line persistence + audit trail | `saveInv()` dropped each line's `supId` (reopened quick-added Product lines failed the supplier gate) and all earlier `editHistory` — Fixed v2.9.95 |
 | INV-GAP-012 | Invoices / `saveInv()` full-object-replace | `saveInv()` rebuilds the record from a whitelist literal, silently dropping any other field on every re-save (probed: `notes`, `_demo`, `creAt`, `depRecoveredAt`, `fpmFunded`, `sourceQuoteId`, `shipId`, `paidAt`, custom keys) — open, not fixed beyond `supId`/`editHistory`; each field needs a decision on whether it is form-owned or must be carried forward |
 | ACCT-GAP-002 / ACCT-GAP-003 | Accounting Export | Modal never opened (`openM` undefined, no test on the entry point) and exporters read `lines`/`cu` instead of `lineItems`/`unitCost` — Fixed v2.9.96 (REQ/SPEC-RPT-003) |
-| SEC-GAP-026 | Security / CSV export | `csvRow()` does not neutralise cells starting with `=`, `+`, `-`, `@` (formula injection when opened in a spreadsheet); pre-existing, newly reachable for invoice rows in v2.9.96 — Open, MEDIUM |
+| SEC-GAP-026 | Security / CSV export | CSV formula injection (cells starting with `=`, `+`, `-`, `@`, tab, CR evaluated by spreadsheets) — Fixed v2.9.96 via `csvSafe()` in `csvRow()` and every other CSV writer; `expCSV()` now routes through `csvRow()` |
 | ACCT-GAP-004 | Accounting Export / cost drift | Catalogue-versus-stored cost drift on real invoices: Open, undetermined until the post-deploy operator-run check (linked to INV-GAP-008) |
 | ACCT-GAP-005 | Accounting Export | Line-level CSVs omit invoice-level charges, deposit and tax on charges — Open, disclosed in the user guide |
 | RPT-GAP-001 | Reports / tests | `openAgingReport`, `openPLReport`, `expCSV` have no direct tests; 27 other `open*` handlers unaudited — Open |

@@ -879,11 +879,11 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Detail:** `openAgingReport`, `openPLReport` and `expCSV` have no direct test (reading them shows no `openM`-class defect). 27 other `open*` handlers were not audited. Logged, not fixed.
 **Status:** open.
 
-## SEC-GAP-026 — CSV formula injection in every `csvRow()` export (Open; newly reachable for invoice rows in v2.9.96)
+## SEC-GAP-026 — CSV formula injection in the app's CSV exports (Fixed v2.9.96; was newly reachable for invoice rows)
 
 **Area:** `csvRow()` and all its call sites (`index.html`): accounting exports, price history, invoices, VAT, aging, P&L.
 **Found:** security-gate review of v2.9.96 (MEDIUM).
 **Detail:** `csvRow()` quotes cells containing `"`, `,`, `\n` or `\r` but does not neutralise cells starting with `=`, `+`, `-`, `@` or a tab, so text that begins that way can be evaluated as a formula when the file is opened in Excel/Sheets. Pre-existing, but until v2.9.96 the invoice accounting exporters emitted no rows for real invoices; now line descriptions, buyer, address, destination and Supplier reach cells for the first time. Needs untrusted text in a record (supplier quote file import, CSV import, Sheets pull, AI-created invoice) plus the file opened in a spreadsheet; Xero/QuickBooks imports do not evaluate formulas.
-**Fix (not done):** prefix a single quote to TEXT cells starting with those characters, in text columns only (blanket prefixing would corrupt negative numeric columns), with a test per exporter.
-**Status:** open.
+**Fix (v2.9.96, same PR):** new `csvSafe()` prefixes a single quote to TEXT cells starting with `=`, `+`, `-`, `@`, tab or CR; real numbers and plain numeric strings (e.g. a negative `-5.00` from `toFixed`) are left alone. Applied in `csvRow()` and in every other CSV writer that quotes cells itself: VAT Return and VAT Transactions, aging report, P&L report, price history. `expCSV()` (invoice list export) now goes through `csvRow()`, which also fixes its unescaped embedded double quotes. 6 tests; 9 of 10 mutations caught (the VAT Return writer holds only constant box text and numbers, so its guard is defensive).
+**Residual:** the blank import templates (`stackd-<entity>-template.csv`) are static and unchanged; a JSON export can still carry the raw text (JSON is not evaluated by spreadsheets).
 
