@@ -10621,7 +10621,7 @@ function buildPdfHeader(colour) {
     ? '<img src="' + sanitizeLogo(b.logo) + '" style="max-height:60px;max-width:180px;object-fit:contain;">'
     : '<div style="font-weight:700;font-size:14pt;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
       + (b.trading && b.trading !== b.name ? '<div style="font-size:10pt;color:#555;">' + san(b.trading) + '</div>' : '');
-  var rightHtml = '<div style="font-weight:700;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
+  var rightHtml = (b.logo ? '<div style="font-weight:700;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>' : '')
     + ((b.addr||AS.addr) ? '<div style="font-size:7.5pt;color:#555;">' + san(b.addr||AS.addr).replace(/\n/g,'<br>') + '</div>' : '')
     + (b.email ? '<div style="font-size:7.5pt;color:#555;">' + san(b.email) + (b.phone ? ' · ' + san(b.phone) : '') + '</div>' : '')
     + (b.reg ? '<div style="font-size:7.5pt;color:#888;">Reg: ' + san(b.reg) + (b.vat ? ' · VAT: ' + san(b.vat) : '') + '</div>' : '');
@@ -10638,7 +10638,6 @@ function buildPdfFooter() {
   var right = b.powered ? '<div style="font-size:7pt;color:#AAAAAA;text-align:right;">Powered by Stackd · getstackdops.com</div>' : '';
   return '<div style="margin-top:24px;padding-top:10px;border-top:1px solid #e0d8d4;display:flex;justify-content:space-between;align-items:flex-start;">'
     + '<div>' + left
-    + (b.reg ? '<div style="font-size:7pt;color:#aaa;">' + (b.reg ? 'Reg: ' + san(b.reg) : '') + (b.vat ? ' · VAT: ' + san(b.vat) : '') + '</div>' : '')
     + '</div>'
     + right
     + '</div>';
@@ -10687,6 +10686,8 @@ function buildInvDocHtml(inv) {
   // PDF shows Grand Total − Deposit Received only. CN deductions appear on the CN document.
   var bank = AS.bank ? fmtBankHtml(AS.bank) : '<em>Bank details pending &mdash; contact '+san(AS.email)+'</em>';
 
+  var fm = function(n,d){ n=+n||0; return n.toLocaleString('en-US',{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d}); };
+  var fup = function(n){ n=+n||0; return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:3}); };
   var liRows = lis.map(function(li,i){
     var lt=(+li.qty||0)*(+li.up||0), ltx=lt*tx;
     return '<tr>'
@@ -10694,35 +10695,30 @@ function buildInvDocHtml(inv) {
       +'<td style="padding:7px;border-bottom:1px solid #eee;">'+(san(li.desc)||'-')+'</td>'
       +'<td style="padding:7px;border-bottom:1px solid #eee;">'+(li.uom||'-')+'</td>'
       +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+(li.qty||0)+'</td>'
-      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+fn(li.up,3)+'</td>'
-      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+fn(ltx)+'</td>'
-      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">'+fn(lt+ltx)+'</td>'
+      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+fup(li.up)+'</td>'
+      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+fm(ltx)+'</td>'
+      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">'+fm(lt+ltx)+'</td>'
       +'</tr>';
   }).join('');
 
   var charges = [
-    ['Subtotal', fn(liT), 'font-weight:600;'],
-    ['Tax ('+((tx*100).toFixed(1))+'%)', fn(tax), ''],
-    lf?['Local Freight', fn(lf), '']:null,
-    ins?['Insurance', fn(ins), '']:null,
-    leg?['Legal / Consular', fn(leg), '']:null,
-    isp?['Inspection / Cert.', fn(isp), '']:null,
-    oth?['Other Charges', fn(oth), '']:null,
-    dep?['Less: Deposit Received', '('+fn(dep)+')', 'color:#1a7a4a;']:null
+    ['Subtotal', fm(liT), 'font-weight:600;'],
+    ['Tax ('+((tx*100).toFixed(1))+'%)', fm(tax), ''],
+    lf?['Local Freight', fm(lf), '']:null,
+    ins?['Insurance', fm(ins), '']:null,
+    leg?['Legal / Consular', fm(leg), '']:null,
+    isp?['Inspection / Cert.', fm(isp), '']:null,
+    oth?['Other Charges', fm(oth), '']:null,
+    dep?['Less: Deposit Received', '('+fm(dep)+')', 'color:#1a7a4a;']:null
   ].filter(Boolean).map(function(r){
     return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.65rem;'+r[2]+'">'
       +'<span style="color:'+(r[2].indexOf('green')>-1?'#1a7a4a':'#555')+'">'+r[0]+'</span>'
       +'<span>'+r[1]+'</span></div>';
   }).join('');
 
-  var shpRows = [['Freight Type',inv.ft],['Incoterms',inv.incoterm],['Est. Ship Date',inv.shipDate],['Gross Weight',inv.wt],['Cubic Weight',inv.cbm],['Total Packages',inv.pk]]
+  var shipStrip = [['Freight Type',inv.ft],['Incoterms',inv.incoterm],['Est. Ship Date',inv.shipDate],['Gross Weight',inv.wt],['Cubic Weight',inv.cbm],['Total Packages',inv.pk],['Country of Origin',inv.coo],['Port of Embarkation',inv.pol],['Port of Discharge',inv.pod]]
     .filter(function(r){return r[1];})
-    .map(function(r){return '<div style="display:flex;gap:8px;font-size:.62rem;margin-bottom:3px;"><span style="color:#8a7f82;width:110px;flex-shrink:0;">'+r[0]+'</span><span>'+san(r[1])+'</span></div>';})
-    .join('');
-
-  var orgRows = [['Country of Origin',inv.coo],['Port of Embarkation',inv.pol],['Port of Discharge',inv.pod]]
-    .filter(function(r){return r[1];})
-    .map(function(r){return '<div style="margin-right:24px;"><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">'+r[0]+'</div><div style="font-size:.62rem;">'+san(r[1])+'</div></div>';})
+    .map(function(r){return '<div><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;margin-bottom:2px;">'+r[0]+'</div><div style="font-size:.62rem;">'+san(r[1])+'</div></div>';})
     .join('');
 
   var invNum = inv.num || 'DRAFT';
@@ -10754,10 +10750,17 @@ function buildInvDocHtml(inv) {
     +'<div class="doc">'
       // Company header from branding
       +buildPdfHeader(docColour)
-      +'<div style="text-align:right;margin-top:-20px;margin-bottom:20px;">'
-          +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:'+docColour+';margin-bottom:8px;">'+(isProforma?'PRO-FORMA INVOICE':'INVOICE')+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:18px;">'
+        +'<div>'
+          +'<div style="margin-bottom:14px;"><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Bill To</div>'
+            +'<div style="font-size:.65rem;line-height:1.7;"><strong>'+(san(inv.buyer)||'-')+'</strong>'+(inv.buyerAddr?'<br>'+san(inv.buyerAddr):'')+'</div></div>'
+          +'<div><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Ship To</div>'
+            +'<div style="font-size:.65rem;line-height:1.7;">'+san(inv.shipTo||inv.buyerAddr||'As above')+'</div></div>'
+        +'</div>'
+        +'<div style="text-align:right;">'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:'+docColour+';margin-bottom:8px;line-height:1;">'+(isProforma?'PRO-FORMA INVOICE':'INVOICE')+'</div>'
           +'<table style="font-size:.62rem;margin-left:auto;"><tbody>'
-            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Invoice #</td><td style="text-align:right;">'+invNum+'</td></tr>'
+            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Invoice #</td><td style="text-align:right;font-weight:600;">'+invNum+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Date</td><td style="text-align:right;">'+(fmtDate(inv.date))+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Expiry</td><td style="text-align:right;">'+(fmtDate(inv.expiry))+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Customer ID</td><td style="text-align:right;">'+san(inv.custId||'-')+'</td></tr>'
@@ -10765,14 +10768,8 @@ function buildInvDocHtml(inv) {
             +(inv.paymentTerms?'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Payment Terms</td><td style="text-align:right;">'+san(inv.paymentTerms)+'</td></tr>':'')
           +'</tbody></table>'
         +'</div>'
-      // Parties
-      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid #ddd;">'
-        +'<div><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Customer</div>'
-          +'<div style="font-size:.65rem;line-height:1.9;">'+(san(inv.buyer)||'-')+'<br>'+san(inv.buyerAddr||'')+'</div></div>'
-        +'<div><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Ship To</div>'
-          +'<div style="font-size:.65rem;line-height:1.9;">'+san(inv.shipTo||inv.buyerAddr||'As above')+'</div></div>'
-        +'<div><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Shipping Details</div>'+shpRows+'</div>'
       +'</div>'
+      +(shipStrip?'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px 16px;padding:10px 12px;background:#fafafa;border:1px solid #eee;margin-bottom:22px;">'+shipStrip+'</div>':'<div style="margin-bottom:10px;"></div>')
       // Line items
       +'<table style="width:100%;border-collapse:collapse;font-size:.65rem;margin-bottom:20px;">'
         +'<thead><tr style="border-bottom:2px solid #111;">'
@@ -10780,9 +10777,9 @@ function buildInvDocHtml(inv) {
           +'<th style="padding:7px;text-align:left;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Description</th>'
           +'<th style="padding:7px;text-align:left;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">UOM</th>'
           +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Qty</th>'
-          +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Unit Price</th>'
+          +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Unit Price ('+cur+')</th>'
           +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Tax</th>'
-          +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Total</th>'
+          +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Total ('+cur+')</th>'
         +'</tr></thead>'
         +'<tbody>'+liRows+'</tbody>'
       +'</table>'
@@ -10792,7 +10789,7 @@ function buildInvDocHtml(inv) {
           +charges
           +'<div style="display:flex;justify-content:space-between;border-top:2px solid #111;padding-top:8px;margin-top:4px;">'
             +'<span style="font-family:Bebas Neue,sans-serif;font-size:.95rem;letter-spacing:.1em;">BALANCE DUE</span>'
-            +'<span style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;color:'+docColour+';">'+cur+' '+fn(bal)+'</span>'
+            +'<span style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;color:'+docColour+';">'+cur+' '+fm(bal)+'</span>'
           +'</div>'
         +'</div>'
       +'</div>'
@@ -10801,9 +10798,9 @@ function buildInvDocHtml(inv) {
         +'<div><div style="font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:#8a7f82;margin-bottom:5px;">Terms of Sale</div>'
           +'<div style="line-height:1.8;color:#333;">'+san(inv.terms||AS.terms||'')+'</div></div>'
         +'<div><div style="font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:#8a7f82;margin-bottom:5px;">Payment Details</div>'
-          +'<div style="line-height:1.8;color:#333;">'+bank+'</div></div>'
+          +'<div style="line-height:1.8;color:#333;">'+bank+'</div>'
+          +(inv.num?'<div style="margin-top:8px;font-size:.58rem;color:#333;">Please quote <strong>'+san(inv.num)+'</strong> as your payment reference.</div>':'')+'</div>'
       +'</div>'
-      +(orgRows?'<div style="display:flex;padding-top:10px;border-top:1px solid #eee;">'+orgRows+'</div>':'')
       +buildPdfFooter()
     +'</div>'
     +'</body></html>';
