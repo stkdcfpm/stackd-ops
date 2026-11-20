@@ -10644,6 +10644,22 @@ function buildPdfFooter() {
     + '</div>';
 }
 
+// Renders AS.bank as a tidy two-column block: "Label: value" lines become label/value rows,
+// any other non-blank line is shown full-width. Input is san()-escaped before insertion.
+function fmtBankHtml(raw) {
+  var lines = String(raw||'').split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+  if (!lines.length) return '';
+  var rows = lines.map(function(l){
+    var m = /^([^:]{1,40}):\s*(.*)$/.exec(l);
+    if (m && m[2]) {
+      return '<tr><td style="padding:1px 12px 1px 0;color:#8a7f82;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;vertical-align:top;">'+san(m[1])+'</td>'
+        +'<td style="padding:1px 0;font-weight:600;color:#111;">'+san(m[2])+'</td></tr>';
+    }
+    return '<tr><td colspan="2" style="padding:1px 0;color:#333;">'+san(l)+'</td></tr>';
+  }).join('');
+  return '<table style="border-collapse:collapse;font-size:.6rem;line-height:1.5;"><tbody>'+rows+'</tbody></table>';
+}
+
 function buildInvDocHtml(inv) {
   var cur = inv.cur||'USD';
   var lis = inv.lineItems||[];
@@ -10658,7 +10674,7 @@ function buildInvDocHtml(inv) {
     dep=+inv.dep||0; bal=grand-dep;
   }
   // PDF shows Grand Total − Deposit Received only. CN deductions appear on the CN document.
-  var bank = AS.bank ? san(AS.bank).replace(/\n/g,'<br>') : '<em>Bank details pending &mdash; contact '+san(AS.email)+'</em>';
+  var bank = AS.bank ? fmtBankHtml(AS.bank) : '<em>Bank details pending &mdash; contact '+san(AS.email)+'</em>';
 
   var liRows = lis.map(function(li,i){
     var lt=(+li.qty||0)*(+li.up||0), ltx=lt*tx;
@@ -12326,7 +12342,7 @@ function prevCNDoc(inv) {
   var cur=inv.cur||'USD';
   var creditAmt=+inv.cnAmount||0; // stored negative; display as negative e.g. -$450
   var linked=DB.inv.find(function(i){return i.id===inv.linkedInvId||i.num===inv.linkedInvNum;});
-  var bank=AS.bank?san(AS.bank).replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
+  var bank=AS.bank?fmtBankHtml(AS.bank):'<em>Bank details pending</em>';
   var isGW=inv.type==='goodwill_credit';
   var badgeLabel=isGW?'GOODWILL CREDIT':'CREDIT NOTE';
   var docTitle=isGW?'Goodwill Credit':'Credit Note';

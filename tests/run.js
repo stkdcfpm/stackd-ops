@@ -15501,6 +15501,16 @@ test('buildInvDocHtml() — AC-10: prevInvDoc()\'s Blob output is byte-identical
   });
 });
 
+test('fmtBankHtml() — Label: value lines become label/value rows, free text kept full-width, HTML escaped', function() {
+  var h = ctx.fmtBankHtml('Account Name: Stackd <Ltd>\nSort Code: 12-34-56\n\nIBAN GB00 TEST\r\nRef: INV-1');
+  assertContains(h, '<table', 'renders a table');
+  assertContains(h, 'Account Name', 'label present');
+  assertContains(h, 'Stackd &lt;Ltd&gt;', 'value escaped');
+  assertContains(h, 'colspan="2"', 'unlabelled line is full-width');
+  assertEqual((h.match(/<tr>/g)||[]).length, 4, 'blank line dropped, 4 rows');
+  assertEqual(ctx.fmtBankHtml('   \n '), '', 'blank input gives empty string');
+});
+
 test('buildInvDocHtml() — AC-10b: does not touch window._lastInv/window._lastPO', function() {
   resetDB();
   ctx.window._lastInv = { sentinel: 'untouched' };
