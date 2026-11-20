@@ -906,3 +906,15 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Deployed 2026-11-09:** operator pasted the new Code.gs and created a new version of the existing deployment; `selfTestFormulaSafety()` logged PASS (7 samples stored as text and read back unchanged on the real Sheets runtime); `auditSheetFormulas()` found no formula cells in the entity tabs; a normal portal sync afterwards worked. Not covered by the live self-test: update_shipment/tracker paths, tab/CR/leading-space inputs (covered by mock tests only).
 **Residual:** text that literally starts with an apostrophe followed by `=`, `+`, `-` or `@` loses that apostrophe on pull (indistinguishable from the neutraliser). Formulas already in the Sheet are not removed by the redeploy itself (a later Push All rewrites the rows it covers; the audit finds the rest). "Lossless" applies to hostile text; numeric-looking business keys are coerced by Sheets regardless (pre-existing).
 **Status:** Fixed and live.
+
+## INV-GAP-014 — Invoice document Customer ID does not resolve for legacy invoices linked to a Buyer by name only (Open, disclosed v2.9.98)
+
+**Area:** `invCustomerNo()` (`index.html`, immediately before `buildInvDocHtml()`).
+**Detail:** the live lookup uses `inv.buyerId` only. A legacy invoice that has no `buyerId` and is matched to a Buyer by name elsewhere in the app (BUY-GAP-002) falls back to its stored `custId`, which is blank for CSV-imported invoices, so the Customer ID row is omitted.
+**Status:** open, no backfill written; a one-off backfill of `custId`/`buyerId` from a name match would fix it. Needs the operator to decide whether name matching is trustworthy enough.
+
+## INV-GAP-015 — Invoice document long-invoice page-break behaviour untested (Open, disclosed v2.9.98)
+
+**Area:** `buildInvDocHtml()` print layout.
+**Detail:** the v2.9.98 redesign was checked against a three-line sample invoice only. A long invoice (many lines, long Bill To / Ship To text) that spills onto a second page has no explicit page-break handling (no `page-break-inside: avoid` on rows or on the totals/payment block) and was not tested.
+**Status:** open; check one real long invoice in print preview before relying on it.
