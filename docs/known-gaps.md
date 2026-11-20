@@ -913,8 +913,9 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Detail:** the live lookup uses `inv.buyerId` only. A legacy invoice that has no `buyerId` and is matched to a Buyer by name elsewhere in the app (BUY-GAP-002) falls back to its stored `custId`, which is blank for CSV-imported invoices, so the Customer ID row is omitted.
 **Status:** open, no backfill written; a one-off backfill of `custId`/`buyerId` from a name match would fix it. Needs the operator to decide whether name matching is trustworthy enough.
 
-## INV-GAP-015 — Invoice document long-invoice page-break behaviour untested (Open, disclosed v2.9.98)
+## INV-GAP-015 — Invoice document long-invoice page-break behaviour (Fixed v2.9.100; found on a real printed invoice: Payment Details spilled across two pages)
 
 **Area:** `buildInvDocHtml()` print layout.
 **Detail:** the v2.9.98 redesign was checked against a three-line sample invoice only. A long invoice (many lines, long Bill To / Ship To text) that spills onto a second page has no explicit page-break handling (no `page-break-inside: avoid` on rows or on the totals/payment block) and was not tested.
 **Status:** open; check one real long invoice in print preview before relying on it.
+**Fixed v2.9.100:** reproduced with a 12-line invoice (heading on page 1, bank address on page 2); fixed with print CSS in `buildInvDocHtml()` only (A4 margins, `tr` and header blocks `break-inside:avoid`, repeating `thead`, Balance Due + Terms/Payment Details in one unbreakable `.avoid` block). Verified for 3–45 lines. **Residual:** `prevPODoc()` and `prevCNDoc()` PDFs have no page-break rules and the same class of problem is possible there (not reported, not tested).

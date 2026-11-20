@@ -15547,6 +15547,20 @@ test('invCustomerNo()/invoice doc — live Buyer num wins, Ad-Hoc and missing st
   assert(without.indexOf('Customer ID') === -1, 'row omitted when no number');
 });
 
+test('buildInvDocHtml() — print layout keeps Balance Due and Payment Details in one unbreakable block; rows never split; header repeats (v2.9.100, INV-GAP-015)', function() {
+  resetDB();
+  const h = ctx.buildInvDocHtml({ id:'p', num:'INV-PRINT', status:'Sent', cur:'USD', date:'2026-01-01', lineItems:[{ desc:'X', uom:'pcs', qty:1, up:10 }], taxRate:0 }).html;
+  assertContains(h, '@page{size:A4;margin:12mm;}', 'A4 page margin set');
+  assertContains(h, 'tr{break-inside:avoid;page-break-inside:avoid;}', 'table rows never split across pages');
+  assertContains(h, 'thead{display:table-header-group;}', 'column header repeats on every page');
+  assertContains(h, '.avoid{break-inside:avoid;page-break-inside:avoid;}', 'avoid class defined');
+  const open = h.indexOf('<div class="avoid">'), bal = h.indexOf('BALANCE DUE'), pay = h.indexOf('Payment Details'), foot = h.indexOf('Powered by');
+  assert(open > -1 && open < bal && bal < pay, 'one avoid block opens before Balance Due and still encloses Payment Details');
+  // the avoid block must close after the payment details (balance due and payment details share one unbreakable block)
+  const closeIdx = h.indexOf('</div></div>', pay);
+  assert(closeIdx > pay, 'avoid block closes after the payment details');
+});
+
 test('buildInvDocHtml() — AC-10b: does not touch window._lastInv/window._lastPO', function() {
   resetDB();
   ctx.window._lastInv = { sentinel: 'untouched' };
