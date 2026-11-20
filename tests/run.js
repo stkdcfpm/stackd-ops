@@ -16685,10 +16685,47 @@ test('INV-GAP-010: an ordinary re-save (no unlock) leaves existing editHistory e
   ctx.EI.i = null;
 });
 
+test('Invoices: date-range filter — inclusive bounds, from-only, to-only, combined with status, blank/odd dates excluded when set (v2.9.99)', () => {
+  resetDB(); resetListControls();
+  const mk = (id, num, date, status) => ({ id, num, buyer:'B', date, status:status||'Draft', cur:'USD', lineItems:[], taxRate:0, chargesIncluded:true, dst:'X' });
+  ctx.DB.inv = [mk('i1','INV20001','2026-01-31'), mk('i2','INV20002','2026-02-01'), mk('i3','INV20003','2026-02-15','Sent'), mk('i4','INV20004','2026-02-28'), mk('i5','INV20005','2026-03-01'), mk('i6','INV20006',''), mk('i7','INV20007','01/02/2026')];
+  const rows = () => { ctx.rInv(); return mockEl('inv-tb').innerHTML; };
+  let h = rows();
+  ['INV20001','INV20002','INV20003','INV20004','INV20005','INV20006','INV20007'].forEach(n => assertContains(h, n));
+  mockEl('inv-df').value = '2026-02-01'; mockEl('inv-dt').value = '2026-02-28'; h = rows();
+  assertContains(h, 'INV20002'); assertContains(h, 'INV20003'); assertContains(h, 'INV20004');
+  ['INV20001','INV20005','INV20006','INV20007'].forEach(n => assertNotContains(h, n));
+  assertEqual(mockEl('inv-dclr').style.display, '', 'clear button shown when a range is set');
+  mockEl('inv-df').value = '2026-02-15'; mockEl('inv-dt').value = ''; h = rows();
+  assertContains(h, 'INV20003'); assertContains(h, 'INV20005'); assertNotContains(h, 'INV20002');
+  mockEl('inv-df').value = ''; mockEl('inv-dt').value = '2026-02-01'; h = rows();
+  assertContains(h, 'INV20001'); assertContains(h, 'INV20002'); assertNotContains(h, 'INV20003');
+  mockEl('inv-df').value = '2026-02-01'; mockEl('inv-dt').value = '2026-02-28'; mockEl('inv-sf').value = 'Sent'; h = rows();
+  assertContains(h, 'INV20003'); assertNotContains(h, 'INV20002'); assertNotContains(h, 'INV20004');
+  resetListControls();
+});
+test('Invoices: invClearDates() empties the range, hides the clear button and restores every invoice (v2.9.99)', () => {
+  resetDB(); resetListControls();
+  ctx.DB.inv = [{ id:'i1', num:'INV30001', buyer:'B', date:'2026-01-01', status:'Draft', cur:'USD', lineItems:[], taxRate:0, chargesIncluded:true, dst:'X' }, { id:'i2', num:'INV30002', buyer:'B', date:'2026-06-01', status:'Draft', cur:'USD', lineItems:[], taxRate:0, chargesIncluded:true, dst:'X' }];
+  mockEl('inv-df').value = '2026-05-01'; mockEl('inv-dt').value = '2026-07-01'; ctx.rInv();
+  assertNotContains(mockEl('inv-tb').innerHTML, 'INV30001');
+  ctx.invClearDates();
+  assertEqual(mockEl('inv-df').value, ''); assertEqual(mockEl('inv-dt').value, '');
+  assertEqual(mockEl('inv-dclr').style.display, 'none');
+  assertContains(mockEl('inv-tb').innerHTML, 'INV30001'); assertContains(mockEl('inv-tb').innerHTML, 'INV30002');
+  resetListControls();
+});
+test('invInDateRange() — pure predicate: no range passes everything; reversed range matches nothing; ISO timestamp prefix accepted', () => {
+  assert(ctx.invInDateRange({ date:'' }, '', '') === true, 'no range, blank date passes');
+  assert(ctx.invInDateRange({ date:'' }, '2026-01-01', '') === false, 'range set, blank date fails');
+  assert(ctx.invInDateRange({ date:'2026-05-05T10:00:00Z' }, '2026-05-05', '2026-05-05') === true, 'ISO timestamp uses its date part');
+  assert(ctx.invInDateRange({ date:'2026-05-05' }, '2026-06-01', '2026-01-01') === false, 'from after to matches nothing');
+});
+
 // ── Sort/filter on list tabs + Buyer autofill on the invoice form (v2.9.95) ──
 console.log('\nList sort/filter + Buyer autofill');
 function resetListControls() {
-  ['li-q','li-sf','li-sort','sup-q','sup-cf','sup-sort','buy-q','buy-sort','inv-q','inv-sf','inv-bf','inv-sort'].forEach(function(id){ mockEl(id).value = ''; });
+  ['li-q','li-sf','li-sort','sup-q','sup-cf','sup-sort','buy-q','buy-sort','inv-q','inv-sf','inv-bf','inv-sort','inv-df','inv-dt'].forEach(function(id){ mockEl(id).value = ''; });
   ['if-cid','if-ba','if-pt'].forEach(function(id){ mockEl(id).value = ''; });
   mockEl('if-cur').value = 'USD'; ctx.EI.i = null; ctx.cIL = [];
 }
