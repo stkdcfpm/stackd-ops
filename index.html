@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.99</title>
+<title>Stackd Ops v2.9.100</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -223,7 +223,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.99</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.100</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1391,8 +1391,18 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.99</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.100</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>Fix: <strong>invoice PDFs no longer split the bank details across two pages</strong> (INV-GAP-015). Found on a real printed invoice: Payment Details started on page 1 and the bank address spilled onto page 2. Balance Due and the Terms / Payment Details block now stay together as one unit (if they do not fit, both move to the next page), table rows are never cut in half, the column header repeats on every page, and the bill-to and shipping blocks also stay whole. The page is set to A4 with 12mm margins. Checked by printing invoices of 3 to 45 lines to PDF: the bank block never split. Purchase Order and credit-note PDFs were not changed.</li>
+          <li>1 new test (1186 &rarr; 1187 pass).</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.99</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>date-range filter on the Invoices tab</strong>. Two date boxes (From / To) in the toolbar filter on the invoice date, inclusive of both ends, and work together with search, buyer, status and sort. Either box can be left empty (from-only or to-only). A &times; button appears while a range is set and clears it. While a range is set, an invoice with no date (or a date not in YYYY-MM-DD form) is hidden, since it cannot be placed in the range. Credit notes are not affected. The range is not remembered across reloads.</li>
@@ -10790,7 +10800,8 @@ function buildInvDocHtml(inv) {
     +'.btn-print{font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:'+docColour+';color:white;border:none;padding:8px 20px;cursor:pointer;}'
     +'.btn-close{font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid #333;color:#8a7f82;padding:8px 14px;cursor:pointer;}'
     +'.doc{padding:32px 40px;max-width:760px;margin:0 auto;}'
-    +'@media print{.topbar{display:none!important;}.doc{padding:0;}}'
+    +'@page{size:A4;margin:12mm;}'
+    +'@media print{.topbar{display:none!important;}.doc{padding:0;}tr{break-inside:avoid;page-break-inside:avoid;}thead{display:table-header-group;}.avoid{break-inside:avoid;page-break-inside:avoid;}}'
     +'</style>'
     +'</head><body>'
     +'<div class="topbar">'
@@ -10801,7 +10812,7 @@ function buildInvDocHtml(inv) {
     +'<div class="doc">'
       // Company header from branding
       +buildPdfHeader(docColour)
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:18px;">'
+      +'<div class="avoid" style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:18px;">'
         +'<div>'
           +'<div style="margin-bottom:14px;"><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Bill To</div>'
             +'<div style="font-size:.65rem;line-height:1.7;"><strong>'+(san(inv.buyer)||'-')+'</strong>'+(inv.buyerAddr?'<br>'+san(inv.buyerAddr):'')+'</div></div>'
@@ -10820,7 +10831,7 @@ function buildInvDocHtml(inv) {
           +'</tbody></table>'
         +'</div>'
       +'</div>'
-      +(shipStrip?'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px 16px;padding:10px 12px;background:#fafafa;border:1px solid #eee;margin-bottom:22px;">'+shipStrip+'</div>':'<div style="margin-bottom:10px;"></div>')
+      +(shipStrip?'<div class="avoid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px 16px;padding:10px 12px;background:#fafafa;border:1px solid #eee;margin-bottom:22px;">'+shipStrip+'</div>':'<div style="margin-bottom:10px;"></div>')
       // Line items
       +'<table style="width:100%;border-collapse:collapse;font-size:.65rem;margin-bottom:20px;">'
         +'<thead><tr style="border-bottom:2px solid #111;">'
@@ -10834,7 +10845,8 @@ function buildInvDocHtml(inv) {
         +'</tr></thead>'
         +'<tbody>'+liRows+'</tbody>'
       +'</table>'
-      // Charges
+      // Charges + footer kept together on one page (v2.9.100): balance due and payment details must never split across pages
+      +'<div class="avoid">'
       +'<div style="display:flex;justify-content:flex-end;margin-bottom:20px;">'
         +'<div style="width:300px;">'
           +charges
@@ -10851,6 +10863,7 @@ function buildInvDocHtml(inv) {
         +'<div><div style="font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:#8a7f82;margin-bottom:5px;">Payment Details</div>'
           +'<div style="line-height:1.8;color:#333;">'+bank+'</div>'
           +(inv.num?'<div style="margin-top:8px;font-size:.58rem;color:#333;">Please quote <strong>'+san(inv.num)+'</strong> as your payment reference.</div>':'')+'</div>'
+      +'</div>'
       +'</div>'
       +buildPdfFooter()
     +'</div>'
@@ -12450,7 +12463,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.99).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.100).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12664,7 +12677,7 @@ var AI_SYSTEM_PROMPT = [
   '## Settings',
   'Language & Localisation card: switch interface between English (EN) and Simplified Chinese (ZH). Nav tabs and key labels update instantly. AI assistant replies in Mandarin when ZH is active.',
   'Company card: Name, Tagline, Address (printed on Purchase Orders; also used in the invoice header only when the Branding address is blank), Email, Phone, Website, Bank/Payment Details (printed on invoices and credit notes), Default Invoice Terms. Bank/Payment Details print as a label/value table: enter either "Label: value" lines or stacked lines (label on one line, value on the next, e.g. Account holder / Account number / Routing number / Swift/BIC / Bank name and address); recognised labels include Account holder/name/number, Routing number, Sort code, IBAN, Swift/BIC and Bank name and address. Any other line prints as plain text.',
-  'Invoice document (v2.9.98): the printed invoice header reads the Branding card live (company name, address, email, phone, Reg) every time it is generated, so changing the Branding address updates every invoice preview/PDF including Sent ones; already-emailed PDFs are not changed and must be re-sent. Layout: Bill To / Ship To left, INVOICE title and meta (Invoice #, Date, Expiry, Customer ID, Currency, Payment Terms) right, one shipping-details strip (freight, incoterms, ship date, weights, packages, origin, ports), line table with currency in the Unit Price/Total headers, money with thousands separators, terms and payment details at the bottom with a "please quote INV-number" payment reference line. Customer ID is the linked Buyer\'s BUY-#### number taken live (falling back to the Customer ID stored on the invoice); the row is hidden when there is none, and the Ad-Hoc buyer never has one. Credit notes use the same header and bank block.',
+  'Invoice document (v2.9.98): the printed invoice header reads the Branding card live (company name, address, email, phone, Reg) every time it is generated, so changing the Branding address updates every invoice preview/PDF including Sent ones; already-emailed PDFs are not changed and must be re-sent. Layout: Bill To / Ship To left, INVOICE title and meta (Invoice #, Date, Expiry, Customer ID, Currency, Payment Terms) right, one shipping-details strip (freight, incoterms, ship date, weights, packages, origin, ports), line table with currency in the Unit Price/Total headers, money with thousands separators, terms and payment details at the bottom with a "please quote INV-number" payment reference line. Customer ID is the linked Buyer\'s BUY-#### number taken live (falling back to the Customer ID stored on the invoice); the row is hidden when there is none, and the Ad-Hoc buyer never has one. Credit notes use the same header and bank block. Printing (v2.9.100): the invoice PDF is A4 with 12mm margins; Balance Due plus Terms/Payment Details are one unbreakable block (if they do not fit on the page both move to the next page), table rows never split, the column header repeats on every page; Purchase Order and credit-note PDFs do not have these page-break rules yet.',
   'Company Branding card: logo (PNG/JPG, stored as base64), company legal name, trading name, address, email, phone, registration number, VAT number, document accent colour, footer text, "Powered by Stackd" toggle. These fields populate all invoice and CN PDF headers/footers. Pre-populated with FPM International Ltd on first load.',
   'Rates & FX card: all freight rate parameters and FX rates for quote engine.',
   'Accounting Export card: field mapping reference for Xero, QuickBooks, and FreeAgent.',

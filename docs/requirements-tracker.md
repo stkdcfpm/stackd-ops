@@ -63,7 +63,7 @@ Last updated: 2026-11-09 (REQ-RPT-003 — Accounting Export fix, v2.9.96)
 | ACCT-GAP-003 | Accounting exporters read `lines`/`cu`, not the saved `lineItems`/`unitCost` | Accounting Export | v2.9.96 | **✓ Closed v2.9.96** (REQ/SPEC-RPT-003) |
 | ACCT-GAP-004 | Catalogue-versus-stored cost drift on real invoices | Accounting Export | v2.9.96 | **Closed 2026-11-09**: check found no drift on lines with a stored cost; one invoice with no stored cost tracked under INV-GAP-013 |
 | INV-GAP-014 | Invoice document Customer ID unresolved for legacy invoices linked to a Buyer by name only (no `buyerId`) | Invoices / document | v2.9.98 | **Open** (disclosed; no backfill) |
-| INV-GAP-015 | Invoice document long-invoice page-break behaviour untested | Invoices / document | v2.9.98 | **Open** (disclosed; check one real long invoice) |
+| INV-GAP-015 | Invoice document page break split the bank details across pages (found on a real printed invoice) | Invoices / document | v2.9.98 | **Fixed v2.9.100** (print CSS; PO/CN PDFs not covered) |
 | INV-GAP-013 | `saveInv()` drops stored `calc_*`; P&L report reads stored `calc_cogs` only | Invoices / reports | v2.9.97 | **Open** (code reading; confirm against live P&L) |
 | ACCT-GAP-005 | Line-level accounting CSVs omit invoice-level charges, deposit and tax on charges | Accounting Export | v2.9.96 | **Open** — disclosed, not fixed |
 | SEC-GAP-027 | Sheets sync (`apps-script/Code.gs` `setValues`) writes text starting with `=` as a live formula | Security / Sheets sync | v2.9.96 | **Fixed and live** (PR #160; redeployed, self-test PASS 2026-11-09) |
