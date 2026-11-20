@@ -2270,14 +2270,14 @@ test('RPT-003 AC18/AC26: gap rows and the ACCT-GAP-005 caveat exist in known-gap
   assertContains(kg, 'Fixed v2.9.96', 'ACCT-GAP-002/003 recorded as Fixed');
   assertContains(kg, 'SEC-GAP-026 — CSV formula injection in the app\'s CSV exports (Fixed v2.9.96', 'SEC-GAP-026 recorded as Fixed');
   assertContains(kg, 'No test covered the entry point', 'entry-point test gap noted');
-  assertContains(kg, 'ACCT-GAP-004 — Catalogue-versus-stored cost drift on real invoices (Open, description: undetermined)', 'ACCT-GAP-004 is Open with "undetermined" in the description only');
+  assertContains(kg, 'ACCT-GAP-004 — Catalogue-versus-stored cost drift on real invoices (Checked 2026-11-09: no value drift found)', 'ACCT-GAP-004 is recorded as checked, no drift found');
   assertContains(ug, '## Accounting Export', 'user guide has the Accounting Export section');
   assertContains(ug, 'ACCT-GAP-005', 'user guide carries the charges/deposit/tax-on-charges caveat');
   assertContains(ug, 'never commit', 'user guide says never to commit exports');
   assertContains(tr, 'REQ-RPT-003', 'tracker row'); assertContains(vh, '| v2.9.96 |', 'version-history row');
   ['ACCT-GAP-002', 'ACCT-GAP-003', 'ACCT-GAP-004', 'ACCT-GAP-005', 'RPT-GAP-001', 'SEC-GAP-026'].forEach(id => assertContains(tr, '| ' + id + ' |', 'tracker has a row for ' + id));
   assert(/\| ACCT-GAP-005 \|[^\n]*\*\*Open\*\*/.test(tr), 'tracker shows ACCT-GAP-005 as Open');
-  assert(/\| ACCT-GAP-004 \|[^\n]*\*\*Open\*\*/.test(tr), 'tracker shows ACCT-GAP-004 as Open');
+  assert(/\| ACCT-GAP-004 \|[^\n]*\*\*Closed 2026-11-09\*\*/.test(tr), 'tracker shows ACCT-GAP-004 as Closed');
   assertContains(md, '| Branch for new work | `fix/acct-export-shape` |', 'CLAUDE.md branch row updated');
 });
 
