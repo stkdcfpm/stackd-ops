@@ -15533,6 +15533,20 @@ test('buildPdfHeader() — falls back to AS.addr when Branding address is blank;
   ctx.AS = oldAS;
 });
 
+test('invCustomerNo()/invoice doc — live Buyer num wins, Ad-Hoc and missing stay blank (row omitted)', function() {
+  resetDB();
+  ctx.DB.buy = [{ id:'BUY1', num:'BUY-0007', name:'Acme' }, { id:'BUY-ADHOC', num:'BUY-0001', name:'Ad-Hoc' }];
+  assertEqual(ctx.invCustomerNo({ buyerId:'BUY1', custId:'STALE' }), 'BUY-0007', 'live buyer num beats stale stored copy');
+  assertEqual(ctx.invCustomerNo({ buyerId:'BUY-ADHOC', custId:'' }), '', 'Ad-Hoc buyer never leaks its num');
+  assertEqual(ctx.invCustomerNo({ buyerId:'BUY-ADHOC', custId:'X-9' }), 'X-9', 'falls back to stored custId');
+  assertEqual(ctx.invCustomerNo({ buyerId:'GONE', custId:'' }), '', 'missing buyer, no custId -> blank');
+  var base = { id:'i', num:'INV-Z', status:'Sent', cur:'USD', date:'2026-01-01', lineItems:[] };
+  var withNo = ctx.buildInvDocHtml(Object.assign({ buyerId:'BUY1' }, base)).html;
+  assertContains(withNo, 'BUY-0007', 'number printed');
+  var without = ctx.buildInvDocHtml(Object.assign({ buyerId:'BUY-ADHOC' }, base)).html;
+  assert(without.indexOf('Customer ID') === -1, 'row omitted when no number');
+});
+
 test('buildInvDocHtml() — AC-10b: does not touch window._lastInv/window._lastPO', function() {
   resetDB();
   ctx.window._lastInv = { sentinel: 'untouched' };

@@ -10670,6 +10670,14 @@ function fmtBankHtml(raw) {
   return '<table style="border-collapse:collapse;font-size:.6rem;line-height:1.5;"><tbody>'+rows+'</tbody></table>';
 }
 
+// Customer number shown on an invoice: the linked Buyer's live num (BUY-####) when the invoice has a real
+// (non Ad-Hoc) Buyer; otherwise the invoice's own stored custId; otherwise '' (row is omitted, never '-').
+function invCustomerNo(inv) {
+  var b = inv && inv.buyerId ? DB.buy.find(function(x){ return x.id === inv.buyerId; }) : null;
+  if (b && b.id !== 'BUY-ADHOC' && b.num) return b.num;
+  return (inv && inv.custId) ? String(inv.custId).trim() : '';
+}
+
 function buildInvDocHtml(inv) {
   var cur = inv.cur||'USD';
   var lis = inv.lineItems||[];
@@ -10763,7 +10771,7 @@ function buildInvDocHtml(inv) {
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Invoice #</td><td style="text-align:right;font-weight:600;">'+invNum+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Date</td><td style="text-align:right;">'+(fmtDate(inv.date))+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Expiry</td><td style="text-align:right;">'+(fmtDate(inv.expiry))+'</td></tr>'
-            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Customer ID</td><td style="text-align:right;">'+san(inv.custId||'-')+'</td></tr>'
+            +(invCustomerNo(inv)?'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Customer ID</td><td style="text-align:right;">'+san(invCustomerNo(inv))+'</td></tr>':'')
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Currency</td><td style="text-align:right;">'+cur+'</td></tr>'
             +(inv.paymentTerms?'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Payment Terms</td><td style="text-align:right;">'+san(inv.paymentTerms)+'</td></tr>':'')
           +'</tbody></table>'
