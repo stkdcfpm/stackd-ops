@@ -635,7 +635,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <div class="fg fg2" style="margin-bottom:12px;">
         <div class="fld"><label>Company Name</label><input type="text" id="c-name"></div>
         <div class="fld"><label>Tagline</label><input type="text" id="c-tag"></div>
-        <div class="fld"><label>Address</label><input type="text" id="c-addr"></div>
+        <div class="fld"><label>Address <span style="font-size:.44rem;color:var(--m);">(Purchase Orders; also used on invoices if Branding address is blank)</span></label><input type="text" id="c-addr"></div>
         <div class="fld"><label>Email</label><input type="email" id="c-email"></div>
         <div class="fld"><label>Phone / WhatsApp</label><input type="text" id="c-phone"></div>
         <div class="fld"><label>Website</label><input type="text" id="c-web"></div>
@@ -649,7 +649,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="fld"><label>Company Legal Name <span style="color:var(--cr);">*</span></label><input type="text" id="co-name" placeholder="FPM International Ltd"></div>
         <div class="fld"><label>Trading Name <span style="font-size:.44rem;color:var(--m);">(if different)</span></label><input type="text" id="co-trading" placeholder="FPM International"></div>
-        <div class="fld" style="grid-column:1/-1"><label>Company Address</label><textarea id="co-addr" rows="2" placeholder="Brighton, UK"></textarea></div>
+        <div class="fld" style="grid-column:1/-1"><label>Company Address <span style="font-size:.44rem;color:var(--m);">(invoice &amp; credit note header)</span></label><textarea id="co-addr" rows="2" placeholder="Brighton, UK"></textarea></div>
         <div class="fld"><label>Email</label><input type="text" id="co-email" placeholder="info@company.com"></div>
         <div class="fld"><label>Phone</label><input type="text" id="co-phone" placeholder="+44..."></div>
         <div class="fld"><label>Registration Number</label><input type="text" id="co-reg" placeholder="12345678"></div>
@@ -10621,8 +10621,8 @@ function buildPdfHeader(colour) {
     ? '<img src="' + sanitizeLogo(b.logo) + '" style="max-height:60px;max-width:180px;object-fit:contain;">'
     : '<div style="font-weight:700;font-size:14pt;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
       + (b.trading && b.trading !== b.name ? '<div style="font-size:10pt;color:#555;">' + san(b.trading) + '</div>' : '');
-  var rightHtml = '<div style="font-weight:700;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
-    + (b.addr ? '<div style="font-size:7.5pt;color:#555;">' + san(b.addr).replace(/\n/g,'<br>') + '</div>' : '')
+  var rightHtml = (b.logo ? '<div style="font-weight:700;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>' : '')
+    + ((b.addr||AS.addr) ? '<div style="font-size:7.5pt;color:#555;">' + san(b.addr||AS.addr).replace(/\n/g,'<br>') + '</div>' : '')
     + (b.email ? '<div style="font-size:7.5pt;color:#555;">' + san(b.email) + (b.phone ? ' · ' + san(b.phone) : '') + '</div>' : '')
     + (b.reg ? '<div style="font-size:7.5pt;color:#888;">Reg: ' + san(b.reg) + (b.vat ? ' · VAT: ' + san(b.vat) : '') + '</div>' : '');
   return '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2px solid ' + c + ';margin-bottom:24px;">'
@@ -10638,10 +10638,44 @@ function buildPdfFooter() {
   var right = b.powered ? '<div style="font-size:7pt;color:#AAAAAA;text-align:right;">Powered by Stackd · getstackdops.com</div>' : '';
   return '<div style="margin-top:24px;padding-top:10px;border-top:1px solid #e0d8d4;display:flex;justify-content:space-between;align-items:flex-start;">'
     + '<div>' + left
-    + (b.reg ? '<div style="font-size:7pt;color:#aaa;">' + (b.reg ? 'Reg: ' + san(b.reg) : '') + (b.vat ? ' · VAT: ' + san(b.vat) : '') + '</div>' : '')
     + '</div>'
     + right
     + '</div>';
+}
+
+// Renders AS.bank as a tidy two-column block. Supports two input styles:
+//  (1) "Label: value" on one line, and
+//  (2) Wise-style stacked text: a known label alone on a line ("Account number"), followed by one or
+//      more value lines (e.g. a multi-line "Bank name and address") until the next known label.
+// Any other line is shown full-width. Everything is san()-escaped before insertion.
+var BANK_LABEL_RE = /^(account (holder|holder name|name|number|no\.?|type)|routing( number)?|aba( number)?|sort code|iban|swift(\/bic)?|bic|swift code|bank (name|name and address|address|code)|beneficiary( name| address)?|reference|payment reference|currency|ach|wire|branch|intermediary bank)$/i;
+function fmtBankHtml(raw) {
+  var lines = String(raw||'').split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+  if (!lines.length) return '';
+  var items = [], open = null;
+  lines.forEach(function(l){
+    var m = /^([^:]{1,40}):\s*(.*)$/.exec(l);
+    if (m && m[2]) { items.push({label:m[1], vals:[m[2]]}); open = null; return; }
+    if (BANK_LABEL_RE.test(l.replace(/:$/,''))) { open = {label:l.replace(/:$/,''), vals:[]}; items.push(open); return; }
+    if (open) { open.vals.push(l); return; }
+    items.push({label:null, vals:[l]});
+  });
+  var rows = items.map(function(it){
+    if (it.label && it.vals.length) {
+      return '<tr><td style="padding:2px 14px 2px 0;color:#8a7f82;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;vertical-align:top;">'+san(it.label)+'</td>'
+        +'<td style="padding:2px 0;font-weight:600;color:#111;">'+it.vals.map(san).join('<br>')+'</td></tr>';
+    }
+    return '<tr><td colspan="2" style="padding:2px 0;color:#333;">'+san(it.label||it.vals.join(' '))+'</td></tr>';
+  }).join('');
+  return '<table style="border-collapse:collapse;font-size:.6rem;line-height:1.5;"><tbody>'+rows+'</tbody></table>';
+}
+
+// Customer number shown on an invoice: the linked Buyer's live num (BUY-####) when the invoice has a real
+// (non Ad-Hoc) Buyer; otherwise the invoice's own stored custId; otherwise '' (row is omitted, never '-').
+function invCustomerNo(inv) {
+  var b = inv && inv.buyerId ? DB.buy.find(function(x){ return x.id === inv.buyerId; }) : null;
+  if (b && b.id !== 'BUY-ADHOC' && b.num) return b.num;
+  return (inv && inv.custId) ? String(inv.custId).trim() : '';
 }
 
 function buildInvDocHtml(inv) {
@@ -10658,8 +10692,10 @@ function buildInvDocHtml(inv) {
     dep=+inv.dep||0; bal=grand-dep;
   }
   // PDF shows Grand Total − Deposit Received only. CN deductions appear on the CN document.
-  var bank = AS.bank ? san(AS.bank).replace(/\n/g,'<br>') : '<em>Bank details pending &mdash; contact '+san(AS.email)+'</em>';
+  var bank = AS.bank ? fmtBankHtml(AS.bank) : '<em>Bank details pending &mdash; contact '+san(AS.email)+'</em>';
 
+  var fm = function(n,d){ n=+n||0; return n.toLocaleString('en-US',{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d}); };
+  var fup = function(n){ n=+n||0; return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:3}); };
   var liRows = lis.map(function(li,i){
     var lt=(+li.qty||0)*(+li.up||0), ltx=lt*tx;
     return '<tr>'
@@ -10667,35 +10703,30 @@ function buildInvDocHtml(inv) {
       +'<td style="padding:7px;border-bottom:1px solid #eee;">'+(san(li.desc)||'-')+'</td>'
       +'<td style="padding:7px;border-bottom:1px solid #eee;">'+(li.uom||'-')+'</td>'
       +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+(li.qty||0)+'</td>'
-      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+fn(li.up,3)+'</td>'
-      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+fn(ltx)+'</td>'
-      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">'+fn(lt+ltx)+'</td>'
+      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+fup(li.up)+'</td>'
+      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;">'+fm(ltx)+'</td>'
+      +'<td style="padding:7px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">'+fm(lt+ltx)+'</td>'
       +'</tr>';
   }).join('');
 
   var charges = [
-    ['Subtotal', fn(liT), 'font-weight:600;'],
-    ['Tax ('+((tx*100).toFixed(1))+'%)', fn(tax), ''],
-    lf?['Local Freight', fn(lf), '']:null,
-    ins?['Insurance', fn(ins), '']:null,
-    leg?['Legal / Consular', fn(leg), '']:null,
-    isp?['Inspection / Cert.', fn(isp), '']:null,
-    oth?['Other Charges', fn(oth), '']:null,
-    dep?['Less: Deposit Received', '('+fn(dep)+')', 'color:#1a7a4a;']:null
+    ['Subtotal', fm(liT), 'font-weight:600;'],
+    ['Tax ('+((tx*100).toFixed(1))+'%)', fm(tax), ''],
+    lf?['Local Freight', fm(lf), '']:null,
+    ins?['Insurance', fm(ins), '']:null,
+    leg?['Legal / Consular', fm(leg), '']:null,
+    isp?['Inspection / Cert.', fm(isp), '']:null,
+    oth?['Other Charges', fm(oth), '']:null,
+    dep?['Less: Deposit Received', '('+fm(dep)+')', 'color:#1a7a4a;']:null
   ].filter(Boolean).map(function(r){
     return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.65rem;'+r[2]+'">'
       +'<span style="color:'+(r[2].indexOf('green')>-1?'#1a7a4a':'#555')+'">'+r[0]+'</span>'
       +'<span>'+r[1]+'</span></div>';
   }).join('');
 
-  var shpRows = [['Freight Type',inv.ft],['Incoterms',inv.incoterm],['Est. Ship Date',inv.shipDate],['Gross Weight',inv.wt],['Cubic Weight',inv.cbm],['Total Packages',inv.pk]]
+  var shipStrip = [['Freight Type',inv.ft],['Incoterms',inv.incoterm],['Est. Ship Date',inv.shipDate],['Gross Weight',inv.wt],['Cubic Weight',inv.cbm],['Total Packages',inv.pk],['Country of Origin',inv.coo],['Port of Embarkation',inv.pol],['Port of Discharge',inv.pod]]
     .filter(function(r){return r[1];})
-    .map(function(r){return '<div style="display:flex;gap:8px;font-size:.62rem;margin-bottom:3px;"><span style="color:#8a7f82;width:110px;flex-shrink:0;">'+r[0]+'</span><span>'+san(r[1])+'</span></div>';})
-    .join('');
-
-  var orgRows = [['Country of Origin',inv.coo],['Port of Embarkation',inv.pol],['Port of Discharge',inv.pod]]
-    .filter(function(r){return r[1];})
-    .map(function(r){return '<div style="margin-right:24px;"><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">'+r[0]+'</div><div style="font-size:.62rem;">'+san(r[1])+'</div></div>';})
+    .map(function(r){return '<div><div style="font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;margin-bottom:2px;">'+r[0]+'</div><div style="font-size:.62rem;">'+san(r[1])+'</div></div>';})
     .join('');
 
   var invNum = inv.num || 'DRAFT';
@@ -10727,25 +10758,26 @@ function buildInvDocHtml(inv) {
     +'<div class="doc">'
       // Company header from branding
       +buildPdfHeader(docColour)
-      +'<div style="text-align:right;margin-top:-20px;margin-bottom:20px;">'
-          +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:'+docColour+';margin-bottom:8px;">'+(isProforma?'PRO-FORMA INVOICE':'INVOICE')+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:18px;">'
+        +'<div>'
+          +'<div style="margin-bottom:14px;"><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Bill To</div>'
+            +'<div style="font-size:.65rem;line-height:1.7;"><strong>'+(san(inv.buyer)||'-')+'</strong>'+(inv.buyerAddr?'<br>'+san(inv.buyerAddr):'')+'</div></div>'
+          +'<div><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Ship To</div>'
+            +'<div style="font-size:.65rem;line-height:1.7;">'+san(inv.shipTo||inv.buyerAddr||'As above')+'</div></div>'
+        +'</div>'
+        +'<div style="text-align:right;">'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:'+docColour+';margin-bottom:8px;line-height:1;">'+(isProforma?'PRO-FORMA INVOICE':'INVOICE')+'</div>'
           +'<table style="font-size:.62rem;margin-left:auto;"><tbody>'
-            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Invoice #</td><td style="text-align:right;">'+invNum+'</td></tr>'
+            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Invoice #</td><td style="text-align:right;font-weight:600;">'+invNum+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Date</td><td style="text-align:right;">'+(fmtDate(inv.date))+'</td></tr>'
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Expiry</td><td style="text-align:right;">'+(fmtDate(inv.expiry))+'</td></tr>'
-            +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Customer ID</td><td style="text-align:right;">'+san(inv.custId||'-')+'</td></tr>'
+            +(invCustomerNo(inv)?'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Customer ID</td><td style="text-align:right;">'+san(invCustomerNo(inv))+'</td></tr>':'')
             +'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Currency</td><td style="text-align:right;">'+cur+'</td></tr>'
             +(inv.paymentTerms?'<tr><td style="color:#8a7f82;padding-right:14px;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;">Payment Terms</td><td style="text-align:right;">'+san(inv.paymentTerms)+'</td></tr>':'')
           +'</tbody></table>'
         +'</div>'
-      // Parties
-      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid #ddd;">'
-        +'<div><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Customer</div>'
-          +'<div style="font-size:.65rem;line-height:1.9;">'+(san(inv.buyer)||'-')+'<br>'+san(inv.buyerAddr||'')+'</div></div>'
-        +'<div><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Ship To</div>'
-          +'<div style="font-size:.65rem;line-height:1.9;">'+san(inv.shipTo||inv.buyerAddr||'As above')+'</div></div>'
-        +'<div><div style="font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;margin-bottom:6px;">Shipping Details</div>'+shpRows+'</div>'
       +'</div>'
+      +(shipStrip?'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px 16px;padding:10px 12px;background:#fafafa;border:1px solid #eee;margin-bottom:22px;">'+shipStrip+'</div>':'<div style="margin-bottom:10px;"></div>')
       // Line items
       +'<table style="width:100%;border-collapse:collapse;font-size:.65rem;margin-bottom:20px;">'
         +'<thead><tr style="border-bottom:2px solid #111;">'
@@ -10753,9 +10785,9 @@ function buildInvDocHtml(inv) {
           +'<th style="padding:7px;text-align:left;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Description</th>'
           +'<th style="padding:7px;text-align:left;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">UOM</th>'
           +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Qty</th>'
-          +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Unit Price</th>'
+          +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Unit Price ('+cur+')</th>'
           +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Tax</th>'
-          +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Total</th>'
+          +'<th style="padding:7px;text-align:right;background:#fafafa;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;">Total ('+cur+')</th>'
         +'</tr></thead>'
         +'<tbody>'+liRows+'</tbody>'
       +'</table>'
@@ -10765,7 +10797,7 @@ function buildInvDocHtml(inv) {
           +charges
           +'<div style="display:flex;justify-content:space-between;border-top:2px solid #111;padding-top:8px;margin-top:4px;">'
             +'<span style="font-family:Bebas Neue,sans-serif;font-size:.95rem;letter-spacing:.1em;">BALANCE DUE</span>'
-            +'<span style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;color:'+docColour+';">'+cur+' '+fn(bal)+'</span>'
+            +'<span style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;color:'+docColour+';">'+cur+' '+fm(bal)+'</span>'
           +'</div>'
         +'</div>'
       +'</div>'
@@ -10774,9 +10806,9 @@ function buildInvDocHtml(inv) {
         +'<div><div style="font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:#8a7f82;margin-bottom:5px;">Terms of Sale</div>'
           +'<div style="line-height:1.8;color:#333;">'+san(inv.terms||AS.terms||'')+'</div></div>'
         +'<div><div style="font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;color:#8a7f82;margin-bottom:5px;">Payment Details</div>'
-          +'<div style="line-height:1.8;color:#333;">'+bank+'</div></div>'
+          +'<div style="line-height:1.8;color:#333;">'+bank+'</div>'
+          +(inv.num?'<div style="margin-top:8px;font-size:.58rem;color:#333;">Please quote <strong>'+san(inv.num)+'</strong> as your payment reference.</div>':'')+'</div>'
       +'</div>'
-      +(orgRows?'<div style="display:flex;padding-top:10px;border-top:1px solid #eee;">'+orgRows+'</div>':'')
       +buildPdfFooter()
     +'</div>'
     +'</body></html>';
@@ -12326,7 +12358,7 @@ function prevCNDoc(inv) {
   var cur=inv.cur||'USD';
   var creditAmt=+inv.cnAmount||0; // stored negative; display as negative e.g. -$450
   var linked=DB.inv.find(function(i){return i.id===inv.linkedInvId||i.num===inv.linkedInvNum;});
-  var bank=AS.bank?san(AS.bank).replace(/\n/g,'<br>'):'<em>Bank details pending</em>';
+  var bank=AS.bank?fmtBankHtml(AS.bank):'<em>Bank details pending</em>';
   var isGW=inv.type==='goodwill_credit';
   var badgeLabel=isGW?'GOODWILL CREDIT':'CREDIT NOTE';
   var docTitle=isGW?'Goodwill Credit':'Credit Note';
