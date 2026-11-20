@@ -63,7 +63,7 @@ Last updated: 2026-11-09 (REQ-RPT-003 — Accounting Export fix, v2.9.96)
 | ACCT-GAP-003 | Accounting exporters read `lines`/`cu`, not the saved `lineItems`/`unitCost` | Accounting Export | v2.9.96 | **✓ Closed v2.9.96** (REQ/SPEC-RPT-003) |
 | ACCT-GAP-004 | Catalogue-versus-stored cost drift on real invoices (status Open; description: undetermined until the post-deploy operator-run check; linked to INV-GAP-008 / price versioning) | Accounting Export / COGS | v2.9.96 | **Open** |
 | ACCT-GAP-005 | Line-level accounting CSVs omit invoice-level charges, deposit and tax on charges | Accounting Export | v2.9.96 | **Open** — disclosed, not fixed |
-| SEC-GAP-027 | Sheets sync (`apps-script/Code.gs` `setValues`) writes text starting with `=` as a live formula | Security / Sheets sync | v2.9.96 | **Fixed in code** (safeCell/unsafeCell, 11 tests); **live only after operator redeploy + selfTestFormulaSafety()** |
+| SEC-GAP-027 | Sheets sync (`apps-script/Code.gs` `setValues`) writes text starting with `=` as a live formula | Security / Sheets sync | v2.9.96 | **Fixed and live** (PR #160; redeployed, self-test PASS 2026-11-09) |
 | RPT-GAP-001 | Report/export entry points without direct tests (`openAgingReport`, `openPLReport`, `expCSV`); 27 other `open*` handlers unaudited | Reports / tests | v2.9.96 | **Open** — log only |
 | SEC-GAP-026 | CSV formula injection in the app's CSV exports (was newly reachable for invoice rows) | Security / exports | v2.9.96 | **✓ Closed v2.9.96** (`csvSafe()`; same PR as REQ/SPEC-RPT-003) |
 | AI-GAP-001 (broad) | Agentic multi-step order flow | AI Assistant | v2.9.27 | Deferred v3.0.x — requires server-side proxy |
