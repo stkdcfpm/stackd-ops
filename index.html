@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.98</title>
+<title>Stackd Ops v2.9.99</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -223,7 +223,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.98</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.99</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -315,6 +315,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
     <select class="sb" style="max-width:150px;" id="inv-bf" onchange="rInv()"><option value="">All buyers</option></select>
     <select class="sb" style="max-width:150px;" id="inv-sort" onchange="rInv()"><option value="">Sort: newest entered</option><option value="dnew">Date: newest</option><option value="dold">Date: oldest</option><option value="baz">Buyer A&ndash;Z</option><option value="bza">Buyer Z&ndash;A</option></select>
     <select class="sb" style="max-width:130px;" id="inv-sf" onchange="rInv()"><option value="">All statuses</option><option>Draft</option><option>Pro-forma</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Cancelled</option></select>
+    <span style="display:inline-flex;align-items:center;gap:4px;font-family:'DM Mono',monospace;font-size:.5rem;color:var(--m);">Date <input class="sb" type="date" id="inv-df" title="From (invoice date, inclusive)" style="max-width:128px;" onchange="rInv()"> &ndash; <input class="sb" type="date" id="inv-dt" title="To (invoice date, inclusive)" style="max-width:128px;" onchange="rInv()"> <button class="btn btn-g" type="button" id="inv-dclr" onclick="invClearDates()" title="Clear date range" style="display:none;padding:2px 7px;">&times;</button></span>
     <button class="btn btn-s" data-en="+ New Invoice" data-zh="+ 新建发票" onclick="openInv()">+ New Invoice</button>
     <button class="btn btn-g" onclick="expCSV()">&#8595; Export CSV</button>
     <button class="btn btn-g" onclick="openAcctExport('inv')">&#8595; Accounting Export</button>
@@ -1390,8 +1391,18 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.98</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.99</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>date-range filter on the Invoices tab</strong>. Two date boxes (From / To) in the toolbar filter on the invoice date, inclusive of both ends, and work together with search, buyer, status and sort. Either box can be left empty (from-only or to-only). A &times; button appears while a range is set and clears it. While a range is set, an invoice with no date (or a date not in YYYY-MM-DD form) is hidden, since it cannot be placed in the range. Credit notes are not affected. The range is not remembered across reloads.</li>
+          <li>3 new tests (1183 &rarr; 1186 pass).</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.98</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>invoice document redesign</strong> (presentation only &mdash; no stored data or calculations change). Bill To / Ship To sit beside the INVOICE title and meta table (no more dead whitespace); freight, incoterms, weights, packages and ports are one shipping strip; money has thousands separators and 2 decimals with the currency in the Unit Price / Total column headers; the payment block adds &ldquo;Please quote INV&hellip; as your payment reference&rdquo;. The company name is no longer printed twice when there is no logo, and Reg appears once.</li>
@@ -9638,16 +9649,35 @@ function exportVATTransactions() {
 }
 
 // ── INVOICES TABLE ─────────────────────────────────────────────
+// Date-range filter for the Invoices tab (v2.9.99). from/to are 'YYYY-MM-DD' (either may be blank), inclusive,
+// compared against inv.date. When a range is set, an invoice whose date is blank or not in YYYY-MM-DD form is
+// excluded (it cannot be placed in the range); with no range set every invoice passes.
+function invInDateRange(inv, from, to) {
+  if (!from && !to) return true;
+  var d = String(inv && inv.date || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  if (from && d < from) return false;
+  if (to && d > to) return false;
+  return true;
+}
+function invClearDates() {
+  var f = G('inv-df'), t = G('inv-dt');
+  if (f) f.value = ''; if (t) t.value = '';
+  rInv();
+}
+
 function rInv() {
   var banner = G('inv-autoship-banner'); if (banner) banner.style.display = (SS.autoCreateShipmentOnPaid === false) ? 'flex' : 'none';
   var q=(G('inv-q')&&G('inv-q').value||'').toLowerCase(), sf=G('inv-sf')&&G('inv-sf').value||'';
+  var dFrom=(G('inv-df')&&G('inv-df').value)||'', dTo=(G('inv-dt')&&G('inv-dt').value)||'';
+  var dClr=G('inv-dclr'); if (dClr) dClr.style.display = (dFrom||dTo) ? '' : 'none';
   // Split records: invoices vs credit notes
   var isCnRec = function(r) { return r.type==='credit_note'||r.type==='goodwill_credit'||(!r.type&&isCN(r.num)); };
   var invRecs = DB.inv.filter(function(i){ return !isCnRec(i); });
   var cnRecs  = DB.inv.filter(function(i){ return isCnRec(i); });
   // Filter invoices
   var ibf = G('inv-bf'), bfPrev = ibf ? ibf.value : '';
-  var fi=invRecs.filter(function(i){ return (!q||(i.num||'').toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.dst||'').toLowerCase().includes(q)) && (!sf||i.status===sf) && (!bfPrev||i.buyer===bfPrev); });
+  var fi=invRecs.filter(function(i){ return (!q||(i.num||'').toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.dst||'').toLowerCase().includes(q)) && (!sf||i.status===sf) && (!bfPrev||i.buyer===bfPrev) && invInDateRange(i, dFrom, dTo); });
   if (ibf) {
     var buyerNames = invRecs.map(function(i){ return i.buyer||''; }).filter(function(b, i, arr){ return b && arr.indexOf(b) === i; }).sort(nameCmp('az'));
     ibf.innerHTML = '<option value="">All buyers</option>' + buyerNames.map(function(b){ return '<option value="' + san(b) + '">' + san(b) + '</option>'; }).join('');
@@ -12420,7 +12450,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.98).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.99).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12546,7 +12576,7 @@ var AI_SYSTEM_PROMPT = [
   '## Dashboard KPIs',
   '- Invoice Revenue: sum of grand totals (non-cancelled invoices)',
   '- Net Profit: grand total minus COGS minus tax per invoice',
-  'List tabs (v2.9.97): Line Items, Suppliers, Buyers and Invoices have sort dropdowns (Name A-Z / Z-A; Invoices also Date newest/oldest and Buyer A-Z / Z-A). Suppliers has a Country filter, Buyers has a search box, Invoices has a Buyer filter. Default orders unchanged. On the invoice form, picking a Buyer fills Customer ID (the Buyer BUY-#### number), Buyer Address, Payment Terms and, for a new invoice with no lines yet, Currency - only into fields the operator has not changed.',
+  'List tabs (v2.9.97): Line Items, Suppliers, Buyers and Invoices have sort dropdowns (Name A-Z / Z-A; Invoices also Date newest/oldest and Buyer A-Z / Z-A). Suppliers has a Country filter, Buyers has a search box, Invoices has a Buyer filter and (v2.9.99) a From/To date-range filter on the invoice date: inclusive, either end optional, combined with search/buyer/status/sort, cleared with the x button, not remembered across reloads; while a range is set an invoice with no date (or a non-YYYY-MM-DD date) is hidden; credit notes are unaffected. Default orders unchanged. On the invoice form, picking a Buyer fills Customer ID (the Buyer BUY-#### number), Buyer Address, Payment Terms and, for a new invoice with no lines yet, Currency - only into fields the operator has not changed.',
   'Margin vs markup (v2.9.94, labels only): Line Item "Margin %" = (price - cost) / price, on supplier cost only (before freight/duty/insurance). Quote "Markup %" (quote-level and per-line) is applied on top of LANDED cost: sell = landed x (1 + markup/100), so a 20% markup is a 16.7% margin. Do not enter a margin figure as a markup.',
   'Accounting Export (v2.9.96, REQ/SPEC-RPT-003): opens from the Invoices tab (Accounting Export) and the Payments view (Export). It defaults to Generic CSV. Xero and QuickBooks are invoices-only and FreeAgent is payments-only, and the options that do not apply to the chosen Entity are disabled. Demo records are never exported. Cancelled invoices ARE exported; Xero and QuickBooks have no status column, so exclude cancelled invoices in the accounting package. Credit notes appear in the JSON export only. Generic CSV gains four columns after the original 19: Unit Cost (stored on line), Unit Cost (catalogue now), Line Type and Supplier, so catalogue-versus-stored cost drift is visible per line. CSV exports (all of them) prefix text cells starting with = + - @ with an apostrophe so spreadsheets do not run them as formulas (SEC-GAP-026). Known limitation (ACCT-GAP-005): the line-level CSVs do not include freight/insurance/other invoice-level charges, the deposit or tax on charges, so Xero and QuickBooks totals will differ from the app total.',
   'Invoice quick-add Supplier dropdown has a "＋ New Supplier…" option (v2.9.93) that creates a name-only Supplier (USD) and selects it, like "＋ New Buyer…"; complete its details in the Suppliers tab.',
