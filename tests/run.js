@@ -15520,6 +15520,19 @@ test('fmtBankHtml() — Wise-style stacked label/value lines, multi-line bank ad
   assertContains(h, '531535298375934', 'account number kept');
 });
 
+test('buildPdfHeader() — falls back to AS.addr when Branding address is blank; Branding wins when set', function() {
+  var oldAS = ctx.AS;
+  ctx.AS = Object.assign({}, oldAS, { addr: '1 Old Road, Brighton' });
+  ctx.localStorage.removeItem('stackd_co_addr');
+  assertContains(ctx.buildPdfHeader('#000'), '1 Old Road, Brighton', 'falls back to AS.addr');
+  ctx.localStorage.setItem('stackd_co_addr', '9 New St\nLondon');
+  var h = ctx.buildPdfHeader('#000');
+  assertContains(h, '9 New St<br>London', 'branding address wins');
+  assert(h.indexOf('1 Old Road') === -1, 'old address not shown when branding set');
+  ctx.localStorage.removeItem('stackd_co_addr');
+  ctx.AS = oldAS;
+});
+
 test('buildInvDocHtml() — AC-10b: does not touch window._lastInv/window._lastPO', function() {
   resetDB();
   ctx.window._lastInv = { sentinel: 'untouched' };

@@ -635,7 +635,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <div class="fg fg2" style="margin-bottom:12px;">
         <div class="fld"><label>Company Name</label><input type="text" id="c-name"></div>
         <div class="fld"><label>Tagline</label><input type="text" id="c-tag"></div>
-        <div class="fld"><label>Address</label><input type="text" id="c-addr"></div>
+        <div class="fld"><label>Address <span style="font-size:.44rem;color:var(--m);">(Purchase Orders; also used on invoices if Branding address is blank)</span></label><input type="text" id="c-addr"></div>
         <div class="fld"><label>Email</label><input type="email" id="c-email"></div>
         <div class="fld"><label>Phone / WhatsApp</label><input type="text" id="c-phone"></div>
         <div class="fld"><label>Website</label><input type="text" id="c-web"></div>
@@ -649,7 +649,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="fld"><label>Company Legal Name <span style="color:var(--cr);">*</span></label><input type="text" id="co-name" placeholder="FPM International Ltd"></div>
         <div class="fld"><label>Trading Name <span style="font-size:.44rem;color:var(--m);">(if different)</span></label><input type="text" id="co-trading" placeholder="FPM International"></div>
-        <div class="fld" style="grid-column:1/-1"><label>Company Address</label><textarea id="co-addr" rows="2" placeholder="Brighton, UK"></textarea></div>
+        <div class="fld" style="grid-column:1/-1"><label>Company Address <span style="font-size:.44rem;color:var(--m);">(invoice &amp; credit note header)</span></label><textarea id="co-addr" rows="2" placeholder="Brighton, UK"></textarea></div>
         <div class="fld"><label>Email</label><input type="text" id="co-email" placeholder="info@company.com"></div>
         <div class="fld"><label>Phone</label><input type="text" id="co-phone" placeholder="+44..."></div>
         <div class="fld"><label>Registration Number</label><input type="text" id="co-reg" placeholder="12345678"></div>
@@ -10622,7 +10622,7 @@ function buildPdfHeader(colour) {
     : '<div style="font-weight:700;font-size:14pt;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
       + (b.trading && b.trading !== b.name ? '<div style="font-size:10pt;color:#555;">' + san(b.trading) + '</div>' : '');
   var rightHtml = '<div style="font-weight:700;">' + san(b.name||AS.name||'FPM International Ltd') + '</div>'
-    + (b.addr ? '<div style="font-size:7.5pt;color:#555;">' + san(b.addr).replace(/\n/g,'<br>') + '</div>' : '')
+    + ((b.addr||AS.addr) ? '<div style="font-size:7.5pt;color:#555;">' + san(b.addr||AS.addr).replace(/\n/g,'<br>') + '</div>' : '')
     + (b.email ? '<div style="font-size:7.5pt;color:#555;">' + san(b.email) + (b.phone ? ' · ' + san(b.phone) : '') + '</div>' : '')
     + (b.reg ? '<div style="font-size:7.5pt;color:#888;">Reg: ' + san(b.reg) + (b.vat ? ' · VAT: ' + san(b.vat) : '') + '</div>' : '');
   return '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2px solid ' + c + ';margin-bottom:24px;">'
