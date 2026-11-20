@@ -15511,6 +15511,15 @@ test('fmtBankHtml() — Label: value lines become label/value rows, free text ke
   assertEqual(ctx.fmtBankHtml('   \n '), '', 'blank input gives empty string');
 });
 
+test('fmtBankHtml() — Wise-style stacked label/value lines, multi-line bank address grouped', function() {
+  var raw = 'Account holder\nFpm International Ltd\nAccount number\n531535298375934\nRouting number\n084009519\nSwift/BIC\nTRWIUS35XXX\nBank name and address\nWise US Inc\n108 W 13th St\nWilmington\n19801\nUnited States';
+  var h = ctx.fmtBankHtml(raw);
+  assertEqual((h.match(/<tr>/g)||[]).length, 5, 'five label/value rows');
+  assertEqual((h.match(/colspan="2"/g)||[]).length, 0, 'nothing left full-width');
+  assertContains(h, 'Wise US Inc<br>108 W 13th St<br>Wilmington<br>19801<br>United States', 'address lines grouped under one label');
+  assertContains(h, '531535298375934', 'account number kept');
+});
+
 test('buildInvDocHtml() — AC-10b: does not touch window._lastInv/window._lastPO', function() {
   resetDB();
   ctx.window._lastInv = { sentinel: 'untouched' };

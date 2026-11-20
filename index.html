@@ -10644,18 +10644,29 @@ function buildPdfFooter() {
     + '</div>';
 }
 
-// Renders AS.bank as a tidy two-column block: "Label: value" lines become label/value rows,
-// any other non-blank line is shown full-width. Input is san()-escaped before insertion.
+// Renders AS.bank as a tidy two-column block. Supports two input styles:
+//  (1) "Label: value" on one line, and
+//  (2) Wise-style stacked text: a known label alone on a line ("Account number"), followed by one or
+//      more value lines (e.g. a multi-line "Bank name and address") until the next known label.
+// Any other line is shown full-width. Everything is san()-escaped before insertion.
+var BANK_LABEL_RE = /^(account (holder|holder name|name|number|no\.?|type)|routing( number)?|aba( number)?|sort code|iban|swift(\/bic)?|bic|swift code|bank (name|name and address|address|code)|beneficiary( name| address)?|reference|payment reference|currency|ach|wire|branch|intermediary bank)$/i;
 function fmtBankHtml(raw) {
   var lines = String(raw||'').split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
   if (!lines.length) return '';
-  var rows = lines.map(function(l){
+  var items = [], open = null;
+  lines.forEach(function(l){
     var m = /^([^:]{1,40}):\s*(.*)$/.exec(l);
-    if (m && m[2]) {
-      return '<tr><td style="padding:1px 12px 1px 0;color:#8a7f82;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;vertical-align:top;">'+san(m[1])+'</td>'
-        +'<td style="padding:1px 0;font-weight:600;color:#111;">'+san(m[2])+'</td></tr>';
+    if (m && m[2]) { items.push({label:m[1], vals:[m[2]]}); open = null; return; }
+    if (BANK_LABEL_RE.test(l.replace(/:$/,''))) { open = {label:l.replace(/:$/,''), vals:[]}; items.push(open); return; }
+    if (open) { open.vals.push(l); return; }
+    items.push({label:null, vals:[l]});
+  });
+  var rows = items.map(function(it){
+    if (it.label && it.vals.length) {
+      return '<tr><td style="padding:2px 14px 2px 0;color:#8a7f82;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;vertical-align:top;">'+san(it.label)+'</td>'
+        +'<td style="padding:2px 0;font-weight:600;color:#111;">'+it.vals.map(san).join('<br>')+'</td></tr>';
     }
-    return '<tr><td colspan="2" style="padding:1px 0;color:#333;">'+san(l)+'</td></tr>';
+    return '<tr><td colspan="2" style="padding:2px 0;color:#333;">'+san(it.label||it.vals.join(' '))+'</td></tr>';
   }).join('');
   return '<table style="border-collapse:collapse;font-size:.6rem;line-height:1.5;"><tbody>'+rows+'</tbody></table>';
 }
