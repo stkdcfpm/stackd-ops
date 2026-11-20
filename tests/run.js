@@ -15501,6 +15501,52 @@ test('buildInvDocHtml() — AC-10: prevInvDoc()\'s Blob output is byte-identical
   });
 });
 
+test('fmtBankHtml() — Label: value lines become label/value rows, free text kept full-width, HTML escaped', function() {
+  var h = ctx.fmtBankHtml('Account Name: Stackd <Ltd>\nSort Code: 12-34-56\n\nIBAN GB00 TEST\r\nRef: INV-1');
+  assertContains(h, '<table', 'renders a table');
+  assertContains(h, 'Account Name', 'label present');
+  assertContains(h, 'Stackd &lt;Ltd&gt;', 'value escaped');
+  assertContains(h, 'colspan="2"', 'unlabelled line is full-width');
+  assertEqual((h.match(/<tr>/g)||[]).length, 4, 'blank line dropped, 4 rows');
+  assertEqual(ctx.fmtBankHtml('   \n '), '', 'blank input gives empty string');
+});
+
+test('fmtBankHtml() — Wise-style stacked label/value lines, multi-line bank address grouped', function() {
+  var raw = 'Account holder\nFpm International Ltd\nAccount number\n531535298375934\nRouting number\n084009519\nSwift/BIC\nTRWIUS35XXX\nBank name and address\nWise US Inc\n108 W 13th St\nWilmington\n19801\nUnited States';
+  var h = ctx.fmtBankHtml(raw);
+  assertEqual((h.match(/<tr>/g)||[]).length, 5, 'five label/value rows');
+  assertEqual((h.match(/colspan="2"/g)||[]).length, 0, 'nothing left full-width');
+  assertContains(h, 'Wise US Inc<br>108 W 13th St<br>Wilmington<br>19801<br>United States', 'address lines grouped under one label');
+  assertContains(h, '531535298375934', 'account number kept');
+});
+
+test('buildPdfHeader() — falls back to AS.addr when Branding address is blank; Branding wins when set', function() {
+  var oldAS = ctx.AS;
+  ctx.AS = Object.assign({}, oldAS, { addr: '1 Old Road, Brighton' });
+  ctx.localStorage.removeItem('stackd_co_addr');
+  assertContains(ctx.buildPdfHeader('#000'), '1 Old Road, Brighton', 'falls back to AS.addr');
+  ctx.localStorage.setItem('stackd_co_addr', '9 New St\nLondon');
+  var h = ctx.buildPdfHeader('#000');
+  assertContains(h, '9 New St<br>London', 'branding address wins');
+  assert(h.indexOf('1 Old Road') === -1, 'old address not shown when branding set');
+  ctx.localStorage.removeItem('stackd_co_addr');
+  ctx.AS = oldAS;
+});
+
+test('invCustomerNo()/invoice doc — live Buyer num wins, Ad-Hoc and missing stay blank (row omitted)', function() {
+  resetDB();
+  ctx.DB.buy = [{ id:'BUY1', num:'BUY-0007', name:'Acme' }, { id:'BUY-ADHOC', num:'BUY-0001', name:'Ad-Hoc' }];
+  assertEqual(ctx.invCustomerNo({ buyerId:'BUY1', custId:'STALE' }), 'BUY-0007', 'live buyer num beats stale stored copy');
+  assertEqual(ctx.invCustomerNo({ buyerId:'BUY-ADHOC', custId:'' }), '', 'Ad-Hoc buyer never leaks its num');
+  assertEqual(ctx.invCustomerNo({ buyerId:'BUY-ADHOC', custId:'X-9' }), 'X-9', 'falls back to stored custId');
+  assertEqual(ctx.invCustomerNo({ buyerId:'GONE', custId:'' }), '', 'missing buyer, no custId -> blank');
+  var base = { id:'i', num:'INV-Z', status:'Sent', cur:'USD', date:'2026-01-01', lineItems:[] };
+  var withNo = ctx.buildInvDocHtml(Object.assign({ buyerId:'BUY1' }, base)).html;
+  assertContains(withNo, 'BUY-0007', 'number printed');
+  var without = ctx.buildInvDocHtml(Object.assign({ buyerId:'BUY-ADHOC' }, base)).html;
+  assert(without.indexOf('Customer ID') === -1, 'row omitted when no number');
+});
+
 test('buildInvDocHtml() — AC-10b: does not touch window._lastInv/window._lastPO', function() {
   resetDB();
   ctx.window._lastInv = { sentinel: 'untouched' };
