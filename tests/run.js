@@ -15550,7 +15550,7 @@ test('invCustomerNo()/invoice doc — live Buyer num wins, Ad-Hoc and missing st
 test('buildInvDocHtml() — print layout keeps Balance Due and Payment Details in one unbreakable block; rows never split; header repeats (v2.9.100, INV-GAP-015)', function() {
   resetDB();
   const h = ctx.buildInvDocHtml({ id:'p', num:'INV-PRINT', status:'Sent', cur:'USD', date:'2026-01-01', lineItems:[{ desc:'X', uom:'pcs', qty:1, up:10 }], taxRate:0 }).html;
-  assertContains(h, '@page{size:A4;margin:12mm;}', 'A4 page margin set');
+  assertContains(h, '@page{size:A4;margin:12mm;', 'A4 page margin set');
   assertContains(h, 'tr{break-inside:avoid;page-break-inside:avoid;}', 'table rows never split across pages');
   assertContains(h, 'thead{display:table-header-group;}', 'column header repeats on every page');
   assertContains(h, '.avoid{break-inside:avoid;page-break-inside:avoid;}', 'avoid class defined');
@@ -15559,6 +15559,26 @@ test('buildInvDocHtml() — print layout keeps Balance Due and Payment Details i
   // the avoid block must close after the payment details (balance due and payment details share one unbreakable block)
   const closeIdx = h.indexOf('</div></div>', pay);
   assert(closeIdx > pay, 'avoid block closes after the payment details');
+});
+
+test('buildInvDocHtml() — printed page footer carries invoice ref + page x of y, sanitised for CSS; tighter print rows (v2.9.101)', function() {
+  resetDB();
+  const base = { id:'p', status:'Sent', cur:'USD', date:'2026-01-01', lineItems:[{ desc:'X', uom:'pcs', qty:1, up:10 }], taxRate:0 };
+  let h = ctx.buildInvDocHtml(Object.assign({ num:'INV10002' }, base)).html;
+  assertContains(h, '@bottom-right{content:"INV10002 ', 'invoice number in the page footer');
+  assertContains(h, 'Page " counter(page) " of " counter(pages)', 'page x of y counters');
+  assertContains(h, 'tbody td{padding-top:4px!important;padding-bottom:4px!important;}', 'print-only tighter rows');
+  h = ctx.buildInvDocHtml(Object.assign({ num:'IN"V\\1};x<b>' }, base)).html;
+  const ref = /@bottom-right\{content:"([^"]*?) \\00B7/.exec(h);
+  assert(ref && !/["\\};<>]/.test(ref[1]), 'quotes, backslashes, braces and angle brackets stripped from the CSS string: ' + (ref && ref[1]));
+  h = ctx.buildInvDocHtml(Object.assign({ num:'' }, base)).html;
+  assertContains(h, '@bottom-right{content:"DRAFT ', 'blank number falls back to DRAFT');
+});
+test('buildInvDocHtml() — Expiry row only when an expiry date exists (v2.9.101)', function() {
+  resetDB();
+  const base = { id:'p', num:'INV-EXP', status:'Sent', cur:'USD', date:'2026-01-01', lineItems:[], taxRate:0 };
+  assert(ctx.buildInvDocHtml(Object.assign({ expiry:'' }, base)).html.indexOf('>Expiry<') === -1, 'blank expiry: row omitted');
+  assertContains(ctx.buildInvDocHtml(Object.assign({ expiry:'2026-02-01' }, base)).html, '>Expiry<', 'expiry present: row shown');
 });
 
 test('buildInvDocHtml() — AC-10b: does not touch window._lastInv/window._lastPO', function() {
