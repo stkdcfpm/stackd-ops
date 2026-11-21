@@ -5564,6 +5564,24 @@ test('loadDemoData: seeds 15 entity records + 1 payment + 4 events', function() 
   assert(ctx.DB.con[0]._demo === true, 'contact has _demo flag');
 });
 
+test('loadDemoData: every demo invoice prices from the fields the app reads (up/unitCost) — none totals $0, no negative balance (v2.9.102)', function() {
+  resetDB();
+  ctx.loadDemoData();
+  ctx.DB.inv.forEach(function(inv) {
+    (inv.lineItems || []).forEach(function(li) {
+      assert((+li.up || 0) > 0, inv.num + ' line has a unit price in up (not price)');
+      assert(!('price' in li) && !('cost' in li), inv.num + ' line uses no stray price/cost keys');
+    });
+    const c = ctx.iCalc(inv), built = ctx.buildInvDocHtml(inv);
+    assert(c.grand > 0, inv.num + ' grand total above zero, got ' + c.grand);
+    assert(c.bal >= 0, inv.num + ' balance never negative, got ' + c.bal);
+    assert(built.grand === c.grand, inv.num + ' document total equals iCalc total');
+  });
+  const first = ctx.DB.inv.find(function(i) { return i.num === 'DINV-0001'; });
+  assertEqual(Math.round(ctx.iCalc(first).grand * 100) / 100, 38568.40, 'DINV-0001: 20 x 1,928.42');
+  assertEqual(Math.round(ctx.iCalc(first).bal * 100) / 100, 22968.40, 'DINV-0001: balance after the 15,600 deposit');
+  resetDB();
+});
 test('loadDemoData: idempotent — second call does not duplicate (AC-2)', function() {
   resetDB();
   ctx.DB.events = [];
