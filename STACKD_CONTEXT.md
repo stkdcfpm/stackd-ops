@@ -219,6 +219,7 @@ var QR = { ...QR_DEFAULTS, ...ld('st_qr') }   // includes QR.displayCurrency (v2
 
 | Item | Notes |
 |------|-------|
+| QA test batch (parked, v2.9.102 audit) | `loadDemoData()` is a prospect-facing sales demo (REQ-DEMO-001), not a test fixture: no Buyer records, no invoice `buyerId`/line `supId`, invoices only Pro-forma/Partially Paid, POs only Confirmed/Draft, quotes all Converted, no Draft/Sent/Paid/Cancelled invoice or credit note, no multi-currency, long, expiry-dated, non-ISO-date or pass-through/charge-line invoice, no Wise-format bank text. If wanted: a SEPARATE QA batch loader with its own clear button, scoped by a short REQ first; do not overload the sales demo (30 tests assert its shape and counts). |
 | INV-GAP-014 (v2.9.98) | Invoice document Customer ID blank on legacy name-matched invoices — cosmetic, operator accepted. INV-GAP-015 (page break spilled the bank details) fixed v2.9.100 for invoices; PO and credit-note PDFs have no page-break rules yet. |
 | INV-GAP-013 (next step) | Confirm against the live P&L report whether native invoices show COGS 0; decide fix (P&L uses `iCalc()` COGS vs `saveInv()` writes fresh `calc_*`) via a short REQ. Until then correct invoices by backed-up data patch, never by UI re-save. ACCT-GAP-004 closed (no drift found). |
 | ACCT-GAP-005 | Line-level accounting CSVs omit invoice-level charges (`lf`,`ins`,`leg`,`isp`,`oth`), deposit and tax on charges, so Xero/QuickBooks imports can total less than the app. Disclosed, not fixed; needs its own REQ if the operator wants a single total line per invoice. |
