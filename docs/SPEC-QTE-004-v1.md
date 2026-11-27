@@ -308,7 +308,7 @@ QTE_LINK_KEYS.forEach(function(k){ if (l[k] !== undefined && !(k === 'lid' && !l
 - The literal already writes `markup: undefined`/`insRate: undefined` (REQ-gate advisory); that is unchanged and the "absent key" rule applies to the new keys only.
 - `editQte()` (`15019`) already copies unknown keys into `cQL` (`Object.assign`, `15024`); no change.
 
-### 6.2 Promotion queue (the Accepted-transition block, `index.html:~15395-15430`)
+### 6.2 Promotion queue (the Accepted-transition block, `index.html:15409-15445`)
 Inside `lines.forEach(function(l){ ... })`, before the existing `if (!l.supId) return;`, add the linked branch; the existing code is the fallback and is **otherwise unchanged**:
 ```js
 var linkedLi = qteIsLinked(l) ? DB.li.find(function(x){ return x.id === l.lid; }) : null;
@@ -339,7 +339,7 @@ if (linkedLi) {
 
 ## 7. `qteToPoConvert()` (REQ-QTE4-013a)
 
-In the PO line builder (`index.html:~15796`), replace the literal
+In the PO line builder (`index.html:15798`), replace the literal
 `return { rid:uid(), lid:'', desc:l.desc, sku:'', uom:l.uom||'pcs', qty:l.qty||1, cost:l.cost };` with:
 ```js
 var lk = qteIsLinked(l);
