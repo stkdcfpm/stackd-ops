@@ -8278,7 +8278,7 @@ function liHistModel(li) {
     if (lowest === null  || r.costOK <= lowest.costOK)  lowest = r;
     if (highest === null || r.costOK >= highest.costOK) highest = r;
   });
-  var collapsed = usable.length >= 1 && usable.every(function(r){ return liHistMilli(r.costOK) === liHistMilli(usable[0].costOK); });
+  var collapsed = usable.length >= 1 && usable.every(function(r){ return r.costOK === usable[0].costOK; });
   var curCost = liHistPos(li.cost);
   var model = {
     li: li, cur: cur, price: price, rows: rows, usable: usable, order: [],
@@ -8343,8 +8343,8 @@ function rLIHist(li) {
       + '<td style="' + td + '">' + san(r.h.date || '–') + '</td><td style="' + td + '">' + liHistMarginHtml(r.mAtToday) + '</td></tr>';
   };
   var b = [];
-  if (!m.noCat) b.push(box('<strong>Last price change:</strong> ' + san(m.lastPriceChange || '–')));
   if (m.stale) b.push('<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;margin:6px 0;">&#9888; The catalogue cost/price has changed since the last history entry (for example by a Sheets pull or an import) — history may be incomplete.</div>');
+  if (!m.noCat) b.push(box('<strong>Last price change:</strong> ' + san(m.lastPriceChange || '–')));
   if (m.noCat) b.push(box('No catalogue price history — only prices charged on orders are recorded'));
   else if (!m.usable.length) b.push(box('No usable cost recorded in the catalogue history'));
   else {
@@ -8419,7 +8419,7 @@ function liHistCsv() {
       '', '', '', String(o.h.invoiceRef), o.h.notes || '', o.invCur || 'unknown'];
   }));
   var safeName = String(li.sku || li.desc || li.id).replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || String(li.id);
-  dlText('Stackd-LineItemHistory-' + safeName + '-' + today() + '.csv', '﻿' + [csvRow(head)].concat(rows.map(csvRow)).join('\n'), 'text/csv');
+  dlText('Stackd-LineItemHistory-' + safeName + '-' + today() + '.csv', '\uFEFF' + [csvRow(head)].concat(rows.map(csvRow)).join('\n'), 'text/csv');
   toast('Cost history exported');
 }
 

@@ -15062,7 +15062,7 @@ test('T-no-change: a shift that rounds to zero shows "no change", never an arrow
 });
 
 test('T-25: AI_SYSTEM_PROMPT distinguishes Line Item history (badge modal) from Quote-line history (clock icon)', () => {
-  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const html = String(ctx.AI_SYSTEM_PROMPT);   // scoped to the prompt itself, not the whole file
   [
     'Quote line price versioning: each quote line retains its price history. Click the clock icon on a quote line to view previous versions.',
     'Line Item cost history: on the Line Items tab, click the N pt badge next to the Unit Price to open a read-only Cost and Margin History modal.',
