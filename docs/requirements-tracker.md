@@ -65,7 +65,7 @@ Last updated: 2026-11-09 (REQ-RPT-003 — Accounting Export fix, v2.9.96)
 | INV-GAP-014 | Invoice document Customer ID unresolved for legacy invoices linked to a Buyer by name only (no `buyerId`) | Invoices / document | v2.9.98 | **Open** (disclosed; no backfill) |
 | INV-GAP-015 | Invoice document page break split the bank details across pages (found on a real printed invoice) | Invoices / document | v2.9.98 | **Fixed v2.9.100** (print CSS; PO/CN PDFs not covered) |
 | LI-GAP-007 | Line Item CSV / Import-from-Sheets replace an existing item wholesale: erases price history, `LI-####` number, linked-invoice list (Sheets path also dims/DG) | Line Items / import | v2.9.103 | **Open** (found by the REQ-LI-003 gate; own REQ needed) |
-| REQ-LI-003 | Line Item cost & margin history modal for reorder decisions | Line Items | v2.9.104 target | **In requirements-gate** (v4 after round-3 CONDITIONAL PASS) |
+| REQ-LI-003 | Line Item cost & margin history modal for reorder decisions | Line Items | v2.9.104 target | **Requirements-gate PASS** (v4, round 4); SPEC is the next step |
 | INV-GAP-013 | `saveInv()` drops stored `calc_*`; P&L report reads stored `calc_cogs` only | Invoices / reports | v2.9.97 | **Open** (code reading; confirm against live P&L) |
 | ACCT-GAP-005 | Line-level accounting CSVs omit invoice-level charges, deposit and tax on charges | Accounting Export | v2.9.96 | **Open** — disclosed, not fixed |
 | SEC-GAP-027 | Sheets sync (`apps-script/Code.gs` `setValues`) writes text starting with `=` as a live formula | Security / Sheets sync | v2.9.96 | **Fixed and live** (PR #160; redeployed, self-test PASS 2026-11-09) |
