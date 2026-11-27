@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.104</title>
+<title>Stackd Ops v2.9.105</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -223,7 +223,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.104</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.105</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1391,8 +1391,24 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.104</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.105</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Quote lines can now be filled from the Line Item catalogue</strong>. On the Quotes tab, <em>Add from Catalogue</em> (several items at once, with search and supplier grouping) or <em>Link</em> on an existing line pulls in supplier, description, UOM, DG, cost and CBM &mdash; no more re-typing products you already have. <em>Unlink</em> returns a line to a plain typed line.</li>
+          <li>Cost is converted to USD and treated as a <strong>line total</strong> (the quote engine has always used it that way), so it scales with Qty until you type a cost yourself; CBM scales the same way from the item&rsquo;s dimensions. The grid column is now headed <em>Cost (USD, line total)</em> on every line.</li>
+          <li>USD, GBP and BBD items convert at your stored rates. Any <strong>other currency asks you for a USD rate</strong> (once per currency), which is recorded on the line &mdash; nothing is ever added with an unconverted number.</li>
+          <li>A cost snapshot is kept. An amber badge appears when the catalogue cost has changed since you built the quote (compared in the item&rsquo;s own currency, so an FX change alone never triggers it); <em>Refresh cost</em> updates cost, CBM and the snapshot only &mdash; never supplier, description, UOM or DG.</li>
+          <li>Fix: <strong>typing in a quote line and then clicking + Add Line (or removing another line) no longer discards what you typed</strong>; the version note now survives too.</li>
+          <li>Quote &rarr; PO: a linked line carries its catalogue link and SKU onto the Purchase Order, with cost converted to per unit. Deleting a Line Item now warns about quotes that use it. Accepting a quote only suggests a catalogue update when you deliberately changed a linked line&rsquo;s cost.</li>
+          <li>Unchanged: the quote engine, the customer-facing quote document, existing quotes, and the invoice picker.</li>
+          <li>27 new tests; 3 existing tests reworded and the fmtN call-count guard updated (1231 &rarr; 1258 pass).</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.104</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Line Item Cost &amp; Margin History</strong>. Click the &ldquo;N pt&rdquo; badge next to a Line Item&rsquo;s Unit Price to open a read-only modal (it replaces the old inline row). It shows the <strong>lowest, highest and latest supplier cost with the margin at today&rsquo;s sell price</strong>, the current catalogue cost, a trend line, a timeline with cost, price and margin changes, and the prices charged on orders that differed from the catalogue. Built for reorder decisions.</li>
@@ -3001,6 +3017,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:.08em;color:var(--cr);margin-bottom:6px;">LINE ITEMS</div>
       <div id="qt-lines" style="overflow-x:auto;margin-bottom:8px;"></div>
       <button class="btn btn-g" style="font-size:.5rem;padding:3px 10px;margin-bottom:14px;" onclick="addQteLine()">+ Add Line</button>
+      <button class="btn btn-g" style="font-size:.5rem;padding:3px 10px;margin-bottom:14px;margin-left:6px;" onclick="qteOpenPicker('multi')">Add from Catalogue</button>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;background:#f8f8f8;padding:12px;margin-bottom:12px;font-size:.56rem;">
         <div><div style="color:var(--m);margin-bottom:2px;">Origin Charges</div><div id="qt-orig" style="font-weight:600;">-</div></div>
         <div><div style="color:var(--m);margin-bottom:2px;">Dest Charges</div><div id="qt-dest" style="font-weight:600;">-</div></div>
@@ -3021,6 +3038,28 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
         <button class="btn btn-g" id="qt-po-btn" onclick="qteToPoConvert()" style="display:none;border-color:var(--gold);color:var(--gold);">Convert to PO</button>
         <button class="btn btn-s" onclick="saveQte()">Save Quote</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUOTE CATALOGUE PICKER + MANUAL-RATE PROMPT (SPEC-QTE-004) — placed AFTER #ov-qt so they stack above the Quote modal (all .ov share one z-index) -->
+<div class="ov" id="ov-qpick" onclick="if(event.target===this)qteClosePicker()">
+  <div class="modal" style="max-width:640px;">
+    <div class="mh"><h2 id="qpick-title">Add from Catalogue</h2><button class="mx" onclick="qteClosePicker()">&#215;</button></div>
+    <div class="mb">
+      <input class="sb" type="text" placeholder="Search items..." id="qpick-q" oninput="rQPickList()" style="width:100%;margin-bottom:8px;box-sizing:border-box;">
+      <div id="qpick-list"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn btn-g" onclick="qteClosePicker()">Cancel</button><button class="btn btn-s" id="qpick-ok" onclick="qtePickConfirm()">Add Selected</button></div>
+    </div>
+  </div>
+</div>
+<div class="ov" id="ov-qrate" onclick="if(event.target===this)qteRateCancel()">
+  <div class="modal" style="max-width:440px;">
+    <div class="mh"><h2>USD rate needed</h2><button class="mx" onclick="qteRateCancel()">&#215;</button></div>
+    <div class="mb">
+      <p id="qrate-msg" style="font-size:.6rem;color:var(--m);margin-bottom:10px;"></p>
+      <input type="number" id="qrate-in" step="any" min="0" style="width:100%;box-sizing:border-box;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn btn-g" onclick="qteRateCancel()">Cancel</button><button class="btn btn-s" onclick="qteRateOk()">Use this rate</button></div>
     </div>
   </div>
 </div>
@@ -7098,15 +7137,15 @@ async function migrateLineItemsToSupabase() {
   // be empty in practice.
   var touchedPoIdsForLi = {};
   DB.po.forEach(function(po){ (po.lineItems||[]).forEach(function(li){ if (liIdMap[li.lid]) { li.lid = liIdMap[li.lid]; touchedPoIdsForLi[po.id] = true; } }); });
-  // Quote.lines[].lid is confirmed dead (never populated by any code path) —
-  // checked anyway, never skipped, per index.html's own stated convention there.
+  // Quote.lines[].lid is populated by REQ-QTE-004's catalogue linking (v2.9.105): this sweep remaps ONLY the lid
+  // and leaves every snapshot/flag key on the line untouched.
   var touchedQteIdsForLi = {};
   DB.qt.forEach(function(q){ (q.lines||[]).forEach(function(ql){ if (liIdMap[ql.lid]) { ql.lid = liIdMap[ql.lid]; touchedQteIdsForLi[q.id] = true; } }); });
   sv(K.i, DB.inv); sv(K.p, DB.po); sv(K.qt, DB.qt);
 
   // REQ-CLOUD-004e: cross-phase fix for Quote, same reasoning as the Supplier/Buyer
-  // retrofit — the touched-set will always be empty in practice today (lid is a
-  // confirmed-dead field), but this loop is safe to run unconditionally regardless.
+  // retrofit — since REQ-QTE-004 (v2.9.105) a quote line can carry a real lid, so this touched-set is non-empty
+  // in real usage once a linked quote was built before Line Items migrated.
   if (Object.keys(touchedQteIdsForLi).length) {
     for (var qi = 0; qi < DB.qt.length; qi++) {
       if (touchedQteIdsForLi[DB.qt[qi].id]) await persistQteChange(DB.qt[qi], true);
@@ -8522,6 +8561,8 @@ async function delLI(id) {
   var warns = [];
   if (invRefs.length) warns.push(invRefs.length + ' invoice' + (invRefs.length>1?'s':'') + ' (' + invRefs.map(function(i){return i.num||i.id;}).join(', ') + ')');
   if (poRefs.length)  warns.push(poRefs.length  + ' purchase order' + (poRefs.length>1?'s':'')  + ' (' + poRefs.map(function(p){return p.num||p.id;}).join(', ') + ')');
+  var qtRefs = DB.qt.filter(function(q){ return (q.lines||[]).some(function(l){ return l.lid === id; }); });   // REQ-QTE4-008: any non-blank match
+  if (qtRefs.length)  warns.push(qtRefs.length  + ' quote' + (qtRefs.length>1?'s':'') + ' (' + qtRefs.map(function(q){return q.num||q.id;}).join(', ') + ')');
   if (pendingUpdate) warns.push('1 pending catalogue-update suggestion (from Quote ' + pendingUpdate.quoteNum + ')');
   var msg = 'Delete this line item?';
   if (warns.length) msg += '\n\nWarning: This item is referenced in:\n  ' + warns.join('\n  ') + '\n\nExisting line entries on those documents will be preserved but the catalogue link will be broken.';
@@ -12423,10 +12464,10 @@ function verifyFkIntegrityAfterCleanup() {
     if (q.sourceContactId && !conIds[q.sourceContactId]) dangling.push('Quote ' + q.id + ' sourceContactId');
     (q.lines||[]).forEach(function(l){
       if (l.supId && !supIds[l.supId]) dangling.push('Quote ' + q.id + ' line supId');
-      // Quote lines don't currently populate `lid` anywhere in the live code (a dead field on this
-      // entity, the same class as the already-known-dead `liId` in qteToPoConvert()) — checked anyway,
-      // never skipped, per REQ-DATA-002g's explicit "not a subset" instruction.
-      if (l.lid && !liIds[l.lid]) dangling.push('Quote ' + q.id + ' line lid');
+      // Quote.lines[].lid is a HISTORICAL REFERENCE since REQ-QTE-004 (v2.9.105): a catalogue item may legitimately be
+      // deleted after a quote was built from it, so a dangling quote-line lid is NOT a data-integrity defect and is no longer
+      // reported. Accepted trade-off: this also removes the check's ability to catch a genuinely failed lid remap after Line
+      // Item migration — the migration tests cover that remap directly. The PO-line lid check is unchanged.
     });
   });
   DB.ord.forEach(function(o){
@@ -12762,7 +12803,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.104).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.105).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12800,7 +12841,8 @@ var AI_SYSTEM_PROMPT = [
   '## Quotes',
   'Quotes tab → + New Quote. Format: QTE-001, QTE-002 etc.',
   'Header fields: Client, Date, Valid Until, Freight Mode (LCL / FCL 20GP / FCL 40HQ), Markup %, Currency, Status (Draft / Sent / Accepted / Declined / Expired).',
-  'Line items: Product description, Supplier (from catalogue), Qty, UOM, Unit Cost, CBM, DG flag (Y/N), Duty %.',
+  'Quote lines from the catalogue: on the Quotes tab, click Add from Catalogue (or Link on an existing line) to pull in a Line Item. Supplier, description, UOM, DG, cost and CBM fill in automatically. Cost is converted to USD and treated as a line total, so it scales with quantity until you type a cost yourself; CBM scales the same way from the item dimensions. USD, GBP and BBD items convert at the stored rates; any other currency asks you for a USD rate, which is recorded on the line. A cost snapshot is kept, and an amber badge shows when the catalogue cost has changed since the quote was built. Refresh cost updates cost and CBM only, not supplier, description, UOM or DG. Duty % stays manual. Unlink returns a line to a plain typed line.',
+  'Line items: Product description, Supplier (from catalogue), Qty, UOM, Cost (a USD line total, not per unit), CBM, DG flag (Y/N), Duty %.',
   'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX.',
   'Overhead charges (Origin Charges, Dest Charges, FPM Admin — v2.9.68, REQ/SPEC-QTE-002): three fixed dollar amounts added to every quote\'s total, unmarked-up (added at cost, never scaled by margin). Global defaults are set in Settings → Rates & FX; each quote can override any of the three individually — three optional fields on the quote form (blank = inherit the current global default, any typed number including 0 = override just this quote). An overridden quote is unaffected by later changes to the global default for that specific field; an un-overridden quote keeps tracking the global default live. Setting a field to 0 removes that charge from just that one quote.',
   'Insurance Rate % override (v2.9.89, REQ/SPEC-QTE-003): insurance (default 0.5% of cost+freight per line, set in Settings → Rates & FX) is editable per quote AND per line, the same two-tier cascade as Margin %. The quote form has an "Insurance % Override" field (blank = inherit the global default). Each line in the editor grid also has its own "Ins %" field (blank = inherit the quote-level value, which itself may be inheriting the global default) — a line-level value always wins over the quote-level value. The editor grid and the PDF preview both show the computed Insurance $ amount as its own column/row, separate from Landed, so it is never a silent, unexplained jump between Cost and Landed.',
@@ -15063,12 +15105,250 @@ function qlEffectiveInsInput(rid) {
   return raw === '' ? undefined : +raw;
 }
 
+// ── QUOTE LINES LINKED TO THE LINE ITEM CATALOGUE (REQ/SPEC-QTE-004, v2.9.105) ──
+// A quote line's `cost` is a LINE TOTAL in USD (cQteLine never multiplies by qty) and `cbm` is the line-total CBM,
+// so a linked line stores unit cost x rate x qty and rescales with Qty until the operator types a value themselves.
+function qteNormCur(c) { return String(c == null ? '' : c).trim().toUpperCase(); }   // 'gbp ' -> 'GBP'; blank stays ''
+function qteR4(x) { return Math.round(x * 10000) / 10000; }                            // computed line cost
+function qteR6(x) { return Math.round(x * 1000000) / 1000000; }                        // computed CBM (matches calcLICBM's toFixed(6))
+// One definition of "linked" for the whole feature: a non-blank lid AND a usable snapshot.
+function qteIsLinked(l) {
+  return !!(l && l.lid) && l.lidUnitUSD !== '' && l.lidUnitUSD !== null && l.lidUnitUSD !== undefined && isFinite(+l.lidUnitUSD)
+      && isFinite(+l.lidRate) && +l.lidRate > 0;
+}
+// USD per 1 unit of the catalogue currency from STORED rates, or null if not convertible from them.
+// A zero/unset stored rate falls back to QR_DEFAULTS exactly as toGBP()/fromGBP() do.
+function qteStoredRate(cur) {
+  var gbpusd = QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD, gbpbbd = QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD;
+  var c = qteNormCur(cur);
+  return c === 'USD' ? 1 : c === 'GBP' ? gbpusd : c === 'BBD' ? gbpusd / gbpbbd : null;
+}
+function qteRateGroup(cur) { var c = qteNormCur(cur); return c === 'CNY' ? 'RMB' : c; }   // RMB and CNY are one prompt group
+function qteRateSuggestion(group) {
+  return group === 'RMB' ? (QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD) / (QR.fxGBPRMB || QR_DEFAULTS.fxGBPRMB) : null;
+}
+function qteUnitCbm(li) {
+  var d = li && li.dims;
+  return (d && +d.l > 0 && +d.w > 0 && +d.h > 0) ? (+d.l * +d.w * +d.h) / 1000000 : null;
+}
+var QTE_LINK_KEYS = ['lid','lidCost','lidCur','lidRate','lidRateSrc','lidUnitUSD','lidAt','lidUnitCBM','costManual','cbmManual'];
+// Applies a link to a cQL entry IN PLACE. snapshotOnly (Refresh) updates cost, CBM and the snapshot but never
+// overwrites the supplier/description/UOM/DG the operator may have edited.
+function qteApplyLink(l, li, qty, rate, src, snapshotOnly) {
+  var q = (+qty > 0) ? +qty : 1;
+  var unitUSD = (+li.cost || 0) * rate;
+  var unitCbm = qteUnitCbm(li);
+  if (!snapshotOnly) {
+    l.supId = DB.sup.some(function(s){ return s.id === li.supId; }) ? li.supId : '';   // never write an unresolvable id
+    l.desc = li.desc || ''; l.uom = li.uom || 'pcs'; l.dg = !!li.dg;
+  }
+  l.qty = q;
+  l.cost = qteR4(unitUSD * q);
+  l.cbm = unitCbm !== null ? qteR6(unitCbm * q) : 0;
+  l.lid = li.id; l.lidCost = +li.cost || 0; l.lidCur = qteNormCur(li.cur);
+  l.lidRate = rate; l.lidRateSrc = src; l.lidUnitUSD = unitUSD; l.lidAt = new Date().toISOString();
+  if (unitCbm !== null) l.lidUnitCBM = unitCbm; else delete l.lidUnitCBM;
+  delete l.costManual;
+  if (!snapshotOnly) delete l.cbmManual;
+  return l;
+}
+function qlLine(rid) { return cQL.find(function(l){ return l.rid === rid; }); }
+// Writes the live grid inputs back into cQL (they are otherwise only ever READ through qlFld()), so a re-render built
+// from cQL cannot discard typing. Link keys and the manual flags are line STATE and are never touched here.
+function syncQLFromDOM() {
+  if (!G('qt-lines') || !cQL.length) return;
+  cQL.forEach(function(l) {
+    var rid = l.rid;
+    l.supId = qlFld(rid, 'supId');   l.desc = qlFld(rid, 'desc');
+    l.qty = +qlFld(rid, 'qty') || 1; l.uom = qlFld(rid, 'uom') || 'pcs';
+    l.cost = +qlFld(rid, 'cost') || 0; l.cbm = +qlFld(rid, 'cbm') || 0;
+    l.dg = !!qlFld(rid, 'dg');       l.dutyPct = +qlFld(rid, 'dutyPct') || 0;
+    var mk = qlFld(rid, 'mkp');      if (mk === '') delete l.markup;  else l.markup = +mk;
+    var ir = qlFld(rid, 'insRate');  if (ir === '') delete l.insRate; else l.insRate = +ir;
+    l.note = qlFld(rid, 'note');     // transient version note; never persisted (saveQte()'s literal does not carry it)
+  });
+}
+function qlCostTyped(rid) { var l = qlLine(rid); if (l && qteIsLinked(l)) l.costManual = true; calcQte(); }   // operator typing only
+function qlCbmTyped(rid)  { var l = qlLine(rid); if (l && qteIsLinked(l)) l.cbmManual  = true; calcQte(); }
+function qlQtyChanged(rid) {
+  var l = qlLine(rid), q = +qlFld(rid, 'qty');
+  if (l && qteIsLinked(l) && q > 0) {          // a blank/zero/negative qty leaves cost and CBM unchanged
+    if (!l.costManual) { l.cost = qteR4(l.lidUnitUSD * q); G('ql-cost-' + rid).value = l.cost; }
+    if (!l.cbmManual && l.lidUnitCBM != null) { l.cbm = qteR6(l.lidUnitCBM * q); G('ql-cbm-' + rid).value = l.cbm; }
+  }
+  calcQte();
+}
+// Drift of the catalogue since the line was linked, compared in the catalogue's OWN currency (never USD, so an FX-rate
+// change alone cannot trigger it). null = not linked or no drift.
+function qteDrift(l) {
+  if (!qteIsLinked(l)) return null;
+  var li = DB.li.find(function(x){ return x.id === l.lid; });
+  if (!li) return { kind: 'removed' };
+  if (qteNormCur(li.cur) !== qteNormCur(l.lidCur)) return { kind: 'cur', li: li, now: qteNormCur(li.cur) };
+  if (Math.abs(liHistMilli(li.cost) - liHistMilli(l.lidCost)) >= 1)
+    return { kind: 'cost', li: li, was: +l.lidCost || 0, now: +li.cost || 0, cur: qteNormCur(li.cur) || 'USD' };
+  return null;
+}
+// The grey info line under a linked line's description: link marker, warnings, drift badge. Text is escaped first,
+// the Refresh control markup is appended afterwards.
+function qteLineInfoHtml(l) {
+  if (!qteIsLinked(l)) return '';
+  var li = DB.li.find(function(x){ return x.id === l.lid; });
+  var parts = ['<span title="Linked to the catalogue">&#128279; ' + san(li ? (li.sku || li.desc || '') : 'catalogue item') + '</span>'];
+  if (!(+l.lidCost > 0)) parts.push('<span style="color:#a15c00;">No cost basis in catalogue</span>');
+  if (!l.supId) parts.push('<span style="color:#a15c00;">Catalogue item has no valid supplier &mdash; select one</span>');
+  var d = qteDrift(l);
+  if (d) {
+    var txt = d.kind === 'removed' ? 'Catalogue item removed'
+      : d.kind === 'cur' ? 'Catalogue currency changed to ' + (d.now || '(blank)') + ' — review manually'
+      : 'Catalogue cost changed since quoted: was ' + fmtN(d.was, d.cur, 3) + ', now ' + fmtN(d.now, d.cur, 3);
+    var h = '<span style="color:#7F6000;background:#FFF8E1;border:1px solid #F9A825;padding:0 4px;border-radius:2px;">&#9888; ' + san(txt) + '</span>';
+    if (d.kind !== 'removed') h += ' <a href="#" onclick="qteRefreshLine(\'' + l.rid + '\').catch(function(){});return false;">Refresh cost</a>';
+    parts.push(h);
+  }
+  return '<div style="font-size:.44rem;color:var(--m);margin-top:2px;line-height:1.5;">' + parts.join(' &middot; ') + '</div>';
+}
+
+// ── catalogue picker + manual-rate prompt ──────────────────────────────────────────
+var _qpickMode = 'multi', _qpickRid = null, _qpickChecked = {};
+function qteOpenPicker(mode, rid) {
+  if (!DB.li.length) { toast('No items in the catalogue yet.'); return; }
+  _qpickMode = mode === 'single' ? 'single' : 'multi'; _qpickRid = rid || null; _qpickChecked = {};
+  G('qpick-title').textContent = _qpickMode === 'single' ? 'Link to catalogue item' : 'Add from Catalogue';
+  G('qpick-ok').textContent = _qpickMode === 'single' ? 'Link' : 'Add Selected';
+  if (G('qpick-q')) G('qpick-q').value = '';
+  rQPickList();
+  G('ov-qpick').classList.add('on');
+}
+function qteClosePicker() { G('ov-qpick').classList.remove('on'); }
+function qtePickToggle(el) {
+  var id = el.getAttribute('data-id');
+  if (_qpickMode === 'single') { _qpickChecked = {}; _qpickChecked[id] = true; rQPickList(); }
+  else { _qpickChecked[id] = !!el.checked; }
+}
+function rQPickList() {
+  var q = (G('qpick-q') ? G('qpick-q').value : '').toLowerCase();
+  var f = DB.li.filter(function(li){ return !q || (li.desc||'').toLowerCase().includes(q) || (li.sku||'').toLowerCase().includes(q); });
+  var groups = {};
+  f.forEach(function(li){ var key = li.supId||''; (groups[key]=groups[key]||[]).push(li); });
+  var keys = Object.keys(groups).sort(function(a,b){
+    if (!a) return 1; if (!b) return -1;
+    return gsn(a).localeCompare(gsn(b));
+  });
+  G('qpick-list').innerHTML = keys.map(function(key){
+    var label = key ? gsn(key) : 'No Supplier';
+    var hdr = '<div style="font-weight:600;font-size:.56rem;color:var(--m);text-transform:uppercase;letter-spacing:.04em;padding:6px 2px 3px;">' + san(label) + '</div>';
+    var rows = groups[key].map(function(li){
+      var onQt = cQL.some(function(c){ return c.lid === li.id; });
+      var checked = _qpickChecked[li.id] ? ' checked' : '';
+      return '<label style="display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--ln);margin-bottom:3px;cursor:pointer;font-size:.58rem;">'
+        + '<input type="' + (_qpickMode === 'single' ? 'radio' : 'checkbox') + '" name="qpick" data-id="' + san(li.id) + '"' + checked + ' onchange="qtePickToggle(this)" style="flex-shrink:0;">'
+        + '<div style="flex:1;"><div style="font-weight:500;">' + (san(li.desc)||'-') + (onQt ? ' <span style="color:#1a7a4a;font-size:.5rem;">&#10003; already on this quote</span>' : '') + '</div>'
+        + '<div style="color:var(--m);font-size:.54rem;">' + san(li.sku||'') + ' &middot; ' + san(gsn(li.supId)) + ' &middot; ' + san(li.uom||'-') + ' &middot; cost ' + san(fmtN(li.cost, li.cur, 3))
+        + (+li.cost > 0 ? '' : ' <span style="color:#a15c00;">(no cost basis)</span>') + ' &middot; sell ref ' + san(fmtN(li.price, li.cur, 3)) + '</div></div></label>';
+    }).join('');
+    return hdr + rows;
+  }).join('');
+}
+function qtePickConfirm() {
+  var q = (G('qpick-q') ? G('qpick-q').value : '').toLowerCase();       // only items still VISIBLE under the current search are added (a ticked item hidden by a later search is not)
+  var visible = {};
+  DB.li.forEach(function(li){ if (!q || (li.desc||'').toLowerCase().includes(q) || (li.sku||'').toLowerCase().includes(q)) visible[li.id] = true; });
+  var ids = Object.keys(_qpickChecked).filter(function(k){ return _qpickChecked[k] && visible[k]; });
+  if (!ids.length) { toast('Select at least one item'); return; }       // checked BEFORE closing: the picker stays open
+  qteClosePicker();
+  if (_qpickMode === 'single') qteLinkExisting(_qpickRid, ids[0]).catch(function(){});
+  else qteAddFromCatalogue(ids).catch(function(){});
+}
+var _qrateResolve = null;
+function qteAskRate(group, suggestion) {           // the ONE function tests replace; resolves a positive number or null
+  return new Promise(function(resolve) {
+    if (_qrateResolve) _qrateResolve(null);        // never leave an earlier prompt hanging
+    _qrateResolve = resolve;
+    G('qrate-msg').textContent = group === ''
+      ? 'Catalogue currency is blank — enter the USD value of one unit of the currency this cost is actually in.'
+      : 'Enter the USD value of 1 ' + group + ' (for example ' + (suggestion ? suggestion.toFixed(4) : '1.0800') + '). This rate is recorded on the quote line.';
+    G('qrate-in').value = suggestion ? String(+suggestion.toFixed(6)) : '';
+    G('ov-qrate').classList.add('on');
+  });
+}
+function qteRateDone(v) { G('ov-qrate').classList.remove('on'); var r = _qrateResolve; _qrateResolve = null; if (r) r(v); }
+function qteRateOk() { var v = +G('qrate-in').value; qteRateDone((isFinite(v) && v > 0) ? v : null); }
+function qteRateCancel() { qteRateDone(null); }
+
+// ── link flows ──────────────────────────────────────────────────────────────────────
+async function qteAddFromCatalogue(ids) {
+  var items = ids.map(function(id){ return DB.li.find(function(x){ return x.id === id; }); }).filter(Boolean);
+  var rates = {};                                   // group -> {rate, src} | null (cancelled)
+  for (var i = 0; i < items.length; i++) {
+    var g = qteRateGroup(items[i].cur);
+    if (g in rates) continue;
+    var st = qteStoredRate(g);
+    if (st !== null) { rates[g] = { rate: st, src: 'stored' }; continue; }
+    var v = await qteAskRate(g, qteRateSuggestion(g));          // ONE prompt per distinct group in the batch
+    rates[g] = (v > 0) ? { rate: v, src: 'manual' } : null;
+  }
+  syncQLFromDOM();                                  // after the awaits: the grid may have changed while a prompt was open
+  var skipped = [];
+  items.forEach(function(li) {
+    var r = rates[qteRateGroup(li.cur)];
+    if (!r) { skipped.push(li.sku || li.desc || li.id); return; }
+    var l = { rid: uid(), dutyPct: 0 };
+    qteApplyLink(l, li, 1, r.rate, r.src);
+    cQL.push(l);
+  });
+  rQLT(); calcQte();
+  toast(skipped.length ? ('Skipped (no rate entered): ' + skipped.join(', ')) : (items.length + ' item' + (items.length !== 1 ? 's' : '') + ' added'), skipped.length ? 6000 : undefined);
+}
+async function qteLinkExisting(rid, liId) {
+  syncQLFromDOM();
+  var l = qlLine(rid), li = DB.li.find(function(x){ return x.id === liId; });
+  if (!l || !li) return;
+  var nonDefault = (l.desc||'').trim() !== '' || (l.supId||'') !== '' || (+l.cost||0) > 0 || (+l.cbm||0) > 0 || !!l.dg;
+  if (nonDefault && !confirm('Linking replaces this line\'s supplier, description, UOM, cost, DG and CBM with the catalogue values (Qty, Duty %, markup and insurance overrides are kept). Continue?')) return;
+  var g = qteRateGroup(li.cur), st = qteStoredRate(g), r;
+  if (st !== null) r = { rate: st, src: 'stored' };
+  else { var v = await qteAskRate(g, qteRateSuggestion(g)); if (!(v > 0)) return; r = { rate: v, src: 'manual' }; }
+  syncQLFromDOM();
+  qteApplyLink(l, li, +qlFld(rid, 'qty') || l.qty, r.rate, r.src);       // typed Qty is kept; both manual flags reset
+  rQLT(); calcQte();
+}
+function qteUnlink(rid) {
+  syncQLFromDOM(); var l = qlLine(rid); if (!l) return;
+  QTE_LINK_KEYS.forEach(function(k){ delete l[k]; });                    // values unchanged; BOTH manual flags removed
+  rQLT(); calcQte();
+}
+async function qteRefreshLine(rid) {
+  syncQLFromDOM();
+  var l = qlLine(rid); if (!l || !qteIsLinked(l)) return;
+  var li = DB.li.find(function(x){ return x.id === l.lid; });
+  if (!li) { toast('Catalogue item removed — nothing to refresh from'); return; }
+  var exist = EI.qt ? DB.qt.find(function(x){ return x.id === EI.qt; }) : null;
+  if ((G('qf-st').value === 'Accepted' || (exist && exist.linkedPOIds && exist.linkedPOIds.length)) &&
+      !confirm('This quote is already Accepted / has Purchase Orders — changing its prices will not update them. Continue?')) return;
+  if (l.costManual && !confirm('You overrode this line\'s cost — Refresh will replace it. Continue?')) return;
+  var g = qteRateGroup(li.cur), st = qteStoredRate(g), r;
+  if (st !== null) r = { rate: st, src: 'stored' };
+  else {
+    var pre = (qteNormCur(li.cur) === qteNormCur(l.lidCur) && +l.lidRate > 0) ? +l.lidRate : qteRateSuggestion(g);   // previous rate pre-filled ONLY when the currency is unchanged
+    var v = await qteAskRate(g, pre); if (!(v > 0)) return; r = { rate: v, src: 'manual' };
+  }
+  syncQLFromDOM();
+  var keepCbm = l.cbmManual ? l.cbm : null;
+  qteApplyLink(l, li, +qlFld(rid, 'qty') || l.qty, r.rate, r.src, true);            // snapshotOnly: cost, CBM and snapshot; resets costManual
+  if (keepCbm !== null) { l.cbm = keepCbm; l.cbmManual = true; }                  // a manual CBM wins
+  rQLT(); calcQte();
+}
+
 function addQteLine() {
+  syncQLFromDOM();
   cQL.push({ rid: uid(), supId:'', desc:'', qty:1, uom:'pcs', cost:0, cbm:0, dg:false, dutyPct:0 });
   rQLT();
+  calcQte();
 }
 
 function removeQteLine(rid) {
+  syncQLFromDOM();
   cQL = cQL.filter(function(l){ return l.rid !== rid; });
   rQLT();
   calcQte();
@@ -15087,7 +15367,7 @@ function rQLT() {
   var quoteInsPct = (quoteInsRateRaw === '') ? QR.insRate * 100 : +quoteInsRateRaw;
   var totalCBM = cQL.reduce(function(s,l){ return s+(+l.cbm||0); }, 0);
   el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:1080px;">'
-    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD)</th><th>CBM</th><th>DG</th><th>Duty %</th><th title="Markup on the landed cost of this line; overrides the quote-level Markup %. Blank inherits it.">Markup %</th><th>Ins %</th><th>Ins $</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
+    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD, line total)</th><th>CBM</th><th>DG</th><th>Duty %</th><th title="Markup on the landed cost of this line; overrides the quote-level Markup %. Blank inherits it.">Markup %</th><th>Ins %</th><th>Ins $</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
     + '<tbody>'
     + cQL.map(function(l){
         var calcR = cQteLine(l, QR, mode, totalCBM, quoteInsRateRaw);
@@ -15101,11 +15381,11 @@ function rQLT() {
             + '<option value="">— Supplier —</option>'
             + DB.sup.map(function(s){ return '<option value="' + san(s.id) + '"' + (l.supId===s.id?' selected':'') + '>' + san(s.name) + '</option>'; }).join('')
             + '</select></td>'
-          + '<td><input type="text" id="ql-desc-' + l.rid + '" value="' + san(l.desc||'') + '" placeholder="Description" style="font-size:.5rem;width:120px;"></td>'
-          + '<td><input type="number" id="ql-qty-' + l.rid + '" value="' + (+l.qty||1) + '" min="0.001" step="any" style="font-size:.5rem;width:50px;" oninput="calcQte()"></td>'
+          + '<td style="min-width:170px;"><input type="text" id="ql-desc-' + l.rid + '" value="' + san(l.desc||'') + '" placeholder="Description" style="font-size:.5rem;width:120px;">' + qteLineInfoHtml(l) + '</td>'
+          + '<td><input type="number" id="ql-qty-' + l.rid + '" value="' + (+l.qty||1) + '" min="0.001" step="any" style="font-size:.5rem;width:50px;" oninput="qlQtyChanged(\'' + l.rid + '\')"></td>'
           + '<td><input type="text" id="ql-uom-' + l.rid + '" value="' + san(l.uom||'pcs') + '" list="dl-uom" style="font-size:.5rem;width:46px;"></td>'
-          + '<td><input type="number" id="ql-cost-' + l.rid + '" value="' + (+l.cost||0) + '" min="0" step="any" style="font-size:.5rem;width:72px;" oninput="calcQte()"></td>'
-          + '<td><input type="number" id="ql-cbm-' + l.rid + '" value="' + (+l.cbm||0) + '" min="0" step="0.001" style="font-size:.5rem;width:50px;" oninput="calcQte()"></td>'
+          + '<td><input type="number" id="ql-cost-' + l.rid + '" value="' + (+l.cost||0) + '" min="0" step="any" style="font-size:.5rem;width:72px;" oninput="qlCostTyped(\'' + l.rid + '\')"></td>'
+          + '<td><input type="number" id="ql-cbm-' + l.rid + '" value="' + (+l.cbm||0) + '" min="0" step="0.001" style="font-size:.5rem;width:50px;" oninput="qlCbmTyped(\'' + l.rid + '\')"></td>'
           + '<td style="text-align:center;"><input type="checkbox" id="ql-dg-' + l.rid + '"' + (l.dg?' checked':'') + ' onchange="calcQte()"></td>'
           + '<td><input type="number" id="ql-dutyPct-' + l.rid + '" value="' + (+l.dutyPct||0) + '" min="0" max="100" step="0.5" style="font-size:.5rem;width:46px;" oninput="calcQte()"></td>'
           + '<td><input type="number" id="ql-mkp-' + l.rid + '" value="' + mkpVal + '" placeholder="' + quoteMarkup + '" min="0" max="500" step="0.5" style="font-size:.5rem;width:50px;" oninput="calcQte()" title="Blank = inherit quote-level ' + quoteMarkup + '%"></td>'
@@ -15113,8 +15393,11 @@ function rQLT() {
           + '<td>$' + fn(calcR.ins,2) + '</td>'
           + '<td style="font-weight:600;">$' + fn(calcR.landed,0) + '</td>'
           + '<td style="font-weight:600;color:var(--cr);">$' + fn(sellP,0) + '</td>'
-          + '<td><input type="text" id="ql-note-' + l.rid + '" placeholder="Version note…" style="font-size:.46rem;width:88px;border:none;border-bottom:1px solid var(--ln);outline:none;"></td>'
+          + '<td><input type="text" id="ql-note-' + l.rid + '" value="' + san(l.note||'') + '" placeholder="Version note…" style="font-size:.46rem;width:88px;border:none;border-bottom:1px solid var(--ln);outline:none;"></td>'
           + '<td style="white-space:nowrap;">'
+            + (qteIsLinked(l)
+                ? '<button onclick="qteUnlink(\'' + l.rid + '\')" style="font-size:.44rem;background:transparent;border:1px solid var(--ln);color:var(--m);padding:1px 5px;cursor:pointer;margin-right:2px;" title="Return this line to a plain typed line">Unlink</button>'
+                : '<button onclick="qteOpenPicker(\'single\',\'' + l.rid + '\')" style="font-size:.44rem;background:transparent;border:1px solid var(--bl);color:var(--bl);padding:1px 5px;cursor:pointer;margin-right:2px;" title="Fill this line from a catalogue item">Link</button>')
             + '<button onclick="toggleQteLineHistory(\'' + l.rid + '\')" style="font-size:.44rem;background:transparent;border:1px solid var(--ln);color:var(--m);padding:1px 5px;cursor:pointer;margin-right:2px;" title="Price history">&#128336;' + (hCount ? '&nbsp;' + hCount : '') + '</button>'
             + '<button onclick="removeQteLine(\'' + l.rid + '\')" style="font-size:.44rem;background:transparent;border:1px solid var(--cr);color:var(--cr);padding:1px 6px;cursor:pointer;">×</button>'
           + '</td>'
@@ -15283,6 +15566,7 @@ async function saveQte() {
       out.sourceOrdLineId = l.sourceOrdLineId;
       out.sourceRfqResponseId = l.sourceRfqResponseId;
     }
+    QTE_LINK_KEYS.forEach(function(k){ if (l[k] !== undefined && !(k === 'lid' && !l.lid)) out[k] = l[k]; });   // REQ-QTE4-006: conditional; a blank lid (AI create_quote) is not carried
     return out;
   });
   var totalCBM = lines.reduce(function(s,l){ return s+(l.cbm||0); }, 0);
@@ -15408,6 +15692,28 @@ async function saveQte() {
   // the real, finalized qt.id/qt.num/qt.currency.
   if (isAccepted && !wasAccepted) {
     lines.forEach(function(l) {
+      // REQ/SPEC-QTE-004 (REQ-QTE4-009): a LINKED line matches its item by id and queues an 'update' only for a DELIBERATE
+      // cost override, compared per unit in the catalogue's own currency. Everything else falls through unchanged.
+      var linkedLi = qteIsLinked(l) ? DB.li.find(function(x){ return x.id === l.lid; }) : null;
+      if (linkedLi) {
+        if (!l.supId) return;
+        if (l.supId !== linkedLi.supId) return;
+        if (!l.costManual) return;
+        var qn = (+l.qty > 0) ? +l.qty : 1;
+        var unitUSD = (+l.cost || 0) / qn;
+        if (Math.abs(unitUSD - (+l.lidUnitUSD)) <= 0.001) return;
+        var nativeCost = unitUSD / (+l.lidRate);
+        if (liHistMilli(nativeCost) === liHistMilli(linkedLi.cost)) return;
+        var dupU = DB.liPending.some(function(p){ return p.status === 'pending' && p.kind === 'update' && p.matchedLiId === linkedLi.id; });
+        if (dupU) return;
+        DB.liPending.push({
+          id: uid(), status: 'pending', kind: 'update', matchedLiId: linkedLi.id,
+          quoteId: qt.id, quoteNum: qt.num, supId: l.supId, desc: l.desc, uom: l.uom,
+          cost: nativeCost, suggestedPrice: (sellPByRid[l.rid] / qn) / (+l.lidRate),
+          currency: linkedLi.cur, createdAt: new Date().toISOString()
+        });
+        return;
+      }
       if (!l.supId) return; // LI-002d: lines with no supplier are never queued
       var existingLi = DB.li.find(function(x){
         return x.desc.toLowerCase() === l.desc.toLowerCase() && x.supId === l.supId;
@@ -15795,7 +16101,12 @@ async function qteToPoConvert() {
       dep: 0, fpmFunded: 0, fpmRecovered: false, oth: 0, paymentTerms: '',
       notes: 'Auto-converted from ' + q.num, status: 'Draft',
       lineItems: lines.map(function(l){
-        return { rid:uid(), lid:'', desc:l.desc, sku:'', uom:l.uom||'pcs', qty:l.qty||1, cost:l.cost };
+        // REQ/SPEC-QTE-004 (REQ-QTE4-013a): a LINKED line carries its live catalogue lid/sku (blank if the item was since deleted)
+        // and its cost converted line-total -> per unit (a linked line's cost is a line total by construction).
+        var lk = qteIsLinked(l);
+        var liP = lk ? DB.li.find(function(x){ return x.id === l.lid; }) : null;
+        var qn = (+l.qty > 0) ? +l.qty : 1;
+        return { rid:uid(), lid: liP ? liP.id : '', desc:l.desc, sku: liP ? (liP.sku || '') : '', uom:l.uom||'pcs', qty:l.qty||1, cost: lk ? qteR4((+l.cost || 0) / qn) : l.cost };
       }),
       quoteId: id, quoteNum: q.num
     };

@@ -190,3 +190,6 @@ Touched pre-existing artefacts: the Quote grid Cost column header (`index.html:1
 | 2 (rounding scope) | REQ-QTE4-003 — computed values only; typed Cost never rounded; `saveQte()` never rounds existing costs |
 | 3 (header relabel visible on all lines) | REQ-QTE4-003 note; §7 touched artefacts; user-guide/changelog |
 | 4 (RMB/CNY aliases) | REQ-QTE4-004 grouping |
+
+## 12. Clarification recorded during SPEC round 2 (2026-11-27)
+**REQ-QTE4-007 Refresh scope:** the control is named *Refresh cost* and, in the SPEC, updates **cost, CBM and the cost snapshot only** — it never overwrites supplier, description, UOM or DG (which the operator may have edited and which drive PO grouping and the surcharge). "Re-links at current catalogue values" is read as this narrow scope. To re-apply every catalogue field, Unlink and Link again. Reversible if the operator prefers a full re-link.

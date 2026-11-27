@@ -930,11 +930,11 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 ## QTE-GAP-002 — Quote line `cost` is a line total in the engine but is copied to Purchase Orders as a per-unit cost (Open, disclosed by the REQ-QTE-004 gate)
 
-**Detail:** `cQteLine()` (`index.html:14655`) never multiplies `cost` by `qty`, so a quote line's cost behaves as a line total. `qteToPoConvert()` (`index.html:15560-15565`) copies it onto a PO line whose `cost`/`qty` are per-unit. Quotes with qty above 1 may produce POs priced wrongly unless the operator types per-unit costs. REQ-QTE-004 fixes the basis for linked lines only. **Status:** open, needs verification against real quotes and its own REQ.
+**Detail:** `cQteLine()` (`index.html:14655`) never multiplies `cost` by `qty`, so a quote line's cost behaves as a line total. `qteToPoConvert()` (`index.html:15560-15565`) copies it onto a PO line whose `cost`/`qty` are per-unit. Quotes with qty above 1 may produce POs priced wrongly unless the operator types per-unit costs. REQ-QTE-004 fixes the basis for linked lines only. **Status:** open for unlinked lines; **addressed for catalogue-linked lines in v2.9.105** (REQ-QTE-004: `qteToPoConvert()` converts a linked line's cost line-total → per-unit). Needs verification against real quotes for the unlinked case.
 
 ## QTE-GAP-003 — Promotion queue compares line-total cost and sell price with per-unit catalogue values (Open, disclosed by the REQ-QTE-004 gate)
 
-**Detail:** the Accepted-quote promotion block (`index.html:15183-15184`) compares `existingLi.cost` (per unit, own currency) with `l.cost` (USD line total) and the line sell price (landed plus markup) with the catalogue price, so the nothing-changed early return effectively never fires and candidates can carry a USD figure under the quote's currency label. Review-gated, so no silent write. REQ-QTE-004 defines a correct basis for linked lines only. **Status:** open.
+**Detail:** the Accepted-quote promotion block (`index.html:15183-15184`) compares `existingLi.cost` (per unit, own currency) with `l.cost` (USD line total) and the line sell price (landed plus markup) with the catalogue price, so the nothing-changed early return effectively never fires and candidates can carry a USD figure under the quote's currency label. Review-gated, so no silent write. REQ-QTE-004 (v2.9.105) defines a correct per-unit, catalogue-currency basis for **linked** lines only; unlinked lines keep the legacy comparison. **Status:** open for unlinked lines.
 
 ## QTE-GAP-004 — `ordConvertToQuote()` fills costs in the quote currency under a Cost (USD) column (Open, disclosed by the REQ-QTE-004 gate)
 
