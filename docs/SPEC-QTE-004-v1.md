@@ -2,7 +2,7 @@
 
 **Status:** v1 DRAFT — written from the gate-passed `docs/REQ-QTE-004-v5.md` (requirements-gate PASS, round 5). Not yet through the spec-gate.
 **Version target:** v2.9.105. **Files touched:** `index.html` (quote grid, two new overlays, helpers, `saveQte()`, `qteToPoConvert()`, `delLI()`, one integrity check, comments, AI prompt, changelog, version strings), `tests/run.js`, docs.
-**Schema impact: none.** `lid`, the snapshot and the two flags ride inside the existing `quotes.lines` jsonb (REQ §5; the `lines` column is opaque to Cloud Data). No new `K` key, no migration, no Sheets mapping change (`FIELD_MAPS.qt` carries no lines, `index.html:5146`), so no `schema-migration-reviewer` pass is needed.
+**Schema impact: none.** `lid`, the snapshot and the two flags ride inside the existing `quotes.lines` jsonb (REQ §5; the `lines` column is opaque to Cloud Data). No new `K` key, no migration, no Sheets mapping change (`FIELD_MAPS.qt` carries no lines, `index.html:5167`), so no `schema-migration-reviewer` pass is needed.
 **Urgency:** the operator needs this to raise a real container-load quote; the spec is written so the build can start the moment it passes the gate.
 Citations were measured at the current commit (main at e5d3249) and checked with `node scripts/check-req-citations.js`.
 
@@ -41,7 +41,7 @@ function qteIsLinked(l) {
       && isFinite(+l.lidRate) && +l.lidRate > 0;
 }
 // USD per 1 unit of the catalogue currency from STORED rates, or null if not convertible from them.
-// Zero/unset stored rates fall back to QR_DEFAULTS exactly as toGBP()/fromGBP() do (index.html:5620-5638).
+// Zero/unset stored rates fall back to QR_DEFAULTS exactly as toGBP()/fromGBP() do (`index.html:5649-5668`).
 function qteStoredRate(cur) {
   var gbpusd = QR.fxGBPUSD || QR_DEFAULTS.fxGBPUSD, gbpbbd = QR.fxGBPBBD || QR_DEFAULTS.fxGBPBBD;
   var c = qteNormCur(cur);
@@ -115,7 +115,7 @@ function removeQteLine(rid) { syncQLFromDOM(); cQL = cQL.filter(...); rQLT(); ca
 ```
 `rQLT()` (`15077`) changes:
 1. Header `Cost (USD)` → `Cost (USD, line total)` (visible on every line, linked or not — REQ-QTE4-003; to be called out in the user guide/changelog). No existing test asserts the old header text (REQ-gate round 4).
-2. The note input renders its value: `... id="ql-note-RID" value="' + san(l.note||'') + '" ...` (it currently has none, `index.html:15114`-area).
+2. The note input renders its value: `... id="ql-note-RID" value="' + san(l.note||'') + '" ...` (it currently has none, `index.html:15116`).
 3. Cost input: `oninput="qlCostTyped('RID')"` (was `calcQte()`); CBM input: `oninput="qlCbmTyped('RID')"`; Qty input: `oninput="qlQtyChanged('RID')"`.
 4. **Description cell** gains a second line under the text input, only when applicable:
    - Linked line (`qteIsLinked(l)`): `<div class="qte-lnk">🔗 <SKU or desc of the live item, san'd> ...</div>` plus the drift state of §5.1.
@@ -293,7 +293,7 @@ async function qteRefreshLine(rid) {
   rQLT(); calcQte();
 }
 ```
-Refresh only edits the in-memory grid — nothing persists until **Save Quote**, which versions the line exactly like a manual cost edit (the `saveQte()` trigger `lastV.cost !== l.cost`, `index.html:15310`).
+Refresh only edits the in-memory grid — nothing persists until **Save Quote**, which versions the line exactly like a manual cost edit (the `saveQte()` trigger `lastV.cost !== l.cost`, `index.html:15303`).
 
 ---
 
@@ -302,9 +302,9 @@ Refresh only edits the in-memory grid — nothing persists until **Save Quote**,
 ### 6.1 Carry-forward
 In the line-literal builder (`index.html:15267-15285`), after the existing `sourceOrd*` block add:
 ```js
-QTE_LINK_KEYS.forEach(function(k){ if (l[k] !== undefined) out[k] = l[k]; });   // conditional: absent on unlinked lines, never `undefined`
+QTE_LINK_KEYS.forEach(function(k){ if (l[k] !== undefined && !(k === 'lid' && !l.lid)) out[k] = l[k]; });   // conditional: absent on unlinked lines, never `undefined`; a blank `lid` is NOT carried
 ```
-- `l` is the `cQL` entry, so the keys (including the flags) are read from `cQL`, not from `qlFld()`. A non-blank `lid` with no snapshot (restored/hand-edited data) is **preserved as data** (not stripped) and treated as unlinked by `qteIsLinked()`; a blank `lid` (`''`, as the AI `create_quote` path writes, `index.html:12979`-area) is carried only if present and means unlinked — the assertion in AC-6 is `'lid' in line === false` for a line that never had one.
+- `l` is the `cQL` entry, so the keys (including the flags) are read from `cQL`, not from `qlFld()`. A non-blank `lid` with no snapshot (restored/hand-edited data) is **preserved as data** (not stripped) and treated as unlinked by `qteIsLinked()`; a blank `lid` (`''`, as the AI `create_quote` path writes, `index.html:13213`) means unlinked and is **not** carried onto the saved line, so `'lid' in line === false` holds for every unlinked line, including AI-created ones.
 - The literal already writes `markup: undefined`/`insRate: undefined` (REQ-gate advisory); that is unchanged and the "absent key" rule applies to the new keys only.
 - `editQte()` (`15019`) already copies unknown keys into `cQL` (`Object.assign`, `15024`); no change.
 
@@ -349,7 +349,7 @@ return { rid: uid(), lid: liP ? liP.id : '', desc: l.desc, sku: liP ? (liP.sku |
          qty: l.qty || 1, cost: lk ? qteR4((+l.cost || 0) / qn) : l.cost };
 ```
 - For a **linked** line the PO `cost` is `cost ÷ qty` rounded to 4 dp (a linked line's cost is a line total by construction; PO lines are per-unit). `qty × cost` can differ from the quote line cost by ±0.0001×qty for non-terminating divisions (100 ÷ 3 → 33.3333 → 99.9999) — accepted (REQ-QTE4-003).
-- **Unlinked lines are unchanged** (the pre-existing line-total-vs-per-unit mismatch is `QTE-GAP-002`). The Cloud Data PO insert reads `newPOs[i].lineItems` (`index.html:~15813`) so it inherits the change with no edit.
+- **Unlinked lines are unchanged** (the pre-existing line-total-vs-per-unit mismatch is `QTE-GAP-002`). The Cloud Data PO insert reads `newPOs[i].lineItems` (`index.html:15812`) so it inherits the change with no edit.
 - `renderPoSourceDriftWarn()` returns early for blank `po.invId` (`9452`-area), so a quote-created PO gains no drift checking from this; the only effect is a real catalogue link for `delLI()`'s PO scan.
 
 ---
@@ -376,7 +376,7 @@ Delete the line `if (l.lid && !liIds[l.lid]) dangling.push('Quote ' + q.id + ' l
 ---
 
 ## 9. Cloud Data / Sheets / backup (REQ-QTE4-014)
-No code change. Confirmed by citation: `refreshQteFromSupabase()` maps `lines: row.lines || []` unmodified (`index.html:~6535`); `saveQte()`'s Cloud branch writes `lines: qt.lines || []` (`~15350`); `FIELD_MAPS.qt` (`5146`) maps no line data; `mergePulledWithLocal()` is `Object.assign({}, local, pulled)` (`5203`), so unmapped `lines` survive a Sheets pull; the AI assistant has no Quote read tool, so the snapshot cannot reach it. Local backup/restore carries `DB.qt` as-is. The LI-migration sweep (`7104`) rewrites only `ql.lid` and so leaves every snapshot/flag key untouched (T-14a).
+No code change. Confirmed by citation: `refreshQteFromSupabase()` maps `lines: row.lines || []` unmodified (`index.html:6530`); `saveQte()`'s Cloud branch writes `lines: qt.lines || []` (`15351`); `FIELD_MAPS.qt` (`5146`) maps no line data; `mergePulledWithLocal()` is `Object.assign({}, local, pulled)` (`5217`), so unmapped `lines` survive a Sheets pull; the AI assistant has no Quote read tool, so the snapshot cannot reach it. Local backup/restore carries `DB.qt` as-is. The LI-migration sweep (`7104`) rewrites only `ql.lid` and so leaves every snapshot/flag key untouched (T-14a).
 
 ---
 
