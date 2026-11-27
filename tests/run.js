@@ -415,6 +415,7 @@ test('savePO stores empty invId when invNum does not match any invoice', () => {
   mockEl('pf-n').value   = 'PO-TEST-002';
   mockEl('pf-sup').value = 'sup-1';
   mockEl('pf-inv').value = 'INV99999'; // no match
+  mockEl('pf-inv').readOnly = true; // locked auto-link field: savePO() stays tolerant (v2.9.103 — an EDITABLE field now rejects unknown numbers in vPO())
   mockEl('pf-dt').value  = '2026-01-01';
   mockEl('pf-del').value = '';
   mockEl('pf-cur').value = 'USD';
@@ -431,6 +432,79 @@ test('savePO stores empty invId when invNum does not match any invoice', () => {
   const saved = ctx.DB.po[0];
   assert(saved, 'PO should be saved');
   assertEqual(saved.invId, '', 'invId should be empty string when no match found');
+  mockEl('pf-inv').readOnly = false;
+});
+
+
+// ── PO: Linked Invoice # editable on manual POs (v2.9.103) ──────
+console.log('\nPO linked invoice editable');
+function poLinkSetup(extra) {
+  resetDB();
+  ctx._sb = null;
+  ctx.DB.sup = [{ id:'sup-fwd', name:'ABC Freight', cur:'USD' }];
+  ctx.DB.inv = [{ id:'inv-A', num:'INV20001', buyer:'B', lineItems:[], pos:[] }, { id:'inv-B', num:'INV20002', buyer:'B', lineItems:[], pos:[] },
+                { id:'cn-1', num:'CN10001', buyer:'B', type:'credit_note', lineItems:[], pos:[] }];
+  ctx.EI.p = null; ctx.cPL = [{ rid:'r1', lid:'', desc:'Ocean freight', sku:'', uom:'', qty:1, cost:1200 }];
+  mockEl('pf-n').value = 'PO-FWD-1'; mockEl('pf-sup').value = 'sup-fwd'; mockEl('pf-cur').value = 'USD';
+  mockEl('pf-dt').value = '2026-01-01'; mockEl('pf-del').value = ''; mockEl('pf-dep').value = ''; mockEl('pf-fpm').value = '';
+  mockEl('pf-oth').value = ''; mockEl('pf-pt').value = ''; mockEl('pf-nt').value = ''; mockEl('pf-rec').checked = false; mockEl('po-sm').value = 'Draft';
+  mockEl('pf-inv').value = ''; mockEl('pf-inv').readOnly = false;
+}
+test('PO form: a manual PO links to an existing invoice by number; invoice pos[] is updated (v2.9.103)', function() {
+  poLinkSetup();
+  mockEl('pf-inv').value = 'INV20001';
+  ctx.savePO();
+  const po = ctx.DB.po[0];
+  assert(po, 'PO saved');
+  assertEqual(po.invNum, 'INV20001'); assertEqual(po.invId, 'inv-A');
+  assert(ctx.DB.inv[0].pos.indexOf(po.id) > -1, 'invoice pos[] lists the new PO');
+  assertEqual(ctx.DB.inv[1].pos.length, 0, 'other invoice untouched');
+  mockEl('pf-inv').value = '';
+});
+test('PO form: an unknown or credit-note number is rejected on the editable field; blank still saves unlinked (v2.9.103)', function() {
+  poLinkSetup();
+  mockEl('pf-inv').value = 'INV99999';
+  ctx.savePO();
+  assertEqual(ctx.DB.po.length, 0, 'unknown number blocks the save');
+  mockEl('pf-inv').value = 'CN10001';
+  ctx.savePO();
+  assertEqual(ctx.DB.po.length, 0, 'a credit note number is not a valid link target');
+  mockEl('pf-inv').value = '';
+  ctx.savePO();
+  assertEqual(ctx.DB.po.length, 1, 'blank saves');
+  assertEqual(ctx.DB.po[0].invId, '', 'and is unlinked');
+});
+test('PO form: editing a manual PO can move the link to another invoice, then remove it (v2.9.103)', function() {
+  poLinkSetup();
+  mockEl('pf-inv').value = 'INV20001';
+  ctx.savePO();
+  const id = ctx.DB.po[0].id;
+  ctx.editPO(id);
+  assertEqual(mockEl('pf-inv').readOnly, false, 'manual PO field is editable');
+  mockEl('pf-inv').value = 'INV20002';
+  ctx.savePO();
+  assertEqual(ctx.DB.po.length, 1, 'edit does not duplicate');
+  assertEqual(ctx.DB.po[0].invId, 'inv-B');
+  assertEqual(ctx.DB.inv[0].pos.indexOf(id), -1, 'removed from the old invoice');
+  assert(ctx.DB.inv[1].pos.indexOf(id) > -1, 'added to the new invoice');
+  ctx.editPO(id); mockEl('pf-inv').value = '';
+  ctx.savePO();
+  assertEqual(ctx.DB.po[0].invId, '', 'unlinked');
+  assertEqual(ctx.DB.inv[1].pos.indexOf(id), -1, 'removed from the invoice');
+  mockEl('pf-inv').value = '';
+});
+test('PO form: an auto-generated PO (lines carry sourceInvUp) keeps its Linked Invoice # locked; a legacy/manual one does not (v2.9.103)', function() {
+  poLinkSetup();
+  ctx.DB.po = [{ id:'po-auto', num:'PO-INV20001-1', supId:'sup-fwd', invId:'inv-A', invNum:'INV20001', cur:'USD', status:'Draft', lineItems:[{ rid:'x', lid:'l1', desc:'Item', qty:1, cost:5, sourceInvUp:9 }] },
+               { id:'po-man',  num:'PO-MANUAL-1',   supId:'sup-fwd', invId:'', invNum:'', cur:'USD', status:'Draft', lineItems:[{ rid:'y', lid:'', desc:'Freight', qty:1, cost:5 }] }];
+  ctx.editPO('po-auto');
+  assertEqual(mockEl('pf-inv').readOnly, true, 'auto-generated: locked');
+  assertContains(mockEl('lbl-pf-inv').innerHTML, 'auto', 'label says it is automatic');
+  ctx.editPO('po-man');
+  assertEqual(mockEl('pf-inv').readOnly, false, 'manual: editable');
+  assertContains(mockEl('dl-invnums').innerHTML, 'INV20001', 'datalist offers invoice numbers');
+  assert(mockEl('dl-invnums').innerHTML.indexOf('CN10001') === -1, 'credit notes are not offered');
+  mockEl('pf-inv').readOnly = false;
 });
 
 // ── Shipment CRUD ──────────────────────────────────────────────
