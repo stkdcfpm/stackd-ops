@@ -14667,20 +14667,24 @@ test('AC-3: Line Items Library main table shows 3-decimal price', () => {
   assertContains(mockEl('li-tb').innerHTML, 'USD 0.125', 'main table price column shows 3 decimals');
 });
 
-test('AC-3: price-history sub-table shows 3-decimal cost', () => {
+test('AC-3: price-history modal shows 3-decimal cost (SPEC-LI-003: the inline row was replaced by the modal)', () => {
   resetDB();
   ctx.DB.li = [{ id: 'li-d3', desc: 'Precision Item', cost: 0.10, price: 0.20, cur: 'USD', uom: 'pcs',
     priceHistory: [{ date: '2026-01-01', cost: 0.125, price: 0.20, invoiceRef: '', notes: '' }] }];
   ctx.rLI();
-  assertContains(mockEl('li-tb').innerHTML, 'USD 0.125', 'price-history sub-table cost shows 3 decimals');
+  ctx._lihId = null; ctx.closeM('ov-lih');
+  ctx.openLIHist('li-d3');
+  assertContains(mockEl('lih-body').innerHTML, 'USD 0.125', 'price-history modal cost shows 3 decimals');
 });
 
-test('AC-3: price-history sub-table shows 3-decimal price', () => {
+test('AC-3: price-history modal shows 3-decimal price (SPEC-LI-003: the inline row was replaced by the modal)', () => {
   resetDB();
   ctx.DB.li = [{ id: 'li-d4', desc: 'Precision Item', cost: 0.10, price: 0.20, cur: 'USD', uom: 'pcs',
     priceHistory: [{ date: '2026-01-01', cost: 0.10, price: 0.125, invoiceRef: '', notes: '' }] }];
   ctx.rLI();
-  assertContains(mockEl('li-tb').innerHTML, 'USD 0.125', 'price-history sub-table price shows 3 decimals');
+  ctx._lihId = null; ctx.closeM('ov-lih');
+  ctx.openLIHist('li-d4');
+  assertContains(mockEl('lih-body').innerHTML, 'USD 0.125', 'price-history modal price shows 3 decimals');
 });
 
 test('AC-3: "Import from Library" picker shows 3-decimal price', () => {
@@ -14790,7 +14794,282 @@ test('AC-7: fmt() call-count reflects REQ-INTEG-002-2c\'s own new, legitimate ca
   const fmtCount  = (html.match(/fmt\(/g)  || []).length;
   const fmtNCount = (html.match(/fmtN\(/g) || []).length;
   assertEqual(fmtCount, 89, 'fmt( occurs 89 times total (88 call sites + 1 definition) — up 1 from REQ-LI-001\'s 88, this REQ\'s own new renderPaymentsTab() Currency/GBP-equivalent column');
-  assertEqual(fmtNCount, 7, 'fmtN( occurs 7 times total (6 call sites + 1 definition) — up 1 from REQ/SPEC-LI-002\'s new rLIPending() suggested-price display');
+  assertEqual(fmtNCount, 13, 'fmtN( occurs 13 times total (12 call sites + 1 definition) — up 6 from REQ/SPEC-LI-003\'s new Cost & Margin History modal (liHistModel order-price/last-charged labels, rLIHist range/current/timeline cells, liHistShiftHtml)');
+});
+
+// ── Line Item cost & margin history modal (REQ/SPEC-LI-003, v2.9.104) ───────────
+console.log('\nLine Item cost & margin history modal (SPEC-LI-003)');
+function lihH(date, cost, price, extra) { return Object.assign({ date: date, cost: cost, price: price, invoiceRef: '', notes: '' }, extra || {}); }
+function lihFx(hist, extra) {   // every group starts clean: mockElements/classList persist across tests (module-level)
+  resetDB(); ctx._lihId = null; ctx.closeM('ov-lih');
+  mockEl('li-q').value = ''; mockEl('li-sf').value = '';
+  ctx.DB.sup = [{ id: 's1', name: 'Sup One' }];
+  ctx.DB.li = [Object.assign({ id: 'l1', sku: 'SKU-1', desc: 'Widget', supId: 's1', cost: 11, price: 20, cur: 'USD', uom: 'pcs', priceHistory: hist }, extra || {})];
+  return ctx.DB.li[0];
+}
+function lihOpen(hist, extra) { lihFx(hist, extra); ctx.openLIHist('l1'); return mockEl('lih-body').innerHTML; }
+function lihRows(body) { return body.split('<tr style="border-top:1px solid var(--ln);">').slice(1); }   // timeline rows, newest first
+const LIH_A = () => [lihH('2026-01-01', 10, 20), lihH('2026-02-01', 12, 20), lihH('2026-03-01', 11, 20)];
+
+test('T-1a: rLI() badge opens the modal; the inline row and togglePH are gone', () => {
+  lihFx(LIH_A()); ctx.rLI();
+  const h = mockEl('li-tb').innerHTML;
+  assertContains(h, "openLIHist('l1')", 'badge opens the modal');
+  assertNotContains(h, 'togglePH'); assertNotContains(h, 'id="ph-l1"');
+  assertEqual(typeof ctx.togglePH, 'undefined', 'togglePH removed');
+});
+test('T-1b: openLIHist() opens #ov-lih and sets the title', () => {
+  lihFx(LIH_A()); ctx.openLIHist('l1');
+  assert(mockEl('ov-lih').classList.contains('on'), 'ov-lih is open');
+  assertContains(mockEl('lih-title').innerHTML, 'SKU-1 Widget');
+});
+test('T-1c (negative): no history -> no badge and no modal', () => {
+  [[], undefined].forEach(hist => {
+    lihFx(hist); if (hist === undefined) delete ctx.DB.li[0].priceHistory;
+    ctx.rLI(); assertNotContains(mockEl('li-tb').innerHTML, 'openLIHist', 'no badge');
+    ctx.openLIHist('l1'); assert(!mockEl('ov-lih').classList.contains('on'), 'no modal for an item without history');
+  });
+});
+test('T-2: lowest/highest/latest cost with the margin at today\'s sell price; no stale notice', () => {
+  const b = lihOpen(LIH_A());
+  assert(/Lowest cost<\/td><td[^>]*>USD 10\.000<\/td><td[^>]*>2026-01-01<\/td><td[^>]*><span class="pill phi">50\.0%/.test(b), 'lowest 10 / 50.0%');
+  assert(/Highest cost<\/td><td[^>]*>USD 12\.000<\/td><td[^>]*>2026-02-01<\/td><td[^>]*><span class="pill phi">40\.0%/.test(b), 'highest 12 / 40.0%');
+  assert(/Latest cost<\/td><td[^>]*>USD 11\.000<\/td><td[^>]*>2026-03-01<\/td><td[^>]*><span class="pill phi">45\.0%/.test(b), 'latest 11 / 45.0%');
+  assertContains(b, 'Current catalogue cost:</strong> USD 11.000');
+  assertNotContains(b, 'has changed since the last history entry');
+});
+test('T-3: no sell price -> margins n/a, no NaN or Infinity', () => {
+  [0, ''].forEach(p => {
+    const b = lihOpen(LIH_A(), { price: p });
+    assertNotContains(b, 'NaN'); assertNotContains(b, 'Infinity'); assertContains(b, 'n/a');
+  });
+});
+test('T-4: cost and margin shifts; the oldest entry has none', () => {
+  const b = lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 12, 20)], { cost: 12 });
+  assertContains(b, '↑ USD 2.000 (+20.0%)'); assertContains(b, 'title="Margin decreased 10.0 pp');
+  const rows = lihRows(b); assertNotContains(rows[rows.length - 1], '↑'); assertNotContains(rows[rows.length - 1], '↓');
+});
+test('T-5: order entries never enter shifts, range or trend', () => {
+  lihFx([lihH('2026-01-01', 10, 20), lihH('2026-01-15', 11, 9.5, { invoiceRef: 'INV-1' }), lihH('2026-02-01', 12, 20)], { cost: 12 });
+  ctx.DB.inv = [{ id: 'i1', num: 'INV-1', cur: 'USD' }]; ctx.openLIHist('l1'); const b = mockEl('lih-body').innerHTML;
+  assertContains(b, 'title="Cost increased USD 2.000 (+20.0%)'); assertContains(b, 'Cost ↑ 20.0%');
+  const timeline = b.slice(b.indexOf('<div style="max-height:260px'), b.indexOf('Prices charged that differed from the catalogue'));
+  assertNotContains(timeline, 'USD 9.500'); assertNotContains(timeline, 'INV-1');   // order entries never appear in the catalogue timeline
+  assertContains(b.slice(b.indexOf('Prices charged that differed from the catalogue')), 'USD 9.500');
+  assert(/Lowest cost<\/td><td[^>]*>USD 10\.000/.test(b), 'range ignores the order entry');
+});
+test('T-6a/b: date order beats array order; same-day entries keep array order', () => {
+  let b = lihOpen([lihH('2026-03-01', 12, 20), lihH('2026-01-01', 10, 20), lihH('2026-02-01', 11, 20)], { cost: 12 });
+  assertContains(b, 'Last price change:</strong> 2026-03-01'); assertContains(b, 'title="Cost increased USD 1.000 (+9.1%)'); assertContains(b, 'Cost ↑ 20.0%');
+  b = lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-01-01', 12, 20)], { cost: 12 });
+  assertContains(b, 'title="Cost increased USD 2.000 (+20.0%)');
+});
+test('T-7: trend line first -> latest usable entry', () => {
+  const b = lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 12, 21)], { cost: 12, price: 21 });
+  assertContains(b, 'Trend:</strong> Cost ↑ 20.0% | Price ↑ 5.0% | Margin ↓ 7.1 pp');
+});
+test('T-8 / T-8b: exactly one usable entry -> "Only one price"; a single zero-cost entry -> "No usable cost"', () => {
+  let b = lihOpen([lihH('2026-01-01', 10, 20)]);
+  assertContains(b, 'Only one price on record — no trend yet'); assertNotContains(b, 'Trend:');
+  b = lihOpen([lihH('2026-01-01', 0, 20)]);
+  assertContains(b, 'No usable cost recorded in the catalogue history'); assertNotContains(b, 'Only one price on record');
+});
+test('T-9a: unusable cost values show a dash, are excluded and never produce NaN', () => {
+  [0, '', 'abc', null].forEach(c => {
+    const b = lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', c, 20)]);
+    assertNotContains(b, 'NaN'); assertContains(b, 'Only one price on record');
+    assert(lihRows(b)[0].includes('>–'), 'dash for the unusable cost');
+  });
+});
+test('T-9b: a zero-cost middle entry is skipped as a baseline (10, 0, 12 -> 12 vs 10)', () => {
+  const b = lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 0, 20), lihH('2026-03-01', 12, 20)], { cost: 12 });
+  assertContains(lihRows(b)[0], 'title="Cost increased USD 2.000 (+20.0%)'); assertContains(lihRows(b)[0], 'no change');
+});
+test('T-9c: cost and price are independent (cost-0 entry keeps its price shift and baseline role)', () => {
+  const rows = lihRows(lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 0, 25), lihH('2026-03-01', 12, 30)], { cost: 12, price: 30 }));
+  assertNotContains(rows[1], 'title="Cost'); assertContains(rows[1], 'title="Price increased USD 5.000 (+25.0%)'); assertContains(rows[1], '>n/a<');
+  assertContains(rows[0], 'title="Cost increased USD 2.000 (+20.0%)'); assertContains(rows[0], 'title="Price increased USD 5.000 (+20.0%)');
+});
+test('T-10a/b/c/d: baseline is the nearest earlier usable value for that field', () => {
+  assertNotContains(lihRows(lihOpen([lihH('2026-01-01', 0, 20), lihH('2026-02-01', 12, 20)]))[0], 'title="Cost');                          // a
+  let r = lihRows(lihOpen([lihH('2026-01-01', 5, 10), lihH('2026-02-01', 5, 0), lihH('2026-03-01', 5, 12)]))[0];                           // b
+  assertContains(r, 'title="Price increased USD 2.000 (+20.0%)'); assertContains(r, 'no change');
+  assertNotContains(lihRows(lihOpen([lihH('2026-01-01', 5, 0), lihH('2026-02-01', 5, 12)]))[0], 'title="Price');                           // c
+  assertContains(lihRows(lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 0, 20), lihH('2026-03-01', 12, 20)]))[0], 'title="Margin decreased 10.0 pp'); // d
+});
+test('T-11: margin health bands on the Current catalogue cost row (25 / 15 / 5) and no badge for a zero cost', () => {
+  [[15, 'phi', 'Healthy margin'], [17, 'pmi', 'Medium margin'], [19, 'plo', 'Low margin']].forEach(t => {
+    const b = lihOpen([lihH('2026-01-01', 10, 20)], { cost: t[0], price: 20 });
+    assertContains(b, 'pill ' + t[1]); assertContains(b, t[2]);
+  });
+  const z = lihOpen([lihH('2026-01-01', 10, 20)], { cost: 0, price: 20 });
+  ['Healthy margin', 'Medium margin', 'Low margin', 'At cost'].forEach(w => assertNotContains(z, w));
+});
+test('T-12a/b/c: "At cost" uses integer thousandths; negative margins take the low band', () => {
+  let b = lihOpen([lihH('2026-01-01', 10, 20)], { cost: 10, price: 10.0004 });
+  assertContains(b, 'At cost'); assertNotContains(b, 'Low margin');
+  b = lihOpen([lihH('2026-01-01', 10, 20)], { cost: 12, price: 10 });
+  assertContains(b, '-20.0%'); assertContains(b, 'Low margin');
+  b = lihOpen([lihH('2026-01-01', 10, 20)], { cost: 10.001, price: 10 });
+  assertNotContains(b, 'At cost');
+});
+test('T-13: stale notice when the live cost differs from the newest catalogue entry', () => {
+  const b = lihOpen([lihH('2026-01-01', 10, 20)], { cost: 11, price: 20 });
+  assertContains(b, 'has changed since the last history entry'); assertContains(b, 'Current catalogue cost:</strong> USD 11.000');
+});
+test('T-14a/b/c: order-entry margin only when the invoice currency equals the Line Item currency', () => {
+  const hist = [lihH('2026-01-01', 10, 20), lihH('2026-01-05', 11, 9.5, { invoiceRef: 'INV-1' })];
+  lihFx(hist); ctx.DB.inv = [{ id: 'i1', num: 'INV-1', cur: 'USD' }]; ctx.openLIHist('l1');
+  assertContains(mockEl('lih-body').innerHTML, '-15.8%');
+  ctx.DB.inv[0].cur = 'EUR'; ctx.openLIHist('l1');
+  assertContains(mockEl('lih-body').innerHTML, 'n/a (different or unknown currency)');
+  ctx.DB.inv = []; ctx.openLIHist('l1');
+  assertContains(mockEl('lih-body').innerHTML, 'n/a (different or unknown currency)');
+});
+test('T-15: blank / whitespace / null / absent invoiceRef = catalogue entry; non-blank string or number = order entry', () => {
+  const hist = [lihH('2026-01-01', 10, 20, { invoiceRef: '' }), lihH('2026-01-02', 11, 20, { invoiceRef: '   ' }),
+    lihH('2026-01-03', 12, 20, { invoiceRef: null }), { date: '2026-01-04', cost: 13, price: 20 },
+    lihH('2026-01-05', 11, 9, { invoiceRef: 'INV-1' }), lihH('2026-01-06', 11, 8, { invoiceRef: 123 })];
+  const b = lihOpen(hist, { cost: 13 });
+  assertContains(b, 'Cost ↑ 30.0%'); assertEqual(lihRows(b).length, 4 + 2, '4 catalogue rows + 2 order rows');
+  assertContains(b.slice(b.indexOf('Prices charged')), 'INV-1'); assertContains(b.slice(b.indexOf('Prices charged')), '123');
+});
+test('T-16a/b/c: every free-text value is escaped (case-insensitive)', () => {
+  const evil = '<img src=x onerror=1>';
+  let b = lihOpen([lihH('2026-01-01', 10, 20, { notes: evil })]);
+  assert(/&lt;img/i.test(b) && !/<img/i.test(b), 'notes escaped');
+  lihFx([lihH('2026-01-01', 10, 20), lihH('2026-01-05', 11, 9.5, { invoiceRef: 'INV-1' })]);
+  ctx.DB.inv = [{ id: 'i1', num: 'INV-1', cur: evil }]; ctx.openLIHist('l1'); b = mockEl('lih-body').innerHTML;
+  assert(/&lt;img/i.test(b) && !/<img/i.test(b), 'inv.cur escaped (payload in inv.cur only)');
+  lihFx([lihH('2026-01-01', 10, 20), lihH('2026-01-05', 11, 9.5, { invoiceRef: evil })]); ctx.openLIHist('l1'); b = mockEl('lih-body').innerHTML;
+  assert(/&lt;img/i.test(b) && !/<img/i.test(b), 'invoiceRef escaped');
+  lihFx([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 12, 20)], { sku: evil, desc: evil, cur: evil }); ctx.DB.sup[0].name = evil; ctx.openLIHist('l1');   // two entries so a shift badge (and its title=) renders
+  const head = mockEl('lih-title').innerHTML + mockEl('lih-sub').innerHTML + mockEl('lih-body').innerHTML;
+  assert(/&lt;img/i.test(head) && !/<img/i.test(head), 'header, supplier name, currency and shift titles escaped');
+});
+test('T-17a/b/c: header with a blank SKU, no supplier, deleted supplier', () => {
+  lihOpen([lihH('2026-01-01', 10, 20)], { sku: '' });
+  assertEqual(mockEl('lih-title').innerHTML, 'Cost &amp; Margin History — Widget'); assertContains(mockEl('lih-sub').innerHTML, 'Sup One');
+  lihOpen([lihH('2026-01-01', 10, 20)], { supId: '' }); assertContains(mockEl('lih-sub').innerHTML, 'No supplier');
+  lihOpen([lihH('2026-01-01', 10, 20)], { supId: 'gone' }); assertContains(mockEl('lih-sub').innerHTML, 'Unknown supplier');
+});
+test('T-18a-e: per-item CSV — quoting, formula neutralisation, both kinds, arrow shifts, BOM, Price Currency', () => {
+  lihFx([lihH('2026-01-01', 10, 20, { notes: 'a, "b"\nc' }), lihH('2026-02-01', 12, 20, { notes: '=cmd' }), lihH('2026-02-05', 11, 9.5, { invoiceRef: 'INV-1' }),
+    lihH('2026-02-06', 11, 8, { invoiceRef: 'INV-2' }), lihH('2026-02-07', 11, 7, { invoiceRef: 'GONE' })]);
+  ctx.DB.inv = [{ id: 'i1', num: 'INV-1', cur: 'USD' }, { id: 'i2', num: 'INV-2', cur: 'EUR' }];
+  ctx.openLIHist('l1'); const text = csvCapture(() => ctx.liHistCsv());
+  assertEqual(text.charAt(0), '﻿', 'BOM (e)');
+  const rows = csvParseLoose(text.slice(1));
+  assertEqual(rows.length, 1 + 5, 'header + one row per entry (c)');
+  assertEqual(rows[0].join('|'), 'Date|Type|Unit Cost|Unit Price|Margin %|Cost shift|Price shift|Margin shift (pp)|Invoice Ref|Notes|Price Currency');
+  assertEqual(rows[1][9], 'a, "b"\nc', 'comma/quote/newline survive (a)');
+  assertEqual(rows[2][9], "'=cmd", 'formula neutralised (b)');
+  assert(rows[2][5].startsWith('↑'), 'shift cell is arrow-led, not apostrophe-prefixed (d, e)');
+  assertEqual(rows[1][1], 'catalogue'); assertEqual(rows[3][1], 'order');
+  assertEqual(rows[1][10], 'USD'); assertEqual(rows[3][10], 'USD'); assertEqual(rows[4][10], 'EUR'); assertEqual(rows[5][10], 'unknown');
+});
+test('T-19: opening and closing the modal writes nothing', () => {
+  const fx = [lihH('2026-03-01', 12, 20), lihH('2026-01-01', 10, 20), lihH('2026-02-01', 11, 9, { invoiceRef: 'INV-1' })];
+  lihFx(fx); const before = JSON.stringify(ctx.DB.li);
+  let writes = 0; const o = { sv: ctx.sv, saveAll: ctx.saveAll, logEv: ctx.logEv };
+  ctx.sv = function() { writes++; return o.sv.apply(this, arguments); }; ctx.saveAll = function() { writes++; }; ctx.logEv = function() { writes++; };
+  try { ctx.openLIHist('l1'); ctx.closeM('ov-lih'); } finally { ctx.sv = o.sv; ctx.saveAll = o.saveAll; ctx.logEv = o.logEv; }
+  assertEqual(writes, 0, 'no sv/saveAll/logEv calls'); assertEqual(JSON.stringify(ctx.DB.li), before, 'records identical, original entry order kept');
+});
+test('T-20: only order entries -> order-only state', () => {
+  lihFx([lihH('2026-01-05', 11, 9.5, { invoiceRef: 'INV-1' })]); ctx.DB.inv = [{ id: 'i1', num: 'INV-1', cur: 'USD' }]; ctx.openLIHist('l1');
+  const b = mockEl('lih-body').innerHTML;
+  assertContains(b, 'No catalogue price history — only prices charged on orders are recorded'); assertContains(b, 'Current catalogue cost'); assertContains(b, 'Prices charged');
+  ['Lowest', 'Trend:', 'Last price change', 'Unit Cost', 'NaN'].forEach(w => assertNotContains(b, w));
+});
+test('T-20b/c: all-zero costs -> "No usable cost"; two entries with one usable -> "Only one price"', () => {
+  let b = lihOpen([lihH('2026-01-01', 0, 20), lihH('2026-02-01', 0, 20)]);
+  assertContains(b, 'No usable cost recorded in the catalogue history'); assertContains(b, 'Current catalogue cost');
+  ['Lowest', 'Only one price', 'Trend:'].forEach(w => assertNotContains(b, w));
+  b = lihOpen([lihH('2026-01-01', 0, 20), lihH('2026-02-01', 10, 20)]);
+  assertContains(b, 'Only one price on record'); assertContains(b, 'Lowest = Highest = Latest'); assertNotContains(b, 'Trend:');
+});
+test('T-21a-g: staleness compared on integer thousandths, field by field', () => {
+  const stale = (h, c, p) => lihOpen([h], { cost: c, price: p }).includes('has changed since the last history entry');
+  assertEqual(stale(lihH('2026-01-01', 10, 20), 10.0004, 20), false, 'a');
+  assertEqual(stale(lihH('2026-01-01', 10, 20), 10.01, 20), true, 'b');
+  assertEqual(stale(lihH('2026-01-01', 10, 20), 10, 20.01), true, 'c');
+  assertEqual(stale(lihH('2026-01-01', 10, 20), 10.01, 20.01), true, 'd');
+  assertEqual(stale(lihH('2026-01-01', 0, 20), 5, 20), false, 'e: unusable newest cost skips the cost comparison');
+  assertEqual(stale(lihH('2026-01-01', 0, 20), 5, 20.01), true, 'f: price still compared');
+  assertEqual(stale(lihH('2026-01-01', 10, 20), 10.001, 20), true, 'g: exact-thousandth boundary');
+});
+test('T-22a/b/c: order price labelled with the invoice currency, "currency unknown", or a dash', () => {
+  lihFx([lihH('2026-01-01', 10, 20), lihH('2026-01-05', 11, 9.5, { invoiceRef: 'INV-1' })]); ctx.DB.inv = [{ id: 'i1', num: 'INV-1', cur: 'EUR' }]; ctx.openLIHist('l1');
+  assertContains(mockEl('lih-body').innerHTML, 'EUR 9.500');
+  ctx.DB.inv = []; ctx.openLIHist('l1'); assertContains(mockEl('lih-body').innerHTML, '9.500 currency unknown');
+  lihFx([lihH('2026-01-01', 10, 20), lihH('2026-01-05', 11, 'abc', { invoiceRef: 'INV-1' })]); ctx.openLIHist('l1');
+  assertNotContains(mockEl('lih-body').innerHTML, 'NaN');
+});
+test('T-23a/b: old-shape entries (no invoiceRef key) and a Sheets-merged record render', () => {
+  let b = lihOpen([{ date: '2026-01-01', cost: 10, price: 20 }]); assertContains(b, 'USD 10.000');
+  const merged = ctx.mergePulledWithLocal({ cost: 11, price: 21 }, { id: 'l1', sku: 'S', desc: 'W', cur: 'USD', cost: 10, price: 20, priceHistory: [lihH('2026-01-01', 10, 20)] });
+  lihFx(merged.priceHistory, { cost: merged.cost, price: merged.price }); ctx.openLIHist('l1');
+  assertContains(mockEl('lih-body').innerHTML, 'has changed since the last history entry');   // a Sheets pull changed cost/price without a history entry
+});
+testAsync('T-23c: a record loaded by the real refreshLIFromSupabase() keeps priceHistory and the modal renders', async () => {
+  resetDB(); ctx._lihId = null; ctx.closeM('ov-lih'); ctx.localStorage.removeItem('st_li_cloud_migration_ts');
+  try {
+    ctx._sb = mockSb({ line_items: { selectData: [{ id: 'cloud-li-1', num: 'LI-0001', sku: 'C-SKU', description: 'Cloud', currency: 'USD', cost: 10, price: 20, price_history: [lihH('2026-01-01', 10, 20)] }] } });
+    await ctx.refreshLIFromSupabase();
+    assertEqual(ctx.DB.li[0].priceHistory.length, 1, 'priceHistory survived the refresh');
+    ctx.openLIHist('cloud-li-1'); assert(mockEl('ov-lih').classList.contains('on'), 'modal opened'); assertContains(mockEl('lih-body').innerHTML, 'USD 10.000');
+  } finally { ctx.localStorage.removeItem('st_li_cloud_migration_ts'); ctx._sb = null; ctx.closeM('ov-lih'); }
+});
+test('T-24: the toolbar Price History CSV is unchanged byte-for-byte', () => {
+  lihFx([lihH('2026-01-01', 10, 20, { notes: 'n' }), lihH('2026-02-01', 12, 20, { invoiceRef: 'INV-1', notes: 'Price at time of order' })]);
+  const text = csvCapture(() => ctx.expPriceHistoryCSV());
+  assertEqual(text, '"SKU","Description","Currency","Current Cost","Current Price","History Date","History Cost","History Price","Invoice Ref","Notes"\n'
+    + '"SKU-1","Widget","USD","11","20","2026-01-01","10","20","","n"\n"SKU-1","Widget","USD","11","20","2026-02-01","12","20","INV-1","Price at time of order"');
+});
+test('T-30a/b: "Last charged on" uses the latest same-currency order entry', () => {
+  lihFx([lihH('2026-01-01', 10, 20), lihH('2026-01-05', 11, 9.5, { invoiceRef: 'INV-1' }), lihH('2026-01-09', 11, 8.5, { invoiceRef: 'INV-3' }), lihH('2026-01-12', 11, 7, { invoiceRef: 'INV-2' })]);
+  ctx.DB.inv = [{ id: 'i1', num: 'INV-1', cur: 'USD' }, { id: 'i2', num: 'INV-2', cur: 'EUR' }, { id: 'i3', num: 'INV-3', cur: 'USD' }]; ctx.openLIHist('l1');
+  assertContains(mockEl('lih-body').innerHTML, 'Last charged on INV-3 at USD 8.500');
+  ctx.DB.inv = [{ id: 'i2', num: 'INV-2', cur: 'EUR' }]; ctx.openLIHist('l1'); assertNotContains(mockEl('lih-body').innerHTML, 'Last charged on');
+});
+test('T-31a/b: duplicate invoice numbers use the first match; a missing invoice is "currency unknown"', () => {
+  lihFx([lihH('2026-01-01', 10, 20), lihH('2026-01-05', 11, 9.5, { invoiceRef: 'INV-1' })]);
+  ctx.DB.inv = [{ id: 'i1', num: 'INV-1', cur: 'EUR' }, { id: 'i2', num: 'INV-1', cur: 'USD' }]; ctx.openLIHist('l1');
+  assertContains(mockEl('lih-body').innerHTML, 'EUR 9.500');
+  ctx.DB.inv = [{ id: 'i1', num: 'INV-9', cur: 'USD' }]; ctx.openLIHist('l1'); assertContains(mockEl('lih-body').innerHTML, 'currency unknown');
+});
+test('T-32a/b: a zero price at the first or the latest usable entry makes the Price and Margin trend parts n/a', () => {
+  let b = lihOpen([lihH('2026-01-01', 10, 0), lihH('2026-02-01', 12, 25)], { cost: 12, price: 25 });
+  assertContains(b, 'Trend:</strong> Cost ↑ 20.0% | Price n/a | Margin n/a');
+  b = lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 12, 0)], { cost: 12, price: 20 });
+  assertContains(b, 'Trend:</strong> Cost ↑ 20.0% | Price n/a | Margin n/a');
+});
+test('T-33a/b: blank dates sort first and null elements are skipped; a null-only history opens nothing', () => {
+  let b = lihOpen([lihH('2026-02-01', 12, 20), null, lihH('', 10, 20)], { cost: 12 });
+  assertContains(b, 'Cost ↑ 20.0%'); assertContains(lihRows(b)[1], '–');
+  lihFx([null]); ctx.openLIHist('l1'); assert(!mockEl('ov-lih').classList.contains('on'), 'no empty-state modal');
+});
+test('T-34: equal-cost ties report the most recent entry; all-equal collapses to one row', () => {
+  let b = lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 10, 20), lihH('2026-03-01', 12, 20)], { cost: 12 });
+  assert(/Lowest cost<\/td><td[^>]*>USD 10\.000<\/td><td[^>]*>2026-02-01/.test(b), 'most recent of the tied lowest');
+  b = lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 10, 20)], { cost: 10 });
+  assertContains(b, 'Lowest = Highest = Latest'); assertNotContains(b, 'Highest cost');
+});
+test('T-no-change: a shift that rounds to zero shows "no change", never an arrow with 0.000', () => {
+  const b = lihOpen([lihH('2026-01-01', 10, 20), lihH('2026-02-01', 10.0004, 20)], { cost: 10.0004 });
+  assertNotContains(b, 'USD 0.000'); assertContains(lihRows(b)[0], 'no change');
+});
+
+test('T-25: AI_SYSTEM_PROMPT distinguishes Line Item history (badge modal) from Quote-line history (clock icon)', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  [
+    'Quote line price versioning: each quote line retains its price history. Click the clock icon on a quote line to view previous versions.',
+    'Line Item cost history: on the Line Items tab, click the N pt badge next to the Unit Price to open a read-only Cost and Margin History modal.',
+    '- Quote line price history not showing',
+    '- Line Item history badge missing'
+  ].forEach(sn => assertContains(html, sn, 'prompt contains: ' + sn.slice(0, 50)));
+  assertNotContains(html, 'Click the clock icon on any line to view previous versions', 'the old Line-Item-scoped clock-icon sentence is gone');
 });
 
 // ── SEC-GAP-021: status-tag class-attribute injection fix ──────

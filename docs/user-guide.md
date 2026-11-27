@@ -71,6 +71,15 @@ Your product catalogue — SKU, description, specs, HS code, linked supplier, un
 
 **Margin vs markup (v2.9.94):** the Line Item form's *Margin %* is `(price − cost) ÷ price` on the supplier cost only — before freight, duty and insurance. A Quote's *Markup %* (quote-level and the per-line column) is applied on top of **landed** cost, so a 20% markup is a 16.7% margin. Don't type a margin figure into a markup field.
 
+**Cost & Margin History (v2.9.104):** when an item has price history, a small *N pt* badge appears next to its Unit Price. Click it to open a read-only modal built for reorder decisions: the **lowest, highest and latest supplier cost** — each with the **margin at today's sell price** — plus the current catalogue cost, a trend line (cost, price and margin from the first to the latest entry), and a timeline of every cost/price change with the change from the previous real value. Entries are written when an item is created, when its Unit Cost or Unit Price changes on save, and when an invoice is saved at a price different from the catalogue price (those *order* entries are listed separately, in their own currency, and never mix into the cost range or trend). Things to know:
+- **Stale notice:** if the live cost or price no longer matches the newest history entry — for example after a Sheets pull or an import, which change the numbers without writing history — an amber notice says the history may be incomplete. A repeat order at a new supplier price only shows up here once you enter it as the item's Unit Cost.
+- **Zero-cost entries:** an item first saved with a blank cost is stored as 0. Those entries show a dash and are skipped when measuring changes, so the next real cost is compared with the last real one; a zero cost never shows a 100% margin in the modal.
+- **Export as CSV** (in the modal) downloads that item's full history — catalogue and order entries, with a *Price Currency* column — as a UTF-8 file. The toolbar *Price History CSV* is separate and unchanged (all items).
+- **Currency edits are not tracked:** if you change an item's currency, earlier entries are shown in the new currency.
+- **Dates:** entries are ordered by date; an invoice with an unusual (non-ISO) date format may sort out of place.
+- **Do not import Line Items over items whose history or numbering you want to keep** (Import Data → CSV, or Import from Sheets): an import replaces the record and erases its history (known gap LI-GAP-007). An ordinary Sheets sync keeps history.
+- The AI assistant describes this modal as the *Line Item* history; the clock icon in the Quote grid is the separate *Quote line* history.
+
 Opening a Supplier's record shows a **Price History** panel aggregating every price point recorded for that supplier — from Line Items, Quote lines, and PO lines — newest first, flagged if a price point is older than your configured staleness threshold (Settings).
 
 ## Buyers

@@ -943,3 +943,7 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 ## QTE-GAP-005 — No historic FX rate store (Open, disclosed by the REQ-QTE-004 gate; relates to MTD-GAP-002)
 
 **Detail:** `QR` holds single global rates overwritten by `fetchLiveRates()`; nothing records the rate in force on a given day. REQ-QTE-004 records the rate and date used on each linked line instead of looking up historic rates. **Status:** open, would need its own REQ and a rate source.
+
+## LI-GAP-008 — `getSupplierPriceHistory()` treats order-entry costs as supplier price points (Open, disclosed with REQ-LI-003, v2.9.104)
+
+**Detail:** `getSupplierPriceHistory()` (`index.html`) reads every Line Item history entry's `cost` — including the `invoiceRef`-bearing *order* entries `saveInv()` writes when an invoice price differs from the catalogue (their `cost` is just the catalogue cost at invoice-save time, not a new supplier quote) — as a supplier price point for the Supplier modal's Price History panel and staleness check. The Line Item Cost & Margin History modal (REQ-LI-003) separates catalogue and order entries; the Supplier panel does not, so it can show duplicate or misleading points. **Status:** open, not fixed (out of REQ-LI-003 scope; needs its own small REQ).
