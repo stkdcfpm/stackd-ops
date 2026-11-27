@@ -928,3 +928,22 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 **Cloud Data interplay (added when the operator asked whether the fix is still needed once on Supabase):** on a device where Line Items have migrated (`st_li_cloud_migration_ts` set), both importers still write locally only (`CLOUD-GAP-003`). The wiped local record is replaced from Supabase at the next refresh (page load via `initCloudDataLayer()`, and after `saveLI()`/`saveInv()` history writes), so history and `num` come back — but the import itself is silently discarded (new items vanish, cost/price changes revert). **Residual real risk:** until that refresh, the local copy is the wiped one, and a Line Item edit saved in that window writes the truncated history to Supabase (`saveLI()`'s cloud branch builds its update from the local record's `priceHistory`, and `saveInv()`'s catalogue auto-recording pushes the local `priceHistory`), which is permanent. So on Supabase the data-loss is mostly masked rather than gone, and a carry-forward-only fix would be pointless: the real fix is `CLOUD-GAP-003` for Line Items (import writes through Supabase) together with the carry-forward. **Interim rule:** do not import Line Items at all; if you did, reload before touching any Line Item or invoice. Priority is Medium, not High, for a Supabase-backed operator.
 **Status:** open, not fixed. Needs its own REQ covering both paths, every lost field, how a blank Unit Price/Unit Cost column is treated (import currently coerces blanks to 0), and the existing Cloud Data importer gap. Split out of REQ-LI-003 by operator decision.
 
+## QTE-GAP-002 — Quote line `cost` is a line total in the engine but is copied to Purchase Orders as a per-unit cost (Open, disclosed by the REQ-QTE-004 gate)
+
+**Detail:** `cQteLine()` (`index.html:14655`) never multiplies `cost` by `qty`, so a quote line's cost behaves as a line total. `qteToPoConvert()` (`index.html:15560-15565`) copies it onto a PO line whose `cost`/`qty` are per-unit. Quotes with qty above 1 may produce POs priced wrongly unless the operator types per-unit costs. REQ-QTE-004 fixes the basis for linked lines only. **Status:** open, needs verification against real quotes and its own REQ.
+
+## QTE-GAP-003 — Promotion queue compares line-total cost and sell price with per-unit catalogue values (Open, disclosed by the REQ-QTE-004 gate)
+
+**Detail:** the Accepted-quote promotion block (`index.html:15183-15184`) compares `existingLi.cost` (per unit, own currency) with `l.cost` (USD line total) and the line sell price (landed plus markup) with the catalogue price, so the nothing-changed early return effectively never fires and candidates can carry a USD figure under the quote's currency label. Review-gated, so no silent write. REQ-QTE-004 defines a correct basis for linked lines only. **Status:** open.
+
+## QTE-GAP-004 — `ordConvertToQuote()` fills costs in the quote currency under a Cost (USD) column (Open, disclosed by the REQ-QTE-004 gate)
+
+**Detail:** `ordConvertToQuote()` (`index.html:3640-3648`) converts line costs into the quote's own currency while the grid header and the engine treat the column as USD. A non-USD quote converted from an Order Request may carry non-USD numbers in the USD column. **Status:** open, verify against live data.
+
+## QTE-GAP-005 — No historic FX rate store (Open, disclosed by the REQ-QTE-004 gate; relates to MTD-GAP-002)
+
+**Detail:** `QR` holds single global rates overwritten by `fetchLiveRates()`; nothing records the rate in force on a given day. REQ-QTE-004 records the rate and date used on each linked line instead of looking up historic rates. **Status:** open, would need its own REQ and a rate source.
+
+## LI-GAP-008 — `getSupplierPriceHistory()` treats order-entry costs as supplier price points (Open, disclosed with REQ-LI-003, v2.9.104)
+
+**Detail:** `getSupplierPriceHistory()` (`index.html`) reads every Line Item history entry's `cost` — including the `invoiceRef`-bearing *order* entries `saveInv()` writes when an invoice price differs from the catalogue (their `cost` is just the catalogue cost at invoice-save time, not a new supplier quote) — as a supplier price point for the Supplier modal's Price History panel and staleness check. The Line Item Cost & Margin History modal (REQ-LI-003) separates catalogue and order entries; the Supplier panel does not, so it can show duplicate or misleading points. **Status:** open, not fixed (out of REQ-LI-003 scope; needs its own small REQ).

@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.103</title>
+<title>Stackd Ops v2.9.104</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -223,7 +223,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.103</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.104</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1391,8 +1391,22 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.103</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.104</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>Line Item Cost &amp; Margin History</strong>. Click the &ldquo;N pt&rdquo; badge next to a Line Item&rsquo;s Unit Price to open a read-only modal (it replaces the old inline row). It shows the <strong>lowest, highest and latest supplier cost with the margin at today&rsquo;s sell price</strong>, the current catalogue cost, a trend line, a timeline with cost, price and margin changes, and the prices charged on orders that differed from the catalogue. Built for reorder decisions.</li>
+          <li>New: a <strong>stale-catalogue notice</strong> appears when the live cost or price no longer matches the newest history entry (for example after a Sheets pull or an import), because the history may then be incomplete.</li>
+          <li>New: <strong>Export as CSV</strong> in the modal downloads that item&rsquo;s full history (both catalogue and order entries) as a UTF-8 file with a Price Currency column. The toolbar &ldquo;Price History CSV&rdquo; is unchanged.</li>
+          <li>Note: entries with a zero cost (an item first saved with a blank cost) are skipped when measuring changes, so a later cost is compared with the last real one. Nothing is stored for any of this &mdash; it is all calculated when the modal opens, so there is no data change and no migration.</li>
+          <li>Docs: the AI assistant now distinguishes Line Item history (this modal) from Quote-line history (the clock icon in the quote grid).</li>
+          <li>37 new tests, 2 existing tests rewritten for the modal and 1 call-count guard updated (1194 &rarr; 1231 pass).</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.103</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Linked Invoice # is now editable on hand-made Purchase Orders</strong>. Previously the box was read-only and blank on a new PO, so a PO you created yourself (for example a freight forwarder&rsquo;s bill for a pass-through freight invoice) could never be tied to an invoice. Type an invoice number (the box suggests existing ones) to link it, change it to move the link, or clear it to unlink. Saving also keeps that invoice&rsquo;s list of POs up to date.</li>
@@ -2711,6 +2725,21 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
         <button class="btn btn-g" onclick="closeM('ov-po')">Cancel</button>
         <button class="btn btn-b" onclick="prevPO()">Preview PO</button>
         <button class="btn btn-s" onclick="savePO()">Save PO</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LINE ITEM COST & MARGIN HISTORY MODAL (SPEC-LI-003) -->
+<div class="ov" id="ov-lih" onclick="if(event.target===this)closeM('ov-lih')">
+  <div class="modal" style="max-width:760px;">
+    <div class="mh"><h2 id="lih-title">Cost &amp; Margin History</h2><button class="mx" onclick="closeM('ov-lih')">&#215;</button></div>
+    <div class="mb">
+      <div id="lih-sub" style="font-size:.56rem;color:var(--m);margin-bottom:10px;"></div>
+      <div id="lih-body"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+        <button class="btn btn-g" onclick="liHistCsv()">Export as CSV</button>
+        <button class="btn btn-s" onclick="closeM('ov-lih')">Close</button>
       </div>
     </div>
   </div>
@@ -8150,23 +8179,7 @@ function rLI() {
     var mc = m===null?'':(m>=20?'phi':m>=10?'pmi':'plo');
     var ph = li.priceHistory || [];
     var phBadge = ph.length
-      ? '<span onclick="togglePH(\'' + li.id + '\')" style="cursor:pointer;font-size:.44rem;color:var(--bl);border:1px solid var(--bl);padding:1px 5px;border-radius:2px;white-space:nowrap;margin-left:4px;" title="Show price history">' + ph.length + ' pt' + (ph.length!==1?'s':'') + '</span>'
-      : '';
-    var phRow = ph.length
-      ? '<tr id="ph-' + li.id + '" style="display:none;"><td colspan="12" style="padding:0;background:var(--card);border-bottom:1px solid var(--ln);">' +
-          '<div style="padding:8px 14px;">' +
-          '<table style="width:100%;border-collapse:collapse;font-size:.52rem;">' +
-          '<thead><tr style="color:var(--m);"><th style="padding:3px 8px;text-align:left;">Date</th><th style="padding:3px 8px;text-align:right;">Cost</th><th style="padding:3px 8px;text-align:right;">Price</th><th style="padding:3px 8px;text-align:left;">Invoice</th><th style="padding:3px 8px;text-align:left;">Notes</th></tr></thead><tbody>' +
-          ph.map(function(h){
-            return '<tr style="border-top:1px solid var(--ln);">' +
-              '<td style="padding:3px 8px;">' + san(h.date||'-') + '</td>' +
-              '<td style="padding:3px 8px;text-align:right;">' + fmtN(h.cost, li.cur||'USD', 3) + '</td>' +
-              '<td style="padding:3px 8px;text-align:right;">' + fmtN(h.price, li.cur||'USD', 3) + '</td>' +
-              '<td style="padding:3px 8px;color:var(--cr);">' + san(h.invoiceRef||'-') + '</td>' +
-              '<td style="padding:3px 8px;color:var(--m);">' + san(h.notes||'-') + '</td>' +
-            '</tr>';
-          }).join('') +
-          '</tbody></table></div></td></tr>'
+      ? '<span onclick="openLIHist(\'' + li.id + '\')" style="cursor:pointer;font-size:.44rem;color:var(--bl);border:1px solid var(--bl);padding:1px 5px;border-radius:2px;white-space:nowrap;margin-left:4px;" title="Show cost &amp; margin history">' + ph.length + ' pt' + (ph.length!==1?'s':'') + '</span>'
       : '';
     return '<tr><td style="font-family:monospace;color:var(--m);font-size:.65rem;">' + san(li.num||'-') + (li._demo ? '<span style="background:#7c3aed;color:white;font-size:.4rem;padding:1px 5px;border-radius:2px;margin-left:4px;">DEMO</span>' : '') + '</td><td style="color:var(--m);font-size:.54rem;">' + (san(li.sku)||'-') + '</td><td style="font-weight:500;">' + (san(li.desc)||'-') + '</td><td style="color:var(--m);font-size:.56rem;">' + san(li.specs||'-') + '</td><td style="color:var(--m);font-size:.54rem;">' + san(li.hs||'-') + '</td><td>' + san(gsn(li.supId)) + '</td>' +
       '<td class="num">' + fmtN(li.cost,li.cur||'USD',3) + '</td>' +
@@ -8174,16 +8187,11 @@ function rLI() {
       '<td>' + (li.uom||'-') + '</td>' +
       '<td class="num"><span class="pill ' + mc + '">' + fp(m) + '</span></td><td>' + (li.cur||'-') + '</td>' +
       '<td>' + (li.invoiceRefs && li.invoiceRefs.length ? '<span style="font-size:.5rem;color:#1a7a4a;">used on ' + li.invoiceRefs.length + ' invoice(s)</span>' : '-') + '</td>' +
-      '<td><button class="ab" onclick="editLI(\'' + li.id + '\')">&#9998;</button><button class="ab" onclick="delLI(\'' + li.id + '\')">&#10005;</button></td></tr>' +
-      phRow;
+      '<td><button class="ab" onclick="editLI(\'' + li.id + '\')">&#9998;</button><button class="ab" onclick="delLI(\'' + li.id + '\')">&#10005;</button></td></tr>';
     }).join('');
     return hdr + rows;
   }).join('');
   rLIPending();
-}
-function togglePH(id) {
-  var row = G('ph-' + id);
-  if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
 }
 
 function liMgn() {
@@ -8192,6 +8200,229 @@ function liMgn() {
   G('lmp').textContent = m!==null ? fp(m) : '-';
   G('lmp').style.color = m!==null ? (m>=20?'#4ade80':m>=10?'var(--gold)':'#f87171') : '#888';
 }
+// ── LINE ITEM COST & MARGIN HISTORY (REQ/SPEC-LI-003, v2.9.104) ────────────────
+// Read-only modal for reorder decisions. Everything is derived on render from each history entry's own
+// cost and price — nothing is stored and nothing here writes to DB, localStorage or Cloud Data.
+var _lihId = null; // id of the Line Item currently shown in #ov-lih (the CSV button reads it)
+
+// Finite positive number or null. cost/price <= 0, blank, NaN, non-numeric -> null ("no value recorded").
+function liHistPos(v) {
+  if (v === null || v === undefined || v === '') return null;
+  var n = +v;
+  return (isFinite(n) && n > 0) ? n : null;
+}
+// Order entry <=> invoiceRef is non-null and non-blank after trim. A non-string non-null value is coerced and
+// therefore classed as an ORDER entry (conservative: an invoice-sourced entry can never leak into catalogue maths).
+function liHistIsOrder(h) {
+  var r = h ? h.invoiceRef : null;
+  return r !== null && r !== undefined && String(r).trim() !== '';
+}
+// Margin % on price; null unless BOTH cost and price are usable (cost 0 means "not entered": 100% would mislead).
+function liHistMargin(cost, price) {
+  var c = liHistPos(cost), p = liHistPos(price);
+  return (c !== null && p !== null) ? (p - c) / p * 100 : null;
+}
+// Integer thousandths: one comparison rule for the staleness notice and the "At cost" test.
+function liHistMilli(v) { return Math.round((+v || 0) * 1000); }
+// Splits history into catalogue and order entries, each sorted ascending by date string then array position.
+// Works on a copy — li.priceHistory is never reordered. null/non-object elements are skipped.
+function liHistSplit(li) {
+  var all = (li.priceHistory || []).map(function(h, i){ return { h: h, i: i }; })
+    .filter(function(w){ return w.h && typeof w.h === 'object'; });
+  function key(w){ return String(w.h.date || ''); }
+  function cmp(a, b){ var ka = key(a), kb = key(b); return ka < kb ? -1 : ka > kb ? 1 : a.i - b.i; }
+  return {
+    cat: all.filter(function(w){ return !liHistIsOrder(w.h); }).sort(cmp),
+    ord: all.filter(function(w){ return  liHistIsOrder(w.h); }).sort(cmp)
+  };
+}
+// Baseline for a shift: the nearest EARLIER catalogue entry with a usable value for that same field.
+function liHistBase(cat, k, kind) {
+  for (var j = k - 1; j >= 0; j--) {
+    var h = cat[j].h;
+    var v = (kind === 'cost') ? liHistPos(h.cost) : (kind === 'price') ? liHistPos(h.price) : liHistMargin(h.cost, h.price);
+    if (v !== null) return v;
+  }
+  return null;
+}
+// Shift of cur against base; null when either is unusable. 'pp' (margin) never has a percent.
+function liHistShift(base, cur, kind) {
+  if (base === null || cur === null) return null;
+  return { abs: cur - base, pct: (kind === 'pp') ? null : (cur - base) / base * 100 };
+}
+// Stale: the live catalogue cost/price differs (in integer thousandths) from the NEWEST catalogue entry.
+// A field is compared only when that entry's own value is usable.
+function liHistStale(li, newest) {
+  if (!newest) return false;
+  var h = newest.h;
+  return (liHistPos(h.cost)  !== null && Math.abs(liHistMilli(li.cost)  - liHistMilli(h.cost))  >= 1)
+      || (liHistPos(h.price) !== null && Math.abs(liHistMilli(li.price) - liHistMilli(h.price)) >= 1);
+}
+function liHistModel(li) {
+  var cur = String(li.cur || 'USD').trim().toUpperCase();
+  var sp = liHistSplit(li);
+  var price = liHistPos(li.price);
+  var atToday = function(cost){ return (cost !== null && price !== null) ? (price - cost) / price * 100 : null; };
+  var rows = sp.cat.map(function(w, k){
+    var h = w.h, costOK = liHistPos(h.cost), priceOK = liHistPos(h.price), mg = liHistMargin(h.cost, h.price);
+    return {
+      h: h, i: w.i, costOK: costOK, priceOK: priceOK, margin: mg, mAtToday: atToday(costOK),
+      dCost:   liHistShift(liHistBase(sp.cat, k, 'cost'),   costOK,  'amt'),
+      dPrice:  liHistShift(liHistBase(sp.cat, k, 'price'),  priceOK, 'amt'),
+      dMargin: liHistShift(liHistBase(sp.cat, k, 'margin'), mg,      'pp')
+    };
+  });
+  var usable = rows.filter(function(r){ return r.costOK !== null; });
+  var lowest = null, highest = null;
+  usable.forEach(function(r){            // ties: the most recent equal-cost entry wins (rows are oldest -> newest)
+    if (lowest === null  || r.costOK <= lowest.costOK)  lowest = r;
+    if (highest === null || r.costOK >= highest.costOK) highest = r;
+  });
+  var collapsed = usable.length >= 1 && usable.every(function(r){ return r.costOK === usable[0].costOK; });
+  var curCost = liHistPos(li.cost);
+  var model = {
+    li: li, cur: cur, price: price, rows: rows, usable: usable, order: [],
+    noCat: sp.cat.length === 0, single: usable.length === 1,
+    lowest: lowest, highest: highest, latest: usable.length ? usable[usable.length - 1] : null, collapsed: collapsed,
+    current: { cost: curCost, mAtToday: atToday(curCost), atCost: curCost !== null && price !== null && liHistMilli(curCost) === liHistMilli(price) },
+    trend: null, stale: liHistStale(li, sp.cat.length ? sp.cat[sp.cat.length - 1] : null),
+    lastPriceChange: sp.cat.length ? (sp.cat[sp.cat.length - 1].h.date || null) : null,
+    lastCharged: null
+  };
+  if (usable.length >= 2) {
+    var f = usable[0], l = usable[usable.length - 1];
+    model.trend = {
+      cost: (l.costOK - f.costOK) / f.costOK * 100,
+      price: (f.priceOK !== null && l.priceOK !== null) ? (l.priceOK - f.priceOK) / f.priceOK * 100 : null,
+      margin: (f.margin !== null && l.margin !== null) ? l.margin - f.margin : null
+    };
+  }
+  sp.ord.forEach(function(w){
+    var h = w.h;
+    var inv = DB.inv.filter(function(x){ return x.num === h.invoiceRef; })[0] || null;
+    var invCur = inv ? String(inv.cur || 'USD').trim().toUpperCase() : null;
+    var pn = liHistPos(h.price);
+    var same = !!(inv && invCur === cur);
+    var mg = same ? liHistMargin(h.cost, h.price) : null;
+    var o = {
+      h: h, i: w.i, inv: inv, invCur: invCur, margin: mg,
+      priceTxt: pn === null ? '–' : (inv ? fmtN(pn, invCur, 3) : pn.toFixed(3) + ' currency unknown'),
+      marginTxt: !same ? 'n/a (different or unknown currency)' : (mg === null ? 'n/a' : fp(mg))
+    };
+    model.order.push(o);
+    if (same && pn !== null) model.lastCharged = { num: inv.num, priceTxt: fmtN(pn, cur, 3) };
+  });
+  return model;
+}
+function liHistBand(m) { return m >= 20 ? { cls: 'phi', txt: 'Healthy margin' } : m >= 10 ? { cls: 'pmi', txt: 'Medium margin' } : { cls: 'plo', txt: 'Low margin' }; }
+function liHistMarginHtml(m) {
+  if (m === null) return '<span style="color:var(--m);">n/a</span>';
+  return '<span class="pill ' + liHistBand(m).cls + '">' + fp(m) + '</span>';
+}
+// One shift badge: arrow + absolute amount (+ percent). 'no change' when it rounds to zero at the displayed precision.
+function liHistShiftHtml(sh, unit, cur, what) {
+  if (!sh) return '';
+  var scale = unit === 'pp' ? 10 : 1000;
+  if (Math.round(Math.abs(sh.abs) * scale) === 0) return ' <span style="color:var(--m);font-size:.44rem;">no change</span>';
+  var up = sh.abs > 0;
+  var amt = unit === 'pp' ? Math.abs(sh.abs).toFixed(1) + ' pp' : fmtN(Math.abs(sh.abs), cur, 3);
+  var pct = sh.pct === null ? '' : ' (' + (sh.pct > 0 ? '+' : '') + sh.pct.toFixed(1) + '%)';
+  var words = what + (up ? ' increased ' : ' decreased ') + amt + pct + ' from the previous recorded value';
+  return ' <span title="' + san(words) + '" style="color:' + (up ? '#1a7a4a' : 'var(--cr)') + ';font-size:.46rem;white-space:nowrap;">'
+    + (up ? '↑' : '↓') + ' ' + san(amt) + san(pct) + '</span>';
+}
+function rLIHist(li) {
+  var m = liHistModel(li), cur = m.cur;
+  var supTxt = !li.supId ? 'No supplier' : (DB.sup.some(function(s){ return s.id === li.supId; }) ? gsn(li.supId) : 'Unknown supplier');
+  G('lih-title').innerHTML = san(('Cost & Margin History — ' + (li.sku ? li.sku + ' ' : '') + (li.desc || '')).trim());
+  G('lih-sub').innerHTML = san(supTxt) + ' &middot; Currency ' + san(cur);
+  var td = 'padding:3px 8px;';
+  var box = function(txt){ return '<div style="font-size:.54rem;margin:6px 0;">' + txt + '</div>'; };
+  var rangeRow = function(label, r){
+    return '<tr><td style="' + td + 'color:var(--m);">' + label + '</td><td style="' + td + 'text-align:right;">' + san(fmtN(r.costOK, cur, 3)) + '</td>'
+      + '<td style="' + td + '">' + san(r.h.date || '–') + '</td><td style="' + td + '">' + liHistMarginHtml(r.mAtToday) + '</td></tr>';
+  };
+  var b = [];
+  if (m.stale) b.push('<div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:3px;padding:7px 10px;font-size:.5rem;color:#7F6000;margin:6px 0;">&#9888; The catalogue cost/price has changed since the last history entry (for example by a Sheets pull or an import) — history may be incomplete.</div>');
+  if (!m.noCat) b.push(box('<strong>Last price change:</strong> ' + san(m.lastPriceChange || '–')));
+  if (m.noCat) b.push(box('No catalogue price history — only prices charged on orders are recorded'));
+  else if (!m.usable.length) b.push(box('No usable cost recorded in the catalogue history'));
+  else {
+    var rr = [];
+    if (m.collapsed) rr.push(rangeRow('Lowest = Highest = Latest', m.latest));
+    else { rr.push(rangeRow('Lowest cost', m.lowest)); rr.push(rangeRow('Highest cost', m.highest)); rr.push(rangeRow('Latest cost', m.latest)); }
+    b.push('<table style="width:100%;border-collapse:collapse;font-size:.54rem;margin:6px 0;"><thead><tr style="color:var(--m);"><th style="' + td + 'text-align:left;"></th><th style="' + td + 'text-align:right;">Unit cost</th><th style="' + td + 'text-align:left;">Date</th><th style="' + td + 'text-align:left;">Margin at today\'s price</th></tr></thead><tbody>' + rr.join('') + '</tbody></table>');
+  }
+  var band = m.current.atCost ? '<span class="pill pmi" style="background:#eee;color:#555;">At cost</span>'
+    : (m.current.mAtToday !== null ? '<span class="pill ' + liHistBand(m.current.mAtToday).cls + '">' + liHistBand(m.current.mAtToday).txt + '</span>' : '');
+  b.push(box('<strong>Current catalogue cost:</strong> ' + (m.current.cost === null ? '–' : san(fmtN(m.current.cost, cur, 3)))
+    + ' &middot; margin at <strong>' + (m.price === null ? 'n/a' : san(fmtN(m.price, cur, 3))) + '</strong>: '
+    + (m.current.atCost ? '' : liHistMarginHtml(m.current.mAtToday)) + ' ' + band));
+  if (m.lastCharged) b.push(box('Last charged on ' + san(m.lastCharged.num) + ' at ' + san(m.lastCharged.priceTxt)));
+  if (!m.noCat && m.usable.length === 1) b.push(box('Only one price on record — no trend yet'));
+  if (m.trend) {
+    var tp = function(label, v, unit){
+      if (v === null) return label + ' n/a';
+      var a = Math.round(Math.abs(v) * 10) === 0 ? '→' : (v > 0 ? '↑' : '↓');
+      return label + ' ' + a + ' ' + Math.abs(v).toFixed(1) + (unit === 'pp' ? ' pp' : '%');
+    };
+    b.push(box('<strong>Trend:</strong> ' + [tp('Cost', m.trend.cost), tp('Price', m.trend.price), tp('Margin', m.trend.margin, 'pp')].join(' | ')));
+  }
+  if (!m.noCat) {
+    var tr = m.rows.slice().reverse().map(function(r){
+      return '<tr style="border-top:1px solid var(--ln);"><td style="' + td + '">' + san(r.h.date || '–') + '</td>'
+        + '<td style="' + td + 'text-align:right;">' + (r.costOK === null ? '–' : san(fmtN(r.costOK, cur, 3))) + liHistShiftHtml(r.dCost, 'amt', cur, 'Cost') + '</td>'
+        + '<td style="' + td + 'text-align:right;">' + (r.priceOK === null ? '–' : san(fmtN(r.priceOK, cur, 3))) + liHistShiftHtml(r.dPrice, 'amt', cur, 'Price') + '</td>'
+        + '<td style="' + td + 'text-align:right;">' + liHistMarginHtml(r.margin) + liHistShiftHtml(r.dMargin, 'pp', cur, 'Margin') + '</td>'
+        + '<td style="' + td + 'color:var(--m);">' + san(r.h.notes || '–') + '</td></tr>';
+    }).join('');
+    b.push('<div style="max-height:260px;overflow-y:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font-size:.52rem;"><thead><tr style="color:var(--m);"><th style="' + td + 'text-align:left;">Date</th><th style="' + td + 'text-align:right;">Unit Cost</th><th style="' + td + 'text-align:right;">Unit Price</th><th style="' + td + 'text-align:right;">Margin %</th><th style="' + td + 'text-align:left;">Notes</th></tr></thead><tbody>' + tr + '</tbody></table></div>');
+  }
+  if (m.order.length) {
+    var or = m.order.slice().reverse().map(function(o){
+      return '<tr style="border-top:1px solid var(--ln);"><td style="' + td + '">' + san(o.h.date || '–') + '</td><td style="' + td + 'color:var(--cr);">' + san(String(o.h.invoiceRef)) + '</td>'
+        + '<td style="' + td + 'text-align:right;">' + san(o.priceTxt) + '</td><td style="' + td + '">' + san(o.marginTxt) + '</td></tr>';
+    }).join('');
+    b.push('<div style="margin-top:12px;font-size:.54rem;font-weight:600;color:var(--m);">Prices charged that differed from the catalogue</div><table style="width:100%;border-collapse:collapse;font-size:.52rem;"><thead><tr style="color:var(--m);"><th style="' + td + 'text-align:left;">Date</th><th style="' + td + 'text-align:left;">Invoice</th><th style="' + td + 'text-align:right;">Price charged</th><th style="' + td + 'text-align:left;">Margin</th></tr></thead><tbody>' + or + '</tbody></table>');
+  }
+  G('lih-body').innerHTML = b.join('');
+}
+function openLIHist(id) {
+  var li = DB.li.find(function(x){ return x.id === id; });
+  if (!li) return;
+  var sp = liHistSplit(li);
+  if (!sp.cat.length && !sp.ord.length) return; // defensive: no history, or only null/non-object elements -> no modal
+  _lihId = id;
+  rLIHist(li);
+  G('ov-lih').classList.add('on');
+}
+// Per-item CSV: every history entry, both kinds. Shift text starts with an arrow (never +/-) so csvSafe() leaves it alone.
+function liHistCsv() {
+  var li = DB.li.find(function(x){ return x.id === _lihId; });
+  if (!li) return;
+  var m = liHistModel(li);
+  var shiftTxt = function(sh, unit){
+    if (!sh) return '';
+    var scale = unit === 'pp' ? 10 : 1000;
+    if (Math.round(Math.abs(sh.abs) * scale) === 0) return 'no change';
+    var amt = unit === 'pp' ? Math.abs(sh.abs).toFixed(1) + ' pp' : Math.abs(sh.abs).toFixed(3);
+    var pct = sh.pct === null ? '' : ' (' + (sh.pct > 0 ? '+' : '') + sh.pct.toFixed(1) + '%)';
+    return (sh.abs > 0 ? '↑' : '↓') + ' ' + amt + pct;
+  };
+  var num3 = function(v){ var p = liHistPos(v); return p === null ? '' : p.toFixed(3); };
+  var head = ['Date','Type','Unit Cost','Unit Price','Margin %','Cost shift','Price shift','Margin shift (pp)','Invoice Ref','Notes','Price Currency'];
+  var rows = m.rows.map(function(r){
+    return [r.h.date || '', 'catalogue', num3(r.h.cost), num3(r.h.price), r.margin === null ? '' : r.margin.toFixed(1),
+      shiftTxt(r.dCost), shiftTxt(r.dPrice), shiftTxt(r.dMargin, 'pp'), '', r.h.notes || '', m.cur];
+  }).concat(m.order.map(function(o){
+    return [o.h.date || '', 'order', num3(o.h.cost), num3(o.h.price), o.margin === null ? '' : o.margin.toFixed(1),
+      '', '', '', String(o.h.invoiceRef), o.h.notes || '', o.invCur || 'unknown'];
+  }));
+  var safeName = String(li.sku || li.desc || li.id).replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || String(li.id);
+  dlText('Stackd-LineItemHistory-' + safeName + '-' + today() + '.csv', '\uFEFF' + [csvRow(head)].concat(rows.map(csvRow)).join('\n'), 'text/csv');
+  toast('Cost history exported');
+}
+
 function calcLICBM() {
   var l=+G('lf-diml').value||0, w=+G('lf-dimw').value||0, h=+G('lf-dimh').value||0;
   var el=G('lf-cbm-calc'); if(!el) return;
@@ -12531,7 +12762,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.103).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.104).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12563,6 +12794,7 @@ var AI_SYSTEM_PROMPT = [
   'Catalogue promotion queue (v2.9.90, REQ/SPEC-LI-002): accepting a Quote whose lines carry a Supplier link automatically proposes adding a matching new catalogue item, or updating an existing one\'s cost/price, via a review banner at the top of the Line Items tab — Approve opens the real Line Item form pre-filled (nothing is written to the catalogue until the operator explicitly saves); Dismiss discards the suggestion. A line with no Supplier is never proposed. Duplicate/no-op suggestions are silently skipped (e.g. a second Quote matching an already-pending suggestion, or a Quote whose cost/price already matches the catalogue exactly).',
   'Dimensions (L/W/H cm): optional per-unit dimensions. CBM/unit is calculated automatically (L×W×H÷1,000,000) and shown read-only. Stored as dims:{l,w,h} on the record. Used by Load Calculator. DG Item flag marks the product as Dangerous Goods — propagates into quote feasibility check and load calculator DG alerts.',
   'Invoice usage: each library item tracks which invoices it has been used on (invoiceRefs index). The list view shows "used on N invoice(s)" against each item. The Import from Library picker marks items already on the current invoice with a green tick.',
+  'Line Item cost history: on the Line Items tab, click the N pt badge next to the Unit Price to open a read-only Cost and Margin History modal. History entries are written when a Line Item is created, when its Unit Cost or Unit Price changes on save, and when an invoice is saved at a price different from the catalogue price. The modal shows the lowest, highest and latest cost with the margin at the current sell price, a stale-catalogue notice, a trend line, the prices charged on orders, and an Export as CSV button.',
   'Rule: wrong unit cost or price corrupts profit calculations on every invoice using that product.',
   '',
   '## Quotes',
@@ -12573,7 +12805,7 @@ var AI_SYSTEM_PROMPT = [
   'Overhead charges (Origin Charges, Dest Charges, FPM Admin — v2.9.68, REQ/SPEC-QTE-002): three fixed dollar amounts added to every quote\'s total, unmarked-up (added at cost, never scaled by margin). Global defaults are set in Settings → Rates & FX; each quote can override any of the three individually — three optional fields on the quote form (blank = inherit the current global default, any typed number including 0 = override just this quote). An overridden quote is unaffected by later changes to the global default for that specific field; an un-overridden quote keeps tracking the global default live. Setting a field to 0 removes that charge from just that one quote.',
   'Insurance Rate % override (v2.9.89, REQ/SPEC-QTE-003): insurance (default 0.5% of cost+freight per line, set in Settings → Rates & FX) is editable per quote AND per line, the same two-tier cascade as Margin %. The quote form has an "Insurance % Override" field (blank = inherit the global default). Each line in the editor grid also has its own "Ins %" field (blank = inherit the quote-level value, which itself may be inheriting the global default) — a line-level value always wins over the quote-level value. The editor grid and the PDF preview both show the computed Insurance $ amount as its own column/row, separate from Landed, so it is never a silent, unexplained jump between Cost and Landed.',
   'FX conversion: sell price shown in both USD and GBP using the configured GBP/USD rate.',
-  'Price versioning: each line item retains full price history. Click the clock icon on any line to view previous versions. A new version is created on save only when cost, duty %, or markup % has changed.',
+  'Quote line price versioning: each quote line retains its price history. Click the clock icon on a quote line to view previous versions. A new version is created on save only when cost, duty %, insurance % or markup % has changed.',
   'Convert to PO: only available when quote status is Accepted. Set the status dropdown to Accepted — the Convert to PO button appears automatically. Clicking it creates one PO per distinct supplier on the quote\'s lines (v2.9.44 — fixes PO-GAP-001, which previously misattributed every line to the first supplier on a multi-supplier quote); the quote modal title then shows a "PO RAISED" badge and the button is hidden. Each PO carries the Quote ID for traceability; PO numbers get a -1/-2 suffix when a quote splits across multiple suppliers.',
   'Approval audit trail (v2.9.48): setting a quote\'s status to Accepted reveals two additional fields — Approved By (required) and Approval Note (optional). approvedAt is captured automatically the first time a quote transitions into Accepted; re-saving an already-Accepted quote never overwrites that original timestamp, only the by/note fields remain editable.',
   'Feasibility Check: shown automatically in the quote modal when lines are present. Flags: DG cargo (red/critical — IMDG compliance required), container mismatch (amber — CBM vs selected freight mode), Caribbean electrical goods advisory (amber — voltage/cert check). Cleared automatically when lines are removed.',
@@ -12734,7 +12966,8 @@ var AI_SYSTEM_PROMPT = [
   '## Troubleshooting',
   '- Dashboard KPIs wrong → Settings → ⚙ Repair invoice totals',
   '- Quote landed cost looks wrong → check Settings → Rates & FX — rates may not be configured',
-  '- Price history not showing → price versioning only triggers when cost, duty %, or markup % changes on save',
+  '- Quote line price history not showing → versioning only triggers when cost, duty %, insurance % or markup % changes on save',
+  '- Line Item history badge missing → that item has no history yet; an entry is written when it is created and whenever its Unit Cost or Unit Price changes on save',
   '- Accounting export quality check warnings → review flagged invoices for missing Incoterm or Payment Terms before exporting',
   '- Line items missing after reopening → closed modal without saving OR Sheets pull overwrote lineItems → re-add items, Save Invoice, Push All. The sync guard (v2.9.7) now preserves existing line items on pull if the remote copy arrives empty — but always save before closing.',
   '- Storage health red (≥85%) → export JSON backup immediately, consider clearing old data',

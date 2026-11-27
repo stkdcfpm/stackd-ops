@@ -65,7 +65,13 @@ Last updated: 2026-11-09 (REQ-RPT-003 — Accounting Export fix, v2.9.96)
 | INV-GAP-014 | Invoice document Customer ID unresolved for legacy invoices linked to a Buyer by name only (no `buyerId`) | Invoices / document | v2.9.98 | **Open** (disclosed; no backfill) |
 | INV-GAP-015 | Invoice document page break split the bank details across pages (found on a real printed invoice) | Invoices / document | v2.9.98 | **Fixed v2.9.100** (print CSS; PO/CN PDFs not covered) |
 | LI-GAP-007 | Line Item CSV / Import-from-Sheets replace an existing item wholesale: erases price history, `LI-####` number, linked-invoice list (Sheets path also dims/DG) | Line Items / import | v2.9.103 | **Open** (found by the REQ-LI-003 gate; own REQ needed) |
-| REQ-LI-003 | Line Item cost & margin history modal for reorder decisions | Line Items | v2.9.104 target | **Requirements-gate PASS** (v4, round 4); SPEC is the next step |
+| REQ-LI-003 | Line Item cost & margin history modal for reorder decisions | Line Items | v2.9.104 | **Built** (REQ v5 / SPEC v3 both gate-passed; 37 new tests, 11 mutations verified, 1194 → 1231); awaiting build-gate review and merge |
+| LI-GAP-008 | `getSupplierPriceHistory()` treats order-entry costs as supplier price points | Line Items / Suppliers | v2.9.104 | **Open**, disclosed |
+| REQ-QTE-004 | Link Quote lines to existing Line Items (catalogue-assisted entry, cost snapshot, drift badge, manual-rate prompt) | Quotes / Line Items | target TBD | **Requirements-gate PASS** (v5, round 5); SPEC is the next step |
+| QTE-GAP-002 | Quote line cost is a line total in the engine but is copied to Purchase Orders as a per-unit cost | Quotes / POs | disclosed REQ-QTE-004 | **Open** |
+| QTE-GAP-003 | Unlinked-line promotion compares line-total cost and sell price with per-unit catalogue values | Quotes / Line Items | disclosed REQ-QTE-004 | **Open** |
+| QTE-GAP-004 | `ordConvertToQuote()` fills costs in the quote currency under a Cost (USD) column | Quotes / Order Requests | disclosed REQ-QTE-004 | **Open**, verify against live data |
+| QTE-GAP-005 | No historic FX rate store (relates to MTD-GAP-002) | Quotes / FX | disclosed REQ-QTE-004 | **Open** |
 | INV-GAP-013 | `saveInv()` drops stored `calc_*`; P&L report reads stored `calc_cogs` only | Invoices / reports | v2.9.97 | **Open** (code reading; confirm against live P&L) |
 | ACCT-GAP-005 | Line-level accounting CSVs omit invoice-level charges, deposit and tax on charges | Accounting Export | v2.9.96 | **Open** — disclosed, not fixed |
 | SEC-GAP-027 | Sheets sync (`apps-script/Code.gs` `setValues`) writes text starting with `=` as a live formula | Security / Sheets sync | v2.9.96 | **Fixed and live** (PR #160; redeployed, self-test PASS 2026-11-09) |
