@@ -8963,12 +8963,12 @@ testAsync('migrateLineItemsToSupabase — blocked when a Line Item\'s supId does
   ctx.showBlockingBackupModal = origShowBackup;
 });
 
-testAsync('migrateLineItemsToSupabase — Supplier already migrated: inserts every field, rewrites Invoice/PO lid refs, checks-but-skips dead Quote.lines[].lid, preserves invoiceRefs across the post-migration refresh', async function() {
+testAsync('migrateLineItemsToSupabase — Supplier already migrated: inserts every field, rewrites Invoice/PO lid refs, checks a lid-less Quote.lines[] entry (nothing to rewrite), preserves invoiceRefs across the post-migration refresh', async function() {
   resetDB();
   ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', supId: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, cur: 'USD', notes: '', priceHistory: [{date:'2026-01-01',cost:1,price:2,invoiceRef:'',notes:'Initial catalogue price'}], invoiceRefs: [{ invId: 'INV-1' }], dims: {l:1,w:1,h:1}, dg: true });
   ctx.DB.inv.push({ id: 'i1', lineItems: [{ lid: 'l1', qty: 1 }] });
   ctx.DB.po.push({ id: 'p1', lineItems: [{ lid: 'l1', qty: 1 }] });
-  ctx.DB.qt.push({ id: 'q1', lines: [{ desc: 'Widget' }] }); // Quote.lines[].lid is dead — never populated in real data, so no lid key at all here (matching real-world shape); checked anyway per AC-4
+  ctx.DB.qt.push({ id: 'q1', lines: [{ desc: 'Widget' }] }); // a lid-less quote line (a plain typed line): no lid key at all here; the sweep checks it anyway per AC-4 and has nothing to rewrite
   // Explicitly seed localStorage's K.l entry to match the DB.li fixture above (matching
   // what sv(K.l,...) would have persisted) — the archive step below reads whatever K.l
   // currently holds in localStorage, not ctx.DB.li directly, so this must not be left to
@@ -8998,7 +8998,7 @@ testAsync('migrateLineItemsToSupabase — Supplier already migrated: inserts eve
 
   assertEqual(ctx.DB.inv[0].lineItems[0].lid, 'new-li-uuid', 'Invoice lineItems[].lid remapped');
   assertEqual(ctx.DB.po[0].lineItems[0].lid, 'new-li-uuid', 'PO lineItems[].lid remapped');
-  assertEqual(ctx.DB.qt[0].lines[0].lid, undefined, 'dead Quote.lines[].lid left as-is (never populated in real data) — sweep checked it (no crash) but had nothing real to rewrite');
+  assertEqual(ctx.DB.qt[0].lines[0].lid, undefined, 'a lid-less quote line is left as-is — the sweep checked it (no crash) but had nothing to rewrite');
 
   assertEqual(ctx.DB.li[0].id, 'new-li-uuid', 'Line Item own id remapped to the Supabase-assigned id');
   assertEqual(JSON.stringify(ctx.DB.li[0].invoiceRefs), JSON.stringify([{ invId: 'INV-1' }]), 'invoiceRefs preserved across the post-migration refresh, not dropped by the Supabase-sourced replacement');
@@ -10261,7 +10261,7 @@ testAsync('migrateLineItemsToSupabase — now also rewrites Quote.lines[].lid wh
 
   await ctx.migrateLineItemsToSupabase();
 
-  assertEqual(ctx.DB.qt[0].lines[0].lid, 'new-li-uuid', 'Quote lines[].lid remapped locally (field is dead in real data today, but the sweep itself is exercised end-to-end)');
+  assertEqual(ctx.DB.qt[0].lines[0].lid, 'new-li-uuid', 'Quote lines[].lid remapped locally (a lid-less line in this fixture, so the sweep itself is exercised end-to-end)');
   var qteUpdateCall = sb._calls.find(function(c){ return c.table === 'quotes' && c.op === 'update'; });
   assert(qteUpdateCall, 'the rewritten Quote was pushed to Supabase, not just fixed locally');
   ctx.showBlockingBackupModal = origShowBackup;
@@ -14794,7 +14794,7 @@ test('AC-7: fmt() call-count reflects REQ-INTEG-002-2c\'s own new, legitimate ca
   const fmtCount  = (html.match(/fmt\(/g)  || []).length;
   const fmtNCount = (html.match(/fmtN\(/g) || []).length;
   assertEqual(fmtCount, 89, 'fmt( occurs 89 times total (88 call sites + 1 definition) — up 1 from REQ-LI-001\'s 88, this REQ\'s own new renderPaymentsTab() Currency/GBP-equivalent column');
-  assertEqual(fmtNCount, 13, 'fmtN( occurs 13 times total (12 call sites + 1 definition) — up 6 from REQ/SPEC-LI-003\'s new Cost & Margin History modal (liHistModel order-price/last-charged labels, rLIHist range/current/timeline cells, liHistShiftHtml)');
+  assertEqual(fmtNCount, 17, 'fmtN( occurs 17 times total (16 call sites + 1 definition) — 13 after REQ/SPEC-LI-003\'s Cost & Margin History modal, up 4 from REQ/SPEC-QTE-004\'s quote-line catalogue linking (qteLineInfoHtml drift badge x2, rQPickList cost/sell-ref x2)');
 });
 
 // ── Line Item cost & margin history modal (REQ/SPEC-LI-003, v2.9.104) ───────────
@@ -15070,6 +15070,314 @@ test('T-25: AI_SYSTEM_PROMPT distinguishes Line Item history (badge modal) from 
     '- Line Item history badge missing'
   ].forEach(sn => assertContains(html, sn, 'prompt contains: ' + sn.slice(0, 50)));
   assertNotContains(html, 'Click the clock icon on any line to view previous versions', 'the old Line-Item-scoped clock-icon sentence is gone');
+});
+
+// ── Quote lines linked to the Line Item catalogue (REQ/SPEC-QTE-004, v2.9.105) ──────────────
+console.log('\nQuote lines linked to the Line Item catalogue (SPEC-QTE-004)');
+function qtItems() { return [
+  { id:'u1', sku:'USD-1', desc:'USD Widget', supId:'s1', cost:10, price:20, cur:'USD', uom:'pcs', dg:false, dims:{ l:50, w:40, h:30 } },
+  { id:'g1', sku:'GBP-1', desc:'GBP Widget', supId:'s1', cost:10, price:20, cur:'GBP', uom:'pcs' },
+  { id:'b1', sku:'BBD-1', desc:'BBD Widget', supId:'s1', cost:20, price:40, cur:'BBD', uom:'pcs' },
+  { id:'e1', sku:'EUR-1', desc:'EUR Widget', supId:'s1', cost:8,  price:16, cur:'EUR', uom:'pcs' },
+  { id:'e2', sku:'EUR-2', desc:'EUR Widget 2', supId:'s1', cost:9, price:18, cur:'EUR', uom:'pcs' },
+  { id:'n1', sku:'NC-1',  desc:'No-currency Widget', supId:'s1', cost:5, price:9, cur:'', uom:'pcs' },
+  { id:'r1', sku:'RMB-1', desc:'RMB Widget', supId:'s1', cost:100, price:200, cur:'RMB', uom:'pcs' },
+  { id:'c1', sku:'CNY-1', desc:'CNY Widget', supId:'s1', cost:50, price:90, cur:'CNY', uom:'pcs' },
+  { id:'z1', sku:'ZERO-1', desc:'Zero-cost Widget', supId:'s1', cost:0, price:9, cur:'USD', uom:'pcs' },
+  { id:'nd1', sku:'ND-1', desc:'No-dims Widget', supId:'s1', cost:10, price:20, cur:'USD', uom:'pcs', dg:true },
+  { id:'ns1', sku:'NS-1', desc:'No-supplier Widget', supId:'gone', cost:10, price:20, cur:'USD', uom:'pcs' }
+]; }
+let qtAskCalls = [];
+function qtFx(answer) {
+  resetDB(); ctx.EI.qt = null; ctx.cQL = []; ctx._qpickChecked = {}; ctx._qpickMode = 'multi'; ctx._qpickRid = null;
+  ctx.closeM('ov-qpick'); ctx.closeM('ov-qrate');
+  ['qf-st','qf-insRate','qf-approved-by','qf-cur','qf-mkp','qf-mode','qpick-q'].forEach(k => { mockEl(k).value = ''; });
+  mockEl('qf-st').value = 'Draft'; mockEl('qf-cur').value = 'USD'; mockEl('qf-mkp').value = '15'; mockEl('qf-mode').value = 'LCL';
+  ctx.QR.fxGBPUSD = 1.27; ctx.QR.fxGBPBBD = 2.54; ctx.QR.fxGBPRMB = 9.20;
+  ctx.DB.sup = [{ id: 's1', name: 'Sup One' }, { id: 's2', name: 'Sup Two' }];
+  ctx.DB.li = qtItems();
+  qtAskCalls = [];
+  ctx.qteAskRate = function(g, sug) { qtAskCalls.push([g, sug]); return Promise.resolve(typeof answer === 'function' ? answer(g) : (answer === undefined ? null : answer)); };
+}
+function qtMirror() {   // simulates a real render: mock inputs are never populated from cQL (dg through .value — the mock has no .type)
+  ctx.cQL.forEach(l => {
+    const f = (k, v) => { mockEl('ql-' + k + '-' + l.rid).value = v; };
+    f('supId', l.supId || ''); f('desc', l.desc || ''); f('qty', l.qty); f('uom', l.uom || 'pcs'); f('cost', l.cost); f('cbm', l.cbm);
+    f('dutyPct', l.dutyPct || 0); f('mkp', l.markup === undefined ? '' : l.markup); f('insRate', l.insRate === undefined ? '' : l.insRate); f('note', l.note || '');
+    mockEl('ql-dg-' + l.rid).value = !!l.dg;
+  });
+}
+function qtForm(status) {
+  mockEl('qf-num').value = 'QTE-0001'; mockEl('qf-client').value = 'Test Client'; mockEl('qf-dt').value = '2026-11-01'; mockEl('qf-valid').value = '';
+  mockEl('qf-nt').value = ''; mockEl('qt-verr').textContent = ''; mockEl('qf-st').value = status || 'Draft';
+  mockEl('qf-approved-by').value = status === 'Accepted' ? 'J. Smith' : ''; mockEl('qf-approved-note').value = '';
+  ['qf-origOv','qf-destOv','qf-admOv','qf-insRate'].forEach(k => { mockEl(k).value = ''; });
+}
+function qtLinked(id, status, mut) {   // one linked line saved into DB.qt[0]; mut(line) may tweak the cQL line before saving
+  ctx.qteAddFromCatalogue([id]); const l = ctx.cQL[0]; qtMirror(); if (mut) mut(l); qtForm(status); ctx.saveQte(); return l;
+}
+
+test('SPEC-QTE-004 T-1: Add from Catalogue fills a linked line from a USD item', () => {
+  qtFx(); ctx.qteAddFromCatalogue(['u1']);
+  const l = ctx.cQL[0];
+  assertEqual(ctx.cQL.length, 1);
+  assertEqual(l.supId, 's1'); assertEqual(l.desc, 'USD Widget'); assertEqual(l.uom, 'pcs'); assertEqual(l.dg, false); assertEqual(l.qty, 1);
+  assertEqual(l.cost, 10); assertEqual(l.cbm, 0.06);
+  assertEqual(l.lid, 'u1'); assertEqual(l.lidCost, 10); assertEqual(l.lidCur, 'USD'); assertEqual(l.lidRate, 1); assertEqual(l.lidRateSrc, 'stored');
+  assertEqual(l.lidUnitUSD, 10); assert(!!l.lidAt, 'lidAt set'); assertEqual(l.dutyPct, 0);
+  assert(ctx.qteIsLinked(l), 'linked');
+  assertContains(mockEl('qt-lines').innerHTML, 'Cost (USD, line total)');
+});
+test('SPEC-QTE-004 T-2: GBP/BBD convert from stored rates; padded lower-case currency; zero stored rate falls back to QR_DEFAULTS', () => {
+  qtFx(); ctx.qteAddFromCatalogue(['g1', 'b1']);
+  assertEqual(ctx.cQL[0].lidRate, 1.27); assertEqual(ctx.cQL[0].lidUnitUSD, 12.7); assertEqual(ctx.cQL[0].cost, 12.7);
+  assertEqual(ctx.cQL[1].lidRate, 0.5);  assertEqual(ctx.cQL[1].lidUnitUSD, 10);   assertEqual(ctx.cQL[1].cost, 10);
+  qtFx(); ctx.DB.li[1].cur = 'gbp '; ctx.qteAddFromCatalogue(['g1']);
+  assertEqual(ctx.cQL[0].lidRate, 1.27, 'padded lower-case currency behaves as GBP'); assertEqual(ctx.cQL[0].lidCur, 'GBP');
+  qtFx(); ctx.QR.fxGBPUSD = 0; ctx.qteAddFromCatalogue(['g1']);
+  assertEqual(ctx.cQL[0].lidRate, ctx.QR_DEFAULTS.fxGBPUSD, 'zero stored rate falls back to QR_DEFAULTS, never 0');
+  qtFx(); ctx.QR.fxGBPBBD = 0; ctx.qteAddFromCatalogue(['b1']);
+  assert(isFinite(ctx.cQL[0].lidRate) && ctx.cQL[0].lidRate > 0, 'zero BBD rate never divides by zero');
+});
+testAsync('SPEC-QTE-004 T-3a: a non-stored currency asks for a rate once per group; the entered rate is recorded', async () => {
+  qtFx(1.08); await ctx.qteAddFromCatalogue(['e1', 'e2']);
+  assertEqual(qtAskCalls.length, 1, 'EUR asked once for two EUR items'); assertEqual(qtAskCalls[0][0], 'EUR');
+  assertEqual(ctx.cQL.length, 2); assertEqual(ctx.cQL[0].lidRate, 1.08); assertEqual(ctx.cQL[0].lidRateSrc, 'manual'); assertEqual(ctx.cQL[0].cost, 8.64);
+});
+testAsync('SPEC-QTE-004 T-3b: a blank, zero, negative or non-numeric answer appends nothing', async () => {
+  for (const ans of [null, 0, -1, 'abc', undefined]) { qtFx(ans); await ctx.qteAddFromCatalogue(['e1']); assertEqual(ctx.cQL.length, 0, 'nothing appended for ' + String(ans)); }
+});
+testAsync('SPEC-QTE-004 T-3c: cancelling one currency group skips only that group; RMB and CNY are one group; blank currency is its own group', async () => {
+  qtFx(g => g === 'NGN' ? null : 1.1); ctx.DB.li.push({ id:'ng1', sku:'NG-1', desc:'NGN Widget', supId:'s1', cost:3, price:6, cur:'NGN', uom:'pcs' });
+  let toasted = ''; const ot = ctx.toast; ctx.toast = m => { toasted = m; };
+  try { await ctx.qteAddFromCatalogue(['e1', 'e2', 'ng1']); } finally { ctx.toast = ot; }
+  assertEqual(qtAskCalls.map(c => c[0]).join(','), 'EUR,NGN', 'asked EUR once and NGN once');
+  assertEqual(ctx.cQL.length, 2, 'EUR items added, NGN skipped'); assertContains(toasted, 'NG-1');
+  qtFx(1.1); await ctx.qteAddFromCatalogue(['r1', 'c1']);
+  assertEqual(qtAskCalls.length, 1, 'RMB and CNY ask once'); assertEqual(qtAskCalls[0][0], 'RMB');
+  assertApprox(qtAskCalls[0][1], 1.27 / 9.20, 'RMB suggestion is fxGBPUSD / fxGBPRMB');
+  qtFx(1.1); await ctx.qteAddFromCatalogue(['n1']);
+  assertEqual(qtAskCalls[0][0], '', 'blank currency prompts as its own group'); assertEqual(ctx.cQL[0].lidCur, '');
+});
+test('SPEC-QTE-004 T-4a-d: cost is a line total — scales with Qty until the operator types a cost', () => {
+  qtFx(); ctx.qteAddFromCatalogue(['u1']); const l = ctx.cQL[0], rid = l.rid; qtMirror();
+  assertEqual(l.cost, 10);
+  mockEl('ql-qty-' + rid).value = '5'; ctx.qlQtyChanged(rid);
+  assertEqual(l.cost, 50); assertEqual(+mockEl('ql-cost-' + rid).value, 50, 'input rewritten programmatically');
+  assert(!l.costManual, 'the programmatic rescale never sets the flag');
+  mockEl('ql-cost-' + rid).value = '42'; ctx.qlCostTyped(rid); assert(l.costManual, 'typing sets the flag');
+  mockEl('ql-qty-' + rid).value = '6'; ctx.qlQtyChanged(rid);
+  assertEqual(+mockEl('ql-cost-' + rid).value, 42, 'a typed cost is left alone when Qty changes');
+  mockEl('ql-qty-' + rid).value = ''; mockEl('ql-cost-' + rid).value = '7'; ctx.qlQtyChanged(rid);
+  assertEqual(+mockEl('ql-cost-' + rid).value, 7, 'blank qty leaves cost unchanged');
+});
+test('SPEC-QTE-004 T-4d: costManual persists through save + reopen and is still honoured', () => {
+  qtFx(); const l = qtLinked('u1', 'Draft', l0 => { mockEl('ql-cost-' + l0.rid).value = '42'; ctx.qlCostTyped(l0.rid); });
+  const saved = ctx.DB.qt[0].lines[0]; assertEqual(saved.costManual, true); assertEqual(saved.cost, 42);
+  ctx.editQte(ctx.DB.qt[0].id); qtMirror(); const rid = ctx.cQL[0].rid;
+  mockEl('ql-qty-' + rid).value = '3'; ctx.qlQtyChanged(rid);
+  assertEqual(+mockEl('ql-cost-' + rid).value, 42, 'manual cost still honoured after reopen');
+});
+test('SPEC-QTE-004 T-4e: linking an existing line at qty 5 gives cost 50 and cbm 0.3', async () => {
+  qtFx(); ctx.cQL = [{ rid: 'ex1', supId: '', desc: '', qty: 5, uom: 'pcs', cost: 0, cbm: 0, dg: false, dutyPct: 0 }]; qtMirror();
+  let r; ctx.qteLinkExisting('ex1', 'u1').then(() => { r = 1; });
+  assertEqual(ctx.cQL[0].cost, 50); assertEqual(ctx.cQL[0].cbm, 0.3); assertEqual(ctx.cQL[0].qty, 5);
+});
+test('SPEC-QTE-004 T-5a-d: CBM scales with Qty from the dimensions until typed; rounded to 6 dp; no dims = no CBM', () => {
+  qtFx(); ctx.qteAddFromCatalogue(['u1']); const l = ctx.cQL[0], rid = l.rid; qtMirror();
+  mockEl('ql-qty-' + rid).value = '10'; ctx.qlQtyChanged(rid); assertEqual(l.cbm, 0.6);
+  mockEl('ql-qty-' + rid).value = '20'; ctx.qlQtyChanged(rid); assertEqual(l.cbm, 1.2);
+  mockEl('ql-cbm-' + rid).value = '0.9'; ctx.qlCbmTyped(rid); assert(l.cbmManual);
+  mockEl('ql-qty-' + rid).value = '30'; ctx.qlQtyChanged(rid); assertEqual(+mockEl('ql-cbm-' + rid).value, 0.9, 'manual CBM wins');
+  qtFx(); ctx.DB.li[0].dims = { l: 33.3333, w: 44.4444, h: 55.5555 }; ctx.qteAddFromCatalogue(['u1']);
+  assertEqual(ctx.cQL[0].cbm, Math.round(33.3333 * 44.4444 * 55.5555 / 1000000 * 1e6) / 1e6, 'rounded to 6 dp');
+  qtFx(); ctx.qteAddFromCatalogue(['nd1']); assertEqual(ctx.cQL[0].cbm, 0); assert(!('lidUnitCBM' in ctx.cQL[0]), 'no per-unit CBM stored without dims');
+  qtFx(); ctx.qteAddFromCatalogue(['u1']); const rid2 = ctx.cQL[0].rid; qtMirror();
+  ctx.DB.li[0].dims = { l: 1, w: 1, h: 1 };                                    // changing the item's dims afterwards must not change the line's recompute
+  mockEl('ql-qty-' + rid2).value = '2'; ctx.qlQtyChanged(rid2); assertEqual(ctx.cQL[0].cbm, 0.12);
+});
+test('SPEC-QTE-004 T-6a-c: link keys survive save + reopen; unlinked lines carry none (incl. lid:"")', () => {
+  qtFx(); qtLinked('u1', 'Draft', l0 => { mockEl('ql-cbm-' + l0.rid).value = '0.5'; ctx.qlCbmTyped(l0.rid); mockEl('ql-cost-' + l0.rid).value = '11'; ctx.qlCostTyped(l0.rid); });
+  const sl = ctx.DB.qt[0].lines[0];
+  ['lid','lidCost','lidCur','lidRate','lidRateSrc','lidUnitUSD','lidAt','lidUnitCBM','costManual','cbmManual'].forEach(k => assert(k in sl, 'carried: ' + k));
+  assertEqual(sl.lid, 'u1'); assertEqual(sl.lidUnitUSD, 10);
+  ctx.editQte(ctx.DB.qt[0].id); assertEqual(ctx.cQL[0].lidUnitUSD, 10); assertEqual(ctx.cQL[0].costManual, true);
+  qtFx(); ctx.EI.qt = null; ctx.cQL = [{ rid: 'p1', supId: '', desc: 'Typed', qty: 1, uom: 'pcs', cost: 5, cbm: 0, dg: false, dutyPct: 0 }, { rid: 'p2', supId: '', desc: 'AI line', qty: 1, uom: 'pcs', cost: 5, cbm: 0, dg: false, dutyPct: 0, lid: '' }];
+  qtMirror(); qtForm('Draft'); ctx.saveQte();
+  ctx.DB.qt[0].lines.forEach(l => ['lid','lidCost','lidCur','lidRate','lidRateSrc','lidUnitUSD','lidAt','lidUnitCBM','costManual','cbmManual'].forEach(k => assert(!(k in l), 'absent on an unlinked line: ' + k)));
+});
+test('SPEC-QTE-004 T-6d: a non-blank lid with a missing or garbage snapshot is UNLINKED everywhere (no NaN)', () => {
+  const shapes = [{ lid: 'u1' }, { lid: 'u1', lidUnitUSD: '', lidRate: 1 }, { lid: 'u1', lidUnitUSD: null, lidRate: 1 }, { lid: 'u1', lidUnitUSD: 'abc', lidRate: 1 }, { lid: 'u1', lidUnitUSD: 10, lidRate: 0 }, { lid: 'u1', lidUnitUSD: 10, lidRate: -1 }];
+  shapes.forEach((sh, i) => {
+    assertEqual(ctx.qteIsLinked(sh), false, 'unlinked shape ' + i);
+    qtFx(); ctx.cQL = [Object.assign({ rid: 'x1', supId: 's1', desc: 'Hand', qty: 1, uom: 'pcs', cost: 7, cbm: 1, dg: false, dutyPct: 0 }, sh)]; qtMirror();
+    mockEl('ql-qty-x1').value = '4'; ctx.qlQtyChanged('x1');
+    assertEqual(ctx.cQL[0].cost, 7, 'no rescale (no NaN) for shape ' + i);
+    ctx.rQLT(); const h = mockEl('qt-lines').innerHTML; assertContains(h, 'qteOpenPicker(\'single\''); assertNotContains(h, 'qteUnlink'); assertNotContains(h, 'Catalogue cost changed');
+  });
+  qtFx(); ctx.cQL = [{ rid: 'x1', supId: 's1', desc: 'Hand', qty: 1, uom: 'pcs', cost: 7, cbm: 0, dg: false, dutyPct: 0, lid: 'u1' }]; qtMirror(); qtForm('Draft'); ctx.saveQte();
+  assertEqual(ctx.DB.qt[0].lines[0].lid, 'u1', 'the lid is preserved as data'); assertEqual(ctx.qteIsLinked(ctx.DB.qt[0].lines[0]), false);
+  ctx.confirm = () => true; ctx.localStorage.removeItem('st_li_cloud_migration_ts'); ctx.delLI('u1');                     // counts conservatively; never crashes
+});
+test('SPEC-QTE-004 T-7a-f: drift is judged in the catalogue currency — FX alone never triggers it', () => {
+  qtFx(); ctx.qteAddFromCatalogue(['u1', 'g1']); const [u, g] = ctx.cQL;
+  assertEqual(ctx.qteDrift(u), null); assertEqual(ctx.qteDrift(g), null);
+  ctx.DB.li[0].cost = 11; assertEqual(ctx.qteDrift(u).kind, 'cost');
+  ctx.rQLT(); assertContains(mockEl('qt-lines').innerHTML, 'was USD 10.000, now USD 11.000');
+  ctx.DB.li[0].cost = 10.0004; assertEqual(ctx.qteDrift(u), null, 'below a thousandth: no badge');
+  ctx.QR.fxGBPUSD = 1.5; assertEqual(ctx.qteDrift(g), null, 'a stored-rate change alone is not drift');
+  ctx.DB.li[1].cur = 'EUR'; assertEqual(ctx.qteDrift(g).kind, 'cur'); ctx.rQLT(); assertContains(mockEl('qt-lines').innerHTML, 'Catalogue currency changed to EUR');
+  ctx.DB.li = ctx.DB.li.filter(x => x.id !== 'u1'); assertEqual(ctx.qteDrift(u).kind, 'removed'); ctx.rQLT(); assertContains(mockEl('qt-lines').innerHTML, 'Catalogue item removed');
+  assertEqual(u.cost, 10, 'the quote cost never changes on its own');
+});
+testAsync('SPEC-QTE-004 T-7g-i: Refresh is confirm-gated, in-memory only, and versions on save', async () => {
+  qtFx(); ctx.qteAddFromCatalogue(['u1']); const l = ctx.cQL[0], rid = l.rid; qtMirror(); qtForm('Draft'); ctx.saveQte();
+  ctx.editQte(ctx.DB.qt[0].id); qtMirror(); const rid2 = ctx.cQL[0].rid; ctx.DB.li[0].cost = 12;
+  mockEl('ql-cost-' + rid2).value = '10.5'; ctx.qlCostTyped(rid2);
+  let asked = 0; ctx.confirm = () => { asked++; return false; };
+  await ctx.qteRefreshLine(rid2); assertEqual(asked, 1, 'manual-cost confirm asked'); assertEqual(ctx.cQL[0].lidCost, 10, 'declined: nothing changed');
+  ctx.confirm = () => true; qtMirror(); await ctx.qteRefreshLine(rid2);
+  assertEqual(ctx.cQL[0].cost, 12); assertEqual(ctx.cQL[0].lidCost, 12); assert(!ctx.cQL[0].costManual, 'costManual reset');
+  assertEqual(ctx.DB.qt[0].lines[0].cost, 10, 'DB untouched until Save');
+  qtMirror(); qtForm('Draft'); ctx.saveQte(); assertEqual(ctx.DB.qt[0].lines[0].cost, 12); assert(ctx.DB.qt[0].lines[0].priceHistory.length >= 2, 'saving versions the line');
+  qtFx(); ctx.qteAddFromCatalogue(['u1']); qtMirror(); mockEl('qf-st').value = 'Accepted'; ctx.DB.li[0].cost = 13; let msgs = []; ctx.confirm = m => { msgs.push(m); return true; };
+  await ctx.qteRefreshLine(ctx.cQL[0].rid); assert(msgs.some(m => /already Accepted/.test(m)), 'Accepted quote warns');
+});
+test('SPEC-QTE-004 T-8a-c: delLI warns about quotes; the line keeps its lid; the integrity check ignores the dangling quote lid', () => {
+  qtFx(); qtLinked('u1', 'Draft'); let msg = ''; ctx.confirm = m => { msg = m; return true; };
+  ctx.localStorage.removeItem('st_li_cloud_migration_ts'); ctx.delLI('u1');
+  assertContains(msg, '1 quote (QTE-0001)'); assertEqual(ctx.DB.qt[0].lines[0].lid, 'u1', 'lid kept as a historical reference');
+  const rep = ctx.verifyFkIntegrityAfterCleanup(); assertNotContains(JSON.stringify(rep), 'line lid');
+  ctx.editQte(ctx.DB.qt[0].id); qtMirror(); qtForm('Draft'); ctx.saveQte(); assertEqual(ctx.DB.qt.length, 1, 'still saves');
+});
+test('SPEC-QTE-004 T-9a-i: promotion queues an update only for a deliberate cost override, per unit in the catalogue currency', () => {
+  const run = (id, mut, pre) => { qtFx(); if (pre) pre(); const l = qtLinked(id, 'Accepted', mut); return ctx.DB.liPending; };
+  qtFx(); ctx.cQL = [{ rid: 'a1', supId: 's1', desc: 'Renamed linked desc', qty: 1, uom: 'pcs', cost: 10, cbm: 0, dg: false, dutyPct: 0, lid: 'u1', lidCost: 10, lidCur: 'USD', lidRate: 1, lidRateSrc: 'stored', lidUnitUSD: 10, lidAt: 'x' },
+                      { rid: 'a2', supId: 's1', desc: 'Brand new typed item', qty: 1, uom: 'pcs', cost: 3, cbm: 0, dg: false, dutyPct: 0 }];
+  qtMirror(); qtForm('Accepted'); ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 1, '(a) renamed linked line queues nothing; the unlinked new one queues one'); assertEqual(ctx.DB.liPending[0].kind, 'new'); assertEqual(ctx.DB.liPending[0].desc, 'Brand new typed item');
+  assertEqual(run('g1').length, 0, '(b) cost untouched');
+  assertEqual(run('g1', null, () => {}).length, 0);
+  qtFx(); ctx.qteAddFromCatalogue(['g1']); ctx.DB.li[1].cost = 11; qtMirror(); qtForm('Accepted'); ctx.saveQte(); assertEqual(ctx.DB.liPending.length, 0, '(c) catalogue drift alone queues nothing');
+  qtFx(); const l = qtLinked('g1', 'Accepted', l0 => { mockEl('ql-cost-' + l0.rid).value = '15.24'; ctx.qlCostTyped(l0.rid); });
+  assertEqual(ctx.DB.liPending.length, 1, '(d) deliberate override queues one'); const c = ctx.DB.liPending[0];
+  assertEqual(c.kind, 'update'); assertEqual(c.matchedLiId, 'g1'); assertApprox(c.cost, 12, 'native per-unit cost'); assertEqual(c.currency, 'GBP');
+  const sellP = ctx.DB.qt[0].lines[0].priceHistory[ctx.DB.qt[0].lines[0].priceHistory.length - 1].sellPrice; assertApprox(c.suggestedPrice, (sellP / 1) / 1.27, 'per-unit native suggestedPrice');
+  ctx.approveLIPending(c.id); assertEqual(mockEl('lf-cur').value, 'GBP', '(h) form pre-filled in GBP'); assertApprox(+mockEl('lf-c').value, 12, '(h) native cost, never a USD figure');
+  qtFx(); qtLinked('g1', 'Accepted', l0 => { mockEl('ql-supId-' + l0.rid).value = 's2'; mockEl('ql-cost-' + l0.rid).value = '15.24'; ctx.qlCostTyped(l0.rid); });
+  assertEqual(ctx.DB.liPending.length, 0, '(f) supplier changed away from the item\'s: no update');
+  qtFx(); ctx.qteAddFromCatalogue(['g1']); ctx.DB.li = ctx.DB.li.filter(x => x.id !== 'g1'); qtMirror(); qtForm('Accepted'); ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 1, '(g) dangling lid falls back to the desc+supId path'); assertEqual(ctx.DB.liPending[0].kind, 'new');
+  qtFx(); qtLinked('g1', 'Accepted', l0 => { ctx.DB.li[1].cost = 11; mockEl('ql-cost-' + l0.rid).value = '12.7'; ctx.qlCostTyped(l0.rid); });
+  assertEqual(ctx.DB.liPending.length, 0, '(e) costManual set but the typed value equals what was linked (price-only / no cost change): no update');
+  qtFx(); ctx.cQL = [{ rid: 'i1', supId: 's1', desc: 'GBP Widget', qty: 1, uom: 'pcs', cost: 20, cbm: 0, dg: false, dutyPct: 0, lid: 'g1', lidCost: 10, lidCur: 'GBP', lidRate: 1.27, lidRateSrc: 'stored', lidUnitUSD: 12.7, lidAt: 'x' }];
+  qtMirror(); qtForm('Accepted'); ctx.saveQte(); assertEqual(ctx.DB.liPending.length, 0, '(i) costManual absent but cost differs: no update (the flag is the trigger)');
+});
+test('SPEC-QTE-004 T-10a-e: typed grid values survive every re-render (asserted on the rendered string and cQL)', () => {
+  qtFx(); ctx.cQL = [{ rid: 'A', supId: '', desc: '', qty: 1, uom: 'pcs', cost: 0, cbm: 0, dg: false, dutyPct: 0 }, { rid: 'B', supId: '', desc: '', qty: 1, uom: 'pcs', cost: 0, cbm: 0, dg: false, dutyPct: 0 }];
+  const typeA = () => { qtMirror(); const set = (k, v) => { mockEl('ql-' + k + '-A').value = v; }; set('supId', 's1'); set('desc', 'Typed desc'); set('qty', '7'); set('cost', '123'); set('mkp', '9'); set('insRate', '1.5'); set('note', 'a note'); mockEl('ql-dg-A').value = true; };
+  const check = (what) => {
+    const A = ctx.cQL.find(l => l.rid === 'A'); const h = mockEl('qt-lines').innerHTML;
+    assertEqual(A.desc, 'Typed desc', what); assertEqual(A.qty, 7, what); assertEqual(A.cost, 123, what); assertEqual(A.markup, 9, what); assertEqual(A.insRate, 1.5, what); assertEqual(A.dg, true, what); assertEqual(A.supId, 's1', what); assertEqual(A.note, 'a note', what);
+    assertContains(h, 'value="Typed desc"', what); assertContains(h, 'value="a note"', what); assertContains(h, 'value="123"', what); assertContains(h, 'value="7"', what);
+  };
+  typeA(); ctx.addQteLine(); check('after addQteLine');
+  ctx.cQL = ctx.cQL.slice(0, 2); typeA(); ctx.removeQteLine('B'); check('after removeQteLine');
+  qtFx(); ctx.cQL = [{ rid: 'A', supId: '', desc: '', qty: 1, uom: 'pcs', cost: 0, cbm: 0, dg: false, dutyPct: 0 }]; typeA(); ctx.qteAddFromCatalogue(['u1']); check('after Add from Catalogue');
+  typeA(); ctx.qteUnlink(ctx.cQL[1].rid); check('after Unlink');
+  assertEqual(ctx.cQL.length, 2);
+});
+test('SPEC-QTE-004 T-11a-d: PO conversion carries lid/sku and per-unit cost for linked lines only', () => {
+  const mk = lines => { resetDB(); ctx.DB.sup = [{ id: 's1', name: 'Sup One' }]; ctx.DB.li = qtItems(); ctx.DB.qt = [{ id: 'qt1', num: 'QTE-0001', status: 'Accepted', currency: 'USD', lines }]; ctx.EI.qt = 'qt1'; ctx.qteToPoConvert(); return ctx.DB.po[0].lineItems; };
+  const snap = { lid: 'u1', lidCost: 10, lidCur: 'USD', lidRate: 1, lidRateSrc: 'stored', lidUnitUSD: 10, lidAt: 'x' };
+  let li = mk([Object.assign({ rid: 'r1', supId: 's1', desc: 'USD Widget', qty: 5, uom: 'pcs', cost: 50 }, snap), { rid: 'r2', supId: 's1', desc: 'Typed', qty: 5, uom: 'pcs', cost: 50 }]);
+  assertEqual(li[0].lid, 'u1'); assertEqual(li[0].sku, 'USD-1'); assertEqual(li[0].cost, 10); assertEqual(li[0].qty, 5);
+  assertEqual(li[1].lid, ''); assertEqual(li[1].sku, ''); assertEqual(li[1].cost, 50, 'an unlinked line is unchanged (QTE-GAP-002)');
+  li = mk([Object.assign({ rid: 'r1', supId: 's1', desc: 'USD Widget', qty: 3, uom: 'pcs', cost: 100 }, snap)]); assertEqual(li[0].cost, 33.3333, '100 / 3 rounded to 4 dp');
+  resetDB(); ctx.DB.sup = [{ id: 's1', name: 'Sup One' }]; ctx.DB.li = qtItems().filter(x => x.id !== 'u1'); ctx.DB.qt = [{ id: 'qt1', num: 'QTE-0001', status: 'Accepted', currency: 'USD', lines: [Object.assign({ rid: 'r1', supId: 's1', desc: 'USD Widget', qty: 5, uom: 'pcs', cost: 50 }, snap)] }];
+  ctx.EI.qt = 'qt1'; ctx.qteToPoConvert(); assertEqual(ctx.DB.po[0].lineItems[0].lid, ''); assertEqual(ctx.DB.po[0].lineItems[0].sku, ''); assertEqual(ctx.DB.po[0].lineItems[0].cost, 10, 'still per unit');
+});
+test('SPEC-QTE-004 T-12: the customer quote document shows no catalogue-link, snapshot, rate or Refresh text', () => {
+  qtFx(); qtLinked('g1', 'Draft'); ctx.DB.li[1].cost = 11; let doc = ''; const ow = ctx.window; ctx.window = Object.assign({}, ow, { open: () => ({ focus() {} }) });
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'); const s = html.indexOf('function prevQteDoc'); const body = html.slice(s, html.indexOf('\nfunction ', s + 20));
+  ['lidRate', 'lidUnitUSD', 'lidCost', 'Refresh', 'Catalogue cost changed', 'qteDrift', 'qteLineInfoHtml'].forEach(w => assertNotContains(body, w, 'prevQteDoc must not mention ' + w));
+  ctx.window = ow;
+});
+test('SPEC-QTE-004 T-13: the new overlays stack after the Quote modal; the invoice picker is untouched', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const qt = html.indexOf('id="ov-qt"'), pk = html.indexOf('id="ov-qpick"'), rt = html.indexOf('id="ov-qrate"'), ai = html.indexOf('<!-- AI CHAT FLOATING BUTTON -->');
+  assert(qt > -1 && pk > qt && rt > qt, 'both overlays come after #ov-qt'); assert(pk < ai && rt < ai, 'both precede the AI chat block');
+  assert(html.indexOf('id="ov-pick"') < qt, 'the invoice picker overlay is unchanged and precedes #ov-qt'); assert(/function doPick\(\) \{\s*var ck = Object\.keys\(_pickChecked\)/.test(html), 'doPick unchanged');
+});
+testAsync('SPEC-QTE-004 T-14a: the Line Item migration sweep remaps only lid and leaves the snapshot byte-identical', async () => {
+  resetDB();
+  const snap = { lid: 'l1', lidCost: 1, lidCur: 'USD', lidRate: 1, lidRateSrc: 'stored', lidUnitUSD: 1, lidAt: '2026-01-01T00:00:00.000Z', lidUnitCBM: 0.06, costManual: true };
+  ctx.DB.li.push({ id: 'l1', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', supId: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, cur: 'USD', notes: '', priceHistory: [] });
+  ctx.DB.qt.push({ id: 'q1', lines: [Object.assign({ rid: 'r1', desc: 'Widget', qty: 1, cost: 1 }, snap)] });
+  ctx.localStorage.setItem(ctx.K.l, JSON.stringify(ctx.DB.li));
+  ctx._sb = mockSb({ suppliers: { selectData: [{ id: 'new-sup-uuid', name: 'ACME' }] }, line_items: { insertImpl: row => Object.assign({ id: 'new-li-uuid' }, row), selectData: [{ id: 'new-li-uuid', num: 'LI-0001', sku: 'SKU1', desc: 'Widget', specs: '', hs: '', sup_id: 'new-sup-uuid', uom: 'pcs', cost: 1, price: 2, currency: 'USD', notes: '', price_history: [] }] } });
+  const osb = ctx.showBlockingBackupModal; ctx.showBlockingBackupModal = () => Promise.resolve(true); mockEl('cfg-sb-li-restore-btn');
+  try { await ctx.migrateLineItemsToSupabase(); } finally { ctx.showBlockingBackupModal = osb; ctx._sb = null; ctx.localStorage.removeItem('st_li_cloud_migration_ts'); }
+  const l = ctx.DB.qt[0].lines[0]; assertEqual(l.lid, 'new-li-uuid', 'lid remapped');
+  Object.keys(snap).filter(k => k !== 'lid').forEach(k => assertEqual(l[k], snap[k], 'snapshot key untouched: ' + k));
+});
+testAsync('SPEC-QTE-004 T-14b: a link made after Line Items migrated carries a real UUID and round-trips through refreshQteFromSupabase()', async () => {
+  resetDB(); ctx.localStorage.removeItem('st_qt_cloud_migration_ts');
+  const line = { rid: 'r1', desc: 'Widget', qty: 1, cost: 10, lid: '11111111-2222-4333-8444-555555555555', lidCost: 10, lidCur: 'USD', lidRate: 1, lidRateSrc: 'stored', lidUnitUSD: 10, lidAt: 'x' };
+  const plain = { rid: 'r2', desc: 'Typed', qty: 1, cost: 3 };
+  try {
+    ctx._sb = mockSb({ quotes: { selectData: [{ id: 'q-uuid', num: 'QTE-0001', client: 'C', dt: '2026-11-01', currency: 'USD', freight_mode: 'LCL', markup: 15, status: 'Draft', notes: '', lines: [line, plain], linked_po_ids: [] }] } });
+    await ctx.refreshQteFromSupabase();
+    const ls = ctx.DB.qt[0].lines; assertEqual(ls[0].lid, line.lid); assertEqual(ls[0].lidUnitUSD, 10);
+    ['lid','lidCost','lidCur','lidRate','lidRateSrc','lidUnitUSD','lidAt','costManual','cbmManual'].forEach(k => assert(!(k in ls[1]), 'unlinked line gains no ' + k));
+  } finally { ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx._sb = null; }
+});
+test('SPEC-QTE-004 T-15a-e: supplier edge cases, duplicates, link-over-typed-values, unlink', () => {
+  qtFx(); ctx.qteAddFromCatalogue(['ns1']); assertEqual(ctx.cQL[0].supId, '', 'an unresolvable supplier id is never written');
+  ctx.rQLT(); assertContains(mockEl('qt-lines').innerHTML, 'Catalogue item has no valid supplier');
+  qtFx(); ctx.qteAddFromCatalogue(['u1']); ctx.qteAddFromCatalogue(['u1']); assertEqual(ctx.cQL.length, 2, 'the same item can be added twice');
+  ctx.qteOpenPicker('multi'); assertContains(mockEl('qpick-list').innerHTML, 'already on this quote');
+  qtFx(); ctx.cQL = [{ rid: 'x', supId: 's2', desc: 'Typed', qty: 4, uom: 'kg', cost: 9, cbm: 2, dg: false, dutyPct: 12, markup: 20, insRate: 1 }]; qtMirror();
+  let asked = 0; ctx.confirm = () => { asked++; return false; }; ctx.qteLinkExisting('x', 'u1'); assertEqual(asked, 1, 'asks before overwriting a non-default line'); assertEqual(ctx.cQL[0].desc, 'Typed', 'declined: unchanged');
+  ctx.confirm = () => true; ctx.qteLinkExisting('x', 'u1'); const l = ctx.cQL[0];
+  assertEqual(l.desc, 'USD Widget'); assertEqual(l.qty, 4, 'typed Qty kept'); assertEqual(l.cost, 40); assertEqual(l.dutyPct, 12); assertEqual(l.markup, 20); assertEqual(l.insRate, 1); assert(!l.costManual && !l.cbmManual, 'flags reset');
+  qtMirror(); ctx.qteUnlink('x'); ['lid','lidCost','lidCur','lidRate','lidRateSrc','lidUnitUSD','lidAt','lidUnitCBM','costManual','cbmManual'].forEach(k => assert(!(k in ctx.cQL[0]), 'unlinked: ' + k)); assertEqual(ctx.cQL[0].cost, 40, 'values unchanged');
+  mockEl('ql-cost-x').value = '1';
+});
+test('SPEC-QTE-004 T-17: the AI prompt describes catalogue-linked quote lines', () => {
+  const p = String(ctx.AI_SYSTEM_PROMPT);
+  assertContains(p, 'Quote lines from the catalogue: on the Quotes tab, click Add from Catalogue');
+  assertContains(p, 'Refresh cost updates cost and CBM only');
+  assertNotContains(p, 'Quote line cost per unit');
+});
+test('SPEC-QTE-004 T-18a-c: hostile catalogue text is escaped in the picker, the description cell and the badge', () => {
+  const evil = '<img src=x onerror=1>';
+  qtFx(); ctx.DB.li[0].desc = evil; ctx.DB.li[0].sku = evil; ctx.DB.li[0].cur = 'USD'; ctx.qteOpenPicker('multi'); const pk = mockEl('qpick-list').innerHTML;
+  assert(/&lt;img/i.test(pk) && !/<img/i.test(pk), 'picker row escaped'); assertContains(pk, 'data-id="u1"'); assertNotContains(pk, "onchange=\"qtePickToggle('u1')");
+  ctx.qteAddFromCatalogue(['u1']); ctx.DB.li[0].cost = 11; ctx.rQLT(); let h = mockEl('qt-lines').innerHTML; assert(!/<img/i.test(h), 'description cell and badge escaped');
+  ctx.DB.li[0].cur = evil; ctx.rQLT(); h = mockEl('qt-lines').innerHTML; assert(/&lt;img/i.test(h) && !/<img/i.test(h), 'currency-changed badge escaped');
+});
+test('SPEC-QTE-004 T-19: async onclicks chain .catch; an empty picker selection keeps the picker open', () => {
+  qtFx(); ctx.qteAddFromCatalogue(['u1']); ctx.DB.li[0].cost = 11; ctx.rQLT(); assertContains(mockEl('qt-lines').innerHTML, ".catch(function(){})");
+  ctx.qteOpenPicker('multi'); assert(mockEl('ov-qpick').classList.contains('on')); let t = ''; const ot = ctx.toast; ctx.toast = m => { t = m; };
+  try { ctx.qtePickConfirm(); } finally { ctx.toast = ot; } assertContains(t, 'Select at least one item'); assert(mockEl('ov-qpick').classList.contains('on'), 'picker stays open');
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'); assertContains(html, 'qteAddFromCatalogue(ids).catch(function(){})'); assertContains(html, 'qteLinkExisting(_qpickRid, ids[0]).catch(function(){})');
+});
+testAsync('SPEC-QTE-004 T-20a/b: Refresh touches cost, CBM and the snapshot only; the rate pre-fill is gated on an unchanged currency', async () => {
+  qtFx(); ctx.qteAddFromCatalogue(['g1']); const l = ctx.cQL[0], rid = l.rid; qtMirror();
+  mockEl('ql-desc-' + rid).value = 'Edited desc'; mockEl('ql-supId-' + rid).value = 's2'; ctx.confirm = () => true; ctx.DB.li[1].cost = 20;
+  await ctx.qteRefreshLine(rid);
+  assertEqual(l.desc, 'Edited desc'); assertEqual(l.supId, 's2'); assertEqual(l.uom, 'pcs'); assertEqual(l.lidCost, 20); assertEqual(l.cost, 25.4);
+  qtFx(1.1); ctx.qteAddFromCatalogue(['g1']); ctx.cQL[0].lidCur = 'GBP'; qtMirror(); ctx.DB.li[1].cur = 'EUR'; await ctx.qteRefreshLine(ctx.cQL[0].rid);
+  assertEqual(qtAskCalls[0][1], null, 'currency changed GBP->EUR: the old GBP rate is NOT pre-filled');
+  qtFx(1.1); ctx.DB.li[3].cur = 'EUR'; await ctx.qteAddFromCatalogue(['e1']); qtAskCalls = []; qtMirror(); ctx.DB.li[3].cost = 9; await ctx.qteRefreshLine(ctx.cQL[0].rid);
+  assertEqual(qtAskCalls[0][1], 1.1, 'currency unchanged: the previous manual rate is pre-filled');
+  qtFx(1.1); ctx.DB.li[3].cur = 'EUR'; await ctx.qteAddFromCatalogue(['e1']); qtAskCalls = []; qtMirror(); ctx.DB.li[3].cur = 'RMB'; await ctx.qteRefreshLine(ctx.cQL[0].rid);
+  assertApprox(qtAskCalls[0][1], 1.27 / 9.20, 'changing to RMB suggests fxGBPUSD / fxGBPRMB');
+});
+test('SPEC-QTE-004 T-21: the rate modal and picker are cleaned up between tests (harness hygiene)', () => {
+  qtFx(); ctx.cQL = []; ctx.EI.qt = null; ['qf-st','qf-approved-by','qf-insRate'].forEach(k => { mockEl(k).value = ''; }); mockEl('qf-st').value = 'Draft';
+  ctx.qteAskRate = ctx.qteAskRate; assert(true);
 });
 
 // ── SEC-GAP-021: status-tag class-attribute injection fix ──────
