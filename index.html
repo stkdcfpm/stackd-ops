@@ -12842,7 +12842,7 @@ var AI_SYSTEM_PROMPT = [
   'Quotes tab → + New Quote. Format: QTE-001, QTE-002 etc.',
   'Header fields: Client, Date, Valid Until, Freight Mode (LCL / FCL 20GP / FCL 40HQ), Markup %, Currency, Status (Draft / Sent / Accepted / Declined / Expired).',
   'Quote lines from the catalogue: on the Quotes tab, click Add from Catalogue (or Link on an existing line) to pull in a Line Item. Supplier, description, UOM, DG, cost and CBM fill in automatically. Cost is converted to USD and treated as a line total, so it scales with quantity until you type a cost yourself; CBM scales the same way from the item dimensions. USD, GBP and BBD items convert at the stored rates; any other currency asks you for a USD rate, which is recorded on the line. A cost snapshot is kept, and an amber badge shows when the catalogue cost has changed since the quote was built. Refresh cost updates cost and CBM only, not supplier, description, UOM or DG. Duty % stays manual. Unlink returns a line to a plain typed line.',
-  'Line items: Product description, Supplier (from catalogue), Qty, UOM, Unit Cost, CBM, DG flag (Y/N), Duty %.',
+  'Line items: Product description, Supplier (from catalogue), Qty, UOM, Cost (a USD line total, not per unit), CBM, DG flag (Y/N), Duty %.',
   'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX.',
   'Overhead charges (Origin Charges, Dest Charges, FPM Admin — v2.9.68, REQ/SPEC-QTE-002): three fixed dollar amounts added to every quote\'s total, unmarked-up (added at cost, never scaled by margin). Global defaults are set in Settings → Rates & FX; each quote can override any of the three individually — three optional fields on the quote form (blank = inherit the current global default, any typed number including 0 = override just this quote). An overridden quote is unaffected by later changes to the global default for that specific field; an un-overridden quote keeps tracking the global default live. Setting a field to 0 removes that charge from just that one quote.',
   'Insurance Rate % override (v2.9.89, REQ/SPEC-QTE-003): insurance (default 0.5% of cost+freight per line, set in Settings → Rates & FX) is editable per quote AND per line, the same two-tier cascade as Margin %. The quote form has an "Insurance % Override" field (blank = inherit the global default). Each line in the editor grid also has its own "Ins %" field (blank = inherit the quote-level value, which itself may be inheriting the global default) — a line-level value always wins over the quote-level value. The editor grid and the PDF preview both show the computed Insurance $ amount as its own column/row, separate from Landed, so it is never a silent, unexplained jump between Cost and Landed.',
@@ -15251,7 +15251,10 @@ function rQPickList() {
   }).join('');
 }
 function qtePickConfirm() {
-  var ids = Object.keys(_qpickChecked).filter(function(k){ return _qpickChecked[k]; });
+  var q = (G('qpick-q') ? G('qpick-q').value : '').toLowerCase();       // only items still VISIBLE under the current search are added (a ticked item hidden by a later search is not)
+  var visible = {};
+  DB.li.forEach(function(li){ if (!q || (li.desc||'').toLowerCase().includes(q) || (li.sku||'').toLowerCase().includes(q)) visible[li.id] = true; });
+  var ids = Object.keys(_qpickChecked).filter(function(k){ return _qpickChecked[k] && visible[k]; });
   if (!ids.length) { toast('Select at least one item'); return; }       // checked BEFORE closing: the picker stays open
   qteClosePicker();
   if (_qpickMode === 'single') qteLinkExisting(_qpickRid, ids[0]).catch(function(){});

@@ -443,6 +443,8 @@ No code change. Confirmed by citation: `refreshQteFromSupabase()` maps `lines: r
 9. `qtRefs` removed from `delLI()` → T-8a fails.
 10. `qteIsLinked()` ignores the snapshot (non-blank `lid` alone counts as linked) → **T-6d** fails (NaN rescale, "Unlink" shown, promotion/PO take the linked branch).
 
+11. Refresh made a full re-link (`snapshotOnly` false) → T-20a fails. 12. Refresh pre-fills the old rate regardless of currency → T-20b fails. 13. `san()` removed from the picker description → T-18a fails. 14. Empty-selection check moved after the picker close → T-19 fails. 15. Promotion compares price on top of the unit-USD test (typed value equal to what was linked, catalogue cost changed) → T-9e fails. 16. `qtePickConfirm` adds hidden selections → T-22 fails. (CLAUDE.md's "16 mutation tests" counts 1–16 here.)
+
 **Existing tests:** `tests/run.js:8966/8971/9001` renamed/reworded (§8.3, assertions unchanged); no other existing test touches quote-line link keys. Expected delta: roughly +55 tests (1231 → ~1286); exact count recorded at build.
 
 ---

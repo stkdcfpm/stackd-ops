@@ -15178,9 +15178,9 @@ test('SPEC-QTE-004 T-4d: costManual persists through save + reopen and is still 
   mockEl('ql-qty-' + rid).value = '3'; ctx.qlQtyChanged(rid);
   assertEqual(+mockEl('ql-cost-' + rid).value, 42, 'manual cost still honoured after reopen');
 });
-test('SPEC-QTE-004 T-4e: linking an existing line at qty 5 gives cost 50 and cbm 0.3', async () => {
+testAsync('SPEC-QTE-004 T-4e: linking an existing line at qty 5 gives cost 50 and cbm 0.3', async () => {
   qtFx(); ctx.cQL = [{ rid: 'ex1', supId: '', desc: '', qty: 5, uom: 'pcs', cost: 0, cbm: 0, dg: false, dutyPct: 0 }]; qtMirror();
-  let r; ctx.qteLinkExisting('ex1', 'u1').then(() => { r = 1; });
+  await ctx.qteLinkExisting('ex1', 'u1');
   assertEqual(ctx.cQL[0].cost, 50); assertEqual(ctx.cQL[0].cbm, 0.3); assertEqual(ctx.cQL[0].qty, 5);
 });
 test('SPEC-QTE-004 T-5a-d: CBM scales with Qty from the dimensions until typed; rounded to 6 dp; no dims = no CBM', () => {
@@ -15217,7 +15217,12 @@ test('SPEC-QTE-004 T-6d: a non-blank lid with a missing or garbage snapshot is U
   });
   qtFx(); ctx.cQL = [{ rid: 'x1', supId: 's1', desc: 'Hand', qty: 1, uom: 'pcs', cost: 7, cbm: 0, dg: false, dutyPct: 0, lid: 'u1' }]; qtMirror(); qtForm('Draft'); ctx.saveQte();
   assertEqual(ctx.DB.qt[0].lines[0].lid, 'u1', 'the lid is preserved as data'); assertEqual(ctx.qteIsLinked(ctx.DB.qt[0].lines[0]), false);
-  ctx.confirm = () => true; ctx.localStorage.removeItem('st_li_cloud_migration_ts'); ctx.delLI('u1');                     // counts conservatively; never crashes
+  let dmsg = ''; ctx.confirm = m => { dmsg = m; return false; }; ctx.localStorage.removeItem('st_li_cloud_migration_ts'); ctx.delLI('u1');
+  assertContains(dmsg, '1 quote (QTE-0001)', 'delLI counts a snapshot-less lid conservatively and never crashes');
+  qtFx(); ctx.cQL = [{ rid: 'x1', supId: 's1', desc: 'USD Widget', qty: 1, uom: 'pcs', cost: 7, cbm: 0, dg: false, dutyPct: 0, lid: 'u1' }]; qtMirror(); qtForm('Accepted'); ctx.saveQte();
+  assertEqual(ctx.DB.liPending.length, 1, 'promotion falls back to the legacy desc+supId path'); assertEqual(ctx.DB.liPending[0].kind, 'update'); assertEqual(ctx.DB.liPending[0].matchedLiId, 'u1'); assertEqual(ctx.DB.liPending[0].cost, 7, 'legacy basis: the typed cost, quote currency label');
+  resetDB(); ctx.DB.sup = [{ id: 's1', name: 'Sup One' }]; ctx.DB.li = qtItems(); ctx.DB.qt = [{ id: 'qt1', num: 'QTE-0001', status: 'Accepted', currency: 'USD', lines: [{ rid: 'r1', supId: 's1', desc: 'USD Widget', qty: 5, uom: 'pcs', cost: 50, lid: 'u1' }] }]; ctx.EI.qt = 'qt1'; ctx.qteToPoConvert();
+  assertEqual(ctx.DB.po[0].lineItems[0].lid, ''); assertEqual(ctx.DB.po[0].lineItems[0].sku, ''); assertEqual(ctx.DB.po[0].lineItems[0].cost, 50, 'PO line as for an unlinked line: cost as typed');
 });
 test('SPEC-QTE-004 T-7a-f: drift is judged in the catalogue currency — FX alone never triggers it', () => {
   qtFx(); ctx.qteAddFromCatalogue(['u1', 'g1']); const [u, g] = ctx.cQL;
@@ -15248,6 +15253,10 @@ test('SPEC-QTE-004 T-8a-c: delLI warns about quotes; the line keeps its lid; the
   ctx.localStorage.removeItem('st_li_cloud_migration_ts'); ctx.delLI('u1');
   assertContains(msg, '1 quote (QTE-0001)'); assertEqual(ctx.DB.qt[0].lines[0].lid, 'u1', 'lid kept as a historical reference');
   const rep = ctx.verifyFkIntegrityAfterCleanup(); assertNotContains(JSON.stringify(rep), 'line lid');
+  qtFx(); qtLinked('u1', 'Draft'); ctx.localStorage.setItem('st_li_cloud_migration_ts', 'x'); ctx._sb = mockSb({}); let cmsg = ''; ctx.confirm = m => { cmsg = m; return false; };
+  try { ctx.delLI('u1'); } finally { ctx.localStorage.removeItem('st_li_cloud_migration_ts'); ctx._sb = null; }
+  assertContains(cmsg, '1 quote (QTE-0001)', 'the Cloud-migrated branch carries the same count (warnings are built before the branch split)');
+  qtFx(); qtLinked('u1', 'Draft'); ctx.confirm = () => true; ctx.localStorage.removeItem('st_li_cloud_migration_ts');
   ctx.editQte(ctx.DB.qt[0].id); qtMirror(); qtForm('Draft'); ctx.saveQte(); assertEqual(ctx.DB.qt.length, 1, 'still saves');
 });
 test('SPEC-QTE-004 T-9a-i: promotion queues an update only for a deliberate cost override, per unit in the catalogue currency', () => {
@@ -15286,6 +15295,12 @@ test('SPEC-QTE-004 T-10a-e: typed grid values survive every re-render (asserted 
   qtFx(); ctx.cQL = [{ rid: 'A', supId: '', desc: '', qty: 1, uom: 'pcs', cost: 0, cbm: 0, dg: false, dutyPct: 0 }]; typeA(); ctx.qteAddFromCatalogue(['u1']); check('after Add from Catalogue');
   typeA(); ctx.qteUnlink(ctx.cQL[1].rid); check('after Unlink');
   assertEqual(ctx.cQL.length, 2);
+  qtFx(); ctx.confirm = () => true; ctx.cQL = [{ rid: 'A', supId: '', desc: '', qty: 1, uom: 'pcs', cost: 0, cbm: 0, dg: false, dutyPct: 0 }, { rid: 'B', supId: '', desc: '', qty: 1, uom: 'pcs', cost: 0, cbm: 0, dg: false, dutyPct: 0 }];
+  typeA(); ctx.qteLinkExisting('B', 'u1'); check('after Link to catalogue (qteLinkExisting)');
+  qtFx(); ctx.confirm = () => true; ctx.qteAddFromCatalogue(['u1']); const rid0 = ctx.cQL[0].rid; ctx.cQL.push({ rid: 'A', supId: '', desc: '', qty: 1, uom: 'pcs', cost: 0, cbm: 0, dg: false, dutyPct: 0 });
+  ctx.DB.li[0].cost = 12; typeA(); ctx.qteRefreshLine(rid0); check('after Refresh cost (qteRefreshLine)');
+  qtFx(); let calc = 0; const oc = ctx.calcQte; ctx.calcQte = function() { calc++; return oc.apply(this, arguments); };
+  try { ctx.addQteLine(); } finally { ctx.calcQte = oc; } assert(calc >= 1, 'addQteLine() recalculates after re-rendering');
 });
 test('SPEC-QTE-004 T-11a-d: PO conversion carries lid/sku and per-unit cost for linked lines only', () => {
   const mk = lines => { resetDB(); ctx.DB.sup = [{ id: 's1', name: 'Sup One' }]; ctx.DB.li = qtItems(); ctx.DB.qt = [{ id: 'qt1', num: 'QTE-0001', status: 'Accepted', currency: 'USD', lines }]; ctx.EI.qt = 'qt1'; ctx.qteToPoConvert(); return ctx.DB.po[0].lineItems; };
@@ -15298,10 +15313,9 @@ test('SPEC-QTE-004 T-11a-d: PO conversion carries lid/sku and per-unit cost for 
   ctx.EI.qt = 'qt1'; ctx.qteToPoConvert(); assertEqual(ctx.DB.po[0].lineItems[0].lid, ''); assertEqual(ctx.DB.po[0].lineItems[0].sku, ''); assertEqual(ctx.DB.po[0].lineItems[0].cost, 10, 'still per unit');
 });
 test('SPEC-QTE-004 T-12: the customer quote document shows no catalogue-link, snapshot, rate or Refresh text', () => {
-  qtFx(); qtLinked('g1', 'Draft'); ctx.DB.li[1].cost = 11; let doc = ''; const ow = ctx.window; ctx.window = Object.assign({}, ow, { open: () => ({ focus() {} }) });
+  qtFx(); qtLinked('g1', 'Draft'); ctx.DB.li[1].cost = 11; 
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'); const s = html.indexOf('function prevQteDoc'); const body = html.slice(s, html.indexOf('\nfunction ', s + 20));
   ['lidRate', 'lidUnitUSD', 'lidCost', 'Refresh', 'Catalogue cost changed', 'qteDrift', 'qteLineInfoHtml'].forEach(w => assertNotContains(body, w, 'prevQteDoc must not mention ' + w));
-  ctx.window = ow;
 });
 test('SPEC-QTE-004 T-13: the new overlays stack after the Quote modal; the invoice picker is untouched', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
@@ -15346,9 +15360,12 @@ test('SPEC-QTE-004 T-15a-e: supplier edge cases, duplicates, link-over-typed-val
 });
 test('SPEC-QTE-004 T-17: the AI prompt describes catalogue-linked quote lines', () => {
   const p = String(ctx.AI_SYSTEM_PROMPT);
-  assertContains(p, 'Quote lines from the catalogue: on the Quotes tab, click Add from Catalogue');
-  assertContains(p, 'Refresh cost updates cost and CBM only');
-  assertNotContains(p, 'Quote line cost per unit');
+  assertContains(p, 'Quote lines from the catalogue: on the Quotes tab, click Add from Catalogue (or Link on an existing line) to pull in a Line Item.');
+  assertContains(p, 'Cost is converted to USD and treated as a line total, so it scales with quantity until you type a cost yourself;');
+  assertContains(p, 'USD, GBP and BBD items convert at the stored rates; any other currency asks you for a USD rate, which is recorded on the line.');
+  assertContains(p, 'Refresh cost updates cost and CBM only, not supplier, description, UOM or DG.');
+  const qs = p.indexOf('## Quotes'), qe = p.indexOf('## ', qs + 5); const sect = p.slice(qs, qe);
+  assertNotContains(sect, 'Unit Cost', 'the Quotes section no longer calls the quote line cost a unit cost'); assertContains(sect, 'USD line total, not per unit');
 });
 test('SPEC-QTE-004 T-18a-c: hostile catalogue text is escaped in the picker, the description cell and the badge', () => {
   const evil = '<img src=x onerror=1>';
@@ -15375,9 +15392,11 @@ testAsync('SPEC-QTE-004 T-20a/b: Refresh touches cost, CBM and the snapshot only
   qtFx(1.1); ctx.DB.li[3].cur = 'EUR'; await ctx.qteAddFromCatalogue(['e1']); qtAskCalls = []; qtMirror(); ctx.DB.li[3].cur = 'RMB'; await ctx.qteRefreshLine(ctx.cQL[0].rid);
   assertApprox(qtAskCalls[0][1], 1.27 / 9.20, 'changing to RMB suggests fxGBPUSD / fxGBPRMB');
 });
-test('SPEC-QTE-004 T-21: the rate modal and picker are cleaned up between tests (harness hygiene)', () => {
-  qtFx(); ctx.cQL = []; ctx.EI.qt = null; ['qf-st','qf-approved-by','qf-insRate'].forEach(k => { mockEl(k).value = ''; }); mockEl('qf-st').value = 'Draft';
-  ctx.qteAskRate = ctx.qteAskRate; assert(true);
+test('SPEC-QTE-004 T-22: a picker selection hidden by a later search is not added', () => {
+  qtFx(); ctx.qteOpenPicker('multi'); ctx._qpickChecked = { u1: true, g1: true }; mockEl('qpick-q').value = 'GBP';
+  let added = []; const o = ctx.qteAddFromCatalogue; ctx.qteAddFromCatalogue = ids => { added = ids; return Promise.resolve(); };
+  try { ctx.qtePickConfirm(); } finally { ctx.qteAddFromCatalogue = o; }
+  assertEqual(added.join(','), 'g1', 'only the item still visible under the search is added'); mockEl('qpick-q').value = '';
 });
 
 // ── SEC-GAP-021: status-tag class-attribute injection fix ──────
