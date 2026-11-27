@@ -29,7 +29,7 @@ Unchanged (confirmed, not just asserted): `saveLI()`, `saveInv()`'s history auto
 In the row builder (`index.html:8124` onward):
 
 - The badge keeps its position and look; `onclick` changes from `togglePH('<id>')` to `openLIHist('<id>')`, and its `title` from "Show price history" to "Show cost & margin history". The `N pt(s)` label is unchanged. `li.id` is interpolated into the `onclick` exactly as today (DATA-GAP-004 is pre-existing and unchanged).
-- **Delete** the `phRow` variable (the `<tr id="ph-<id>">` block, `8156-8170`) and the trailing `+ phRow` in the returned row string. Nothing else references `ph-<id>` (grep-verified: only `rLI()` and `togglePH()` itself).
+- **Delete** the `phRow` variable (`var phRow`, whose `<tr id="ph-<id>">` block spans `8155-8170`) and the trailing `+ phRow` in the returned row string. Nothing else references `ph-<id>` (grep-verified: only `rLI()` and `togglePH()` itself).
 - **Delete** `togglePH()` (`8184-8187`). Grep-verified: no test and no other code references it.
 - A Line Item with an empty/absent `priceHistory` still renders no badge (`ph.length` falsy) — **unchanged**, which is REQ §3.1's no-history rule. `openLIHist()` is defensive (§2.2) but the badge never routes there.
 
