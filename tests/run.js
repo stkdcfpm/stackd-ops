@@ -15859,16 +15859,22 @@ test('SPEC-QTE-006 T-18: cQteLine call sites are exactly the five known function
   assertEqual(Object.keys(found).sort().join(','), ['cQte', 'calcQte', 'rQLT', 'rfqLandedGBP', 'saveQte'].sort().join(','));
 });
 
-test('SPEC-QTE-006 T-19: AI_SYSTEM_PROMPT states the three treatments; AI-created quotes carry no freightTreatment', () => {
+test('SPEC-QTE-006 T-19: AI_SYSTEM_PROMPT states the three treatments; a quote created through the AI create_quote path is Included (behavioural)', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
   ['Included in line prices', 'Shown as a separate line', 'Not included', 'Freight (estimate)'].forEach(t => assertContains(html.slice(html.indexOf('var AI_SYSTEM_PROMPT ='), html.indexOf('var AI_SYSTEM_PROMPT =') + 60000), t));
-  assert(/freightTreatment/.test(html) && !/create_quote[\s\S]{0,400}freightTreatment/.test(html.slice(html.indexOf('function handleAIAction'), html.indexOf('function handleAIAction') + 20000)), 'create_quote path never sets freightTreatment');
+  frFx(); ctx.DB.qt = []; ctx.EI.qt = null;
+  mockEl('qf-fr').value = 'separate'; mockEl('qf-frAmt').value = '999';        // stale state from a previously edited quote
+  ctx.handleAIAction({ action: 'create_quote', payload: { client: 'AI Client', lineItems: [{ desc: 'Pipe', qty: 1, cost: 100, uom: 'pcs' }] } });
+  assertEqual(mockEl('qf-fr').value, 'included', 'form reset to Included'); assertEqual(mockEl('qf-frAmt').value, '');
+  qtForm(); mockEl('qf-mkp').value = '20'; mockEl('qf-client').value = 'AI Client'; qtMirror(); ctx.saveQte();
+  assertEqual(ctx.DB.qt.length, 1, 'quote saved'); assertEqual('freightTreatment' in ctx.DB.qt[0], false); assertEqual('freightAmount' in ctx.DB.qt[0], false);
+  frReset(); ctx.closeM('ov-qt'); ctx.cQL = [];
 });
 
 test('SPEC-QTE-006 T-20: qteToPoConvert on a separate quote builds PO lines from line cost only', () => {
   frFx(); const q = frQuote({ status: 'Accepted', freightTreatment: 'separate', freightAmount: 1800, lines: [{ rid: 'a', supId: 's1', desc: 'Pipe', qty: 10, uom: 'pcs', cost: 10000, cbm: 20 }] });
   ctx.DB.qt = [q]; ctx.EI.qt = 'fq1'; ctx.DB.po = []; ctx.qteToPoConvert();
-  const po = ctx.DB.po[0]; assert(po, 'PO created'); assertEqual(JSON.stringify(po.lineItems.map(l => l.cost)), JSON.stringify([1000]).replace('1000', String(po.lineItems[0].cost)));
+  const po = ctx.DB.po[0]; assert(po, 'PO created'); assertEqual(po.lineItems.length, 1); assertEqual(+po.lineItems[0].cost, 10000, 'PO line cost is the quote line cost unchanged (qteToPoConvert copies l.cost); no freight, insurance or DG added');
   assert(JSON.stringify(po).indexOf('1800') === -1 && JSON.stringify(po).indexOf('2060') === -1, 'no freight/insurance/DG amount in the PO'); ctx.EI.qt = null;
 });
 
