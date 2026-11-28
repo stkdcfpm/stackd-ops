@@ -68,6 +68,8 @@ Last updated: 2026-11-09 (REQ-RPT-003 — Accounting Export fix, v2.9.96)
 | REQ-LI-003 | Line Item cost & margin history modal for reorder decisions | Line Items | v2.9.104 | **Built** (REQ v5 / SPEC v3 both gate-passed; 37 new tests, 11 mutations verified, 1194 → 1231); awaiting build-gate review and merge |
 | LI-GAP-008 | `getSupplierPriceHistory()` treats order-entry costs as supplier price points | Line Items / Suppliers | v2.9.104 | **Open**, disclosed |
 | REQ-QTE-004 | Link Quote lines to existing Line Items (catalogue-assisted entry, cost snapshot, drift badge, manual-rate prompt) | Quotes / Line Items | v2.9.105 | **Built** (REQ v5 / SPEC v3 gate-passed; 27 new tests, 16 mutations verified, 1231 → 1258); awaiting build-gate review and merge |
+| REQ-QTE-005 | Customer-facing Quote document (selling price per line, charge lines, price basis, terms; internal sheet relabelled) | Quotes / Documents | v2.9.106 | **Built** (REQ v7 / SPEC v3 gate-passed; 20 new tests, 16 mutations, 1258 → 1278); awaiting build-gate review and merge |
+| QTE-GAP-006 | The customer quote document is not stored (no record of what a buyer was sent) | Quotes / Documents | v2.9.106 | **Open**, Phase 2 |
 | QTE-GAP-002 | Quote line cost is a line total in the engine but is copied to Purchase Orders as a per-unit cost | Quotes / POs | disclosed REQ-QTE-004 | **Open** |
 | QTE-GAP-003 | Unlinked-line promotion compares line-total cost and sell price with per-unit catalogue values | Quotes / Line Items | disclosed REQ-QTE-004 | **Open** |
 | QTE-GAP-004 | `ordConvertToQuote()` fills costs in the quote currency under a Cost (USD) column | Quotes / Order Requests | disclosed REQ-QTE-004 | **Open**, verify against live data |

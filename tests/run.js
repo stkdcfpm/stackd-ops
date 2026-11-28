@@ -15399,6 +15399,201 @@ test('SPEC-QTE-004 T-22: a picker selection hidden by a later search is not adde
   assertEqual(added.join(','), 'g1', 'only the item still visible under the search is added'); mockEl('qpick-q').value = '';
 });
 
+// ── Customer-facing quote document (REQ/SPEC-QTE-005, v2.9.106) ─────────────────────────────
+console.log('\nCustomer-facing quote document (SPEC-QTE-005)');
+const QC_SENT = ['SENTINEL-SUPPLIER-NAME', 'SENTINEL-SKU-9999', 'SENTINEL-LINENOTE', 'SENTINEL-VERSION', 'SENTINEL-INTERNAL-NOTE'];
+function qcQuote(over) {
+  return Object.assign({ id: 'qc1', num: 'QTE-0001', client: 'Acme Ltd', dt: '2026-11-27', validUntil: '2099-12-31', currency: 'USD', freightMode: 'LCL', markup: 20, status: 'Draft', notes: '',
+    originCharges: 0, destCharges: 0, fpmAdmin: 0, calc_sellUSD: 'AUTO',
+    lines: [
+      { rid: 'a', supId: 's1', desc: 'Reolink 4K camera kit', qty: 100, uom: 'pcs', cost: 8800, cbm: 2.4, dg: false, dutyPct: 5, note: 'SENTINEL-LINENOTE', priceHistory: [{ v: 1, cost: 8800, note: 'SENTINEL-VERSION' }] },
+      { rid: 'b', supId: 's1', desc: 'Pallet wrap', qty: 5000, uom: 'rolls', cost: 21000, cbm: 12, dg: false, dutyPct: 0, markup: 50 }
+    ] }, over || {});
+}
+function qcFx(q) {
+  resetDB(); ctx.DB.sup = [{ id: 's1', name: 'SENTINEL-SUPPLIER-NAME' }]; ctx.DB.li = [{ id: 'li1', sku: 'SENTINEL-SKU-9999', desc: 'x', supId: 's1', cost: 1, price: 2, cur: 'USD' }];
+  ctx.DB.qt = [q || qcQuote()];
+  ctx.EI.qt = null; ctx._qdocId = null; ctx._qOpenSnap = null; ctx._qunsavedId = null; ctx._qdocAcks = {}; ctx._qdocWarns = []; ctx.cQL = [];
+  ctx.closeM('ov-qdoc'); ctx.closeM('ov-qunsaved'); ctx.closeM('ov-qt');
+  ['qdoc-pb', 'qdoc-terms', 'qdoc-total', 'qdoc-header', 'qdoc-warns'].forEach(k => { mockEl(k).value = ''; mockEl(k).innerHTML = ''; mockEl(k).textContent = ''; }); mockEl('qdoc-notes').checked = false; mockEl('qdoc-go').disabled = false;
+  ['stackd_co_email', 'stackd_co_phone', 'stackd_co_name', 'stackd_co_addr', 'stackd_co_colour', 'stackd_co_reg', 'stackd_co_vat'].forEach(k => ctx.localStorage.removeItem(k));
+  ctx.localStorage.setItem('stackd_co_email', 'sales@fpm.test');
+  ctx.AS = { name: 'FPM International Ltd', addr: '1 Test Road', email: 'personal@example.com', bank: '', terms: 'INVOICE-TERMS-SENTINEL' };
+  ctx.QR.fxGBPUSD = 1.27; ctx.QR.insRate = 0.005; ctx.QR.lclPerCBM = 85; ctx.QR.dgSurcharge = 0;
+  ctx.DB.qt.forEach(function(x){ if (x.calc_sellUSD === 'AUTO') x.calc_sellUSD = ctx.cQte(x).sellUSD; });   // a saved total that matches the live engine (no drift) unless a test sets one
+  ctx.Blob = function(parts) { this._parts = parts; }; qcOpened = []; qcHtml = '';
+  ctx.URL = { createObjectURL: function(b) { qcHtml = b._parts[0]; return 'blob:mock'; }, revokeObjectURL: function() {} };
+  ctx.open = function(u) { qcOpened.push(u); return { focus() {} }; };
+}
+let qcOpened = [], qcHtml = '';
+const qcDoc = (q, opt) => ctx.qteCustomerDocHtml(q || ctx.DB.qt[0], Object.assign({ priceBasis: '', terms: '', includeNotes: false }, opt || {}));
+let qcToast = ''; const qcCaptureToast = () => { qcToast = ''; const o = ctx.toast; ctx.toast = (m) => { qcToast = String(m); }; return () => { ctx.toast = o; }; };
+
+test('SPEC-QTE-005 T-0a: money / unit / quantity formatters never throw and group correctly at every magnitude', () => {
+  const cases = { 0: ['0.00', '0.00'], 0.5: ['0.50', '0.50'], 12.7: ['12.70', '12.70'], 999.99: ['999.99', '999.99'], 1000: ['1,000.00', '1,000.00'], 1234.5: ['1,234.50', '1,234.50'],
+    12345.67: ['12,345.67', '12,345.67'], 25000: ['25,000.00', '25,000.00'], 1234567.5: ['1,234,567.50', '1,234,567.50'] };
+  Object.keys(cases).forEach(k => { assertEqual(ctx.qteFmtAmt(+k), cases[k][0], 'amt ' + k); assertEqual(ctx.qteFmtUnit(+k), cases[k][1], 'unit ' + k); assertEqual(ctx.qteFmtMoney(+k), 'USD ' + cases[k][0], 'money ' + k); });
+  assertEqual(ctx.qteFmtAmt(999999.995), '1,000,000.00'); assertEqual(ctx.qteFmtUnit(12.7143), '12.7143'); assertEqual(ctx.qteFmtUnit(12.71), '12.71'); assertEqual(ctx.qteFmtUnit(1234567.8), '1,234,567.80');
+  assertEqual(ctx.qteFmtQty(2.5), '2.5'); assertEqual(ctx.qteFmtQty(0.001), '0.001');
+});
+test('SPEC-QTE-005 T-0b: non-finite inputs print 0.00 and never throw', () => {
+  [NaN, 'abc', Infinity, -Infinity, undefined, null].forEach(v => { assertEqual(ctx.qteFmtAmt(v), '0.00'); assertEqual(ctx.qteFmtUnit(v), '0.00'); });
+  assertEqual(ctx.qteFmtAmt('1234.5'), '1,234.50');
+});
+test('SPEC-QTE-005 T-0c: a quote with non-numeric markup/cost/cbm/duty renders without throwing and warns on the zero price', () => {
+  qcFx(qcQuote({ lines: [{ rid: 'x', supId: 's1', desc: 'Broken markup', qty: 1, uom: 'pcs', cost: 100, cbm: 0, markup: 'abc' }, { rid: 'y', supId: 's1', desc: 'Broken cost', qty: 2, uom: 'pcs', cost: 'x', cbm: 'y', dutyPct: 'z' }] }));
+  const q = ctx.DB.qt[0]; let html = ''; try { html = qcDoc(q); } catch (e) { throw new Error('threw: ' + e.message); }
+  assertContains(html, 'QUOTATION'); const w = ctx.qteCustWarnings(q, ctx.qteCustomerModel(q), { pb: '', terms: '', notes: '' });
+  assert(w.some(x => x.k === 'nc:1'), 'no-cost warning for the broken-cost line');
+});
+test('SPEC-QTE-005 T-1: customer document columns, live engine prices, per-line markup override affects only its line', () => {
+  qcFx(); const q = ctx.DB.qt[0], html = qcDoc(q), c = ctx.cQte(q);
+  ['Description', 'Qty', 'UOM', 'Unit price (USD)', 'Line total (USD)', 'QUOTATION', 'Reolink 4K camera kit', 'Pallet wrap', 'Shipping: LCL'].forEach(t => assertContains(html, t));
+  const S0 = c.lineCalcs[0].landed * 1.2, S1 = c.lineCalcs[1].landed * 1.5; const U0 = Number((S0 / 100).toFixed(4)), U1 = Number((S1 / 5000).toFixed(4));
+  assertContains(html, ctx.qteFmtUnit(U0)); assertContains(html, ctx.qteFmtAmt(ctx.qteRound2(U0 * 100))); assertContains(html, ctx.qteFmtUnit(U1));
+  assert(S0 > 1000 && S1 > 1000, 'fixture exercises the thousands path');
+  const q2 = qcQuote(); q2.lines[0].markup = 60; const m2 = ctx.qteCustomerModel(q2), m1 = ctx.qteCustomerModel(q);
+  assert(m2.rows[0].S > m1.rows[0].S, 'the overridden line changed'); assertEqual(m2.rows[1].S, m1.rows[1].S, 'the other line did not');
+});
+test('SPEC-QTE-005 T-2a/b: no supplier, SKU, cost, freight, insurance, duty, landed, markup, line/version note ever prints; Notes only on opt-in', () => {
+  qcFx(qcQuote({ notes: 'SENTINEL-INTERNAL-NOTE' })); const q = ctx.DB.qt[0]; q.lines[0].lid = 'li1';
+  let html = qcDoc(q); QC_SENT.forEach(t => assertNotContains(html, t, 'must not print ' + t));
+  ['8800', '21000', 'Landed', 'landed', 'Insurance', 'Duty', 'duty', 'Markup', 'markup', 'Margin', 'Freight cost', 'priceHistory', 'lidUnitUSD'].forEach(t => assertNotContains(html, t, 'must not print ' + t));
+  assertContains(html, 'Reolink 4K camera kit', 'the printable description sentinel prints');
+  html = qcDoc(q, { includeNotes: true }); assertContains(html, 'SENTINEL-INTERNAL-NOTE'); assertContains(html, '>Notes<');
+});
+test('SPEC-QTE-005 T-3a-e: printed unit x printed qty = printed line total; Total = sum of the printed lines; bounded against the engine', () => {
+  [5, 5000, 2.5, 0.001, 2.5000004, 1e-7, 0, 'abc'].forEach(qty => {
+    qcFx(qcQuote({ originCharges: 250.555, destCharges: 349.999, fpmAdmin: 75 })); const q = ctx.DB.qt[0]; q.lines[0].qty = qty; q.lines[1].qty = 7;
+    const m = ctx.qteCustomerModel(q), c = ctx.cQte(q); let sum = 0, bound = 0;
+    m.rows.forEach(r => { assert(Math.abs(Number(ctx.qteFmtUnit(r.U).replace(/,/g, '')) * r.qty - r.total) <= 0.005 + 1e-9, 'unit x qty reconciles for qty ' + qty); sum += r.total; bound += 0.00005 * r.qty + 0.005; });
+    m.charges.forEach(x => { sum += x.amount; bound += 0.005; });
+    assert(Math.abs(ctx.qteRound2(sum) - m.total) < 1e-9, 'Total is the sum of the printed lines');
+    assert(Math.abs(m.total - c.sellUSD) <= bound + 1e-9, 'bounded vs the engine for qty ' + qty);
+    assertEqual(m.rows[0].qty, (qty === 1e-7 || qty === 0 || qty === 'abc') ? 1 : Number((+qty).toFixed(6)), 'the Qty used is the Qty printed');
+  });
+});
+test('SPEC-QTE-005 T-4: only non-zero overhead components appear, with buyer labels; no freight/insurance/duty rows', () => {
+  qcFx(qcQuote({ originCharges: 250, destCharges: 0, fpmAdmin: 75 })); let html = qcDoc();
+  assertContains(html, 'Origin charges'); assertContains(html, 'Handling &amp; admin'); assertNotContains(html, 'Destination charges');
+  qcFx(qcQuote({ originCharges: 0, destCharges: 1500, fpmAdmin: 0 })); html = qcDoc(); assertContains(html, 'Destination charges (local freight &amp; taxes)'); assertContains(html, '1,500.00');
+});
+test('SPEC-QTE-005 T-5a-c: buttons relabelled, customer control on both entry points, INTERNAL banner and title on the internal sheet', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assertContains(html, 'Internal costing sheet'); assertContains(html, 'id="qt-cust-btn"'); assertContains(html, "qteCustFromList(\\'' + q.id + '\\')"); assertContains(html, 'Internal costing sheet (not for the client)');
+  qcFx(); ctx.EI.qt = null; ctx.openQte(); assertEqual(mockEl('qt-cust-btn').style.display, 'none', 'hidden for a new quote');
+  ctx.DB.qt = [qcQuote()]; ctx.editQte('qc1'); assertEqual(mockEl('qt-cust-btn').style.display, '', 'shown for a saved quote');
+  const getHtml = makePreviewMock(); ctx.prevQteDoc(qcQuote()); const internal = getHtml();
+  assertContains(internal, 'INTERNAL — contains supplier and cost information. Do not send to the client.'); assertContains(internal, '— Quote (INTERNAL)</title>'); assertNotContains(internal, '@media print{button{display:none!important;}}.banner');
+});
+testAsync('SPEC-QTE-005 T-6a-g: unsaved-changes guard — snapshot compare, fail-closed, scope, save-and-continue outcomes', async () => {
+  const setup = () => { qcFx(); ctx.editQte('qc1'); };
+  qcFx(); ctx.EI.qt = 'qc1'; ctx.editQte('qc1'); assert(ctx._qOpenSnap !== null, 'snapshot captured on open');
+  ctx.qteCustFromModal(); assert(mockEl('ov-qdoc').classList.contains('on'), 'no change -> straight to the dialog'); assert(!mockEl('ov-qunsaved').classList.contains('on'));
+  ctx.qteCustClose();
+  mockEl('qf-client').value = 'Changed Client'; ctx.qteCustFromModal(); assert(mockEl('ov-qunsaved').classList.contains('on'), 'edited -> three-way prompt'); assert(!mockEl('ov-qdoc').classList.contains('on'));
+  ctx.qteUnsavedCancel(); assert(!mockEl('ov-qunsaved').classList.contains('on'), 'Cancel closes the prompt and opens nothing'); assert(!mockEl('ov-qdoc').classList.contains('on'));
+  qcFx(); ctx.EI.qt = 'qc1'; ctx.editQte('qc1'); mockEl('qf-st').value = 'Sent'; ctx.qteCustFromModal(); assert(mockEl('ov-qunsaved').classList.contains('on'), 'status-only change differs'); ctx.qteUnsavedCancel();
+  qcFx(); ctx.EI.qt = 'qc1'; ctx.editQte('qc1'); mockEl('qf-mkp').value = '20'; const snapA = ctx.qteFormSnapshot(); mockEl('qf-mkp').value = '0'; assert(ctx.qteFormSnapshot() !== snapA, 'markup change differs'); mockEl('qf-origOv').value = ''; const sb = ctx.qteFormSnapshot(); mockEl('qf-origOv').value = '0'; assert(ctx.qteFormSnapshot() !== sb, 'blank (inherit) vs 0 (override) differ');
+  qcFx(); ctx.EI.qt = 'qc1'; ctx.editQte('qc1'); ctx.cQL[0].costManual = true; ctx.qteCustFromModal(); assert(mockEl('ov-qunsaved').classList.contains('on'), 'costManual-only change differs'); ctx.qteUnsavedCancel();
+  qcFx(); ctx.EI.qt = 'qc1'; ctx._qOpenSnap = null; ctx.qteCustFromModal(); assert(mockEl('ov-qunsaved').classList.contains('on'), 'a null snapshot fails CLOSED');
+  qcFx(); ctx._qOpenSnap = 'stale'; ctx.qteCustFromList('qc1'); assert(mockEl('ov-qdoc').classList.contains('on') && !mockEl('ov-qunsaved').classList.contains('on'), 'list-row entry never compares or prompts');
+  qcFx(); ctx.EI.qt = 'qc1'; ctx.editQte('qc1'); mockEl('qf-client').value = ''; ctx._qunsavedId = 'qc1'; ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); await ctx.qteUnsavedSave();
+  assert(mockEl('ov-qt').classList.contains('on') && !mockEl('ov-qdoc').classList.contains('on'), 'a failing vQte() opens NO document and leaves the modal open');
+  qcFx(); ctx.EI.qt = 'qc1'; ctx.editQte('qc1'); ctx.cQL = [{ rid: 'a', supId: 's1', desc: 'Reolink', qty: 1, uom: 'pcs', cost: 100, cbm: 0, dg: false, dutyPct: 0 }]; qtMirror(); qtForm('Draft'); mockEl('qf-client').value = 'Saved Client'; mockEl('qf-num').value = 'QTE-0001'; ctx._qunsavedId = 'qc1';
+  await ctx.qteUnsavedSave(); assert(!mockEl('ov-qt').classList.contains('on'), 'a completed save closed the modal'); assert(mockEl('ov-qdoc').classList.contains('on'), 'then the dialog opens for the captured id'); assertEqual(ctx._qdocId, 'qc1');
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'); assertContains(html, 'qteUnsavedSave().catch(function(e){ toast(\'Could not complete the save');
+  qcFx(); ctx.EI.qt = 'qc1'; ctx.editQte('qc1'); ctx._qunsavedId = 'qc1'; const os = ctx.saveQte; ctx.saveQte = () => { throw new Error('boom'); }; let thrown = false; try { await ctx.qteUnsavedSave(); } catch (e) { thrown = true; } finally { ctx.saveQte = os; } assert(thrown, 'an exception propagates to the inline .catch (which toasts)');
+});
+test('SPEC-QTE-005 T-7a-m: every pre-send warning appears on its condition', () => {
+  const W = (q, text) => { qcFx(q); const qq = ctx.DB.qt[0]; return ctx.qteCustWarnings(qq, ctx.qteCustomerModel(qq), Object.assign({ pb: '', terms: '', notes: '' }, text || {})); };
+  const has = (w, pre) => w.some(x => x.k.indexOf(pre) === 0), lvl = (w, k) => (w.find(x => x.k === k) || {}).lvl;
+  let q = qcQuote(); q.lines[0].desc = 'Camera from SENTINEL-SUPPLIER-NAME'; assert(has(W(q), 'sup:Line 1 description:'), 'supplier name in a description');
+  q = qcQuote(); q.lines[0].desc = 'Kit SENTINEL-SKU-9999 boxed'; q.lines[0].lid = 'li1'; q.lines[0].lidUnitUSD = 1; q.lines[0].lidRate = 1; assert(has(W(q), 'sku:0'), 'linked SKU >= 4 chars in a description');
+  q = qcQuote(); q.lines[0].desc = 'Kit abc boxed'; q.lines[0].lid = 'li1'; q.lines[0].lidUnitUSD = 1; q.lines[0].lidRate = 1; qcFx(q); ctx.DB.li[0].sku = 'abc'; assert(!has(ctx.qteCustWarnings(ctx.DB.qt[0], ctx.qteCustomerModel(ctx.DB.qt[0]), { pb: '', terms: '', notes: '' }), 'sku:'), 'a short SKU is ignored');
+  q = qcQuote(); q.lines[0].lid = 'gone'; q.lines[0].lidUnitUSD = 1; q.lines[0].lidRate = 1; q.lines[0].desc = 'SENTINEL-SKU-9999'; assert(!has(W(q), 'sku:'), 'a missing catalogue record is skipped');
+  assert(has(W(qcQuote({ validUntil: '' })), 'val'), 'no validity'); assert(has(W(qcQuote({ validUntil: '2020-01-01' })), 'past'), 'validity passed'); assert(has(W(qcQuote({ dt: '' })), 'dt'), 'blank date');
+  q = qcQuote(); q.lines[0].desc = ''; assert(has(W(q), 'bd:0'), 'blank description'); q = qcQuote(); q.lines[0].cost = 0; assert(has(W(q), 'nc:0'), 'cost 0'); q = qcQuote(); q.lines[0].cost = 0; q.lines[0].cbm = 0; assert(has(W(q), 'zp:0'), 'selling price 0');
+  assertEqual(lvl(W(qcQuote({ currency: 'GBP' })), 'cur'), 'ack', 'non-USD is an acknowledged warning'); assert(has(W(qcQuote({ status: 'Declined' })), 'st'), 'Declined'); assert(has(W(qcQuote({ status: 'Expired' })), 'st'), 'Expired');
+  q = qcQuote({ calc_sellUSD: 123.45 }); assertEqual(lvl(W(q), 'drift'), 'ack', 'live vs saved total drift'); assert(!has(W(qcQuote({ calc_sellUSD: undefined })), 'drift') && !has(W(qcQuote({ calc_sellUSD: 'abc' })), 'drift'), 'absent / non-finite saved total -> no drift warning');
+  assertEqual(lvl(W(qcQuote(), { pb: 'FOB [port]' }), 'ph:[port]'), 'ack', 'placeholder in the price basis'); assertEqual(lvl(W(qcQuote(), { terms: 'Valid for [30] days' }), 'ph:[30]'), 'ack'); assertEqual(lvl(W(qcQuote(), { terms: 'x [] y' }), 'ph:[]'), 'ack');
+  assert(!W(qcQuote(), { terms: 'stray [ here\nand ] there' }).some(x => x.k.indexOf('ph:') === 0), 'a stray bracket spanning lines is not a placeholder');
+  assert(has(W(qcQuote(), { terms: 'x'.repeat(6001) }), 'long'), 'over-long terms'); assert(has(W(qcQuote(), { notes: 'call SENTINEL-SUPPLIER-NAME' }), 'sup:The included Notes:'), 'supplier name in the included Notes');
+  assertEqual(lvl(W(qcQuote({ lines: [] })), 'nol'), 'block', 'no lines'); q = qcQuote(); q.lines.forEach(l => { l.cost = 0; l.cbm = 0; }); assertEqual(lvl(W(q), 'zero'), 'block', 'total 0');
+  qcFx(); ctx.localStorage.removeItem('stackd_co_email'); const wm = ctx.qteCustWarnings(ctx.DB.qt[0], ctx.qteCustomerModel(ctx.DB.qt[0]), { pb: '', terms: '', notes: '' }); assert(has(wm, 'mail'), 'no email will print');
+});
+test('SPEC-QTE-005 T-7n/o: acknowledgement lifecycle and Generate re-enforcement', () => {
+  qcFx(); ctx.qteOpenCustDialog('qc1'); mockEl('qdoc-terms').value = 'Valid [30] days'; ctx.qteCustRefresh(); assert(mockEl('qdoc-go').disabled, 'a placeholder disables Generate');
+  ctx.qteCustGenerate(); assertEqual(qcOpened.length, 0, 'a direct qteCustGenerate() with an unticked acknowledgement opens nothing');
+  const idx = ctx._qdocWarns.findIndex(w => w.k === 'ph:[30]'); ctx.qteCustAck({ getAttribute: () => String(idx), checked: true }); assert(!mockEl('qdoc-go').disabled, 'ticked -> enabled');
+  mockEl('qdoc-terms').value = 'Valid [25%] days'; ctx.qteCustRefresh(); assert(mockEl('qdoc-go').disabled, 'a tick for [30] does not satisfy [25%]');
+  mockEl('qdoc-terms').value = 'Valid 30 days'; ctx.qteCustRefresh(); assert(!mockEl('qdoc-go').disabled, 'no placeholder -> enabled');
+  ctx.qteCustClose(); assertEqual(Object.keys(ctx._qdocAcks).length, 0, 'ticks reset on close'); ctx.qteOpenCustDialog('qc1'); assertEqual(Object.keys(ctx._qdocAcks).length, 0, 'ticks reset on open');
+  qcFx(qcQuote({ lines: [] })); ctx.qteOpenCustDialog('qc1'); ctx.qteCustGenerate(); assertEqual(qcOpened.length, 0, 'a block (no lines) cannot be bypassed by a direct call');
+  qcFx(qcQuote({ currency: 'GBP' })); ctx.qteOpenCustDialog('qc1'); ctx.qteCustGenerate(); assertEqual(qcOpened.length, 0, 'the currency acknowledgement is enforced on Generate');
+  qcFx(); ctx.qteOpenCustDialog('qc1'); ctx.open = () => null; const restore = qcCaptureToast(); ctx.qteCustGenerate(); restore(); assertContains(qcToast, 'Pop-ups are blocked'); assert(mockEl('ov-qdoc').classList.contains('on'), 'a blocked pop-up keeps the dialog open');
+  qcFx(); ctx.qteOpenCustDialog('qc1'); ctx.qteCustGenerate(); assertEqual(qcOpened.length, 1, 'a clean quote opens the document'); assert(!mockEl('ov-qdoc').classList.contains('on'), 'and closes the dialog');
+  qcFx(); ctx.qteOpenCustDialog('qc1'); assertContains(mockEl('qdoc-total').textContent, 'Total that will print: USD '); assertContains(mockEl('qdoc-header').textContent, 'FPM International Ltd'); assertContains(mockEl('qdoc-header').textContent, 'sales@fpm.test');
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'); assertContains(html, 'keep a copy of each PDF you send'); assertContains(html, 'id="qdoc-notes" onchange="qteCustRefresh()"');
+  qcFx(qcQuote({ notes: 'internal remark' })); ctx.qteOpenCustDialog('qc1'); assertEqual(mockEl('qdoc-notes-row').style.display, '', 'the Notes box shows only when the quote has Notes'); assertEqual(mockEl('qdoc-notes').checked, false, 'and is unchecked by default');
+  qcFx(); ctx.localStorage.removeItem('stackd_co_email'); ctx.qteOpenCustDialog('qc1'); assertContains(mockEl('qdoc-header').textContent, '(no email or phone)');
+});
+test('SPEC-QTE-005 T-8: generating (and opening the dialog) writes nothing', () => {
+  qcFx(qcQuote({ notes: 'n' })); const before = JSON.stringify(ctx.DB) + JSON.stringify(ctx.AS); let writes = 0; const o = { sv: ctx.sv, saveAll: ctx.saveAll, logEv: ctx.logEv };
+  ctx.sv = function() { writes++; return o.sv.apply(this, arguments); }; ctx.saveAll = function() { writes++; }; ctx.logEv = function() { writes++; };
+  try { ctx.qteOpenCustDialog('qc1'); mockEl('qdoc-pb').value = 'edited'; mockEl('qdoc-terms').value = 'edited terms'; ctx.qteCustRefresh(); ctx.qteCustGenerate(); ctx.prevQteDoc(ctx.DB.qt[0]); } finally { ctx.sv = o.sv; ctx.saveAll = o.saveAll; ctx.logEv = o.logEv; }
+  assertEqual(writes, 0, 'no sv/saveAll/logEv'); assertEqual(JSON.stringify(ctx.DB) + JSON.stringify(ctx.AS), before, 'DB and AS byte-identical');
+});
+test('SPEC-QTE-005 T-9a/b: every printed value is escaped (case-insensitive); the brand colour is validated', () => {
+  const evil = '<img src=x onerror=1>';
+  qcFx(qcQuote({ client: evil, num: evil, dt: evil, validUntil: evil, freightMode: evil, notes: evil })); const q = ctx.DB.qt[0]; q.lines[0].desc = evil; q.lines[0].uom = evil;
+  ctx.AS.bank = 'Bank: ' + evil; const html = qcDoc(q, { includeNotes: true, priceBasis: evil, terms: evil });
+  assert(/&lt;img/i.test(html) && !/<img/i.test(html), 'document escaped');
+  ctx.localStorage.setItem('stackd_co_colour', 'red;}</style><img src=x onerror=1>'); const h2 = qcDoc(qcQuote()); assert(!/<img/i.test(h2), 'a hostile brand colour never reaches the markup'); assertContains(h2, '#B8283A');
+  qcFx(); ctx.DB.sup[0].name = evil; const w = ctx.qteCustWarnings(ctx.DB.qt[0], ctx.qteCustomerModel(ctx.DB.qt[0]), { pb: '', terms: '', notes: '' }); ctx.DB.qt[0].lines[0].desc = 'has ' + evil; ctx.qteOpenCustDialog('qc1');
+  assert(!/<img/i.test(mockEl('qdoc-warns').innerHTML), 'warning texts are escaped'); assert(!/data-i="[^"0-9]/.test(mockEl('qdoc-warns').innerHTML), 'data-i carries only integers');
+});
+test('SPEC-QTE-005 T-10a-e: price basis, terms (only from AS.quoteTerms), no truncation in the builder, nothing stored', () => {
+  qcFx(); ctx.AS.quoteTerms = 'APPROVED TERMS TEXT'; ctx.AS.priceBasis = 'Settings basis';
+  let html = qcDoc(null, { priceBasis: 'Line one\nline two', terms: 'T&C line 1\nT&C line 2' }); assertContains(html, 'Price basis:</strong> Line one line two'); assertContains(html, 'T&amp;C line 1<br>T&amp;C line 2'); assertNotContains(html, 'INVOICE-TERMS-SENTINEL');
+  html = qcDoc(null, { priceBasis: '', terms: '' }); assertNotContains(html, 'Price basis'); assertNotContains(html, 'Terms &amp; conditions');
+  html = qcDoc(null, { priceBasis: 'p'.repeat(400), terms: 't'.repeat(7000) }); assertContains(html, 'p'.repeat(400)); assertContains(html, 't'.repeat(7000));
+  ctx.qteOpenCustDialog('qc1'); assertEqual(mockEl('qdoc-pb').value, 'Settings basis'); assertEqual(mockEl('qdoc-terms').value, 'APPROVED TERMS TEXT'); mockEl('qdoc-pb').value = 'per-document edit'; ctx.qteCustGenerate();
+  assertEqual(ctx.AS.priceBasis, 'Settings basis', 'the dialog edit is not stored'); ctx.qteOpenCustDialog('qc1'); assertEqual(mockEl('qdoc-pb').value, 'Settings basis', 'and not remembered for the next document');
+});
+test('SPEC-QTE-005 T-11a-d: Settings fields persist through saveCfg and rCfg; a cut is visible; no default terms', () => {
+  qcFx(); ['c-name','c-tag','c-addr','c-email','c-phone','c-web','c-bank','c-terms'].forEach(k => { mockEl(k).value = 'v-' + k; });
+  mockEl('c-pbasis').value = 'My price basis'; mockEl('c-qterms').value = 'My terms'; ctx.saveCfg();
+  assertEqual(ctx.AS.priceBasis, 'My price basis'); assertEqual(ctx.AS.quoteTerms, 'My terms'); assertEqual(ctx.AS.name, 'v-c-name', 'the eight existing fields still persist');
+  mockEl('c-pbasis').value = ''; mockEl('c-qterms').value = ''; ctx.rCfg(); assertEqual(mockEl('c-pbasis').value, 'My price basis'); assertEqual(mockEl('c-qterms').value, 'My terms');
+  mockEl('c-pbasis').value = 'p\nq'.repeat(200); mockEl('c-qterms').value = 'q'.repeat(7000); const restore = qcCaptureToast(); try { ctx.saveCfg(); } finally { restore(); }
+  assertEqual(ctx.AS.priceBasis.length, 300); assertEqual(ctx.AS.quoteTerms.length, 6000); assertContains(qcToast, 'Price basis was longer than 300 characters and was cut'); assertContains(qcToast, 'Quote terms was longer than 6000 characters and was cut'); assertContains(qcToast, 'Settings saved');
+  ctx.AS = { name: 'n' }; ctx.rCfg(); assertEqual(mockEl('c-qterms').value, '', 'no default terms text'); assertEqual(mockEl('c-pbasis').value, '');
+  const cuts = []; assertEqual(ctx.qteLimitText(undefined, 300, 'X', true, cuts), '', 'absent -> exactly the empty string'); assertEqual(ctx.qteLimitText(null, 6000, 'X', false, cuts), ''); assertEqual(cuts.length, 0);
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'); assertContains(html, 'var qteCuts = [];'); assertContains(html, "(qteCuts.length ? '. ' + qteCuts.join(' ') : '')"); assertContains(html, "qteCuts.length ? 8000 : 4000");
+});
+test('SPEC-QTE-005 T-12: no AS.email fallback; invoice header unchanged', () => {
+  qcFx(); ctx.localStorage.removeItem('stackd_co_email'); const html = qcDoc(); assertNotContains(html, 'personal@example.com', 'the personal AS.email never prints');
+  const hdr = ctx.buildPdfHeader('#B8283A'); assertNotContains(hdr, 'personal@example.com');
+});
+test('SPEC-QTE-005 T-13a/b: no terms text ships anywhere (blank default; no needles in the app or user guide)', () => {
+  const needles = ['Standard Terms and Con' + 'ditions', 'Force Maj' + 'eure', 'non-refund' + 'able deposit', 'Late Payment of Commer' + 'cial Debts', 'Governing ' + 'Law'];
+  const files = ['../index.html', '../docs/user-guide.md']; files.forEach(f => { const t = fs.readFileSync(path.join(__dirname, f), 'utf8'); needles.forEach(n => assertNotContains(t, n, f + ' must not contain shipped terms text: ' + n)); });
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'); assert(/id="c-qterms"[^>]*placeholder=""/.test(html), 'the terms field has an empty placeholder');
+});
+test('SPEC-QTE-005 T-14: the new overlays stack after the Quote modal and before the AI chat block', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'), qt = html.indexOf('id="ov-qt"'), ai = html.indexOf('<!-- AI CHAT FLOATING BUTTON -->');
+  ['id="ov-qdoc"', 'id="ov-qunsaved"'].forEach(id => { const i = html.indexOf(id); assert(i > qt && i < ai, id + ' sits after #ov-qt and before the AI chat block'); });
+});
+test('SPEC-QTE-005 T-15: the AI prompt describes the customer quote and warns against sending the internal sheet', () => {
+  const p = String(ctx.AI_SYSTEM_PROMPT);
+  assertContains(p, 'Customer quote: in Quotes, the Customer quote button'); assertContains(p, 'never shows supplier, cost, freight, duty or markup'); assertContains(p, 'Internal costing sheet and must not be sent to a client'); assertContains(p, 'keep a copy of each PDF you send');
+});
+test('SPEC-QTE-005 T-17: keep-together wrappers and the page footer are present in the document', () => {
+  qcFx(); const html = qcDoc(null, { priceBasis: 'basis' }); ctx.AS.bank = 'Account: 123'; const h2 = qcDoc(null, {});
+  assertContains(html, '<div class="avoid"><div style="display:flex;justify-content:flex-end'); assertContains(h2, '<div class="avoid" style="margin-top:18px;"><div'); assertContains(html, '@page{size:A4;margin:12mm;@bottom-right{content:"QTE-0001'); assertContains(html, 'thead{display:table-header-group;}');
+});
+
 // ── SEC-GAP-021: status-tag class-attribute injection fix ──────
 console.log('\nSEC-GAP-021 — status-tag class injection fix');
 
