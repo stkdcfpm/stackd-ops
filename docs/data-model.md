@@ -64,6 +64,9 @@ Quote (DB.qt / K.qt = 'st_qt')
   sourceContactId   FK → Contact.id (optional, '' if none)
   linkedPOId        FK → PurchaseOrder.id (optional, '' if none)
   lineItems[]       each line carries its own supId → Supplier.id
+  freightTreatment  optional (v2.9.107): 'separate' | 'excluded'; absent = included in line prices
+  freightAmount     optional (v2.9.107): typed freight USD, only for 'separate'; absent = CBM estimate
+                       (Cloud columns quotes.freight_treatment text / quotes.freight_amount numeric, migration 0011)
 
 Purchase Order (DB.po / K.p = 'st_p')
   id                PK — uid()
