@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.106</title>
+<title>Stackd Ops v2.9.107</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -223,7 +223,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.106</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.107</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -1393,8 +1393,22 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.106</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.107</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>freight as its own line on the customer quote</strong> (<code>REQ/SPEC-QTE-006</code>). Each quote has a new <em>Freight in the customer quote</em> setting: <strong>Included in line prices</strong> (the default; every existing quote), <strong>Shown as a separate line</strong>, or <strong>Not included</strong> (ex-works / FOB).</li>
+          <li><strong>Shown as a separate line:</strong> freight, insurance and the DG surcharge leave the line prices and print as one <em>Freight</em> row, passed through <strong>at cost with no markup</strong>. Type a <em>Freight amount</em> when the forwarder confirms it; until then the row is labelled <em>Freight (estimate)</em> from the CBM rates and the pre-send dialog asks you to tick that you know. A $0 estimate (for example no CBM on any line) also asks for a tick so a missing CBM cannot silently under-quote.</li>
+          <li><strong>Not included:</strong> no freight, insurance or DG anywhere in the prices, no Freight row and no <em>Shipping:</em> line; the dialog reminds you to say so in your price basis.</li>
+          <li>The editor shows the freight line and estimate under the line grid; the Landed column is renamed <em>Landed (cost + duty)</em> and the Ins $ column is labelled when freight is separate or excluded. The internal costing sheet and the price-version history show the same. Changing the setting creates a new price version for each line.</li>
+          <li>Needs <strong>database migration 0011</strong> (two new columns on <code>quotes</code>) for Cloud Data users &mdash; apply it <strong>before</strong> this version is deployed, or Cloud quote saves will fail.</li>
+          <li>Tests 1278 &rarr; 1300; 22 mutation tests each failed their predicted test.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.106</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>a buyer-facing Customer quote</strong>. The <em>Customer quote</em> button (in the quote, and on every row of the Quotes list) opens a pre-send dialog and then a clean <strong>QUOTATION</strong> with your header and address, validity, a <strong>selling price per line</strong> (unit price and line total), any origin / destination / handling charges as separate lines, a total, a price-basis line, optional terms and your bank details. It shows <strong>no supplier, cost, freight, insurance, duty or markup</strong>; international freight, insurance and import duty are inside the line prices.</li>
@@ -3005,6 +3019,16 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
             <option value="FCL 40HQ">FCL 40HQ</option>
           </select>
         </div>
+        <div class="fld"><label>Freight in the customer quote</label>
+          <select id="qf-fr" onchange="qteFrSync()">
+            <option value="included">Included in line prices</option>
+            <option value="separate">Shown as a separate line</option>
+            <option value="excluded">Not included (ex-works / FOB)</option>
+          </select>
+        </div>
+        <div class="fld" id="qf-frAmt-wrap" style="display:none;"><label>Freight amount ($)</label>
+          <input type="number" id="qf-frAmt" min="0" max="10000000" step="any" placeholder="Blank = estimate from CBM" oninput="qteFrAmtInput()">
+        </div>
         <div class="fld"><label>Markup % <span style="font-size:.44rem;color:var(--m);">(on landed cost)</span></label><input type="number" id="qf-mkp" value="15" min="0" max="500" step="0.5" oninput="calcQte()"></div>
         <div class="fld"><label>Origin Charges Override ($)</label><input type="number" id="qf-origOv" min="0" step="5" oninput="calcQte()"></div>
         <div class="fld"><label>Dest Charges Override ($)</label><input type="number" id="qf-destOv" min="0" step="5" oninput="calcQte()"></div>
@@ -3041,10 +3065,12 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
         <div><div style="color:var(--m);margin-bottom:2px;">Dest Charges</div><div id="qt-dest" style="font-weight:600;">-</div></div>
         <div><div style="color:var(--m);margin-bottom:2px;">FPM Admin</div><div id="qt-adm" style="font-weight:600;">-</div></div>
         <div><div style="color:var(--m);margin-bottom:2px;">Total Landed</div><div id="qt-landed" style="font-weight:600;">-</div></div>
+        <div><div style="color:var(--m);margin-bottom:2px;">Freight line</div><div id="qt-freight" style="font-weight:600;">-</div></div>
         <div><div style="color:var(--m);margin-bottom:2px;">Markup</div><div id="qt-mkp-disp" style="font-weight:600;color:var(--gold);">-</div></div>
         <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (USD)</div><div id="qt-sell-usd" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
         <div><div style="color:var(--m);margin-bottom:2px;">Sell Price (GBP)</div><div id="qt-sell-gbp" style="font-weight:600;color:var(--cr);font-size:.7rem;">-</div></div>
       </div>
+      <div id="qt-fr-foot" style="font-size:.5rem;color:var(--m);margin-bottom:8px;"></div>
       <div id="qt-feasibility" style="margin-bottom:12px;"></div>
       <div class="fld" style="margin-bottom:12px;"><label>Notes</label>
         <textarea id="qf-nt" placeholder="Special conditions, scope, exclusions..." rows="2"></textarea>
@@ -6620,6 +6646,8 @@ async function refreshQteFromSupabase() {
     if (row.dest_charges != null) q.destCharges = row.dest_charges;
     if (row.fpm_admin != null) q.fpmAdmin = row.fpm_admin;
     if (row.ins_rate != null) q.insRate = row.ins_rate;
+    if (row.freight_treatment != null) q.freightTreatment = row.freight_treatment;
+    if (row.freight_amount != null) q.freightAmount = row.freight_amount;
     return q;
   });
   sv(K.qt, DB.qt);
@@ -6863,7 +6891,9 @@ async function persistQteChange(qt, skipRefresh) {
       origin_charges: qt.originCharges != null ? qt.originCharges : null,
       dest_charges: qt.destCharges != null ? qt.destCharges : null,
       fpm_admin: qt.fpmAdmin != null ? qt.fpmAdmin : null,
-      ins_rate: qt.insRate != null ? qt.insRate : null
+      ins_rate: qt.insRate != null ? qt.insRate : null,
+      freight_treatment: qt.freightTreatment != null ? qt.freightTreatment : null,
+      freight_amount: qt.freightAmount != null ? qt.freightAmount : null
     }).eq('id', qt.id);
     if (result.error) { console.warn('[Stackd] persistQteChange: failed to push Quote update for ' + qt.id, result.error.message); return; }
     if (!skipRefresh) await refreshQteFromSupabase();
@@ -7395,7 +7425,9 @@ async function migrateQteToSupabase() {
       origin_charges: q.originCharges != null ? q.originCharges : null,
       dest_charges: q.destCharges != null ? q.destCharges : null,
       fpm_admin: q.fpmAdmin != null ? q.fpmAdmin : null,
-      ins_rate: q.insRate != null ? q.insRate : null
+      ins_rate: q.insRate != null ? q.insRate : null,
+      freight_treatment: q.freightTreatment != null ? q.freightTreatment : null,
+      freight_amount: q.freightAmount != null ? q.freightAmount : null
     }).select().single();
     if (result.error) { toast('Migration failed on Quote ' + (q.num||q.id) + ' — no local data changed, Supabase rows already inserted are not auto-rolled-back. See dr-procedure.md.'); return; }
     qteIdMap[q.id] = result.data.id;
@@ -12848,7 +12880,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.106).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.107).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12887,7 +12919,7 @@ var AI_SYSTEM_PROMPT = [
   'Quotes tab → + New Quote. Format: QTE-001, QTE-002 etc.',
   'Header fields: Client, Date, Valid Until, Freight Mode (LCL / FCL 20GP / FCL 40HQ), Markup %, Currency, Status (Draft / Sent / Accepted / Declined / Expired).',
   'Quote lines from the catalogue: on the Quotes tab, click Add from Catalogue (or Link on an existing line) to pull in a Line Item. Supplier, description, UOM, DG, cost and CBM fill in automatically. Cost is converted to USD and treated as a line total, so it scales with quantity until you type a cost yourself; CBM scales the same way from the item dimensions. USD, GBP and BBD items convert at the stored rates; any other currency asks you for a USD rate, which is recorded on the line. A cost snapshot is kept, and an amber badge shows when the catalogue cost has changed since the quote was built. Refresh cost updates cost and CBM only, not supplier, description, UOM or DG. Duty % stays manual. Unlink returns a line to a plain typed line.',
-  'Customer quote: in Quotes, the Customer quote button (in the quote modal or on each list row) opens a pre-send dialog and then a buyer-facing QUOTATION with a selling price per line, any origin / destination / handling charges as separate lines, a total, an optional price basis line and optional terms. International freight, insurance and import duty are inside the line prices. It never shows supplier, cost, freight, duty or markup. The older Preview is now the Internal costing sheet and must not be sent to a client. Quote terms and price basis are set in Settings and can be edited for one document in the dialog. The document is generated from the saved quote and is not stored, so keep a copy of each PDF you send.',
+  'Customer quote: in Quotes, the Customer quote button (in the quote modal or on each list row) opens a pre-send dialog and then a buyer-facing QUOTATION with a selling price per line, any origin / destination / handling charges as separate lines, a total, an optional price basis line and optional terms. By default international freight, insurance and import duty are inside the line prices. Each quote has a Freight in the customer quote setting: Included in line prices (the default), Shown as a separate line (the document then prints a Freight row, labelled Freight (estimate) until the operator types a freight amount; insurance and the DG surcharge travel with the freight, passed through at cost with no markup, and the pre-send dialog asks for a tick on an estimate), or Not included for ex-works or FOB quotes (no freight row and no Shipping line). Quotes created by the AI assistant are always Included in line prices. It never shows supplier, cost, duty or markup. The older Preview is now the Internal costing sheet and must not be sent to a client. Quote terms and price basis are set in Settings and can be edited for one document in the dialog. The document is generated from the saved quote and is not stored, so keep a copy of each PDF you send.',
   'Line items: Product description, Supplier (from catalogue), Qty, UOM, Cost (a USD line total, not per unit), CBM, DG flag (Y/N), Duty %.',
   'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX.',
   'Overhead charges (Origin Charges, Dest Charges, FPM Admin — v2.9.68, REQ/SPEC-QTE-002): three fixed dollar amounts added to every quote\'s total, unmarked-up (added at cost, never scaled by margin). Global defaults are set in Settings → Rates & FX; each quote can override any of the three individually — three optional fields on the quote form (blank = inherit the current global default, any typed number including 0 = override just this quote). An overridden quote is unaffected by later changes to the global default for that specific field; an un-overridden quote keeps tracking the global default live. Setting a field to 0 removes that charge from just that one quote.',
@@ -14977,7 +15009,29 @@ function nextQteNum() {
   return 'QTE-' + String(max + 1).padStart(4, '0');
 }
 
-function cQteLine(line, qr, freightMode, totalCBM, quoteInsRateRaw) {
+// REQ/SPEC-QTE-006 — freight treatment. The ONLY place the three values are interpreted: undefined, '' and any unknown string -> 'included'.
+function qteFreightTreatment(v) { return (v === 'separate' || v === 'excluded') ? v : 'included'; }
+// A typed freight amount: a finite number >= 0, else null (blank/absent/invalid never counts as typed).
+function qteFreightTyped(v) { if (v === undefined || v === null || v === '') return null; var n = +v; return (isFinite(n) && n >= 0) ? n : null; }
+// The ONE place the freight figures are computed; cQte(), calcQte() and saveQte() all call it.
+function qteFreightFigures(lineCalcs, ft, amountRaw) {
+  ft = qteFreightTreatment(ft);
+  var freightUsd = lineCalcs.reduce(function(s,c){ return s + c.freight; }, 0);                     // CBM-driven freight in USD (NOT a CBM count) — the frzero key
+  var freightEst = lineCalcs.reduce(function(s,c){ return s + c.freight + c.dgAmt + c.ins; }, 0);   // informational unless separate
+  var typed = qteFreightTyped(amountRaw);
+  var isTyped = ft === 'separate' && typed !== null;
+  var freightLine = ft === 'separate' ? (typed !== null ? typed : freightEst) : 0;
+  return { freightTreatment: ft, freightUsd: freightUsd, freightEst: freightEst, freightLine: freightLine, freightTyped: isTyped };
+}
+// Header suffix for the freight/insurance columns when freight is not in the line prices.
+function qteFrSuffix(ft, isTyped) {
+  ft = qteFreightTreatment(ft);
+  if (ft === 'excluded') return ' (not charged)';
+  if (ft === 'separate') return isTyped ? ' (replaced by typed freight)' : ' (in Freight row)';
+  return '';
+}
+
+function cQteLine(line, qr, freightMode, totalCBM, quoteInsRateRaw, freightTreatment) {
   var cbm = +line.cbm || 0;
   var cost = +line.cost || 0;
   var freight = 0;
@@ -14996,8 +15050,10 @@ function cQteLine(line, qr, freightMode, totalCBM, quoteInsRateRaw) {
   var insPct = qteEffectiveInsRate(line, quoteInsPct);
   var ins = (cost + freight) * (insPct / 100);
   var duty = cost * (+line.dutyPct || 0) / 100;
-  var landed = cost + freight + dgAmt + ins + duty;
-  return { freight: freight, dgAmt: dgAmt, ins: ins, insPct: insPct, duty: duty, landed: landed };
+  var ft = qteFreightTreatment(freightTreatment);
+  // included: today's arithmetic, same expression and order. separate/excluded: freight, DG surcharge and insurance leave the line price (REQ-QTE-006).
+  var landed = ft === 'included' ? cost + freight + dgAmt + ins + duty : cost + duty;
+  return { freight: freight, dgAmt: dgAmt, ins: ins, insPct: insPct, duty: duty, landed: landed, freightTreatment: ft };
 }
 
 function qteEffectiveInsRate(line, quoteInsRatePct) {
@@ -15018,14 +15074,15 @@ function qteEffectiveOverhead(originVal, destVal, adminVal, qr) {
   return { origin: origin, dest: dest, admin: admin, total: origin + dest + admin };
 }
 
-function qteSellTotals(lines, lineCalcs, quoteMarkup, overheadTotal, fxGBPUSD) {
+function qteSellTotals(lines, lineCalcs, quoteMarkup, overheadTotal, fxGBPUSD, freightLine) {
   var sellUSD = lines.reduce(function(sum, l, i) {
     var m = qteEffectiveMargin(l, quoteMarkup);
     return sum + lineCalcs[i].landed * (1 + m / 100);
   }, 0);
   sellUSD += overheadTotal; // SPEC-QTE-001: overhead is never marked up, added at cost
+  var fl = +freightLine || 0; sellUSD += fl; // SPEC-QTE-006: a separate freight line is passed through at cost, never marked up
   var sellGBP = sellUSD / fxGBPUSD;
-  return { sellUSD: sellUSD, sellGBP: sellGBP, overhead: overheadTotal };
+  return { sellUSD: sellUSD, sellGBP: sellGBP, overhead: overheadTotal, freightLine: fl };
 }
 
 function cQte(qt) {
@@ -15033,13 +15090,16 @@ function cQte(qt) {
   var mode = qt.freightMode || 'LCL';
   var lines = qt.lines || [];
   var totalCBM = lines.reduce(function(s,l){ return s + (+l.cbm||0); }, 0);
-  var lineCalcs = lines.map(function(l){ return cQteLine(l, qr, mode, totalCBM, qt.insRate); });
+  var ft = qteFreightTreatment(qt.freightTreatment);
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, qr, mode, totalCBM, qt.insRate, ft); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
+  var fig = qteFreightFigures(lineCalcs, ft, qt.freightAmount);
   var markup = +qt.markup || 0;
   var overheadEff = qteEffectiveOverhead(qt.originCharges, qt.destCharges, qt.fpmAdmin, qr);
-  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, qr.fxGBPUSD);
-  var quotedTotal = totalLanded + totals.overhead;
-  return { totalLanded: totalLanded, overhead: totals.overhead, overheadBreakdown: overheadEff, quotedTotal: quotedTotal, sellUSD: totals.sellUSD, sellGBP: totals.sellGBP, lineCalcs: lineCalcs };
+  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, qr.fxGBPUSD, fig.freightLine);
+  var quotedTotal = totalLanded + fig.freightLine + totals.overhead;
+  return { totalLanded: totalLanded, overhead: totals.overhead, overheadBreakdown: overheadEff, quotedTotal: quotedTotal, sellUSD: totals.sellUSD, sellGBP: totals.sellGBP, lineCalcs: lineCalcs,
+    freightTreatment: fig.freightTreatment, freightEst: fig.freightEst, freightUsd: fig.freightUsd, freightLine: fig.freightLine, freightTyped: fig.freightTyped };
 }
 
 function rQte() {
@@ -15095,6 +15155,8 @@ function openQte() {
   G('qf-destOv').value = '';
   G('qf-admOv').value = '';
   G('qf-insRate').value = '';
+  G('qf-fr').value = 'included'; G('qf-frAmt').value = ''; qteFrApply();
+  if (G('qt-freight')) G('qt-freight').textContent = '-'; if (G('qt-fr-foot')) G('qt-fr-foot').textContent = '';
   G('qf-st').value = 'Draft';
   G('qf-nt').value = '';
   G('qf-approved-by').value = '';
@@ -15128,6 +15190,9 @@ function editQte(id) {
   G('qf-destOv').value = q.destCharges   !== undefined ? String(q.destCharges)   : '';
   G('qf-admOv').value  = q.fpmAdmin      !== undefined ? String(q.fpmAdmin)      : '';
   G('qf-insRate').value = q.insRate      !== undefined ? String(q.insRate)       : '';
+  G('qf-fr').value = qteFreightTreatment(q.freightTreatment);
+  G('qf-frAmt').value = (qteFreightTreatment(q.freightTreatment) === 'separate' && q.freightAmount !== undefined) ? String(q.freightAmount) : '';
+  qteFrApply();   // load-safe: NOT qteFrSync() (stale grid DOM must never be read into the freshly loaded cQL)
   G('qf-st').value = q.status || 'Draft';
   G('qf-nt').value = q.notes || '';
   G('qf-approved-by').value = q.approvedBy || '';
@@ -15142,6 +15207,23 @@ function editQte(id) {
   renderQteSourceDriftWarn(q);
   _qOpenSnap = qteFormSnapshot();
   G('ov-qt').classList.add('on');
+}
+
+// REQ/SPEC-QTE-006 form helpers.
+// LOAD-SAFE: visibility + stale-amount clear only. NEVER reads the grid DOM into cQL.
+function qteFrApply() {
+  var ft = qteFreightTreatment(G('qf-fr') ? G('qf-fr').value : '');
+  if (G('qf-frAmt-wrap')) G('qf-frAmt-wrap').style.display = ft === 'separate' ? '' : 'none';
+  if (ft !== 'separate' && G('qf-frAmt')) G('qf-frAmt').value = '';     // a stale figure can never resurrect
+}
+// USER-DRIVEN change of the treatment select. Syncs typed line edits into cQL first (rQLT() builds from cQL and never reads the inputs),
+// then re-renders. NEVER call this from openQte()/editQte(): there #qt-lines still holds the previously opened quote's grid, and
+// syncQLFromDOM() on a freshly loaded non-empty cQL would overwrite the loaded lines with that stale DOM (qlFld() returns '' for missing ids).
+function qteFrSync() { syncQLFromDOM(); qteFrApply(); rQLT(); calcQte(); }
+function qteFrAmtInput() { syncQLFromDOM(); rQLT(); calcQte(); }   // the header suffix depends on typed-or-not, so the grid re-renders
+function qteFormFreight() {   // the one reader every form-driven path uses
+  var ft = qteFreightTreatment(G('qf-fr') ? G('qf-fr').value : '');
+  return { ft: ft, amtRaw: ft === 'separate' && G('qf-frAmt') ? String(G('qf-frAmt').value).trim() : '' };
 }
 
 function qlFld(rid, f) {
@@ -15419,13 +15501,14 @@ function rQLT() {
   var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
   var quoteMarkup = G('qf-mkp') ? +G('qf-mkp').value : 15;
   var quoteInsRateRaw = G('qf-insRate') ? G('qf-insRate').value : '';
+  var ff = qteFormFreight();
   var quoteInsPct = (quoteInsRateRaw === '') ? QR.insRate * 100 : +quoteInsRateRaw;
   var totalCBM = cQL.reduce(function(s,l){ return s+(+l.cbm||0); }, 0);
   el.innerHTML = '<table class="tbl" style="font-size:.52rem;width:100%;min-width:1080px;">'
-    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD, line total)</th><th>CBM</th><th>DG</th><th>Duty %</th><th title="Markup on the landed cost of this line; overrides the quote-level Markup %. Blank inherits it.">Markup %</th><th>Ins %</th><th>Ins $</th><th>Landed</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
+    + '<thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>UOM</th><th>Cost (USD, line total)</th><th>CBM</th><th>DG</th><th>Duty %</th><th title="Markup on the landed cost of this line; overrides the quote-level Markup %. Blank inherits it.">Markup %</th><th>Ins %</th><th>Ins $' + san(qteFrSuffix(ff.ft, qteFreightTyped(ff.amtRaw) !== null)) + '</th><th>' + (ff.ft === 'included' ? 'Landed' : 'Landed (cost + duty)') + '</th><th>Sell</th><th>Note</th><th></th></tr></thead>'
     + '<tbody>'
     + cQL.map(function(l){
-        var calcR = cQteLine(l, QR, mode, totalCBM, quoteInsRateRaw);
+        var calcR = cQteLine(l, QR, mode, totalCBM, quoteInsRateRaw, ff.ft);
         var effM = qteEffectiveMargin(l, quoteMarkup);
         var sellP = calcR.landed * (1 + effM / 100);
         var hCount = l.priceHistory ? l.priceHistory.length : 0;
@@ -15491,7 +15574,7 @@ function renderQteLineHistory(rid) {
     + '<tbody>'
     + history.slice().reverse().map(function(v){
         return '<tr>'
-          + '<td style="font-weight:600;color:var(--cr);">v' + v.v + '</td>'
+          + '<td style="font-weight:600;color:var(--cr);">v' + v.v + ((v.ft || 'included') !== 'included' ? '<div style="font-weight:400;font-size:.44rem;color:var(--m);">' + (v.ft === 'separate' ? 'Freight: shown separately' : 'Freight: not included') + '</div>' : '') + '</td>'
           + '<td style="color:var(--m);">' + (v.ts ? v.ts.slice(0,16).replace('T',' ') : '') + '</td>'
           + '<td>$' + fn(v.cost,3) + '</td>'
           + '<td>' + fn(v.dutyPct,1) + '%</td>'
@@ -15516,7 +15599,8 @@ function updQteOverheadPlaceholders() {
 function calcQte() {
   updQteOverheadPlaceholders();
   if (!cQL.length) {
-    ['qt-orig','qt-dest','qt-adm','qt-landed','qt-mkp-disp','qt-sell-usd','qt-sell-gbp'].forEach(function(f){ var el=G(f); if(el) el.textContent='-'; });
+    ['qt-orig','qt-dest','qt-adm','qt-landed','qt-freight','qt-mkp-disp','qt-sell-usd','qt-sell-gbp'].forEach(function(f){ var el=G(f); if(el) el.textContent='-'; });
+    if (G('qt-fr-foot')) G('qt-fr-foot').textContent = '';   // cleared to empty, never '-'
     return;
   }
   var mode = G('qf-mode') ? G('qf-mode').value : 'LCL';
@@ -15526,13 +15610,23 @@ function calcQte() {
   var lines = cQL.map(function(l){
     return { cost:+qlFld(l.rid,'cost')||0, cbm:+qlFld(l.rid,'cbm')||0, dg:qlFld(l.rid,'dg'), dutyPct:+qlFld(l.rid,'dutyPct')||0, markup: qlEffectiveMarkupInput(l.rid), insRate: qlEffectiveInsInput(l.rid) };
   });
-  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM, insRateOv); });
+  var ff = qteFormFreight();
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM, insRateOv, ff.ft); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s + c.landed; }, 0);
+  var fig = qteFreightFigures(lineCalcs, ff.ft, ff.amtRaw);
   var origOvRaw = G('qf-origOv') ? G('qf-origOv').value : '';
   var destOvRaw = G('qf-destOv') ? G('qf-destOv').value : '';
   var admOvRaw  = G('qf-admOv')  ? G('qf-admOv').value  : '';
   var overheadEff = qteEffectiveOverhead(origOvRaw, destOvRaw, admOvRaw, QR);
-  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, QR.fxGBPUSD);
+  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, QR.fxGBPUSD, fig.freightLine);
+  if (G('qt-freight')) G('qt-freight').textContent = ff.ft === 'separate' ? '$' + fn(fig.freightLine,2) + (fig.freightTyped ? ' (typed)' : ' (estimate)') : '-';
+  if (G('qt-fr-foot')) {
+    var noCbm = lines.filter(function(l){ return !(+l.cbm > 0); }).length;
+    var noCbmTxt = noCbm + (noCbm === 1 ? ' line' : ' lines') + ' with no CBM';
+    G('qt-fr-foot').textContent = ff.ft === 'separate'
+      ? 'Freight estimate $' + fn(fig.freightEst,2) + ' (' + noCbmTxt + ')' + (fig.freightTyped ? ' — using typed $' + fn(fig.freightLine,2) + '. Insurance % has no effect while a typed freight amount is used' : '')
+      : ff.ft === 'excluded' ? 'Freight not included. Insurance % has no effect while freight is not included' : '';
+  }
   if (G('qt-orig'))     G('qt-orig').textContent     = '$' + fn(overheadEff.origin,0) + (overheadEff.origin !== QR.originCharges ? ' (override)' : '');
   if (G('qt-dest'))     G('qt-dest').textContent     = '$' + fn(overheadEff.dest,0)   + (overheadEff.dest   !== QR.destCharges   ? ' (override)' : '');
   if (G('qt-adm'))      G('qt-adm').textContent      = '$' + fn(overheadEff.admin,0)  + (overheadEff.admin  !== QR.fpmAdmin     ? ' (override)' : '');
@@ -15594,6 +15688,8 @@ function vQte() {
   if (!cQL.length)                  errs.push('Add at least one line item');
   if (G('qf-st').value === 'Accepted' && !G('qf-approved-by').value.trim())
     errs.push('Approved By is required when status is Accepted');
+  var ff = qteFormFreight();
+  if (ff.ft === 'separate' && ff.amtRaw !== '' && (qteFreightTyped(ff.amtRaw) === null || +ff.amtRaw > 10000000)) errs.push('Freight amount must be a number from 0 to 10,000,000, or blank');
   if (errs.length) { G('qt-verr').textContent = errs.join(' · '); return false; }
   G('qt-verr').textContent = '';
   return true;
@@ -15626,8 +15722,10 @@ async function saveQte() {
   });
   var totalCBM = lines.reduce(function(s,l){ return s+(l.cbm||0); }, 0);
   var insRateOvRaw = G('qf-insRate').value;
-  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM, insRateOvRaw); });
+  var ff = qteFormFreight();
+  var lineCalcs = lines.map(function(l){ return cQteLine(l, QR, mode, totalCBM, insRateOvRaw, ff.ft); });
   var totalLanded = lineCalcs.reduce(function(s,c){ return s+c.landed; }, 0);
+  var fig = qteFreightFigures(lineCalcs, ff.ft, ff.amtRaw);
   var markup = +G('qf-mkp').value||0;
   var existQ = EI.qt ? DB.qt.find(function(x){ return x.id===EI.qt; }) : null;
   var sellPByRid = {};
@@ -15639,9 +15737,10 @@ async function saveQte() {
     var effM = qteEffectiveMargin(l, markup);
     var sellP = +(calcR.landed * (1 + effM/100)).toFixed(2);
     sellPByRid[l.rid] = sellP;
-    var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== effM || lastV.insRate !== calcR.insPct;
+    var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== effM || lastV.insRate !== calcR.insPct || (lastV.ft || 'included') !== ff.ft;
     if (changed) {
       history.push({ v: lastV ? lastV.v+1 : 1, ts: new Date().toISOString(), cost: l.cost, dutyPct: l.dutyPct, markup: effM, insRate: calcR.insPct, ins: +fn(calcR.ins,2), landed: +fn(calcR.landed,2), sellPrice: sellP, note: qlFld(l.rid,'note') });
+      if (ff.ft !== 'included') history[history.length-1].ft = ff.ft;   // omitted for included, like every other optional field
     }
     l.priceHistory = history;
   });
@@ -15649,7 +15748,7 @@ async function saveQte() {
   var destOvRaw = G('qf-destOv').value;
   var admOvRaw  = G('qf-admOv').value;
   var overheadEff = qteEffectiveOverhead(origOvRaw, destOvRaw, admOvRaw, QR);
-  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, QR.fxGBPUSD);
+  var totals = qteSellTotals(lines, lineCalcs, markup, overheadEff.total, QR.fxGBPUSD, fig.freightLine);
   var sellUSD = totals.sellUSD;
   var sellGBP = totals.sellGBP;
   var wasAccepted = existQ && existQ.status === 'Accepted';
@@ -15681,6 +15780,8 @@ async function saveQte() {
   if (destOvRaw !== '') qt.destCharges = +destOvRaw;
   if (admOvRaw  !== '') qt.fpmAdmin = +admOvRaw;
   if (insRateOvRaw !== '') qt.insRate = +insRateOvRaw;
+  if (ff.ft !== 'included') qt.freightTreatment = ff.ft;                                  // omitted for included, never undefined
+  if (ff.ft === 'separate' && qteFreightTyped(ff.amtRaw) !== null) qt.freightAmount = +ff.amtRaw;
 
   if (_sb && localStorage.getItem('st_qt_cloud_migration_ts')) {
     if (!(await ensureSbAuth())) return;
@@ -15693,7 +15794,9 @@ async function saveQte() {
       origin_charges: qt.originCharges != null ? qt.originCharges : null,
       dest_charges: qt.destCharges != null ? qt.destCharges : null,
       fpm_admin: qt.fpmAdmin != null ? qt.fpmAdmin : null,
-      ins_rate: qt.insRate != null ? qt.insRate : null
+      ins_rate: qt.insRate != null ? qt.insRate : null,
+      freight_treatment: qt.freightTreatment != null ? qt.freightTreatment : null,
+      freight_amount: qt.freightAmount != null ? qt.freightAmount : null
     };
     var qtResult;
     if (EI.qt) {
@@ -16229,13 +16332,16 @@ function qteCustomerModel(q) {
     var U = Number((S / qty).toFixed(4));
     return { l: l, desc: String(l.desc == null ? '' : l.desc), uom: String(l.uom || 'pcs'), qty: qty, S: S, U: U, total: qteRound2(U * qty), noCost: !(+l.cost > 0), zeroPrice: !(S > 0) };
   });
-  var charges = [
+  var frAmt = qteRound2(c.freightLine);   // REQ/SPEC-QTE-006: freight is a charge row only for 'separate'
+  var freightRow = (c.freightTreatment === 'separate' && frAmt > 0) ? { key: 'freight', label: c.freightTyped ? 'Freight' : 'Freight (estimate)', amount: frAmt } : null;
+  var charges = (freightRow ? [freightRow] : []).concat([
     { key: 'origin', label: 'Origin charges',                              amount: qteRound2(oh.origin) },
     { key: 'dest',   label: 'Destination charges (local freight & taxes)', amount: qteRound2(oh.dest) },
     { key: 'admin',  label: 'Handling & admin',                             amount: qteRound2(oh.admin) }
-  ].filter(function(x){ return x.amount > 0; });
+  ].filter(function(x){ return x.amount > 0; }));
   var total = qteRound2(rows.reduce(function(s, r){ return s + r.total; }, 0) + charges.reduce(function(s, x){ return s + x.amount; }, 0));
-  return { rows: rows, charges: charges, total: total, engineTotal: c.sellUSD };
+  return { rows: rows, charges: charges, total: total, engineTotal: c.sellUSD,
+    freight: { treatment: c.freightTreatment, typed: c.freightTyped, amount: frAmt, freightUsd: qteRound2(c.freightUsd), printed: !!freightRow } };   // freightUsd is a DOLLAR amount (sum of line freight), not CBM
 }
 // Pure: returns the HTML string. opt = { priceBasis, terms, includeNotes }. Every printed value goes through san().
 function qteCustomerDocHtml(q, opt) {
@@ -16270,7 +16376,7 @@ function qteCustomerDocHtml(q, opt) {
     + '<div class="topbar"><span class="topbar-title">' + docTitle + '</span><button class="btn-print" onclick="setTimeout(function(){print();},200)">&#128438;&nbsp; Print / Save PDF</button></div>'
     + '<div class="doc">' + buildPdfHeader(colour)
     + '<div class="avoid" style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:18px;">'
-    +   '<div><div style="' + lbl + 'margin-bottom:6px;">Quoted to</div><div style="font-size:.65rem;line-height:1.7;"><strong>' + (san(q.client) || '-') + '</strong><br>Shipping: ' + san(q.freightMode || 'LCL') + '</div></div>'
+    +   '<div><div style="' + lbl + 'margin-bottom:6px;">Quoted to</div><div style="font-size:.65rem;line-height:1.7;"><strong>' + (san(q.client) || '-') + '</strong>' + (m.freight.treatment === 'excluded' ? '' : '<br>Shipping: ' + san(q.freightMode || 'LCL')) + '</div></div>'
     +   '<div style="text-align:right;"><div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:' + colour + ';margin-bottom:8px;line-height:1;">QUOTATION</div>'
     +   '<table style="font-size:.62rem;margin-left:auto;width:auto;"><tbody>'
     +   '<tr><td style="' + lbl + 'padding-right:14px;">Quote #</td><td style="text-align:right;font-weight:600;">' + san(q.num || '') + '</td></tr>'
@@ -16299,6 +16405,11 @@ function qteCustWarnings(q, m, text) {
     if (r.zeroPrice) out.push({ k: 'zp:' + i, lvl: 'warn', t: 'Line ' + (i+1) + ' has a selling price of 0' });
   });
   if (text.notes) nameHits(text.notes, 'The included Notes');
+  var fr = m.freight;   // REQ/SPEC-QTE-006 freight warnings
+  if (fr.treatment === 'separate') {
+    if ((!fr.typed && fr.freightUsd === 0) || (fr.typed && fr.amount === 0)) out.push({ k: 'frzero', lvl: 'ack', t: 'No freight is calculated (no CBM or rate): the Freight row would show insurance only, or no row at all for a typed 0. Check before sending' });
+    else if (!fr.typed && fr.amount >= 0.01) out.push({ k: 'frest', lvl: 'ack', t: 'The Freight row is an estimate from CBM rates and insurance \u2014 the forwarder\u2019s figure may differ' });
+  } else if (fr.treatment === 'excluded') out.push({ k: 'frexc', lvl: 'warn', t: 'Freight is not included \u2014 make sure your price basis says so' });
   if (!q.validUntil) out.push({ k: 'val', lvl: 'warn', t: 'No validity date is set — this quote would be open-ended' });
   else if (String(q.validUntil).slice(0, 10) < today()) out.push({ k: 'past', lvl: 'warn', t: 'The validity date ' + q.validUntil + ' has already passed' });
   if (!q.dt) out.push({ k: 'dt', lvl: 'warn', t: 'The quote has no date' });
@@ -16378,7 +16489,7 @@ function qteFormSnapshot() {
   var n6 = function(x){ return Math.round((+x || 0) * 1e6) / 1e6; }, nb = function(v){ return (v === '' || v === undefined || v === null) ? '' : n6(v); };
   var hdr = ['qf-num','qf-client','qf-dt','qf-valid','qf-cur','qf-mode','qf-st','qf-approved-by','qf-approved-note'].map(function(k){ return String(G(k) ? G(k).value : '').trim(); });
   hdr.push(nb(G('qf-mkp') ? G('qf-mkp').value : ''));
-  ['qf-origOv','qf-destOv','qf-admOv','qf-insRate'].forEach(function(k){ hdr.push(String(G(k) ? G(k).value : '').trim()); });
+  ['qf-origOv','qf-destOv','qf-admOv','qf-insRate','qf-fr','qf-frAmt'].forEach(function(k){ hdr.push(String(G(k) ? G(k).value : '').trim()); });
   hdr.push(String(G('qf-nt') ? G('qf-nt').value : '').trim());
   var ls = cQL.map(function(l){ var r = l.rid; return [ qlFld(r,'supId'), String(qlFld(r,'desc')).trim(), n6(qlFld(r,'qty')), String(qlFld(r,'uom')), n6(qlFld(r,'cost')), n6(qlFld(r,'cbm')), !!qlFld(r,'dg'), n6(qlFld(r,'dutyPct')), nb(qlFld(r,'mkp')), nb(qlFld(r,'insRate')), l.lid || '', !!l.costManual, !!l.cbmManual ]; });
   return JSON.stringify([hdr, ls]);
@@ -16426,14 +16537,15 @@ function prevQteDoc(q) {
     + '<div style="font-size:11px;">' + san(q.dt||'') + '</div>'
     + '<div style="font-size:11px;color:#888;">Valid until: ' + san(q.validUntil||'—') + '</div></div>'
     + '</div>'
-    + '<div style="margin-bottom:12px;font-size:11px;"><strong>Client:</strong> ' + san(q.client||'') + ' &nbsp; <strong>Mode:</strong> ' + san(q.freightMode||'LCL') + '</div>'
-    + '<table><thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>Cost</th><th>Freight</th><th>Insurance</th><th>Duty</th><th>Landed</th></tr></thead>'
+    + '<div style="margin-bottom:12px;font-size:11px;"><strong>Client:</strong> ' + san(q.client||'') + ' &nbsp; <strong>Mode:</strong> ' + san(q.freightMode||'LCL') + (c.freightTreatment === 'separate' ? ' &nbsp; <strong>Freight:</strong> shown separately' : c.freightTreatment === 'excluded' ? ' &nbsp; <strong>Freight:</strong> not included' : '') + '</div>'
+    + '<table><thead><tr><th>Supplier</th><th>Description</th><th>Qty</th><th>Cost</th><th>Freight' + san(qteFrSuffix(c.freightTreatment, c.freightTyped)) + '</th><th>Insurance' + san(qteFrSuffix(c.freightTreatment, c.freightTyped)) + '</th><th>Duty</th><th>' + (c.freightTreatment === 'included' ? 'Landed' : 'Landed (cost + duty)') + '</th></tr></thead>'
     + '<tbody>' + linesHtml + '</tbody></table>'
     + '<div style="margin-top:14px;display:flex;justify-content:flex-end;">'
     + '<table style="width:280px;"><tbody>'
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Origin Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.origin,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Destination Charges</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.dest,0) + '</td></tr>'
     + '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Admin</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.overheadBreakdown.admin,0) + '</td></tr>'
+    + (c.freightTreatment === 'separate' ? '<tr><td style="padding:3px 8px;color:#666;font-size:11px;">Freight (' + (c.freightTyped ? 'typed' : 'estimate') + ')</td><td style="padding:3px 8px;text-align:right;font-size:11px;">$' + fn(c.freightLine,0) + '</td></tr>' : '')
     + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (USD)</td><td style="padding:3px 8px;text-align:right;font-weight:600;font-size:14px;color:#B8283A;">' + fmt(c.sellUSD,'USD') + '</td></tr>'
     + '<tr><td style="padding:3px 8px;font-weight:600;">Sell Price (GBP)</td><td style="padding:3px 8px;text-align:right;font-weight:600;">£' + fn(c.sellGBP,0) + '</td></tr>'
     + '</tbody></table></div>'

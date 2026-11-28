@@ -951,3 +951,11 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 ## QTE-GAP-006 — The customer quote document is not stored (Open, disclosed with REQ-QTE-005, v2.9.106)
 
 **Detail:** `qteCustomerDocHtml()` renders the buyer-facing quotation live from the saved quote, today's Settings (header, bank, price basis, terms), the current rate engine and the current catalogue; nothing is stored and quotes carry no "issued" marker. A reprint can therefore differ from what the buyer received, which matters most for the **terms**, which form part of the contract. The user guide and the pre-send dialog tell the operator to keep a copy of each PDF sent. **Status:** open — Phase 2 (REQ-QTE-005 §7): an immutable `issued_docs` snapshot per issue, one additive nullable jsonb column on `quotes` (Cloud Data migration, `saveQte()` carry-forward, schema-migration-reviewer), status moves to Sent on issue; GDPR note: the snapshot would be transmitted to Supabase for migrated quotes and cannot be erased through the app (SEC-GAP-022).
+
+## QTE-GAP-007 — Mixed-version window after migration 0011 (Open, accepted, disclosed with REQ-QTE-006, v2.9.107)
+
+**Detail:** once the freight columns exist, an older cached client or second device saving a `separate`/`excluded` quote omits `freight_treatment`/`freight_amount` from its write, so the stored columns stay set but that client refreshes the quote as *Included in line prices* and prices it accordingly (and rewrites `calc_sellUSD` without freight, so the newer client then shows a drift acknowledgement until it re-saves). **Status:** accepted for a single-operator tool; mitigation is to hard-refresh every device after deploy (documented in `docs/dr-procedure.md`).
+
+## QTE-GAP-008 — Sheets-only new quotes arrive as "Included in line prices" (Open, accepted, v2.9.107)
+
+**Detail:** `FIELD_MAPS.qt` does not carry `freightTreatment`/`freightAmount` (same class as `originCharges`/`insRate`), so a quote that exists only in the linked Sheet and is pulled as new is created as Included. An existing local quote keeps its fields through `mergePulledWithLocal()`. Migration convention note: `0009`–`0011` use no `IF NOT EXISTS`, so a re-run fails loudly (corrupts nothing). **Status:** accepted.

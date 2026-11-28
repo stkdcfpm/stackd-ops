@@ -123,3 +123,10 @@ If the Supabase-backed Suppliers/Buyers feature (REQ/SPEC-CLOUD-001) needs to be
 - If two operators both restore from different backups, their data diverges silently — coordinate restores with all operators
 
 See `docs/known-gaps.md` BACKUP-GAP-001 and BACKUP-GAP-002 for the formal gap register entries.
+
+
+## Deploy order for migration 0011 (quotes freight columns, v2.9.107)
+
+`supabase/migrations/0011_quotes_freight_treatment.sql` adds two nullable columns to `quotes` (`freight_treatment text`, `freight_amount numeric`). **Apply it to Supabase BEFORE v2.9.107 reaches any user with Cloud Data configured** (not only users with migrated quotes), and confirm PostgREST has picked up the new columns (a PGRST204 error means the schema cache has not). The new client sends both columns on every Cloud quote write, so against an un-migrated database: `saveQte` shows a "Save failed" toast, but `persistQteChange()` (nine call sites: status changes, the Convert-to-PO link and the six sweep retrofits) only logs a console warning and returns — **a silently unsaved status change or PO link is the symptom to look for.** `migrateQteToSupabase` aborts at its first insert with no partial rows. Rollback of the app alone is safe: the columns are nullable and older clients ignore them; note an older client saving a `separate`/`excluded` quote leaves the stored columns set but shows and prices that quote as Included until the newer client re-saves it. After deploying, hard-refresh every device.
+
+**App rollback:** leave the two columns in place — dropping them would permanently destroy every `separate`/`excluded` setting and typed freight amount. `restoreQteMigrationArchive()` reverts local quotes to the pre-migration snapshot, which has no freight fields (existing behaviour for every optional quote field).
