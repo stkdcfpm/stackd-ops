@@ -123,3 +123,8 @@ If the Supabase-backed Suppliers/Buyers feature (REQ/SPEC-CLOUD-001) needs to be
 - If two operators both restore from different backups, their data diverges silently — coordinate restores with all operators
 
 See `docs/known-gaps.md` BACKUP-GAP-001 and BACKUP-GAP-002 for the formal gap register entries.
+
+
+## Deploy order for migration 0011 (quotes freight columns, v2.9.107)
+
+`supabase/migrations/0011_quotes_freight_treatment.sql` adds two nullable columns to `quotes` (`freight_treatment text`, `freight_amount numeric`). **Apply it to Supabase BEFORE v2.9.107 is deployed**: the new client sends both columns on every Cloud quote save, so every save would fail on unknown columns until the migration is applied (not only quotes using the new feature). Rollback of the app alone is safe: the columns are nullable and older clients ignore them; note an older client saving a `separate`/`excluded` quote leaves the stored columns set but shows and prices that quote as Included until the newer client re-saves it. After deploying, hard-refresh every device.

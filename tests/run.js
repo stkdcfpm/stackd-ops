@@ -15605,7 +15605,7 @@ test('SPEC-QTE-005 T-14: the new overlays stack after the Quote modal and before
 });
 test('SPEC-QTE-005 T-15: the AI prompt describes the customer quote and warns against sending the internal sheet', () => {
   const p = String(ctx.AI_SYSTEM_PROMPT);
-  assertContains(p, 'Customer quote: in Quotes, the Customer quote button'); assertContains(p, 'never shows supplier, cost, freight, duty or markup'); assertContains(p, 'Internal costing sheet and must not be sent to a client'); assertContains(p, 'keep a copy of each PDF you send');
+  assertContains(p, 'Customer quote: in Quotes, the Customer quote button'); assertContains(p, 'never shows supplier, cost, duty or markup'); assertContains(p, 'Internal costing sheet and must not be sent to a client'); assertContains(p, 'keep a copy of each PDF you send');
 });
 test('SPEC-QTE-005 T-17: keep-together wrappers and the page footer are present in the document', () => {
   qcFx(); const html = qcDoc(null, { priceBasis: 'basis' }); ctx.AS.bank = 'Account: 123'; const h2 = qcDoc(null, {});
@@ -15861,7 +15861,7 @@ test('SPEC-QTE-006 T-18: cQteLine call sites are exactly the five known function
 
 test('SPEC-QTE-006 T-19: AI_SYSTEM_PROMPT states the three treatments; AI-created quotes carry no freightTreatment', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
-  ['Included in line prices', 'Shown as a separate line', 'Not included', 'Freight (estimate)'].forEach(t => assertContains(html.slice(html.indexOf('AI_SYSTEM_PROMPT')), t));
+  ['Included in line prices', 'Shown as a separate line', 'Not included', 'Freight (estimate)'].forEach(t => assertContains(html.slice(html.indexOf('var AI_SYSTEM_PROMPT ='), html.indexOf('var AI_SYSTEM_PROMPT =') + 60000), t));
   assert(/freightTreatment/.test(html) && !/create_quote[\s\S]{0,400}freightTreatment/.test(html.slice(html.indexOf('function handleAIAction'), html.indexOf('function handleAIAction') + 20000)), 'create_quote path never sets freightTreatment');
 });
 
