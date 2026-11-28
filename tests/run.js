@@ -15572,6 +15572,24 @@ test('SPEC-QTE-005 T-11a-d: Settings fields persist through saveCfg and rCfg; a 
   const cuts = []; assertEqual(ctx.qteLimitText(undefined, 300, 'X', true, cuts), '', 'absent -> exactly the empty string'); assertEqual(ctx.qteLimitText(null, 6000, 'X', false, cuts), ''); assertEqual(cuts.length, 0);
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'); assertContains(html, 'var qteCuts = [];'); assertContains(html, "(qteCuts.length ? '. ' + qteCuts.join(' ') : '')"); assertContains(html, "qteCuts.length ? 8000 : 4000");
 });
+test('SPEC-QTE-005 T-11e-g: doImport() restore carries priceBasis/quoteTerms, defaults absent to exactly empty, cuts visibly in the last toast', () => {
+  const runRestore = (company) => {
+    resetDB(); const msgs = []; const oT = ctx.toast, oC = ctx.confirm, oFR = ctx.FileReader; let cb = null;
+    ctx.toast = (m, d) => { msgs.push([String(m), d]); }; ctx.confirm = () => true;
+    ctx.FileReader = function () { this.onload = null; this.readAsText = function () { cb = this.onload; }; };
+    try {
+      ctx.doImport({ target: { files: [{ name: 'b.json' }] } });
+      cb({ target: { result: JSON.stringify({ _app: 'Stackd Ops', _version: 2, _exported: new Date().toISOString(), sup: [], li: [], inv: [], po: [], payments: [], sh: [], qt: [], company }) } });
+    } finally { ctx.toast = oT; ctx.confirm = oC; ctx.FileReader = oFR; }
+    return msgs[msgs.length - 1];
+  };
+  let last = runRestore({ name: 'Co', priceBasis: 'CIF Bridgetown', quoteTerms: 'Terms X' });
+  assertEqual(ctx.AS.priceBasis, 'CIF Bridgetown'); assertEqual(ctx.AS.quoteTerms, 'Terms X'); assertEqual(last[1], 4000, 'no cut -> normal toast duration');
+  runRestore({ name: 'Old backup' }); assertEqual(ctx.AS.priceBasis, '', 'absent -> exactly the empty string'); assertEqual(ctx.AS.quoteTerms, '');
+  last = runRestore({ name: 'Co', priceBasis: 'p'.repeat(400), quoteTerms: 'q'.repeat(7000) });
+  assertEqual(ctx.AS.priceBasis.length, 300); assertEqual(ctx.AS.quoteTerms.length, 6000);
+  assertContains(last[0], 'Price basis was longer than 300 characters and was cut'); assertContains(last[0], 'Quote terms'); assertEqual(last[1], 8000, 'cut toast is held longer');
+});
 test('SPEC-QTE-005 T-12: no AS.email fallback; invoice header unchanged', () => {
   qcFx(); ctx.localStorage.removeItem('stackd_co_email'); const html = qcDoc(); assertNotContains(html, 'personal@example.com', 'the personal AS.email never prints');
   const hdr = ctx.buildPdfHeader('#B8283A'); assertNotContains(hdr, 'personal@example.com');
