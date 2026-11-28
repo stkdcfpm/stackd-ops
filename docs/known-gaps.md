@@ -956,3 +956,6 @@ Every line in `lines[]` is copied onto this single PO regardless of its own `sup
 
 **Detail:** once the freight columns exist, an older cached client or second device saving a `separate`/`excluded` quote omits `freight_treatment`/`freight_amount` from its write, so the stored columns stay set but that client refreshes the quote as *Included in line prices* and prices it accordingly (and rewrites `calc_sellUSD` without freight, so the newer client then shows a drift acknowledgement until it re-saves). **Status:** accepted for a single-operator tool; mitigation is to hard-refresh every device after deploy (documented in `docs/dr-procedure.md`).
 
+## QTE-GAP-008 — Sheets-only new quotes arrive as "Included in line prices" (Open, accepted, v2.9.107)
+
+**Detail:** `FIELD_MAPS.qt` does not carry `freightTreatment`/`freightAmount` (same class as `originCharges`/`insRate`), so a quote that exists only in the linked Sheet and is pulled as new is created as Included. An existing local quote keeps its fields through `mergePulledWithLocal()`. Migration convention note: `0009`–`0011` use no `IF NOT EXISTS`, so a re-run fails loudly (corrupts nothing). **Status:** accepted.
