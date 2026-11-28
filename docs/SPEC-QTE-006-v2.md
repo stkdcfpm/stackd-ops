@@ -17,7 +17,7 @@ Citations measured at `main` aa7131e (+ docs); `node scripts/check-req-citations
 | 1 | `qteFreightTreatment()` / `qteFreightTyped()` pure helpers | new, just before `cQteLine()` (`14980`) |
 | 2 | `cQteLine()` 6th param; landed = cost + duty for non-included | `14980-15001` |
 | 3 | `qteSellTotals()` 6th param `freightLine` | `15021` |
-| 4 | `cQte()` computes `freightEst`, `freightLine`, `freightCbm`, passes treatment | `15031` |
+| 4 | `cQte()` computes `freightEst`, `freightLine`, `freightUsd`, via `qteFreightFigures()`, passes treatment | `15031` |
 | 5 | Form: `qf-fr` select, `qf-frAmt` input, `qteFrSync()`, validation in `vQte()` | modal `3002-3012`, `15590` |
 | 6 | `rQLT()` / `calcQte()` / `saveQte()` read the form and pass the treatment | `15412`, `15516`, `15602` |
 | 7 | Versioning trigger + history `ft` field | `saveQte()` `15642-15645` |
