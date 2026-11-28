@@ -6,7 +6,7 @@
 **GDPR / data flow:** commercial amounts and an enum on an existing record; no personal data; Cloud-migrated quotes already sit in the existing Supabase project; no new external flow. The freight figure and the word "estimate" print to the buyer by design.
 Citations measured at `main` aa7131e (+ docs); `node scripts/check-req-citations.js` run before submission.
 
-**Known REQ clarification (flagged for the gate):** REQ-QTE6-007 mentions "Freight, Insurance and DG columns". No DG column exists today in `prevQteDoc` (`16419`) or `rQLT` (`15423`); only the internal sheet has Freight and Insurance columns, and the editor grid has only **Ins $**. The suffix rule therefore applies to those that exist (internal sheet: Freight, Insurance; editor grid: Ins $); the DG amount has never had its own column and is not given one.
+**Known REQ clarification (flagged for the gate):** REQ-QTE6-007 mentions "Freight, Insurance and DG columns". No DG column exists today in `prevQteDoc` (`16419`) or `rQLT` (`15412`); only the internal sheet has Freight and Insurance columns, and the editor grid has only **Ins $**. The suffix rule therefore applies to those that exist (internal sheet: Freight, Insurance; editor grid: Ins $); the DG amount has never had its own column and is not given one.
 
 ---
 
@@ -19,12 +19,12 @@ Citations measured at `main` aa7131e (+ docs); `node scripts/check-req-citations
 | 3 | `qteSellTotals()` 6th param `freightLine` | `15021` |
 | 4 | `cQte()` computes `freightEst`, `freightLine`, `freightCbm`, passes treatment | `15031` |
 | 5 | Form: `qf-fr` select, `qf-frAmt` input, `qteFrSync()`, validation in `vQte()` | modal `3002-3012`, `15590` |
-| 6 | `rQLT()` / `calcQte()` / `saveQte()` read the form and pass the treatment | `15423`, `15519`, `15626` |
+| 6 | `rQLT()` / `calcQte()` / `saveQte()` read the form and pass the treatment | `15412`, `15516`, `15602` |
 | 7 | Versioning trigger + history `ft` field | `saveQte()` `15642-15645` |
 | 8 | Cloud Data: four row builders + migration 0011 | `6619`, `6858`, `7395`, `15687` |
 | 9 | Customer model/doc: Freight row, warnings `frest`/`frzero`/`frexc`, Shipping line | `qteCustomerModel` `16224`, `qteCustWarnings` `16288` |
 | 10 | Internal costing sheet, editor summary/footer, history panel | `prevQteDoc` `16401`, `3043`, `renderQteLineHistory` `15480` |
-| 11 | Snapshot ids, open/edit reset/load | `qteFormSnapshot` `16377`, `openQte` `15094`, `editQte` `15112` |
+| 11 | Snapshot ids, open/edit reset/load | `qteFormSnapshot` `16377`, `openQte` `15084`, `editQte` `15114` |
 | 12 | Docs, `AI_SYSTEM_PROMPT`, changelog, version strings, tests | §10, §11 |
 
 **Unchanged (confirmed):** `rfqLandedGBP()` (`4263`, four-argument `cQteLine` call — stays `included` semantics), `qteToPoConvert()` (reads `l.cost`, never `cQte`), the promotion queue (no `cQteLine` call), `buildPdfHeader()`, the REQ-QTE5 reconciliation rule (printed Total = Σ printed lines + printed rows).
@@ -107,10 +107,10 @@ function qteFormFreight() {   // the one reader every form-driven path uses
 
 ## 4. Form-driven paths (REQ-QTE6-002)
 
-- `rQLT()` (`15423`): `var ff = qteFormFreight();` `cQteLine(l, QR, mode, totalCBM, quoteInsRateRaw, ff.ft)`. Header for the **Landed** column: `ff.ft === 'included' ? 'Landed' : 'Landed (cost + duty)'`; header for **Ins $**: `'Ins $' + qteFrSuffix(ff)`.
+- `rQLT()` (`15412`): `var ff = qteFormFreight();` `cQteLine(l, QR, mode, totalCBM, quoteInsRateRaw, ff.ft)`. Header for the **Landed** column: `ff.ft === 'included' ? 'Landed' : 'Landed (cost + duty)'`; header for **Ins $**: `'Ins $' + qteFrSuffix(ff)`.
 - `qteFrSuffix(ff)`: `included` → `''`; `excluded` → `' (not charged)'`; `separate` with `qteFreightTyped(ff.amtRaw) !== null` → `' (replaced by typed freight)'`; else `' (in Freight row)'`. Used by `rQLT`, `prevQteDoc` (Freight and Insurance headers).
-- `calcQte()` (`15519`): pass `ff.ft` to `cQteLine`; compute `freightCbm`, `freightEst`, `freightLine` exactly as `cQte()` (a shared helper `qteFreightFigures(lineCalcs, ff)` returns `{freightCbm, freightEst, freightLine, typed}` and is used by both `cQte()` and `calcQte()` so they cannot diverge); `qteSellTotals(..., freightLine)`. New summary cell `qt-freight` ("Freight line", `$` + `fn(freightLine,0)` + ` (estimate)` when separate & not typed; `-` otherwise) added to the grid at `3043`. Footer element `qt-fr-foot` (below the grid) renders the REQ-QTE6-007 per-treatment text exactly: `separate`/no typed → `Freight estimate $X (N lines with no CBM)`; `separate`/typed → `Freight estimate $X (N lines with no CBM) — using typed $Y. Insurance % has no effect while a typed freight amount is used`; `excluded` → `Freight not included. Insurance % has no effect while freight is not included`; `included` → empty. `N` = count of lines with `+cbm = 0`.
-- `saveQte()` (`15626`): `var ff = qteFormFreight();` `cQteLine(..., insRateOvRaw, ff.ft)`; `qteSellTotals(..., freightLine)`; record: `if (ff.ft !== 'included') qt.freightTreatment = ff.ft; if (ff.ft === 'separate' && qteFreightTyped(ff.amtRaw) !== null) qt.freightAmount = +ff.amtRaw;` (keys omitted otherwise, never `undefined`); `calc_*` from the new totals.
+- `calcQte()` (`15516`): pass `ff.ft` to `cQteLine`; compute `freightCbm`, `freightEst`, `freightLine` exactly as `cQte()` (a shared helper `qteFreightFigures(lineCalcs, ff)` returns `{freightCbm, freightEst, freightLine, typed}` and is used by both `cQte()` and `calcQte()` so they cannot diverge); `qteSellTotals(..., freightLine)`. New summary cell `qt-freight` ("Freight line", `$` + `fn(freightLine,0)` + ` (estimate)` when separate & not typed; `-` otherwise) added to the grid at `3043`. Footer element `qt-fr-foot` (below the grid) renders the REQ-QTE6-007 per-treatment text exactly: `separate`/no typed → `Freight estimate $X (N lines with no CBM)`; `separate`/typed → `Freight estimate $X (N lines with no CBM) — using typed $Y. Insurance % has no effect while a typed freight amount is used`; `excluded` → `Freight not included. Insurance % has no effect while freight is not included`; `included` → empty. `N` = count of lines with `+cbm = 0`.
+- `saveQte()` (`15602`): `var ff = qteFormFreight();` `cQteLine(..., insRateOvRaw, ff.ft)`; `qteSellTotals(..., freightLine)`; record: `if (ff.ft !== 'included') qt.freightTreatment = ff.ft; if (ff.ft === 'separate' && qteFreightTyped(ff.amtRaw) !== null) qt.freightAmount = +ff.amtRaw;` (keys omitted otherwise, never `undefined`); `calc_*` from the new totals.
 - **Versioning (REQ-QTE6-006):** inside the per-line loop at `15642`:
   `var curFt = ff.ft; var changed = !lastV || lastV.cost !== l.cost || lastV.dutyPct !== l.dutyPct || lastV.markup !== effM || lastV.insRate !== calcR.insPct || (lastV.ft || 'included') !== curFt;` and the pushed entry gains `ft: curFt`. A typed-amount-only change does not version lines.
 
