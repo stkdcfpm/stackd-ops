@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23B8283A'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='21'>S</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https:; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'">
-<title>Stackd Ops v2.9.105</title>
+<title>Stackd Ops v2.9.106</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <!-- SPEC-CLOUD-001: vendored @supabase/supabase-js UMD client (per DASH-GAP-001 precedent) — same-origin static file, version-pinned, no auto-update. Only used for Suppliers/Buyers when Cloud Data is configured in Settings. -->
 <script src="vendor/supabase-js-v2.min.js"></script>
@@ -223,7 +223,7 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 </div>
 
 <div id="app-shell" style="display:none;">
-<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.105</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
+<div id="banner" class="banner"><span>&#9889; Paste proxy URL to enable Sheets sync:</span><input type="text" id="url-in" placeholder="https://your-worker.workers.dev/macros/s/.../exec"><button onclick="setUrl()">Connect</button><button onclick="document.getElementById('banner').style.display='none'" style="background:transparent;border:none;cursor:pointer;color:var(--ink);">&#10005;</button></div><nav class="nav"><div class="logo"><div class="logo-wm"><div class="logo-text">STACK<span>D</span></div><hr class="logo-rule"><div class="logo-tag">SOURCE&nbsp;&middot;&nbsp;SUPPLY&nbsp;&middot;&nbsp;SHIP</div></div></div><button onclick="openChangelog()" style="font-family:'DM Mono',monospace;font-size:.42rem;color:#6A6060;border:1px solid #3A3537;background:transparent;padding:2px 7px;border-radius:2px;cursor:pointer;margin-right:12px;flex-shrink:0;letter-spacing:.06em;">v2.9.106</button><div class="tabs"><button class="tab on" data-v="dash" onclick="showV('dash',this)">Dashboard</button><button class="tab" data-v="contacts" onclick="showV('contacts',this)">Contacts</button><button class="tab" data-v="ord" onclick="showV('ord',this)">Orders</button><button class="tab" data-v="sup" onclick="showV('sup',this)" data-en="Suppliers" data-zh="供应商">Suppliers</button><button class="tab" data-v="li" onclick="showV('li',this)" data-en="Line Items" data-zh="商品目录">Line Items</button><button class="tab" data-v="buy" onclick="showV('buy',this)">Buyers</button><button class="tab" data-v="qt" onclick="showV('qt',this)" data-en="Quotes" data-zh="报价单">Quotes</button><button class="tab" data-v="po" onclick="showV('po',this)" data-en="Purchase Orders" data-zh="采购订单">Purchase Orders</button><button class="tab" data-v="inv" onclick="showV('inv',this)" data-en="Invoices" data-zh="发票">Invoices</button><button class="tab" data-v="sh" onclick="showV('sh',this)" data-en="Shipments" data-zh="货运追踪">Shipments</button><button class="tab" data-v="import" onclick="showV('import',this)" data-en="Import Data" data-zh="导入数据">Import Data</button><button class="tab" data-v="cfg" onclick="showV('cfg',this)" data-en="Settings" data-zh="设置">Settings</button></div><div id="lang-toggle" style="display:flex;align-items:center;gap:0;margin-right:10px;flex-shrink:0;"><button id="lt-en" onclick="setLang('en')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-right:none;border-radius:2px 0 0 2px;">EN</button><button id="lt-zh" onclick="setLang('zh')" style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;border:1px solid #3A3537;background:transparent;padding:2px 8px;cursor:pointer;border-radius:0 2px 2px 0;">ZH</button></div><button class="syncb" id="sbtn" onclick="syncAll()">&#8635; Sync</button><div class="sdot" id="sdot"></div><button class="syncb" id="pmode-btn" onclick="togglePresentationMode()" title="Presentation Mode — larger text for screen/projector" style="margin-left:8px;">&#128225; Present</button></nav>
 <!-- ONBOARDING BANNER -->
 <div id="onboarding-bar" style="display:none;background:var(--ink);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;position:relative;">
   <button onclick="dismissOnboarding()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--m);font-size:.7rem;cursor:pointer;line-height:1;" title="Skip">&#10005;</button>
@@ -643,6 +643,8 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       </div>
       <div class="fld" style="margin-bottom:12px;"><label id="lbl-cfg-bank">Bank / Payment Details (leave blank until Stackd account open)</label><textarea id="c-bank" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:70px;margin-top:3px;" placeholder="Account Name: Stackd&#10;Sort Code: xx-xx-xx&#10;Account No: xxxxxxxx"></textarea></div>
       <div class="fld" style="margin-bottom:12px;"><label id="lbl-cfg-terms">Default Invoice Terms</label><textarea id="c-terms" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;min-height:52px;margin-top:3px;"></textarea></div>
+      <div class="fld" style="margin-bottom:12px;"><label id="lbl-cfg-pbasis">Quote price basis <span style="font-size:.44rem;color:var(--m);">(one line printed on customer quotes; up to 300 characters)</span></label><input type="text" id="c-pbasis" maxlength="300" placeholder="Line prices include international freight, insurance and import duty. Origin, destination and handling charges are itemised separately."></div>
+      <div class="fld" style="margin-bottom:12px;"><label id="lbl-cfg-qterms">Quote terms &amp; conditions <span style="font-size:.44rem;color:var(--m);">(printed on customer quotes; up to 6,000 characters; get your solicitor&rsquo;s approval first &mdash; nothing prints while this is blank)</span></label><textarea id="c-qterms" maxlength="6000" placeholder="" style="font-family:'DM Mono',monospace;font-size:.63rem;border:1px solid var(--ln);padding:7px;outline:none;resize:vertical;width:100%;box-sizing:border-box;" rows="6"></textarea></div>
       <button class="btn btn-s" onclick="saveCfg()">Save Settings</button>
     </div>
     <div class="card">
@@ -1391,8 +1393,24 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
 
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.105</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.106</span>
           <span style="font-size:.5rem;color:var(--m);">Current release</span>
+        </div>
+        <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
+          <li>New: <strong>a buyer-facing Customer quote</strong>. The <em>Customer quote</em> button (in the quote, and on every row of the Quotes list) opens a pre-send dialog and then a clean <strong>QUOTATION</strong> with your header and address, validity, a <strong>selling price per line</strong> (unit price and line total), any origin / destination / handling charges as separate lines, a total, a price-basis line, optional terms and your bank details. It shows <strong>no supplier, cost, freight, insurance, duty or markup</strong>; international freight, insurance and import duty are inside the line prices.</li>
+          <li>Safety: the old <em>Preview</em> is now called the <strong>Internal costing sheet</strong> and carries a print-visible INTERNAL banner &mdash; it lists suppliers and costs and must never be sent to a client.</li>
+          <li>The pre-send dialog shows the <strong>total that will print</strong>, the header that will print, and warnings: a supplier name or SKU in a description, no validity date, no cost basis, a zero price, a non-USD quote currency, Declined/Expired status, a changed total since saving, or an unfilled <code>[placeholder]</code> (those last ones need a tick). A $0 total or a quote with no lines cannot be generated. Quote Notes are left out unless you tick them.</li>
+          <li>If you have edited a quote without saving, the Customer quote button asks whether to save first &mdash; the document always shows the <strong>saved</strong> quote.</li>
+          <li>New Settings: <em>Quote price basis</em> (one line) and <em>Quote terms &amp; conditions</em> (up to 6,000 characters; blank by default &mdash; nothing prints until you add wording your solicitor has approved). Both can be edited per document in the dialog. Over-long text is cut with a visible message.</li>
+          <li>Prices reconcile on the page: the unit price is shown to 4 decimals and the line total is that unit price &times; quantity, so the columns always multiply out. Amounts are in USD.</li>
+          <li>Not stored: the document is generated from the saved quote and today&rsquo;s Settings &mdash; <strong>keep a copy of each PDF you send</strong> (a stored copy is a later phase).</li>
+          <li>20 new tests (1258 &rarr; 1278 pass); 16 mutation tests each failed their predicted test.</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;color:var(--cr);">v2.9.105</span>
         </div>
         <ul style="font-size:.58rem;color:var(--m);line-height:1.9;margin:0;padding-left:16px;">
           <li>New: <strong>Quote lines can now be filled from the Line Item catalogue</strong>. On the Quotes tab, <em>Add from Catalogue</em> (several items at once, with search and supplier grouping) or <em>Link</em> on an existing line pulls in supplier, description, UOM, DG, cost and CBM &mdash; no more re-typing products you already have. <em>Unlink</em> returns a line to a plain typed line.</li>
@@ -3034,7 +3052,8 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <div id="qt-verr" style="font-size:.54rem;color:var(--cr);margin-bottom:8px;min-height:16px;"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
         <button class="btn btn-g" onclick="closeQteDlg()">Cancel</button>
-        <button class="btn btn-g" id="qt-prev-btn" onclick="prevQteId()" style="display:none;">&#128438; Preview</button>
+        <button class="btn btn-g" id="qt-prev-btn" onclick="prevQteId()" style="display:none;" title="Internal costing sheet — contains supplier and cost information. Not for the client.">&#128438; Internal costing sheet</button>
+        <button class="btn btn-g" id="qt-cust-btn" onclick="qteCustFromModal()" style="display:none;border-color:var(--bl);color:var(--bl);">Customer quote</button>
         <button class="btn btn-g" id="qt-po-btn" onclick="qteToPoConvert()" style="display:none;border-color:var(--gold);color:var(--gold);">Convert to PO</button>
         <button class="btn btn-s" onclick="saveQte()">Save Quote</button>
       </div>
@@ -3062,6 +3081,32 @@ body.presentation-mode .nav,body.presentation-mode .banner{zoom:.7692;}
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn btn-g" onclick="qteRateCancel()">Cancel</button><button class="btn btn-s" onclick="qteRateOk()">Use this rate</button></div>
     </div>
   </div>
+</div>
+
+<!-- CUSTOMER QUOTE DIALOGS (SPEC-QTE-005) — placed AFTER #ov-qt so they stack above the Quote modal -->
+<div class="ov" id="ov-qdoc" onclick="if(event.target===this)qteCustClose()">
+  <div class="modal" style="max-width:680px;">
+    <div class="mh"><h2 id="qdoc-title">Customer quote</h2><button class="mx" onclick="qteCustClose()">&#215;</button></div>
+    <div class="mb">
+      <div id="qdoc-total" style="font-size:.8rem;font-weight:600;margin-bottom:6px;"></div>
+      <div id="qdoc-header" style="font-size:.52rem;color:var(--m);margin-bottom:10px;"></div>
+      <div id="qdoc-warns" style="margin-bottom:10px;"></div>
+      <p id="qdoc-notice" style="font-size:.5rem;color:var(--m);margin-bottom:8px;">The terms below form part of the contract with the buyer. This document is generated from the saved quote and today&rsquo;s Settings and is <strong>not stored</strong> &mdash; keep a copy of each PDF you send.</p>
+      <div class="fld" style="margin-bottom:8px;"><label>Price basis <span style="font-size:.44rem;color:var(--m);">(this document only; blank = no line)</span></label><input type="text" id="qdoc-pb" maxlength="300" oninput="qteCustRefresh()"></div>
+      <div class="fld" style="margin-bottom:8px;"><label>Terms &amp; conditions <span style="font-size:.44rem;color:var(--m);">(this document only)</span></label><textarea id="qdoc-terms" rows="8" maxlength="6000" oninput="qteCustRefresh()" style="font-size:.6rem;width:100%;box-sizing:border-box;"></textarea></div>
+      <label id="qdoc-notes-row" style="display:none;font-size:.56rem;"><input type="checkbox" id="qdoc-notes" onchange="qteCustRefresh()"> Include the quote Notes on the customer quote</label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn btn-g" onclick="qteCustClose()">Cancel</button><button class="btn btn-s" id="qdoc-go" onclick="qteCustGenerate()">Generate</button></div>
+    </div>
+  </div>
+</div>
+<div class="ov" id="ov-qunsaved" onclick="if(event.target===this)qteUnsavedCancel()">
+  <div class="modal" style="max-width:460px;"><div class="mh"><h2>Unsaved changes</h2></div>
+    <div class="mb"><p style="font-size:.6rem;margin-bottom:12px;">You have unsaved changes. The customer quote shows the <strong>saved</strong> version &mdash; Save first?</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="qteUnsavedCancel()">Cancel</button>
+        <button class="btn btn-g" onclick="qteUnsavedContinue()">Continue with saved version</button>
+        <button class="btn btn-s" onclick="qteUnsavedSave().catch(function(e){ toast('Could not complete the save — ' + ((e &amp;&amp; e.message) || 'error')); })">Save and continue</button>
+      </div></div></div>
 </div>
 
 <!-- AI CHAT FLOATING BUTTON -->
@@ -12803,7 +12848,7 @@ function prevCNDoc(inv) {
 // ── SETTINGS ──────────────────────────────────────────────────
 // ── AI ASSISTANT ───────────────────────────────────────────────
 var AI_SYSTEM_PROMPT = [
-  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.105).',
+  'You are the built-in AI assistant for Stackd Ops, FPM International\'s browser-based trade operations portal (v2.9.106).',
   'You have access to tools that can query the user\'s live portal data (invoices, payments, purchase orders, KPIs). Use them whenever a question is about specific records, balances, or figures — do not guess or say the data is unavailable. Call the appropriate tool, then answer based on the result.',
   'Answer questions about how to use the portal concisely and practically. Refer to tabs, buttons, and fields by their exact names. If something is not covered below, say so clearly.',
   '',
@@ -12842,6 +12887,7 @@ var AI_SYSTEM_PROMPT = [
   'Quotes tab → + New Quote. Format: QTE-001, QTE-002 etc.',
   'Header fields: Client, Date, Valid Until, Freight Mode (LCL / FCL 20GP / FCL 40HQ), Markup %, Currency, Status (Draft / Sent / Accepted / Declined / Expired).',
   'Quote lines from the catalogue: on the Quotes tab, click Add from Catalogue (or Link on an existing line) to pull in a Line Item. Supplier, description, UOM, DG, cost and CBM fill in automatically. Cost is converted to USD and treated as a line total, so it scales with quantity until you type a cost yourself; CBM scales the same way from the item dimensions. USD, GBP and BBD items convert at the stored rates; any other currency asks you for a USD rate, which is recorded on the line. A cost snapshot is kept, and an amber badge shows when the catalogue cost has changed since the quote was built. Refresh cost updates cost and CBM only, not supplier, description, UOM or DG. Duty % stays manual. Unlink returns a line to a plain typed line.',
+  'Customer quote: in Quotes, the Customer quote button (in the quote modal or on each list row) opens a pre-send dialog and then a buyer-facing QUOTATION with a selling price per line, any origin / destination / handling charges as separate lines, a total, an optional price basis line and optional terms. International freight, insurance and import duty are inside the line prices. It never shows supplier, cost, freight, duty or markup. The older Preview is now the Internal costing sheet and must not be sent to a client. Quote terms and price basis are set in Settings and can be edited for one document in the dialog. The document is generated from the saved quote and is not stored, so keep a copy of each PDF you send.',
   'Line items: Product description, Supplier (from catalogue), Qty, UOM, Cost (a USD line total, not per unit), CBM, DG flag (Y/N), Duty %.',
   'Rate engine: calculates freight, DG surcharge, insurance, duty, and total landed cost per line automatically. Rates are configured in Settings → Rates & FX.',
   'Overhead charges (Origin Charges, Dest Charges, FPM Admin — v2.9.68, REQ/SPEC-QTE-002): three fixed dollar amounts added to every quote\'s total, unmarked-up (added at cost, never scaled by margin). Global defaults are set in Settings → Rates & FX; each quote can override any of the three individually — three optional fields on the quote form (blank = inherit the current global default, any typed number including 0 = override just this quote). An overridden quote is unaffected by later changes to the global default for that specific field; an un-overridden quote keeps tracking the global default live. Setting a field to 0 removes that charge from just that one quote.',
@@ -13643,6 +13689,7 @@ function rCfg() {
   G('c-name').value=AS.name||'Stackd'; G('c-tag').value=AS.tag||'Source - Supply - Ship';
   G('c-addr').value=AS.addr||'Brighton, UK'; G('c-email').value=AS.email||'cachafpm@gmail.com';
   G('c-phone').value=AS.phone||'+44 7930 438631'; G('c-web').value=AS.web||'';
+  G('c-pbasis').value=AS.priceBasis||''; G('c-qterms').value=AS.quoteTerms||'';
   G('c-bank').value=AS.bank||''; G('c-terms').value=AS.terms||'Payment due within 30 days of invoice date. All prices have been adjusted for tax, local shipping and any resulting FX fees incurred.';
   if(G('cfg-ai-key')) G('cfg-ai-key').value=AI.key||'';
   if(G('ai-key-st') && AI.key) G('ai-key-st').textContent = 'Key configured.';
@@ -13745,8 +13792,10 @@ function saveCoBrandSettings() {
   toast('Branding saved'); updCoPreview();
 }
 function saveCfg() {
-  AS={name:G('c-name').value,tag:G('c-tag').value,addr:G('c-addr').value,email:G('c-email').value,phone:G('c-phone').value,web:G('c-web').value,bank:G('c-bank').value,terms:G('c-terms').value};
-  sv(K.as,AS); toast('Settings saved');
+  var cuts = [];
+  AS={name:G('c-name').value,tag:G('c-tag').value,addr:G('c-addr').value,email:G('c-email').value,phone:G('c-phone').value,web:G('c-web').value,bank:G('c-bank').value,terms:G('c-terms').value,
+      priceBasis: qteLimitText(G('c-pbasis').value, 300, 'Price basis', true, cuts), quoteTerms: qteLimitText(G('c-qterms').value, 6000, 'Quote terms', false, cuts)};
+  sv(K.as,AS); toast(cuts.length ? 'Settings saved. ' + cuts.join(' ') : 'Settings saved', cuts.length ? 8000 : undefined);   // ONE toast — toast() overwrites, so a cut note must travel in it
 }
 
 function rRefData(cat) {
@@ -14199,7 +14248,8 @@ function doImport(e) {
     }
     DB.events = Array.isArray(data.events) ? data.events : [];
     if (data.settings) { SS = data.settings; sv(K.ss, SS); }
-    if (data.company)  { AS = data.company;  sv(K.as, AS); }
+    var qteCuts = [];
+    if (data.company)  { AS = data.company;  AS.priceBasis = qteLimitText(AS.priceBasis, 300, 'Price basis', true, qteCuts); AS.quoteTerms = qteLimitText(AS.quoteTerms, 6000, 'Quote terms', false, qteCuts); sv(K.as, AS); }
     if (data.branding) { saveCoBrand(data.branding); }
     if (data.qr) { sv('st_qr', data.qr); QR = Object.assign({}, QR_DEFAULTS, data.qr); }
     if (data.customPorts && data.customPorts.length) { sv('stackd_custom_ports', data.customPorts); }
@@ -14223,7 +14273,7 @@ function doImport(e) {
     saveAll();
     renderAll();
     rCfg();
-    toast('Restored: ' + DB.inv.length + ' invoices, ' + DB.sup.length + ' suppliers, ' + DB.events.length + ' events', 4000);
+    toast('Restored: ' + DB.inv.length + ' invoices, ' + DB.sup.length + ' suppliers, ' + DB.events.length + ' events' + (qteCuts.length ? '. ' + qteCuts.join(' ') : ''), qteCuts.length ? 8000 : 4000);
     G('imp-file').value = '';
   };
   reader.readAsText(file);
@@ -15013,7 +15063,8 @@ function rQte() {
       + '<td style="font-size:.5rem;color:var(--m);">' + (q.linkedPOIds && q.linkedPOIds.length ? 'PO linked' : '') + '</td>'
       + '<td style="white-space:nowrap;">'
         + '<button onclick="editQte(\'' + q.id + '\')" class="btn btn-g" style="font-size:.46rem;padding:2px 7px;">Edit</button> '
-        + '<button onclick="prevQte(\'' + q.id + '\')" class="btn btn-g" style="font-size:.46rem;padding:2px 7px;">&#128438;</button> '
+        + '<button onclick="prevQte(\'' + q.id + '\')" class="btn btn-g" title="Internal costing sheet (not for the client)" style="font-size:.46rem;padding:2px 7px;">&#128438;</button> '
+        + '<button onclick="qteCustFromList(\'' + q.id + '\')" class="btn btn-g" title="Customer quote (buyer-facing)" style="font-size:.46rem;padding:2px 7px;">Customer quote</button> '
         + '<button onclick="delQte(\'' + q.id + '\')" class="btn btn-g" style="font-size:.46rem;padding:2px 7px;border-color:var(--cr);color:var(--cr);">Del</button>'
       + '</td>'
       + '</tr>';
@@ -15050,11 +15101,13 @@ function openQte() {
   G('qf-approved-note').value = '';
   G('qt-verr').textContent = '';
   G('qt-prev-btn').style.display = 'none';
+  G('qt-cust-btn').style.display = 'none';
   G('qt-po-btn').style.display = 'none';
   updQtePoBtn();
   rQLT();
   renderQteRatesWarn();
   updQteOverheadPlaceholders();
+  _qOpenSnap = qteFormSnapshot();
   G('ov-qt').classList.add('on');
 }
 
@@ -15081,11 +15134,13 @@ function editQte(id) {
   G('qf-approved-note').value = q.approvedReason || '';
   G('qt-verr').textContent = '';
   G('qt-prev-btn').style.display = '';
+  G('qt-cust-btn').style.display = '';
   updQtePoBtn();
   rQLT();
   calcQte();
   renderQteRatesWarn();
   renderQteSourceDriftWarn(q);
+  _qOpenSnap = qteFormSnapshot();
   G('ov-qt').classList.add('on');
 }
 
@@ -15749,6 +15804,7 @@ async function saveQte() {
     rLIPending();
   }
 
+  _qOpenSnap = null;
   closeM('ov-qt');
   rQte();
   toast('Quote ' + qt.num + ' saved');
@@ -15794,6 +15850,7 @@ async function delQte(id) {
 function closeQteDlg() {
   cConvertId = null;
   cConvertOrdId = null;
+  _qOpenSnap = null;
   closeM('ov-qt');
 }
 
@@ -16138,10 +16195,199 @@ async function qteToPoConvert() {
   q.linkedPOIds = newPOIds;
   await persistQteChange(q);
   G('qt-po-btn').style.display = 'none';
+  _qOpenSnap = null;
   closeM('ov-qt');
   rQte();
   rPO();
   toast('PO' + (poNums.length > 1 ? 's ' : ' ') + poNums.join(', ') + ' created from ' + q.num);
+}
+
+// ── CUSTOMER-FACING QUOTE DOCUMENT (REQ/SPEC-QTE-005, v2.9.106) ────────────────────────────
+// The customer document shows a selling price per line and the overhead charges, and NEVER supplier, cost, freight,
+// insurance, duty or markup (international freight/insurance/duty are already inside each line's selling price).
+function qteRound2(x) { return Math.round(x * 100) / 100; }
+function qteGroup3(intDigits) { return String(intDigits).replace(/\B(?=(\d{3})+$)/g, ','); }   // integer digits ONLY — no capture group, no callback
+function qteFmtAmt(x) {                                                                      // 2 dp with thousands separators, e.g. 1234.5 -> 1,234.50
+  if (!isFinite(x)) x = 0;                                                                   // a non-numeric markup/cost from Sheets or the AI must never throw or print NaN
+  var v = qteRound2(x), parts = Math.abs(v).toFixed(2).split('.');
+  return (v < 0 ? '-' : '') + qteGroup3(parts[0]) + '.' + parts[1];
+}
+function qteFmtMoney(x) { return 'USD ' + qteFmtAmt(x); }
+function qteFmtUnit(u) {                                                                     // 4 dp, trailing zeros trimmed to a minimum of 2 decimals
+  if (!isFinite(u)) u = 0;
+  var parts = Number(u).toFixed(4).split('.'), d = parts[1];
+  while (d.length > 2 && d.charAt(d.length - 1) === '0') d = d.slice(0, -1);
+  return qteGroup3(parts[0]) + '.' + d;
+}
+function qteFmtQty(q) { return String(q); }                                                  // q is ALREADY the used value (<= 6 dp, > 0)
+// Everything the buyer document needs, from the LIVE engine (never the stored calc_* fields, fixed at save time).
+function qteCustomerModel(q) {
+  var c = cQte(q), markup = +q.markup || 0, oh = c.overheadBreakdown;
+  var rows = (q.lines || []).map(function(l, i) {
+    var qty = Number((+l.qty).toFixed(6)); if (!(qty > 0)) qty = 1;        // rounded to 6 dp FIRST, then the <= 0 rule: the Qty USED is exactly the Qty PRINTED
+    var S = c.lineCalcs[i].landed * (1 + qteEffectiveMargin(l, markup) / 100); if (!isFinite(S)) S = 0;
+    var U = Number((S / qty).toFixed(4));
+    return { l: l, desc: String(l.desc == null ? '' : l.desc), uom: String(l.uom || 'pcs'), qty: qty, S: S, U: U, total: qteRound2(U * qty), noCost: !(+l.cost > 0), zeroPrice: !(S > 0) };
+  });
+  var charges = [
+    { key: 'origin', label: 'Origin charges',                              amount: qteRound2(oh.origin) },
+    { key: 'dest',   label: 'Destination charges (local freight & taxes)', amount: qteRound2(oh.dest) },
+    { key: 'admin',  label: 'Handling & admin',                             amount: qteRound2(oh.admin) }
+  ].filter(function(x){ return x.amount > 0; });
+  var total = qteRound2(rows.reduce(function(s, r){ return s + r.total; }, 0) + charges.reduce(function(s, x){ return s + x.amount; }, 0));
+  return { rows: rows, charges: charges, total: total, engineTotal: c.sellUSD };
+}
+// Pure: returns the HTML string. opt = { priceBasis, terms, includeNotes }. Every printed value goes through san().
+function qteCustomerDocHtml(q, opt) {
+  var m = qteCustomerModel(q), b = getCoBrand();
+  var colour = /^#[0-9a-fA-F]{3,8}$/.test(String(b.colour || '')) ? b.colour : '#B8283A';   // validated before it reaches a style attribute
+  var pageRef = String(q.num || '').replace(/[^A-Za-z0-9 ._-]/g, '');
+  var docTitle = san(q.num || '') + ' — Quotation';
+  var pb = String(opt.priceBasis || '').replace(/\s*[\r\n]+\s*/g, ' ').trim();   // whitespace normalisation only — the builder NEVER truncates
+  var terms = String(opt.terms || '');
+  var lbl = 'font-size:.48rem;letter-spacing:.13em;text-transform:uppercase;color:#8a7f82;';
+  var th = 'padding:6px 8px;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#8a7f82;border-bottom:1px solid #ccc;';
+  var td = 'padding:6px 8px;font-size:.62rem;border-bottom:1px solid #eee;vertical-align:top;';
+  var rowsHtml = m.rows.map(function(r){
+    return '<tr><td style="' + td + '">' + san(r.desc) + '</td><td style="' + td + 'text-align:right;">' + san(qteFmtQty(r.qty)) + '</td><td style="' + td + '">' + san(r.uom)
+      + '</td><td style="' + td + 'text-align:right;">' + san(qteFmtUnit(r.U)) + '</td><td style="' + td + 'text-align:right;">' + san(qteFmtAmt(r.total)) + '</td></tr>';
+  }).join('');
+  var chargesHtml = m.charges.map(function(x){
+    return '<tr><td colspan="4" style="' + td + 'text-align:right;color:#555;">' + san(x.label) + '</td><td style="' + td + 'text-align:right;">' + san(qteFmtAmt(x.amount)) + '</td></tr>';
+  }).join('');
+  var notesHtml = (opt.includeNotes && q.notes) ? '<div style="margin-top:12px;"><div style="' + lbl + 'margin-bottom:4px;">Notes</div><div style="font-size:.62rem;line-height:1.7;">' + san(q.notes).replace(/\n/g, '<br>') + '</div></div>' : '';
+  var bankHtml = AS.bank ? '<div class="avoid" style="margin-top:18px;"><div style="' + lbl + 'margin-bottom:6px;">Payment details</div>' + fmtBankHtml(AS.bank) + '</div>' : '';
+  var termsHtml = terms.trim() ? '<div style="margin-top:18px;"><div style="' + lbl + 'margin-bottom:6px;break-after:avoid;">Terms &amp; conditions</div><div style="font-size:.56rem;line-height:1.7;color:#333;">' + san(terms).replace(/\n/g, '<br>') + '</div></div>' : '';
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + docTitle + '</title>'
+    + '<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">'
+    + '<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"DM Mono",monospace;font-size:.72rem;color:#111;background:white;}'
+    + '.topbar{background:#0f0c0d;padding:10px 24px;display:flex;align-items:center;gap:12px;}.topbar-title{font-size:.6rem;letter-spacing:.1em;color:#8a7f82;flex:1;}'
+    + '.btn-print{font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:' + colour + ';color:white;border:none;padding:8px 20px;cursor:pointer;}'
+    + '.doc{padding:32px 40px;max-width:760px;margin:0 auto;}table{border-collapse:collapse;width:100%;}'
+    + '@page{size:A4;margin:12mm;@bottom-right{content:"' + pageRef + ' \\00B7  Page " counter(page) " of " counter(pages);font-family:"DM Mono",monospace;font-size:7pt;color:#8a7f82;}}'
+    + '@media print{.topbar{display:none!important;}.doc{padding:0;}tr{break-inside:avoid;page-break-inside:avoid;}thead{display:table-header-group;}.avoid{break-inside:avoid;page-break-inside:avoid;}}'
+    + '</style></head><body>'
+    + '<div class="topbar"><span class="topbar-title">' + docTitle + '</span><button class="btn-print" onclick="setTimeout(function(){print();},200)">&#128438;&nbsp; Print / Save PDF</button></div>'
+    + '<div class="doc">' + buildPdfHeader(colour)
+    + '<div class="avoid" style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:18px;">'
+    +   '<div><div style="' + lbl + 'margin-bottom:6px;">Quoted to</div><div style="font-size:.65rem;line-height:1.7;"><strong>' + (san(q.client) || '-') + '</strong><br>Shipping: ' + san(q.freightMode || 'LCL') + '</div></div>'
+    +   '<div style="text-align:right;"><div style="font-family:Bebas Neue,sans-serif;font-size:1.9rem;letter-spacing:.15em;color:' + colour + ';margin-bottom:8px;line-height:1;">QUOTATION</div>'
+    +   '<table style="font-size:.62rem;margin-left:auto;width:auto;"><tbody>'
+    +   '<tr><td style="' + lbl + 'padding-right:14px;">Quote #</td><td style="text-align:right;font-weight:600;">' + san(q.num || '') + '</td></tr>'
+    +   '<tr><td style="' + lbl + 'padding-right:14px;">Date</td><td style="text-align:right;">' + san(fmtDate(q.dt)) + '</td></tr>'
+    +   (q.validUntil ? '<tr><td style="' + lbl + 'padding-right:14px;">Valid until</td><td style="text-align:right;">' + san(fmtDate(q.validUntil)) + '</td></tr>' : '')
+    +   '</tbody></table></div></div>'
+    + '<table><thead><tr><th style="' + th + 'text-align:left;">Description</th><th style="' + th + 'text-align:right;">Qty</th><th style="' + th + 'text-align:left;">UOM</th><th style="' + th + 'text-align:right;">Unit price (USD)</th><th style="' + th + 'text-align:right;">Line total (USD)</th></tr></thead><tbody>'
+    + rowsHtml + chargesHtml + '</tbody></table>'
+    + '<div class="avoid"><div style="display:flex;justify-content:flex-end;margin-top:10px;"><table style="width:300px;"><tbody><tr><td style="padding:6px 8px;font-weight:700;font-size:.72rem;">Total</td><td style="padding:6px 8px;text-align:right;font-weight:700;font-size:.85rem;color:' + colour + ';">' + san(qteFmtMoney(m.total)) + '</td></tr></tbody></table></div>'
+    + (pb ? '<div style="margin-top:10px;font-size:.58rem;line-height:1.7;"><strong>Price basis:</strong> ' + san(pb) + '</div>' : '') + notesHtml + '</div>'
+    + termsHtml + bankHtml + buildPdfFooter()
+    + '</div></body></html>';
+}
+// pure. text = {pb, terms, notes (the Notes text ONLY when the Include box is ticked, else '')}
+function qteCustWarnings(q, m, text) {
+  var out = [];
+  var nameHits = function(hay, where) {
+    var dl = String(hay).toLowerCase();
+    DB.sup.forEach(function(s){ if (s.name && String(s.name).length >= 3 && dl.indexOf(String(s.name).toLowerCase()) !== -1) out.push({ k: 'sup:' + where + ':' + s.name, lvl: 'warn', t: where + ' mentions supplier ‘' + s.name + '’ — edit it before sending' }); });
+  };
+  m.rows.forEach(function(r, i) {
+    nameHits(r.desc, 'Line ' + (i+1) + ' description');
+    if (qteIsLinked(r.l)) { var li = DB.li.find(function(x){ return x.id === r.l.lid; }); if (li && li.sku && String(li.sku).length >= 4 && r.desc.toLowerCase().indexOf(String(li.sku).toLowerCase()) !== -1) out.push({ k: 'sku:' + i, lvl: 'warn', t: 'Line ' + (i+1) + ' description contains the catalogue SKU ‘' + li.sku + '’' }); }
+    if (!r.desc.trim()) out.push({ k: 'bd:' + i, lvl: 'warn', t: 'Line ' + (i+1) + ' has no description' });
+    if (r.noCost)    out.push({ k: 'nc:' + i, lvl: 'warn', t: 'Line ' + (i+1) + ' has no cost basis — its selling price may be wrong' });
+    if (r.zeroPrice) out.push({ k: 'zp:' + i, lvl: 'warn', t: 'Line ' + (i+1) + ' has a selling price of 0' });
+  });
+  if (text.notes) nameHits(text.notes, 'The included Notes');
+  if (!q.validUntil) out.push({ k: 'val', lvl: 'warn', t: 'No validity date is set — this quote would be open-ended' });
+  else if (String(q.validUntil).slice(0, 10) < today()) out.push({ k: 'past', lvl: 'warn', t: 'The validity date ' + q.validUntil + ' has already passed' });
+  if (!q.dt) out.push({ k: 'dt', lvl: 'warn', t: 'The quote has no date' });
+  if (q.status === 'Declined' || q.status === 'Expired') out.push({ k: 'st', lvl: 'warn', t: 'This quote is marked ' + q.status });
+  if (qteNormCur(q.currency || 'USD') !== 'USD') out.push({ k: 'cur', lvl: 'ack', t: 'This quote’s currency is ' + (q.currency || '?') + '. The engine prices in USD, so these amounts may not be USD — check the line costs before sending.' });
+  var saved = q.calc_sellUSD;
+  if (saved !== undefined && saved !== null && saved !== '' && isFinite(+saved) && Math.abs(m.engineTotal - +saved) > 0.01) out.push({ k: 'drift', lvl: 'ack', t: 'Rates or catalogue changed since this quote was saved: saved total USD ' + (+saved).toFixed(2) + ', now USD ' + m.engineTotal.toFixed(2) });
+  var ph = /\[[^\]\n]{0,40}\]/.exec(String(text.pb) + '\n' + String(text.terms));   // single-line, <= 40 chars inside the brackets; [] counts
+  if (ph) out.push({ k: 'ph:' + ph[0], lvl: 'ack', t: 'Bracketed placeholder still present: ' + ph[0] + ' — I have replaced or accept these' });
+  if (String(text.terms).length > 6000) out.push({ k: 'long', lvl: 'warn', t: 'The terms are longer than the 6,000-character Settings limit' });
+  if (!getCoBrand().email) out.push({ k: 'mail', lvl: 'warn', t: 'No email or phone will print — set an email in Settings → Company Branding' });
+  if (!m.rows.length) out.push({ k: 'nol', lvl: 'block', t: 'The quote has no product lines' });
+  if (!(m.total > 0)) out.push({ k: 'zero', lvl: 'block', t: 'The total is 0 — nothing to send' });
+  return out;
+}
+var _qdocId = null, _qOpenSnap = null, _qunsavedId = null, _qdocAcks = {}, _qdocWarns = [];
+function qteCustClose() { G('ov-qdoc').classList.remove('on'); _qdocId = null; _qdocAcks = {}; _qdocWarns = []; }
+function qteCustBlocked(q, w) { return w.some(function(x){ return x.lvl === 'block'; }) || w.some(function(x){ return x.lvl === 'ack' && !_qdocAcks[q.id + '|' + x.k]; }); }
+function qteCustAck(el) { var w = _qdocWarns[+el.getAttribute('data-i')]; if (!w) return; _qdocAcks[_qdocId + '|' + w.k] = !!el.checked; qteCustRefresh(); }   // data-i is an integer index into the CURRENT _qdocWarns
+function qteCustRefresh() {
+  var q = DB.qt.find(function(x){ return x.id === _qdocId; }); if (!q) return;
+  var m = qteCustomerModel(q), inc = !!G('qdoc-notes').checked && !!q.notes;
+  _qdocWarns = qteCustWarnings(q, m, { pb: G('qdoc-pb').value, terms: G('qdoc-terms').value, notes: inc ? q.notes : '' });
+  var live = {}; _qdocWarns.forEach(function(w){ live[q.id + '|' + w.k] = true; });
+  Object.keys(_qdocAcks).forEach(function(k){ if (!live[k]) delete _qdocAcks[k]; });          // ticks for warnings that no longer exist are dropped
+  G('qdoc-total').textContent = 'Total that will print: ' + qteFmtMoney(m.total);
+  G('qdoc-warns').innerHTML = _qdocWarns.map(function(w, i){ var t = san(w.t);
+    return w.lvl === 'ack' ? '<label style="display:block;font-size:.54rem;margin-bottom:4px;"><input type="checkbox" data-i="' + i + '"' + (_qdocAcks[q.id + '|' + w.k] ? ' checked' : '') + ' onchange="qteCustAck(this)"> ' + t + '</label>'
+                           : '<div style="font-size:.54rem;margin-bottom:4px;color:' + (w.lvl === 'block' ? '#B8283A' : '#a15c00') + ';">' + (w.lvl === 'block' ? '&#9940; ' : '&#9888; ') + t + '</div>'; }).join('');
+  G('qdoc-go').disabled = qteCustBlocked(q, _qdocWarns);
+}
+// The effective header exactly as buildPdfHeader() renders it: email and phone print only when the branding email is set.
+function qteCustHeaderText() {
+  var b = getCoBrand();
+  var name = b.name || AS.name || 'FPM International Ltd', addr = b.addr || AS.addr || '';
+  return 'Header that will print: ' + name + (addr ? ' — ' + String(addr).replace(/\n/g, ', ') : '') + (b.email ? ' — ' + b.email + (b.phone ? ' · ' + b.phone : '') : ' — (no email or phone)') + (b.reg ? ' — Reg ' + b.reg + (b.vat ? ' · VAT ' + b.vat : '') : '');
+}
+function qteOpenCustDialog(id) {
+  var q = DB.qt.find(function(x){ return x.id === id; });
+  if (!q) { toast('Quote not found'); return; }
+  _qdocId = id; _qdocAcks = {}; _qdocWarns = [];
+  G('qdoc-title').textContent = 'Customer quote — ' + (q.num || '');
+  G('qdoc-header').textContent = qteCustHeaderText();
+  G('qdoc-pb').value = AS.priceBasis || ''; G('qdoc-terms').value = AS.quoteTerms || '';
+  G('qdoc-notes').checked = false; G('qdoc-notes-row').style.display = q.notes ? '' : 'none';
+  qteCustRefresh();
+  G('ov-qdoc').classList.add('on');
+}
+function qteCustFromList(id) { qteOpenCustDialog(id); }                       // modal closed: never compares, never prompts
+function qteCustFromModal() {                                                 // the modal's own button (saved quotes only, same visibility as Preview)
+  var id = EI.qt; if (!id) return;
+  // a null snapshot (never captured) FAILS CLOSED: prompt
+  if (_qOpenSnap === null || qteFormSnapshot() !== _qOpenSnap) { _qunsavedId = id; G('ov-qunsaved').classList.add('on'); return; }
+  qteOpenCustDialog(id);
+}
+function qteUnsavedCancel() { G('ov-qunsaved').classList.remove('on'); }      // the backdrop click is ALSO Cancel (never Continue)
+function qteUnsavedContinue() { G('ov-qunsaved').classList.remove('on'); qteOpenCustDialog(_qunsavedId); }
+async function qteUnsavedSave() {                                             // "Save and continue" — the operator's own explicit save
+  G('ov-qunsaved').classList.remove('on'); var id = _qunsavedId;
+  await saveQte();
+  if (G('ov-qt').classList.contains('on')) return;                            // saveQte() closes #ov-qt ONLY after a completed save: any early return leaves it open -> NO document
+  qteOpenCustDialog(id);
+}
+function qteCustGenerate() {
+  var q = DB.qt.find(function(x){ return x.id === _qdocId; }); if (!q) return;
+  var opt = { priceBasis: G('qdoc-pb').value, terms: G('qdoc-terms').value, includeNotes: !!G('qdoc-notes').checked && !!q.notes };
+  var m = qteCustomerModel(q), w = qteCustWarnings(q, m, { pb: opt.priceBasis, terms: opt.terms, notes: opt.includeNotes ? q.notes : '' });
+  if (qteCustBlocked(q, w)) { toast('Resolve or acknowledge the warnings first'); return; }          // re-enforced HERE: a direct call cannot bypass a block or an unticked acknowledgement
+  var html = qteCustomerDocHtml(q, opt);
+  var url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  var w2 = window.open(url, '_blank');
+  if (!w2) { URL.revokeObjectURL(url); toast('Pop-ups are blocked — allow pop-ups for this page, then click Generate again'); return; }   // dialog stays open
+  qteCustClose(); toast('Customer quote opened — set the quote status to Sent when you send it. Keep a copy of the PDF you send.', 6000);
+}
+// Normalised snapshot of the Quote modal, for the unsaved-changes guard (captured when the modal opens, compared on click).
+function qteFormSnapshot() {
+  var n6 = function(x){ return Math.round((+x || 0) * 1e6) / 1e6; }, nb = function(v){ return (v === '' || v === undefined || v === null) ? '' : n6(v); };
+  var hdr = ['qf-num','qf-client','qf-dt','qf-valid','qf-cur','qf-mode','qf-st','qf-approved-by','qf-approved-note'].map(function(k){ return String(G(k) ? G(k).value : '').trim(); });
+  hdr.push(nb(G('qf-mkp') ? G('qf-mkp').value : ''));
+  ['qf-origOv','qf-destOv','qf-admOv','qf-insRate'].forEach(function(k){ hdr.push(String(G(k) ? G(k).value : '').trim()); });
+  hdr.push(String(G('qf-nt') ? G('qf-nt').value : '').trim());
+  var ls = cQL.map(function(l){ var r = l.rid; return [ qlFld(r,'supId'), String(qlFld(r,'desc')).trim(), n6(qlFld(r,'qty')), String(qlFld(r,'uom')), n6(qlFld(r,'cost')), n6(qlFld(r,'cbm')), !!qlFld(r,'dg'), n6(qlFld(r,'dutyPct')), nb(qlFld(r,'mkp')), nb(qlFld(r,'insRate')), l.lid || '', !!l.costManual, !!l.cbmManual ]; });
+  return JSON.stringify([hdr, ls]);
+}
+// Settings text limits — the cut is made VISIBLE (cuts[] is shown in the single final toast), never silent.
+function qteLimitText(v, max, label, oneLine, cuts) {
+  v = String(v == null ? '' : v); if (oneLine) v = v.replace(/\s*[\r\n]+\s*/g, ' ').trim();
+  if (v.length > max) { cuts.push(label + ' was longer than ' + max + ' characters and was cut — check the end'); v = v.slice(0, max); }
+  return v;
 }
 
 function prevQteId() { if (EI.qt) prevQte(EI.qt); }
@@ -16167,12 +16413,13 @@ function prevQteDoc(q) {
       + '<td style="padding:4px 8px;font-size:11px;text-align:right;font-weight:600;">$' + fn(calc.landed||0,0) + '</td>'
       + '</tr>';
   }).join('');
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + san(q.num) + ' — Quote</title>'
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + san(q.num) + ' — Quote (INTERNAL)</title>'
     + '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:0;padding:24px;color:#222;}'
     + 'h1{font-size:22px;letter-spacing:.1em;margin:0 0 4px;}table{border-collapse:collapse;width:100%;}'
     + 'th{background:#0f0c0d;color:white;padding:6px 8px;text-align:left;font-size:11px;}'
     + 'td{border-bottom:1px solid #e8e8e8;}@media print{button{display:none!important;}}</style></head>'
     + '<body>'
+    + '<div style="background:#B8283A;color:#fff;padding:6px 10px;font-weight:700;font-size:11px;margin-bottom:10px;">INTERNAL — contains supplier and cost information. Do not send to the client.</div>'
     + '<div style="display:flex;justify-content:space-between;margin-bottom:16px;">'
     + '<div><h1>QUOTE</h1><div style="color:#888;font-size:11px;">' + san(AS.name||'Stackd') + ' · ' + san(AS.email||'') + '</div></div>'
     + '<div style="text-align:right;"><div style="font-weight:600;font-size:16px;color:#B8283A;">' + san(q.num) + '</div>'
