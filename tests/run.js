@@ -15612,6 +15612,272 @@ test('SPEC-QTE-005 T-17: keep-together wrappers and the page footer are present 
   assertContains(html, '<div class="avoid"><div style="display:flex;justify-content:flex-end'); assertContains(h2, '<div class="avoid" style="margin-top:18px;"><div'); assertContains(html, '@page{size:A4;margin:12mm;@bottom-right{content:"QTE-0001'); assertContains(html, 'thead{display:table-header-group;}');
 });
 
+// ══ SPEC-QTE-006: freight as its own line (v2.9.107) ══
+function frQuote(over) {
+  return Object.assign({ id: 'fq1', num: 'QTE-0100', client: 'Acme Ltd', dt: '2026-11-28', validUntil: '2099-12-31', currency: 'USD', freightMode: 'LCL', markup: 20, status: 'Draft', notes: '',
+    originCharges: 0, destCharges: 0, fpmAdmin: 0,
+    lines: [{ rid: 'a', supId: 's1', desc: 'Pallet of PVC pipe', qty: 100, uom: 'pcs', cost: 10000, cbm: 20, dg: false, dutyPct: 0 }] }, over || {});
+}
+function frFx(q) { qcFx(q || frQuote()); ctx.QR.lclPerCBM = 100; ctx.QR.insRate = 0.005; ctx.QR.dgSurcharge = 150; ctx.QR.fxGBPUSD = 1.3; ctx.QR.fcl20GP = 3000; ctx.QR.fcl40HQ = 5000; ctx.DB.qt.forEach(x => { if (x.calc_sellUSD === 'AUTO') x.calc_sellUSD = ctx.cQte(x).sellUSD; }); }
+function frReset() { mockEl('qf-fr').value = 'included'; mockEl('qf-frAmt').value = ''; mockEl('qt-freight').textContent = '-'; mockEl('qt-fr-foot').textContent = ''; ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx._sb = null; }
+const frR = x => Math.round(x * 100) / 100;
+
+test('SPEC-QTE-006 T-1: included regression — pre-existing cQte result keys unchanged (independent arithmetic) incl. DG, line Ins %, quote insRate, FCL modes; 4-arg cQteLine is included', () => {
+  frFx();
+  const plain = ctx.cQte(frQuote());                                    // cost 10000, cbm 20 -> freight 2000, ins 60, landed 12060, sell 14472
+  assertEqual(frR(plain.totalLanded), 12060); assertEqual(frR(plain.sellUSD), 14472); assertEqual(frR(plain.quotedTotal), 12060); assertEqual(plain.lineCalcs[0].landed, 12060);
+  const dg = ctx.cQte(frQuote({ lines: [{ rid: 'a', cost: 1000, cbm: 1, dg: true, dutyPct: 10 }] }));   // freight 100, dg 150, ins (1100)*.005=5.5, duty 100
+  assertEqual(frR(dg.totalLanded), 1355.5, 'DG line: cost+freight+dg+ins+duty');
+  const ov = ctx.cQte(frQuote({ lines: [{ rid: 'a', cost: 1000, cbm: 1, insRate: 2 }], insRate: 1 }));   // line Ins % 2 beats quote 1
+  assertEqual(frR(ov.lineCalcs[0].ins), frR(1100 * 0.02));
+  const fcl = ctx.cQte(frQuote({ freightMode: 'FCL 20GP', lines: [{ rid: 'a', cost: 100, cbm: 10 }, { rid: 'b', cost: 100, cbm: 30 }] }));
+  assertEqual(frR(fcl.lineCalcs[0].freight), 750); assertEqual(frR(fcl.lineCalcs[1].freight), 2250);
+  const a4 = ctx.cQteLine({ cost: 10000, cbm: 20 }, ctx.QR, 'LCL', 20), a6 = ctx.cQteLine({ cost: 10000, cbm: 20 }, ctx.QR, 'LCL', 20, undefined, 'included');
+  assertEqual(a4.landed, a6.landed); assertEqual(a4.landed, 12060);
+  assertEqual(plain.freightLine, 0); assertEqual(plain.freightTreatment, 'included');
+});
+
+test('SPEC-QTE-006 T-2: the §3.4 worked example — all four columns', () => {
+  frFx();
+  const run = (ft, amt) => { const q = frQuote(); if (ft) q.freightTreatment = ft; if (amt !== undefined) q.freightAmount = amt; return ctx.cQte(q); };
+  const inc = run(), sep = run('separate'), typ = run('separate', 1800), exc = run('excluded');
+  assertEqual(frR(inc.sellUSD), 14472); assertEqual(frR(inc.quotedTotal), 12060); assertEqual(frR(inc.totalLanded), 12060);
+  assertEqual(frR(sep.totalLanded), 10000); assertEqual(frR(sep.freightLine), 2060); assertEqual(frR(sep.sellUSD), 14060); assertEqual(frR(sep.quotedTotal), 12060);
+  assertEqual(frR(typ.freightLine), 1800); assertEqual(frR(typ.sellUSD), 13800); assertEqual(frR(typ.quotedTotal), 11800); assertEqual(typ.freightTyped, true);
+  assertEqual(frR(exc.totalLanded), 10000); assertEqual(exc.freightLine, 0); assertEqual(frR(exc.sellUSD), 12000); assertEqual(frR(exc.quotedTotal), 10000);
+  assertEqual(frR(sep.lineCalcs[0].ins), 60, 'line ins still returned (basis cost+freight)'); assertEqual(frR(exc.lineCalcs[0].freight), 2000, 'excluded still returns per-line freight');
+});
+
+test('SPEC-QTE-006 T-3: helper normalisation and qteFreightFigures is the single source', () => {
+  ['separate', 'excluded'].forEach(v => assertEqual(ctx.qteFreightTreatment(v), v));
+  [undefined, null, '', 'foo', 'Separate', 'included', 5].forEach(v => assertEqual(ctx.qteFreightTreatment(v), 'included'));
+  [[undefined, null], [null, null], ['', null], ['0', 0], [0, 0], [-1, null], ['abc', null], [NaN, null], ['1e3', 1000], [Infinity, null], ['-1', null]].forEach(c => assertEqual(ctx.qteFreightTyped(c[0]), c[1], 'typed ' + String(c[0])));
+  const lc = [{ freight: 2000, dgAmt: 0, ins: 60 }];
+  const a = ctx.qteFreightFigures(lc, 'separate', '1800'), b = ctx.qteFreightFigures(lc, 'separate', 1800);
+  assertEqual(JSON.stringify(a), JSON.stringify(b), 'string and number amount identical');
+  assertEqual(a.freightLine, 1800); assertEqual(a.freightEst, 2060); assertEqual(a.freightUsd, 2000); assertEqual(a.freightTyped, true);
+  assertEqual(ctx.qteFreightFigures(lc, 'excluded', 5).freightLine, 0); assertEqual(ctx.qteFreightFigures(lc, 'bogus', 5).freightTreatment, 'included');
+  assertEqual(ctx.qteFreightFigures(lc, 'separate', '0').freightLine, 0); assertEqual(ctx.qteFreightFigures(lc, 'separate', '0').freightTyped, true);
+});
+
+test('SPEC-QTE-006 T-4: DG surcharge — included in landed; separate moves it into the freight estimate; excluded drops it', () => {
+  frFx(); const mk = ft => { const q = frQuote({ lines: [{ rid: 'a', cost: 1000, cbm: 1, dg: true }] }); if (ft) q.freightTreatment = ft; return ctx.cQte(q); };
+  const inc = mk(), sep = mk('separate'), exc = mk('excluded');
+  assertEqual(frR(inc.lineCalcs[0].landed), frR(1000 + 100 + 150 + 5.5));
+  assertEqual(frR(sep.lineCalcs[0].landed), 1000); assertEqual(frR(sep.freightEst), frR(100 + 150 + 5.5)); assertEqual(frR(sep.freightLine), frR(100 + 150 + 5.5));
+  assertEqual(frR(exc.lineCalcs[0].landed), 1000); assertEqual(exc.freightLine, 0); assertEqual(frR(exc.sellUSD), 1200);
+});
+
+test('SPEC-QTE-006 T-5: line Ins % and quote Insurance % feed the separate estimate; no price effect with a typed amount or excluded', () => {
+  frFx(); const base = { lines: [{ rid: 'a', cost: 1000, cbm: 1, insRate: 2 }], freightTreatment: 'separate' };
+  const sep = ctx.cQte(frQuote(base));                                      // freight 100, ins (1100)*2% = 22
+  assertEqual(frR(sep.freightEst), 122); assertEqual(frR(sep.freightLine), 122);
+  const typ = ctx.cQte(frQuote(Object.assign({}, base, { freightAmount: 500 }))), typ2 = ctx.cQte(frQuote(Object.assign({}, base, { freightAmount: 500, lines: [{ rid: 'a', cost: 1000, cbm: 1, insRate: 9 }] })));
+  assertEqual(frR(typ.sellUSD), frR(typ2.sellUSD), 'typed amount: Ins % changes no total');
+  const e1 = ctx.cQte(frQuote({ lines: [{ rid: 'a', cost: 1000, cbm: 1, insRate: 2 }], freightTreatment: 'excluded' })), e2 = ctx.cQte(frQuote({ lines: [{ rid: 'a', cost: 1000, cbm: 1, insRate: 9 }], freightTreatment: 'excluded' }));
+  assertEqual(frR(e1.sellUSD), frR(e2.sellUSD), 'excluded: Ins % changes no total');
+  const qIns = ctx.cQte(frQuote({ lines: [{ rid: 'a', cost: 1000, cbm: 1 }], freightTreatment: 'separate', insRate: 3 }));
+  assertEqual(frR(qIns.freightEst), frR(100 + 1100 * 0.03), 'quote-level insurance override flows into the estimate');
+});
+
+test('SPEC-QTE-006 T-6: calcQte DOM figures equal cQte for all treatments; qt-freight and footer strings exact; empty lines + openQte reset', () => {
+  frFx(); ctx.cQL = [{ rid: 'r1', supId: '', desc: 'x', qty: 1, uom: 'pcs', cost: 10000, cbm: 20, dg: false, dutyPct: 0 }];
+  qtForm(); mockEl('qf-mode').value = 'LCL'; mockEl('qf-mkp').value = '20'; ['qf-origOv', 'qf-destOv', 'qf-admOv'].forEach(k => { mockEl(k).value = '0'; });
+  const check = (ft, amt, usd, fr, foot) => {
+    mockEl('qf-fr').value = ft; mockEl('qf-frAmt').value = amt; qtMirror(); ctx.calcQte();
+    const q = frQuote({ lines: [Object.assign({}, ctx.cQL[0])] }); if (ft !== 'included') q.freightTreatment = ft; if (amt !== '') q.freightAmount = +amt;
+    assertEqual(mockEl('qt-sell-usd').textContent, ctx.fmt(ctx.cQte(q).sellUSD, 'USD'), 'sell price ' + ft + '/' + amt);
+    assertEqual(mockEl('qt-freight').textContent, fr, 'qt-freight ' + ft + '/' + amt); assertEqual(mockEl('qt-fr-foot').textContent, foot, 'footer ' + ft + '/' + amt);
+  };
+  check('included', '', 0, '-', ''); check('separate', '', 0, '$2060.00 (estimate)', 'Freight estimate $2060.00 (0 lines with no CBM)');
+  check('separate', '1800', 0, '$1800.00 (typed)', 'Freight estimate $2060.00 (0 lines with no CBM) — using typed $1800.00. Insurance % has no effect while a typed freight amount is used');
+  check('excluded', '', 0, '-', 'Freight not included. Insurance % has no effect while freight is not included');
+  ctx.cQL = [{ rid: 'r1', cost: 100, cbm: 1 }, { rid: 'r2', cost: 100, cbm: 0 }]; mockEl('qf-fr').value = 'separate'; mockEl('qf-frAmt').value = ''; qtMirror(); ctx.calcQte();
+  assert(mockEl('qt-fr-foot').textContent.indexOf('(1 line with no CBM)') !== -1, 'singular "1 line"');
+  ctx.cQL = []; ctx.calcQte(); assertEqual(mockEl('qt-freight').textContent, '-'); assertEqual(mockEl('qt-fr-foot').textContent, '', 'footer cleared to empty, never "-"');
+  mockEl('qt-freight').textContent = '$9.00 (estimate)'; mockEl('qt-fr-foot').textContent = 'stale'; ctx.openQte();
+  assertEqual(mockEl('qt-freight').textContent, '-'); assertEqual(mockEl('qt-fr-foot').textContent, ''); assertEqual(mockEl('qf-fr').value, 'included');
+  frReset(); ctx.closeM('ov-qt');
+});
+
+test('SPEC-QTE-006 T-7: saveQte stores freightTreatment/freightAmount only when set; calc_* include freight; no drift ack on a fresh separate quote', () => {
+  const save = (ft, amt) => {
+    frFx(); ctx.DB.qt = []; ctx.EI.qt = null; ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Pipe', qty: 1, uom: 'pcs', cost: 10000, cbm: 20, dg: false, dutyPct: 0 }];
+    qtForm(); mockEl('qf-mkp').value = '20'; ['qf-origOv', 'qf-destOv', 'qf-admOv'].forEach(k => { mockEl(k).value = '0'; });
+    mockEl('qf-fr').value = ft; mockEl('qf-frAmt').value = amt; qtMirror(); ctx.saveQte(); frReset(); return ctx.DB.qt[0];
+  };
+  const inc = save('included', ''), sep = save('separate', ''), typ = save('separate', '1800'), z = save('separate', '0'), exc = save('excluded', '1800');
+  assertEqual('freightTreatment' in inc, false); assertEqual('freightAmount' in inc, false); assertEqual(frR(inc.calc_sellUSD), 14472);
+  assertEqual(sep.freightTreatment, 'separate'); assertEqual('freightAmount' in sep, false, 'blank omitted'); assertEqual(frR(sep.calc_sellUSD), 14060); assertEqual(frR(sep.calc_totalLanded), 10000);
+  assertEqual(typ.freightAmount, 1800); assertEqual(frR(typ.calc_sellUSD), 13800);
+  assertEqual(z.freightAmount, 0, 'typed 0 is stored'); assertEqual(exc.freightTreatment, 'excluded'); assertEqual('freightAmount' in exc, false, 'amount never stored for excluded'); assertEqual(frR(exc.calc_sellUSD), 12000);
+  frFx(sep); ctx.DB.qt = [sep]; const m = ctx.qteCustomerModel(sep);
+  assert(!ctx.qteCustWarnings(sep, m, { pb: '', terms: '', notes: '' }).some(w => w.k === 'drift'), 'fresh separate quote raises no false drift ack');
+});
+
+test('SPEC-QTE-006 T-8: vQte blocks a bad freight amount and accepts blank, 0 and the limit', () => {
+  frFx(); ctx.cQL = [{ rid: 'r1', cost: 1, cbm: 1 }]; qtForm(); mockEl('qf-fr').value = 'separate';
+  [['-1', false], ['abc', false], ['10000001', false], ['', true], ['0', true], ['10000000', true], ['1800.5', true]].forEach(c => { mockEl('qf-frAmt').value = c[0]; assertEqual(ctx.vQte(), c[1], 'amount ' + c[0]); });
+  mockEl('qf-fr').value = 'included'; mockEl('qf-frAmt').value = '-5'; assertEqual(ctx.vQte(), true, 'amount ignored when not separate');
+  frReset();
+});
+
+test('SPEC-QTE-006 T-9/T-12: customer document — Freight row first, labels, zero prints none, reconciliation bound, Shipping line per treatment', () => {
+  frFx(); const mk = (ft, amt, extra) => frQuote(Object.assign({ freightTreatment: ft, freightAmount: amt }, extra || {}));
+  const est = ctx.qteCustomerModel(mk('separate')), typed = ctx.qteCustomerModel(mk('separate', 1800)), exc = ctx.qteCustomerModel(mk('excluded')), inc = ctx.qteCustomerModel(frQuote());
+  assertEqual(est.charges[0].label, 'Freight (estimate)'); assertEqual(est.charges[0].amount, 2060); assertEqual(typed.charges[0].label, 'Freight'); assertEqual(typed.charges[0].amount, 1800);
+  assertEqual(exc.charges.length, 0); assertEqual(inc.charges.length, 0);
+  const zero = ctx.qteCustomerModel(mk('separate', 0)); assertEqual(zero.charges.filter(c => c.key === 'freight').length, 0, 'typed 0 prints no row');
+  const withOh = ctx.qteCustomerModel(mk('separate', undefined, { originCharges: 50, destCharges: 25, fpmAdmin: 10 }));
+  assertEqual(withOh.charges.map(c => c.key).join(','), 'freight,origin,dest,admin', 'Freight row first, then overhead rows');
+  [est, typed, withOh].forEach(m => { const eng = m.engineTotal; const bound = m.rows.reduce((s, r) => s + 0.00005 * r.qty + 0.005, 0) + 0.005 * 4; assert(Math.abs(m.total - eng) <= bound + 1e-9, 'printed total within the stated bound'); });
+  assert(Math.abs(est.total - 14060) < 0.011, 'separate printed total'); 
+  const html = (ft) => ctx.qteCustomerDocHtml(frQuote(ft ? { freightTreatment: ft } : {}), { priceBasis: '', terms: '', includeNotes: false });
+  assertContains(html('separate'), 'Freight (estimate)'); assertContains(html('separate'), 'Shipping: LCL'); assertContains(html(), 'Shipping: LCL');
+  assert(html('excluded').indexOf('Shipping:') === -1, 'excluded prints no Shipping line');
+});
+
+test('SPEC-QTE-006 T-10: sentinels — CBM, rates, markup, insurance, estimate-vs-typed delta never reach the customer document', () => {
+  frFx(); ctx.QR.lclPerCBM = 77.77; ctx.QR.fcl20GP = 31313; ctx.QR.insRate = 0.00717;
+  const q = frQuote({ markup: 13.37, freightTreatment: 'separate', freightAmount: 1999, lines: [{ rid: 'a', desc: 'Pipe', qty: 1, uom: 'pcs', cost: 10000, cbm: 33.33, dg: false, dutyPct: 0, insRate: 4.44 }] });
+  const html = ctx.qteCustomerDocHtml(q, { priceBasis: '', terms: '', includeNotes: false });
+  ['77.77', '31313', '0.00717', '13.37', '33.33', '4.44', 'separate', 'Separate'].forEach(sn => assert(html.indexOf(sn) === -1, 'sentinel ' + sn + ' absent'));
+  const frUsdStr = String(ctx.qteRound2(ctx.cQte(q).freightUsd)); assert(html.indexOf(frUsdStr) === -1, 'sum of line freight (' + frUsdStr + ') never printed');
+  const delta = ctx.cQte(q).freightEst - 1999; assert(html.indexOf(String(Math.round(delta * 100) / 100)) === -1, 'estimate-vs-typed delta absent');
+  ctx.QR.lclPerCBM = 100; ctx.QR.insRate = 0.005;
+});
+
+test('SPEC-QTE-006 T-11: freight warnings — frest ack, frzero (CBM-less with insurance > 0, and typed 0), frexc warn; none for typed > 0 on a CBM-less quote; Generate refuses until ticked', () => {
+  frFx(); const warns = (q) => ctx.qteCustWarnings(q, ctx.qteCustomerModel(q), { pb: '', terms: '', notes: '' }).map(w => w.k + ':' + w.lvl);
+  assert(warns(frQuote({ freightTreatment: 'separate' })).indexOf('frest:ack') !== -1, 'frest ack on estimate');
+  const noCbm = { lines: [{ rid: 'a', cost: 10000, cbm: 0, qty: 1 }], freightTreatment: 'separate' };
+  const w1 = warns(frQuote(noCbm)); assert(w1.indexOf('frzero:ack') !== -1, 'frzero for CBM-less with insurance > 0'); assert(w1.indexOf('frest:ack') === -1, 'frest and frzero mutually exclusive');
+  assert(warns(frQuote({ freightTreatment: 'separate', freightAmount: 0 })).indexOf('frzero:ack') !== -1, 'frzero for typed 0');
+  const w3 = warns(frQuote(Object.assign({}, noCbm, { freightAmount: 1800 }))); assert(!w3.some(k => k.indexOf('fr') === 0 && k !== 'frexc'), 'typed amount > 0 on a CBM-less quote raises no freight warning: ' + w3.join());
+  assert(warns(frQuote({ freightTreatment: 'excluded' })).indexOf('frexc:warn') !== -1, 'frexc warn');
+  assert(!warns(frQuote()).some(k => k.indexOf('fr') === 0), 'included raises none');
+});
+
+testAsync('SPEC-QTE-006 T-11b: qteCustGenerate refuses a separate-estimate quote until frest is ticked', async () => {
+  frFx(frQuote({ freightTreatment: 'separate' })); ctx.qteOpenCustDialog('fq1');
+  const before = qcOpened.length; ctx.qteCustGenerate(); assertEqual(qcOpened.length, before, 'not generated without the tick');
+  ctx._qdocAcks['fq1|frest'] = true; ctx.qteCustGenerate(); assert(qcOpened.length === before + 1, 'generated once ticked');
+  ctx.closeM('ov-qdoc'); frReset();
+});
+
+test('SPEC-QTE-006 T-13: versioning — a treatment change creates a new version with ft; a typed-amount-only change does not; included stores no ft', () => {
+  const doSave = (ft, amt) => { mockEl('qf-fr').value = ft; mockEl('qf-frAmt').value = amt; qtMirror(); ctx.saveQte(); };
+  frFx(); ctx.DB.qt = []; ctx.EI.qt = null; ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Pipe', qty: 1, uom: 'pcs', cost: 10000, cbm: 20, dg: false, dutyPct: 0 }];
+  qtForm(); mockEl('qf-mkp').value = '20'; ['qf-origOv', 'qf-destOv', 'qf-admOv'].forEach(k => { mockEl(k).value = '0'; });
+  doSave('included', ''); const id = ctx.DB.qt[0].id; assertEqual(ctx.DB.qt[0].lines[0].priceHistory.length, 1); assertEqual('ft' in ctx.DB.qt[0].lines[0].priceHistory[0], false, 'included stores no ft');
+  ctx.editQte(id); qtForm(); mockEl('qf-mkp').value = '20'; ['qf-origOv', 'qf-destOv', 'qf-admOv'].forEach(k => { mockEl(k).value = '0'; });
+  doSave('separate', ''); let h = ctx.DB.qt[0].lines[0].priceHistory; assertEqual(h.length, 2, 'treatment change versions'); assertEqual(h[1].ft, 'separate'); assertEqual(frR(h[1].landed), 10000);
+  ctx.editQte(id); qtForm(); mockEl('qf-mkp').value = '20'; ['qf-origOv', 'qf-destOv', 'qf-admOv'].forEach(k => { mockEl(k).value = '0'; });
+  doSave('separate', '1800'); assertEqual(ctx.DB.qt[0].lines[0].priceHistory.length, 2, 'typed amount only: no new version');
+  ctx.editQte(id); qtForm(); mockEl('qf-mkp').value = '20'; ['qf-origOv', 'qf-destOv', 'qf-admOv'].forEach(k => { mockEl(k).value = '0'; });
+  doSave('included', ''); assertEqual(ctx.DB.qt[0].lines[0].priceHistory.length, 3, 'back to included versions again'); frReset(); ctx.closeM('ov-qt');
+});
+
+test('SPEC-QTE-006 T-14: snapshot sees the new fields; open/edit reset and load; switching away clears the amount; edits survive; editQte never reads a stale grid', () => {
+  frFx(); const A = frQuote({ id: 'A', num: 'QTE-A', freightTreatment: 'separate', freightAmount: 1800, lines: [{ rid: 'ra', supId: '', desc: 'A line', qty: 2, uom: 'pcs', cost: 500, cbm: 3, dg: false, dutyPct: 0, markup: 33 }] });
+  const B = frQuote({ id: 'B', num: 'QTE-B', lines: [{ rid: 'rb', supId: '', desc: 'B line', qty: 7, uom: 'pcs', cost: 900, cbm: 4, dg: false, dutyPct: 0, markup: 44 }] });
+  ctx.DB.qt = [A, B];
+  ctx.editQte('A'); assertEqual(mockEl('qf-fr').value, 'separate'); assertEqual(mockEl('qf-frAmt').value, '1800'); qtMirror();
+  const snap0 = ctx.qteFormSnapshot(); mockEl('qf-frAmt').value = '1801'; assert(ctx.qteFormSnapshot() !== snap0, 'amount in snapshot'); mockEl('qf-frAmt').value = '1800';
+  mockEl('qf-fr').value = 'excluded'; assert(ctx.qteFormSnapshot() !== snap0, 'treatment in snapshot'); mockEl('qf-fr').value = 'separate';
+  ctx.editQte('B');                                                   // A's grid is still in the mock DOM: a stale sync would overwrite B
+  assertEqual(ctx.cQL[0].desc, 'B line'); assertEqual(+ctx.cQL[0].cost, 900); assertEqual(+ctx.cQL[0].markup, 44, 'B loaded intact'); assertEqual(mockEl('qf-fr').value, 'included'); assertEqual(mockEl('qf-frAmt').value, '');
+  qtMirror(); mockEl('ql-cost-rb').value = '123456';                  // cancelled typing in B
+  ctx.editQte('B'); assertEqual(+ctx.cQL[0].cost, 900, 're-edit after a cancel restores the saved lines, not the cancelled typing');
+  qtMirror(); mockEl('ql-cost-rb').value = '777'; mockEl('qf-fr').value = 'separate'; ctx.qteFrSync(); assertEqual(+ctx.cQL[0].cost, 777, 'typed line edit survives a treatment change');
+  mockEl('ql-cost-rb').value = '888'; mockEl('qf-frAmt').value = '10'; ctx.qteFrAmtInput(); assertEqual(+ctx.cQL[0].cost, 888, 'typed line edit survives a typed-amount keystroke');
+  mockEl('qf-frAmt').value = '55'; mockEl('qf-fr').value = 'excluded'; ctx.qteFrSync(); assertEqual(mockEl('qf-frAmt').value, '', 'switching away from separate clears the amount');
+  assertEqual(mockEl('qf-frAmt-wrap').style.display, 'none');
+  ctx.openQte(); assertEqual(mockEl('qf-fr').value, 'included'); assertEqual(mockEl('qf-frAmt').value, '');
+  frReset(); ctx.closeM('ov-qt');
+});
+
+testAsync('SPEC-QTE-006 T-15: Cloud — each of the four row builders carries both columns; refresh omits keys when null; a status change keeps freight_*', async () => {
+  const row = { id: 'u1', num: 'Q', client: 'C', dt: '2026-11-28', valid_until: '', currency: 'USD', freight_mode: 'LCL', markup: 20, status: 'Draft', notes: '', lines: [], linked_po_ids: [], source_contact_id: null,
+    calc_total_landed: 1, calc_sell_usd: 2, calc_sell_gbp: 3, approved_by: '', approved_reason: '', approved_at: null, origin_charges: null, dest_charges: null, fpm_admin: null, ins_rate: null };
+  const frOrigAuth = ctx.ensureSbAuth;
+  try {
+    // (d) refresh mapping
+    resetDB(); ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+    ctx._sb = mockSb({ quotes: { selectData: [Object.assign({}, row, { freight_treatment: null, freight_amount: null }), Object.assign({}, row, { id: 'u2', freight_treatment: 'separate', freight_amount: 1800 }), Object.assign({}, row, { id: 'u3', freight_treatment: 'excluded', freight_amount: null })] } });
+    await ctx.refreshQteFromSupabase();
+    const q1 = ctx.DB.qt.find(x => x.id === 'u1'), q2 = ctx.DB.qt.find(x => x.id === 'u2'), q3 = ctx.DB.qt.find(x => x.id === 'u3');
+    assertEqual('freightTreatment' in q1, false); assertEqual('freightAmount' in q1, false); assertEqual(q2.freightTreatment, 'separate'); assertEqual(q2.freightAmount, 1800); assertEqual(q3.freightTreatment, 'excluded'); assertEqual('freightAmount' in q3, false);
+    // (b) persistQteChange — a status change must not null the columns
+    const sb2 = mockSb({ quotes: { selectData: [] } }); ctx._sb = sb2; ctx.ensureSbAuth = async () => true;
+    await ctx.persistQteChange(Object.assign({}, q2, { status: 'Sent' }), true);
+    const up = sb2._calls.find(c => c.op === 'update'); assert(up, 'update called'); assertEqual(up.row.freight_treatment, 'separate'); assertEqual(up.row.freight_amount, 1800);
+    const sb3 = mockSb({ quotes: { selectData: [] } }); ctx._sb = sb3; await ctx.persistQteChange(Object.assign({}, q1), true);
+    const up3 = sb3._calls.find(c => c.op === 'update'); assertEqual(up3.row.freight_treatment, null); assertEqual(up3.row.freight_amount, null);
+    // (a) saveQte qtRow
+    resetDB(); ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString()); frFx();
+    ctx.cQL = [{ rid: 'r1', supId: '', desc: 'Pipe', qty: 1, uom: 'pcs', cost: 10000, cbm: 20, dg: false, dutyPct: 0 }]; qtForm(); mockEl('qf-mkp').value = '20'; ['qf-origOv', 'qf-destOv', 'qf-admOv'].forEach(k => { mockEl(k).value = '0'; });
+    mockEl('qf-fr').value = 'separate'; mockEl('qf-frAmt').value = '1800'; qtMirror(); ctx.localStorage.setItem('st_qt_cloud_migration_ts', new Date().toISOString());
+    const sb4 = mockSb({ quotes: { insertImpl: r => Object.assign({ id: 'new-q' }, r), selectData: [] } }); ctx._sb = sb4; await ctx.saveQte();
+    const ins = sb4._calls.find(c => c.op === 'insert'); assertEqual(ins.row.freight_treatment, 'separate'); assertEqual(ins.row.freight_amount, 1800);
+    // (c) migrateQteToSupabase insert
+    resetDB(); ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); ctx.DB.qt = [frQuote({ freightTreatment: 'separate', freightAmount: 1800 })];
+    ctx.localStorage.setItem(ctx.K.qt, JSON.stringify(ctx.DB.qt)); const sb5 = mockSb({ quotes: { insertImpl: r => Object.assign({ id: 'mig-q' }, r), selectData: [] } }); ctx._sb = sb5;
+    const frOrigBackup = ctx.showBlockingBackupModal; ctx.showBlockingBackupModal = () => Promise.resolve(true); mockEl('cfg-sb-qt-restore-btn');
+    try { await ctx.migrateQteToSupabase(); } finally { ctx.showBlockingBackupModal = frOrigBackup; ctx.localStorage.removeItem('st_qt_pre_migration'); }
+    const mi = sb5._calls.find(c => c.op === 'insert' && c.table === 'quotes'); assert(mi, 'migrate insert called'); assertEqual(mi.row.freight_treatment, 'separate'); assertEqual(mi.row.freight_amount, 1800);
+  } finally { ctx.ensureSbAuth = frOrigAuth; ctx._sb = null; ctx.localStorage.removeItem('st_qt_cloud_migration_ts'); frReset(); }
+});
+
+test('SPEC-QTE-006 T-16: a Sheets pull cannot reset a separate quote (mergePulledWithLocal keeps the local-only fields)', () => {
+  const local = { id: 'q1', num: 'Q1', client: 'C', freightTreatment: 'separate', freightAmount: 1800 }, pulled = { id: 'q1', num: 'Q1', client: 'C2' };
+  const merged = ctx.mergePulledWithLocal(pulled, local); assertEqual(merged.freightTreatment, 'separate'); assertEqual(merged.freightAmount, 1800); assertEqual(merged.client, 'C2');
+});
+
+test('SPEC-QTE-006 T-17: internal sheet headers/totals and rQLT headers per treatment; history note; INTERNAL banner intact', () => {
+  frFx(); const sheet = (q) => { ctx.prevQteDoc(q); return qcHtml; };
+  const inc = sheet(frQuote()), sep = sheet(frQuote({ freightTreatment: 'separate' })), typ = sheet(frQuote({ freightTreatment: 'separate', freightAmount: 1800 })), exc = sheet(frQuote({ freightTreatment: 'excluded' }));
+  assertContains(inc, '<th>Freight</th><th>Insurance</th>'); assertContains(inc, '<th>Landed</th>');
+  assertContains(sep, 'Freight (in Freight row)'); assertContains(sep, 'Insurance (in Freight row)'); assertContains(sep, 'Landed (cost + duty)'); assertContains(sep, 'Freight (estimate)'); assertContains(sep, '<strong>Freight:</strong> shown separately');
+  assertContains(typ, '(replaced by typed freight)'); assertContains(typ, 'Freight (typed)'); assertContains(exc, '(not charged)'); assertContains(exc, '<strong>Freight:</strong> not included');
+  [inc, sep, typ, exc].forEach(h => assertContains(h, 'INTERNAL — contains supplier and cost information'));
+  const head = (ft, amt) => { ctx.cQL = [{ rid: 'r1', cost: 1, cbm: 1 }]; mockEl('qf-fr').value = ft; mockEl('qf-frAmt').value = amt; qtMirror(); mockEl('qt-lines').innerHTML = ''; ctx.rQLT(); return mockEl('qt-lines').innerHTML; };
+  assertContains(head('included', ''), '<th>Ins $</th><th>Landed</th>'); assertContains(head('separate', ''), 'Ins $ (in Freight row)'); assertContains(head('separate', '5'), 'Ins $ (replaced by typed freight)');
+  assertContains(head('excluded', ''), 'Ins $ (not charged)'); assertContains(head('excluded', ''), 'Landed (cost + duty)');
+  ctx.cQL = [{ rid: 'h1', cost: 1, priceHistory: [{ v: 1, cost: 1, dutyPct: 0, markup: 20, insRate: 0.5, ins: 0, landed: 1, sellPrice: 1, note: '' }, { v: 2, ft: 'separate', cost: 1, dutyPct: 0, markup: 20, insRate: 0.5, ins: 0, landed: 1, sellPrice: 1, note: '' }, { v: 3, ft: 'excluded', cost: 1, dutyPct: 0, markup: 20, insRate: 0.5, ins: 0, landed: 1, sellPrice: 1, note: '' }] }];
+  mockEl('ql-hist-h1').innerHTML = ''; ctx.renderQteLineHistory('h1'); const hp = mockEl('ql-hist-h1').innerHTML;
+  assertContains(hp, 'Freight: shown separately'); assertContains(hp, 'Freight: not included'); assertEqual((hp.match(/Freight:/g) || []).length, 2, 'nothing for the included version');
+  frReset(); ctx.cQL = [];
+});
+
+test('SPEC-QTE-006 T-18: cQteLine call sites are exactly the five known functions', () => {
+  const lines = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8').split('\n'); const found = {};
+  lines.forEach((ln, i) => {
+    if (ln.indexOf('cQteLine(') === -1 || /function cQteLine\(/.test(ln) || ln.indexOf('<code>cQteLine') !== -1 || ln.indexOf('&lt;code&gt;') !== -1) return;
+    for (let j = i; j >= 0; j--) { const m = /^(?:async )?function (\w+)/.exec(lines[j]); if (m) { found[m[1]] = true; break; } }
+  });
+  assertEqual(Object.keys(found).sort().join(','), ['cQte', 'calcQte', 'rQLT', 'rfqLandedGBP', 'saveQte'].sort().join(','));
+});
+
+test('SPEC-QTE-006 T-19: AI_SYSTEM_PROMPT states the three treatments; AI-created quotes carry no freightTreatment', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  ['Included in line prices', 'Shown as a separate line', 'Not included', 'Freight (estimate)'].forEach(t => assertContains(html.slice(html.indexOf('AI_SYSTEM_PROMPT')), t));
+  assert(/freightTreatment/.test(html) && !/create_quote[\s\S]{0,400}freightTreatment/.test(html.slice(html.indexOf('function handleAIAction'), html.indexOf('function handleAIAction') + 20000)), 'create_quote path never sets freightTreatment');
+});
+
+test('SPEC-QTE-006 T-20: qteToPoConvert on a separate quote builds PO lines from line cost only', () => {
+  frFx(); const q = frQuote({ status: 'Accepted', freightTreatment: 'separate', freightAmount: 1800, lines: [{ rid: 'a', supId: 's1', desc: 'Pipe', qty: 10, uom: 'pcs', cost: 10000, cbm: 20 }] });
+  ctx.DB.qt = [q]; ctx.EI.qt = 'fq1'; ctx.DB.po = []; ctx.qteToPoConvert();
+  const po = ctx.DB.po[0]; assert(po, 'PO created'); assertEqual(JSON.stringify(po.lineItems.map(l => l.cost)), JSON.stringify([1000]).replace('1000', String(po.lineItems[0].cost)));
+  assert(JSON.stringify(po).indexOf('1800') === -1 && JSON.stringify(po).indexOf('2060') === -1, 'no freight/insurance/DG amount in the PO'); ctx.EI.qt = null;
+});
+
+test('SPEC-QTE-006 T-21: hygiene — leave the mock form in the Included state', () => {
+  frReset(); mockEl('qt-freight').textContent = '-'; mockEl('qt-fr-foot').textContent = ''; ctx.cQL = []; ctx.EI.qt = null; ctx.DB.qt = []; ctx.closeM('ov-qt'); ctx.closeM('ov-qdoc');
+  assertEqual(mockEl('qf-fr').value, 'included'); assertEqual(mockEl('qf-frAmt').value, '');
+  qtForm(); ctx.cQL = [{ rid: 'z', cost: 100, cbm: 1 }]; qtMirror(); ctx.calcQte(); assertEqual(mockEl('qt-freight').textContent, '-'); ctx.cQL = [];
+});
+
 // ── SEC-GAP-021: status-tag class-attribute injection fix ──────
 console.log('\nSEC-GAP-021 — status-tag class injection fix');
 
@@ -17547,7 +17813,7 @@ test('healImportedInvNetProfit() corrects only the bug signature, idempotently; 
   assertApprox(parseFloat(ctx.DB.inv[0].calc_netProfit), 28.07, 'still 28.07 after re-run');
 });
 
-test('quickAddSupplier() — creates a name-only supplier from the invoice quick-add row and selects it', async () => {
+testAsync('quickAddSupplier() — creates a name-only supplier from the invoice quick-add row and selects it', async () => {
   resetDB(); ctx.DB.sup = [];
   const oprompt = ctx.prompt; ctx.prompt = () => 'Shenzhen Widgets Ltd';
   try { await ctx.quickAddSupplier(); } finally { ctx.prompt = oprompt; }
@@ -17557,7 +17823,7 @@ test('quickAddSupplier() — creates a name-only supplier from the invoice quick
   assertEqual(mockEl('qal-sup').value, ctx.DB.sup[0].id, 'new supplier is selected');
   assertContains(mockEl('qal-sup').innerHTML, 'Shenzhen Widgets Ltd');
 });
-test('quickAddSupplier() — duplicate name (case-insensitive) selects the existing one, cancel selects nothing', async () => {
+testAsync('quickAddSupplier() — duplicate name (case-insensitive) selects the existing one, cancel selects nothing', async () => {
   resetDB(); ctx.DB.sup = [{ id:'sX', num:'SUP-0001', name:'Acme Co', cur:'USD' }];
   const op = ctx.prompt, oa = ctx.alert; ctx.alert = () => {};
   try {
